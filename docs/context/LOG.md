@@ -14,6 +14,13 @@
 - Kept connection values only in ignored local and Vercel environment storage; no secret value was printed into project documentation or committed.
 - Removed the Marketplace CLI's task-created agent-skill artifacts instead of publishing unrelated third-party instructions.
 
+## 2026-08-25: Canonical database seed manifest
+
+- Retained a fail-first missing-module test before implementing the database-neutral starter seed manifest.
+- Derived equipment, catalog, compatibility, aliases, two equipment-profile template revisions, five exact days, section order, editable prescriptions, and walker/runner cardio from the canonical product domain.
+- Kept canonical exercise records reusable across profiles and days; the Lower-day “Heavy goblet squat” wording remains revision display metadata rather than a duplicate exercise.
+- Four focused seed tests, type checking, and focused lint passed.
+
 ## 2026-08-25: Discovery and bootstrap
 
 - Inventoried the initial workspace and found one private MP4 with no Git repository or portable application.

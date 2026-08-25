@@ -17,6 +17,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - A nonce-based strict Content Security Policy and companion browser security headers. Next.js request rendering applies a fresh nonce to framework output; the YouTube referrer and Firebase popup policies are explicit.
 - Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.
 - All 27 canonical starter exercises have original route cues, movement families, aliases, and primary-muscle metadata. Library search includes those fields while still applying equipment compatibility first.
+- A database-neutral, deterministic seed manifest derives all six equipment rows, 27 catalog exercises, compatibility edges, aliases, and both five-day equipment revisions from the canonical product domain. It preserves the Lower-day “Heavy goblet squat” label as revision metadata without duplicating the catalog exercise.
 - Authentication return targets are normalized to bounded same-origin paths and reject protocol-relative, encoded-control, auth-loop, and external destinations.
 - Double progression can only suggest considering a load increase after the exact number of weight-and-repetition work sets all reach the range top with form explicitly marked appropriate. It ignores warm-ups and never emits a load or increment.
 - The service worker is generated from a tested public-cache policy. It caches only public program/library/sample routes, hashed Next static output, and explicit app artwork; authentication, APIs, future owned-data routes, arbitrary images, cross-origin assets, and non-GET requests remain outside the cache.
@@ -38,7 +39,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - GitHub target repository lookup confirmed that `vdoshi96/My-Workout-Pal` does not exist.
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
 - Vercel Marketplace provisioning reported Neon resource `my-workout-pal-db` ready on billing plan `free_v3`; a follow-up environment inspection confirmed database variables are attached without printing their values.
-- `pnpm typecheck`, `pnpm lint`, 88 unit and integration tests, generated-service-worker parity, and `pnpm docs:check` pass before the pending worktree integrations.
+- `pnpm typecheck`, `pnpm lint`, 92 unit and integration tests, generated-service-worker parity, and `pnpm docs:check` pass before the pending worktree integrations.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
 - Production `next start` inspection returned the strict CSP, a unique matching rendered nonce, `strict-origin-when-cross-origin`, popup-safe opener policy, frame denial, HSTS, and the remaining declared security headers. The nonce policy intentionally makes application HTML request-rendered; the manifest remains static.
 - The production output retains the design contract seed `ba529732` and its full contract text inside the first authored body element.

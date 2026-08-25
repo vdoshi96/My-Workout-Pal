@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="2affcae34380278020f32a915699214a432582b834b59f4c44070bc8981092d0">
+  <meta name="source-sha256" content="15ae77d50fb56b36fcb93e5d11e054ca5e4af4f6f053fa9e5ab3200156292305">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -41,6 +41,13 @@
 <li>Provisioned <code>my-workout-pal-db</code> in <code>iad1</code>, disabled Neon Auth in favor of Firebase identity, and connected development, preview, and production environments.</li>
 <li>Kept connection values only in ignored local and Vercel environment storage; no secret value was printed into project documentation or committed.</li>
 <li>Removed the Marketplace CLI&#39;s task-created agent-skill artifacts instead of publishing unrelated third-party instructions.</li>
+</ul>
+<h2>2026-08-25: Canonical database seed manifest</h2>
+<ul>
+<li>Retained a fail-first missing-module test before implementing the database-neutral starter seed manifest.</li>
+<li>Derived equipment, catalog, compatibility, aliases, two equipment-profile template revisions, five exact days, section order, editable prescriptions, and walker/runner cardio from the canonical product domain.</li>
+<li>Kept canonical exercise records reusable across profiles and days; the Lower-day “Heavy goblet squat” wording remains revision display metadata rather than a duplicate exercise.</li>
+<li>Four focused seed tests, type checking, and focused lint passed.</li>
 </ul>
 <h2>2026-08-25: Discovery and bootstrap</h2>
 <ul>
