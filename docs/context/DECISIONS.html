@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="af99a2119a06943977a635663f6233532f73169a19485548f173fcd5c3a2ba3f">
+  <meta name="source-sha256" content="db1df954a464474ea7f1a66b842cb6fd9e200799a596fede6412b41a3e7e2e1a">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -46,6 +46,8 @@
 <p>The program is represented as a route with five waypoints, and equipment changes reroute only substituted movements. The selected mobile comp is <code>.impeccable/mocks/route-atlas-map.png</code>. Semantic structure and status truth outrank decorative cartography.</p>
 <h2>2026-08-25: Use the supported webpack production build path</h2>
 <p>The first Next.js 16.3.2 Turbopack production compile held the build lock without advancing diagnostics and required termination after more than one minute. The same source compiled, type-checked, prerendered, and traced in about 10 seconds with <code>next build --webpack</code>. The package build script uses webpack until a bounded Turbopack investigation proves the default reliable.</p>
+<h2>2026-08-25: Cache public reading routes only</h2>
+<p>The service worker may cache the guest program, library, samples, offline page, and static assets. It does not intercept authenticated navigation or API requests. Account writes require a confirmed server response and must expose pending, failed, and retry states instead of treating an offline queue as saved data.</p>
 
   </main>
 </body>

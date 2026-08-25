@@ -35,3 +35,7 @@ The program is represented as a route with five waypoints, and equipment changes
 ## 2026-08-25: Use the supported webpack production build path
 
 The first Next.js 16.3.2 Turbopack production compile held the build lock without advancing diagnostics and required termination after more than one minute. The same source compiled, type-checked, prerendered, and traced in about 10 seconds with `next build --webpack`. The package build script uses webpack until a bounded Turbopack investigation proves the default reliable.
+
+## 2026-08-25: Cache public reading routes only
+
+The service worker may cache the guest program, library, samples, offline page, and static assets. It does not intercept authenticated navigation or API requests. Account writes require a confirmed server response and must expose pending, failed, and retry states instead of treating an offline queue as saved data.

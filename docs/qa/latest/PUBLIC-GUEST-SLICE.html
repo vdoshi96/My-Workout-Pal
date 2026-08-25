@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="9a48fbc8d99bb1918ca28cc9fab6a0b7bbdab9b355bd20dba557fa8062eeebba">
+  <title>Public guest slice verification · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Public guest slice verification</h1>
+<h2>Scope</h2>
+<p>This run covers the equipment-aware starter route, day details, compatible exercise library, exercise detail approval state, read-only sample workout and analytics, guarded sign-in destination, and PWA production build surface. It is local evidence, not preview or production proof.</p>
+<h2>Fail then pass evidence</h2>
+<ul>
+<li><code>pnpm vitest run tests/unit/program-seed.test.ts tests/unit/equipment-substitution.test.ts</code> initially failed because the program modules did not exist. Six tests pass after the seed and substitution implementation.</li>
+<li><code>pnpm vitest run tests/unit/library-filter.test.ts</code> initially failed because <code>@/domain/exercises/library</code> did not exist. Three tests now pass for stable ordering, compatibility exclusion, and term search after equipment filtering.</li>
+<li>Browser inspection exposed a desktop navigation overlap, a mobile route-stamp collision, a Playwright artifact watcher loop that reset client state, and exercise-detail <code>scrollWidth</code> of 934 pixels in a 390-pixel viewport. After correction, the measured exercise-detail <code>scrollWidth</code>, field-notes width, and video-field width are all 390 pixels.</li>
+</ul>
+<h2>Personally replayed flows</h2>
+<ul>
+<li>Selected Barbell + rack and observed the announcement that six route changes were applied without saving guest state.</li>
+<li>Selected Pull and observed Barbell bent-over row in the preview and a profile-preserving <code>/program/pull?equipment=barbell</code> link.</li>
+<li>Searched <code>barbell squat</code> under Dumbbells and observed the explicit zero-result compatibility state, then changed to Barbell + rack and observed exactly one compatible Barbell back squat result with the query retained.</li>
+<li>Opened Barbell back squat and observed truthful starter facts plus two separate manual-review video slots with no fabricated embeds.</li>
+<li>Inspected the read-only sample analytics at desktop width and confirmed that every metric and historical row is labeled sample data.</li>
+</ul>
+<h2>Automated checks</h2>
+<ul>
+<li><code>pnpm typecheck</code></li>
+<li><code>pnpm lint</code></li>
+<li><code>pnpm test</code>: three files and nine tests pass.</li>
+<li><code>pnpm build</code>: Next.js 16.3.2 webpack production build succeeds with ten application routes.</li>
+</ul>
+<h2>Remaining verification</h2>
+<p>Production-server service-worker installation, offline navigation, Chromium and WebKit matrices, automated accessibility, reduced motion, dark mode, tablet layout, slow and failed requests, authenticated persistence, preview deployment, production deployment, and runtime logs remain open.</p>
+
+  </main>
+</body>
+</html>

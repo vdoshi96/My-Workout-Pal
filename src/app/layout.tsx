@@ -7,6 +7,8 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
+import { PwaRegistration } from "@/components/pwa/pwa-registration";
+
 const designContract = `<!--
 THESIS: My Workout Pal makes equipment-aware programming visible as a route that can change without redrawing completed ground; it refuses the generic fitness dashboard.
 OWN-WORLD: Warm mineral paper, deep blue-green ink, coral routes, lichen compatibility marks, contour geometry, waypoint controls, and ruled field sheets.
@@ -51,7 +53,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
+    <html data-scroll-behavior="smooth" lang="en">
       <body>
         <template
           data-design-contract="ba529732"
@@ -60,6 +62,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           dangerouslySetInnerHTML={{ __html: designContract }}
         />
         {children}
+        <PwaRegistration />
       </body>
     </html>
   );
