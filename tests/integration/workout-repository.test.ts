@@ -736,6 +736,42 @@ describe("owner-scoped workout repository", () => {
     })).rejects.toMatchObject({ code: "invalid_request" });
   });
 
+  it("accepts repository derived pace after canonical whole-second rounding", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "rounded-derived-pace",
+    });
+    const saved = await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "rounded-derived-cardio",
+      kind: "save_cardio",
+      payload: {
+        kind: "save_cardio",
+        mode: "walker",
+        cardio: {
+          mode: "walker",
+          durationSeconds: 100,
+          distanceMeters: 333.25,
+          paceSecondsPerKilometer: 300,
+          paceSource: "derived",
+          inclinePercent: 1.25,
+          notes: "rounded pace",
+        },
+      },
+    });
+    expect(saved.status).toBe("saved");
+    expect((await repository.loadResume(viewer(fixture.ownerUid), { sessionId: started.model.session.id })).cardioLog?.cardio).toMatchObject({
+      durationSeconds: 100,
+      distanceMeters: 333.25,
+      paceSecondsPerKilometer: 300,
+      paceSource: "derived",
+    });
+  });
+
   it("does not return an unvalidated stored idempotency payload", async () => {
     const { database } = await openDatabase();
     const fixture = await createFixture(database);

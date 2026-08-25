@@ -30,6 +30,7 @@ import {
 } from "@/domain/analytics";
 import {
   createWorkoutSnapshot,
+  derivePaceSecondsPerKilometer,
   type ActiveWorkoutSnapshot,
   type CardioLog,
   type CardioMode,
@@ -714,8 +715,8 @@ function assertCardio(
     if (cardio.distanceMeters === undefined || cardio.paceSecondsPerKilometer === undefined) {
       throw new WorkoutRepositoryError("invalid_request", "Derived pace requires distance and pace.");
     }
-    const derived = cardio.durationSeconds / (cardio.distanceMeters / 1_000);
-    if (Math.abs(derived - cardio.paceSecondsPerKilometer) > 0.000001) {
+    const derived = derivePaceSecondsPerKilometer(cardio.durationSeconds, cardio.distanceMeters);
+    if (derived !== cardio.paceSecondsPerKilometer) {
       throw new WorkoutRepositoryError("invalid_request", "Derived pace does not match distance and duration.");
     }
   }
