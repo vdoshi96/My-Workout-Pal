@@ -1,5 +1,11 @@
 # Project log
 
+## 2026-08-25: Interruption-safe runner domain
+
+- Integrated the directly reviewed runner snapshot, set/cardio draft, rest timer, IndexedDB-compatible storage, owner namespace, idempotent outbox, conflict, auth-expiry, offline, substitution, skip, completion, and abandonment contracts.
+- Returned the slice twice after review found completion mutability and terminal-retry races. The final correction revalidates completion retries, supersedes later work when abandonment is retried, restores immutable transitional states, and stops sync after terminal acceptance.
+- Retained fail-first regression evidence across each correction pass. The combined application now passes 157 tests plus type checking, lint, generated PWA and documentation parity, and the production build.
+
 ## 2026-08-25: Curated dual-video player contract
 
 - Retained a missing-module failure before implementing the production video-pair and embed contract; four focused tests then passed.

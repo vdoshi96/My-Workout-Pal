@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="1811f5ae3e9ebd87afdd6fd7e16264a51339439853d240e27bb021cd2f678feb">
+  <meta name="source-sha256" content="39327f4f3d93afd26ee0c3f1d1786e6083be7e4a3014c5b448af0696cf21dad0">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,12 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Interruption-safe runner domain</h2>
+<ul>
+<li>Integrated the directly reviewed runner snapshot, set/cardio draft, rest timer, IndexedDB-compatible storage, owner namespace, idempotent outbox, conflict, auth-expiry, offline, substitution, skip, completion, and abandonment contracts.</li>
+<li>Returned the slice twice after review found completion mutability and terminal-retry races. The final correction revalidates completion retries, supersedes later work when abandonment is retried, restores immutable transitional states, and stops sync after terminal acceptance.</li>
+<li>Retained fail-first regression evidence across each correction pass. The combined application now passes 157 tests plus type checking, lint, generated PWA and documentation parity, and the production build.</li>
+</ul>
 <h2>2026-08-25: Curated dual-video player contract</h2>
 <ul>
 <li>Retained a missing-module failure before implementing the production video-pair and embed contract; four focused tests then passed.</li>
