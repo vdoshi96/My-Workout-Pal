@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
 
 import { z } from "zod";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 import type { Database } from "@/db/client";
 import {
   catalogExercises,
+  customExerciseEquipment,
+  customExercises,
   exerciseEquipment,
   idempotencyKeys,
   programCardioPrescriptions,
@@ -89,6 +91,7 @@ export type OnboardingInput = Readonly<{
 
 export type EquipmentChangeInput = Readonly<{
   programId: string;
+  baseRevisionId: string;
   equipmentProfileKind?: EquipmentProfileKind;
   profileKind?: EquipmentProfileKind;
   idempotencyKey?: string;
@@ -104,11 +107,13 @@ type NormalizedOnboardingInput = Readonly<{
 
 type NormalizedEquipmentChangeInput = Readonly<{
   programId: string;
+  baseRevisionId: string;
   equipmentProfileKind: EquipmentProfileKind;
   idempotencyKey: string | undefined;
 }>;
 
 type CatalogExerciseRow = typeof catalogExercises.$inferSelect;
+type CustomExerciseRow = typeof customExercises.$inferSelect;
 type TemplateRevisionRow = typeof programTemplateRevisions.$inferSelect;
 type TemplateDayRow = typeof templateDays.$inferSelect;
 type TemplateSectionRow = typeof templateSections.$inferSelect;
@@ -138,15 +143,24 @@ export type EquipmentReadModel = Readonly<{
 
 export type ActiveProgramPrescriptionReadModel = Readonly<{
   id: string;
-  catalogExerciseId: string;
+  catalogExerciseId: string | null;
+  customExerciseId: string | null;
   exercise: Readonly<{
     id: string;
     slug: string;
     name: string;
     movementFamily: string;
-    loggingKind: CatalogExerciseRow["loggingKind"];
-    role: CatalogExerciseRow["role"];
+    loggingKind: CatalogExerciseRow["loggingKind"] | ProgramPrescriptionRow["measurementKind"];
+    role: CatalogExerciseRow["role"] | null;
+    kind: "catalog" | "custom";
   }>;
+  customExercise: Readonly<{
+    id: string;
+    exerciseKey: string;
+    name: string;
+    loggingKind: ProgramPrescriptionRow["measurementKind"];
+    instructions: string | null;
+  }> | null;
   displayName: string | null;
   label: string;
   displayOrder: number;
@@ -224,7 +238,8 @@ export type EquipmentChange = Readonly<{
   toCatalogExerciseId: string;
   toSlug: string;
   preserved: readonly ["sets", "repRange", "rest", "section", "order", "notes"];
-  cleared: readonly ["targetWeightKg", "targetDistanceM"];
+  cleared: readonly ["targetWeightKg", "targetDistanceM", "targetMetadata"];
+  reason: string;
 }>;
 
 export type EquipmentChangeResult = Readonly<
@@ -263,6 +278,7 @@ const onboardingSchema = z
 const equipmentChangeSchema = z
   .object({
     programId: z.string().uuid(),
+    baseRevisionId: z.string().uuid(),
     equipmentProfileKind: profileKindSchema.optional(),
     profileKind: profileKindSchema.optional(),
     idempotencyKey: z.string().trim().min(1).max(180).optional(),
@@ -328,6 +344,7 @@ function parseEquipmentChangeInput(input: EquipmentChangeInput): NormalizedEquip
   const parsed = result.data;
   return {
     programId: parsed.programId,
+    baseRevisionId: parsed.baseRevisionId,
     equipmentProfileKind: parseEquipmentProfileKind(
       parsed.equipmentProfileKind,
       parsed.profileKind,
@@ -387,7 +404,7 @@ async function loadTemplateGraph(
         eq(programTemplateRevisions.equipmentProfileKind, equipmentProfileKind),
       ),
     )
-    .orderBy(asc(programTemplateRevisions.revisionNumber))
+    .orderBy(desc(programTemplateRevisions.revisionNumber))
     .limit(1);
   const revision = revisionResult[0]?.revision;
   if (!revision) throw new RepositoryNotFoundError();
@@ -520,6 +537,25 @@ async function loadCatalogExercises(
   return new Map(rows.map((row) => [row.id, row] as const));
 }
 
+async function loadCustomExercises(
+  database: RepositoryDatabase,
+  ownerFirebaseUid: string,
+  ids: readonly string[],
+): Promise<ReadonlyMap<string, CustomExerciseRow>> {
+  const uniqueIds = [...new Set(ids)];
+  if (uniqueIds.length === 0) return new Map();
+  const rows = await database
+    .select()
+    .from(customExercises)
+    .where(
+      and(
+        eq(customExercises.ownerFirebaseUid, ownerFirebaseUid),
+        inArray(customExercises.id, uniqueIds),
+      ),
+    );
+  return new Map(rows.map((row) => [row.id, row] as const));
+}
+
 async function readProfile(
   database: RepositoryDatabase,
   ownerFirebaseUid: string,
@@ -588,7 +624,13 @@ async function readProgramModel(
   const exerciseIds = graph.prescriptions.flatMap((row) =>
     row.catalogExerciseId ? [row.catalogExerciseId] : [],
   );
-  const exercises = await loadCatalogExercises(database, exerciseIds);
+  const customExerciseIds = graph.prescriptions.flatMap((row) =>
+    row.customExerciseId ? [row.customExerciseId] : [],
+  );
+  const [exercises, customExerciseRows] = await Promise.all([
+    loadCatalogExercises(database, exerciseIds),
+    loadCustomExercises(database, root.ownerFirebaseUid, customExerciseIds),
+  ]);
   const prescriptionBySection = new Map<string, ProgramPrescriptionRow[]>();
   for (const prescription of graph.prescriptions) {
     const list = prescriptionBySection.get(prescription.sectionId) ?? [];
@@ -609,20 +651,51 @@ async function readProgramModel(
   }
 
   function prescriptionModel(row: ProgramPrescriptionRow): ActiveProgramPrescriptionReadModel {
-    if (!row.catalogExerciseId || row.customExerciseId) throw new RepositoryNotFoundError();
-    const exercise = exercises.get(row.catalogExerciseId);
-    if (!exercise) throw new RepositoryNotFoundError();
+    const hasCatalog = row.catalogExerciseId !== null;
+    const hasCustom = row.customExerciseId !== null;
+    if (hasCatalog === hasCustom) throw new RepositoryNotFoundError();
+    const catalogExercise = row.catalogExerciseId
+      ? exercises.get(row.catalogExerciseId)
+      : undefined;
+    const customExercise = row.customExerciseId
+      ? customExerciseRows.get(row.customExerciseId)
+      : undefined;
+    if (!catalogExercise && !customExercise) throw new RepositoryNotFoundError();
+    const exercise = catalogExercise
+      ? {
+          id: catalogExercise.id,
+          slug: catalogExercise.slug,
+          name: catalogExercise.name,
+          movementFamily: catalogExercise.movementFamily,
+          loggingKind: catalogExercise.loggingKind,
+          role: catalogExercise.role,
+          kind: "catalog" as const,
+        }
+      : {
+          id: customExercise!.id,
+          slug: customExercise!.exerciseKey,
+          name: customExercise!.name,
+          movementFamily: "custom",
+          loggingKind: customExercise!.loggingKind,
+          role: null,
+          kind: "custom" as const,
+        };
     return {
       id: row.id,
       catalogExerciseId: row.catalogExerciseId,
+      customExerciseId: row.customExerciseId,
       exercise: {
-        id: exercise.id,
-        slug: exercise.slug,
-        name: exercise.name,
-        movementFamily: exercise.movementFamily,
-        loggingKind: exercise.loggingKind,
-        role: exercise.role,
+        ...exercise,
       },
+      customExercise: customExercise
+        ? {
+            id: customExercise.id,
+            exerciseKey: customExercise.exerciseKey,
+            name: customExercise.name,
+            loggingKind: customExercise.loggingKind,
+            instructions: customExercise.instructions,
+          }
+        : null,
       displayName: row.displayName,
       label: row.displayName ?? exercise.name,
       displayOrder: row.displayOrder,
@@ -793,6 +866,26 @@ async function reserveIdempotency(
     return { key, replay: payload as Record<string, unknown> };
   }
   return { key, replay: undefined };
+}
+
+async function findIdempotency(
+  database: RepositoryDatabase,
+  ownerFirebaseUid: string,
+  key: string | undefined,
+): Promise<typeof idempotencyKeys.$inferSelect | undefined> {
+  if (!key) return undefined;
+  return (
+    await database
+      .select()
+      .from(idempotencyKeys)
+      .where(
+        and(
+          eq(idempotencyKeys.ownerFirebaseUid, ownerFirebaseUid),
+          eq(idempotencyKeys.idempotencyKey, key),
+        ),
+      )
+      .limit(1)
+  )[0];
 }
 
 async function finishIdempotency(
@@ -1017,7 +1110,18 @@ async function cloneEquipmentRevision(
   const sourceExerciseIds = source.prescriptions.flatMap((row) =>
     row.catalogExerciseId ? [row.catalogExerciseId] : [],
   );
+  const sourceCustomExerciseIds = source.prescriptions.flatMap((row) =>
+    row.customExerciseId ? [row.customExerciseId] : [],
+  );
   const allExerciseRows = await loadCatalogExercises(database, sourceExerciseIds);
+  const allCustomExerciseRows = await loadCustomExercises(
+    database,
+    ownerFirebaseUid,
+    sourceCustomExerciseIds,
+  );
+  if (allCustomExerciseRows.size !== new Set(sourceCustomExerciseIds).size) {
+    throw new RepositoryNotFoundError();
+  }
   const sourceSlugs = [...allExerciseRows.values()].map((row) => row.slug);
   const targetSlugs = sourceSlugs
     .map((slug) => substitutionByTarget[targetProfile][slug])
@@ -1041,16 +1145,29 @@ async function cloneEquipmentRevision(
     set.add(row.equipmentId);
     equipmentByExercise.set(row.exerciseId, set);
   }
+  const customEquipmentRows =
+    sourceCustomExerciseIds.length === 0
+      ? []
+      : await database
+          .select()
+          .from(customExerciseEquipment)
+          .where(
+            and(
+              eq(customExerciseEquipment.ownerFirebaseUid, ownerFirebaseUid),
+              inArray(customExerciseEquipment.customExerciseId, [...new Set(sourceCustomExerciseIds)]),
+            ),
+          );
+  const equipmentByCustomExercise = new Map<string, Set<string>>();
+  for (const row of customEquipmentRows) {
+    const set = equipmentByCustomExercise.get(row.customExerciseId) ?? new Set<string>();
+    set.add(row.equipmentId);
+    equipmentByCustomExercise.set(row.customExerciseId, set);
+  }
   const targetEquipment = new Set<string>(EQUIPMENT_PROFILES[targetProfile].equipment);
-  const targetTemplatePrescriptionByShape = new Map(
-    targetTemplate.prescriptions.map((prescription) => {
-      const section = targetTemplate.sections.find((candidate) => candidate.id === prescription.sectionId);
-      const day = section ? targetTemplate.days.find((candidate) => candidate.id === section.dayId) : undefined;
-      return [
-        `${day?.dayNumber}:${section?.kind}:${section?.displayOrder}:${prescription.displayOrder}`,
-        prescription,
-      ] as const;
-    }),
+  const targetDisplayNameByExerciseId = new Map(
+    targetTemplate.prescriptions
+      .filter((prescription) => prescription.displayName !== null)
+      .map((prescription) => [prescription.exerciseId, prescription.displayName!] as const),
   );
   const changes: EquipmentChange[] = [];
 
@@ -1093,40 +1210,79 @@ async function cloneEquipmentRevision(
       source.prescriptions.map((prescription) => {
         const section = sourceSectionById.get(prescription.sectionId);
         const day = section ? sourceDayById.get(section.dayId) : undefined;
-        if (!section || !day || !prescription.catalogExerciseId) {
+        if (!section || !day) {
           throw new RepositoryNotFoundError();
         }
+        const id = scopedUuid(
+          "program-prescription",
+          ownerFirebaseUid,
+          `${root.id}:${revisionId}:${prescription.id}`,
+        );
+        if (prescription.customExerciseId) {
+          const customExercise = allCustomExerciseRows.get(prescription.customExerciseId);
+          if (!customExercise) throw new RepositoryNotFoundError();
+          const required =
+            equipmentByCustomExercise.get(customExercise.id) ?? new Set<string>();
+          const compatible = [...required].every((equipment) => targetEquipment.has(equipment));
+          if (!compatible) {
+            throw new RepositoryValidationError(
+              "A custom exercise is incompatible with the selected equipment profile.",
+            );
+          }
+          return {
+            id,
+            ownerFirebaseUid,
+            programId: root.id,
+            revisionId,
+            sectionId: programSectionId(section.id),
+            catalogExerciseId: null,
+            customExerciseId: customExercise.id,
+            displayName: prescription.displayName,
+            displayOrder: prescription.displayOrder,
+            setKind: prescription.setKind,
+            setCount: prescription.setCount,
+            measurementKind: prescription.measurementKind,
+            minimumReps: prescription.minimumReps,
+            maximumReps: prescription.maximumReps,
+            minimumSeconds: prescription.minimumSeconds,
+            maximumSeconds: prescription.maximumSeconds,
+            restSeconds: prescription.restSeconds,
+            targetWeightKg: prescription.targetWeightKg,
+            targetDistanceM: prescription.targetDistanceM,
+            notes: prescription.notes,
+            targetMetadata: cloneJson(prescription.targetMetadata),
+          };
+        }
+        if (!prescription.catalogExerciseId) throw new RepositoryNotFoundError();
         const sourceExercise = allExerciseRows.get(prescription.catalogExerciseId);
         if (!sourceExercise) throw new RepositoryNotFoundError();
-        const targetShape = targetTemplatePrescriptionByShape.get(
-          `${day.dayNumber}:${section.kind}:${section.displayOrder}:${prescription.displayOrder}`,
-        );
         const required = equipmentByExercise.get(sourceExercise.id) ?? new Set<string>();
         const physicallyCompatible = [...required].every((equipment) => targetEquipment.has(equipment));
-        // The published starter variants intentionally reroute some movements
-        // even when the broader profile still contains the source implement
-        // (for example, goblet squat -> barbell back squat). The matching
-        // template prescription is therefore the source of truth for whether
-        // this target profile requires a substitution.
-        const compatible =
-          physicallyCompatible &&
-          (!targetShape || targetShape.exerciseId === sourceExercise.id);
-        const replacementSlug = compatible
-          ? sourceExercise.slug
-          : targetShape
-            ? (targetExerciseRows.find((row) => row.id === targetShape.exerciseId)?.slug ??
-              substitutionByTarget[targetProfile][sourceExercise.slug])
-            : substitutionByTarget[targetProfile][sourceExercise.slug];
-        const targetExercise = replacementSlug ? exercisesBySlug.get(replacementSlug) : undefined;
+        // Canonical starter substitutions are explicit and intentionally win
+        // over the broader physical equipment set (barbell profiles retain
+        // dumbbells, but still reroute goblet squat to back squat). Any
+        // unmapped catalog exercise stays on its canonical ID when physically
+        // compatible, even if a template position would differ.
+        const replacementSlug = substitutionByTarget[targetProfile][sourceExercise.slug];
+        if (!replacementSlug && !physicallyCompatible) {
+          throw new RepositoryValidationError(
+            "A catalog exercise is incompatible with the selected equipment profile.",
+          );
+        }
+        const targetSlug = replacementSlug ?? sourceExercise.slug;
+        const targetExercise = exercisesBySlug.get(targetSlug);
         if (!targetExercise) {
           throw new RepositoryValidationError(
             `No equipment substitution is available for ${sourceExercise.slug}.`,
           );
         }
-        const displayName = compatible
-          ? prescription.displayName
-          : targetShape?.displayName ?? null;
-        if (!compatible) {
+        const substituted = targetExercise.id !== sourceExercise.id;
+        const displayName = substituted
+          ? targetDisplayNameByExerciseId.get(targetExercise.id) ?? null
+          : prescription.displayName;
+        if (substituted) {
+          const reason =
+            `Changed equipment profile from ${source.revision.equipmentProfileKind} to ${targetProfile}; ${sourceExercise.name} was replaced with ${targetExercise.name}, so movement-specific targets were cleared.`;
           changes.push({
             dayNumber: day.dayNumber,
             dayKey: day.dayKey,
@@ -1139,14 +1295,10 @@ async function cloneEquipmentRevision(
             toCatalogExerciseId: targetExercise.id,
             toSlug: targetExercise.slug,
             preserved: ["sets", "repRange", "rest", "section", "order", "notes"],
-            cleared: ["targetWeightKg", "targetDistanceM"],
+            cleared: ["targetWeightKg", "targetDistanceM", "targetMetadata"],
+            reason,
           });
         }
-        const id = scopedUuid(
-          "program-prescription",
-          ownerFirebaseUid,
-          `${root.id}:${revisionId}:${prescription.id}`,
-        );
         return {
           id,
           ownerFirebaseUid,
@@ -1165,10 +1317,10 @@ async function cloneEquipmentRevision(
           minimumSeconds: prescription.minimumSeconds,
           maximumSeconds: prescription.maximumSeconds,
           restSeconds: prescription.restSeconds,
-          targetWeightKg: compatible ? prescription.targetWeightKg : null,
-          targetDistanceM: compatible ? prescription.targetDistanceM : null,
+          targetWeightKg: substituted ? null : prescription.targetWeightKg,
+          targetDistanceM: substituted ? null : prescription.targetDistanceM,
           notes: prescription.notes,
-          targetMetadata: cloneJson(prescription.targetMetadata),
+          targetMetadata: substituted ? {} : cloneJson(prescription.targetMetadata),
         };
       }),
     )
@@ -1335,11 +1487,39 @@ export function createProfileProgramRepository(
     const normalized = parseEquipmentChangeInput(input);
     const requestHash = stableRequestHash("equipment-change", {
       programId: normalized.programId,
+      baseRevisionId: normalized.baseRevisionId,
       equipmentProfileKind: normalized.equipmentProfileKind,
     });
     return database.transaction(async (transaction) => {
       const tx = transaction as unknown as Database;
       const root = await findProgramRoot(tx, viewer.uid, normalized.programId, true);
+      // A completed replay is read-only and remains valid even after its
+      // original base revision is no longer active. The lookup intentionally
+      // precedes the stale-base check so replay never creates a new write.
+      const existingIdempotency = await findIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+      );
+      if (existingIdempotency) {
+        if (
+          existingIdempotency.operation !== "equipment-change" ||
+          existingIdempotency.requestHash !== requestHash
+        ) {
+          throw new RepositoryConflictError("The idempotency key was already used for another request.");
+        }
+        const stored = replayPayload(existingIdempotency.resultPayload);
+        if (stored) {
+          const current = await readViewerData(tx, viewer.uid);
+          return { ...current, changes: stored.changes };
+        }
+      }
+      if (!root.activeRevisionId) throw new RepositoryNotFoundError();
+      if (root.activeRevisionId !== normalized.baseRevisionId) {
+        throw new RepositoryConflictError(
+          "The active program revision changed. Refresh the program before confirming this equipment change.",
+        );
+      }
       const reservation = await reserveIdempotency(
         tx,
         viewer.uid,
@@ -1353,7 +1533,6 @@ export function createProfileProgramRepository(
         const current = await readViewerData(tx, viewer.uid);
         return { ...current, changes: stored.changes };
       }
-      if (!root.activeRevisionId) throw new RepositoryNotFoundError();
       const source = await loadProgramGraph(tx, viewer.uid, root.id, root.activeRevisionId);
       const currentProfile = source.revision.equipmentProfileKind;
       if (currentProfile === normalized.equipmentProfileKind) {
