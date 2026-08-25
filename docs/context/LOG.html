@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4aeaf67b026cc6b9cfc8482613ba820271d6e3d457eea86494cfe8454c99b047">
+  <meta name="source-sha256" content="9bbc332cfbafa2675c4b59497f14e6c6f1d9993aae86943b8734ec5e1d78b208">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -73,6 +73,12 @@
 <li>Retained a missing-module failing test before adding the double-progression evaluator.</li>
 <li>Limited load-increase suggestions to a complete weight-and-repetition prescription whose every work set reaches the range top with appropriate form explicitly recorded.</li>
 <li>Kept warm-ups outside the decision and returned a nonnumeric advisory result rather than prescribing a load or increment.</li>
+</ul>
+<h2>2026-08-25: Generated public-only PWA cache</h2>
+<ul>
+<li>Retained a missing-module failing test before adding a cache policy for public navigation, static output, and explicit app artwork.</li>
+<li>Stopped caching arbitrary same-origin images and limited cache cleanup to obsolete My Workout Pal public-cache versions.</li>
+<li>Added deterministic <code>pwa:build</code> and <code>pwa:check</code> commands so the shipped worker must match the tested policy.</li>
 </ul>
 
   </main>

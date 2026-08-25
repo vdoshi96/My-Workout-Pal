@@ -1,11 +1,78 @@
-// Generated from src/domain/pwa/cache-policy.ts. Run pnpm pwa:build after policy changes.
-const CACHE_NAME = "my-workout-pal-public-v2";
+export const PWA_CACHE_NAME = "my-workout-pal-public-v2";
+
+export const PWA_INSTALL_ASSETS = Object.freeze([
+  "/",
+  "/offline",
+  "/apple-touch-icon.png",
+  "/contours.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon.svg",
+] as const);
+
+export const PWA_PUBLIC_ASSETS = Object.freeze([
+  "/apple-touch-icon.png",
+  "/contours.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon.svg",
+] as const);
+
+const publicNavigationExact = new Set([
+  "/",
+  "/library",
+  "/offline",
+  "/program",
+  "/sample-progress",
+  "/sample-workout",
+]);
+const publicNavigationPrefixes = ["/library/", "/program/"] as const;
+const staticDestinations = new Set(["font", "image", "script", "style"]);
+
+export function isCacheablePublicNavigationPath(pathname: string): boolean {
+  return (
+    publicNavigationExact.has(pathname) ||
+    publicNavigationPrefixes.some((prefix) => pathname.startsWith(prefix))
+  );
+}
+
+export function isCacheableStaticRequest({
+  appOrigin,
+  destination,
+  method,
+  url,
+}: Readonly<{
+  appOrigin: string;
+  destination: string;
+  method: string;
+  url: string;
+}>): boolean {
+  if (method !== "GET" || !staticDestinations.has(destination)) return false;
+
+  let target: URL;
+  try {
+    target = new URL(url);
+  } catch {
+    return false;
+  }
+  if (target.origin !== appOrigin) return false;
+  if (target.pathname.startsWith("/_next/static/")) {
+    return destination === "font" || destination === "script" || destination === "style";
+  }
+  return destination === "image" && PWA_PUBLIC_ASSETS.includes(
+    target.pathname as (typeof PWA_PUBLIC_ASSETS)[number],
+  );
+}
+
+export function renderServiceWorker(): string {
+  return `// Generated from src/domain/pwa/cache-policy.ts. Run pnpm pwa:build after policy changes.
+const CACHE_NAME = ${JSON.stringify(PWA_CACHE_NAME)};
 const CACHE_PREFIX = "my-workout-pal-public-";
-const INSTALL_ASSETS = ["/","/offline","/apple-touch-icon.png","/contours.svg","/icon-192.png","/icon-512.png","/icon.svg"];
-const PUBLIC_ASSETS = new Set(["/apple-touch-icon.png","/contours.svg","/icon-192.png","/icon-512.png","/icon.svg"]);
-const PUBLIC_NAVIGATION_EXACT = new Set(["/","/library","/offline","/program","/sample-progress","/sample-workout"]);
-const PUBLIC_NAVIGATION_PREFIXES = ["/library/","/program/"];
-const STATIC_DESTINATIONS = new Set(["font","image","script","style"]);
+const INSTALL_ASSETS = ${JSON.stringify(PWA_INSTALL_ASSETS)};
+const PUBLIC_ASSETS = new Set(${JSON.stringify(PWA_PUBLIC_ASSETS)});
+const PUBLIC_NAVIGATION_EXACT = new Set(${JSON.stringify([...publicNavigationExact])});
+const PUBLIC_NAVIGATION_PREFIXES = ${JSON.stringify(publicNavigationPrefixes)};
+const STATIC_DESTINATIONS = new Set(${JSON.stringify([...staticDestinations])});
 
 function isCacheablePublicNavigation(url) {
   return (
@@ -77,3 +144,5 @@ self.addEventListener("fetch", (event) => {
     }),
   );
 });
+`;
+}

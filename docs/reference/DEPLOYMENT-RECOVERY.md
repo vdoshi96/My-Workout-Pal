@@ -87,7 +87,7 @@ If one demonstration fails, show the remaining approved option and direct YouTub
 
 ### Service-worker recovery
 
-Publish a new cache version, retain pending IndexedDB operations, and remove only obsolete public caches during activation. If a worker causes a critical navigation failure, publish a compatibility worker that unregisters safely after it restores ordinary network navigation.
+Publish a new cache version, retain pending IndexedDB operations, and remove only obsolete My Workout Pal public caches during activation. The worker is generated from `src/domain/pwa/cache-policy.ts`; run `pnpm pwa:build` after an intentional policy change and `pnpm pwa:check` before release. Authentication, APIs, owned-data routes, arbitrary images, cross-origin assets, and non-GET requests must stay outside the public cache. If a worker causes a critical navigation failure, publish a compatibility worker that unregisters safely after it restores ordinary network navigation.
 
 ## Credential and approval gates
 

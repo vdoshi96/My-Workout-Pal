@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="1e8c22dae480731c60e09ae6c970ef83c20bef75ead8639c17ec8142c488554c">
+  <meta name="source-sha256" content="8e7419d1bd31bc21a64ecd547af3a7def4560a01398cc0c28cac05c354609ec8">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -98,7 +98,7 @@
 <h3>Video recovery</h3>
 <p>If one demonstration fails, show the remaining approved option and direct YouTube link. If both fail, show the unavailable state and open a reviewed replacement workflow. Do not hot-swap an unapproved video.</p>
 <h3>Service-worker recovery</h3>
-<p>Publish a new cache version, retain pending IndexedDB operations, and remove only obsolete public caches during activation. If a worker causes a critical navigation failure, publish a compatibility worker that unregisters safely after it restores ordinary network navigation.</p>
+<p>Publish a new cache version, retain pending IndexedDB operations, and remove only obsolete My Workout Pal public caches during activation. The worker is generated from <code>src/domain/pwa/cache-policy.ts</code>; run <code>pnpm pwa:build</code> after an intentional policy change and <code>pnpm pwa:check</code> before release. Authentication, APIs, owned-data routes, arbitrary images, cross-origin assets, and non-GET requests must stay outside the public cache. If a worker causes a critical navigation failure, publish a compatibility worker that unregisters safely after it restores ordinary network navigation.</p>
 <h2>Credential and approval gates</h2>
 <ul>
 <li>GitHub repository creation and push require a valid authenticated GitHub credential.</li>

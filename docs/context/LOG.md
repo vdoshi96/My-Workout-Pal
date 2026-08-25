@@ -45,3 +45,9 @@
 - Retained a missing-module failing test before adding the double-progression evaluator.
 - Limited load-increase suggestions to a complete weight-and-repetition prescription whose every work set reaches the range top with appropriate form explicitly recorded.
 - Kept warm-ups outside the decision and returned a nonnumeric advisory result rather than prescribing a load or increment.
+
+## 2026-08-25: Generated public-only PWA cache
+
+- Retained a missing-module failing test before adding a cache policy for public navigation, static output, and explicit app artwork.
+- Stopped caching arbitrary same-origin images and limited cache cleanup to obsolete My Workout Pal public-cache versions.
+- Added deterministic `pwa:build` and `pwa:check` commands so the shipped worker must match the tested policy.
