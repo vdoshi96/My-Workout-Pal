@@ -6,6 +6,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import {
   catalogExercises,
+  catalogEquipment,
   customExerciseEquipment,
   customExercises,
   exerciseEquipment,
@@ -27,10 +28,16 @@ import {
   userPrograms,
 } from "@/db/schema";
 import {
+  EQUIPMENT_IDS,
   EQUIPMENT_PROFILES,
+  type EquipmentId,
   type EquipmentProfileKind,
 } from "@/domain/equipment";
 import { deterministicSeedUuid } from "@/domain/seed/identity";
+import {
+  starterEquipmentReplacement,
+  starterReplacementSlugs,
+} from "@/domain/programs/equipment-substitutions";
 import type { ViewerContext } from "@/server/auth/viewer";
 import { AuthPolicyError } from "@/server/auth/policy";
 
@@ -153,12 +160,14 @@ export type ActiveProgramPrescriptionReadModel = Readonly<{
     loggingKind: CatalogExerciseRow["loggingKind"] | ProgramPrescriptionRow["measurementKind"];
     role: CatalogExerciseRow["role"] | null;
     kind: "catalog" | "custom";
+    requiredEquipment: readonly EquipmentId[];
   }>;
   customExercise: Readonly<{
     id: string;
     exerciseKey: string;
     name: string;
     loggingKind: ProgramPrescriptionRow["measurementKind"];
+    equipmentIds: readonly EquipmentId[];
     instructions: string | null;
   }> | null;
   displayName: string | null;
@@ -379,6 +388,11 @@ function iso(value: Date): string {
 
 function cloneJson<T>(value: T): T {
   return structuredClone(value);
+}
+
+function equipmentId(value: string): EquipmentId {
+  if ((EQUIPMENT_IDS as readonly string[]).includes(value)) return value as EquipmentId;
+  throw new RepositoryNotFoundError();
 }
 
 type RepositoryDatabase = Database;
@@ -637,10 +651,54 @@ async function readProgramModel(
   const customExerciseIds = graph.prescriptions.flatMap((row) =>
     row.customExerciseId ? [row.customExerciseId] : [],
   );
-  const [exercises, customExerciseRows] = await Promise.all([
+  const [exercises, customExerciseRows, catalogEquipmentRows, customEquipmentRows] = await Promise.all([
     loadCatalogExercises(database, exerciseIds),
     loadCustomExercises(database, root.ownerFirebaseUid, customExerciseIds),
+    exerciseIds.length === 0
+      ? []
+      : database
+          .select({
+            equipmentId: exerciseEquipment.equipmentId,
+            exerciseId: exerciseEquipment.exerciseId,
+          })
+          .from(exerciseEquipment)
+          .innerJoin(catalogEquipment, eq(catalogEquipment.id, exerciseEquipment.equipmentId))
+          .where(inArray(exerciseEquipment.exerciseId, [...new Set(exerciseIds)]))
+          .orderBy(asc(catalogEquipment.sortOrder)),
+    customExerciseIds.length === 0
+      ? []
+      : database
+          .select({
+            customExerciseId: customExerciseEquipment.customExerciseId,
+            equipmentId: customExerciseEquipment.equipmentId,
+          })
+          .from(customExerciseEquipment)
+          .innerJoin(
+            catalogEquipment,
+            eq(catalogEquipment.id, customExerciseEquipment.equipmentId),
+          )
+          .where(
+            and(
+              eq(customExerciseEquipment.ownerFirebaseUid, root.ownerFirebaseUid),
+              inArray(customExerciseEquipment.customExerciseId, [
+                ...new Set(customExerciseIds),
+              ]),
+            ),
+          )
+          .orderBy(asc(catalogEquipment.sortOrder)),
   ]);
+  const equipmentByCatalogExercise = new Map<string, EquipmentId[]>();
+  for (const row of catalogEquipmentRows) {
+    const values = equipmentByCatalogExercise.get(row.exerciseId) ?? [];
+    values.push(equipmentId(row.equipmentId));
+    equipmentByCatalogExercise.set(row.exerciseId, values);
+  }
+  const equipmentByCustomExercise = new Map<string, EquipmentId[]>();
+  for (const row of customEquipmentRows) {
+    const values = equipmentByCustomExercise.get(row.customExerciseId) ?? [];
+    values.push(equipmentId(row.equipmentId));
+    equipmentByCustomExercise.set(row.customExerciseId, values);
+  }
   const prescriptionBySection = new Map<string, ProgramPrescriptionRow[]>();
   for (const prescription of graph.prescriptions) {
     const list = prescriptionBySection.get(prescription.sectionId) ?? [];
@@ -680,6 +738,7 @@ async function readProgramModel(
           loggingKind: catalogExercise.loggingKind,
           role: catalogExercise.role,
           kind: "catalog" as const,
+          requiredEquipment: equipmentByCatalogExercise.get(catalogExercise.id) ?? [],
         }
       : {
           id: customExercise!.id,
@@ -689,6 +748,7 @@ async function readProgramModel(
           loggingKind: customExercise!.loggingKind,
           role: null,
           kind: "custom" as const,
+          requiredEquipment: equipmentByCustomExercise.get(customExercise!.id) ?? [],
         };
     return {
       id: row.id,
@@ -703,6 +763,7 @@ async function readProgramModel(
             exerciseKey: customExercise.exerciseKey,
             name: customExercise.name,
             loggingKind: customExercise.loggingKind,
+            equipmentIds: equipmentByCustomExercise.get(customExercise.id) ?? [],
             instructions: customExercise.instructions,
           }
         : null,
@@ -1048,53 +1109,6 @@ async function cloneTemplateRevision(
   return revisionId;
 }
 
-function substitutionKey(
-  dayKey: string,
-  sectionKind: ProgramSectionRow["kind"],
-  sectionDisplayOrder: number,
-  sourceSlug: string,
-): string {
-  return `${dayKey}:${sectionKind}:${sectionDisplayOrder}:${sourceSlug}`;
-}
-
-/**
- * Canonical starter substitutions are deliberately slot-scoped. The same
- * source exercise can be intentionally retained in one starter day (for
- * example, push dumbbell bench press) while being replaced in another (upper
- * dumbbell bench press). Day/section context comes from durable template
- * fields, not the mutable prescription display order.
- */
-const substitutionByTarget: Readonly<
-  Record<EquipmentProfileKind, Readonly<Record<string, string>>>
-> = {
-  barbell: {
-    [substitutionKey("pull", "strength", 1, "chest-supported-dumbbell-row")]:
-      "barbell-bent-over-row",
-    [substitutionKey("upper", "strength", 1, "dumbbell-bench-press")]:
-      "barbell-bench-press",
-    [substitutionKey("upper", "strength", 1, "chest-supported-dumbbell-row")]:
-      "barbell-bent-over-row",
-    [substitutionKey("lower", "strength", 1, "goblet-squat")]: "barbell-back-squat",
-    [substitutionKey("lower", "strength", 1, "dumbbell-romanian-deadlift")]:
-      "barbell-romanian-deadlift",
-    [substitutionKey("lower", "strength", 1, "dumbbell-hip-thrust")]:
-      "barbell-hip-thrust",
-  },
-  dumbbells: {
-    [substitutionKey("pull", "strength", 1, "barbell-bent-over-row")]:
-      "chest-supported-dumbbell-row",
-    [substitutionKey("upper", "strength", 1, "barbell-bench-press")]:
-      "dumbbell-bench-press",
-    [substitutionKey("upper", "strength", 1, "barbell-bent-over-row")]:
-      "chest-supported-dumbbell-row",
-    [substitutionKey("lower", "strength", 1, "barbell-back-squat")]: "goblet-squat",
-    [substitutionKey("lower", "strength", 1, "barbell-romanian-deadlift")]:
-      "dumbbell-romanian-deadlift",
-    [substitutionKey("lower", "strength", 1, "barbell-hip-thrust")]:
-      "dumbbell-hip-thrust",
-  },
-};
-
 async function cloneEquipmentRevision(
   database: RepositoryDatabase,
   ownerFirebaseUid: string,
@@ -1161,7 +1175,7 @@ async function cloneEquipmentRevision(
     throw new RepositoryNotFoundError();
   }
   const sourceSlugs = [...allExerciseRows.values()].map((row) => row.slug);
-  const targetSlugs = Object.values(substitutionByTarget[targetProfile]);
+  const targetSlugs = starterReplacementSlugs(targetProfile);
   const targetExerciseRows = await database
     .select()
     .from(catalogExercises)
@@ -1299,10 +1313,11 @@ async function cloneEquipmentRevision(
         // dumbbells, but still reroute goblet squat to back squat). Any
         // unmapped catalog exercise stays on its canonical ID when physically
         // compatible, even if a template position would differ.
-        const replacementSlug =
-          substitutionByTarget[targetProfile][
-            substitutionKey(day.dayKey, section.kind, section.displayOrder, sourceExercise.slug)
-          ];
+        const replacementSlug = starterEquipmentReplacement(targetProfile, {
+          dayKey: day.dayKey,
+          sectionKind: section.kind,
+          sourceSlug: sourceExercise.slug,
+        });
         if (!replacementSlug && !physicallyCompatible) {
           throw new RepositoryValidationError(
             "A catalog exercise is incompatible with the selected equipment profile.",

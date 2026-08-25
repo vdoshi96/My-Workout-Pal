@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="e7603cf015a1de1460172b67446a5fd8c70bad2b58ca907fab654abb4d2916a0">
+  <meta name="source-sha256" content="88b7fccebdd96cd088fae80aada627f188a944e157c0ebff5c95de8bdc36722c">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -56,10 +56,15 @@
 <li>A server-protected account shell derives identity from the verified HTTP-only session, exposes verified and read-only account states, and provides responsive program, history, progress, and settings navigation. Private account paths remain outside the public service-worker cache policy.</li>
 <li>Owner-scoped custom exercises have private collection/resource API handlers with authenticated <code>no-store</code> reads, bounded strict JSON, same-origin CSRF mutations, UUID validation, optimistic update timestamps, idempotent replay, and stable private errors.</li>
 <li>Authenticated custom-exercise list, create, and edit surfaces expose all supported logging meanings, required-equipment controls, instructions, aliases, up to two normalized YouTube references, retry-safe saves, verification gating, and guarded deletion without inventing custom-video approval.</li>
+<li>The owner-scoped profile/program repository creates one verified member profile, preferences, equipment profile, and exact published five-day starter revision transactionally. Reads and changes derive ownership from the server viewer, hide foreign IDs as missing, replay idempotently, reject stale base revisions, preserve compatible custom and catalog prescriptions, and retain immutable prior revisions.</li>
+<li>Canonical equipment changes now share one explicit day-and-section substitution rule across guest previews and persisted program revisions. Push and Legs retain their specified dumbbell movements in both profiles; only the required Pull, Upper, and Lower slots change. The private read model includes owner-scoped required-equipment facts so an incompatible custom movement blocks confirmation before any write.</li>
+<li>Private profile/program API handlers provide authenticated <code>no-store</code> reads plus bounded, strict, same-origin CSRF onboarding and equipment mutations. Authentication is resolved before database access or hostile-body parsing, and input envelopes cannot accept an ownership key.</li>
+<li>The authenticated <code>/app</code> route now renders either truthful one-step onboarding or the persisted active program, five owned day links, exact equipment-change disclosure, cleared-target copy, stale-revision recovery, verification gating, and retry-safe save status. Owned day detail reads the active immutable revision and labels walker/runner choices; starting a server workout remains deliberately disabled until the reviewed workout repository is integrated.</li>
 </ul>
 <h2>Work in progress</h2>
 <ul>
-<li>Directly review and integrate the isolated profile/program and workout-session repositories, then connect them to authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces.</li>
+<li>Complete the correction review and integrate the isolated workout-session repository, then connect it to the authenticated runner and history surfaces.</li>
+<li>Extend authenticated program editing, records, persisted analytics, settings/preferences, and account deletion after the workout boundary is stable.</li>
 <li>Mount the active runner on an owned workout route and personally verify local pending-state recovery against server synchronization.</li>
 <li>Re-run production service-worker and offline-fallback evidence after the authenticated routes are complete.</li>
 </ul>
@@ -84,6 +89,9 @@
 <li>A production-server Playwright replay on Chromium phone confirmed that an opened Push route reloads from the public cache with the network disabled, <code>/sign-in</code> is absent from that cache, and the app announces the interruption after a same-origin reachability probe. The equivalent service-worker-control case is skipped on WebKit because Playwright documents service-worker support as Chromium-only; ordinary WebKit product flows remain part of the broader browser matrix.</li>
 <li>Auth tests cover duplicate and invalid client errors, CSRF mismatch and cross-origin denial, malformed identity input, absent server credentials, unverified permanent mutations, recent-auth deletion gates, expired and revoked sessions, and cross-user denial. Live provider success cannot run before Firebase credentials exist.</li>
 <li>The reviewed runner, IndexedDB, and custom-exercise integrations brought the combined matrix to 31 test files and 225 passing tests with type checking, lint, Drizzle validation, generated service-worker parity, 23 Markdown/HTML documentation pairs, and a production webpack build. The protected account-shell slice added two focused navigation assertions and passed regenerated Next route types plus focused lint.</li>
+<li>Profile/program repository review first rejected global slug substitutions that would have changed Push and Legs incorrectly. After day-scoped correction, 13 PGlite tests proved both exact five-day profiles, forward and reverse changes, stale-base denial, custom compatibility, immutable source values, ownership, idempotency, and valid IANA time zones.</li>
+<li>Profile/program API TDD retained unauthenticated 500/invalid-body 400 failures before authentication ordering was corrected. Eleven focused contract and direct-route tests now prove strict owner-free envelopes, private cache headers, cross-origin CSRF rejection, auth-before-storage, and generic unexpected failures. Three additional preview tests prove pre-write custom-equipment blockers.</li>
+<li>Current-main verification after the authenticated profile/program surface: 39 test files and 263 tests, strict TypeScript, full ESLint, Drizzle metadata validation, generated service-worker parity, 23 Markdown/HTML pairs, and the Next.js 16.3.2 webpack production build all pass. The build lists <code>/app</code>, <code>/app/program/[day]</code>, and all three private profile/program API routes as dynamic server-rendered surfaces.</li>
 </ul>
 <h2>Blockers and credential gates</h2>
 <ul>
@@ -100,8 +108,8 @@
 <li>The completed runner worktree was integrated through <code>785db9a</code>; its selected files matched the reviewed worktree before cleanup.</li>
 <li>The completed IndexedDB worktree was integrated through <code>36b6cc3</code>, compared for selected-file equality, and removed.</li>
 <li>The completed runner-UI worktree was integrated through <code>c133e93</code>, compared for selected-file equality after teardown and deferred-sync corrections, and removed.</li>
-<li><code>/private/tmp/mwp-profile-program</code> on <code>agent/profile-program</code>: active profile, starter-program, and equipment-revision repository slice.</li>
-<li><code>/private/tmp/mwp-workout-repository</code> on <code>agent/workout-repository</code>: active immutable workout-snapshot, operation, history, and terminal-session repository slice.</li>
+<li>The profile/program worktree was integrated through <code>cbf72ba</code>, compared byte-for-byte for its selected source and test files, and removed. Main then consolidated the shared day-scoped substitution rule and private surface integration.</li>
+<li><code>/private/tmp/mwp-workout-repository</code> on <code>agent/workout-repository</code>: active correction pass for bounded previous-value selection, malformed identifiers, populated-database migration safety, and canonical integer validation.</li>
 </ul>
 
   </main>

@@ -2,18 +2,7 @@ import type { EquipmentProfile } from "@/domain/equipment";
 import { supportsEquipment } from "@/domain/equipment";
 import { getCatalogExercise } from "@/domain/exercises/catalog";
 import type { Program } from "@/domain/programs/types";
-
-const dumbbellToBarbell = {
-  "chest-supported-dumbbell-row": "barbell-bent-over-row",
-  "dumbbell-bench-press": "barbell-bench-press",
-  "goblet-squat": "barbell-back-squat",
-  "dumbbell-romanian-deadlift": "barbell-romanian-deadlift",
-  "dumbbell-hip-thrust": "barbell-hip-thrust",
-} as const;
-
-const barbellToDumbbell = Object.fromEntries(
-  Object.entries(dumbbellToBarbell).map(([dumbbell, barbell]) => [barbell, dumbbell]),
-) as Readonly<Record<string, string>>;
+import { starterEquipmentReplacement } from "@/domain/programs/equipment-substitutions";
 
 export type SubstitutionChange = Readonly<{
   day: string;
@@ -43,14 +32,15 @@ export function previewEquipmentChange(
   nextProgram.id = `${program.id.split("@", 1)[0]}@${nextProgram.revision}`;
 
   const changes: SubstitutionChange[] = [];
-  const mapping = targetProfile.id === "dumbbells" ? barbellToDumbbell : dumbbellToBarbell;
-
   for (const day of nextProgram.days) {
     for (const prescription of day.prescriptions) {
       const exercise = getCatalogExercise(prescription.exerciseSlug);
-      if (supportsEquipment(targetProfile, exercise.requiredEquipment)) continue;
-
-      const replacement = mapping[prescription.exerciseSlug as keyof typeof mapping];
+      const replacement = starterEquipmentReplacement(targetProfile.id, {
+        dayKey: day.name.toLocaleLowerCase("en-US"),
+        sectionKind: prescription.section,
+        sourceSlug: prescription.exerciseSlug,
+      });
+      if (!replacement && supportsEquipment(targetProfile, exercise.requiredEquipment)) continue;
       if (!replacement) {
         throw new Error(`No substitution for ${prescription.exerciseSlug} in ${targetProfile.id}`);
       }

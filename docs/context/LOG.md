@@ -1,5 +1,14 @@
 # Project log
 
+## 2026-08-25: Authenticated profile, program, and equipment surface
+
+- Integrated the owner-scoped onboarding and active-program repository only after direct review found and corrected a global substitution rule that would have changed required Push and Legs movements. Both directions now assert every exercise across all five starter days.
+- Added server-derived profile, preferences, equipment, and active-revision reads; transactionally cloned the exact starter; required valid IANA time zones; preserved owner custom exercises and compatible values; rejected incompatible custom exercises without writes; and made equipment confirmation depend on the previewed base revision.
+- Consolidated guest and persisted equipment behavior behind one explicit day-and-section rule, then added a private read-model equipment projection so custom compatibility is known before confirmation.
+- Added strict private profile/program endpoints with bounded JSON, same-origin double-submit CSRF, owner-free envelopes, UUID validation, no-store responses, stable errors, and authentication before database access or body parsing.
+- Added one-step verified onboarding, exact substitution disclosure, active five-day overview, owned day detail, retry-stable saves, stale-conflict copy, and honest disabled runner state pending the separate workout repository integration.
+- Retained the API authorization-order failure and the over-broad preview failure before correction. The focused profile, route, contract, and preview matrix passes 31 assertions; current main passes 39 test files and 263 tests, strict type checking, full lint, Drizzle, PWA and 23-pair documentation parity checks, and the production webpack build.
+
 ## 2026-08-25: Authenticated custom-exercise editor
 
 - Mounted an authenticated private-library list plus create and edit routes without exposing the Firebase ownership key in any route or mutation input.

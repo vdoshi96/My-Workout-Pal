@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4b5be230dee1323fa358f242234d75a7c18d70cc9fd22aa74e2b25a83160697b">
+  <meta name="source-sha256" content="be1ff4603d4c6fe2be7793d5eb11dd99f756c8e5c4860ac725bb4f644cfba293">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,15 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Authenticated profile, program, and equipment surface</h2>
+<ul>
+<li>Integrated the owner-scoped onboarding and active-program repository only after direct review found and corrected a global substitution rule that would have changed required Push and Legs movements. Both directions now assert every exercise across all five starter days.</li>
+<li>Added server-derived profile, preferences, equipment, and active-revision reads; transactionally cloned the exact starter; required valid IANA time zones; preserved owner custom exercises and compatible values; rejected incompatible custom exercises without writes; and made equipment confirmation depend on the previewed base revision.</li>
+<li>Consolidated guest and persisted equipment behavior behind one explicit day-and-section rule, then added a private read-model equipment projection so custom compatibility is known before confirmation.</li>
+<li>Added strict private profile/program endpoints with bounded JSON, same-origin double-submit CSRF, owner-free envelopes, UUID validation, no-store responses, stable errors, and authentication before database access or body parsing.</li>
+<li>Added one-step verified onboarding, exact substitution disclosure, active five-day overview, owned day detail, retry-stable saves, stale-conflict copy, and honest disabled runner state pending the separate workout repository integration.</li>
+<li>Retained the API authorization-order failure and the over-broad preview failure before correction. The focused profile, route, contract, and preview matrix passes 31 assertions; current main passes 39 test files and 263 tests, strict type checking, full lint, Drizzle, PWA and 23-pair documentation parity checks, and the production webpack build.</li>
+</ul>
 <h2>2026-08-25: Authenticated custom-exercise editor</h2>
 <ul>
 <li>Mounted an authenticated private-library list plus create and edit routes without exposing the Firebase ownership key in any route or mutation input.</li>

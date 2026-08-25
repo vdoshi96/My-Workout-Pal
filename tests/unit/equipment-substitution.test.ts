@@ -5,6 +5,46 @@ import { createStarterProgram } from "@/domain/programs/starter";
 import { previewEquipmentChange } from "@/domain/programs/substitutions";
 
 describe("equipment substitutions", () => {
+  it("previews only the required day-scoped starter substitutions in both directions", () => {
+    const dumbbells = createStarterProgram(EQUIPMENT_PROFILES.dumbbells);
+    const barbellPreview = previewEquipmentChange(dumbbells, EQUIPMENT_PROFILES.barbell);
+    const slugs = (dayName: string) =>
+      barbellPreview.nextProgram.days
+        .find((day) => day.name === dayName)
+        ?.prescriptions.map((prescription) => prescription.exerciseSlug);
+
+    expect(slugs("Push")?.[0]).toBe("dumbbell-bench-press");
+    expect(slugs("Pull")?.[0]).toBe("barbell-bent-over-row");
+    expect(slugs("Legs")?.slice(0, 2)).toEqual([
+      "goblet-squat",
+      "dumbbell-romanian-deadlift",
+    ]);
+    expect(slugs("Upper")?.slice(0, 2)).toEqual([
+      "barbell-bench-press",
+      "barbell-bent-over-row",
+    ]);
+    expect(slugs("Lower")?.slice(0, 4)).toEqual([
+      "barbell-back-squat",
+      "barbell-romanian-deadlift",
+      "bulgarian-split-squat",
+      "barbell-hip-thrust",
+    ]);
+
+    const barbell = createStarterProgram(EQUIPMENT_PROFILES.barbell);
+    const dumbbellPreview = previewEquipmentChange(barbell, EQUIPMENT_PROFILES.dumbbells);
+    expect(
+      dumbbellPreview.nextProgram.days
+        .find((day) => day.name === "Lower")
+        ?.prescriptions.slice(0, 4)
+        .map((prescription) => prescription.exerciseSlug),
+    ).toEqual([
+      "goblet-squat",
+      "dumbbell-romanian-deadlift",
+      "bulgarian-split-squat",
+      "dumbbell-hip-thrust",
+    ]);
+  });
+
   it("preserves compatible prescription fields and clears movement-specific load targets", () => {
     const program = createStarterProgram(EQUIPMENT_PROFILES.barbell);
     const upper = program.days.find((day) => day.name === "Upper");

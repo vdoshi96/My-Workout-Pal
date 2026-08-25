@@ -222,6 +222,79 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .member-empty-sheet { border: 1px dashed var(--rule); margin-top: 2rem; padding: clamp(1.5rem, 4vw, 3rem); }
 .member-empty-sheet h2 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 4rem); line-height: .9; margin: .7rem 0; text-transform: uppercase; }
 .member-empty-sheet p { color: var(--ink-soft); max-width: 54ch; }
+.member-program, .member-onboarding, .member-day { margin: 0 auto; max-width: 79rem; padding: clamp(1.25rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3.5rem) 7rem; }
+.member-program-hero, .member-onboarding-copy, .member-day-heading { border: 1px solid var(--rule); padding: clamp(1.25rem, 5vw, 3.25rem); }
+.member-program-hero h1, .member-onboarding-copy h1, .member-day-heading h1 { font-family: var(--font-display); font-size: clamp(3.4rem, 10vw, 7rem); letter-spacing: -.035em; line-height: .8; margin: .75rem 0 1rem; text-transform: uppercase; }
+.member-program-hero p, .member-onboarding-copy p, .member-day-heading p { color: var(--ink-soft); margin: 0; max-width: 58ch; }
+.member-program-actions { align-items: end; display: flex; margin-top: 1.5rem; }
+.member-program-actions .secondary-action { width: fit-content; }
+.member-week, .member-equipment { margin-top: clamp(2.5rem, 7vw, 5rem); }
+.member-week h2, .member-equipment h2, .onboarding-preview h2, .member-day-section h2, .member-cardio-card h2 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.8rem); line-height: .9; margin: .55rem 0 1rem; text-transform: uppercase; }
+.member-day-grid { border-top: 1px solid var(--rule); display: grid; list-style: none; margin: 1.5rem 0 0; padding: 0; }
+.member-day-grid li { border-bottom: 1px solid var(--rule); }
+.member-day-grid a { align-items: center; display: grid; gap: .75rem; grid-template-columns: 2.5rem minmax(0, 1fr) auto; min-height: 6rem; padding: .75rem 0; text-decoration: none; }
+.member-day-grid a > span { color: var(--coral-strong); font-family: var(--font-display); font-size: 1.2rem; grid-row: 1 / span 2; }
+.member-day-grid strong { font-family: var(--font-display); font-size: 1.4rem; text-transform: uppercase; }
+.member-day-grid small { color: var(--ink-soft); grid-column: 2; }
+.member-day-grid svg { grid-column: 3; grid-row: 1 / span 2; }
+.member-equipment > header p { color: var(--ink-soft); max-width: 65ch; }
+.member-equipment-options { display: grid; gap: .75rem; margin-top: 1.5rem; }
+.member-equipment-options button { align-items: center; background: var(--white); border: 1px solid var(--rule); color: var(--ink); cursor: pointer; display: flex; gap: .85rem; min-height: 5rem; padding: .8rem 1rem; text-align: left; }
+.member-equipment-options button[aria-pressed="true"] { border-color: var(--lichen); box-shadow: inset .3rem 0 var(--lichen); }
+.member-equipment-options strong, .member-equipment-options small { display: block; }
+.member-equipment-options small { color: var(--ink-soft); margin-top: .15rem; }
+.equipment-review { background: var(--white); border: 1px solid var(--rule); margin-top: 1rem; padding: clamp(1rem, 4vw, 2rem); }
+.equipment-review h3 { font-family: var(--font-display); font-size: clamp(1.8rem, 5vw, 3rem); margin: 0; text-transform: uppercase; }
+.equipment-review > p { color: var(--ink-soft); }
+.equipment-change-list { border-top: 1px solid var(--rule); list-style: none; margin: 1.25rem 0; padding: 0; }
+.equipment-change-list li { border-bottom: 1px solid var(--rule); display: grid; gap: .3rem; padding: .85rem 0; }
+.equipment-change-list li > span { color: var(--coral-strong); font-family: var(--font-display); font-size: .85rem; text-transform: uppercase; }
+.equipment-change-list small { color: var(--ink-soft); }
+.equipment-blockers { background: color-mix(in srgb, var(--danger) 11%, var(--white)); border-inline-start: .3rem solid var(--danger); padding: 1rem; }
+.equipment-blockers ul { margin-bottom: 0; }
+.equipment-review-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+.equipment-review-actions > button:not(.primary-action) { background: transparent; border: 1px solid var(--rule); color: var(--ink); cursor: pointer; min-height: 3.4rem; padding: .7rem 1rem; }
+.member-save-status { color: var(--ink-soft); min-height: 1.5rem; }
+.member-onboarding > .member-inline-notice { margin-bottom: 1.5rem; }
+.onboarding-form { display: grid; gap: clamp(1.5rem, 5vw, 3rem); margin-top: 2rem; }
+.onboarding-form fieldset { border: 0; margin: 0; padding: 0; }
+.onboarding-form legend { font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 2.4rem); font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; }
+.onboarding-profile-grid { display: grid; gap: .75rem; }
+.onboarding-profile-grid > label { cursor: pointer; position: relative; }
+.onboarding-profile-grid > label > input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+.onboarding-profile-grid > label > span { background: var(--white); border: 1px solid var(--rule); display: grid; gap: .35rem; min-height: 9rem; padding: 1rem; }
+.onboarding-profile-grid > label > input:checked + span { border-color: var(--lichen); box-shadow: inset .35rem 0 var(--lichen); }
+.onboarding-profile-grid > label > input:focus-visible + span { outline: 3px solid var(--coral); outline-offset: 3px; }
+.onboarding-profile-grid strong, .onboarding-profile-grid small { display: block; }
+.onboarding-profile-grid strong { font-family: var(--font-display); font-size: 1.2rem; text-transform: uppercase; }
+.onboarding-profile-grid small { color: var(--ink-soft); }
+.onboarding-preview { border-block: 1px solid var(--rule); padding-block: 1.5rem; }
+.onboarding-preview > p { color: var(--ink-soft); max-width: 60ch; }
+.onboarding-preview ul { list-style: none; margin: 1rem 0 0; padding: 0; }
+.onboarding-preview li { border-top: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); display: grid; gap: .2rem; padding: .75rem 0; }
+.onboarding-preview li span { color: var(--coral-strong); font-family: var(--font-display); font-size: .8rem; text-transform: uppercase; }
+.onboarding-preferences { display: grid; gap: .5rem; max-width: 42rem; }
+.onboarding-preferences > label:not(.onboarding-check) { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin-top: .75rem; text-transform: uppercase; }
+.onboarding-preferences input, .onboarding-preferences select { background: var(--white); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); min-height: 3.4rem; padding: .7rem; width: 100%; }
+.onboarding-preferences > small { color: var(--ink-soft); }
+.onboarding-check { align-items: start; border-top: 1px solid var(--rule); display: grid; gap: .7rem; grid-template-columns: auto minmax(0, 1fr); margin-top: 1rem; padding-top: 1rem; }
+.onboarding-check input { min-height: 1.2rem; width: 1.2rem; }
+.onboarding-check strong, .onboarding-check small { display: block; }
+.onboarding-check small { color: var(--ink-soft); margin-top: .2rem; }
+.onboarding-submit { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; }
+.onboarding-submit p { color: var(--ink-soft); margin: 0; min-height: 1.5rem; }
+.member-day-heading .back-link { margin-bottom: 1.5rem; width: fit-content; }
+.member-day-layout { display: grid; gap: 2rem; margin-top: 2rem; }
+.member-day-section + .member-day-section { margin-top: 2.5rem; }
+.member-day-section ol { border-top: 1px solid var(--rule); list-style: none; margin: 0; padding: 0; }
+.member-day-section li { align-items: center; border-bottom: 1px solid var(--rule); display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) auto; min-height: 5.5rem; padding: .75rem 0; }
+.member-day-section strong, .member-day-section small { display: block; }
+.member-day-section small { color: var(--ink-soft); margin-top: .2rem; }
+.member-day-section a { align-items: center; display: flex; font-size: .85rem; gap: .25rem; text-decoration: none; }
+.member-cardio-card { align-self: start; background: var(--white); border: 1px solid var(--rule); padding: clamp(1rem, 4vw, 2rem); }
+.member-cardio-card ul { list-style: none; margin: 1rem 0; padding: 0; }
+.member-cardio-card li { border-top: 1px solid var(--rule); display: flex; justify-content: space-between; padding: .8rem 0; }
+.member-cardio-card p { color: var(--ink-soft); }
 .custom-exercise-list { border-top: 1px solid var(--rule); list-style: none; margin: 2rem 0 0; padding: 0; }
 .custom-exercise-list li { border-bottom: 1px solid var(--rule); }
 .custom-exercise-list a { align-items: center; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr) auto auto; min-height: 5.5rem; padding: .8rem 0; text-decoration: none; }
@@ -264,6 +337,21 @@ svg { display: block; height: 1.4em; width: 1.4em; }
   .member-page-heading { grid-template-columns: minmax(0, 1fr) auto; }
   .custom-equipment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .custom-form-actions { grid-template-columns: auto minmax(0, 1fr); }
+  .member-program-hero { align-items: end; display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .member-program-actions { margin-top: 0; }
+  .member-day-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .member-day-grid li { border-inline-end: 1px solid var(--rule); }
+  .member-day-grid a { align-content: start; grid-template-columns: 1fr auto; min-height: 10rem; padding: 1rem; }
+  .member-day-grid a > span { grid-column: 1; grid-row: 1; }
+  .member-day-grid strong { grid-column: 1 / span 2; }
+  .member-day-grid small { grid-column: 1 / span 2; }
+  .member-day-grid svg { grid-column: 2; grid-row: 1; }
+  .member-equipment-options, .onboarding-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .onboarding-form { grid-template-columns: minmax(0, 1fr) minmax(20rem, .75fr); }
+  .onboarding-form fieldset, .onboarding-preferences { grid-column: 1; }
+  .onboarding-preview { grid-column: 2; grid-row: 1 / span 2; padding: 0 0 0 2rem; }
+  .onboarding-submit { grid-column: 1 / -1; }
+  .member-day-layout { grid-template-columns: minmax(0, 1fr) minmax(18rem, .38fr); }
 }
 
 .eyebrow { color: var(--lichen); display: block; font-family: var(--font-display); font-size: .85rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }

@@ -541,10 +541,12 @@ describe("profile and active-program repository", () => {
         slug: "member-row",
         name: "Member row",
         kind: "custom",
+        requiredEquipment: ["dumbbells"],
       },
       customExercise: {
         id: customId,
         exerciseKey: "member-row",
+        equipmentIds: ["dumbbells"],
         instructions: "Keep the elbow close.",
       },
     });
