@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Transactional Neon bootstrap
+
+- Wrote the operator plan before implementation, then retained the focused missing-module failure before adding the seeder.
+- Added checked-in migrate, seed, and read-only verification commands. The transactional seed inserts catalog truth, constructs template revisions as drafts, writes and verifies their complete child graphs, and only then publishes them.
+- Proved empty bootstrap, byte-stable rerun, catalog-drift rollback, and refusal to repair missing immutable published history in PGlite against the real migration.
+- Applied the migration to the provisioned Neon database, seeded twice with identical counts, and verified the graph read-only. The live database contains 6 equipment records, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 exercise prescriptions, 20 cardio prescriptions, and no invented approved videos.
+- Kept the connection string in ignored environment storage and recorded only sanitized outcomes.
+
 ## 2026-08-25: Deterministic seed identity
 
 - Retained a missing-module failure before adding the canonical seed identity helper; three focused tests then passed with type checking and lint.

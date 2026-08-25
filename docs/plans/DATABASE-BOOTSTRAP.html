@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="3bb6f8d1a7a9fac9aacf72a3e0888b80468180262893faf1553d49d7c2071fc9">
+  <title>Database bootstrap plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Database bootstrap plan</h1>
+<h2>User outcome</h2>
+<p>Guests and signed-in users see the same canonical exercise catalog and the same two five-day starter-program variants on every environment. Operators can migrate, seed, and verify an empty or previously seeded database without inventing video approvals, changing published history, or silently accepting drift.</p>
+<h2>Entry points and navigation</h2>
+<p>This is an operator workflow rather than a page. <code>db:migrate</code> applies checked-in migrations, <code>db:seed</code> inserts or verifies the deterministic starter graph, and <code>db:verify</code> performs a read-only publication check. Application routes consume published revisions only; no bootstrap command changes navigation or creates a user program.</p>
+<h2>States and recovery</h2>
+<ul>
+<li><strong>Empty:</strong> migration creates the bounded schema; seeding writes catalog rows and each template revision as a draft, writes all children, then publishes it.</li>
+<li><strong>Already current:</strong> rerunning seeding performs no material update and verification reports the same identities and counts.</li>
+<li><strong>Catalog drift:</strong> a conflicting deterministic row aborts the transaction with the table and identity named; existing data stays intact.</li>
+<li><strong>Published-template drift:</strong> immutable published rows are never rewritten. Any mismatch or missing child is an error with a fresh migration or revision required.</li>
+<li><strong>Interrupted:</strong> migration bookkeeping and each seed transaction are atomic. A retry starts from the last committed boundary.</li>
+<li><strong>Missing credentials:</strong> commands fail before network mutation with a concise <code>DATABASE_URL</code> gate.</li>
+<li><strong>Worst case:</strong> constraint, connection, or transaction failure exits nonzero, prints no secret, and publishes nothing partially.</li>
+</ul>
+<h2>Domain types and invariants</h2>
+<p>The canonical domain manifest produces stable RFC 4122 version 5 identifiers for exercises, aliases, templates, revisions, days, sections, prescriptions, and cardio choices. There are six equipment records, 27 exercises, two profile revisions, ten days, 26 sections, 60 exercise prescriptions, and 20 cardio prescriptions. Every foreign key resolves inside the planned graph. Prescription labels may specialize presentation, such as “Heavy goblet squat,” without duplicating a canonical exercise. Production video rows remain empty until exactly two eligible videos per required variation have been manually watched and approved.</p>
+<h2>Persistence, authentication, and authorization</h2>
+<p>Bootstrap uses the server-only Neon connection and a single database transaction for the starter graph. It does not accept a Firebase UID, create user-owned rows, or bypass ownership constraints. Runtime readers select <code>published</code> template revisions. Historical workout snapshots remain independent of future catalog or template publication.</p>
+<h2>Responsive behavior and accessibility</h2>
+<p>No user interface is introduced. Any later operator surface must expose the same explicit state labels and keyboard-readable error text; it must never render a successful seed state from local fixture data.</p>
+<h2>Privacy and security</h2>
+<p>The connection string stays in environment variables and is never logged. Errors identify logical table/key boundaries, not credentials or raw driver configuration. Private reference media, curation reports, and unapproved video candidates are outside the seed. Commands make no cross-user queries or writes.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Migration succeeds from an empty PostgreSQL database and is tracked once.</li>
+<li>Seeding succeeds from empty schema, then a second run is materially idempotent.</li>
+<li>Published revisions contain the exact planned children and publication timestamp.</li>
+<li>A deliberately changed deterministic catalog row is rejected and rolled back.</li>
+<li>A deliberately changed or missing published child is rejected rather than repaired in place.</li>
+<li>Verification reports expected counts, relationship coverage, zero approved-video claims, and no secret values.</li>
+<li>The production Neon database passes migrate, seed, rerun, and read-only verification before an application deployment is called database-ready.</li>
+</ul>
+<h2>Automated tests and evidence</h2>
+<p>PGlite integration tests apply the real SQL migration, demonstrate the initial failure before the seeder exists, seed an empty database, rerun it, inspect exact counts and publication states, and prove catalog and published-child drift roll back. Typecheck, lint, migration metadata validation, documentation parity, and a production build remain required. Deployment evidence records sanitized command outcomes and read-only row counts; local success is not production proof.</p>
+
+  </main>
+</body>
+</html>

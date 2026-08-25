@@ -15,6 +15,16 @@ The target Vercel team is `vdoshi96s-projects`. Local project `my-workout-pal` i
 
 Neon resource `my-workout-pal-db` was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed `free_v3` plan in `iad1`. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.
 
+The initial schema and starter graph are live. The first migration, first seed, idempotent seed rerun, and read-only verification passed on August 25, 2026. Run the same checked-in boundaries without printing connection values:
+
+```sh
+node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts
+node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts
+node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
+```
+
+The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. Production video rows remain outside this starter seed until the exact-two manual approval gate is satisfied.
+
 Primary references:
 
 - [Neon on Vercel Marketplace](https://vercel.com/marketplace/neon)
@@ -77,6 +87,8 @@ Promote the last verified Vercel deployment only when its database schema remain
 ### Database recovery
 
 Use forward-compatible migrations. Before a destructive migration, create and verify a recovery point or branch through supported Neon features. Recovery requires an explicit target, impact statement, and verification query. Never run an unscoped restore against production.
+
+For starter-data drift, run `db:verify` first. Catalog drift requires an explicit reviewed migration. Published template drift requires a new revision or a recovery from a verified point; do not disable immutability triggers or rewrite a published child. Rerunning `db:seed` is safe only when verification agrees with the deterministic graph.
 
 ### Authentication recovery
 

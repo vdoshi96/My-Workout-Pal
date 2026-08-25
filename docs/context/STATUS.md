@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Authenticated-domain and persistence integration after the verified guest-product foundation.
+Authenticated repositories and runner-surface integration after the verified guest-product and Neon bootstrap foundations.
 
 ## What exists
 
@@ -18,18 +18,18 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.
 - All 27 canonical starter exercises have original route cues, movement families, aliases, and primary-muscle metadata. Library search includes those fields while still applying equipment compatibility first.
 - A database-neutral, deterministic seed manifest derives all six equipment rows, 27 catalog exercises, compatibility edges, aliases, and both five-day equipment revisions from the canonical product domain. It preserves the Lower-day “Heavy goblet squat” label as revision metadata without duplicating the catalog exercise.
-- Canonical database rows have stable RFC 4122 version-five identities derived from a fixed public namespace and bounded seed keys, ready for an idempotent Neon seed transaction.
+- Canonical database rows have stable RFC 4122 version-five identities derived from a fixed public namespace and bounded seed keys. The checked-in migration and transactional seeder have been applied to Neon, rerun without material change, and verified read-only.
+- The complete bounded Drizzle schema is integrated: 30 user, catalog, template, program, immutable workout, idempotency, personal-record, progress-summary, and account-deletion tables plus composite ownership constraints and publication/history guards.
 - Authentication return targets are normalized to bounded same-origin paths and reject protocol-relative, encoded-control, auth-loop, and external destinations.
 - Double progression can only suggest considering a load increase after the exact number of weight-and-repetition work sets all reach the range top with form explicitly marked appropriate. It ignores warm-ups and never emits a load or increment.
 - The service worker is generated from a tested public-cache policy. It caches only public program/library/sample routes, hashed Next static output, and explicit app artwork; authentication, APIs, future owned-data routes, arbitrary images, cross-origin assets, and non-GET requests remain outside the cache.
-- Vercel project `vdoshi96s-projects/my-workout-pal` is linked locally as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`. Neon resource `my-workout-pal-db` is connected on the Marketplace `free_v3` plan in `iad1`, with Neon Auth disabled and database variables attached to development, preview, and production. It has no deployment yet.
+- Vercel project `vdoshi96s-projects/my-workout-pal` is linked locally as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`. Neon resource `my-workout-pal-db` is connected on the Marketplace `free_v3` plan in `iad1`, with Neon Auth disabled and database variables attached to development, preview, and production. The database is migrated and seeded; the Vercel project has no deployment yet.
 - Pure YouTube URL normalization, catalog-derived curation targets, candidate hard-gate/ranking, exact-two seed validation, and private resumable curation checkpoint modules with offline tests.
 - A reusable curated-video presentation contract validates an approved, fully watched exact pair before mounting one privacy-enhanced non-autoplay iframe at a time. Production exercise pages remain unavailable until the reviewed seed exists.
 
 ## Work in progress
 
-- Review the corrected database worktree after its cross-program persistence corrections completed.
-- Finish and review correction passes for the YouTube curation workflow and pure interruption-safe runner state machine.
+- Finish direct review and integration of the owner-scoped IndexedDB adapter and active runner component after their recovery-race correction passes.
 - Add owner-scoped repositories and authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces after the schema corrections land.
 - Verify the service worker and offline fallback against a production server rather than the development server.
 
@@ -42,7 +42,9 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - GitHub target repository lookup confirmed that `vdoshi96/My-Workout-Pal` does not exist.
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
 - Vercel Marketplace provisioning reported Neon resource `my-workout-pal-db` ready on billing plan `free_v3`; a follow-up environment inspection confirmed database variables are attached without printing their values.
-- `pnpm typecheck`, `pnpm lint`, 160 unit and integration tests, generated-service-worker parity, `pnpm docs:check`, and a production build pass after the reviewed YouTube and interruption-safe runner integrations plus deterministic seed identity.
+- Direct type checking, lint, 189 unit and integration tests, generated-service-worker parity, documentation parity across 21 Markdown/HTML pairs, Drizzle metadata validation, and a production build pass after the reviewed YouTube, runner-domain, database-schema, and deterministic seed integrations.
+- Database bootstrap TDD retained the missing-seeder failure, then passed three PGlite integration tests covering empty publication, byte-stable rerun, catalog-drift rollback, and missing published-child refusal.
+- Live Neon evidence: `db:migrate` passed against the provisioned empty database; `db:seed` passed twice with identical counts; `db:verify` then confirmed 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 published revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos. Connection values were not printed.
 - YouTube curation TDD evidence: the initial focused suites failed before implementation with unresolved domain-module imports, then passed; the first correction run failed on the unbounded page loop, syndication truth, custom-input message, and missing pair workflow, then passed; the second correction run failed on missing catalog targets, duplicate proposals, unscoped state, and accepted schema-one checkpoints, then passed; this final correction run failed six assertions covering omitted hydration, default seed coverage, duplicate required mappings, cross-variation seed IDs, default required derivation, and variation-scoped ranking, then passed with 37 tests.
 - The default curation smoke generated 27 canonical proposals without making a request under a zero-search budget. An explicit empty target manifest produced a blocked report with zero proposals. The default `seed:check` path rejected an incomplete one-row fixture with all 27 required-video-count errors, and the duplicate-required manifest smoke reported duplicate and missing-required-variation errors. The typed `seed:check` smoke passed a two-video fixture in the preceding correction run.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
@@ -63,5 +65,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 
 - The completed analytics worktree was integrated as `fedfba4` and removed after patch-equivalence verification.
 - The completed YouTube worktree was integrated through `6b633b0`; its selected files matched the reviewed worktree before cleanup.
-- `/private/tmp/mwp-database` on `agent/database`: final schema correction is in progress for curated-video variation, snapshot target shape, bounded set positions, tied PR sources, and published active revisions.
+- The completed database worktree was integrated through `ff3d69c`, compared for selected-file equality, and removed.
 - The completed runner worktree was integrated through `785db9a`; its selected files matched the reviewed worktree before cleanup.
+- `/private/tmp/mwp-runner-storage` on `agent/runner-storage`: final corrected IndexedDB adapter is awaiting integration after direct review.
+- `/private/tmp/mwp-runner-ui` on `agent/runner-ui`: active runner component is correcting serialized persistence/sync and owner-switch restoration races found in direct review.

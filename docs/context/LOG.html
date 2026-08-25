@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="63d4ec392f62711091465b060fa9853857326ffd699b69a66defc3bd52d39b69">
+  <meta name="source-sha256" content="187fb014f4fd3a53d056772469cba50b9bb2396e79efb63e0ab0660d2adffcee">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Transactional Neon bootstrap</h2>
+<ul>
+<li>Wrote the operator plan before implementation, then retained the focused missing-module failure before adding the seeder.</li>
+<li>Added checked-in migrate, seed, and read-only verification commands. The transactional seed inserts catalog truth, constructs template revisions as drafts, writes and verifies their complete child graphs, and only then publishes them.</li>
+<li>Proved empty bootstrap, byte-stable rerun, catalog-drift rollback, and refusal to repair missing immutable published history in PGlite against the real migration.</li>
+<li>Applied the migration to the provisioned Neon database, seeded twice with identical counts, and verified the graph read-only. The live database contains 6 equipment records, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 exercise prescriptions, 20 cardio prescriptions, and no invented approved videos.</li>
+<li>Kept the connection string in ignored environment storage and recorded only sanitized outcomes.</li>
+</ul>
 <h2>2026-08-25: Deterministic seed identity</h2>
 <ul>
 <li>Retained a missing-module failure before adding the canonical seed identity helper; three focused tests then passed with type checking and lint.</li>
