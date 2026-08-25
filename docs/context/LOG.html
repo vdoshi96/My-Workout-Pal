@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="94680ca3d55145c72024958868784550a9891eda0a2a5ff1a28e710da8eaaff3">
+  <meta name="source-sha256" content="18f8a0c8f48fe2a898e12c8afbfa06ca1938aa54ae3bf2127447b0850e909053">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,13 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Server-derived viewer boundary</h2>
+<ul>
+<li>Added a request-memoized viewer context whose ownership key comes exclusively from a revocation-aware Firebase Admin session-cookie result.</li>
+<li>Normalized Google, password, and other providers without promoting malformed display, email, verification, or authentication-time claims.</li>
+<li>Kept unverified password identities in a truthful read-only state for permanent mutations.</li>
+<li>Recorded a fail-first missing-module test before implementing the boundary; three focused viewer tests, type checking, and focused lint then passed.</li>
+</ul>
 <h2>2026-08-25: Discovery and bootstrap</h2>
 <ul>
 <li>Inventoried the initial workspace and found one private MP4 with no Git repository or portable application.</li>

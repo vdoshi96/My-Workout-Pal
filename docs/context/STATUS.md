@@ -13,6 +13,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - Pure starter-program, equipment-substitution, program-draft editing, library-filter, canonical exercise-metadata, safe authenticated-return, double-progression eligibility, and persisted-data analytics domains.
 - A verified baseline commit, `168f2a5`, from which bounded analytics, YouTube, and database worktrees were created.
 - Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No Firebase project is configured yet.
+- A request-memoized viewer context is derived only from the revocation-aware Firebase Admin session result. It normalizes provider and display claims, keeps unverified password identities read-only, and never accepts a client-provided ownership key.
 - A nonce-based strict Content Security Policy and companion browser security headers. Next.js request rendering applies a fresh nonce to framework output; the YouTube referrer and Firebase popup policies are explicit.
 - Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.
 - All 27 canonical starter exercises have original route cues, movement families, aliases, and primary-muscle metadata. Library search includes those fields while still applying equipment compatibility first.
@@ -36,7 +37,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - The workspace inventory found only the private MP4 before initialization.
 - GitHub target repository lookup confirmed that `vdoshi96/My-Workout-Pal` does not exist.
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
-- `pnpm typecheck`, `pnpm lint`, 85 unit and integration tests, generated-service-worker parity, and `pnpm docs:check` pass before the pending worktree integrations.
+- `pnpm typecheck`, `pnpm lint`, 88 unit and integration tests, generated-service-worker parity, and `pnpm docs:check` pass before the pending worktree integrations.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
 - Production `next start` inspection returned the strict CSP, a unique matching rendered nonce, `strict-origin-when-cross-origin`, popup-safe opener policy, frame denial, HSTS, and the remaining declared security headers. The nonce policy intentionally makes application HTML request-rendered; the manifest remains static.
 - The production output retains the design contract seed `ba529732` and its full contract text inside the first authored body element.

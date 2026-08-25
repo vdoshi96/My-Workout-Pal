@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-08-25: Server-derived viewer boundary
+
+- Added a request-memoized viewer context whose ownership key comes exclusively from a revocation-aware Firebase Admin session-cookie result.
+- Normalized Google, password, and other providers without promoting malformed display, email, verification, or authentication-time claims.
+- Kept unverified password identities in a truthful read-only state for permanent mutations.
+- Recorded a fail-first missing-module test before implementing the boundary; three focused viewer tests, type checking, and focused lint then passed.
+
 ## 2026-08-25: Discovery and bootstrap
 
 - Inventoried the initial workspace and found one private MP4 with no Git repository or portable application.

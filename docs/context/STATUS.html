@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4115ab22db359abb6e10b74ed7ac09c58046cfc571ab028578539d09e13fc314">
+  <meta name="source-sha256" content="10357a0e401c16a45676c9fc38b27f214076095c0eea7a73f2d685f3566714a6">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,6 +39,7 @@
 <li>Pure starter-program, equipment-substitution, program-draft editing, library-filter, canonical exercise-metadata, safe authenticated-return, double-progression eligibility, and persisted-data analytics domains.</li>
 <li>A verified baseline commit, <code>168f2a5</code>, from which bounded analytics, YouTube, and database worktrees were created.</li>
 <li>Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No Firebase project is configured yet.</li>
+<li>A request-memoized viewer context is derived only from the revocation-aware Firebase Admin session result. It normalizes provider and display claims, keeps unverified password identities read-only, and never accepts a client-provided ownership key.</li>
 <li>A nonce-based strict Content Security Policy and companion browser security headers. Next.js request rendering applies a fresh nonce to framework output; the YouTube referrer and Firebase popup policies are explicit.</li>
 <li>Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.</li>
 <li>All 27 canonical starter exercises have original route cues, movement families, aliases, and primary-muscle metadata. Library search includes those fields while still applying equipment compatibility first.</li>
@@ -62,7 +63,7 @@
 <li>The workspace inventory found only the private MP4 before initialization.</li>
 <li>GitHub target repository lookup confirmed that <code>vdoshi96/My-Workout-Pal</code> does not exist.</li>
 <li>Vercel CLI authentication succeeded for <code>vdoshi96</code> and listed the <code>vdoshi96s-projects</code> team.</li>
-<li><code>pnpm typecheck</code>, <code>pnpm lint</code>, 85 unit and integration tests, generated-service-worker parity, and <code>pnpm docs:check</code> pass before the pending worktree integrations.</li>
+<li><code>pnpm typecheck</code>, <code>pnpm lint</code>, 88 unit and integration tests, generated-service-worker parity, and <code>pnpm docs:check</code> pass before the pending worktree integrations.</li>
 <li><code>next build --webpack</code> completed successfully. The default Turbopack build hung during compile and is recorded in <code>docs/context/DECISIONS.md</code>.</li>
 <li>Production <code>next start</code> inspection returned the strict CSP, a unique matching rendered nonce, <code>strict-origin-when-cross-origin</code>, popup-safe opener policy, frame denial, HSTS, and the remaining declared security headers. The nonce policy intentionally makes application HTML request-rendered; the manifest remains static.</li>
 <li>The production output retains the design contract seed <code>ba529732</code> and its full contract text inside the first authored body element.</li>
