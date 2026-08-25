@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="e3e990675dba409901399d9e7dda2f4ff3ec20469c59e6f6136adb160e8b68d0">
+  <title>Authenticated data and repository plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Authenticated data and repository plan</h1>
+<h2>User outcome</h2>
+<p>A verified member can finish onboarding, keep one active equipment-aware program, start or resume exactly one workout for its published revision, record every supported strength/core/cardio result, and later see the same immutable session in history, records, and analytics. An unverified password member can view public and already-owned read-only data but cannot create or permanently change it. No caller can select an ownership key.</p>
+<h2>Navigation and flow</h2>
+<ol>
+<li>Server-derived viewer context enters <code>/app</code> and loads profile, preferences, equipment, and active program in one bounded read model.</li>
+<li>A first-time verified member confirms units, time zone, reduced motion, and either dumbbell or barbell equipment. The server creates the profile and clones the matching published starter revision into one owned active program.</li>
+<li>Program overview and day detail read the active published owned revision. Editing creates a new draft, validates it, publishes it, then atomically moves only that program’s active pointer.</li>
+<li>An equipment change previews substitutions and incompatible targets. Confirmation creates a new revision for the active program; history and existing session snapshots do not change.</li>
+<li>“Start workout” returns an existing resumable session for that owned revision or atomically creates one with immutable exercise/cardio snapshots.</li>
+<li>Runner operations persist with owner-scoped idempotency. Completion or abandonment closes the session; history reads the frozen snapshot and logs.</li>
+<li>History, records, and progress project only persisted owned rows. Settings can update preferences, initiate recent-auth deletion, and clear owner-scoped offline drafts after successful deletion.</li>
+</ol>
+<h2>UI states</h2>
+<ul>
+<li><strong>Loading:</strong> route-level skeleton describes the surface, not synthetic user values.</li>
+<li><strong>Empty onboarding:</strong> public starter content remains available with a clear “not saved yet” label.</li>
+<li><strong>Unverified:</strong> owned reads remain truthful; permanent controls are disabled with verification guidance.</li>
+<li><strong>Ready:</strong> active program revision, profile, and save state come from Neon.</li>
+<li><strong>Saving:</strong> controls prevent accidental duplicate submits while the idempotency key remains stable.</li>
+<li><strong>Interrupted/offline:</strong> runner changes remain pending locally; account/program mutations report that they were not saved.</li>
+<li><strong>Duplicate:</strong> the server returns the original successful result without creating another profile, revision, session, or log.</li>
+<li><strong>Stale revision/conflict:</strong> the server does not overwrite newer state and offers reload/retry guidance.</li>
+<li><strong>Expired/revoked auth:</strong> mutation stops, the local runner draft remains owner-scoped, and the member reauthenticates as the same account.</li>
+<li><strong>Not found/foreign ID:</strong> resource absence and cross-owner access use the same response shape.</li>
+<li><strong>Worst case:</strong> a transaction rolls back completely; no active pointer targets a draft, no session has a partial snapshot, and no success UI is rendered.</li>
+</ul>
+<h2>Domain types and invariants</h2>
+<ul>
+<li>Firebase UID comes only from the revocation-aware server session and is the external ownership key.</li>
+<li>Profile, preferences, and equipment are one-to-one with the owner.</li>
+<li>A program key is unique per owner. Its active pointer belongs to that same owner/program and targets a published revision.</li>
+<li>Program/template revision descendants are immutable after publication.</li>
+<li>Equipment confirmation creates a new active revision only for the selected program. Compatible notes and targets remain; incompatible targets are cleared with an explanatory revision note.</li>
+<li>Each active revision has five ordered days, ordered sections, exact exercise XOR identity, valid measurement shapes, and walker/runner cardio choices.</li>
+<li>One owner/revision may have at most one resumable session. Session creation snapshots all presentation and target meaning before activation.</li>
+<li>Set positions are bounded by the snapshot set count. Measurement kind and shape must match the snapshot. Kilograms and meters are canonical.</li>
+<li>One cardio result belongs to a session. Client operation IDs are nonblank, owner/session scoped, and replay-safe; reuse with a different request hash is a conflict.</li>
+<li>Exercise outcome versions start at one and material changes advance exactly one with a new operation ID. Terminal outcomes and terminal sessions freeze.</li>
+<li>History never resolves names or targets from mutable current program/catalog rows.</li>
+</ul>
+<h2>Persistence and transactions</h2>
+<p>Repositories are server-only and receive a verified viewer object, never a client UID. Onboarding, template cloning, revision publication/pointer movement, session snapshot creation, operation application, and deletion each use one database transaction. Reads select owner plus resource ID together. Mutation results are recorded with an idempotency key before returning. Database constraints are the final boundary; repository validation turns expected conflicts into stable application errors.</p>
+<h2>Authentication and authorization</h2>
+<p>Every repository entry requires a non-null server viewer. Permanent mutations require <code>eligibleForPermanentMutations</code>; password verification and Google verified identity are represented by that server-derived fact. Deletion additionally requires recent authentication at the route boundary. CSRF is validated before every browser mutation. Repository APIs do not export an <code>ownerUid</code> argument, and foreign IDs return the same not-found error as missing IDs.</p>
+<h2>Phone, tablet, and desktop behavior</h2>
+<p>Phone uses one-column onboarding, program cards, and runner controls with a sticky session action region that does not obscure fields. Tablet keeps the outline beside the active set when space permits. Desktop adds history/target context without changing operation order. All surfaces preserve the same server states and do not use viewport-specific data behavior.</p>
+<h2>Accessibility</h2>
+<p>Every status change has visible text and a restrained live-region announcement. Field errors connect through <code>aria-describedby</code>; navigation and reordering have keyboard equivalents; confirmation dialogs name the exact program/profile effect. Focus moves to the first invalid field or conflict summary. Reduced-motion preference affects transitions but not save feedback. Color is never the only pending, saved, failed, skipped, or PR indicator.</p>
+<h2>Privacy and security</h2>
+<p>Private notes, loads, bodyweight additions, cardio details, history, and analytics never enter public caches or logs. Repository errors omit raw SQL, connection values, Firebase tokens, and foreign ownership facts. History endpoints are dynamic and <code>no-store</code>. Account deletion is a resumable server saga; successful removal clears database ownership rows, Firebase identity, session cookies, and the matching offline namespace in the documented order.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Verified onboarding creates exactly one profile/preferences/equipment set and one complete active starter program; replay returns the same result.</li>
+<li>Unverified mutation is denied without writes.</li>
+<li>Dumbbell and barbell clones preserve exact five-day prescriptions and labels.</li>
+<li>Confirmed equipment change creates one new published revision, moves only the selected active pointer, preserves the old revision, and explains cleared incompatible targets.</li>
+<li>Foreign program/session/custom-exercise IDs are indistinguishable from missing IDs and produce no write.</li>
+<li>Start/resume is idempotent under duplicate and concurrent submission and never exposes a partial snapshot.</li>
+<li>Every set/cardio/outcome operation validates snapshot scope, kind, position, version, terminal state, and request-hash replay.</li>
+<li>Completed and abandoned sessions are immutable and appear in owner-only history from snapshots.</li>
+<li>Records and progress use persisted logs, canonical units, declared calculation versions, and exact-tie behavior.</li>
+<li>Slow, failed, expired-auth, duplicate, stale, offline, refresh, and back-navigation paths never claim unsaved data succeeded.</li>
+</ul>
+<h2>Automated tests and browser evidence</h2>
+<p>PGlite integration tests use the real migration and starter seed. Retained fail-then-pass evidence covers verified/unverified onboarding, duplicate replay, exact profile clones, active-pointer ownership, revision immutability, equipment substitution, foreign-ID denial, concurrent start/resume, immutable snapshots, all four measurement shapes, set bounds, cardio uniqueness, operation hash conflict, outcome versions, terminal freeze, and history isolation. Unit tests cover request hashing and stable error mapping. Browser evidence must replay onboarding, both equipment profiles, program edit/confirmation, active runner save/offline/reload/resume/retry/complete, history, records, analytics, auth expiry, and deletion on phone, tablet, and desktop in Chromium and WebKit with keyboard, reduced motion, dark mode, and automated accessibility checks.</p>
+
+  </main>
+</body>
+</html>
