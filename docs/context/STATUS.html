@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="88b7fccebdd96cd088fae80aada627f188a944e157c0ebff5c95de8bdc36722c">
+  <meta name="source-sha256" content="00e4613ddd22869bb19e83833918dd39d45b5a82092f51cf779c8ab98b778ef7">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -60,6 +60,7 @@
 <li>Canonical equipment changes now share one explicit day-and-section substitution rule across guest previews and persisted program revisions. Push and Legs retain their specified dumbbell movements in both profiles; only the required Pull, Upper, and Lower slots change. The private read model includes owner-scoped required-equipment facts so an incompatible custom movement blocks confirmation before any write.</li>
 <li>Private profile/program API handlers provide authenticated <code>no-store</code> reads plus bounded, strict, same-origin CSRF onboarding and equipment mutations. Authentication is resolved before database access or hostile-body parsing, and input envelopes cannot accept an ownership key.</li>
 <li>The authenticated <code>/app</code> route now renders either truthful one-step onboarding or the persisted active program, five owned day links, exact equipment-change disclosure, cleared-target copy, stale-revision recovery, verification gating, and retry-safe save status. Owned day detail reads the active immutable revision and labels walker/runner choices; starting a server workout remains deliberately disabled until the reviewed workout repository is integrated.</li>
+<li>The authenticated exercise library combines compatibility-filtered canonical records with only the signed-in owner’s custom exercises, searches private names, aliases, equipment, and logging meaning, and links to the correct public or private detail route. Account navigation now exposes Library as a first-class phone and desktop destination.</li>
 </ul>
 <h2>Work in progress</h2>
 <ul>

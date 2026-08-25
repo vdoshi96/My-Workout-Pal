@@ -13,5 +13,6 @@ describe("authenticated account navigation", () => {
     expect(authenticatedDestinationIsCurrent("/app/history/session-a", "/app/history")).toBe(true);
     expect(authenticatedDestinationIsCurrent("/app/history-extra", "/app/history")).toBe(false);
     expect(authenticatedDestinationIsCurrent("/app/settings", "/app/settings")).toBe(true);
+    expect(authenticatedDestinationIsCurrent("/app/library/custom/new", "/app/library")).toBe(true);
   });
 });

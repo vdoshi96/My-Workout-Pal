@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
-import { listCatalogExercises } from "@/domain/exercises/library";
+import { listCatalogExercises, listOwnedCustomExercises } from "@/domain/exercises/library";
 
 describe("exercise library filtering", () => {
   it("returns the canonical catalog in stable name order", () => {
@@ -48,5 +48,37 @@ describe("exercise library filtering", () => {
         (exercise) => exercise.slug,
       ),
     ).toEqual(["barbell-back-squat"]);
+  });
+
+  it("filters only compatible owner-provided custom records with aliases", () => {
+    const custom = [
+      {
+        id: "dumbbell-row",
+        aliases: [{ alias: "supported row", normalizedAlias: "supported row" }],
+        equipmentIds: ["dumbbells"] as const,
+        loggingKind: "weight_reps" as const,
+        name: "My supported row",
+      },
+      {
+        id: "rack-row",
+        aliases: [{ alias: "private rack pull", normalizedAlias: "private rack pull" }],
+        equipmentIds: ["barbell", "rack"] as const,
+        loggingKind: "weight_reps" as const,
+        name: "My rack row",
+      },
+    ];
+
+    expect(
+      listOwnedCustomExercises(custom, {
+        profile: EQUIPMENT_PROFILES.dumbbells,
+        query: "supported",
+      }).map(({ id }) => id),
+    ).toEqual(["dumbbell-row"]);
+    expect(
+      listOwnedCustomExercises(custom, {
+        profile: EQUIPMENT_PROFILES.dumbbells,
+        query: "rack",
+      }),
+    ).toEqual([]);
   });
 });

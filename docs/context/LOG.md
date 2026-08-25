@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-08-25: Authenticated compatible library
+
+- Added a first-class Library destination to the protected account shell and a private dynamic route that derives the active equipment profile from the owner-scoped program read model.
+- Combined the canonical compatibility-first catalog with only that viewer’s private custom exercises, including name, alias, equipment, and logging-kind search without accepting a client ownership key.
+- Kept canonical and private detail destinations distinct, preserved a truthful no-results state, and bounded the URL query before filtering.
+- Retained a missing custom-filter failure before implementation; seven focused library and nested-navigation assertions, strict TypeScript, and focused lint pass.
+
 ## 2026-08-25: Authenticated profile, program, and equipment surface
 
 - Integrated the owner-scoped onboarding and active-program repository only after direct review found and corrected a global substitution rule that would have changed required Push and Legs movements. Both directions now assert every exercise across all five starter days.
