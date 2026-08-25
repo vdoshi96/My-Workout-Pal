@@ -726,11 +726,38 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF OLD.state::text IN ('completed', 'abandoned') AND (
-    NEW.state IS DISTINCT FROM OLD.state
-    OR NEW.started_at IS DISTINCT FROM OLD.started_at
-    OR NEW.completed_at IS DISTINCT FROM OLD.completed_at
-    OR NEW.abandoned_at IS DISTINCT FROM OLD.abandoned_at
+  IF NEW.id IS DISTINCT FROM OLD.id
+    OR NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
+    OR NEW.program_id IS DISTINCT FROM OLD.program_id
+    OR NEW.program_revision_id IS DISTINCT FROM OLD.program_revision_id
+    OR NEW.idempotency_key IS DISTINCT FROM OLD.idempotency_key
+    OR NEW.created_at IS DISTINCT FROM OLD.created_at
+  THEN
+    RAISE EXCEPTION 'workout session identity is immutable' USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF OLD.state::text IN ('completed', 'abandoned') AND ROW(
+    NEW.id,
+    NEW.owner_firebase_uid,
+    NEW.program_id,
+    NEW.program_revision_id,
+    NEW.state,
+    NEW.idempotency_key,
+    NEW.started_at,
+    NEW.completed_at,
+    NEW.abandoned_at,
+    NEW.created_at
+  ) IS DISTINCT FROM ROW(
+    OLD.id,
+    OLD.owner_firebase_uid,
+    OLD.program_id,
+    OLD.program_revision_id,
+    OLD.state,
+    OLD.idempotency_key,
+    OLD.started_at,
+    OLD.completed_at,
+    OLD.abandoned_at,
+    OLD.created_at
   ) THEN
     RAISE EXCEPTION 'terminal workout sessions are immutable' USING ERRCODE = 'check_violation';
   END IF;
@@ -761,7 +788,7 @@ BEGIN
   RAISE EXCEPTION 'accepted workout snapshots are immutable' USING ERRCODE = 'check_violation';
 END;
 $$;--> statement-breakpoint
-CREATE OR REPLACE FUNCTION prevent_workout_log_mutation()
+CREATE OR REPLACE FUNCTION prevent_set_log_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
@@ -775,10 +802,56 @@ BEGIN
     session_key := NEW.session_id;
   ELSE
     IF TG_OP = 'UPDATE' AND (
-      NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
+      NEW.id IS DISTINCT FROM OLD.id
+      OR NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
       OR NEW.session_id IS DISTINCT FROM OLD.session_id
+      OR NEW.snapshot_id IS DISTINCT FROM OLD.snapshot_id
+      OR NEW.set_position IS DISTINCT FROM OLD.set_position
+      OR NEW.measurement_kind IS DISTINCT FROM OLD.measurement_kind
+      OR NEW.set_kind IS DISTINCT FROM OLD.set_kind
+      OR NEW.client_idempotency_key IS DISTINCT FROM OLD.client_idempotency_key
+      OR NEW.created_at IS DISTINCT FROM OLD.created_at
     ) THEN
-      RAISE EXCEPTION 'workout log ownership and session scope are immutable' USING ERRCODE = 'check_violation';
+      RAISE EXCEPTION 'set log identity and correction scope are immutable' USING ERRCODE = 'check_violation';
+    END IF;
+    owner_key := OLD.owner_firebase_uid;
+    session_key := OLD.session_id;
+  END IF;
+
+  SELECT state::text
+    INTO owning_state
+    FROM workout_sessions
+   WHERE owner_firebase_uid = owner_key
+     AND id = session_key;
+
+  IF owning_state IN ('draft', 'active', 'completing') THEN
+    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  END IF;
+
+  RAISE EXCEPTION 'completed or abandoned workout history is immutable' USING ERRCODE = 'check_violation';
+END;
+$$;--> statement-breakpoint
+CREATE OR REPLACE FUNCTION prevent_cardio_log_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  owning_state text;
+  owner_key text;
+  session_key uuid;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    owner_key := NEW.owner_firebase_uid;
+    session_key := NEW.session_id;
+  ELSE
+    IF TG_OP = 'UPDATE' AND (
+      NEW.id IS DISTINCT FROM OLD.id
+      OR NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
+      OR NEW.session_id IS DISTINCT FROM OLD.session_id
+      OR NEW.client_idempotency_key IS DISTINCT FROM OLD.client_idempotency_key
+      OR NEW.created_at IS DISTINCT FROM OLD.created_at
+    ) THEN
+      RAISE EXCEPTION 'cardio log identity and correction scope are immutable' USING ERRCODE = 'check_violation';
     END IF;
     owner_key := OLD.owner_firebase_uid;
     session_key := OLD.session_id;
@@ -835,7 +908,7 @@ BEFORE INSERT OR UPDATE OR DELETE ON workout_exercise_snapshots
 FOR EACH ROW EXECUTE FUNCTION prevent_workout_snapshot_mutation();--> statement-breakpoint
 CREATE TRIGGER set_logs_mutation_guard
 BEFORE INSERT OR UPDATE OR DELETE ON set_logs
-FOR EACH ROW EXECUTE FUNCTION prevent_workout_log_mutation();--> statement-breakpoint
+FOR EACH ROW EXECUTE FUNCTION prevent_set_log_mutation();--> statement-breakpoint
 CREATE TRIGGER cardio_logs_mutation_guard
 BEFORE INSERT OR UPDATE OR DELETE ON cardio_logs
-FOR EACH ROW EXECUTE FUNCTION prevent_workout_log_mutation();
+FOR EACH ROW EXECUTE FUNCTION prevent_cardio_log_mutation();

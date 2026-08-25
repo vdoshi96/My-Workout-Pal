@@ -29,6 +29,7 @@ const ids = {
   terminalSetLog: "00000000-0000-4000-8000-000000000028",
   terminalCardioLog: "00000000-0000-4000-8000-000000000029",
   terminalSnapshot: "00000000-0000-4000-8000-000000000030",
+  activeSecondSnapshot: "00000000-0000-4000-8000-000000000032",
 } as const;
 
 const openDatabases: PGlite[] = [];
@@ -475,6 +476,58 @@ describe("initial database migration", () => {
     ).rejects.toThrow(/terminal|immutable|state|violates/i);
   });
 
+  it("freezes workout session identity in active and terminal states", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedProgram(database, "alice", ids.aliceSecondProgram, ids.aliceSecondRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+
+    await database.exec(`
+      UPDATE workout_sessions
+      SET state = 'active', started_at = now()
+      WHERE id = '${ids.aliceSession}';
+    `);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET program_id = '${ids.aliceSecondProgram}', program_revision_id = '${ids.aliceSecondRevision}'
+        WHERE id = '${ids.aliceSession}';
+      `),
+    ).rejects.toThrow(/identity|scope|immutable|foreign|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET idempotency_key = 'changed-active-identity'
+        WHERE id = '${ids.aliceSession}';
+      `),
+    ).rejects.toThrow(/identity|idempotency|immutable|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET created_at = created_at + interval '1 second'
+        WHERE id = '${ids.aliceSession}';
+      `),
+    ).rejects.toThrow(/identity|created|immutable|violates/i);
+
+    await database.exec(`
+      UPDATE workout_sessions
+      SET state = 'completed', completed_at = now()
+      WHERE id = '${ids.aliceSession}';
+    `);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET program_id = '${ids.aliceSecondProgram}', program_revision_id = '${ids.aliceSecondRevision}'
+        WHERE id = '${ids.aliceSession}';
+      `),
+    ).rejects.toThrow(/terminal|identity|immutable|scope|violates/i);
+  });
+
   it("stores volume as a personal-record type", async () => {
     const database = await openDatabase();
     await seedOwner(database, "alice");
@@ -577,12 +630,62 @@ describe("initial database migration", () => {
       ) VALUES (
         '${ids.aliceCardioLog}', 'alice', '${ids.aliceSession}', 'walker', 600, 1000, 'cardio-1'
       );
+
+      INSERT INTO workout_exercise_snapshots (
+        id, owner_firebase_uid, session_id, position, display_name, logging_kind, set_count
+      ) VALUES (
+        '${ids.activeSecondSnapshot}', 'alice', '${ids.aliceSession}', 2,
+        'Second active snapshot', 'weight_reps', 1
+      );
     `);
+
+    await expect(
+      database.exec(`
+        UPDATE set_logs
+        SET snapshot_id = '${ids.activeSecondSnapshot}'
+        WHERE owner_firebase_uid = 'alice' AND client_idempotency_key = 'set-1';
+      `),
+    ).rejects.toThrow(/identity|scope|immutable|foreign|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE set_logs
+        SET client_idempotency_key = 'set-2'
+        WHERE owner_firebase_uid = 'alice' AND client_idempotency_key = 'set-1';
+      `),
+    ).rejects.toThrow(/identity|idempotency|immutable|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE set_logs
+        SET created_at = created_at + interval '1 second'
+        WHERE owner_firebase_uid = 'alice' AND client_idempotency_key = 'set-1';
+      `),
+    ).rejects.toThrow(/identity|created|immutable|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE cardio_logs
+        SET client_idempotency_key = 'cardio-2'
+        WHERE id = '${ids.aliceCardioLog}';
+      `),
+    ).rejects.toThrow(/identity|idempotency|immutable|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE cardio_logs
+        SET created_at = created_at + interval '1 second'
+        WHERE id = '${ids.aliceCardioLog}';
+      `),
+    ).rejects.toThrow(/identity|created|immutable|violates/i);
 
     await database.exec(`
       UPDATE set_logs
       SET weight_kg = 25
       WHERE owner_firebase_uid = 'alice' AND client_idempotency_key = 'set-1';
+      UPDATE cardio_logs
+      SET mode = 'runner', duration_seconds = 720, distance_m = 1200, note_snapshot = 'active correction'
+      WHERE id = '${ids.aliceCardioLog}';
       DELETE FROM cardio_logs WHERE id = '${ids.aliceCardioLog}';
       INSERT INTO cardio_logs (
         id, owner_firebase_uid, session_id, mode, duration_seconds,
