@@ -5,6 +5,7 @@ import {
   createRunnerPersistenceQueue,
   runRunnerPersistenceCycle,
   runnerSnapshotIdentity,
+  runnerSnapshotRestoreKey,
   shouldResetRunnerSnapshot,
   WorkoutRunner,
 } from "@/components/workout/workout-runner";
@@ -160,30 +161,30 @@ describe("WorkoutRunner injected boundary harness", () => {
     const queue = createRunnerPersistenceQueue();
     let firstResult: ActiveWorkoutState | undefined;
     let secondResult: ActiveWorkoutState | undefined;
-    const first = queue.enqueue(async (isCurrent) => {
+    const first = queue.enqueue(async ({ isLatest, isCancelled }) => {
       firstResult = await runRunnerPersistenceCycle(
         firstState,
         { storage, submitter },
-        isCurrent,
+        () => isLatest() && !isCancelled(),
       );
     });
     await firstStarted;
-    const second = queue.enqueue(async (isCurrent) => {
+    const second = queue.enqueue(async ({ isLatest, isCancelled }) => {
       secondResult = await runRunnerPersistenceCycle(
         newerState,
         { storage, submitter },
-        isCurrent,
+        () => isLatest() && !isCancelled(),
       );
     });
+    // Simulate the component unmounting while the older remote request is in
+    // flight. The newest local revision must still get its durable write.
+    second.cancel();
     releaseFirstSubmit();
     await Promise.all([first.promise, second.promise]);
 
     expect(firstResult).toBeUndefined();
-    expect(secondResult?.loggedSets["press-work-1"]?.measurement).toMatchObject({
-      weightKg: 25,
-      repetitions: 8,
-    });
-    expect(submitted).toHaveLength(2);
+    expect(secondResult).toBeUndefined();
+    expect(submitted).toHaveLength(1);
     const stored = await storage.load(
       "runner:owner-harness:session-harness",
     );
@@ -191,7 +192,7 @@ describe("WorkoutRunner injected boundary harness", () => {
       weightKg: 25,
       repetitions: 8,
     });
-    expect(stored?.state.operations.at(-1)?.status).toBe("saved");
+    expect(stored?.state.operations.at(-1)?.status).toBe("pending");
   });
 
   it("keys restoration by owner and session, not session alone", () => {
@@ -206,5 +207,11 @@ describe("WorkoutRunner injected boundary harness", () => {
     expect(ownerA).not.toBe(ownerB);
     expect(shouldResetRunnerSnapshot(ownerA, ownerB, true, true)).toBe(true);
     expect(shouldResetRunnerSnapshot(ownerA, ownerA, false, true)).toBe(true);
+
+    const snapshot = createWorkoutSnapshot(snapshotInput);
+    const structurallyIdenticalSnapshot = structuredClone(snapshot);
+    expect(runnerSnapshotRestoreKey(snapshot)).toBe(
+      runnerSnapshotRestoreKey(structurallyIdenticalSnapshot),
+    );
   });
 });

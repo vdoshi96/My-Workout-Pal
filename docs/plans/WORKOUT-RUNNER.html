@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="e8aa3322698429691e9abee849a63d017b0393cf260c665dd5a38495beaf2e82">
+  <meta name="source-sha256" content="92cde8131cb01e16ea61f88c158ca0a10c6393b646d0a7f1e57d334438fcd611">
   <title>Workout runner component plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -67,9 +67,11 @@ route.</li>
 uses <code>syncRunnerOperations</code> only through the injected adapters. One persistence
 queue serializes the local write and submit cycle for each state revision. A
 newer revision cancels stale React results; an already-started injected submit
-is allowed to settle, but cannot replace newer local truth. It does not create
-a persistence schema, call a route directly, or render a fabricated success
-page.</p>
+is allowed to settle, but cannot replace newer local truth. Effect cleanup may
+stop UI adoption or a new remote sync, but never drops the latest local write;
+the newest queued state is written even if the runner unmounts before its
+queue turn. It does not create a persistence schema, call a route directly, or
+render a fabricated success page.</p>
 <p>The <code>unitSystem</code> prop accepts <code>metric</code> or <code>imperial</code> and defaults to <code>metric</code>.
 The reducer always stores kilograms, meters, and seconds. The component
 converts weight to kilograms, distance to meters, and pace to seconds per
@@ -185,8 +187,10 @@ timer labels, and announcement throttling. Run the existing domain runner suite
 with the helper suite. The component-boundary harness dispatches a real reducer
 action, persists and syncs through injected adapters, renders metric and
 imperial values, verifies canonical round-trip conversion, and defers an older
-submit while a newer revision becomes authoritative. It also covers
-owner-plus-session restoration identity. Record browser evidence later at the
+submit while a newer revision becomes authoritative, then cancels the newest
+handle to prove that its pending local state still wins. It also covers
+owner-plus-session restoration identity and stable restore keys across
+structurally identical snapshots. Record browser evidence later at the
 runner route for phone, tablet, and desktop,
 including keyboard entry, reduced motion, refresh resume, offline queue,
 retry, conflict, authentication expiry, completion, and abandonment.</p>

@@ -65,9 +65,14 @@ type NavigationProtectionOptions = Readonly<{
 
 export type RunnerPersistenceGuard = () => boolean;
 
+export type RunnerPersistenceTaskContext = Readonly<{
+  isLatest: RunnerPersistenceGuard;
+  isCancelled: () => boolean;
+}>;
+
 export type RunnerPersistenceQueue = Readonly<{
   enqueue: (
-    task: (isCurrent: RunnerPersistenceGuard) => Promise<void>,
+    task: (context: RunnerPersistenceTaskContext) => Promise<void>,
   ) => RunnerPersistenceHandle;
 }>;
 
@@ -75,6 +80,7 @@ export type RunnerPersistenceHandle = Readonly<{
   promise: Promise<void>;
   cancel: () => void;
   isCurrent: RunnerPersistenceGuard;
+  isLatest: RunnerPersistenceGuard;
 }>;
 
 /**
@@ -91,10 +97,15 @@ export function createRunnerPersistenceQueue(): RunnerPersistenceQueue {
     enqueue(task) {
       const taskRevision = ++revision;
       let cancelled = false;
-      const isCurrent = () => !cancelled && taskRevision === revision;
+      const isLatest = () => taskRevision === revision;
+      const isCurrent = () => !cancelled && isLatest();
       const promise = tail.then(async () => {
-        if (!isCurrent()) return;
-        await task(isCurrent);
+        // A superseded queued revision must not write stale state. Cleanup
+        // alone does not skip the latest revision: it still gets its durable
+        // local write, while the task can use isCancelled to avoid UI adoption
+        // or starting a remote sync after unmount.
+        if (!isLatest()) return;
+        await task({ isLatest, isCancelled: () => cancelled });
       });
       tail = promise.then(
         () => undefined,
@@ -106,6 +117,7 @@ export function createRunnerPersistenceQueue(): RunnerPersistenceQueue {
           cancelled = true;
         },
         isCurrent,
+        isLatest,
       };
     },
   };
@@ -115,6 +127,15 @@ export function runnerSnapshotIdentity(
   snapshot: Pick<WorkoutSnapshot, "ownerUid" | "sessionId">,
 ): string {
   return `${snapshot.ownerUid.length}:${snapshot.ownerUid}${snapshot.sessionId.length}:${snapshot.sessionId}`;
+}
+
+export function runnerSnapshotRestoreKey(
+  snapshot: Pick<
+    WorkoutSnapshot,
+    "ownerUid" | "sessionId" | "programRevisionId" | "dayId"
+  >,
+): string {
+  return `${runnerSnapshotIdentity(snapshot)}\u0000${snapshot.programRevisionId.length}:${snapshot.programRevisionId}\u0000${snapshot.dayId.length}:${snapshot.dayId}`;
 }
 
 export function shouldResetRunnerSnapshot(
@@ -387,6 +408,7 @@ function Field({
 
 export function WorkoutRunner(props: WorkoutRunnerProps) {
   const sourceSnapshot = snapshotFor(props);
+  const sourceSnapshotRef = useRef(sourceSnapshot);
   const [state, setState] = useState<ActiveWorkoutState>(() =>
     initialStateFor(props),
   );
@@ -415,7 +437,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const previousRunnerStatus = useRef(state.status);
   const previousSyncStatus = useRef(state.sync.status);
   const runnerIdentity = runnerSnapshotIdentity(sourceSnapshot);
-  const snapshotKey = `${runnerIdentity}\u0000${sourceSnapshot.programRevisionId.length}:${sourceSnapshot.programRevisionId}\u0000${sourceSnapshot.dayId.length}:${sourceSnapshot.dayId}`;
+  const snapshotKey = runnerSnapshotRestoreKey(sourceSnapshot);
   const stateIdentity = runnerSnapshotIdentity(state.snapshot);
   const stateMatchesSnapshot =
     stateIdentity === runnerIdentity &&
@@ -429,6 +451,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const persistenceQueue = useRef<RunnerPersistenceQueue>(
     createRunnerPersistenceQueue(),
   );
+
+  useEffect(() => {
+    sourceSnapshotRef.current = sourceSnapshot;
+  }, [sourceSnapshot]);
 
   const protectionOptions: NavigationProtectionOptions =
     props.onNavigationProtectionChange === undefined
@@ -481,10 +507,11 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     }
     restoreInFlightKey.current = snapshotKey;
     let cancelled = false;
+    const restoreSnapshot = sourceSnapshotRef.current;
     void loadRunnerState(props.storage, {
-      ownerUid: sourceSnapshot.ownerUid,
-      sessionId: sourceSnapshot.sessionId,
-      snapshot: sourceSnapshot,
+      ownerUid: restoreSnapshot.ownerUid,
+      sessionId: restoreSnapshot.sessionId,
+      snapshot: restoreSnapshot,
     })
       .then((restored) => {
         if (cancelled || restored === undefined) return;
@@ -520,7 +547,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     props.getConnectivity,
     props.initialState,
     props.storage,
-    sourceSnapshot,
+    sourceSnapshot.ownerUid,
+    sourceSnapshot.sessionId,
+    sourceSnapshot.programRevisionId,
+    sourceSnapshot.dayId,
     restoreEnabled,
     snapshotKey,
   ]);
@@ -586,18 +616,20 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     ) {
       return;
     }
-    const handle = persistenceQueue.current.enqueue(async (isCurrent) => {
-      const next = await runRunnerPersistenceCycle(
-        state,
-        { storage: props.storage, submitter: props.submitter },
-        isCurrent,
-      );
-      if (!isCurrent()) return;
-      setAdapterError(undefined);
-      if (next !== undefined && next !== state) {
-        setState((current) => (current === state ? next : current));
-      }
-    });
+    const handle = persistenceQueue.current.enqueue(
+      async ({ isLatest, isCancelled }) => {
+        const next = await runRunnerPersistenceCycle(
+          state,
+          { storage: props.storage, submitter: props.submitter },
+          () => isLatest() && !isCancelled(),
+        );
+        if (!isLatest() || isCancelled()) return;
+        setAdapterError(undefined);
+        if (next !== undefined && next !== state) {
+          setState((current) => (current === state ? next : current));
+        }
+      },
+    );
     void handle.promise.catch((error: unknown) => {
       if (handle.isCurrent()) setAdapterError(errorMessage(error));
     });

@@ -44,9 +44,11 @@ The component dispatches `runnerReducer` actions, persists before sync, and
 uses `syncRunnerOperations` only through the injected adapters. One persistence
 queue serializes the local write and submit cycle for each state revision. A
 newer revision cancels stale React results; an already-started injected submit
-is allowed to settle, but cannot replace newer local truth. It does not create
-a persistence schema, call a route directly, or render a fabricated success
-page.
+is allowed to settle, but cannot replace newer local truth. Effect cleanup may
+stop UI adoption or a new remote sync, but never drops the latest local write;
+the newest queued state is written even if the runner unmounts before its
+queue turn. It does not create a persistence schema, call a route directly, or
+render a fabricated success page.
 
 The `unitSystem` prop accepts `metric` or `imperial` and defaults to `metric`.
 The reducer always stores kilograms, meters, and seconds. The component
@@ -180,8 +182,10 @@ timer labels, and announcement throttling. Run the existing domain runner suite
 with the helper suite. The component-boundary harness dispatches a real reducer
 action, persists and syncs through injected adapters, renders metric and
 imperial values, verifies canonical round-trip conversion, and defers an older
-submit while a newer revision becomes authoritative. It also covers
-owner-plus-session restoration identity. Record browser evidence later at the
+submit while a newer revision becomes authoritative, then cancels the newest
+handle to prove that its pending local state still wins. It also covers
+owner-plus-session restoration identity and stable restore keys across
+structurally identical snapshots. Record browser evidence later at the
 runner route for phone, tablet, and desktop,
 including keyboard entry, reduced motion, refresh resume, offline queue,
 retry, conflict, authentication expiry, completion, and abandonment.
