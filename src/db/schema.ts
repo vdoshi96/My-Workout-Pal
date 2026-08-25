@@ -440,6 +440,7 @@ export const templatePrescriptions = pgTable(
     exerciseId: uuid("exercise_id")
       .notNull()
       .references(() => catalogExercises.id, { onDelete: "restrict", onUpdate: "cascade" }),
+    displayName: varchar("display_name", { length: 180 }),
     displayOrder: integer("display_order").notNull(),
     setKind: prescriptionSetKind("set_kind").default("work").notNull(),
     setCount: integer("set_count").notNull(),
@@ -464,6 +465,10 @@ export const templatePrescriptions = pgTable(
     uniqueIndex("template_prescriptions_order_unique").on(table.revisionId, table.sectionId, table.displayOrder),
     uniqueIndex("template_prescriptions_revision_id_unique").on(table.revisionId, table.id),
     check("template_prescriptions_order_positive", sql`${table.displayOrder} > 0`),
+    check(
+      "template_prescriptions_display_name_not_blank",
+      sql`${table.displayName} is null or length(trim(${table.displayName})) > 0`,
+    ),
     check("template_prescriptions_set_count_positive", sql`${table.setCount} > 0`),
     check("template_prescriptions_rest_nonnegative", sql`${table.restSeconds} >= 0`),
     check(
@@ -664,6 +669,7 @@ export const programPrescriptions = pgTable(
     sectionId: uuid("section_id").notNull(),
     catalogExerciseId: uuid("catalog_exercise_id"),
     customExerciseId: uuid("custom_exercise_id"),
+    displayName: varchar("display_name", { length: 180 }),
     displayOrder: integer("display_order").notNull(),
     setKind: prescriptionSetKind("set_kind").default("work").notNull(),
     setCount: integer("set_count").notNull(),
@@ -699,6 +705,10 @@ export const programPrescriptions = pgTable(
     uniqueIndex("program_prescriptions_order_unique").on(table.ownerFirebaseUid, table.revisionId, table.sectionId, table.displayOrder),
     check("program_prescriptions_exercise_xor", sql`num_nonnulls(${table.catalogExerciseId}, ${table.customExerciseId}) = 1`),
     check("program_prescriptions_order_positive", sql`${table.displayOrder} > 0`),
+    check(
+      "program_prescriptions_display_name_not_blank",
+      sql`${table.displayName} is null or length(trim(${table.displayName})) > 0`,
+    ),
     check("program_prescriptions_set_count_positive", sql`${table.setCount} > 0`),
     check("program_prescriptions_rest_nonnegative", sql`${table.restSeconds} >= 0`),
     check(
@@ -875,7 +885,7 @@ export const workoutExerciseStates = pgTable(
     effectiveLoggingKind: measurementKind("effective_logging_kind").notNull(),
     note: text("note"),
     substitutionReason: text("substitution_reason"),
-    clientIdempotencyKey: varchar("client_idempotency_key", { length: 180 }).notNull(),
+    lastClientOperationId: varchar("last_client_operation_id", { length: 180 }).notNull(),
     version: integer("version").default(1).notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -909,10 +919,10 @@ export const workoutExerciseStates = pgTable(
       foreignColumns: [customExercises.ownerFirebaseUid, customExercises.id],
       name: "workout_exercise_states_custom_exercise_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
-    uniqueIndex("workout_exercise_states_owner_idempotency_unique").on(
+    uniqueIndex("workout_exercise_states_owner_operation_unique").on(
       table.ownerFirebaseUid,
       table.sessionId,
-      table.clientIdempotencyKey,
+      table.lastClientOperationId,
     ),
     index("workout_exercise_states_owner_session_status_idx").on(table.ownerFirebaseUid, table.sessionId, table.status),
     check(
@@ -928,8 +938,8 @@ export const workoutExerciseStates = pgTable(
       sql`${table.substitutionReason} is null or length(trim(${table.substitutionReason})) > 0`,
     ),
     check(
-      "workout_exercise_states_idempotency_not_blank",
-      sql`length(trim(${table.clientIdempotencyKey})) > 0`,
+      "workout_exercise_states_operation_id_not_blank",
+      sql`length(trim(${table.lastClientOperationId})) > 0`,
     ),
     check("workout_exercise_states_version_positive", sql`${table.version} > 0`),
   ],

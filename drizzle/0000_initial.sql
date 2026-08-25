@@ -212,6 +212,7 @@ CREATE TABLE "program_prescriptions" (
 	"section_id" uuid NOT NULL,
 	"catalog_exercise_id" uuid,
 	"custom_exercise_id" uuid,
+	"display_name" varchar(180),
 	"display_order" integer NOT NULL,
 	"set_kind" "prescription_set_kind" DEFAULT 'work' NOT NULL,
 	"set_count" integer NOT NULL,
@@ -228,6 +229,7 @@ CREATE TABLE "program_prescriptions" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "program_prescriptions_exercise_xor" CHECK (num_nonnulls("program_prescriptions"."catalog_exercise_id", "program_prescriptions"."custom_exercise_id") = 1),
 	CONSTRAINT "program_prescriptions_order_positive" CHECK ("program_prescriptions"."display_order" > 0),
+	CONSTRAINT "program_prescriptions_display_name_not_blank" CHECK ("program_prescriptions"."display_name" is null or length(trim("program_prescriptions"."display_name")) > 0),
 	CONSTRAINT "program_prescriptions_set_count_positive" CHECK ("program_prescriptions"."set_count" > 0),
 	CONSTRAINT "program_prescriptions_rest_nonnegative" CHECK ("program_prescriptions"."rest_seconds" >= 0),
 	CONSTRAINT "program_prescriptions_reps_range" CHECK (("program_prescriptions"."minimum_reps" is null and "program_prescriptions"."maximum_reps" is null) or ("program_prescriptions"."minimum_reps" is not null and "program_prescriptions"."maximum_reps" is not null and "program_prescriptions"."minimum_reps" > 0 and "program_prescriptions"."minimum_reps" <= "program_prescriptions"."maximum_reps")),
@@ -377,6 +379,7 @@ CREATE TABLE "template_prescriptions" (
 	"revision_id" uuid NOT NULL,
 	"section_id" uuid NOT NULL,
 	"exercise_id" uuid NOT NULL,
+	"display_name" varchar(180),
 	"display_order" integer NOT NULL,
 	"set_kind" "prescription_set_kind" DEFAULT 'work' NOT NULL,
 	"set_count" integer NOT NULL,
@@ -393,6 +396,7 @@ CREATE TABLE "template_prescriptions" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "template_prescriptions_order_positive" CHECK ("template_prescriptions"."display_order" > 0),
 	CONSTRAINT "template_prescriptions_set_count_positive" CHECK ("template_prescriptions"."set_count" > 0),
+	CONSTRAINT "template_prescriptions_display_name_not_blank" CHECK ("template_prescriptions"."display_name" is null or length(trim("template_prescriptions"."display_name")) > 0),
 	CONSTRAINT "template_prescriptions_rest_nonnegative" CHECK ("template_prescriptions"."rest_seconds" >= 0),
 	CONSTRAINT "template_prescriptions_reps_range" CHECK (("template_prescriptions"."minimum_reps" is null and "template_prescriptions"."maximum_reps" is null) or ("template_prescriptions"."minimum_reps" is not null and "template_prescriptions"."maximum_reps" is not null and "template_prescriptions"."minimum_reps" > 0 and "template_prescriptions"."minimum_reps" <= "template_prescriptions"."maximum_reps")),
 	CONSTRAINT "template_prescriptions_seconds_range" CHECK (("template_prescriptions"."minimum_seconds" is null and "template_prescriptions"."maximum_seconds" is null) or ("template_prescriptions"."minimum_seconds" is not null and "template_prescriptions"."maximum_seconds" is not null and "template_prescriptions"."minimum_seconds" > 0 and "template_prescriptions"."minimum_seconds" <= "template_prescriptions"."maximum_seconds")),
@@ -492,7 +496,7 @@ CREATE TABLE "workout_exercise_states" (
 	"effective_logging_kind" "measurement_kind" NOT NULL,
 	"note" text,
 	"substitution_reason" text,
-	"client_idempotency_key" varchar(180) NOT NULL,
+	"last_client_operation_id" varchar(180) NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -500,7 +504,7 @@ CREATE TABLE "workout_exercise_states" (
 	CONSTRAINT "workout_exercise_states_effective_exercise_xor" CHECK (num_nonnulls("workout_exercise_states"."effective_catalog_exercise_id", "workout_exercise_states"."effective_custom_exercise_id") <= 1),
 	CONSTRAINT "workout_exercise_states_display_name_not_blank" CHECK (length(trim("workout_exercise_states"."effective_display_name")) > 0),
 	CONSTRAINT "workout_exercise_states_substitution_reason_not_blank" CHECK ("workout_exercise_states"."substitution_reason" is null or length(trim("workout_exercise_states"."substitution_reason")) > 0),
-	CONSTRAINT "workout_exercise_states_idempotency_not_blank" CHECK (length(trim("workout_exercise_states"."client_idempotency_key")) > 0),
+	CONSTRAINT "workout_exercise_states_operation_id_not_blank" CHECK (length(trim("workout_exercise_states"."last_client_operation_id")) > 0),
 	CONSTRAINT "workout_exercise_states_version_positive" CHECK ("workout_exercise_states"."version" > 0)
 );
 --> statement-breakpoint
@@ -670,6 +674,8 @@ CREATE UNIQUE INDEX "workout_snapshots_owner_session_position_unique" ON "workou
 CREATE UNIQUE INDEX "workout_snapshots_owner_id_session_unique" ON "workout_exercise_snapshots" USING btree ("owner_firebase_uid","id","session_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "workout_snapshots_owner_id_session_logging_unique" ON "workout_exercise_snapshots" USING btree ("owner_firebase_uid","id","session_id","logging_kind");--> statement-breakpoint
 CREATE INDEX "workout_snapshots_owner_session_idx" ON "workout_exercise_snapshots" USING btree ("owner_firebase_uid","session_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "workout_exercise_states_owner_operation_unique" ON "workout_exercise_states" USING btree ("owner_firebase_uid","session_id","last_client_operation_id");--> statement-breakpoint
+CREATE INDEX "workout_exercise_states_owner_session_status_idx" ON "workout_exercise_states" USING btree ("owner_firebase_uid","session_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "workout_sessions_owner_id_unique" ON "workout_sessions" USING btree ("owner_firebase_uid","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "workout_sessions_owner_idempotency_unique" ON "workout_sessions" USING btree ("owner_firebase_uid","idempotency_key");--> statement-breakpoint
 CREATE UNIQUE INDEX "workout_sessions_one_resumable_unique" ON "workout_sessions" USING btree ("owner_firebase_uid","program_revision_id") WHERE "workout_sessions"."state" in ('draft', 'active', 'completing');--> statement-breakpoint
@@ -865,12 +871,17 @@ BEGIN
   IF TG_OP = 'INSERT' THEN
     owner_key := NEW.owner_firebase_uid;
     session_key := NEW.session_id;
+    IF NEW.version IS DISTINCT FROM 1 THEN
+      RAISE EXCEPTION 'workout exercise state inserts must start at version 1' USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.last_client_operation_id IS NULL OR length(trim(NEW.last_client_operation_id)) = 0 THEN
+      RAISE EXCEPTION 'workout exercise state operation ID must be nonblank' USING ERRCODE = 'check_violation';
+    END IF;
   ELSE
     IF TG_OP = 'UPDATE' AND (
       NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
       OR NEW.session_id IS DISTINCT FROM OLD.session_id
       OR NEW.snapshot_id IS DISTINCT FROM OLD.snapshot_id
-      OR NEW.client_idempotency_key IS DISTINCT FROM OLD.client_idempotency_key
       OR NEW.created_at IS DISTINCT FROM OLD.created_at
     ) THEN
       RAISE EXCEPTION 'workout exercise state identity and correction scope are immutable' USING ERRCODE = 'check_violation';
@@ -889,43 +900,61 @@ BEGIN
     RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
   END IF;
 
-  IF owning_state NOT IN ('draft', 'active', 'completing') THEN
-    IF TG_OP = 'UPDATE' AND ROW(
-      NEW.owner_firebase_uid,
-      NEW.session_id,
-      NEW.snapshot_id,
-      NEW.status,
-      NEW.effective_catalog_exercise_id,
-      NEW.effective_custom_exercise_id,
-      NEW.effective_display_name,
-      NEW.effective_logging_kind,
-      NEW.note,
-      NEW.substitution_reason,
-      NEW.client_idempotency_key,
-      NEW.version,
-      NEW.created_at
-    ) IS NOT DISTINCT FROM ROW(
-      OLD.owner_firebase_uid,
-      OLD.session_id,
-      OLD.snapshot_id,
-      OLD.status,
-      OLD.effective_catalog_exercise_id,
-      OLD.effective_custom_exercise_id,
-      OLD.effective_display_name,
-      OLD.effective_logging_kind,
-      OLD.note,
-      OLD.substitution_reason,
-      OLD.client_idempotency_key,
-      OLD.version,
-      OLD.created_at
-    ) THEN
-      RETURN NEW;
+  IF TG_OP = 'DELETE' THEN
+    IF owning_state NOT IN ('draft', 'active', 'completing') THEN
+      RAISE EXCEPTION 'completed or abandoned workout exercise state is immutable' USING ERRCODE = 'check_violation';
     END IF;
+    RETURN OLD;
+  END IF;
+
+  IF TG_OP = 'UPDATE' AND ROW(
+    NEW.owner_firebase_uid,
+    NEW.session_id,
+    NEW.snapshot_id,
+    NEW.status,
+    NEW.effective_catalog_exercise_id,
+    NEW.effective_custom_exercise_id,
+    NEW.effective_display_name,
+    NEW.effective_logging_kind,
+    NEW.note,
+    NEW.substitution_reason,
+    NEW.last_client_operation_id,
+    NEW.version,
+    NEW.created_at
+  ) IS NOT DISTINCT FROM ROW(
+    OLD.owner_firebase_uid,
+    OLD.session_id,
+    OLD.snapshot_id,
+    OLD.status,
+    OLD.effective_catalog_exercise_id,
+    OLD.effective_custom_exercise_id,
+    OLD.effective_display_name,
+    OLD.effective_logging_kind,
+    OLD.note,
+    OLD.substitution_reason,
+    OLD.last_client_operation_id,
+    OLD.version,
+    OLD.created_at
+  ) THEN
+    NEW.updated_at := OLD.updated_at;
+    RETURN NEW;
+  END IF;
+
+  IF owning_state NOT IN ('draft', 'active', 'completing') THEN
     RAISE EXCEPTION 'completed or abandoned workout exercise state is immutable' USING ERRCODE = 'check_violation';
   END IF;
 
-  IF TG_OP = 'DELETE' THEN
-    RETURN OLD;
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.version IS DISTINCT FROM OLD.version + 1 THEN
+      RAISE EXCEPTION 'workout exercise state version must increment sequentially' USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.last_client_operation_id IS NULL
+      OR length(trim(NEW.last_client_operation_id)) = 0
+      OR NEW.last_client_operation_id IS NOT DISTINCT FROM OLD.last_client_operation_id
+    THEN
+      RAISE EXCEPTION 'workout exercise state requires a new nonblank operation ID' USING ERRCODE = 'check_violation';
+    END IF;
+    NEW.updated_at := GREATEST(clock_timestamp(), OLD.updated_at + interval '1 microsecond');
   END IF;
 
   SELECT logging_kind::text

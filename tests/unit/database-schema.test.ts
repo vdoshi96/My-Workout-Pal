@@ -46,6 +46,7 @@ const ids = {
   templateRevision: "00000000-0000-4000-8000-000000000046",
   templateDay: "00000000-0000-4000-8000-000000000047",
   templateSection: "00000000-0000-4000-8000-000000000048",
+  templatePrescription: "00000000-0000-4000-8000-000000000054",
   outcomeSecondSnapshot: "00000000-0000-4000-8000-000000000049",
   outcomeThirdSnapshot: "00000000-0000-4000-8000-000000000050",
   outcomeCardioLogA: "00000000-0000-4000-8000-000000000051",
@@ -519,13 +520,22 @@ describe("initial database migration", () => {
 
     await database.exec(`
       INSERT INTO template_prescriptions (
-        revision_id, section_id, exercise_id, display_order, set_count,
+        revision_id, section_id, exercise_id, display_name, display_order, set_count,
         measurement_kind, minimum_reps, maximum_reps, target_weight_kg
       ) VALUES (
-        '${ids.templateRevision}', '${ids.templateSection}', '${ids.catalogExercise}',
+        '${ids.templateRevision}', '${ids.templateSection}', '${ids.catalogExercise}', 'Heavy goblet squat',
         1, 1, 'weight_reps', 8, 12, 20
       );
     `);
+
+    const templatePrescription = await database.query<{ exercise_id: string; display_name: string | null }>(`
+      SELECT exercise_id, display_name
+      FROM template_prescriptions
+      WHERE revision_id = '${ids.templateRevision}' AND section_id = '${ids.templateSection}';
+    `);
+    expect(templatePrescription.rows).toEqual([
+      { exercise_id: ids.catalogExercise, display_name: 'Heavy goblet squat' },
+    ]);
   });
 
   it("persists runner exercise outcomes without mutating the original snapshot", async () => {
@@ -562,7 +572,7 @@ describe("initial database migration", () => {
       INSERT INTO workout_exercise_states (
         owner_firebase_uid, session_id, snapshot_id, status,
         effective_catalog_exercise_id, effective_display_name, effective_logging_kind,
-        note, substitution_reason, client_idempotency_key, version
+        note, substitution_reason, last_client_operation_id, version
       ) VALUES (
         'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}', 'pending',
         '${ids.catalogExercise}', 'Outcome substitute', 'weight_reps',
@@ -570,7 +580,7 @@ describe("initial database migration", () => {
       );
 
       UPDATE workout_exercise_states
-      SET status = 'completed', note = 'Completed after substitution', version = 2
+      SET status = 'completed', note = 'Completed after substitution', last_client_operation_id = 'complete-1', version = 2
       WHERE owner_firebase_uid = 'alice'
         AND session_id = '${ids.aliceSession}'
         AND snapshot_id = '${ids.aliceSnapshot}';
@@ -578,7 +588,7 @@ describe("initial database migration", () => {
       INSERT INTO workout_exercise_states (
         owner_firebase_uid, session_id, snapshot_id, status,
         effective_display_name, effective_logging_kind, note,
-        client_idempotency_key, version
+        last_client_operation_id, version
       ) VALUES (
         'alice', '${ids.aliceSession}', '${ids.outcomeSecondSnapshot}', 'skipped',
         'Second exercise', 'weight_reps', 'Skipped for time', 'skip-1', 1
@@ -615,7 +625,7 @@ describe("initial database migration", () => {
       database.exec(`
         INSERT INTO workout_exercise_states (
           owner_firebase_uid, session_id, snapshot_id, status,
-          effective_display_name, effective_logging_kind, client_idempotency_key
+          effective_display_name, effective_logging_kind, last_client_operation_id
         ) VALUES (
           'bob', '${ids.aliceSession}', '${ids.aliceSnapshot}', 'pending',
           'Cross-owner state', 'weight_reps', 'cross-owner-state'
@@ -628,7 +638,7 @@ describe("initial database migration", () => {
         INSERT INTO workout_exercise_states (
           owner_firebase_uid, session_id, snapshot_id, status,
           effective_custom_exercise_id, effective_display_name, effective_logging_kind,
-          client_idempotency_key
+          last_client_operation_id
         ) VALUES (
           'alice', '${ids.aliceSession}', '${ids.outcomeThirdSnapshot}', 'pending',
           '${ids.bobCustomExercise}', 'Bob custom', 'weight_reps', 'cross-owner-custom'
@@ -640,7 +650,7 @@ describe("initial database migration", () => {
       database.exec(`
         INSERT INTO workout_exercise_states (
           owner_firebase_uid, session_id, snapshot_id, status,
-          effective_display_name, effective_logging_kind, client_idempotency_key
+          effective_display_name, effective_logging_kind, last_client_operation_id
         ) VALUES (
           'alice', '${ids.bobSession}', '${ids.aliceSnapshot}', 'pending',
           'Cross-session state', 'weight_reps', 'cross-session-state'
@@ -651,7 +661,7 @@ describe("initial database migration", () => {
     await expect(
       database.exec(`
         UPDATE workout_exercise_states
-        SET effective_logging_kind = 'duration'
+        SET effective_logging_kind = 'duration', last_client_operation_id = 'invalid-kind-3', version = 3
         WHERE owner_firebase_uid = 'alice'
           AND session_id = '${ids.aliceSession}'
           AND snapshot_id = '${ids.aliceSnapshot}';
@@ -678,7 +688,7 @@ describe("initial database migration", () => {
       database.exec(`
         INSERT INTO workout_exercise_states (
           owner_firebase_uid, session_id, snapshot_id, status,
-          effective_display_name, effective_logging_kind, client_idempotency_key
+          effective_display_name, effective_logging_kind, last_client_operation_id
         ) VALUES (
           'alice', '${ids.aliceSession}', '${ids.outcomeThirdSnapshot}', 'pending',
           'Late state', 'weight_reps', 'late-state'
@@ -689,6 +699,163 @@ describe("initial database migration", () => {
     await expect(
       database.exec(`
         DELETE FROM workout_exercise_states
+        WHERE owner_firebase_uid = 'alice'
+          AND session_id = '${ids.aliceSession}'
+          AND snapshot_id = '${ids.aliceSnapshot}';
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+  });
+
+  it("requires sequential exercise-state operation versions and IDs", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+    await database.exec(`
+      UPDATE workout_sessions
+      SET state = 'active', started_at = now()
+      WHERE id = '${ids.aliceSession}';
+
+      INSERT INTO catalog_exercises (id, slug, name, movement_family, role, logging_kind)
+      VALUES ('${ids.catalogExercise}', 'sequential-substitute', 'Sequential substitute', 'horizontal_push', 'compound', 'weight_reps');
+    `);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_states (
+          owner_firebase_uid, session_id, snapshot_id, status,
+          effective_display_name, effective_logging_kind, note,
+          last_client_operation_id, version
+        ) VALUES (
+          'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}', 'pending',
+          'Dumbbell bench press', 'weight_reps', 'Invalid initial version',
+          'invalid-insert-2', 2
+        );
+      `),
+    ).rejects.toThrow(/version|start|insert|check|violates/i);
+
+    await database.exec(`
+      INSERT INTO workout_exercise_states (
+        owner_firebase_uid, session_id, snapshot_id, status,
+        effective_display_name, effective_logging_kind, note,
+        last_client_operation_id, version
+      ) VALUES (
+        'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}', 'pending',
+        'Dumbbell bench press', 'weight_reps', 'Saved note',
+        'save-note-1', 1
+      );
+    `);
+    const inserted = await database.query<{ updated_at: Date }>(`
+      SELECT updated_at
+      FROM workout_exercise_states
+      WHERE owner_firebase_uid = 'alice'
+        AND session_id = '${ids.aliceSession}'
+        AND snapshot_id = '${ids.aliceSnapshot}';
+    `);
+
+    await database.exec(`
+      UPDATE workout_exercise_states
+      SET effective_catalog_exercise_id = '${ids.catalogExercise}',
+          effective_display_name = 'Outcome substitute',
+          substitution_reason = 'Equipment-compatible substitution',
+          last_client_operation_id = 'substitute-1',
+          version = 2
+      WHERE owner_firebase_uid = 'alice'
+        AND session_id = '${ids.aliceSession}'
+        AND snapshot_id = '${ids.aliceSnapshot}';
+    `);
+    const substituted = await database.query<{ updated_at: Date; version: number; last_client_operation_id: string }>(`
+      SELECT updated_at, version, last_client_operation_id
+      FROM workout_exercise_states
+      WHERE owner_firebase_uid = 'alice'
+        AND session_id = '${ids.aliceSession}'
+        AND snapshot_id = '${ids.aliceSnapshot}';
+    `);
+    expect(substituted.rows[0]?.version).toBe(2);
+    expect(substituted.rows[0]?.last_client_operation_id).toBe('substitute-1');
+    expect(substituted.rows[0]?.updated_at.getTime()).toBeGreaterThan(inserted.rows[0]?.updated_at.getTime() ?? 0);
+
+    await database.exec(`
+      UPDATE workout_exercise_states
+      SET note = note,
+          effective_catalog_exercise_id = effective_catalog_exercise_id,
+          effective_display_name = effective_display_name,
+          substitution_reason = substitution_reason,
+          last_client_operation_id = last_client_operation_id,
+          version = version,
+          updated_at = updated_at + interval '1 second'
+      WHERE owner_firebase_uid = 'alice'
+        AND session_id = '${ids.aliceSession}'
+        AND snapshot_id = '${ids.aliceSnapshot}';
+    `);
+    const replayed = await database.query<{ updated_at: Date }>(`
+      SELECT updated_at
+      FROM workout_exercise_states
+      WHERE owner_firebase_uid = 'alice'
+        AND session_id = '${ids.aliceSession}'
+        AND snapshot_id = '${ids.aliceSnapshot}';
+    `);
+    expect(replayed.rows[0]?.updated_at?.toISOString()).toBe(substituted.rows[0]?.updated_at?.toISOString());
+
+    await expect(
+      database.exec(`
+        UPDATE workout_exercise_states
+        SET note = 'Stale version', last_client_operation_id = 'stale-2', version = 2
+        WHERE owner_firebase_uid = 'alice'
+          AND session_id = '${ids.aliceSession}'
+          AND snapshot_id = '${ids.aliceSnapshot}';
+      `),
+    ).rejects.toThrow(/version|sequential|increment|check|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_exercise_states
+        SET note = 'Reused operation', last_client_operation_id = 'substitute-1', version = 3
+        WHERE owner_firebase_uid = 'alice'
+          AND session_id = '${ids.aliceSession}'
+          AND snapshot_id = '${ids.aliceSnapshot}';
+      `),
+    ).rejects.toThrow(/operation|id|reuse|new|check|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_exercise_states
+        SET note = 'Decreasing version', last_client_operation_id = 'decreasing-1', version = 1
+        WHERE owner_firebase_uid = 'alice'
+          AND session_id = '${ids.aliceSession}'
+          AND snapshot_id = '${ids.aliceSnapshot}';
+      `),
+    ).rejects.toThrow(/version|sequential|increment|check|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_exercise_states
+        SET note = 'Skipped version', last_client_operation_id = 'skipped-4', version = 4
+        WHERE owner_firebase_uid = 'alice'
+          AND session_id = '${ids.aliceSession}'
+          AND snapshot_id = '${ids.aliceSnapshot}';
+      `),
+    ).rejects.toThrow(/version|sequential|increment|check|violates/i);
+
+    await database.exec(`
+      UPDATE workout_exercise_states
+      SET status = 'completed', note = 'Completed after substitution',
+          last_client_operation_id = 'complete-1', version = 3
+      WHERE owner_firebase_uid = 'alice'
+        AND session_id = '${ids.aliceSession}'
+        AND snapshot_id = '${ids.aliceSnapshot}';
+    `);
+
+    await database.exec(`
+      UPDATE workout_sessions
+      SET state = 'completed', completed_at = now()
+      WHERE id = '${ids.aliceSession}';
+    `);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_exercise_states
+        SET note = 'Terminal correction', last_client_operation_id = 'terminal-4', version = 4
         WHERE owner_firebase_uid = 'alice'
           AND session_id = '${ids.aliceSession}'
           AND snapshot_id = '${ids.aliceSnapshot}';
@@ -1117,6 +1284,8 @@ describe("initial database migration", () => {
   it("does not move a template child into a published revision", async () => {
     const database = await openDatabase();
     await database.exec(`
+      INSERT INTO catalog_exercises (id, slug, name, movement_family, role, logging_kind)
+      VALUES ('${ids.catalogExercise}', 'template-goblet', 'Goblet squat', 'squat', 'compound', 'weight_reps');
       INSERT INTO program_templates (id, template_key, name)
       VALUES ('00000000-0000-4000-8000-000000000020', 'starter', 'Starter');
       INSERT INTO program_template_revisions (
@@ -1131,13 +1300,52 @@ describe("initial database migration", () => {
         '00000000-0000-4000-8000-000000000021',
         1, 'push', 'Push'
       );
+      INSERT INTO template_sections (
+        id, revision_id, day_id, kind, display_order, title
+      ) VALUES (
+        '00000000-0000-4000-8000-000000000025',
+        '00000000-0000-4000-8000-000000000021',
+        '00000000-0000-4000-8000-000000000023',
+        'strength', 1, 'Strength'
+      );
+      INSERT INTO template_prescriptions (
+        id, revision_id, section_id, exercise_id, display_name,
+        display_order, set_count, measurement_kind, minimum_reps, maximum_reps
+      ) VALUES (
+        '${ids.templatePrescription}',
+        '00000000-0000-4000-8000-000000000021',
+        '00000000-0000-4000-8000-000000000025',
+        '${ids.catalogExercise}', 'Heavy goblet squat', 1, 3, 'weight_reps', 8, 12
+      );
     `);
+
+    await database.exec(`
+      UPDATE program_template_revisions
+      SET status = 'published', published_at = now()
+      WHERE id = '00000000-0000-4000-8000-000000000021';
+    `);
+
+    await expect(
+      database.exec(`
+        UPDATE template_prescriptions
+        SET display_name = 'Changed published label'
+        WHERE id = '${ids.templatePrescription}';
+      `),
+    ).rejects.toThrow(/immutable|published|revision/i);
 
     await expect(
       database.exec(`
         UPDATE template_days
         SET revision_id = '00000000-0000-4000-8000-000000000022'
         WHERE id = '00000000-0000-4000-8000-000000000023';
+      `),
+    ).rejects.toThrow(/immutable|published|revision/i);
+
+    await expect(
+      database.exec(`
+        UPDATE template_prescriptions
+        SET revision_id = '00000000-0000-4000-8000-000000000022'
+        WHERE id = '${ids.templatePrescription}';
       `),
     ).rejects.toThrow(/immutable|published|revision/i);
 
@@ -1258,6 +1466,19 @@ describe("initial database migration", () => {
         ) VALUES (
           '${ids.aliceProgramDay}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
           1, 'push', 'Push'
+        );
+      `),
+    ).rejects.toThrow(/immutable|published|revision/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO program_prescriptions (
+          owner_firebase_uid, program_id, revision_id, section_id, catalog_exercise_id,
+          display_name, display_order, set_count, measurement_kind, minimum_reps, maximum_reps
+        ) VALUES (
+          'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
+          '00000000-0000-4000-8000-000000000126', '${ids.catalogExercise}',
+          'Heavy goblet squat', 1, 3, 'weight_reps', 8, 12
         );
       `),
     ).rejects.toThrow(/immutable|published|revision/i);

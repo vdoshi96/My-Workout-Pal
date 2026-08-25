@@ -1,5 +1,5 @@
 {
-  "id": "1bd1dbeb-23a5-4de3-a71e-b0a3733ecd90",
+  "id": "c26cdc75-6e02-4cfe-a509-bbebcc7cc360",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2275,6 +2275,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "display_name": {
+          "name": "display_name",
+          "type": "varchar(180)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "display_order": {
           "name": "display_order",
           "type": "integer",
@@ -2488,6 +2494,10 @@
         "program_prescriptions_order_positive": {
           "name": "program_prescriptions_order_positive",
           "value": "\"program_prescriptions\".\"display_order\" > 0"
+        },
+        "program_prescriptions_display_name_not_blank": {
+          "name": "program_prescriptions_display_name_not_blank",
+          "value": "\"program_prescriptions\".\"display_name\" is null or length(trim(\"program_prescriptions\".\"display_name\")) > 0"
         },
         "program_prescriptions_set_count_positive": {
           "name": "program_prescriptions_set_count_positive",
@@ -4186,6 +4196,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "display_name": {
+          "name": "display_name",
+          "type": "varchar(180)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "display_order": {
           "name": "display_order",
           "type": "integer",
@@ -4364,6 +4380,10 @@
         "template_prescriptions_order_positive": {
           "name": "template_prescriptions_order_positive",
           "value": "\"template_prescriptions\".\"display_order\" > 0"
+        },
+        "template_prescriptions_display_name_not_blank": {
+          "name": "template_prescriptions_display_name_not_blank",
+          "value": "\"template_prescriptions\".\"display_name\" is null or length(trim(\"template_prescriptions\".\"display_name\")) > 0"
         },
         "template_prescriptions_set_count_positive": {
           "name": "template_prescriptions_set_count_positive",
@@ -5277,8 +5297,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "client_idempotency_key": {
-          "name": "client_idempotency_key",
+        "last_client_operation_id": {
+          "name": "last_client_operation_id",
           "type": "varchar(180)",
           "primaryKey": false,
           "notNull": true
@@ -5306,8 +5326,8 @@
         }
       },
       "indexes": {
-        "workout_exercise_states_owner_idempotency_unique": {
-          "name": "workout_exercise_states_owner_idempotency_unique",
+        "workout_exercise_states_owner_operation_unique": {
+          "name": "workout_exercise_states_owner_operation_unique",
           "columns": [
             {
               "expression": "owner_firebase_uid",
@@ -5322,7 +5342,7 @@
               "nulls": "last"
             },
             {
-              "expression": "client_idempotency_key",
+              "expression": "last_client_operation_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -5448,9 +5468,9 @@
           "name": "workout_exercise_states_substitution_reason_not_blank",
           "value": "\"workout_exercise_states\".\"substitution_reason\" is null or length(trim(\"workout_exercise_states\".\"substitution_reason\")) > 0"
         },
-        "workout_exercise_states_idempotency_not_blank": {
-          "name": "workout_exercise_states_idempotency_not_blank",
-          "value": "length(trim(\"workout_exercise_states\".\"client_idempotency_key\")) > 0"
+        "workout_exercise_states_operation_id_not_blank": {
+          "name": "workout_exercise_states_operation_id_not_blank",
+          "value": "length(trim(\"workout_exercise_states\".\"last_client_operation_id\")) > 0"
         },
         "workout_exercise_states_version_positive": {
           "name": "workout_exercise_states_version_positive",
