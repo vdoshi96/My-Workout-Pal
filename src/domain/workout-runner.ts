@@ -1161,11 +1161,14 @@ function queueOperation(
   const shouldSupersede = (operation: RunnerOperation): boolean => {
     if (operation.status === "saved" || operation.status === "superseded")
       return false;
-    if (
-      options.supersedeForAbandonment === true &&
-      operation.kind !== "complete_session" &&
-      operation.kind !== "abandon_session"
-    ) {
+    if (options.supersedeForAbandonment === true) {
+      if (
+        operation.kind === "abandon_session" ||
+        (operation.kind === "complete_session" &&
+          operation.status === "pending")
+      ) {
+        return false;
+      }
       return true;
     }
     if (
@@ -1245,6 +1248,7 @@ function replaceOperation(
 function assertMutable(state: ActiveWorkoutState): void {
   if (
     state.status === "completed" ||
+    state.status === "completing" ||
     state.status === "abandoning" ||
     state.status === "abandoned"
   ) {
@@ -1482,7 +1486,43 @@ export function runnerReducer(
 ): ActiveWorkoutState {
   const at = timestamp(state, "now" in action ? action.now : undefined);
 
+  if (action.type === "complete_session" && state.status === "completing") {
+    return state;
+  }
+  if (action.type === "abandon_session" && state.status === "abandoning") {
+    return state;
+  }
+  if (
+    action.type === "complete_session" &&
+    state.operations.some(
+      ({ kind, status }) => kind === "abandon_session" && status === "pending",
+    )
+  ) {
+    throw new RunnerTransitionError(
+      "session_abandoning",
+      "A workout cannot be completed while abandonment is pending.",
+    );
+  }
+  if (action.type === "abandon_session" && state.status === "completing") {
+    throw new RunnerTransitionError(
+      "session_completing",
+      "A workout cannot be abandoned while completion is being saved.",
+    );
+  }
+  if (
+    action.type === "abandon_session" &&
+    state.operations.some(
+      ({ kind, status }) => kind === "complete_session" && status === "pending",
+    )
+  ) {
+    throw new RunnerTransitionError(
+      "session_completing",
+      "A workout cannot be abandoned while completion is pending.",
+    );
+  }
+
   if (action.type === "navigate_exercise") {
+    assertMutable(state);
     if (
       !Number.isInteger(action.index) ||
       action.index < 0 ||
@@ -1497,6 +1537,7 @@ export function runnerReducer(
     );
   }
   if (action.type === "navigate_set") {
+    assertMutable(state);
     const exercise = state.snapshot.exercises[state.currentExerciseIndex];
     if (
       !exercise ||
@@ -1533,6 +1574,7 @@ export function runnerReducer(
     return withUpdated(state, { restTimer }, at);
   }
   if (action.type === "pause_rest") {
+    assertMutable(state);
     if (state.restTimer === undefined || state.restTimer.pausedAt !== undefined)
       return state;
     return withUpdated(
@@ -1542,6 +1584,7 @@ export function runnerReducer(
     );
   }
   if (action.type === "resume_rest") {
+    assertMutable(state);
     if (state.restTimer === undefined || state.restTimer.pausedAt === undefined)
       return state;
     const remaining = Math.max(
@@ -1560,15 +1603,20 @@ export function runnerReducer(
       at,
     );
   }
-  if (action.type === "clear_rest")
+  if (action.type === "clear_rest") {
+    assertMutable(state);
     return withUpdated(state, { restTimer: undefined }, at);
+  }
 
   const isOperationLifecycleAction =
     action.type === "retry_operation" ||
     action.type === "operation_attempted" ||
     action.type === "operation_saved" ||
     action.type === "operation_failed";
-  if (!(state.status === "abandoning" && isOperationLifecycleAction)) {
+  if (!(
+    (state.status === "abandoning" || state.status === "completing") &&
+    isOperationLifecycleAction
+  )) {
     assertMutable(state);
   }
 
@@ -1876,7 +1924,6 @@ export function runnerReducer(
     return withUpdated(queued.state, { status: "abandoning" }, at);
   }
   if (action.type === "complete_session") {
-    if (state.status === "completing") return state;
     ensureCompleteSession(state);
     const payload: CompleteSessionOperationPayload = {
       kind: "complete_session",
@@ -1989,9 +2036,13 @@ export function runnerReducer(
             : "transient"),
     };
     const next = replaceOperation({ ...state, lastUpdatedAt: at }, failed);
+    const recovered =
+      failed.kind === "complete_session" || failed.kind === "abandon_session"
+        ? { ...next, status: "active" as const }
+        : next;
     return {
-      ...next,
-      sync: syncForState(next, {
+      ...recovered,
+      sync: syncForState(recovered, {
         status: action.conflict === true ? "conflict" : "failed",
         code: action.errorCode,
         message: action.errorMessage,

@@ -133,6 +133,41 @@ function makeCardioState(now = 1_000): ActiveWorkoutState {
   return createRunnerState(createWorkoutSnapshot(cardioSnapshotInput), { now });
 }
 
+async function makeCompletingState(
+  storage: InMemoryRunnerStorage,
+): Promise<ActiveWorkoutState> {
+  let state = makeState();
+  state = runnerReducer(state, {
+    type: "skip_exercise",
+    exerciseId: "exercise-plank",
+    reason: "not today",
+  });
+  state = runnerReducer(state, {
+    type: "skip_exercise",
+    exerciseId: "exercise-run",
+    reason: "not today",
+  });
+  state = runnerReducer(state, {
+    type: "update_set_draft",
+    setId: "row-work-1",
+    draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+  });
+  state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+  state = await syncRunnerOperations(state, {
+    storage,
+    submit: async () => ({ status: "saved" }),
+  });
+  state = runnerReducer(state, {
+    type: "complete_exercise",
+    exerciseId: "exercise-row",
+  });
+  state = await syncRunnerOperations(state, {
+    storage,
+    submit: async () => ({ status: "saved" }),
+  });
+  return runnerReducer(state, { type: "complete_session" });
+}
+
 function operation(
   state: ActiveWorkoutState,
   kind: RunnerOperation["kind"],
@@ -1269,6 +1304,169 @@ describe("offline operation queue", () => {
 });
 
 describe("session completion", () => {
+  it("blocks ordinary edits and abandonment while completing", async () => {
+    const state = await makeCompletingState(new InMemoryRunnerStorage());
+    expect(runnerReducer(state, { type: "complete_session" })).toBe(state);
+    expect(() =>
+      runnerReducer(state, {
+        type: "update_set_draft",
+        setId: "row-work-1",
+        draft: { kind: "weight_reps", weightKg: 34, repetitions: 10 },
+      }),
+    ).toThrow(/closed/);
+    expect(() =>
+      runnerReducer(state, {
+        type: "update_note",
+        exerciseId: "exercise-row",
+        note: "Too late",
+      }),
+    ).toThrow(/closed/);
+    expect(() =>
+      runnerReducer(state, {
+        type: "update_cardio_draft",
+        draft: {
+          mode: "runner",
+          durationSeconds: 900,
+          distanceMeters: undefined,
+          paceSecondsPerKilometer: undefined,
+          paceSource: undefined,
+          inclinePercent: undefined,
+          notes: "Too late",
+        },
+      }),
+    ).toThrow(/closed/);
+    expect(() =>
+      runnerReducer(state, {
+        type: "skip_exercise",
+        exerciseId: "exercise-run",
+      }),
+    ).toThrow(/closed/);
+    expect(() =>
+      runnerReducer(state, {
+        type: "substitute_exercise",
+        exerciseId: "exercise-row",
+        replacement: {
+          id: "exercise-machine-row",
+          name: "Machine row",
+          loggingKind: "weight_reps",
+        },
+      }),
+    ).toThrow(/closed/);
+    expect(() => runnerReducer(state, { type: "start_rest" })).toThrow(
+      /closed/,
+    );
+    expect(() => runnerReducer(state, { type: "pause_rest" })).toThrow(
+      /closed/,
+    );
+    expect(() => runnerReducer(state, { type: "resume_rest" })).toThrow(
+      /closed/,
+    );
+    expect(() => runnerReducer(state, { type: "clear_rest" })).toThrow(
+      /closed/,
+    );
+    expect(() =>
+      runnerReducer(state, { type: "abandon_session", reason: "Too late" }),
+    ).toThrow(/completion/);
+    expect(
+      state.operations.filter(({ kind }) => kind === "abandon_session"),
+    ).toHaveLength(0);
+  });
+
+  it("makes duplicate abandonment idempotent", () => {
+    const abandoning = runnerReducer(makeState(), {
+      type: "abandon_session",
+      reason: "Stopped early",
+    });
+    expect(runnerReducer(abandoning, { type: "abandon_session" })).toBe(
+      abandoning,
+    );
+    expect(() =>
+      runnerReducer(abandoning, { type: "complete_session" }),
+    ).toThrow(/abandonment/);
+  });
+
+  it("rolls back failed terminal operations, retries, and closes successfully", async () => {
+    let conflictedCompletion = await makeCompletingState(
+      new InMemoryRunnerStorage(),
+    );
+    const conflictedCompletionKey = operation(
+      conflictedCompletion,
+      "complete_session",
+    ).idempotencyKey;
+    conflictedCompletion = runnerReducer(conflictedCompletion, {
+      type: "operation_failed",
+      idempotencyKey: conflictedCompletionKey,
+      errorCode: "completion_conflict",
+      conflict: true,
+      retryable: false,
+    });
+    expect(conflictedCompletion.status).toBe("active");
+    expect(conflictedCompletion.sync.status).toBe("conflict");
+    expect(() =>
+      runnerReducer(conflictedCompletion, {
+        type: "retry_operation",
+        idempotencyKey: conflictedCompletionKey,
+      }),
+    ).toThrow(/not retryable/);
+
+    const storage = new InMemoryRunnerStorage();
+    let completing = await makeCompletingState(storage);
+    const completeKey = operation(
+      completing,
+      "complete_session",
+    ).idempotencyKey;
+    completing = runnerReducer(completing, {
+      type: "operation_failed",
+      idempotencyKey: completeKey,
+      errorCode: "temporary_completion_failure",
+      retryable: true,
+    });
+    expect(completing.status).toBe("active");
+    expect(completing.sync.status).toBe("failed");
+    expect(isNavigationBlocked(completing)).toBe(true);
+    completing = runnerReducer(completing, {
+      type: "retry_operation",
+      idempotencyKey: completeKey,
+    });
+    expect(completing.status).toBe("active");
+    expect(
+      completing.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === completeKey,
+      )?.status,
+    ).toBe("pending");
+    completing = await syncRunnerOperations(completing, {
+      storage,
+      submit: async () => ({ status: "saved", persistedId: "session-retried" }),
+    });
+    expect(completing.status).toBe("completed");
+
+    let abandoning = runnerReducer(makeState(), {
+      type: "abandon_session",
+      reason: "Stopped early",
+    });
+    const abandonKey = operation(abandoning, "abandon_session").idempotencyKey;
+    abandoning = runnerReducer(abandoning, {
+      type: "operation_failed",
+      idempotencyKey: abandonKey,
+      errorCode: "temporary_abandon_failure",
+      retryable: true,
+    });
+    expect(abandoning.status).toBe("active");
+    expect(abandoning.sync.status).toBe("failed");
+    abandoning = runnerReducer(abandoning, {
+      type: "retry_operation",
+      idempotencyKey: abandonKey,
+    });
+    abandoning = await syncRunnerOperations(abandoning, {
+      storage,
+      submit: async () => ({
+        status: "saved",
+        persistedId: "abandoned-retried",
+      }),
+    });
+    expect(abandoning.status).toBe("abandoned");
+  });
+
   it("does not complete until required work operations are confirmed", async () => {
     const storage = new InMemoryRunnerStorage();
     let state = makeState();
