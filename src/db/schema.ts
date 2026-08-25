@@ -603,6 +603,12 @@ export const programDays = pgTable(
       name: "program_days_revision_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
     uniqueIndex("program_days_owner_revision_id_unique").on(table.ownerFirebaseUid, table.revisionId, table.id),
+    uniqueIndex("program_days_program_revision_id_unique").on(
+      table.ownerFirebaseUid,
+      table.programId,
+      table.revisionId,
+      table.id,
+    ),
     uniqueIndex("program_days_number_unique").on(table.ownerFirebaseUid, table.revisionId, table.dayNumber),
     check("program_days_number_shape", sql`${table.dayNumber} between 1 and 7`),
   ],
@@ -623,11 +629,17 @@ export const programSections = pgTable(
   },
   (table) => [
     foreignKey({
-      columns: [table.ownerFirebaseUid, table.revisionId, table.dayId],
-      foreignColumns: [programDays.ownerFirebaseUid, programDays.revisionId, programDays.id],
+      columns: [table.ownerFirebaseUid, table.programId, table.revisionId, table.dayId],
+      foreignColumns: [programDays.ownerFirebaseUid, programDays.programId, programDays.revisionId, programDays.id],
       name: "program_sections_day_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
     uniqueIndex("program_sections_owner_revision_id_unique").on(table.ownerFirebaseUid, table.revisionId, table.id),
+    uniqueIndex("program_sections_program_revision_id_unique").on(
+      table.ownerFirebaseUid,
+      table.programId,
+      table.revisionId,
+      table.id,
+    ),
     uniqueIndex("program_sections_order_unique").on(table.ownerFirebaseUid, table.revisionId, table.dayId, table.displayOrder),
     check("program_sections_order_positive", sql`${table.displayOrder} > 0`),
   ],
@@ -765,8 +777,8 @@ export const workoutSessions = pgTable(
     index("workout_sessions_owner_state_idx").on(table.ownerFirebaseUid, table.state),
     index("workout_sessions_owner_created_idx").on(table.ownerFirebaseUid, table.createdAt),
     check(
-      "workout_sessions_completion_shape",
-      sql`(${table.state} <> 'completed' or ${table.completedAt} is not null) and (${table.state} <> 'abandoned' or ${table.abandonedAt} is not null)`,
+      "workout_sessions_state_timestamps",
+      sql`(${table.state} = 'draft' and ${table.startedAt} is null and ${table.completedAt} is null and ${table.abandonedAt} is null) or (${table.state} in ('active', 'completing') and ${table.startedAt} is not null and ${table.completedAt} is null and ${table.abandonedAt} is null) or (${table.state} = 'completed' and ${table.startedAt} is not null and ${table.completedAt} is not null and ${table.abandonedAt} is null) or (${table.state} = 'abandoned' and ${table.startedAt} is not null and ${table.completedAt} is null and ${table.abandonedAt} is not null)`,
     ),
   ],
 );
@@ -813,6 +825,12 @@ export const workoutExerciseSnapshots = pgTable(
     uniqueIndex("workout_snapshots_owner_id_unique").on(table.ownerFirebaseUid, table.id),
     uniqueIndex("workout_snapshots_owner_session_position_unique").on(table.ownerFirebaseUid, table.sessionId, table.position),
     uniqueIndex("workout_snapshots_owner_id_session_unique").on(table.ownerFirebaseUid, table.id, table.sessionId),
+    uniqueIndex("workout_snapshots_owner_id_session_logging_unique").on(
+      table.ownerFirebaseUid,
+      table.id,
+      table.sessionId,
+      table.loggingKind,
+    ),
     index("workout_snapshots_owner_session_idx").on(table.ownerFirebaseUid, table.sessionId),
     check("workout_snapshots_position_positive", sql`${table.position} > 0`),
     check("workout_snapshots_set_count_positive", sql`${table.setCount} > 0`),
@@ -850,8 +868,13 @@ export const setLogs = pgTable(
       name: "set_logs_session_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
     foreignKey({
-      columns: [table.ownerFirebaseUid, table.snapshotId, table.sessionId],
-      foreignColumns: [workoutExerciseSnapshots.ownerFirebaseUid, workoutExerciseSnapshots.id, workoutExerciseSnapshots.sessionId],
+      columns: [table.ownerFirebaseUid, table.snapshotId, table.sessionId, table.measurementKind],
+      foreignColumns: [
+        workoutExerciseSnapshots.ownerFirebaseUid,
+        workoutExerciseSnapshots.id,
+        workoutExerciseSnapshots.sessionId,
+        workoutExerciseSnapshots.loggingKind,
+      ],
       name: "set_logs_snapshot_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
     uniqueIndex("set_logs_owner_id_unique").on(table.ownerFirebaseUid, table.id),

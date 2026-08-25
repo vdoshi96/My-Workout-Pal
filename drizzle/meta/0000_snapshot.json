@@ -1,5 +1,5 @@
 {
-  "id": "c228c70d-9b87-413a-97e6-b4b9ad3c3db4",
+  "id": "4c8cfef2-1245-4403-bef9-d2b996f88dec",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2065,6 +2065,39 @@
           "method": "btree",
           "with": {}
         },
+        "program_days_program_revision_id_unique": {
+          "name": "program_days_program_revision_id_unique",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "program_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "revision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "program_days_number_unique": {
           "name": "program_days_number_unique",
           "columns": [
@@ -2729,6 +2762,39 @@
           "method": "btree",
           "with": {}
         },
+        "program_sections_program_revision_id_unique": {
+          "name": "program_sections_program_revision_id_unique",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "program_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "revision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "program_sections_order_unique": {
           "name": "program_sections_order_unique",
           "columns": [
@@ -2770,11 +2836,13 @@
           "tableTo": "program_days",
           "columnsFrom": [
             "owner_firebase_uid",
+            "program_id",
             "revision_id",
             "day_id"
           ],
           "columnsTo": [
             "owner_firebase_uid",
+            "program_id",
             "revision_id",
             "id"
           ],
@@ -3719,12 +3787,14 @@
           "columnsFrom": [
             "owner_firebase_uid",
             "snapshot_id",
-            "session_id"
+            "session_id",
+            "measurement_kind"
           ],
           "columnsTo": [
             "owner_firebase_uid",
             "id",
-            "session_id"
+            "session_id",
+            "logging_kind"
           ],
           "onDelete": "restrict",
           "onUpdate": "cascade"
@@ -4925,6 +4995,39 @@
           "method": "btree",
           "with": {}
         },
+        "workout_snapshots_owner_id_session_logging_unique": {
+          "name": "workout_snapshots_owner_id_session_logging_unique",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "logging_kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "workout_snapshots_owner_session_idx": {
           "name": "workout_snapshots_owner_session_idx",
           "columns": [
@@ -5245,9 +5348,9 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "workout_sessions_completion_shape": {
-          "name": "workout_sessions_completion_shape",
-          "value": "(\"workout_sessions\".\"state\" <> 'completed' or \"workout_sessions\".\"completed_at\" is not null) and (\"workout_sessions\".\"state\" <> 'abandoned' or \"workout_sessions\".\"abandoned_at\" is not null)"
+        "workout_sessions_state_timestamps": {
+          "name": "workout_sessions_state_timestamps",
+          "value": "(\"workout_sessions\".\"state\" = 'draft' and \"workout_sessions\".\"started_at\" is null and \"workout_sessions\".\"completed_at\" is null and \"workout_sessions\".\"abandoned_at\" is null) or (\"workout_sessions\".\"state\" in ('active', 'completing') and \"workout_sessions\".\"started_at\" is not null and \"workout_sessions\".\"completed_at\" is null and \"workout_sessions\".\"abandoned_at\" is null) or (\"workout_sessions\".\"state\" = 'completed' and \"workout_sessions\".\"started_at\" is not null and \"workout_sessions\".\"completed_at\" is not null and \"workout_sessions\".\"abandoned_at\" is null) or (\"workout_sessions\".\"state\" = 'abandoned' and \"workout_sessions\".\"started_at\" is not null and \"workout_sessions\".\"completed_at\" is null and \"workout_sessions\".\"abandoned_at\" is not null)"
         }
       },
       "isRLSEnabled": false

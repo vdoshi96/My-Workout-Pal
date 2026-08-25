@@ -22,6 +22,13 @@ const ids = {
   aliceSecondRevision: "00000000-0000-4000-8000-000000000017",
   bobCustomExercise: "00000000-0000-4000-8000-000000000018",
   volumeSetLog: "00000000-0000-4000-8000-000000000019",
+  aliceProgramDay: "00000000-0000-4000-8000-000000000024",
+  aliceProgramSection: "00000000-0000-4000-8000-000000000025",
+  aliceAbandonedSession: "00000000-0000-4000-8000-000000000026",
+  aliceAbandonedSnapshot: "00000000-0000-4000-8000-000000000027",
+  terminalSetLog: "00000000-0000-4000-8000-000000000028",
+  terminalCardioLog: "00000000-0000-4000-8000-000000000029",
+  terminalSnapshot: "00000000-0000-4000-8000-000000000030",
 } as const;
 
 const openDatabases: PGlite[] = [];
@@ -245,6 +252,18 @@ describe("initial database migration", () => {
         );
       `),
     ).rejects.toThrow(/check|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO set_logs (
+          id, owner_firebase_uid, session_id, snapshot_id, set_position,
+          measurement_kind, set_kind, repetitions, client_idempotency_key
+        ) VALUES (
+          '00000000-0000-4000-8000-000000000031', 'alice', '${ids.aliceSession}',
+          '${ids.aliceSnapshot}', 3, 'bodyweight_reps', 'work', 10, 'mismatched-kind'
+        );
+      `),
+    ).rejects.toThrow(/set_logs_snapshot_scope_fk|foreign key|violates/i);
   });
 
   it("allows one resumable session and one idempotency result per owner key", async () => {
@@ -253,10 +272,10 @@ describe("initial database migration", () => {
     await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
     await database.exec(`
       INSERT INTO workout_sessions (
-        id, owner_firebase_uid, program_id, program_revision_id, state, idempotency_key
+        id, owner_firebase_uid, program_id, program_revision_id, state, started_at, idempotency_key
       ) VALUES (
         '${ids.aliceSession}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
-        'active', 'session-create'
+        'active', now(), 'session-create'
       );
     `);
 
@@ -325,6 +344,137 @@ describe("initial database migration", () => {
     ).rejects.toThrow(/workout_sessions_revision_scope_fk|foreign key|violates/i);
   });
 
+  it("scopes a program section to its parent day program", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedProgram(database, "alice", ids.aliceSecondProgram, ids.aliceSecondRevision);
+    await database.exec(`
+      INSERT INTO program_days (
+        id, owner_firebase_uid, program_id, revision_id, day_number, day_key, display_name
+      ) VALUES (
+        '${ids.aliceProgramDay}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
+        1, 'push', 'Push'
+      );
+    `);
+
+    await expect(
+      database.exec(`
+        INSERT INTO program_sections (
+          id, owner_firebase_uid, program_id, revision_id, day_id,
+          kind, display_order, title
+        ) VALUES (
+          '${ids.aliceProgramSection}', 'alice', '${ids.aliceSecondProgram}', '${ids.aliceRevision}',
+          '${ids.aliceProgramDay}', 'strength', 1, 'Mismatched program'
+        );
+      `),
+    ).rejects.toThrow(/program_sections_day_scope_fk|foreign key|violates/i);
+  });
+
+  it("keeps terminal workout sessions terminal and timestamps truthful", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET state = 'completed', completed_at = now()
+        WHERE id = '${ids.aliceSession}';
+      `),
+    ).rejects.toThrow(/timestamp|state|check|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET state = 'active', started_at = now(), completed_at = now()
+        WHERE id = '${ids.aliceSession}';
+      `),
+    ).rejects.toThrow(/timestamp|state|check|violates/i);
+
+    await database.exec(`
+      UPDATE workout_sessions
+      SET state = 'active', started_at = now()
+      WHERE id = '${ids.aliceSession}';
+      UPDATE workout_sessions
+      SET state = 'completed', completed_at = now()
+      WHERE id = '${ids.aliceSession}';
+    `);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET state = 'active', completed_at = null
+        WHERE id = '${ids.aliceSession}';
+      `),
+    ).rejects.toThrow(/terminal|immutable|state|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET state = 'abandoned', completed_at = null, abandoned_at = now()
+        WHERE id = '${ids.aliceSession}';
+      `),
+    ).rejects.toThrow(/terminal|immutable|state|violates/i);
+
+    await database.exec(`
+      INSERT INTO workout_sessions (
+        id, owner_firebase_uid, program_id, program_revision_id,
+        state, started_at, idempotency_key
+      ) VALUES (
+        '${ids.aliceAbandonedSession}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
+        'active', now(), 'abandoned-session'
+      );
+      UPDATE workout_sessions
+      SET state = 'abandoned', abandoned_at = now()
+      WHERE id = '${ids.aliceAbandonedSession}';
+    `);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_snapshots (
+          id, owner_firebase_uid, session_id, position, display_name, logging_kind, set_count
+        ) VALUES (
+          '${ids.aliceAbandonedSnapshot}', 'alice', '${ids.aliceAbandonedSession}', 1,
+          'Abandoned snapshot', 'weight_reps', 1
+        );
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO set_logs (
+          id, owner_firebase_uid, session_id, snapshot_id, set_position,
+          measurement_kind, set_kind, weight_kg, repetitions, client_idempotency_key
+        ) VALUES (
+          '${ids.terminalSetLog}', 'alice', '${ids.aliceAbandonedSession}', '${ids.aliceAbandonedSnapshot}',
+          1, 'weight_reps', 'work', 20, 10, 'abandoned-set'
+        );
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO cardio_logs (
+          id, owner_firebase_uid, session_id, mode, duration_seconds,
+          distance_m, client_idempotency_key
+        ) VALUES (
+          '${ids.terminalCardioLog}', 'alice', '${ids.aliceAbandonedSession}', 'runner',
+          600, 1000, 'abandoned-cardio'
+        );
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_sessions
+        SET state = 'completed', abandoned_at = null, completed_at = now()
+        WHERE id = '${ids.aliceAbandonedSession}';
+      `),
+    ).rejects.toThrow(/terminal|immutable|state|violates/i);
+  });
+
   it("stores volume as a personal-record type", async () => {
     const database = await openDatabase();
     await seedOwner(database, "alice");
@@ -385,6 +535,18 @@ describe("initial database migration", () => {
         WHERE id = '00000000-0000-4000-8000-000000000023';
       `),
     ).rejects.toThrow(/immutable|published|revision/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO template_days (
+          id, revision_id, day_number, day_key, display_name
+        ) VALUES (
+          '00000000-0000-4000-8000-000000000024',
+          '00000000-0000-4000-8000-000000000022',
+          2, 'pull', 'Pull'
+        );
+      `),
+    ).rejects.toThrow(/immutable|published|revision/i);
   });
 
   it("protects published revisions and accepted workout history from mutation", async () => {
@@ -438,6 +600,17 @@ describe("initial database migration", () => {
     ).rejects.toThrow(/immutable|published|revision/i);
 
     await expect(
+      database.exec(`
+        INSERT INTO program_days (
+          id, owner_firebase_uid, program_id, revision_id, day_number, day_key, display_name
+        ) VALUES (
+          '${ids.aliceProgramDay}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
+          1, 'push', 'Push'
+        );
+      `),
+    ).rejects.toThrow(/immutable|published|revision/i);
+
+    await expect(
       database.exec(`UPDATE workout_exercise_snapshots SET display_name = 'Changed' WHERE id = '${ids.aliceSnapshot}';`),
     ).rejects.toThrow(/immutable|append-only|history/i);
 
@@ -448,6 +621,41 @@ describe("initial database migration", () => {
     await expect(
       database.exec(`DELETE FROM cardio_logs WHERE id = '${ids.aliceCardioLog}';`),
     ).rejects.toThrow(/immutable|append-only|history/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_snapshots (
+          id, owner_firebase_uid, session_id, position, display_name, logging_kind, set_count
+        ) VALUES (
+          '${ids.terminalSnapshot}', 'alice', '${ids.aliceSession}', 2,
+          'Post-terminal snapshot', 'weight_reps', 1
+        );
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO set_logs (
+          id, owner_firebase_uid, session_id, snapshot_id, set_position,
+          measurement_kind, set_kind, weight_kg, repetitions, client_idempotency_key
+        ) VALUES (
+          '${ids.terminalSetLog}', 'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}',
+          2, 'weight_reps', 'work', 20, 10, 'post-terminal-set'
+        );
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO cardio_logs (
+          id, owner_firebase_uid, session_id, mode, duration_seconds,
+          distance_m, client_idempotency_key
+        ) VALUES (
+          '${ids.terminalCardioLog}', 'alice', '${ids.aliceSession}', 'runner',
+          600, 1000, 'post-terminal-cardio'
+        );
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
   });
 
   it("keeps Drizzle configuration and the live connector import-safe without credentials", async () => {

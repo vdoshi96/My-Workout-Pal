@@ -485,12 +485,13 @@ CREATE TABLE "workout_sessions" (
 	"abandoned_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "workout_sessions_completion_shape" CHECK (("workout_sessions"."state" <> 'completed' or "workout_sessions"."completed_at" is not null) and ("workout_sessions"."state" <> 'abandoned' or "workout_sessions"."abandoned_at" is not null))
+	CONSTRAINT "workout_sessions_state_timestamps" CHECK (("workout_sessions"."state" = 'draft' and "workout_sessions"."started_at" is null and "workout_sessions"."completed_at" is null and "workout_sessions"."abandoned_at" is null) or ("workout_sessions"."state" in ('active', 'completing') and "workout_sessions"."started_at" is not null and "workout_sessions"."completed_at" is null and "workout_sessions"."abandoned_at" is null) or ("workout_sessions"."state" = 'completed' and "workout_sessions"."started_at" is not null and "workout_sessions"."completed_at" is not null and "workout_sessions"."abandoned_at" is null) or ("workout_sessions"."state" = 'abandoned' and "workout_sessions"."started_at" is not null and "workout_sessions"."completed_at" is null and "workout_sessions"."abandoned_at" is not null))
 );
 --> statement-breakpoint
--- Composite foreign keys must have their referenced uniqueness in place before
--- PostgreSQL validates the constraints below. Drizzle emits regular indexes
--- after foreign keys, so these schema-level keys are created up front.
+-- The *_scope_key constraints mirror unique indexes in src/db/schema.ts.
+-- They are emitted before Drizzle's post-FK indexes so PostgreSQL can validate
+-- composite foreign keys without adding ownership rules that are absent from
+-- the schema definition.
 ALTER TABLE "user_programs" ADD CONSTRAINT "user_programs_owner_id_scope_key" UNIQUE ("owner_firebase_uid", "id");--> statement-breakpoint
 ALTER TABLE "program_revisions" ADD CONSTRAINT "program_revisions_owner_id_scope_key" UNIQUE ("owner_firebase_uid", "id");--> statement-breakpoint
 ALTER TABLE "program_revisions" ADD CONSTRAINT "program_revisions_program_scope_key" UNIQUE ("owner_firebase_uid", "program_id", "id");--> statement-breakpoint
@@ -501,6 +502,7 @@ ALTER TABLE "program_sections" ADD CONSTRAINT "program_sections_program_revision
 ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_owner_id_scope_key" UNIQUE ("owner_firebase_uid", "id");--> statement-breakpoint
 ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_owner_id_scope_key" UNIQUE ("owner_firebase_uid", "id");--> statement-breakpoint
 ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_owner_id_session_scope_key" UNIQUE ("owner_firebase_uid", "id", "session_id");--> statement-breakpoint
+ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_owner_id_session_logging_scope_key" UNIQUE ("owner_firebase_uid", "id", "session_id", "logging_kind");--> statement-breakpoint
 ALTER TABLE "custom_exercises" ADD CONSTRAINT "custom_exercises_owner_id_scope_key" UNIQUE ("owner_firebase_uid", "id");--> statement-breakpoint
 ALTER TABLE "set_logs" ADD CONSTRAINT "set_logs_owner_id_scope_key" UNIQUE ("owner_firebase_uid", "id");--> statement-breakpoint
 ALTER TABLE "cardio_logs" ADD CONSTRAINT "cardio_logs_owner_id_scope_key" UNIQUE ("owner_firebase_uid", "id");--> statement-breakpoint
@@ -533,7 +535,7 @@ ALTER TABLE "program_prescriptions" ADD CONSTRAINT "program_prescriptions_custom
 ALTER TABLE "program_revisions" ADD CONSTRAINT "program_revisions_owner_fk" FOREIGN KEY ("owner_firebase_uid") REFERENCES "public"."user_profiles"("firebase_uid") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "program_revisions" ADD CONSTRAINT "program_revisions_program_scope_fk" FOREIGN KEY ("owner_firebase_uid","program_id") REFERENCES "public"."user_programs"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "program_revisions" ADD CONSTRAINT "program_revisions_source_template_fk" FOREIGN KEY ("source_template_revision_id") REFERENCES "public"."program_template_revisions"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "program_sections" ADD CONSTRAINT "program_sections_day_scope_fk" FOREIGN KEY ("owner_firebase_uid","revision_id","day_id") REFERENCES "public"."program_days"("owner_firebase_uid","revision_id","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "program_sections" ADD CONSTRAINT "program_sections_day_scope_fk" FOREIGN KEY ("owner_firebase_uid","program_id","revision_id","day_id") REFERENCES "public"."program_days"("owner_firebase_uid","program_id","revision_id","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "program_template_revisions" ADD CONSTRAINT "program_template_revisions_template_id_program_templates_id_fk" FOREIGN KEY ("template_id") REFERENCES "public"."program_templates"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "progress_summaries" ADD CONSTRAINT "progress_summaries_owner_fk" FOREIGN KEY ("owner_firebase_uid") REFERENCES "public"."user_profiles"("firebase_uid") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "progress_summaries" ADD CONSTRAINT "progress_summaries_catalog_exercise_fk" FOREIGN KEY ("catalog_exercise_id") REFERENCES "public"."catalog_exercises"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
@@ -542,7 +544,7 @@ ALTER TABLE "progress_summary_sources" ADD CONSTRAINT "progress_summary_sources_
 ALTER TABLE "progress_summary_sources" ADD CONSTRAINT "progress_summary_sources_set_scope_fk" FOREIGN KEY ("owner_firebase_uid","set_log_id") REFERENCES "public"."set_logs"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "progress_summary_sources" ADD CONSTRAINT "progress_summary_sources_cardio_scope_fk" FOREIGN KEY ("owner_firebase_uid","cardio_log_id") REFERENCES "public"."cardio_logs"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "set_logs" ADD CONSTRAINT "set_logs_session_scope_fk" FOREIGN KEY ("owner_firebase_uid","session_id") REFERENCES "public"."workout_sessions"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "set_logs" ADD CONSTRAINT "set_logs_snapshot_scope_fk" FOREIGN KEY ("owner_firebase_uid","snapshot_id","session_id") REFERENCES "public"."workout_exercise_snapshots"("owner_firebase_uid","id","session_id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "set_logs" ADD CONSTRAINT "set_logs_snapshot_scope_fk" FOREIGN KEY ("owner_firebase_uid","snapshot_id","session_id","measurement_kind") REFERENCES "public"."workout_exercise_snapshots"("owner_firebase_uid","id","session_id","logging_kind") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "template_cardio_prescriptions" ADD CONSTRAINT "template_cardio_prescriptions_day_scope_fk" FOREIGN KEY ("revision_id","day_id") REFERENCES "public"."template_days"("revision_id","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "template_days" ADD CONSTRAINT "template_days_revision_fk" FOREIGN KEY ("revision_id") REFERENCES "public"."program_template_revisions"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "template_prescriptions" ADD CONSTRAINT "template_prescriptions_exercise_id_catalog_exercises_id_fk" FOREIGN KEY ("exercise_id") REFERENCES "public"."catalog_exercises"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
@@ -591,6 +593,7 @@ CREATE UNIQUE INDEX "personal_records_custom_type_unique" ON "personal_records" 
 CREATE INDEX "personal_records_owner_achieved_idx" ON "personal_records" USING btree ("owner_firebase_uid","achieved_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_cardio_prescriptions_mode_unique" ON "program_cardio_prescriptions" USING btree ("owner_firebase_uid","revision_id","day_id","mode");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_days_owner_revision_id_unique" ON "program_days" USING btree ("owner_firebase_uid","revision_id","id");--> statement-breakpoint
+CREATE UNIQUE INDEX "program_days_program_revision_id_unique" ON "program_days" USING btree ("owner_firebase_uid","program_id","revision_id","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_days_number_unique" ON "program_days" USING btree ("owner_firebase_uid","revision_id","day_number");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_prescriptions_owner_revision_id_unique" ON "program_prescriptions" USING btree ("owner_firebase_uid","revision_id","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_prescriptions_order_unique" ON "program_prescriptions" USING btree ("owner_firebase_uid","revision_id","section_id","display_order");--> statement-breakpoint
@@ -599,6 +602,7 @@ CREATE UNIQUE INDEX "program_revisions_program_scope_unique" ON "program_revisio
 CREATE UNIQUE INDEX "program_revisions_number_unique" ON "program_revisions" USING btree ("owner_firebase_uid","program_id","revision_number");--> statement-breakpoint
 CREATE INDEX "program_revisions_owner_status_idx" ON "program_revisions" USING btree ("owner_firebase_uid","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_sections_owner_revision_id_unique" ON "program_sections" USING btree ("owner_firebase_uid","revision_id","id");--> statement-breakpoint
+CREATE UNIQUE INDEX "program_sections_program_revision_id_unique" ON "program_sections" USING btree ("owner_firebase_uid","program_id","revision_id","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_sections_order_unique" ON "program_sections" USING btree ("owner_firebase_uid","revision_id","day_id","display_order");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_template_revisions_number_unique" ON "program_template_revisions" USING btree ("template_id","revision_number");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_template_revisions_template_id_unique" ON "program_template_revisions" USING btree ("template_id","id");--> statement-breakpoint
@@ -628,6 +632,7 @@ CREATE INDEX "user_programs_owner_updated_idx" ON "user_programs" USING btree ("
 CREATE UNIQUE INDEX "workout_snapshots_owner_id_unique" ON "workout_exercise_snapshots" USING btree ("owner_firebase_uid","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "workout_snapshots_owner_session_position_unique" ON "workout_exercise_snapshots" USING btree ("owner_firebase_uid","session_id","position");--> statement-breakpoint
 CREATE UNIQUE INDEX "workout_snapshots_owner_id_session_unique" ON "workout_exercise_snapshots" USING btree ("owner_firebase_uid","id","session_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "workout_snapshots_owner_id_session_logging_unique" ON "workout_exercise_snapshots" USING btree ("owner_firebase_uid","id","session_id","logging_kind");--> statement-breakpoint
 CREATE INDEX "workout_snapshots_owner_session_idx" ON "workout_exercise_snapshots" USING btree ("owner_firebase_uid","session_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "workout_sessions_owner_id_unique" ON "workout_sessions" USING btree ("owner_firebase_uid","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "workout_sessions_owner_idempotency_unique" ON "workout_sessions" USING btree ("owner_firebase_uid","idempotency_key");--> statement-breakpoint
@@ -637,7 +642,7 @@ CREATE INDEX "workout_sessions_owner_created_idx" ON "workout_sessions" USING bt
 --> statement-breakpoint
 -- Published revision trees are append-only. Draft rows may be assembled and
 -- then atomically published; once published, neither the root nor a child can
--- be edited or removed.
+-- be edited, removed, or added.
 CREATE OR REPLACE FUNCTION prevent_published_program_revision_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -654,24 +659,24 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  old_published boolean;
-  new_published boolean;
+  old_published boolean := false;
+  new_published boolean := false;
 BEGIN
-  SELECT (status = 'published' OR published_at IS NOT NULL)
-    INTO old_published
-    FROM program_revisions
-   WHERE id = OLD.revision_id AND owner_firebase_uid = OLD.owner_firebase_uid;
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    SELECT (status = 'published' OR published_at IS NOT NULL)
+      INTO old_published
+      FROM program_revisions
+     WHERE id = OLD.revision_id AND owner_firebase_uid = OLD.owner_firebase_uid;
+  END IF;
 
-  IF TG_OP = 'UPDATE' THEN
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
     SELECT (status = 'published' OR published_at IS NOT NULL)
       INTO new_published
       FROM program_revisions
      WHERE id = NEW.revision_id AND owner_firebase_uid = NEW.owner_firebase_uid;
-  ELSE
-    new_published := false;
   END IF;
 
-  IF coalesce(old_published, false) OR coalesce(new_published, false) THEN
+  IF old_published OR new_published THEN
     RAISE EXCEPTION 'published program revision descendants are immutable' USING ERRCODE = 'check_violation';
   END IF;
   RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
@@ -693,35 +698,67 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  old_published boolean;
-  new_published boolean;
+  old_published boolean := false;
+  new_published boolean := false;
 BEGIN
-  SELECT (status = 'published' OR published_at IS NOT NULL)
-    INTO old_published
-    FROM program_template_revisions
-   WHERE id = OLD.revision_id;
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    SELECT (status = 'published' OR published_at IS NOT NULL)
+      INTO old_published
+      FROM program_template_revisions
+     WHERE id = OLD.revision_id;
+  END IF;
 
-  IF TG_OP = 'UPDATE' THEN
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
     SELECT (status = 'published' OR published_at IS NOT NULL)
       INTO new_published
       FROM program_template_revisions
      WHERE id = NEW.revision_id;
-  ELSE
-    new_published := false;
   END IF;
 
-  IF coalesce(old_published, false) OR coalesce(new_published, false) THEN
+  IF old_published OR new_published THEN
     RAISE EXCEPTION 'published template revision descendants are immutable' USING ERRCODE = 'check_violation';
   END IF;
   RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
 END;
 $$;--> statement-breakpoint
-CREATE OR REPLACE FUNCTION prevent_workout_history_mutation()
+CREATE OR REPLACE FUNCTION prevent_terminal_workout_session_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  RAISE EXCEPTION 'accepted workout history is append-only' USING ERRCODE = 'check_violation';
+  IF OLD.state::text IN ('completed', 'abandoned') AND (
+    NEW.state IS DISTINCT FROM OLD.state
+    OR NEW.started_at IS DISTINCT FROM OLD.started_at
+    OR NEW.completed_at IS DISTINCT FROM OLD.completed_at
+    OR NEW.abandoned_at IS DISTINCT FROM OLD.abandoned_at
+  ) THEN
+    RAISE EXCEPTION 'terminal workout sessions are immutable' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;--> statement-breakpoint
+CREATE OR REPLACE FUNCTION prevent_workout_snapshot_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  owning_state text;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    SELECT state::text
+      INTO owning_state
+      FROM workout_sessions
+     WHERE owner_firebase_uid = NEW.owner_firebase_uid
+       AND id = NEW.session_id;
+
+    IF owning_state IN ('draft', 'active', 'completing') THEN
+      RETURN NEW;
+    END IF;
+
+    RAISE EXCEPTION 'completed or abandoned workout snapshots are immutable' USING ERRCODE = 'check_violation';
+  END IF;
+
+  RAISE EXCEPTION 'accepted workout snapshots are immutable' USING ERRCODE = 'check_violation';
 END;
 $$;--> statement-breakpoint
 CREATE OR REPLACE FUNCTION prevent_workout_log_mutation()
@@ -730,19 +767,28 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
   owning_state text;
+  owner_key text;
+  session_key uuid;
 BEGIN
-  IF TG_OP = 'UPDATE' AND (
-    NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
-    OR NEW.session_id IS DISTINCT FROM OLD.session_id
-  ) THEN
-    RAISE EXCEPTION 'workout log ownership and session scope are immutable' USING ERRCODE = 'check_violation';
+  IF TG_OP = 'INSERT' THEN
+    owner_key := NEW.owner_firebase_uid;
+    session_key := NEW.session_id;
+  ELSE
+    IF TG_OP = 'UPDATE' AND (
+      NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
+      OR NEW.session_id IS DISTINCT FROM OLD.session_id
+    ) THEN
+      RAISE EXCEPTION 'workout log ownership and session scope are immutable' USING ERRCODE = 'check_violation';
+    END IF;
+    owner_key := OLD.owner_firebase_uid;
+    session_key := OLD.session_id;
   END IF;
 
   SELECT state::text
     INTO owning_state
     FROM workout_sessions
-   WHERE owner_firebase_uid = OLD.owner_firebase_uid
-     AND id = OLD.session_id;
+   WHERE owner_firebase_uid = owner_key
+     AND id = session_key;
 
   IF owning_state IN ('draft', 'active', 'completing') THEN
     RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
@@ -751,42 +797,45 @@ BEGIN
   RAISE EXCEPTION 'completed or abandoned workout history is immutable' USING ERRCODE = 'check_violation';
 END;
 $$;--> statement-breakpoint
+CREATE TRIGGER workout_sessions_terminal_guard
+BEFORE UPDATE ON workout_sessions
+FOR EACH ROW EXECUTE FUNCTION prevent_terminal_workout_session_mutation();--> statement-breakpoint
 CREATE TRIGGER program_revisions_immutable_after_publish
 BEFORE UPDATE OR DELETE ON program_revisions
 FOR EACH ROW EXECUTE FUNCTION prevent_published_program_revision_mutation();--> statement-breakpoint
 CREATE TRIGGER program_days_immutable_after_publish
-BEFORE UPDATE OR DELETE ON program_days
+BEFORE INSERT OR UPDATE OR DELETE ON program_days
 FOR EACH ROW EXECUTE FUNCTION prevent_published_program_child_mutation();--> statement-breakpoint
 CREATE TRIGGER program_sections_immutable_after_publish
-BEFORE UPDATE OR DELETE ON program_sections
+BEFORE INSERT OR UPDATE OR DELETE ON program_sections
 FOR EACH ROW EXECUTE FUNCTION prevent_published_program_child_mutation();--> statement-breakpoint
 CREATE TRIGGER program_prescriptions_immutable_after_publish
-BEFORE UPDATE OR DELETE ON program_prescriptions
+BEFORE INSERT OR UPDATE OR DELETE ON program_prescriptions
 FOR EACH ROW EXECUTE FUNCTION prevent_published_program_child_mutation();--> statement-breakpoint
 CREATE TRIGGER program_cardio_prescriptions_immutable_after_publish
-BEFORE UPDATE OR DELETE ON program_cardio_prescriptions
+BEFORE INSERT OR UPDATE OR DELETE ON program_cardio_prescriptions
 FOR EACH ROW EXECUTE FUNCTION prevent_published_program_child_mutation();--> statement-breakpoint
 CREATE TRIGGER program_template_revisions_immutable_after_publish
 BEFORE UPDATE OR DELETE ON program_template_revisions
 FOR EACH ROW EXECUTE FUNCTION prevent_published_template_revision_mutation();--> statement-breakpoint
 CREATE TRIGGER template_days_immutable_after_publish
-BEFORE UPDATE OR DELETE ON template_days
+BEFORE INSERT OR UPDATE OR DELETE ON template_days
 FOR EACH ROW EXECUTE FUNCTION prevent_published_template_child_mutation();--> statement-breakpoint
 CREATE TRIGGER template_sections_immutable_after_publish
-BEFORE UPDATE OR DELETE ON template_sections
+BEFORE INSERT OR UPDATE OR DELETE ON template_sections
 FOR EACH ROW EXECUTE FUNCTION prevent_published_template_child_mutation();--> statement-breakpoint
 CREATE TRIGGER template_prescriptions_immutable_after_publish
-BEFORE UPDATE OR DELETE ON template_prescriptions
+BEFORE INSERT OR UPDATE OR DELETE ON template_prescriptions
 FOR EACH ROW EXECUTE FUNCTION prevent_published_template_child_mutation();--> statement-breakpoint
 CREATE TRIGGER template_cardio_prescriptions_immutable_after_publish
-BEFORE UPDATE OR DELETE ON template_cardio_prescriptions
+BEFORE INSERT OR UPDATE OR DELETE ON template_cardio_prescriptions
 FOR EACH ROW EXECUTE FUNCTION prevent_published_template_child_mutation();--> statement-breakpoint
-CREATE TRIGGER workout_exercise_snapshots_append_only
-BEFORE UPDATE OR DELETE ON workout_exercise_snapshots
-FOR EACH ROW EXECUTE FUNCTION prevent_workout_history_mutation();--> statement-breakpoint
-CREATE TRIGGER set_logs_append_only
-BEFORE UPDATE OR DELETE ON set_logs
+CREATE TRIGGER workout_exercise_snapshots_mutation_guard
+BEFORE INSERT OR UPDATE OR DELETE ON workout_exercise_snapshots
+FOR EACH ROW EXECUTE FUNCTION prevent_workout_snapshot_mutation();--> statement-breakpoint
+CREATE TRIGGER set_logs_mutation_guard
+BEFORE INSERT OR UPDATE OR DELETE ON set_logs
 FOR EACH ROW EXECUTE FUNCTION prevent_workout_log_mutation();--> statement-breakpoint
-CREATE TRIGGER cardio_logs_append_only
-BEFORE UPDATE OR DELETE ON cardio_logs
+CREATE TRIGGER cardio_logs_mutation_guard
+BEFORE INSERT OR UPDATE OR DELETE ON cardio_logs
 FOR EACH ROW EXECUTE FUNCTION prevent_workout_log_mutation();
