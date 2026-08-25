@@ -1428,7 +1428,7 @@ describe("session completion", () => {
       type: "retry_operation",
       idempotencyKey: completeKey,
     });
-    expect(completing.status).toBe("active");
+    expect(completing.status).toBe("completing");
     expect(
       completing.operations.find(
         ({ idempotencyKey }) => idempotencyKey === completeKey,
@@ -1465,6 +1465,108 @@ describe("session completion", () => {
       }),
     });
     expect(abandoning.status).toBe("abandoned");
+  });
+
+  it("revalidates a failed completion before restoring the completing state", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let state = await makeCompletingState(storage);
+    const completeKey = operation(state, "complete_session").idempotencyKey;
+    state = runnerReducer(state, {
+      type: "operation_failed",
+      idempotencyKey: completeKey,
+      errorCode: "temporary_completion_failure",
+      retryable: true,
+    });
+    state = runnerReducer(state, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 34, repetitions: 10 },
+    });
+    expect(() =>
+      runnerReducer(state, {
+        type: "retry_operation",
+        idempotencyKey: completeKey,
+      }),
+    ).toThrow(/local draft|confirmed/);
+    expect(state.status).toBe("active");
+    expect(operation(state, "complete_session").status).toBe("failed");
+
+    state = runnerReducer(state, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 35, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+    const correctedSetKey = operation(state, "save_set").idempotencyKey;
+    expect(() =>
+      runnerReducer(state, {
+        type: "retry_operation",
+        idempotencyKey: completeKey,
+      }),
+    ).toThrow(/confirmed/);
+
+    state = runnerReducer(state, {
+      type: "operation_saved",
+      idempotencyKey: correctedSetKey,
+    });
+    state = runnerReducer(state, {
+      type: "retry_operation",
+      idempotencyKey: completeKey,
+    });
+    expect(state.status).toBe("completing");
+    expect(operation(state, "complete_session").status).toBe("pending");
+    expect(() =>
+      runnerReducer(state, {
+        type: "update_note",
+        exerciseId: "exercise-row",
+        note: "Must wait for completion retry",
+      }),
+    ).toThrow(/closed/);
+  });
+
+  it("stops after a saved terminal operation even with legacy pending entries", async () => {
+    const storage = new InMemoryRunnerStorage();
+    const completed = await syncRunnerOperations(
+      await makeCompletingState(storage),
+      {
+        storage,
+        submit: async () => ({
+          status: "saved",
+          persistedId: "session-legacy",
+        }),
+      },
+    );
+    expect(completed.status).toBe("completed");
+    const legacyPending: RunnerOperation = {
+      ...completed.operations[0]!,
+      idempotencyKey: stableIdempotencyKey({
+        legacy: "pending-after-terminal",
+      }),
+      sequence: completed.nextOperationSequence,
+      attempts: 0,
+      status: "pending",
+      persistedId: undefined,
+      errorCode: undefined,
+      errorMessage: undefined,
+      retryable: undefined,
+      failureKind: undefined,
+    };
+    const corrupted = {
+      ...completed,
+      operations: [...completed.operations, legacyPending],
+      nextOperationSequence: completed.nextOperationSequence + 1,
+    };
+    const submitted: string[] = [];
+    const result = await syncRunnerOperations(corrupted, {
+      storage,
+      submit: async ({ idempotencyKey }) => {
+        submitted.push(idempotencyKey);
+        return { status: "saved" };
+      },
+    });
+    expect(submitted).toEqual([]);
+    expect(result.status).toBe("completed");
+    expect(result.operations.at(-1)?.status).toBe("pending");
   });
 
   it("does not complete until required work operations are confirmed", async () => {
@@ -1618,5 +1720,63 @@ describe("session completion", () => {
     });
     expect(state.status).toBe("abandoned");
     expect(isNavigationBlocked(state)).toBe(false);
+  });
+
+  it("retries abandonment by superseding later unsaved work", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let state = runnerReducer(makeState(), {
+      type: "abandon_session",
+      reason: "Stopped early",
+    });
+    const abandonKey = operation(state, "abandon_session").idempotencyKey;
+    state = runnerReducer(state, {
+      type: "operation_failed",
+      idempotencyKey: abandonKey,
+      errorCode: "temporary_abandon_failure",
+      retryable: true,
+    });
+    state = runnerReducer(state, {
+      type: "update_note",
+      exerciseId: "exercise-row",
+      note: "Queued after failed abandonment",
+    });
+    state = runnerReducer(state, {
+      type: "save_note",
+      exerciseId: "exercise-row",
+    });
+    const noteKey = operation(state, "save_note").idempotencyKey;
+    state = runnerReducer(state, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 34, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+    const setKey = operation(state, "save_set").idempotencyKey;
+
+    state = runnerReducer(state, {
+      type: "retry_operation",
+      idempotencyKey: abandonKey,
+    });
+    expect(state.status).toBe("abandoning");
+    expect(operation(state, "abandon_session").status).toBe("pending");
+    expect(
+      state.operations.find(({ idempotencyKey }) => idempotencyKey === noteKey)
+        ?.status,
+    ).toBe("superseded");
+    expect(
+      state.operations.find(({ idempotencyKey }) => idempotencyKey === setKey)
+        ?.status,
+    ).toBe("superseded");
+
+    const submitted: string[] = [];
+    state = await syncRunnerOperations(state, {
+      storage,
+      submit: async ({ idempotencyKey }) => {
+        submitted.push(idempotencyKey);
+        return { status: "saved", persistedId: "abandoned-after-retry" };
+      },
+    });
+    expect(submitted).toEqual([abandonKey]);
+    expect(state.status).toBe("abandoned");
   });
 });

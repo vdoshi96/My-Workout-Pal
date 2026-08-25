@@ -1245,6 +1245,45 @@ function replaceOperation(
   return { ...state, operations, sync: syncForState({ ...state, operations }) };
 }
 
+function terminalStatusForState(
+  state: ActiveWorkoutState,
+): "completed" | "abandoned" | undefined {
+  if (state.status === "completed" || state.status === "abandoned") {
+    return state.status;
+  }
+  const savedTerminal = state.operations.find(
+    ({ kind, status }) =>
+      status === "saved" &&
+      (kind === "complete_session" || kind === "abandon_session"),
+  );
+  if (!savedTerminal) return undefined;
+  return savedTerminal.kind === "complete_session" ? "completed" : "abandoned";
+}
+
+function supersedeUnsavedOperations(
+  state: ActiveWorkoutState,
+  preservedKey: string,
+): ActiveWorkoutState {
+  const operations = state.operations.map((operation) => {
+    if (
+      operation.idempotencyKey === preservedKey ||
+      operation.status === "saved" ||
+      operation.status === "superseded"
+    ) {
+      return operation;
+    }
+    return {
+      ...operation,
+      status: "superseded" as const,
+      errorCode: "superseded",
+      errorMessage: "Superseded by retrying session abandonment.",
+      retryable: false,
+      failureKind: undefined,
+    };
+  });
+  return { ...state, operations, sync: syncForState({ ...state, operations }) };
+}
+
 function assertMutable(state: ActiveWorkoutState): void {
   if (
     state.status === "completed" ||
@@ -1960,7 +1999,20 @@ export function runnerReducer(
       retryable: undefined,
       failureKind: undefined,
     };
-    const next = replaceOperation({ ...state, lastUpdatedAt: at }, retried);
+    if (operation.kind === "complete_session") {
+      ensureCompleteSession(state);
+    }
+    let next = replaceOperation({ ...state, lastUpdatedAt: at }, retried);
+    if (operation.kind === "abandon_session") {
+      next = supersedeUnsavedOperations(next, operation.idempotencyKey);
+    }
+    const status =
+      operation.kind === "complete_session"
+        ? "completing"
+        : operation.kind === "abandon_session"
+          ? "abandoning"
+          : next.status;
+    next = { ...next, status };
     return { ...next, sync: syncForState(next) };
   }
   if (action.type === "operation_attempted") {
@@ -2321,6 +2373,12 @@ export async function syncRunnerOperations(
 ): Promise<ActiveWorkoutState> {
   let state = initialState;
   const at = options.now ?? state.lastUpdatedAt;
+  const terminalStatus = terminalStatusForState(state);
+  if (terminalStatus !== undefined) {
+    const next = withUpdated(state, { status: terminalStatus }, at);
+    await persistRunnerState(options.storage, next);
+    return next;
+  }
   if (state.connectivity === "offline") {
     const next = withUpdated(state, { sync: syncForState(state) }, at);
     await persistRunnerState(options.storage, next);
@@ -2402,6 +2460,12 @@ export async function syncRunnerOperations(
         now: at,
       });
       await persistRunnerState(options.storage, state);
+      if (
+        current.kind === "complete_session" ||
+        current.kind === "abandon_session"
+      ) {
+        break;
+      }
       continue;
     }
 
