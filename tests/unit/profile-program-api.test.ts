@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   equipmentChangeRequestSchema,
   onboardingRequestSchema,
+  preferencesUpdateRequestSchema,
   profileProgramApiError,
 } from "@/server/http/profile-program-api";
 import { AuthPolicyError } from "@/server/auth/policy";
@@ -45,6 +46,26 @@ describe("profile program API contract", () => {
         equipmentProfileKind: "barbell",
         idempotencyKey: "equipment-1",
         programId: "22222222-2222-4222-8222-222222222222",
+      }).success,
+    ).toBe(false);
+
+    expect(
+      preferencesUpdateRequestSchema.safeParse({
+        expectedUpdatedAt: "2026-08-25T12:00:00.000Z",
+        idempotencyKey: "preferences-1",
+        reducedMotion: false,
+        timezone: "America/Chicago",
+        unitSystem: "imperial",
+      }).success,
+    ).toBe(true);
+    expect(
+      preferencesUpdateRequestSchema.safeParse({
+        expectedUpdatedAt: "2026-08-25T12:00:00.000Z",
+        idempotencyKey: "preferences-1",
+        ownerUid: "other-user",
+        reducedMotion: false,
+        timezone: "America/Chicago",
+        unitSystem: "imperial",
       }).success,
     ).toBe(false);
   });

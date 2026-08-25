@@ -104,6 +104,14 @@ export type EquipmentChangeInput = Readonly<{
   idempotencyKey?: string;
 }>;
 
+export type PreferencesUpdateInput = Readonly<{
+  expectedUpdatedAt: string;
+  idempotencyKey?: string;
+  reducedMotion: boolean;
+  timezone: string;
+  unitSystem: UnitSystem;
+}>;
+
 type NormalizedOnboardingInput = Readonly<{
   equipmentProfileKind: EquipmentProfileKind;
   unitSystem: UnitSystem;
@@ -117,6 +125,14 @@ type NormalizedEquipmentChangeInput = Readonly<{
   baseRevisionId: string;
   equipmentProfileKind: EquipmentProfileKind;
   idempotencyKey: string | undefined;
+}>;
+
+type NormalizedPreferencesUpdateInput = Readonly<{
+  expectedUpdatedAt: string;
+  idempotencyKey: string | undefined;
+  reducedMotion: boolean;
+  timezone: string;
+  unitSystem: UnitSystem;
 }>;
 
 type CatalogExerciseRow = typeof catalogExercises.$inferSelect;
@@ -142,6 +158,7 @@ export type PreferencesReadModel = Readonly<{
   unitSystem: UnitSystem;
   timezone: string;
   reducedMotion: boolean;
+  updatedAt: string;
 }>;
 
 export type EquipmentReadModel = Readonly<{
@@ -271,6 +288,10 @@ export type ProfileProgramRepository = Readonly<{
     viewer: ViewerContext | null,
     input: EquipmentChangeInput,
   ): Promise<EquipmentChangeResult>;
+  updatePreferences(
+    viewer: ViewerContext | null,
+    input: PreferencesUpdateInput,
+  ): Promise<ProfileProgramReadModel>;
 }>;
 
 const profileKindSchema = z.enum(["dumbbells", "barbell"]);
@@ -291,6 +312,15 @@ const equipmentChangeSchema = z
     equipmentProfileKind: profileKindSchema.optional(),
     profileKind: profileKindSchema.optional(),
     idempotencyKey: z.string().trim().min(1).max(180).optional(),
+  })
+  .strict();
+const preferencesUpdateSchema = z
+  .object({
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    idempotencyKey: z.string().trim().min(1).max(180).optional(),
+    reducedMotion: z.boolean(),
+    timezone: z.string().trim().min(1).max(64),
+    unitSystem: z.enum(["metric", "imperial"]),
   })
   .strict();
 
@@ -329,12 +359,7 @@ function parseOnboardingInput(input: OnboardingInput): NormalizedOnboardingInput
   const result = onboardingSchema.safeParse(input);
   if (!result.success) throw new RepositoryValidationError("The onboarding data is invalid.");
   const parsed = result.data;
-  const timezone = parsed.timezone ?? "UTC";
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone }).format();
-  } catch {
-    throw new RepositoryValidationError("The onboarding data is invalid.");
-  }
+  const timezone = validTimezone(parsed.timezone ?? "UTC");
   return {
     equipmentProfileKind: parseEquipmentProfileKind(
       parsed.equipmentProfileKind,
@@ -345,6 +370,15 @@ function parseOnboardingInput(input: OnboardingInput): NormalizedOnboardingInput
     reducedMotion: parsed.reducedMotion ?? false,
     idempotencyKey: parsed.idempotencyKey,
   };
+}
+
+function validTimezone(value: string): string {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
+  } catch {
+    throw new RepositoryValidationError("The time zone is invalid.");
+  }
+  return value;
 }
 
 function parseEquipmentChangeInput(input: EquipmentChangeInput): NormalizedEquipmentChangeInput {
@@ -369,6 +403,22 @@ function parseEquipmentChangeInput(input: EquipmentChangeInput): NormalizedEquip
       parsed.profileKind,
     ),
     idempotencyKey: parsed.idempotencyKey,
+  };
+}
+
+function parsePreferencesUpdateInput(
+  input: PreferencesUpdateInput,
+): NormalizedPreferencesUpdateInput {
+  const result = preferencesUpdateSchema.safeParse(input);
+  if (!result.success) {
+    throw new RepositoryValidationError("The preferences data is invalid.");
+  }
+  return {
+    expectedUpdatedAt: result.data.expectedUpdatedAt,
+    idempotencyKey: result.data.idempotencyKey,
+    reducedMotion: result.data.reducedMotion,
+    timezone: validTimezone(result.data.timezone),
+    unitSystem: result.data.unitSystem,
   };
 }
 
@@ -616,6 +666,7 @@ async function readPreferences(
     unitSystem: row.unitSystem,
     timezone: row.timezone,
     reducedMotion: row.reducedMotion,
+    updatedAt: iso(row.updatedAt),
   };
 }
 
@@ -1629,11 +1680,98 @@ export function createProfileProgramRepository(
     });
   }
 
+  async function updatePreferences(
+    viewerInput: ViewerContext | null,
+    input: PreferencesUpdateInput,
+  ): Promise<ProfileProgramReadModel> {
+    const viewer = requirePermanentMutationViewer(viewerInput);
+    const normalized = parsePreferencesUpdateInput(input);
+    const requestHash = stableRequestHash("preferences-update", {
+      expectedUpdatedAt: normalized.expectedUpdatedAt,
+      reducedMotion: normalized.reducedMotion,
+      timezone: normalized.timezone,
+      unitSystem: normalized.unitSystem,
+    });
+    return database.transaction(async (transaction) => {
+      const tx = transaction as unknown as Database;
+      await tx.execute(
+        sql`SELECT owner_firebase_uid FROM user_preferences WHERE owner_firebase_uid = ${viewer.uid} FOR UPDATE`,
+      );
+      const existingIdempotency = await findIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+      );
+      if (existingIdempotency) {
+        if (
+          existingIdempotency.operation !== "preferences-update" ||
+          existingIdempotency.requestHash !== requestHash
+        ) {
+          throw new RepositoryConflictError(
+            "The idempotency key was already used for another request.",
+          );
+        }
+        if (existingIdempotency.resultPayload["pending"] === false) {
+          return readViewerData(tx, viewer.uid);
+        }
+      }
+      const current = (
+        await tx
+          .select({ updatedAt: userPreferences.updatedAt })
+          .from(userPreferences)
+          .where(eq(userPreferences.ownerFirebaseUid, viewer.uid))
+          .limit(1)
+      )[0];
+      if (!current) throw new RepositoryNotFoundError();
+      if (iso(current.updatedAt) !== normalized.expectedUpdatedAt) {
+        throw new RepositoryConflictError(
+          "Preferences changed after this page loaded. Reload before saving.",
+        );
+      }
+      const reservation = await reserveIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+        "preferences-update",
+        requestHash,
+      );
+      if (reservation?.replay) return readViewerData(tx, viewer.uid);
+      const updatedAt = new Date(
+        Math.max(Date.now(), current.updatedAt.getTime() + 1),
+      );
+      const changed = await tx
+        .update(userPreferences)
+        .set({
+          reducedMotion: normalized.reducedMotion,
+          timezone: normalized.timezone,
+          unitSystem: normalized.unitSystem,
+          updatedAt,
+        })
+        .where(
+          and(
+            eq(userPreferences.ownerFirebaseUid, viewer.uid),
+            eq(userPreferences.updatedAt, current.updatedAt),
+          ),
+        )
+        .returning({ ownerFirebaseUid: userPreferences.ownerFirebaseUid });
+      if (changed.length !== 1) {
+        throw new RepositoryConflictError(
+          "Preferences changed before they could be saved. Reload before retrying.",
+        );
+      }
+      await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        updatedAt: iso(updatedAt),
+      });
+      return readViewerData(tx, viewer.uid);
+    });
+  }
+
   return {
     onboard,
     getViewerData,
     getActiveProgram,
     confirmEquipmentChange,
+    updatePreferences,
   };
 }
 
@@ -1667,6 +1805,14 @@ export async function confirmEquipmentChange(
   input: EquipmentChangeInput,
 ): Promise<EquipmentChangeResult> {
   return createProfileProgramRepository(database).confirmEquipmentChange(viewer, input);
+}
+
+export async function updateViewerPreferences(
+  database: Database,
+  viewer: ViewerContext | null,
+  input: PreferencesUpdateInput,
+): Promise<ProfileProgramReadModel> {
+  return createProfileProgramRepository(database).updatePreferences(viewer, input);
 }
 
 // Common alternate names used by route-level callers.

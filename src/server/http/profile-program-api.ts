@@ -34,6 +34,16 @@ export const equipmentChangeRequestSchema = z
   })
   .strict();
 
+export const preferencesUpdateRequestSchema = z
+  .object({
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    idempotencyKey: idempotencyKeySchema,
+    reducedMotion: z.boolean(),
+    timezone: z.string().trim().min(1).max(64),
+    unitSystem: z.enum(["metric", "imperial"]),
+  })
+  .strict();
+
 export function profileProgramApiError(error: unknown): Response {
   if (
     error instanceof RepositoryNotFoundError ||

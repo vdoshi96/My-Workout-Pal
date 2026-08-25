@@ -90,6 +90,7 @@ describe("profile and active-program repository", () => {
       unitSystem: "imperial",
       timezone: "America/Chicago",
       reducedMotion: true,
+      updatedAt: expect.any(String),
     });
     expect(first.equipment.profileKind).toBe("dumbbells");
     const active = first.activeProgram;
@@ -164,6 +165,68 @@ describe("profile and active-program repository", () => {
         "SELECT count(*)::text AS count FROM user_profiles WHERE firebase_uid = 'timezone-invalid';",
       ),
     ).resolves.toMatchObject({ rows: [{ count: "0" }] });
+  });
+
+  it("updates preferences with optimistic conflict and idempotent replay", async () => {
+    const { database } = await openDatabase();
+    const repository = createProfileProgramRepository(database);
+    const original = await repository.onboard(viewer("member-preferences"), {
+      equipmentProfileKind: "dumbbells",
+      timezone: "UTC",
+      unitSystem: "imperial",
+    });
+    const input = {
+      expectedUpdatedAt: original.preferences.updatedAt,
+      idempotencyKey: "preferences-1",
+      reducedMotion: true,
+      timezone: "America/Chicago",
+      unitSystem: "metric" as const,
+    };
+
+    const updated = await repository.updatePreferences(viewer("member-preferences"), input);
+    const replay = await repository.updatePreferences(viewer("member-preferences"), input);
+    expect(replay).toEqual(updated);
+    expect(updated.preferences).toMatchObject({
+      reducedMotion: true,
+      timezone: "America/Chicago",
+      unitSystem: "metric",
+    });
+    expect(updated.preferences.updatedAt).not.toBe(original.preferences.updatedAt);
+
+    await expect(
+      repository.updatePreferences(viewer("member-preferences"), {
+        ...input,
+        idempotencyKey: "preferences-stale",
+        timezone: "America/New_York",
+      }),
+    ).rejects.toBeInstanceOf(RepositoryConflictError);
+    await expect(repository.getViewerData(viewer("member-preferences"))).resolves.toEqual(updated);
+  });
+
+  it("denies unverified preference changes and invalid timezones without writes", async () => {
+    const { database } = await openDatabase();
+    const repository = createProfileProgramRepository(database);
+    const original = await repository.onboard(viewer("member-preferences-denied"), {
+      equipmentProfileKind: "dumbbells",
+    });
+    const input = {
+      expectedUpdatedAt: original.preferences.updatedAt,
+      idempotencyKey: "preferences-denied",
+      reducedMotion: false,
+      timezone: "Mars/Olympus",
+      unitSystem: "imperial" as const,
+    };
+
+    await expect(
+      repository.updatePreferences(viewer("member-preferences-denied", false), {
+        ...input,
+        timezone: "UTC",
+      }),
+    ).rejects.toMatchObject({ code: "email_unverified" });
+    await expect(
+      repository.updatePreferences(viewer("member-preferences-denied"), input),
+    ).rejects.toBeInstanceOf(RepositoryValidationError);
+    await expect(repository.getViewerData(viewer("member-preferences-denied"))).resolves.toEqual(original);
   });
 
   it("keeps active reads owner-scoped and maps foreign IDs to the same not-found error", async () => {

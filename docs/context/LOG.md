@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Conflict-safe settings and sign-out
+
+- Added owner-scoped preference updates for units, IANA time zone, and reduced motion with strict input, verification gating, row locking, expected-update timestamps, stable idempotent replay, and stale-page conflict refusal.
+- Added a private same-origin CSRF endpoint and protected Settings surface. Unit copy distinguishes presentation conversion from canonical kilogram and meter storage, while equipment changes return to the Program revision workflow.
+- Implemented sign-out ordering that clears only the active Firebase UID’s IndexedDB workout namespace before deleting the secure HTTP-only session and signing out the configured Firebase client.
+- Kept account deletion visibly closed instead of simulating success while its recent-auth, database saga, Firebase failure-retry, and credential-backed paths remain unimplemented.
+- Retained missing preference-method and missing-route/schema failures before implementation. Twenty-eight focused repository, API contract, and authorization-order assertions pass. Current main passes 39 files and 268 tests, strict type checking, full lint, Drizzle/PWA/documentation parity, and the production build. A parallel resource-contention timeout in the initial PGlite schema case passed alone and on full sequential replay.
+
 ## 2026-08-25: Authenticated compatible library
 
 - Added a first-class Library destination to the protected account shell and a private dynamic route that derives the active equipment profile from the owner-scoped program read model.
