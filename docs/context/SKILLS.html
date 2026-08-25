@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="a11b8c7a51863f04bd3ac073f9c2987b225eef2a8257c771e1ca2fd9fe43e1be">
+  <title>Project workflows · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Project workflows</h1>
+<h2>Context retrieval</h2>
+<p>Read <code>AGENTS.md</code> and the context files before changing the repository. Verify code and deployed behavior because context notes can become stale.</p>
+<h2>Feature planning</h2>
+<p>Update the applicable plan in <code>docs/plans/</code> before implementation. Record the user outcome, navigation, states, data invariants, persistence, authorization, recovery, device behavior, accessibility, privacy, acceptance criteria, tests, and evidence.</p>
+<h2>Test-driven domain work</h2>
+<p>For domain behavior or transformations, first add a test that fails for the intended reason. Capture the failing test name and result in the latest QA note. Implement the narrow behavior, rerun the test, then run its broader suite.</p>
+<h2>Documentation parity</h2>
+<p>Edit Markdown as the canonical source. Generate matching HTML with <code>pnpm docs:build</code> and verify byte-for-byte source metadata with <code>pnpm docs:check</code>.</p>
+<h2>Video curation</h2>
+<p>Run the resumable curation command only with an official YouTube Data API v3 key. Review the generated report, watch every proposed seed in full, record approval, and validate complete two-video mappings before a seed or deployment.</p>
+<h2>Release closeout</h2>
+<p>Release only a reviewed main commit. Confirm preview, production, runtime logs, public URL, GitHub main, local main, and deployed commit independently. Remove completed worktrees and preserve only the newest verified QA evidence.</p>
+
+  </main>
+</body>
+</html>

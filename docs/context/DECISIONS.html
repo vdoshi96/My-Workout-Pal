@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="af99a2119a06943977a635663f6233532f73169a19485548f173fcd5c3a2ba3f">
+  <title>Decisions · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Decisions</h1>
+<h2>2026-08-25: Treat the recording as workflow evidence</h2>
+<p>The private recording is evidence for navigation and interaction intent. It is not a source repository or visual specification. The application uses original code, data, copy, assets, and identity.</p>
+<h2>2026-08-25: Keep guest data temporary</h2>
+<p>Guest equipment and runner interactions remain in memory or tab-scoped browser storage. The interface labels sample data and never reports that guest activity is saved to an account.</p>
+<h2>2026-08-25: Use immutable program and workout revisions</h2>
+<p>Editing a program creates a revision. Starting a workout snapshots the relevant prescription and exercise meaning. Later program or catalog edits do not alter completed or in-progress history.</p>
+<h2>2026-08-25: Store canonical metric values</h2>
+<p>Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.</p>
+<h2>2026-08-25: Verify identity only on the server</h2>
+<p>Firebase client identity is exchanged for a secure HTTP-only session. Server code derives Firebase UID from the verified session and applies it to every user-owned database query. Client-supplied ownership identifiers are ignored or rejected.</p>
+<h2>2026-08-25: Require confirmed video approval</h2>
+<p>Discovery scripts can propose candidates but cannot silently seed production. A seeded demonstration requires mechanical eligibility, manual review, a complete viewing, approval metadata, and complete two-video mapping validation.</p>
+<h2>2026-08-25: Defer an open-source license decision</h2>
+<p>The repository can be public without granting an open-source license. No license will be added without explicit legal approval from the user.</p>
+<h2>2026-08-25: Use a training route atlas visual system</h2>
+<p>The program is represented as a route with five waypoints, and equipment changes reroute only substituted movements. The selected mobile comp is <code>.impeccable/mocks/route-atlas-map.png</code>. Semantic structure and status truth outrank decorative cartography.</p>
+<h2>2026-08-25: Use the supported webpack production build path</h2>
+<p>The first Next.js 16.3.2 Turbopack production compile held the build lock without advancing diagnostics and required termination after more than one minute. The same source compiled, type-checked, prerendered, and traced in about 10 seconds with <code>next build --webpack</code>. The package build script uses webpack until a bounded Turbopack investigation proves the default reliable.</p>
+
+  </main>
+</body>
+</html>

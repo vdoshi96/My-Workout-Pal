@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="aa325b426116ec5cfdeb4c14aa2eaa2a5659d6239f6f3d93530733d248e3f99b">
+  <title>Repository instructions · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Repository instructions</h1>
+<p>Read <code>/Users/vishal/.codex/AGENTS.md</code> before implementation work. Then read the project memory in this order:</p>
+<ol>
+<li><code>docs/context/STATUS.md</code></li>
+<li><code>docs/context/PROJECT.md</code></li>
+<li><code>docs/context/DECISIONS.md</code></li>
+<li><code>docs/context/SOURCES.md</code></li>
+<li><code>docs/wiki/index.md</code></li>
+</ol>
+<h2>Product and engineering rules</h2>
+<ul>
+<li>Treat the raw reference recording and every derived audio, transcript, frame, or curation scratch report as private. Never commit or publish them.</li>
+<li>Write or update the relevant plan in <code>docs/plans/</code> before implementing a feature, flow, or page. Cover outcomes, navigation, states, types, persistence, authorization, failure recovery, responsive behavior, accessibility, privacy, acceptance criteria, tests, and browser evidence.</li>
+<li>Use test-driven development for domain rules and transformations. Retain concise evidence that a meaningful test failed before its implementation and passed afterward.</li>
+<li>Keep Firebase UID ownership checks on the server. Never trust a UID supplied by a client.</li>
+<li>Keep weight in kilograms and distance in meters in storage. Convert only at presentation and validated input boundaries.</li>
+<li>Preserve immutable workout and program-revision snapshots. Equipment changes must create a confirmed active-program revision and must not rewrite history.</li>
+<li>Never seed, approve, or publish an exercise video that the curation policy has not accepted and a human has not watched in full.</li>
+<li>Keep secrets in local or Vercel environment variables. Commit only <code>.env.example</code> with empty values and setup notes.</li>
+<li>Keep project-owned Markdown and generated HTML documentation in parity. Use <code>pnpm docs:build</code> and verify with <code>pnpm docs:check</code> after the package scripts exist.</li>
+<li>Keep only the newest completed QA evidence in <code>docs/qa/latest/</code>. Remove superseded generated evidence after the replacement is verified.</li>
+</ul>
+<h2>Git closeout</h2>
+<p>For each authorized implementation iteration, use a feature branch, push it, merge it into <code>main</code>, update local <code>main</code> to the identical commit, and remove completed worktrees. Record any active or unresolved worktree and its reason in <code>docs/context/STATUS.md</code>.</p>
+<!-- BEGIN:nextjs-agent-rules --><h1>This is NOT the Next.js you know</h1>
+<p>This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in <code>node_modules/next/dist/docs/</code> (resolved from this file&#39;s directory; in monorepos the <code>next</code> package may not be visible from the repo root) before writing any code. Heed deprecation notices.</p>
+<p>This block is written and re-added by <code>next dev</code> — verify at <code>node_modules/next/dist/server/lib/generate-agent-files.js</code>. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.</p>
+<!-- END:nextjs-agent-rules -->
+
+  </main>
+</body>
+</html>

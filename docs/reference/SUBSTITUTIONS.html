@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="21cf2ea911f1b1a047764f31677b26b7361dbc8b7421a95ae4c4c8d556d96272">
+  <title>Equipment substitutions · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Equipment substitutions</h1>
+<h2>Profiles</h2>
+<p>The dumbbell profile includes dumbbells, bodyweight, and an ordinary bench. The barbell profile includes a barbell, plates, a rack, a bench, dumbbells, and bodyweight.</p>
+<p>Compatibility is derived from each exercise&#39;s required equipment. The program selector never marks a movement compatible because its name contains an equipment word.</p>
+<h2>Starter days</h2>
+<h3>Push</h3>
+<p>Both profiles use the following prescriptions in order:</p>
+<ol>
+<li>Dumbbell bench press.</li>
+<li>Seated dumbbell shoulder press.</li>
+<li>Incline dumbbell press.</li>
+<li>Overhead dumbbell triceps extension.</li>
+<li>Dead bug.</li>
+<li>Front plank.</li>
+</ol>
+<h3>Pull</h3>
+<p>The barbell profile uses the following prescriptions:</p>
+<ol>
+<li>Barbell bent-over row.</li>
+<li>One-arm dumbbell row.</li>
+<li>Dumbbell pullover.</li>
+<li>Dumbbell curl.</li>
+<li>Bird dog.</li>
+<li>Side plank.</li>
+</ol>
+<p>The dumbbell profile replaces barbell bent-over row with chest-supported dumbbell row and retains the remaining order.</p>
+<h3>Legs</h3>
+<p>Both profiles use the following prescriptions in order:</p>
+<ol>
+<li>Goblet squat.</li>
+<li>Dumbbell Romanian deadlift.</li>
+<li>Reverse lunge.</li>
+<li>Standing calf raise.</li>
+<li>Plank shoulder tap.</li>
+<li>Reverse crunch.</li>
+</ol>
+<h3>Upper</h3>
+<p>The barbell profile uses the following prescriptions:</p>
+<ol>
+<li>Barbell bench press.</li>
+<li>Barbell bent-over row.</li>
+<li>Seated dumbbell shoulder press.</li>
+<li>One-arm dumbbell row.</li>
+<li>Bicycle crunch.</li>
+<li>Hollow hold.</li>
+</ol>
+<p>The dumbbell profile replaces barbell bench press with dumbbell bench press and barbell bent-over row with chest-supported dumbbell row. It retains the remaining order.</p>
+<h3>Lower</h3>
+<p>The barbell profile uses the following prescriptions:</p>
+<ol>
+<li>Barbell back squat.</li>
+<li>Barbell Romanian deadlift.</li>
+<li>Bulgarian split squat.</li>
+<li>Barbell hip thrust.</li>
+<li>Dead bug.</li>
+<li>Side plank.</li>
+</ol>
+<p>The dumbbell profile uses the following prescriptions:</p>
+<ol>
+<li>Heavy goblet squat, implemented as the canonical goblet squat with a prescription label and intent rather than a duplicate catalog exercise.</li>
+<li>Dumbbell Romanian deadlift.</li>
+<li>Bulgarian split squat.</li>
+<li>Dumbbell hip thrust.</li>
+<li>Dead bug.</li>
+<li>Side plank.</li>
+</ol>
+<p>The brief permits a weighted glute bridge as the fourth dumbbell movement. The initial seed chooses dumbbell hip thrust so the movement pattern stays closer to the barbell profile and the exercise name remains explicit.</p>
+<h2>Substitution matrix</h2>
+<p>The following mappings apply in both directions when the target profile changes:</p>
+<table>
+<thead>
+<tr>
+<th>Barbell variation</th>
+<th>Dumbbell variation</th>
+<th>Preserved</th>
+<th>Cleared with explanation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Barbell bent-over row</td>
+<td>Chest-supported dumbbell row</td>
+<td>Sets, repetition range, rest, section, order, and general notes</td>
+<td>Load target, movement-specific cue, and prior-value link</td>
+</tr>
+<tr>
+<td>Barbell bench press</td>
+<td>Dumbbell bench press</td>
+<td>Sets, repetition range, rest, section, order, and general notes</td>
+<td>Load target, movement-specific cue, and prior-value link</td>
+</tr>
+<tr>
+<td>Barbell back squat</td>
+<td>Goblet squat with heavy prescription label</td>
+<td>Sets, repetition range, rest, section, order, and general notes</td>
+<td>Load target, rack-specific cue, and prior-value link</td>
+</tr>
+<tr>
+<td>Barbell Romanian deadlift</td>
+<td>Dumbbell Romanian deadlift</td>
+<td>Sets, repetition range, rest, section, order, and general notes</td>
+<td>Load target, grip-specific cue, and prior-value link</td>
+</tr>
+<tr>
+<td>Barbell hip thrust</td>
+<td>Dumbbell hip thrust</td>
+<td>Sets, repetition range, rest, section, order, and general notes</td>
+<td>Load target, bar-pad cue, and prior-value link</td>
+</tr>
+</tbody></table>
+<p>Unchanged movements retain all compatible prescription values. A custom movement that becomes incompatible has no automatic substitute. The confirmation flow requires the user to choose a compatible replacement, remove the prescription, or cancel.</p>
+<h2>Mutation algorithm</h2>
+<ol>
+<li>Load the active program revision through the verified owner.</li>
+<li>Derive compatibility from required equipment.</li>
+<li>Map incompatible seeded variations through the matrix.</li>
+<li>Classify every prescription field as preserved, cleared, or requiring user resolution.</li>
+<li>Present the complete diff before mutation.</li>
+<li>Validate confirmation against the base revision and proposed target profile.</li>
+<li>Clone the revision, apply mappings and confirmed custom resolutions, and advance the active pointer in one transaction.</li>
+<li>Keep prior revisions, workout snapshots, set logs, cardio logs, and analytics source rows unchanged.</li>
+<li>Return the new revision ID and a summary that matches the confirmed diff.</li>
+</ol>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Both profiles produce five usable starter days with core and cardio.</li>
+<li>Every seeded mapping is reversible without duplicating canonical records.</li>
+<li>An equipment change mutates only the selected active program.</li>
+<li>Completed and active workout snapshots retain their original exercise and prescription meaning.</li>
+<li>General notes, sets, repetition ranges, rest, section, and order survive mapped substitutions.</li>
+<li>Incompatible targets are never silently copied.</li>
+<li>A stale or duplicate confirmation cannot create divergent revisions.</li>
+<li>Another user cannot preview or confirm substitutions for an owned program.</li>
+</ul>
+
+  </main>
+</body>
+</html>

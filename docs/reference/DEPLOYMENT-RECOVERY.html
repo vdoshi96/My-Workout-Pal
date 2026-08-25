@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="28f2bc873f4a2929d6ebb9c289f9c853e425fe3eefca1936f91fa7e7d2819487">
+  <title>Deployment, cost, and recovery · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Deployment, cost, and recovery</h1>
+<h2>Environments</h2>
+<ul>
+<li>Local development uses local environment variables and an isolated development database branch.</li>
+<li>Pull requests use Vercel previews and Neon preview branches when the native integration supports them.</li>
+<li>Production deploys only from <code>main</code> after preview verification.</li>
+<li>Firebase uses authorized local, preview, and production origins. Separate projects are preferred when account and quota access permit; otherwise emulator-backed tests and explicit environment restrictions prevent test-user leakage.</li>
+</ul>
+<p>Secrets live only in local or Vercel environment storage. <code>.env.example</code> contains names and setup guidance with empty values.</p>
+<h2>Vercel and Neon provisioning</h2>
+<p>The target Vercel team is <code>vdoshi96s-projects</code>. Link the GitHub repository and configure production from <code>main</code> with pull-request previews.</p>
+<p>Install Neon through the Vercel Marketplace only after confirming the selected plan is free and does not add a paid service. The native integration can inject database environment variables and create preview branches. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.</p>
+<p>Primary references:</p>
+<ul>
+<li><a href="https://vercel.com/marketplace/neon">Neon on Vercel Marketplace</a></li>
+<li><a href="https://vercel.com/docs/marketplace-storage">Storage on Vercel Marketplace</a></li>
+</ul>
+<h2>Spend management</h2>
+<p>The Vercel Pro plan includes a $20 monthly credit after included allocations. Credit does not make overage impossible. Spend Management can notify, call a webhook, or pause production projects at the configured spend amount. Setting a spend amount does not pause usage unless the pause action is enabled.</p>
+<p>Configure the following controls only within the existing Pro plan and without increasing paid limits:</p>
+<ul>
+<li>Confirm the automatic 50%, 75%, and 100% spend-amount web and email notifications.</li>
+<li>Configure a 90% usage notification where the Vercel dashboard exposes that threshold for the relevant usage category. The Spend Management budget itself documents only 50%, 75%, and 100%; record any unavailable 90% control rather than claiming it exists.</li>
+<li>Enable the supported pause-all-production-projects action at 100% of the chosen spend amount as the hard-cap behavior.</li>
+<li>Record that checks can lag the threshold and that some overage can occur before pause takes effect.</li>
+<li>Do not set or change the spend amount until the user approves the dollar value because it controls potential billing and can pause unrelated team projects.</li>
+</ul>
+<p>Track the following usage separately:</p>
+<ul>
+<li>Vercel function invocations, duration, memory, and failures.</li>
+<li>Fast Data Transfer and Fast Origin Transfer.</li>
+<li>Edge requests.</li>
+<li>Build minutes and deployment frequency.</li>
+<li>Image optimization transformations and cache misses.</li>
+<li>Neon compute, storage, data transfer, branches, and connection limits.</li>
+<li>YouTube Data API daily quota and per-command estimates.</li>
+</ul>
+<p>Primary references:</p>
+<ul>
+<li><a href="https://vercel.com/docs/plans/pro-plan">Vercel Pro plan</a></li>
+<li><a href="https://vercel.com/docs/spend-management">Spend Management</a></li>
+<li><a href="https://vercel.com/docs/pricing/manage-and-optimize-usage">Manage and optimize usage</a></li>
+<li><a href="https://vercel.com/docs/notifications">Vercel notifications</a></li>
+</ul>
+<h2>Release procedure</h2>
+<ol>
+<li>Confirm the feature branch is clean and documentation parity passes.</li>
+<li>Run the full local verification matrix and retain only the newest completed evidence.</li>
+<li>Push the branch and inspect the Vercel preview commit and environment-variable presence.</li>
+<li>Apply only approved preview migrations and seed data.</li>
+<li>Replay the required browser, security, accessibility, PWA, and embed flows on preview.</li>
+<li>Inspect build and runtime logs by request ID.</li>
+<li>Merge the verified branch into <code>main</code> without bypassing required checks.</li>
+<li>Update local <code>main</code> to the exact GitHub commit.</li>
+<li>Wait for the production deployment and verify its source commit.</li>
+<li>Apply production migration and seed changes only when they were reviewed and authorized as part of the release.</li>
+<li>Replay production guest and representative authenticated flows with production-safe test data.</li>
+<li>Confirm local main, GitHub main, and production report the same commit.</li>
+<li>Remove completed worktrees and record any unresolved worktree and reason.</li>
+</ol>
+<h2>Runtime recovery</h2>
+<h3>Application rollback</h3>
+<p>Promote the last verified Vercel deployment only when its database schema remains compatible. Confirm the promoted deployment commit and replay a safe smoke test. A deployment rollback does not reverse database migrations.</p>
+<h3>Database recovery</h3>
+<p>Use forward-compatible migrations. Before a destructive migration, create and verify a recovery point or branch through supported Neon features. Recovery requires an explicit target, impact statement, and verification query. Never run an unscoped restore against production.</p>
+<h3>Authentication recovery</h3>
+<p>If session verification fails broadly, keep public content available, block permanent mutations, clear invalid cookies, and guide sign-in. Rotate a compromised Admin credential in Firebase and Vercel, revoke affected refresh tokens, and verify that logs contain no secret values.</p>
+<h3>Video recovery</h3>
+<p>If one demonstration fails, show the remaining approved option and direct YouTube link. If both fail, show the unavailable state and open a reviewed replacement workflow. Do not hot-swap an unapproved video.</p>
+<h3>Service-worker recovery</h3>
+<p>Publish a new cache version, retain pending IndexedDB operations, and remove only obsolete public caches during activation. If a worker causes a critical navigation failure, publish a compatibility worker that unregisters safely after it restores ordinary network navigation.</p>
+<h2>Credential and approval gates</h2>
+<ul>
+<li>GitHub repository creation and push require a valid authenticated GitHub credential.</li>
+<li>Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.</li>
+<li>Neon Marketplace installation requires confirmation that the selected plan is free. Any billing or trial acceptance requires the user.</li>
+<li>Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.</li>
+<li>YouTube curation requires an official API key and sufficient quota.</li>
+</ul>
+
+  </main>
+</body>
+</html>

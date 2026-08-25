@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="bf2fc5688e1731647aa5a8ac468f4503f4459dd9c1c4b1606264ca6180dc13ab">
+  <title>Verification plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Verification plan</h1>
+<h2>Evidence principles</h2>
+<p>Local green checks prove only the environment in which they ran. Preview and production require separate build, browser, runtime-log, and commit evidence. Every claim names its environment and commit.</p>
+<p>Keep the newest completed run under <code>docs/qa/latest/</code>. A concise Markdown note and generated HTML counterpart contain commands, commit, environment URLs, pass and fail counts, TDD fail-then-pass evidence, screenshots, and unresolved findings. Raw traces, videos, HAR files, and redundant screenshots remain untracked unless one is needed to explain a release blocker.</p>
+<h2>Static and unit verification</h2>
+<ul>
+<li><code>pnpm typecheck</code> with strict TypeScript and no ignored errors.</li>
+<li><code>pnpm lint</code> with Next.js, React, accessibility, import, and project rules.</li>
+<li><code>pnpm format:check</code> for maintained source and documentation.</li>
+<li><code>pnpm test:unit</code> for calculations, conversions, progression, equipment compatibility, substitutions, revision rules, YouTube normalization and ranking, and state reducers.</li>
+<li><code>pnpm test:integration</code> for repositories, migrations, auth session helpers, CSRF, ownership, idempotency, deletion saga, and curation persistence.</li>
+<li><code>pnpm db:check</code> for empty migration, upgrade migration, constraints, rollback policy, and generated-schema drift.</li>
+<li><code>pnpm seed:check</code> for exact starter days, defaults, aliases, compatibility, and exactly two approved videos per required canonical variation.</li>
+<li><code>pnpm docs:check</code> for Markdown and HTML parity.</li>
+</ul>
+<h2>Security matrix</h2>
+<p>Automated tests must cover invalid and missing sessions, unverified password accounts, verified Google identities, expired and revoked sessions, CSRF mismatch, invalid origin, duplicate submit, stale revision, guessed identifiers, cross-user reads and writes, custom exercise ownership, workout ownership, analytics ownership, account deletion, and reauthentication freshness.</p>
+<p>Run an adversarial route matrix with two seeded test users. For every owned resource, user B attempts list, read, update, delete, attach, substitute, resume, complete, and analytics access against user A&#39;s identifiers. Responses must not disclose existence and database state must remain unchanged.</p>
+<h2>Browser matrix</h2>
+<p>Run Playwright against Chromium and WebKit at the following sizes:</p>
+<ul>
+<li>Phone: 390 by 844.</li>
+<li>Tablet: 820 by 1,180.</li>
+<li>Desktop: 1,440 by 1,000.</li>
+</ul>
+<p>Cover guest program and both equipment profiles, all five days, library, exercise detail, dual videos and fallback, sample workout and analytics, registration and sign-in, program editing, custom exercise, complete workout, resume, history, records, analytics, settings, recovery, sign-out, and deletion.</p>
+<h2>Unhappy-path matrix</h2>
+<p>Inject slow and failed server responses, offline transitions, expired auth, duplicate input, stale revision, removed video, denied embed, database error, session exchange error, and service-worker update. Replay refresh, browser back, route navigation, tab-close event, and reopen. Confirm that local draft state, server state, and presented status agree.</p>
+<h2>Accessibility and presentation</h2>
+<ul>
+<li>Run automated accessibility checks on every primary route and state.</li>
+<li>Complete a keyboard-only pass for navigation, dialogs, comboboxes, editors, runner, charts, auth, and deletion.</li>
+<li>Inspect screen-reader names, live-region behavior, heading order, landmarks, focus restoration, error summaries, and chart table alternatives.</li>
+<li>Test 200% zoom, forced colors where available, light and dark modes, and reduced motion.</li>
+<li>Confirm 44 by 44 CSS pixel interactive targets on phone.</li>
+</ul>
+<h2>PWA and performance</h2>
+<ul>
+<li>Validate manifest, service worker, installability, update path, offline public routes, cache privacy boundaries, and IndexedDB migrations.</li>
+<li>Run Lighthouse on landing, program overview, day detail, library, and runner shell in mobile and desktop modes.</li>
+<li>Record performance, accessibility, best-practices, and PWA findings without hiding variability.</li>
+<li>Inspect bundle boundaries and ensure interactive dependencies do not move whole routes to the client.</li>
+</ul>
+<h2>YouTube evidence</h2>
+<p>For each seeded canonical exercise and equipment variation, record two unique approved IDs, title, channel, exact variation, eligibility result, reviewer, review time, and full-watch confirmation. Run representative browser tests for two simultaneous choices, one active nonautoplay embed, referrer policy, direct fallback, unavailable primary, and both-unavailable state.</p>
+<p>View count can break a tie only after eligibility and quality gates. The QA record must state this ordering and cannot treat popularity as relevance proof.</p>
+<h2>Preview verification</h2>
+<p>For each release candidate:</p>
+<ol>
+<li>Confirm preview commit and environment variable presence without printing values.</li>
+<li>Apply migrations only to the preview database or approved isolated branch.</li>
+<li>Run the production build and browser matrix against the preview URL.</li>
+<li>Inspect Vercel build logs, function logs, and browser network failures.</li>
+<li>Verify Firebase session cookies, database ownership, YouTube embeds, service worker, and PWA manifest on the deployed origin.</li>
+</ol>
+<h2>Production verification</h2>
+<p>After verified merge to <code>main</code>:</p>
+<ol>
+<li>Confirm GitHub main, local main, and the Vercel production deployment reference the same commit.</li>
+<li>Confirm production migrations and seed version without printing credentials or sensitive data.</li>
+<li>Replay guest flows, a representative authenticated flow, equipment change, runner interruption, persisted history, analytics, and account lifecycle against production-safe test data.</li>
+<li>Inspect production runtime logs for the tested request IDs and verify no token, note, or raw fitness data leakage.</li>
+<li>Run Lighthouse and live embed fallback checks on the public origin.</li>
+<li>Record usage and budget settings separately for Vercel, functions, bandwidth, builds, images, Neon, and YouTube quota.</li>
+</ol>
+<h2>Slice closeout questions</h2>
+<p>Every slice answers the following questions in the latest QA note:</p>
+<ul>
+<li>Which flow did the primary implementer personally observe?</li>
+<li>Which meaningful test failed before the implementation and passed afterward?</li>
+<li>Do types and names describe storage and behavior truthfully?</li>
+<li>Which unhappy and worst-case paths were exercised?</li>
+<li>How does stored canonical data become presented data?</li>
+<li>Can another user access or mutate the resource?</li>
+<li>Do both equipment profiles remain usable?</li>
+<li>For exercise media, are exactly two relevant concise videos approved and watched in full?</li>
+<li>Did view count influence selection only after eligibility and quality gates?</li>
+<li>Can another developer reproduce the evidence from commands and fixtures?</li>
+</ul>
+
+  </main>
+</body>
+</html>

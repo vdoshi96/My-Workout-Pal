@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="d79188707c5deee18494ca823e93536ad170d97d89a70111188782fb27519545">
+  <title>Program overview surface brief · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Program overview surface brief</h1>
+<h2>Scope and mode</h2>
+<p>The primary target is the public and authenticated program overview at <code>src/app/(app)/program/page.tsx</code>. The guest landing route can select this surface as its primary demonstration. Visitor mode is <strong>Operate</strong> inside the app and <strong>Persuade through proof</strong> on the public entry.</p>
+<h2>Audience, job, and action</h2>
+<p>A guest needs to understand the five-day program, verify that their equipment works, and inspect a day before registering. An authenticated user needs to resume or open the active program. The primary action is <strong>Open Push day</strong> for the selected route waypoint; resume replaces it when a session is active.</p>
+<h2>Chosen composition</h2>
+<p>The approved comp is <code>.impeccable/mocks/route-atlas-map.png</code>. Approval was delegated by the user through the end-to-end ownership brief. It was selected because the map makes equipment rerouting visible while the lower route sheet keeps the immediate operating task clear.</p>
+<p>The first viewport contains a compact header, equipment profile control, dominant five-waypoint weekly route, selected-day prescription sheet, primary action, and app navigation. Only one route is visually dominant.</p>
+<h2>Memorable moment</h2>
+<p>The equipment profile control reroutes only affected waypoints. The old path becomes a short dotted trace, the new path settles into place, and the text diff is available before any authenticated mutation.</p>
+<h2>Responsive translation</h2>
+<ul>
+<li>Phone keeps the map dominant and lets the selected-day sheet continue below the fold. Navigation remains thumb reachable.</li>
+<li>Tablet places a wider map beside the selected-day sheet when both remain legible.</li>
+<li>Desktop uses a bounded atlas spread with route and prescription panes. It does not enlarge the phone map into empty space.</li>
+<li>Reduced-motion mode swaps routes without drawing animation.</li>
+</ul>
+<h2>Comp inventory</h2>
+<p>The implementation inventory follows the approved comp. Sampled colors are descriptive starting points and remain subject to contrast verification.</p>
+<table>
+<thead>
+<tr>
+<th>Ingredient</th>
+<th>Comp commitment</th>
+<th>Implementation medium</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Page ground</td>
+<td>Warm mineral field, sampled average near <code>#efeadf</code>, with restrained contour texture</td>
+<td>CSS color plus authored SVG contour pattern</td>
+</tr>
+<tr>
+<td>Navigation field</td>
+<td>Deep blue-green field, sampled mixed average near <code>#27373d</code></td>
+<td>Semantic HTML and CSS</td>
+</tr>
+<tr>
+<td>Equipment selector</td>
+<td>Two large segmented options with lichen selected state</td>
+<td>Form controls with CSS and icons from the project SVG system</td>
+</tr>
+<tr>
+<td>Weekly route</td>
+<td>Five numbered labeled waypoints connected by one coral route and one short dotted alternate</td>
+<td>Responsive SVG with semantic list fallback</td>
+</tr>
+<tr>
+<td>Selected-day sheet</td>
+<td>Large ruled panel that overlaps the route field and previews prescriptions</td>
+<td>Semantic section and ordered list with CSS</td>
+</tr>
+<tr>
+<td>Primary action</td>
+<td>Full-width coral route action with directional geometry</td>
+<td>Semantic link or button with CSS and SVG mark</td>
+</tr>
+<tr>
+<td>Bottom navigation</td>
+<td>Four labeled destinations and clear current state</td>
+<td>Semantic navigation with project SVG icons</td>
+</tr>
+<tr>
+<td>Paper grain</td>
+<td>Very light broad-field texture; never under inputs at a level that hurts contrast</td>
+<td>Generated or authored raster only if CSS and SVG cannot match the approved material</td>
+</tr>
+<tr>
+<td>Type</td>
+<td>Condensed display silhouette for names and numerals; readable humanist body</td>
+<td>Local or optimized web fonts selected after silhouette and performance comparison</td>
+</tr>
+<tr>
+<td>Motion</td>
+<td>One reroute draw and one saved-state stamp</td>
+<td>CSS or SVG motion with immediate reduced-motion alternative</td>
+</tr>
+</tbody></table>
+<h2>Nonliteral comp details</h2>
+<p>Do not copy generated mountain, tree, lake, shoe, compass, or exercise pictograms. Do not treat the generated weekday labels, sample duration, or summit badge as product facts. Core UI text, controls, focus behavior, semantics, and responsive structure are implemented from the product plans.</p>
+<h2>Unresolved implementation checks</h2>
+<ul>
+<li>Confirm that contour density survives light and dark mode without reducing contrast.</li>
+<li>Compare available condensed fonts against the comp before selecting one.</li>
+<li>Verify the route remains understandable at 320 CSS pixels and 200% zoom.</li>
+<li>Decide whether paper grain needs a raster after the first semantic CSS and SVG reproduction.</li>
+</ul>
+
+  </main>
+</body>
+</html>

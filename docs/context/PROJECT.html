@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="dd539eaf5cefdd8c3e85022605aad62051479e756921c2d9d2ca5a85ab3c4ebb">
+  <title>Project context · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Project context</h1>
+<h2>Product intent</h2>
+<p>My Workout Pal is a trustworthy bridge between a prescribed routine and the record that a user creates while training. It must work for a guest evaluating the routine and for an authenticated user whose program, logs, and analytics persist.</p>
+<h2>Confirmed workflows</h2>
+<ul>
+<li>Browse the starter catalog and all five days without an account.</li>
+<li>Preview dumbbell-only and barbell-enabled equipment profiles.</li>
+<li>Inspect two approved demonstrations for each seeded movement.</li>
+<li>Review clearly labeled sample workout and analytics data.</li>
+<li>Register or sign in with Google or email and password.</li>
+<li>Verify a password account before permanent mutations.</li>
+<li>Clone or create a program, edit prescriptions, and create custom exercises.</li>
+<li>Confirm equipment substitutions on the active program.</li>
+<li>Start, complete, interrupt, and resume strength and cardio workouts.</li>
+<li>Review history, personal records, and progress analytics.</li>
+<li>Change units and preferences, sign out, recover access, and delete account data.</li>
+</ul>
+<h2>Stack and boundaries</h2>
+<ul>
+<li>Next.js App Router PWA with strict TypeScript and Tailwind CSS.</li>
+<li>React Server Components by default. Client Components are limited to interactive and browser-state boundaries.</li>
+<li>Firebase Auth for identity and Firebase Admin for server-side session and revocation checks.</li>
+<li>Neon Postgres through Vercel Marketplace, accessed through Drizzle ORM and versioned migrations.</li>
+<li>Zod validation at every untrusted input boundary.</li>
+<li>Vitest for domain and integration tests. Playwright covers Chromium and WebKit browser flows.</li>
+<li>Vercel Pro hosts preview and production deployments from GitHub.</li>
+</ul>
+<h2>Non-goals</h2>
+<ul>
+<li>Medical diagnosis, rehabilitation advice, or outcome guarantees.</li>
+<li>Automatic load prescriptions.</li>
+<li>Guest cloud persistence or claims that guest activity is saved.</li>
+<li>Social feeds, public profiles, coaching marketplaces, or wearable integrations in the initial release.</li>
+<li>Silent production data mutation by a curation or refresh script.</li>
+<li>Paid service changes without explicit approval.</li>
+</ul>
+<h2>Source-to-product interpretation</h2>
+<p>The supplied recording establishes workflow intent, not a design or codebase to reproduce. The product keeps the useful sequence of selecting a day, opening an exercise, logging work, and viewing progress. It replaces the reference name, visual language, routine, information architecture, data model, copy, sample values, and media selection.</p>
+
+  </main>
+</body>
+</html>

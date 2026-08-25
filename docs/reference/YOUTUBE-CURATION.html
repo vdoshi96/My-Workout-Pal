@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="1e715742656b1d62199b38f03683e0c588a3b9b07c61ac5cea0610c2810d3b86">
+  <title>YouTube curation and video policy · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>YouTube curation and video policy</h1>
+<h2>Release invariant</h2>
+<p>Every seeded canonical exercise and equipment variation must have exactly two ordered, unique demonstrations that passed mechanical eligibility, human quality review, and a complete human viewing. A missing API key, exhausted quota, or incomplete watch review blocks production seeding. The application must not substitute arbitrary links.</p>
+<h2>Credential and quota boundary</h2>
+<p><code>YOUTUBE_API_KEY</code> is a server-side development and curation secret. It is never bundled into the application, printed in reports, committed, or copied into public QA evidence.</p>
+<p>The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, and review status. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.</p>
+<h2>Discovery sequence</h2>
+<ol>
+<li>Deduplicate the required canonical exercise and equipment variations from the seed specification.</li>
+<li>Build several exact movement and equipment queries, including known aliases and exclusion terms.</li>
+<li>Call <code>search.list</code> with <code>type=video</code>, <code>videoEmbeddable=true</code>, <code>videoSyndicated=true</code>, <code>safeSearch=strict</code>, <code>relevanceLanguage=en</code>, the launch <code>regionCode</code>, and <code>videoDuration=short</code> for the primary pool.</li>
+<li>Run relevance-ordered and view-count-ordered searches as separate candidate sources. Search order is not an approval score.</li>
+<li>Hydrate unique video IDs with <code>videos.list</code> parts <code>snippet</code>, <code>contentDetails</code>, <code>status</code>, and <code>statistics</code>.</li>
+<li>Parse ISO 8601 duration, language, live status, privacy, upload status, embeddability, channel, title, description, and view count.</li>
+<li>Apply mechanical rejection before any ranking.</li>
+<li>Produce a human-review report with query provenance, metadata, mechanical decisions, rejection reasons, and proposed candidates.</li>
+</ol>
+<p>Official API references:</p>
+<ul>
+<li><a href="https://developers.google.com/youtube/v3/docs/search/list">Search: list</a></li>
+<li><a href="https://developers.google.com/youtube/v3/docs/videos/list">Videos: list</a></li>
+<li><a href="https://developers.google.com/youtube/v3/docs/videos">Video resource</a></li>
+</ul>
+<h2>Mechanical eligibility</h2>
+<p>Reject a candidate when any of the following conditions applies:</p>
+<ul>
+<li>The video is missing, private, unlisted when launch policy requires public discovery, still processing, failed, rejected, or not embeddable.</li>
+<li>The duration is shorter than about 30 seconds or longer than about six minutes without a recorded exception.</li>
+<li>The URL or metadata identifies a YouTube Short.</li>
+<li>The title, description, or channel context indicates the wrong movement, wrong equipment variation, an unrelated exercise, unsafe or misleading instruction, mistakes, clickbait, a listicle, ranking, challenge, reaction, podcast, follow-along, routine, compilation, or long discussion.</li>
+<li>The video is live, upcoming, primarily an introduction, not understandable in English, or unavailable in the launch region.</li>
+<li>The candidate duplicates an existing ID or is a near-duplicate cut from the same material.</li>
+</ul>
+<p>Mechanical checks can reject obvious failures but cannot approve technical accuracy, relevance, concision, or safety.</p>
+<h2>Human quality review</h2>
+<p>The reviewer watches each proposed video from start to finish and records the following decisions:</p>
+<ul>
+<li>The demonstrated movement and equipment variation are exact.</li>
+<li>The instruction is concise, visible, understandable, and focused on one exercise.</li>
+<li>The presentation does not promote dangerous technique, false certainty, or a medical claim.</li>
+<li>The opening reaches useful instruction without an excessive introduction.</li>
+<li>Camera framing and audio make the movement understandable.</li>
+<li>The candidate adds material value beyond the first selected video.</li>
+<li>The title and channel attribution match the live YouTube page.</li>
+</ul>
+<p>Prefer distinct channels when quality is comparable. Skip a materially worse second result rather than filling a slot. View count breaks a tie only after both candidates pass eligibility and quality gates. The March 31, 2025, change to Shorts view counting is another reason not to treat view count as quality.</p>
+<h2>Approval record</h2>
+<p>The durable seed stores the following fields:</p>
+<ul>
+<li>YouTube video ID.</li>
+<li>Canonical exercise and equipment variation ID.</li>
+<li>Display order one or two.</li>
+<li>Title and channel attribution.</li>
+<li>Approval state, reviewer, and review timestamp.</li>
+<li>Full-watch confirmation.</li>
+<li>Optional replacement lineage and last availability check.</li>
+</ul>
+<p>The seed does not store indefinite ranking scores or stale view counts as product truth.</p>
+<h2>Validation</h2>
+<p><code>pnpm seed:check</code> must reject any seed with a missing required mapping, count other than two, invalid ID syntax, duplicate ID within a variation, wrong variation, missing approval, missing full-watch confirmation, duplicate order, or unsupported canonical exercise reference.</p>
+<p>The checker also confirms that reused starter prescriptions point to the same canonical exercise and therefore reuse the same approved demonstrations.</p>
+<h2>Refresh and replacement</h2>
+<p><code>pnpm youtube:refresh</code> checks seeded IDs with <code>videos.list</code> and proposes action when a video becomes missing, private, restricted, removed, unembeddable, or regionally unavailable. It does not mutate production.</p>
+<p>The application keeps the remaining approved video and direct YouTube fallback available. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.</p>
+<h2>Player requirements</h2>
+<ul>
+<li>Render one active iframe at a time and never autoplay.</li>
+<li>Use <code>https://www.youtube.com/embed/VIDEO_ID</code> with supported parameters such as <code>playsinline=1</code> and keyboard controls enabled.</li>
+<li>Do not use deprecated branding controls such as <code>modestbranding</code>.</li>
+<li>Keep the viewport at least 200 by 200 pixels; target at least 480 by 270 pixels for a 16:9 player when the layout permits.</li>
+<li>Preserve YouTube controls and branding.</li>
+<li>Set an iframe title, constrained <code>allow</code> features, fullscreen support, and a strict referrer policy that remains compatible with the player.</li>
+<li>Provide a titled and channel-attributed selector for both videos and a direct YouTube fallback.</li>
+</ul>
+<p>Official player references:</p>
+<ul>
+<li><a href="https://developers.google.com/youtube/player_parameters">YouTube embedded players and player parameters</a></li>
+<li><a href="https://developers.google.com/youtube/terms/required-minimum-functionality">YouTube API Services required minimum functionality</a></li>
+</ul>
+<h2>Exact credential gate</h2>
+<p>The environment has no <code>YOUTUBE_API_KEY</code>. Independent application, curation-code, seed-validation, fixture, and unavailable-state work can proceed. Discovery, quota-backed metadata hydration, final candidate selection, complete viewing, approval, exact-two production seed, and live production embed verification remain blocked until an authorized official YouTube Data API v3 key is available.</p>
+
+  </main>
+</body>
+</html>

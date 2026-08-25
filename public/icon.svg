@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">My Workout Pal route mark</title>
+  <rect width="512" height="512" rx="96" fill="#0b252b"/>
+  <path d="M88 354c68-180 138-244 208-193 48 35 53 100 128 17" fill="none" stroke="#f36c50" stroke-width="34" stroke-linecap="round"/>
+  <circle cx="100" cy="332" r="34" fill="#f3eee3" stroke="#0b252b" stroke-width="12"/>
+  <circle cx="302" cy="176" r="34" fill="#a8b185" stroke="#0b252b" stroke-width="12"/>
+  <path d="M256 72v368M72 256h368" stroke="#f3eee3" stroke-width="12" stroke-linecap="round" opacity=".9"/>
+  <path d="m256 108 34 108-34 38-34-38Z" fill="#f3eee3"/>
+</svg>

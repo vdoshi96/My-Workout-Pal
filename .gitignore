@@ -1,0 +1,45 @@
+# Dependencies and builds
+node_modules/
+.pnpm-store/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+blob-report/
+.playwright-cli/
+output/playwright/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+.vercel/
+.firebase/
+firebase-debug.log*
+
+# Local data and generated state
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+drizzle/meta/_journal.json.tmp
+
+# Private source media and derived inspection artifacts
+*.mp4
+*.mov
+*.m4a
+*.mp3
+*.wav
+*.vtt
+*.srt
+*transcript*
+docs/qa/runs/
+.impeccable/mocks/decision/
+.impeccable/review/
+
+# Operating system and editor files
+.DS_Store
+*.swp
+*.swo

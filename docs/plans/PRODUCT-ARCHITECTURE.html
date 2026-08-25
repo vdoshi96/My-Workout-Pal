@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="19d168c911197061fd414136ffa85b74af99447e53924be2fe9aa990327294ae">
+  <title>Product and architecture plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Product and architecture plan</h1>
+<h2>User outcomes</h2>
+<p>My Workout Pal must support two truthful experiences:</p>
+<ul>
+<li>A guest can evaluate the complete seeded program, both equipment profiles, exercise guidance, a sample workout, and sample analytics without believing that activity is saved.</li>
+<li>An authenticated and eligible user can own program revisions, custom exercises, workout logs, and derived progress without another user being able to read or mutate them.</li>
+</ul>
+<h2>Navigation model</h2>
+<p>Public navigation exposes <strong>Program</strong>, <strong>Library</strong>, <strong>Sample progress</strong>, and <strong>Sign in</strong>. Authenticated navigation exposes <strong>Today</strong>, <strong>Program</strong>, <strong>Library</strong>, <strong>History</strong>, <strong>Progress</strong>, and <strong>Settings</strong>. On narrow screens, the four highest-frequency destinations use a bottom navigation bar and secondary destinations remain in the account menu. On tablets and desktop, the same information architecture uses a persistent rail or header without changing route meaning.</p>
+<p>An active workout becomes the primary task. The runner owns its own compact navigation and requires explicit confirmation before leaving with unsaved or failed changes.</p>
+<h2>Application boundaries</h2>
+<h3>Server Components</h3>
+<p>Server Components render public catalog data, program overviews, history, records, analytics summaries, and settings reads. They query the database only through ownership-scoped repositories and never serialize secrets, Firebase Admin objects, or unrelated user records.</p>
+<h3>Client Components</h3>
+<p>Client Components are limited to equipment preview toggles, search and filtering, video selection, editors, authentication SDK calls, timers, set entry, offline drafts, retry controls, install prompts, and navigation protection. A Client Component receives the minimum serializable state required for its interaction.</p>
+<h3>Mutations</h3>
+<p>Server Actions handle same-origin form and editor mutations. Route handlers handle Firebase token exchange, session lifecycle, curation administration, PWA synchronization, and APIs that require explicit request semantics. Every mutation validates the body with Zod, verifies origin and CSRF, derives Firebase UID from the secure session, checks account eligibility, applies ownership in the query, and returns a discriminated result.</p>
+<h2>Domain types and invariants</h2>
+<h3>Identity and eligibility</h3>
+<ul>
+<li><code>AuthIdentity</code> contains server-derived <code>firebaseUid</code>, provider, email verification, authentication time, and revocation status.</li>
+<li>Google identities are eligible when Firebase reports a verified provider identity.</li>
+<li>Password identities can browse authenticated surfaces before email verification but cannot perform permanent mutations.</li>
+<li>High-risk account deletion requires a recent authentication time and an explicit reauthentication proof.</li>
+</ul>
+<h3>Equipment</h3>
+<ul>
+<li><code>EquipmentProfileKind</code> is <code>dumbbells</code> or <code>barbell</code>.</li>
+<li>The dumbbell profile contains dumbbells, bodyweight, and an ordinary bench.</li>
+<li>The barbell profile contains barbell, plates, rack, bench, dumbbells, and bodyweight.</li>
+<li>Catalog compatibility is derived from required equipment, not a hand-written boolean.</li>
+<li>An equipment change produces a substitution preview. Confirmation creates one new active-program revision inside one transaction.</li>
+</ul>
+<h3>Exercise and prescription</h3>
+<ul>
+<li>A canonical exercise has a stable slug, movement name, modality, muscles, instructions, equipment requirements, compatibility, logging kind, and optional variation parent.</li>
+<li>Logging kinds are <code>weight_reps</code>, <code>bodyweight_reps</code>, <code>duration</code>, and <code>distance_duration</code>.</li>
+<li>Custom exercises belong to exactly one Firebase UID and can contain zero to two normalized YouTube video IDs.</li>
+<li>A prescription points to a canonical or owned custom exercise and stores section, order, set count, range, rest, warm-up or work classification, and target metadata.</li>
+<li>Reused movements point to the same canonical exercise record across program days.</li>
+</ul>
+<h3>Program revisions</h3>
+<ul>
+<li>A user program has one active revision pointer.</li>
+<li>A revision and its day, section, and prescription rows are immutable after publication.</li>
+<li>Editing clones the active revision, applies validated changes, and atomically advances the pointer.</li>
+<li>Workout sessions retain the revision ID and a denormalized snapshot of names, logging kind, units, prescriptions, and substitutions needed to preserve meaning.</li>
+</ul>
+<h3>Workout sessions and logs</h3>
+<ul>
+<li>A session state is <code>draft</code>, <code>active</code>, <code>completing</code>, <code>completed</code>, or <code>abandoned</code>.</li>
+<li>Only one resumable active session per user and program revision is allowed unless the user explicitly abandons or completes it.</li>
+<li>Every client mutation has an idempotency key unique within the user and session.</li>
+<li>Warm-up sets never count toward progression, volume, or personal records.</li>
+<li>Work-set logs preserve canonical kilograms, repetitions, duration, distance, form rating when supplied, note snapshot, timestamp, and client idempotency key.</li>
+<li>Completion requires all locally acknowledged operations to be durably accepted or explicitly retried. A failed save cannot be presented as complete.</li>
+</ul>
+<h3>Progression and analytics</h3>
+<ul>
+<li>Double progression suggests a load increase only when every work set reaches the repetition-range top and the user records appropriate form. The product never chooses a load.</li>
+<li>Volume is the sum of <code>weightKg * repetitions</code> across qualifying work sets. Bodyweight work is excluded from external-load volume unless a logged added load exists.</li>
+<li>Epley estimated one-repetition maximum is <code>weightKg * (1 + repetitions / 30)</code> for positive weight and repetitions. It is not calculated for duration, distance, warm-up, or bodyweight-only sets.</li>
+<li>A personal record compares canonical values within the same exercise variation and record type. An equal best is a tie, not a new higher record.</li>
+<li>Presentation rounds only after canonical comparison. Weight conversion uses <code>1 kg = 2.2046226218 lb</code>.</li>
+<li>Analytics derive from persisted completed sessions and logs. Sample analytics use a separate labeled fixture and never share a user record identifier.</li>
+</ul>
+<h2>Starter program</h2>
+<p>All prescriptions use editable defaults. Compounds use three work sets of 8-12 repetitions and 90 seconds of rest. Accessories use two sets of 10-15 repetitions and 60 seconds of rest. Repetition-based core uses two sets of 8-15 repetitions. Timed core uses two sets of 20-45 seconds. Every day includes a walker or runner cardio template with time, distance, pace, incline, and notes.</p>
+<p>The exact movement order and equipment substitutions are maintained in <code>docs/reference/SUBSTITUTIONS.md</code> and validated against seed data.</p>
+<h2>Persistence model</h2>
+<h3>Core tables</h3>
+<ul>
+<li><code>user_profiles</code>, <code>user_preferences</code>, and <code>user_equipment_profiles</code> use Firebase UID as the external owner key.</li>
+<li><code>catalog_exercises</code>, <code>catalog_equipment</code>, <code>exercise_equipment</code>, <code>exercise_aliases</code>, and <code>curated_videos</code> are globally readable seeded records.</li>
+<li><code>custom_exercises</code> and <code>custom_exercise_videos</code> are user-owned.</li>
+<li><code>program_templates</code>, <code>program_template_revisions</code>, <code>template_days</code>, <code>template_sections</code>, and <code>template_prescriptions</code> hold immutable seeded templates.</li>
+<li><code>user_programs</code>, <code>program_revisions</code>, <code>program_days</code>, <code>program_sections</code>, and <code>program_prescriptions</code> hold immutable user revisions plus one active pointer.</li>
+<li><code>workout_sessions</code>, <code>workout_exercise_snapshots</code>, <code>set_logs</code>, and <code>cardio_logs</code> preserve sessions and immutable historical meaning.</li>
+<li><code>personal_records</code> and <code>progress_summaries</code> are reproducible projections with source log identifiers and calculation versions.</li>
+<li><code>idempotency_keys</code> records accepted mutation results and expiry.</li>
+<li><code>account_deletion_jobs</code> tracks the deletion saga without retaining deleted fitness content.</li>
+</ul>
+<h3>Database rules</h3>
+<ul>
+<li>Foreign keys use restrictive deletion by default. Account deletion uses an explicit owned-data transaction.</li>
+<li>Unique constraints enforce one active session boundary, revision numbers, set positions, video order, video identity per exercise variation, and idempotency scope.</li>
+<li>Check constraints enforce nonnegative canonical measures, valid ranges, two approved seed-video orders, and known states.</li>
+<li>Every repository method that reads or writes user data requires a server-derived owner argument. There is no unscoped <code>findById</code> for owned records.</li>
+<li>Migrations are append-only, versioned, tested from an empty database, and tested as upgrades from the preceding release fixture.</li>
+</ul>
+<h2>Authentication and session design</h2>
+<ol>
+<li>The Firebase client SDK completes Google or email/password authentication.</li>
+<li>The client sends the short-lived Firebase ID token to the session route with a same-origin request, an origin check, and a double-submit CSRF token.</li>
+<li>Firebase Admin verifies the ID token, provider, verification state, expiration, and revocation requirements, then creates a secure session cookie.</li>
+<li>The cookie uses the <code>__Host-</code> prefix, <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite=Lax</code>, <code>Path=/</code>, and no <code>Domain</code> attribute. The server rotates or clears it on expiry, revocation, sign-out, or identity mismatch.</li>
+<li>Every permanent mutation verifies the session and eligibility. Sensitive mutations request revocation checking and recent authentication.</li>
+<li>Sign-out clears the server session before client SDK sign-out and clears the local user draft namespace.</li>
+</ol>
+<p>Tests cover invalid, duplicate, unverified, expired, revoked, CSRF, cross-user, deletion, and reauthentication paths. Error responses avoid revealing whether another user&#39;s resource exists.</p>
+<h2>Offline and interruption recovery</h2>
+<p>The service worker caches the immutable shell, public program payload, catalog metadata, and app icons. It does not cache authenticated HTML, session endpoints, mutation responses, or private analytics.</p>
+<p>The active runner writes a tab-safe draft to IndexedDB under a Firebase UID and session namespace. Each queued operation carries an idempotency key, base revision, local timestamp, and explicit status. Reconnection submits operations in order. Server acceptance replaces pending state with persisted identifiers. Conflict responses retain the draft and explain the action required.</p>
+<p>Refresh resumes the same server session and overlays unacknowledged local operations. A different signed-in UID cannot open the draft. Sign-out or account deletion clears that UID namespace. If authentication expires, the runner keeps the local draft, blocks permanent mutations, and guides reauthentication without claiming that data is saved.</p>
+<h2>Security and privacy</h2>
+<ul>
+<li>Use strict Content Security Policy with the minimum Firebase, YouTube, and Vercel sources. Frame policy permits only approved YouTube embed origins.</li>
+<li>Add <code>Referrer-Policy</code>, <code>Permissions-Policy</code>, <code>X-Content-Type-Options</code>, and frame-ancestor protection.</li>
+<li>Normalize and validate YouTube URLs before persistence. Render embeds from durable video IDs and never inject user-provided markup.</li>
+<li>Rate-limit authentication session exchange, recovery-adjacent routes, custom exercise writes, and sync retries by trusted identity and coarse network signal.</li>
+<li>Keep logs free of tokens, cookies, private keys, full notes, and raw fitness records. Use request IDs and safe error codes.</li>
+<li>Do not use third-party product analytics in the initial release. Operational usage is measured through Vercel and database dashboards without adding a paid product.</li>
+<li>Account deletion removes owned database rows, local drafts, session cookies, and the Firebase user through an auditable saga. Partial failure leaves a restricted deletion job and retry path, not a false success.</li>
+</ul>
+<h2>Loading, empty, error, and worst-case behavior</h2>
+<ul>
+<li>Route loading uses meaningful skeletons with stable dimensions and accessible status text.</li>
+<li>Empty states distinguish no user data, filtered-out results, unavailable offline data, and intentionally blank optional fields.</li>
+<li>Validation errors remain adjacent to fields and preserve nonsecret input.</li>
+<li>Server and network errors return retryable codes and do not discard local drafts.</li>
+<li>Duplicate submits resolve to the original idempotent result.</li>
+<li>Stale program revisions reject edits with a comparison and reload path.</li>
+<li>Database or Firebase outages leave reads and local drafts honest, disable unsafe completion, and expose recovery actions.</li>
+<li>A removed or restricted video leaves the alternate approved video selectable, shows a direct YouTube fallback, and flags replacement review without silently changing the seed.</li>
+</ul>
+<h2>Responsive behavior</h2>
+<ul>
+<li>Phone layouts prioritize one active task, thumb-reachable actions, sticky runner progress, and full-width media.</li>
+<li>Tablet layouts support a prescription list beside the selected detail or editor inspector when space permits.</li>
+<li>Desktop layouts use a bounded reading width, persistent navigation, and side-by-side program or analytics context without stretching forms.</li>
+<li>Breakpoint changes preserve DOM order and reading order. No information is available only through hover.</li>
+</ul>
+<h2>Accessibility</h2>
+<ul>
+<li>Every route has one <code>h1</code>, a skip link, landmarks, logical heading levels, and a descriptive title.</li>
+<li>Tabs, dialogs, menus, timers, toasts, charts, and comboboxes implement keyboard and screen-reader semantics.</li>
+<li>Save status uses text and live regions with controlled announcement frequency.</li>
+<li>Charts include a tabular summary and never rely on color alone.</li>
+<li>Video selection labels title, channel, active state, and external fallback.</li>
+<li>Motion is purposeful and disabled or replaced when <code>prefers-reduced-motion</code> is active.</li>
+<li>Touch targets are at least 44 by 44 CSS pixels. Zoom to 200% does not obscure actions or content.</li>
+</ul>
+<h2>Implementation slices</h2>
+<ol>
+<li>Foundation: repository, documentation parity, design direction, scaffold, lint, typecheck, unit harness, and seeded domain contracts.</li>
+<li>Public catalog: starter program, equipment preview, day and exercise detail, library, dual-video component, sample workout, and sample analytics.</li>
+<li>Identity and ownership: Firebase client/Admin sessions, eligibility, CSRF, protected layouts, profile, preferences, and IDOR tests.</li>
+<li>Program editing: immutable revisions, equipment substitution confirmation, custom exercises, and YouTube URL normalization.</li>
+<li>Runner and recovery: session snapshots, strength and cardio logs, timers, IndexedDB outbox, resume, and navigation protection.</li>
+<li>Progress: history, records, calculations, analytics, conversion, ties, and accessible visualizations.</li>
+<li>Account lifecycle: verification, recovery, sign-out, reauthentication, deletion saga, and local cleanup.</li>
+<li>Curation and operations: YouTube API workflow, review, seed validation, removal refresh, deployment, budgets, observability, and recovery documentation.</li>
+</ol>
+<p>Each slice must satisfy the plan, TDD, security review, responsive browser evidence, and documentation parity before merge.</p>
+
+  </main>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="03173cf347656207a7ddc535376266bd813ccdf8e0121b1aaba0fd1671977651">
+  <title>Product · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Product</h1>
+<!-- impeccable:product-schema 1 --><h2>Platform</h2>
+<p>web</p>
+<h2>Stack</h2>
+<p>The user specified a mobile-first installable Next.js App Router PWA with strict TypeScript, Server Components by default, Tailwind CSS, Firebase Auth, Firebase Admin session verification, Neon Postgres, Drizzle ORM, Playwright, and Vercel Pro deployment.</p>
+<h2>Users</h2>
+<p>The primary user is an adult who wants a structured five-day strength and core routine that works with common home equipment and remains usable during an active workout. This audience statement is inferred from the confirmed equipment and workflow requirements.</p>
+<p>Guests evaluate the routine, equipment substitutions, exercise guidance, and sample tracking without creating an account. Authenticated users adapt programs, log real workouts, and review their own progress.</p>
+<h2>Product purpose</h2>
+<p>My Workout Pal turns an equipment-aware program into an interruption-safe workout record. Success means a user can understand the plan, complete a workout with honest save feedback, resume after disruption, and trust that historical results retain their original meaning.</p>
+<h2>Positioning</h2>
+<p>The product combines explicit dumbbell and barbell program variants with confirmed substitutions, immutable workout snapshots, and two approved concise demonstrations for every seeded movement. It does not auto-prescribe weight, rewrite history, or present sample activity as personal progress.</p>
+<h2>Operating context</h2>
+<p>Users browse on phones, tablets, and desktop browsers. Workout logging primarily occurs on a phone with possible disconnection, refresh, tab close, authentication expiry, or device interruption. Guests might install the PWA, but guest interaction remains temporary and is never described as saved.</p>
+<h2>Capabilities and constraints</h2>
+<ul>
+<li>The starter program has Push, Pull, Legs, Upper, and Lower days. Every day includes core work and configurable walker or runner cardio.</li>
+<li>The guest default supports dumbbells, bodyweight, and an ordinary bench. The barbell profile adds a barbell, plates, a rack, and a bench while retaining dumbbells and bodyweight.</li>
+<li>Equipment changes affect only the active program after a clear preview and confirmation. Compatible prescriptions survive; incompatible movement-specific targets are explained and cleared.</li>
+<li>Authenticated users can create and edit programs and custom exercises, resume workouts, log strength and cardio, review history and analytics, set preferences, and delete their account and data.</li>
+<li>Firebase Auth supports Google and email/password accounts. Password accounts must verify email before permanent mutations. Server code verifies secure HTTP-only sessions and ownership.</li>
+<li>Neon Postgres is the durable store. Firebase UID is the external ownership key. Historical workout meaning is immutable.</li>
+<li>Production requires exactly two manually approved and fully watched YouTube demonstrations for each seeded canonical exercise and equipment variation.</li>
+<li>The product provides training organization and tracking. It does not provide medical advice, diagnose conditions, or guarantee outcomes.</li>
+<li>No paid service, plan upgrade, Marketplace product, or material limit increase can be enabled without explicit user approval.</li>
+</ul>
+<h2>Brand commitments</h2>
+<p>The product name is <strong>My Workout Pal</strong>. The identity, architecture, copy, and assets must be original and must not reuse the reference recording&#39;s FITTRACK name or visual system.</p>
+<h2>Evidence on hand</h2>
+<p>The private 96.52-second narrated reference recording demonstrates the desired workflow shape: day navigation, prescribed sections, embedded exercise demonstrations, per-set logging, a rest timer, exercise history, progress views, an exercise directory, and aggregate analytics. The recording is a behavioral reference only and is excluded from publication. No portable source code, customer claims, production data, approved videos, or brand assets were supplied.</p>
+<h2>Product principles</h2>
+<ul>
+<li>Make save state and data ownership unambiguous.</li>
+<li>Adapt the active plan without altering completed history.</li>
+<li>Keep the runner operable under interruption and constrained attention.</li>
+<li>Explain progression without prescribing unverified loads or making health claims.</li>
+<li>Prefer approved, relevant instruction over content volume or popularity.</li>
+</ul>
+<h2>Accessibility and inclusion</h2>
+<p>The product must support semantic navigation, keyboard use, screen readers, zoom, high contrast, reduced motion, dark mode, and responsive layouts. Controls used during a workout need generous targets, text labels, and noncolor status cues.</p>
+
+  </main>
+</body>
+</html>
