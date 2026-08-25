@@ -1,27 +1,43 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 
-function subscribeToConnection(callback: () => void): () => void {
-  window.addEventListener("online", callback);
-  window.addEventListener("offline", callback);
-  return () => {
-    window.removeEventListener("online", callback);
-    window.removeEventListener("offline", callback);
-  };
+async function probeConnection(): Promise<boolean> {
+  if (!navigator.onLine) return false;
+  try {
+    const response = await fetch("/manifest.webmanifest", {
+      cache: "no-store",
+      method: "HEAD",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 export function PwaRegistration() {
-  const online = useSyncExternalStore(
-    subscribeToConnection,
-    () => window.navigator.onLine,
-    () => true,
-  );
+  const [online, setOnline] = useState(true);
 
   useEffect(() => {
+    let active = true;
+    const refreshConnection = () => {
+      void probeConnection().then((available) => {
+        if (active) setOnline(available);
+      });
+    };
+
     if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
       void navigator.serviceWorker.register("/sw.js", { scope: "/" });
     }
+    window.addEventListener("online", refreshConnection);
+    window.addEventListener("offline", refreshConnection);
+    refreshConnection();
+
+    return () => {
+      active = false;
+      window.removeEventListener("online", refreshConnection);
+      window.removeEventListener("offline", refreshConnection);
+    };
   }, []);
 
   return online ? null : (

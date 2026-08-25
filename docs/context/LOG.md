@@ -51,3 +51,5 @@
 - Retained a missing-module failing test before adding a cache policy for public navigation, static output, and explicit app artwork.
 - Stopped caching arbitrary same-origin images and limited cache cleanup to obsolete My Workout Pal public-cache versions.
 - Added deterministic `pwa:build` and `pwa:check` commands so the shipped worker must match the tested policy.
+- Replayed the worker against a production server and retained the failure that showed `navigator.onLine` remained true during a cached offline navigation.
+- Replaced the unreliable single signal with a same-origin manifest reachability probe, then verified the real cached Push route, private-cache denial, and offline announcement in Chromium phone.
