@@ -1,7 +1,11 @@
 import type { EquipmentId } from "@/domain/equipment";
 
 export type ExerciseRole = "compound" | "accessory" | "core-reps" | "core-timed";
-export type LoggingKind = "weight_reps" | "bodyweight_reps" | "duration";
+export type LoggingKind =
+  | "weight_reps"
+  | "bodyweight_reps"
+  | "duration"
+  | "distance_duration";
 
 export type CatalogExercise = Readonly<{
   slug: string;
