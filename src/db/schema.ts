@@ -12,6 +12,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  type AnyPgColumn,
   uniqueIndex,
   uuid,
   varchar,
@@ -62,6 +63,7 @@ export const recordType = pgEnum("record_type", [
   "max_weight",
   "estimated_1rm",
   "max_repetitions",
+  "volume",
   "distance",
   "duration",
 ]);
@@ -189,8 +191,9 @@ export const exerciseAliases = pgTable(
     normalizedAlias: varchar("normalized_alias", { length: 180 }).notNull(),
   },
   (table) => [
-    uniqueIndex("exercise_aliases_normalized_unique").on(table.normalizedAlias),
+    uniqueIndex("exercise_aliases_exercise_normalized_unique").on(table.exerciseId, table.normalizedAlias),
     uniqueIndex("exercise_aliases_exercise_alias_unique").on(table.exerciseId, table.alias),
+    index("exercise_aliases_normalized_idx").on(table.normalizedAlias),
   ],
 );
 
@@ -273,6 +276,66 @@ export const customExerciseVideos = pgTable(
     index("custom_exercise_videos_owner_idx").on(table.ownerFirebaseUid, table.customExerciseId),
     check("custom_exercise_videos_order_shape", sql`${table.displayOrder} between 1 and 2`),
     check("custom_exercise_videos_youtube_id_shape", sql`${table.youtubeVideoId} ~ '^[A-Za-z0-9_-]{11}$'`),
+  ],
+);
+
+export const customExerciseEquipment = pgTable(
+  "custom_exercise_equipment",
+  {
+    ownerFirebaseUid: text("owner_firebase_uid").notNull(),
+    customExerciseId: uuid("custom_exercise_id").notNull(),
+    equipmentId: text("equipment_id").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.ownerFirebaseUid, table.customExerciseId, table.equipmentId],
+      name: "custom_exercise_equipment_pk",
+    }),
+    foreignKey({
+      columns: [table.ownerFirebaseUid, table.customExerciseId],
+      foreignColumns: [customExercises.ownerFirebaseUid, customExercises.id],
+      name: "custom_exercise_equipment_owner_exercise_fk",
+    }).onDelete("restrict").onUpdate("cascade"),
+    foreignKey({
+      columns: [table.equipmentId],
+      foreignColumns: [catalogEquipment.id],
+      name: "custom_exercise_equipment_equipment_fk",
+    }).onDelete("restrict").onUpdate("cascade"),
+    index("custom_exercise_equipment_owner_exercise_idx").on(table.ownerFirebaseUid, table.customExerciseId),
+    index("custom_exercise_equipment_owner_equipment_idx").on(table.ownerFirebaseUid, table.equipmentId),
+  ],
+);
+
+export const customExerciseAliases = pgTable(
+  "custom_exercise_aliases",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ownerFirebaseUid: text("owner_firebase_uid").notNull(),
+    customExerciseId: uuid("custom_exercise_id").notNull(),
+    alias: varchar("alias", { length: 180 }).notNull(),
+    normalizedAlias: varchar("normalized_alias", { length: 180 }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.ownerFirebaseUid, table.customExerciseId],
+      foreignColumns: [customExercises.ownerFirebaseUid, customExercises.id],
+      name: "custom_exercise_aliases_owner_exercise_fk",
+    }).onDelete("restrict").onUpdate("cascade"),
+    uniqueIndex("custom_exercise_aliases_owner_normalized_unique").on(table.ownerFirebaseUid, table.normalizedAlias),
+    uniqueIndex("custom_exercise_aliases_owner_exercise_normalized_unique").on(
+      table.ownerFirebaseUid,
+      table.customExerciseId,
+      table.normalizedAlias,
+    ),
+    index("custom_exercise_aliases_owner_exercise_idx").on(table.ownerFirebaseUid, table.customExerciseId),
+    index("custom_exercise_aliases_owner_normalized_idx").on(table.ownerFirebaseUid, table.normalizedAlias),
+    check("custom_exercise_aliases_alias_not_blank", sql`length(trim(${table.alias})) > 0`),
+    check("custom_exercise_aliases_normalized_not_blank", sql`length(trim(${table.normalizedAlias})) > 0`),
+    check(
+      "custom_exercise_aliases_normalized_form",
+      sql`${table.normalizedAlias} = lower(trim(${table.alias}))`,
+    ),
   ],
 );
 
@@ -443,6 +506,14 @@ export const templateCardioPrescriptions = pgTable(
   ],
 );
 
+// These late-bound columns break the program/published-revision pointer cycle
+// while keeping the composite owner + program scope visible to Drizzle.
+const programRevisionColumns: {
+  owner: AnyPgColumn | undefined;
+  program: AnyPgColumn | undefined;
+  id: AnyPgColumn | undefined;
+} = { owner: undefined, program: undefined, id: undefined };
+
 export const userPrograms = pgTable(
   "user_programs",
   {
@@ -457,6 +528,11 @@ export const userPrograms = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.ownerFirebaseUid, table.id, table.activeRevisionId],
+      foreignColumns: [programRevisionColumns.owner!, programRevisionColumns.program!, programRevisionColumns.id!],
+      name: "user_programs_active_revision_scope_fk",
+    }).onDelete("restrict").onUpdate("cascade"),
     uniqueIndex("user_programs_owner_key_unique").on(table.ownerFirebaseUid, table.programKey),
     uniqueIndex("user_programs_owner_id_unique").on(table.ownerFirebaseUid, table.id),
     index("user_programs_owner_updated_idx").on(table.ownerFirebaseUid, table.updatedAt),
@@ -503,6 +579,10 @@ export const programRevisions = pgTable(
     ),
   ],
 );
+
+programRevisionColumns.owner = programRevisions.ownerFirebaseUid;
+programRevisionColumns.program = programRevisions.programId;
+programRevisionColumns.id = programRevisions.id;
 
 export const programDays = pgTable(
   "program_days",
@@ -673,8 +753,8 @@ export const workoutSessions = pgTable(
       name: "workout_sessions_program_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
     foreignKey({
-      columns: [table.ownerFirebaseUid, table.programRevisionId],
-      foreignColumns: [programRevisions.ownerFirebaseUid, programRevisions.id],
+      columns: [table.ownerFirebaseUid, table.programId, table.programRevisionId],
+      foreignColumns: [programRevisions.ownerFirebaseUid, programRevisions.programId, programRevisions.id],
       name: "workout_sessions_revision_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
     uniqueIndex("workout_sessions_owner_id_unique").on(table.ownerFirebaseUid, table.id),
@@ -1013,6 +1093,8 @@ export const schema = {
   curatedVideos,
   customExercises,
   customExerciseVideos,
+  customExerciseEquipment,
+  customExerciseAliases,
   programTemplates,
   programTemplateRevisions,
   templateDays,

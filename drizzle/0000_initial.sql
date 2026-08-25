@@ -6,7 +6,7 @@ CREATE TYPE "public"."logging_kind" AS ENUM('weight_reps', 'bodyweight_reps', 'd
 CREATE TYPE "public"."measurement_kind" AS ENUM('weight_reps', 'bodyweight_reps', 'duration', 'distance_duration');--> statement-breakpoint
 CREATE TYPE "public"."prescription_set_kind" AS ENUM('warmup', 'work');--> statement-breakpoint
 CREATE TYPE "public"."progress_source_kind" AS ENUM('set', 'cardio');--> statement-breakpoint
-CREATE TYPE "public"."record_type" AS ENUM('max_weight', 'estimated_1rm', 'max_repetitions', 'distance', 'duration');--> statement-breakpoint
+CREATE TYPE "public"."record_type" AS ENUM('max_weight', 'estimated_1rm', 'max_repetitions', 'volume', 'distance', 'duration');--> statement-breakpoint
 CREATE TYPE "public"."revision_status" AS ENUM('draft', 'published', 'archived');--> statement-breakpoint
 CREATE TYPE "public"."section_kind" AS ENUM('strength', 'accessory', 'core', 'cardio');--> statement-breakpoint
 CREATE TYPE "public"."session_state" AS ENUM('draft', 'active', 'completing', 'completed', 'abandoned');--> statement-breakpoint
@@ -83,6 +83,25 @@ CREATE TABLE "curated_videos" (
 	CONSTRAINT "curated_videos_youtube_id_shape" CHECK ("curated_videos"."youtube_video_id" ~ '^[A-Za-z0-9_-]{11}$'),
 	CONSTRAINT "curated_videos_order_shape" CHECK ("curated_videos"."display_order" is null or "curated_videos"."display_order" between 1 and 2),
 	CONSTRAINT "curated_videos_approval_metadata" CHECK ("curated_videos"."approval_status" <> 'approved' or ("curated_videos"."display_order" is not null and "curated_videos"."watched_in_full_at" is not null and "curated_videos"."approved_at" is not null and "curated_videos"."approved_by" is not null))
+);
+--> statement-breakpoint
+CREATE TABLE "custom_exercise_aliases" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"owner_firebase_uid" text NOT NULL,
+	"custom_exercise_id" uuid NOT NULL,
+	"alias" varchar(180) NOT NULL,
+	"normalized_alias" varchar(180) NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "custom_exercise_aliases_alias_not_blank" CHECK (length(trim("custom_exercise_aliases"."alias")) > 0),
+	CONSTRAINT "custom_exercise_aliases_normalized_not_blank" CHECK (length(trim("custom_exercise_aliases"."normalized_alias")) > 0),
+	CONSTRAINT "custom_exercise_aliases_normalized_form" CHECK ("custom_exercise_aliases"."normalized_alias" = lower(trim("custom_exercise_aliases"."alias")))
+);
+--> statement-breakpoint
+CREATE TABLE "custom_exercise_equipment" (
+	"owner_firebase_uid" text NOT NULL,
+	"custom_exercise_id" uuid NOT NULL,
+	"equipment_id" text NOT NULL,
+	CONSTRAINT "custom_exercise_equipment_pk" PRIMARY KEY("owner_firebase_uid","custom_exercise_id","equipment_id")
 );
 --> statement-breakpoint
 CREATE TABLE "custom_exercise_videos" (
@@ -488,11 +507,13 @@ ALTER TABLE "cardio_logs" ADD CONSTRAINT "cardio_logs_owner_id_scope_key" UNIQUE
 ALTER TABLE "progress_summaries" ADD CONSTRAINT "progress_summaries_owner_id_scope_key" UNIQUE ("owner_firebase_uid", "id");--> statement-breakpoint
 ALTER TABLE "template_days" ADD CONSTRAINT "template_days_revision_id_scope_key" UNIQUE ("revision_id", "id");--> statement-breakpoint
 ALTER TABLE "template_sections" ADD CONSTRAINT "template_sections_revision_id_scope_key" UNIQUE ("revision_id", "id");--> statement-breakpoint
-ALTER TABLE "user_programs" ADD CONSTRAINT "user_programs_active_revision_scope_fk" FOREIGN KEY ("owner_firebase_uid", "active_revision_id") REFERENCES "public"."program_revisions"("owner_firebase_uid", "id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "account_deletion_jobs" ADD CONSTRAINT "account_deletion_jobs_owner_firebase_uid_user_profiles_firebase_uid_fk" FOREIGN KEY ("owner_firebase_uid") REFERENCES "public"."user_profiles"("firebase_uid") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "cardio_logs" ADD CONSTRAINT "cardio_logs_session_scope_fk" FOREIGN KEY ("owner_firebase_uid","session_id") REFERENCES "public"."workout_sessions"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "catalog_exercises" ADD CONSTRAINT "catalog_exercises_variation_parent_fk" FOREIGN KEY ("variation_parent_id") REFERENCES "public"."catalog_exercises"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "curated_videos" ADD CONSTRAINT "curated_videos_exercise_id_catalog_exercises_id_fk" FOREIGN KEY ("exercise_id") REFERENCES "public"."catalog_exercises"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "custom_exercise_aliases" ADD CONSTRAINT "custom_exercise_aliases_owner_exercise_fk" FOREIGN KEY ("owner_firebase_uid","custom_exercise_id") REFERENCES "public"."custom_exercises"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "custom_exercise_equipment" ADD CONSTRAINT "custom_exercise_equipment_owner_exercise_fk" FOREIGN KEY ("owner_firebase_uid","custom_exercise_id") REFERENCES "public"."custom_exercises"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "custom_exercise_equipment" ADD CONSTRAINT "custom_exercise_equipment_equipment_fk" FOREIGN KEY ("equipment_id") REFERENCES "public"."catalog_equipment"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "custom_exercise_videos" ADD CONSTRAINT "custom_exercise_videos_owner_exercise_fk" FOREIGN KEY ("owner_firebase_uid","custom_exercise_id") REFERENCES "public"."custom_exercises"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "custom_exercises" ADD CONSTRAINT "custom_exercises_owner_firebase_uid_user_profiles_firebase_uid_fk" FOREIGN KEY ("owner_firebase_uid") REFERENCES "public"."user_profiles"("firebase_uid") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "exercise_aliases" ADD CONSTRAINT "exercise_aliases_exercise_id_catalog_exercises_id_fk" FOREIGN KEY ("exercise_id") REFERENCES "public"."catalog_exercises"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
@@ -530,11 +551,12 @@ ALTER TABLE "template_sections" ADD CONSTRAINT "template_sections_day_scope_fk" 
 ALTER TABLE "user_equipment_profiles" ADD CONSTRAINT "user_equipment_profiles_owner_firebase_uid_user_profiles_firebase_uid_fk" FOREIGN KEY ("owner_firebase_uid") REFERENCES "public"."user_profiles"("firebase_uid") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "user_preferences" ADD CONSTRAINT "user_preferences_owner_firebase_uid_user_profiles_firebase_uid_fk" FOREIGN KEY ("owner_firebase_uid") REFERENCES "public"."user_profiles"("firebase_uid") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "user_programs" ADD CONSTRAINT "user_programs_owner_firebase_uid_user_profiles_firebase_uid_fk" FOREIGN KEY ("owner_firebase_uid") REFERENCES "public"."user_profiles"("firebase_uid") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "user_programs" ADD CONSTRAINT "user_programs_active_revision_scope_fk" FOREIGN KEY ("owner_firebase_uid","id","active_revision_id") REFERENCES "public"."program_revisions"("owner_firebase_uid","program_id","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_session_scope_fk" FOREIGN KEY ("owner_firebase_uid","session_id") REFERENCES "public"."workout_sessions"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_catalog_exercise_fk" FOREIGN KEY ("catalog_exercise_id") REFERENCES "public"."catalog_exercises"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_custom_exercise_scope_fk" FOREIGN KEY ("owner_firebase_uid","custom_exercise_id") REFERENCES "public"."custom_exercises"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_program_scope_fk" FOREIGN KEY ("owner_firebase_uid","program_id") REFERENCES "public"."user_programs"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_revision_scope_fk" FOREIGN KEY ("owner_firebase_uid","program_revision_id") REFERENCES "public"."program_revisions"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_revision_scope_fk" FOREIGN KEY ("owner_firebase_uid","program_id","program_revision_id") REFERENCES "public"."program_revisions"("owner_firebase_uid","program_id","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 CREATE UNIQUE INDEX "cardio_logs_owner_id_unique" ON "cardio_logs" USING btree ("owner_firebase_uid","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "cardio_logs_idempotency_unique" ON "cardio_logs" USING btree ("owner_firebase_uid","session_id","client_idempotency_key");--> statement-breakpoint
 CREATE INDEX "cardio_logs_owner_recorded_idx" ON "cardio_logs" USING btree ("owner_firebase_uid","recorded_at");--> statement-breakpoint
@@ -545,14 +567,21 @@ CREATE INDEX "catalog_exercises_logging_kind_idx" ON "catalog_exercises" USING b
 CREATE UNIQUE INDEX "curated_videos_exercise_video_unique" ON "curated_videos" USING btree ("exercise_id","youtube_video_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "curated_videos_approved_order_unique" ON "curated_videos" USING btree ("exercise_id","display_order") WHERE "curated_videos"."approval_status" = 'approved';--> statement-breakpoint
 CREATE INDEX "curated_videos_exercise_status_idx" ON "curated_videos" USING btree ("exercise_id","approval_status");--> statement-breakpoint
+CREATE UNIQUE INDEX "custom_exercise_aliases_owner_normalized_unique" ON "custom_exercise_aliases" USING btree ("owner_firebase_uid","normalized_alias");--> statement-breakpoint
+CREATE UNIQUE INDEX "custom_exercise_aliases_owner_exercise_normalized_unique" ON "custom_exercise_aliases" USING btree ("owner_firebase_uid","custom_exercise_id","normalized_alias");--> statement-breakpoint
+CREATE INDEX "custom_exercise_aliases_owner_exercise_idx" ON "custom_exercise_aliases" USING btree ("owner_firebase_uid","custom_exercise_id");--> statement-breakpoint
+CREATE INDEX "custom_exercise_aliases_owner_normalized_idx" ON "custom_exercise_aliases" USING btree ("owner_firebase_uid","normalized_alias");--> statement-breakpoint
+CREATE INDEX "custom_exercise_equipment_owner_exercise_idx" ON "custom_exercise_equipment" USING btree ("owner_firebase_uid","custom_exercise_id");--> statement-breakpoint
+CREATE INDEX "custom_exercise_equipment_owner_equipment_idx" ON "custom_exercise_equipment" USING btree ("owner_firebase_uid","equipment_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "custom_exercise_videos_order_unique" ON "custom_exercise_videos" USING btree ("owner_firebase_uid","custom_exercise_id","display_order");--> statement-breakpoint
 CREATE UNIQUE INDEX "custom_exercise_videos_video_unique" ON "custom_exercise_videos" USING btree ("owner_firebase_uid","custom_exercise_id","youtube_video_id");--> statement-breakpoint
 CREATE INDEX "custom_exercise_videos_owner_idx" ON "custom_exercise_videos" USING btree ("owner_firebase_uid","custom_exercise_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "custom_exercises_owner_key_unique" ON "custom_exercises" USING btree ("owner_firebase_uid","exercise_key");--> statement-breakpoint
 CREATE UNIQUE INDEX "custom_exercises_owner_id_unique" ON "custom_exercises" USING btree ("owner_firebase_uid","id");--> statement-breakpoint
 CREATE INDEX "custom_exercises_owner_created_idx" ON "custom_exercises" USING btree ("owner_firebase_uid","created_at");--> statement-breakpoint
-CREATE UNIQUE INDEX "exercise_aliases_normalized_unique" ON "exercise_aliases" USING btree ("normalized_alias");--> statement-breakpoint
+CREATE UNIQUE INDEX "exercise_aliases_exercise_normalized_unique" ON "exercise_aliases" USING btree ("exercise_id","normalized_alias");--> statement-breakpoint
 CREATE UNIQUE INDEX "exercise_aliases_exercise_alias_unique" ON "exercise_aliases" USING btree ("exercise_id","alias");--> statement-breakpoint
+CREATE INDEX "exercise_aliases_normalized_idx" ON "exercise_aliases" USING btree ("normalized_alias");--> statement-breakpoint
 CREATE INDEX "exercise_equipment_equipment_idx" ON "exercise_equipment" USING btree ("equipment_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "idempotency_keys_owner_key_unique" ON "idempotency_keys" USING btree ("owner_firebase_uid","idempotency_key");--> statement-breakpoint
 CREATE INDEX "idempotency_keys_expiry_idx" ON "idempotency_keys" USING btree ("expires_at");--> statement-breakpoint

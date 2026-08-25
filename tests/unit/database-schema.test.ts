@@ -16,6 +16,12 @@ const ids = {
   bobSession: "00000000-0000-4000-8000-000000000008",
   catalogExercise: "00000000-0000-4000-8000-000000000009",
   aliceCardioLog: "00000000-0000-4000-8000-000000000010",
+  catalogAliasExerciseA: "00000000-0000-4000-8000-000000000014",
+  catalogAliasExerciseB: "00000000-0000-4000-8000-000000000015",
+  aliceSecondProgram: "00000000-0000-4000-8000-000000000016",
+  aliceSecondRevision: "00000000-0000-4000-8000-000000000017",
+  bobCustomExercise: "00000000-0000-4000-8000-000000000018",
+  volumeSetLog: "00000000-0000-4000-8000-000000000019",
 } as const;
 
 const openDatabases: PGlite[] = [];
@@ -44,7 +50,7 @@ async function seedProgram(
 ) {
   await database.exec(`
     INSERT INTO user_programs (id, owner_firebase_uid, program_key, name)
-    VALUES ('${programId}', '${ownerFirebaseUid}', '${ownerFirebaseUid}-program', 'Starter');
+    VALUES ('${programId}', '${ownerFirebaseUid}', '${ownerFirebaseUid}-${programId}', 'Starter');
     INSERT INTO program_revisions (
       id, owner_firebase_uid, program_id, revision_number, status, equipment_profile_kind
     ) VALUES (
@@ -92,6 +98,8 @@ describe("initial database migration", () => {
         "catalog_exercises",
         "cardio_logs",
         "curated_videos",
+        "custom_exercise_aliases",
+        "custom_exercise_equipment",
         "custom_exercise_videos",
         "custom_exercises",
         "exercise_aliases",
@@ -137,6 +145,75 @@ describe("initial database migration", () => {
         ) VALUES ('bob', '${ids.aliceCustomExercise}', 'abc123XYZ_1', 1);
       `),
     ).rejects.toThrow(/custom_exercise_videos_owner_exercise_fk|foreign key|violates/i);
+  });
+
+  it("keeps custom equipment and search aliases owner-scoped", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedOwner(database, "bob");
+    await database.exec(`
+      INSERT INTO catalog_equipment (id, label)
+      VALUES ('dumbbells', 'Dumbbells');
+      INSERT INTO custom_exercises (
+        id, owner_firebase_uid, exercise_key, name, logging_kind
+      ) VALUES
+        ('${ids.aliceCustomExercise}', 'alice', 'alice-row', 'Alice row', 'weight_reps'),
+        ('${ids.bobCustomExercise}', 'bob', 'bob-row', 'Bob row', 'weight_reps');
+      INSERT INTO custom_exercise_equipment (
+        owner_firebase_uid, custom_exercise_id, equipment_id
+      ) VALUES ('alice', '${ids.aliceCustomExercise}', 'dumbbells');
+      INSERT INTO custom_exercise_aliases (
+        owner_firebase_uid, custom_exercise_id, alias, normalized_alias
+      ) VALUES ('alice', '${ids.aliceCustomExercise}', 'My Row', 'my row');
+      INSERT INTO custom_exercise_aliases (
+        owner_firebase_uid, custom_exercise_id, alias, normalized_alias
+      ) VALUES ('bob', '${ids.bobCustomExercise}', 'My Row', 'my row');
+    `);
+
+    await expect(
+      database.exec(`
+        INSERT INTO custom_exercise_equipment (
+          owner_firebase_uid, custom_exercise_id, equipment_id
+        ) VALUES ('bob', '${ids.aliceCustomExercise}', 'dumbbells');
+      `),
+    ).rejects.toThrow(/custom_exercise_equipment_owner_exercise_fk|foreign key|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO custom_exercise_aliases (
+          owner_firebase_uid, custom_exercise_id, alias, normalized_alias
+        ) VALUES ('alice', '${ids.aliceCustomExercise}', 'MY ROW', 'my row');
+      `),
+    ).rejects.toThrow(/custom_exercise_aliases_owner_normalized_unique|unique|duplicate/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO custom_exercise_aliases (
+          owner_firebase_uid, custom_exercise_id, alias, normalized_alias
+        ) VALUES ('alice', '${ids.aliceCustomExercise}', 'Another Row', 'Another Row');
+      `),
+    ).rejects.toThrow(/custom_exercise_aliases_normalized_form|check|violates/i);
+  });
+
+  it("allows a catalog alias across exercises but rejects a duplicate per exercise", async () => {
+    const database = await openDatabase();
+    await database.exec(`
+      INSERT INTO catalog_exercises (id, slug, name, role, logging_kind)
+      VALUES
+        ('${ids.catalogAliasExerciseA}', 'alias-a', 'Alias A', 'compound', 'weight_reps'),
+        ('${ids.catalogAliasExerciseB}', 'alias-b', 'Alias B', 'compound', 'weight_reps');
+      INSERT INTO exercise_aliases (exercise_id, alias, normalized_alias)
+      VALUES
+        ('${ids.catalogAliasExerciseA}', 'RDL', 'rdl'),
+        ('${ids.catalogAliasExerciseB}', 'RDL', 'rdl');
+    `);
+
+    await expect(
+      database.exec(`
+        INSERT INTO exercise_aliases (exercise_id, alias, normalized_alias)
+        VALUES ('${ids.catalogAliasExerciseA}', 'Romanian deadlift', 'rdl');
+      `),
+    ).rejects.toThrow(/exercise_aliases_exercise_normalized_unique|unique|duplicate/i);
   });
 
   it("rejects non-canonical measurements and wrong measurement-kind fields", async () => {
@@ -207,6 +284,79 @@ describe("initial database migration", () => {
         ) VALUES ('alice', 'mutation-1', 'program.update', '{}');
       `),
     ).rejects.toThrow(/unique|duplicate/i);
+  });
+
+  it("scopes an active revision pointer to the same owner and program", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedProgram(database, "alice", ids.aliceSecondProgram, ids.aliceSecondRevision);
+
+    await expect(
+      database.exec(`
+        UPDATE user_programs
+        SET active_revision_id = '${ids.aliceSecondRevision}'
+        WHERE owner_firebase_uid = 'alice' AND id = '${ids.aliceProgram}';
+      `),
+    ).rejects.toThrow(/active_revision|foreign key|violates/i);
+
+    await database.exec(`
+      UPDATE user_programs
+      SET active_revision_id = '${ids.aliceRevision}'
+      WHERE owner_firebase_uid = 'alice' AND id = '${ids.aliceProgram}';
+    `);
+  });
+
+  it("scopes a session revision to the session program", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedProgram(database, "alice", ids.aliceSecondProgram, ids.aliceSecondRevision);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_sessions (
+          id, owner_firebase_uid, program_id, program_revision_id, state, idempotency_key
+        ) VALUES (
+          '${ids.aliceSession}', 'alice', '${ids.aliceProgram}', '${ids.aliceSecondRevision}',
+          'draft', 'mismatched-revision'
+        );
+      `),
+    ).rejects.toThrow(/workout_sessions_revision_scope_fk|foreign key|violates/i);
+  });
+
+  it("stores volume as a personal-record type", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+    await database.exec(`
+      INSERT INTO catalog_exercises (
+        id, slug, name, role, logging_kind
+      ) VALUES (
+        '${ids.catalogExercise}', 'volume-test', 'Volume test', 'compound', 'weight_reps'
+      );
+      INSERT INTO set_logs (
+        id, owner_firebase_uid, session_id, snapshot_id, set_position,
+        measurement_kind, set_kind, weight_kg, repetitions, client_idempotency_key
+      ) VALUES (
+        '${ids.volumeSetLog}', 'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}',
+        1, 'weight_reps', 'work', 20, 10, 'volume-source'
+      );
+      INSERT INTO personal_records (
+        owner_firebase_uid, catalog_exercise_id, type, value,
+        source_set_log_id, calculation_version, achieved_at
+      ) VALUES (
+        'alice', '${ids.catalogExercise}', 'volume', 200,
+        '${ids.volumeSetLog}', 'v1', now()
+      );
+    `);
+
+    const result = await database.query<{ type: string }>(`
+      SELECT type FROM personal_records
+      WHERE owner_firebase_uid = 'alice' AND source_set_log_id = '${ids.volumeSetLog}';
+    `);
+    expect(result.rows).toEqual([{ type: "volume" }]);
   });
 
   it("does not move a template child into a published revision", async () => {

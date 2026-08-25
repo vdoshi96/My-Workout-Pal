@@ -1,5 +1,5 @@
 {
-  "id": "95febdb5-e609-4fd3-b3c5-f26cecfb50cf",
+  "id": "c228c70d-9b87-413a-97e6-b4b9ad3c3db4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -671,6 +671,289 @@
       },
       "isRLSEnabled": false
     },
+    "public.custom_exercise_aliases": {
+      "name": "custom_exercise_aliases",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_firebase_uid": {
+          "name": "owner_firebase_uid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "custom_exercise_id": {
+          "name": "custom_exercise_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "alias": {
+          "name": "alias",
+          "type": "varchar(180)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized_alias": {
+          "name": "normalized_alias",
+          "type": "varchar(180)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "custom_exercise_aliases_owner_normalized_unique": {
+          "name": "custom_exercise_aliases_owner_normalized_unique",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "normalized_alias",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "custom_exercise_aliases_owner_exercise_normalized_unique": {
+          "name": "custom_exercise_aliases_owner_exercise_normalized_unique",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "custom_exercise_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "normalized_alias",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "custom_exercise_aliases_owner_exercise_idx": {
+          "name": "custom_exercise_aliases_owner_exercise_idx",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "custom_exercise_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "custom_exercise_aliases_owner_normalized_idx": {
+          "name": "custom_exercise_aliases_owner_normalized_idx",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "normalized_alias",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "custom_exercise_aliases_owner_exercise_fk": {
+          "name": "custom_exercise_aliases_owner_exercise_fk",
+          "tableFrom": "custom_exercise_aliases",
+          "tableTo": "custom_exercises",
+          "columnsFrom": [
+            "owner_firebase_uid",
+            "custom_exercise_id"
+          ],
+          "columnsTo": [
+            "owner_firebase_uid",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "custom_exercise_aliases_alias_not_blank": {
+          "name": "custom_exercise_aliases_alias_not_blank",
+          "value": "length(trim(\"custom_exercise_aliases\".\"alias\")) > 0"
+        },
+        "custom_exercise_aliases_normalized_not_blank": {
+          "name": "custom_exercise_aliases_normalized_not_blank",
+          "value": "length(trim(\"custom_exercise_aliases\".\"normalized_alias\")) > 0"
+        },
+        "custom_exercise_aliases_normalized_form": {
+          "name": "custom_exercise_aliases_normalized_form",
+          "value": "\"custom_exercise_aliases\".\"normalized_alias\" = lower(trim(\"custom_exercise_aliases\".\"alias\"))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.custom_exercise_equipment": {
+      "name": "custom_exercise_equipment",
+      "schema": "",
+      "columns": {
+        "owner_firebase_uid": {
+          "name": "owner_firebase_uid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "custom_exercise_id": {
+          "name": "custom_exercise_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "equipment_id": {
+          "name": "equipment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "custom_exercise_equipment_owner_exercise_idx": {
+          "name": "custom_exercise_equipment_owner_exercise_idx",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "custom_exercise_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "custom_exercise_equipment_owner_equipment_idx": {
+          "name": "custom_exercise_equipment_owner_equipment_idx",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "equipment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "custom_exercise_equipment_owner_exercise_fk": {
+          "name": "custom_exercise_equipment_owner_exercise_fk",
+          "tableFrom": "custom_exercise_equipment",
+          "tableTo": "custom_exercises",
+          "columnsFrom": [
+            "owner_firebase_uid",
+            "custom_exercise_id"
+          ],
+          "columnsTo": [
+            "owner_firebase_uid",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "custom_exercise_equipment_equipment_fk": {
+          "name": "custom_exercise_equipment_equipment_fk",
+          "tableFrom": "custom_exercise_equipment",
+          "tableTo": "catalog_equipment",
+          "columnsFrom": [
+            "equipment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "custom_exercise_equipment_pk": {
+          "name": "custom_exercise_equipment_pk",
+          "columns": [
+            "owner_firebase_uid",
+            "custom_exercise_id",
+            "equipment_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.custom_exercise_videos": {
       "name": "custom_exercise_videos",
       "schema": "",
@@ -997,9 +1280,15 @@
         }
       },
       "indexes": {
-        "exercise_aliases_normalized_unique": {
-          "name": "exercise_aliases_normalized_unique",
+        "exercise_aliases_exercise_normalized_unique": {
+          "name": "exercise_aliases_exercise_normalized_unique",
           "columns": [
+            {
+              "expression": "exercise_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
             {
               "expression": "normalized_alias",
               "isExpression": false,
@@ -1029,6 +1318,21 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "exercise_aliases_normalized_idx": {
+          "name": "exercise_aliases_normalized_idx",
+          "columns": [
+            {
+              "expression": "normalized_alias",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -4394,6 +4698,23 @@
           ],
           "onDelete": "restrict",
           "onUpdate": "cascade"
+        },
+        "user_programs_active_revision_scope_fk": {
+          "name": "user_programs_active_revision_scope_fk",
+          "tableFrom": "user_programs",
+          "tableTo": "program_revisions",
+          "columnsFrom": [
+            "owner_firebase_uid",
+            "id",
+            "active_revision_id"
+          ],
+          "columnsTo": [
+            "owner_firebase_uid",
+            "program_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -4908,10 +5229,12 @@
           "tableTo": "program_revisions",
           "columnsFrom": [
             "owner_firebase_uid",
+            "program_id",
             "program_revision_id"
           ],
           "columnsTo": [
             "owner_firebase_uid",
+            "program_id",
             "id"
           ],
           "onDelete": "restrict",
@@ -5011,6 +5334,7 @@
         "max_weight",
         "estimated_1rm",
         "max_repetitions",
+        "volume",
         "distance",
         "duration"
       ]
