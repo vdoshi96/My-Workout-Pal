@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   InMemoryRunnerStorage,
+  createCardioDraft,
   createRunnerState,
   createSetDraft,
   createWorkoutSnapshot,
   getActiveSetDisplay,
+  getPendingOperations,
   getRestTimerView,
   isNavigationBlocked,
   loadRunnerState,
@@ -13,10 +15,12 @@ import {
   runnerReducer,
   stableIdempotencyKey,
   syncRunnerOperations,
+  validateCardioDraft,
   validateSetDraft,
   type ActiveWorkoutState,
   type RunnerOperation,
   type RunnerSnapshotInput,
+  type WorkoutSetTargetInput,
 } from "@/domain/workout-runner";
 
 const snapshotInput: RunnerSnapshotInput = {
@@ -102,6 +106,29 @@ function makeState(now = 1_000): ActiveWorkoutState {
   return createRunnerState(createWorkoutSnapshot(snapshotInput), { now });
 }
 
+const cardioSnapshotInput: RunnerSnapshotInput = {
+  ...structuredClone(snapshotInput),
+  cardioOptions: [
+    {
+      id: "cardio-walker",
+      mode: "walker",
+      targetDurationSeconds: 1_200,
+      targetDistanceMeters: 1_500,
+      targetInclinePercent: 2,
+    },
+    {
+      id: "cardio-runner",
+      mode: "runner",
+      targetDurationSeconds: 900,
+      targetDistanceMeters: 2_000,
+    },
+  ],
+};
+
+function makeCardioState(now = 1_000): ActiveWorkoutState {
+  return createRunnerState(createWorkoutSnapshot(cardioSnapshotInput), { now });
+}
+
 function operation(
   state: ActiveWorkoutState,
   kind: RunnerOperation["kind"],
@@ -120,12 +147,15 @@ describe("active workout snapshot and navigation", () => {
     const state = createRunnerState(snapshot);
 
     input.exercises[0]!.name = "changed outside runner";
-    input.exercises[0]!.sets[0]!.target.targetWeightKg = 999;
+    (
+      input.exercises[0]!.sets[0]!.target as { targetWeightKg?: number }
+    ).targetWeightKg = 999;
 
     expect(state.snapshot.exercises[0]!.name).toBe("Chest-supported row");
-    expect(state.snapshot.exercises[0]!.sets[0]!.target.targetWeightKg).toBe(
-      20,
-    );
+    const firstTarget = state.snapshot.exercises[0]!.sets[0]!.target;
+    expect(firstTarget.kind).toBe("weight_reps");
+    if (firstTarget.kind === "weight_reps")
+      expect(firstTarget.targetWeightKg).toBe(20);
     expect(Object.isFrozen(state.snapshot)).toBe(true);
     expect(getActiveSetDisplay(state)).toMatchObject({
       exerciseName: "Chest-supported row",
@@ -147,6 +177,87 @@ describe("active workout snapshot and navigation", () => {
     expect(nextExercise.currentExerciseIndex).toBe(1);
     expect(nextExercise.currentSetIndex).toBe(0);
     expect(getActiveSetDisplay(nextExercise).target.kind).toBe("duration");
+  });
+
+  it("normalizes set order and rejects strict target fields for another logging kind", () => {
+    const input = structuredClone(snapshotInput);
+    input.exercises[0]!.sets = [...input.exercises[0]!.sets].reverse();
+    input.exercises[0]!.sets[0]!.position = 2;
+    input.exercises[0]!.sets[1]!.position = 1;
+    const normalized = createWorkoutSnapshot(input);
+    expect(
+      normalized.exercises[0]!.sets.map(({ id, position }) => ({
+        id,
+        position,
+      })),
+    ).toEqual([
+      { id: "row-warmup-1", position: 1 },
+      { id: "row-work-1", position: 2 },
+    ]);
+
+    expect(() =>
+      createWorkoutSnapshot({
+        ...snapshotInput,
+        exercises: [
+          {
+            ...snapshotInput.exercises[0]!,
+            sets: [
+              {
+                ...snapshotInput.exercises[0]!.sets[0]!,
+                target: {
+                  kind: "duration",
+                  minimumSeconds: 20,
+                  maximumSeconds: 40,
+                  restSeconds: 30,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/target kind/);
+    expect(() =>
+      createWorkoutSnapshot({
+        ...snapshotInput,
+        exercises: [
+          {
+            ...snapshotInput.exercises[0]!,
+            sets: [
+              {
+                ...snapshotInput.exercises[0]!.sets[0]!,
+                target: {
+                  kind: "weight_reps",
+                  restSeconds: 30,
+                } as unknown as WorkoutSetTargetInput,
+              },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/minimumReps/);
+    expect(() =>
+      createWorkoutSnapshot({
+        ...snapshotInput,
+        exercises: [
+          {
+            ...snapshotInput.exercises[0]!,
+            sets: [
+              {
+                ...snapshotInput.exercises[0]!.sets[0]!,
+                target: {
+                  kind: "weight_reps",
+                  minimumReps: 8,
+                  maximumReps: 10,
+                  targetWeightKg: 20,
+                  targetDistanceMeters: 2_000,
+                  restSeconds: 30,
+                } as unknown as WorkoutSetTargetInput,
+              },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/targetDistanceMeters/);
   });
 });
 
@@ -267,13 +378,13 @@ describe("drafts, notes, and exercise transitions", () => {
       replacement: {
         id: "exercise-bike",
         name: "Stationary bike",
-        loggingKind: "duration",
+        loggingKind: "distance_duration",
       },
       reason: "equipment unavailable",
     });
     expect(state.substitutions["exercise-run"]).toMatchObject({
       id: "exercise-bike",
-      loggingKind: "duration",
+      loggingKind: "distance_duration",
     });
 
     state = runnerReducer(state, {
@@ -287,6 +398,234 @@ describe("drafts, notes, and exercise transitions", () => {
       exerciseId: "exercise-row",
     });
     expect(state.completedExerciseIds).toContain("exercise-row");
+  });
+
+  it("rejects incompatible substitutions and displays a compatible replacement name", () => {
+    const state = makeState();
+    expect(() =>
+      runnerReducer(state, {
+        type: "substitute_exercise",
+        exerciseId: "exercise-run",
+        replacement: {
+          id: "exercise-bike",
+          name: "Stationary bike",
+          loggingKind: "duration",
+        },
+      }),
+    ).toThrow(/logging kind/);
+
+    const replaced = runnerReducer(state, {
+      type: "substitute_exercise",
+      exerciseId: "exercise-row",
+      replacement: {
+        id: "exercise-barbell-row",
+        name: "Barbell row",
+        loggingKind: "weight_reps",
+      },
+    });
+    expect(getActiveSetDisplay(replaced).exerciseName).toBe("Barbell row");
+  });
+
+  it("validates cardio drafts and derives or preserves entered pace", () => {
+    const empty = createCardioDraft("walker");
+    expect(empty).toMatchObject({
+      mode: "walker",
+      durationSeconds: undefined,
+      notes: "",
+    });
+    expect(validateCardioDraft(empty)).toMatchObject({ ok: false });
+    expect(
+      validateCardioDraft({
+        mode: "runner",
+        durationSeconds: 900,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: undefined,
+        paceSource: undefined,
+        inclinePercent: 1,
+        notes: "Easy effort",
+      }),
+    ).toMatchObject({
+      ok: true,
+      cardio: {
+        durationSeconds: 900,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: 450,
+        paceSource: "derived",
+        inclinePercent: 1,
+        notes: "Easy effort",
+      },
+    });
+    expect(
+      validateCardioDraft({
+        mode: "runner",
+        durationSeconds: 900,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: 420,
+        paceSource: "entered",
+        inclinePercent: undefined,
+        notes: "",
+      }),
+    ).toMatchObject({
+      ok: true,
+      cardio: { paceSecondsPerKilometer: 420, paceSource: "entered" },
+    });
+  });
+});
+
+describe("durable operation identity and recovery", () => {
+  it("uses a deterministic SHA-256 idempotency key contract", () => {
+    const key = stableIdempotencyKey({ a: 1, b: 2 });
+    expect(key).toMatch(/^mwp_sha256_[0-9a-f]{64}$/);
+    expect(stableIdempotencyKey({})).toBe(
+      "mwp_sha256_44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    );
+    expect(key).toBe(stableIdempotencyKey({ b: 2, a: 1 }));
+    expect(key).not.toBe(stableIdempotencyKey({ a: 1, b: 3 }));
+  });
+
+  it("supersedes obsolete unsaved set saves but preserves saved corrections", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let state = makeState();
+    state = runnerReducer(state, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+    const firstKey = operation(state, "save_set").idempotencyKey;
+    state = runnerReducer(state, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 34, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+    const secondKey = operation(state, "save_set").idempotencyKey;
+    expect(secondKey).not.toBe(firstKey);
+    expect(
+      state.operations.find(({ idempotencyKey }) => idempotencyKey === firstKey)
+        ?.status,
+    ).toBe("superseded");
+    expect(
+      getPendingOperations(state).map(({ idempotencyKey }) => idempotencyKey),
+    ).toEqual([secondKey]);
+
+    const submitted: string[] = [];
+    state = await syncRunnerOperations(state, {
+      storage,
+      submit: async ({ idempotencyKey }) => {
+        submitted.push(idempotencyKey);
+        return { status: "saved" };
+      },
+    });
+    expect(submitted).toEqual([secondKey]);
+    state = runnerReducer(state, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 36, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+    expect(
+      state.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === secondKey,
+      )?.status,
+    ).toBe("saved");
+  });
+
+  it("persists conflict and non-retryable failure state and counts submit attempts only", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let state = runnerReducer(makeState(), {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+    const key = operation(state, "save_set").idempotencyKey;
+    state = await syncRunnerOperations(state, {
+      storage,
+      submit: async () => ({
+        status: "failed",
+        code: "conflict",
+        conflict: true,
+        retryable: false,
+      }),
+    });
+    expect(state.operations[0]).toMatchObject({
+      status: "failed",
+      attempts: 1,
+      retryable: false,
+      failureKind: "conflict",
+    });
+    expect(state.sync.status).toBe("conflict");
+    expect(() =>
+      runnerReducer(state, { type: "retry_operation", idempotencyKey: key }),
+    ).toThrow(/retry/);
+    expect(
+      runnerReducer(
+        runnerReducer(state, {
+          type: "set_connectivity",
+          connectivity: "offline",
+        }),
+        { type: "set_auth", auth: "expired" },
+      ).sync.status,
+    ).toBe("conflict");
+    const restored = await loadRunnerState(storage, {
+      ownerUid: "uid-a",
+      sessionId: "session-1",
+      snapshot: createWorkoutSnapshot(snapshotInput),
+    });
+    expect(restored?.sync.status).toBe("conflict");
+    expect(restored?.operations[0]).toMatchObject({
+      failureKind: "conflict",
+      retryable: false,
+    });
+
+    const retryable = runnerReducer(state, {
+      type: "operation_failed",
+      idempotencyKey: key,
+      errorCode: "temporary",
+      retryable: true,
+    });
+    expect(retryable.operations[0]?.attempts).toBe(1);
+    const retried = runnerReducer(retryable, {
+      type: "retry_operation",
+      idempotencyKey: key,
+    });
+    expect(retried.operations[0]?.attempts).toBe(1);
+  });
+
+  it("persists and refuses a non-retryable failure", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let state = runnerReducer(makeState(), {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+    const key = operation(state, "save_set").idempotencyKey;
+    state = await syncRunnerOperations(state, {
+      storage,
+      submit: async () => ({
+        status: "failed",
+        code: "validation_error",
+        retryable: false,
+      }),
+    });
+    expect(state.operations[0]).toMatchObject({
+      status: "failed",
+      failureKind: "permanent",
+      retryable: false,
+      attempts: 1,
+    });
+    expect(() =>
+      runnerReducer(state, { type: "retry_operation", idempotencyKey: key }),
+    ).toThrow(/not retryable/);
+    const restored = await loadRunnerState(storage, {
+      ownerUid: "uid-a",
+      sessionId: "session-1",
+      snapshot: createWorkoutSnapshot(snapshotInput),
+    });
+    expect(restored?.sync.status).toBe("failed");
+    expect(restored?.operations[0]?.failureKind).toBe("permanent");
   });
 });
 
@@ -503,9 +842,20 @@ describe("session completion", () => {
     });
     state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
     expect(() => runnerReducer(state, { type: "complete_session" })).toThrow(
-      /confirmed/,
+      /Explicitly complete/,
     );
 
+    state = await syncRunnerOperations(state, {
+      storage,
+      submit: async () => ({ status: "saved" }),
+    });
+    state = runnerReducer(state, {
+      type: "complete_exercise",
+      exerciseId: "exercise-row",
+    });
+    expect(() => runnerReducer(state, { type: "complete_session" })).toThrow(
+      /confirmed/,
+    );
     state = await syncRunnerOperations(state, {
       storage,
       submit: async () => ({ status: "saved" }),
@@ -523,6 +873,105 @@ describe("session completion", () => {
           : { status: "saved" },
     });
     expect(state.status).toBe("completed");
+    expect(isNavigationBlocked(state)).toBe(false);
+  });
+
+  it("queues cardio logs with derived pace, resumes offline, and requires selected cardio", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let state = makeCardioState();
+    state = runnerReducer(state, { type: "select_cardio", mode: "runner" });
+    state = runnerReducer(state, {
+      type: "update_cardio_draft",
+      draft: {
+        mode: "runner",
+        durationSeconds: 900,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: undefined,
+        paceSource: undefined,
+        inclinePercent: 0,
+        notes: "Steady",
+      },
+    });
+    state = runnerReducer(state, { type: "save_cardio" });
+    expect(operation(state, "save_cardio").payload).toMatchObject({
+      cardio: {
+        durationSeconds: 900,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: 450,
+        paceSource: "derived",
+        notes: "Steady",
+      },
+    });
+    state = runnerReducer(state, {
+      type: "set_connectivity",
+      connectivity: "offline",
+    });
+    const offline = await syncRunnerOperations(state, {
+      storage,
+      submit: async () => ({ status: "saved" }),
+    });
+    expect(
+      offline.operations.find(({ kind }) => kind === "save_cardio")?.status,
+    ).toBe("pending");
+    state = await syncRunnerOperations(
+      runnerReducer(offline, {
+        type: "set_connectivity",
+        connectivity: "online",
+      }),
+      { storage, submit: async () => ({ status: "saved" }) },
+    );
+    expect(state.loggedCardio?.cardio.paceSource).toBe("derived");
+
+    state = runnerReducer(state, {
+      type: "update_cardio_draft",
+      draft: {
+        mode: "runner",
+        durationSeconds: 960,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: undefined,
+        paceSource: undefined,
+        inclinePercent: 0,
+        notes: "Longer steady effort",
+      },
+    });
+    expect(state.loggedCardio).toBeUndefined();
+    expect(() => runnerReducer(state, { type: "complete_session" })).toThrow(
+      /required cardio/,
+    );
+
+    state = await syncRunnerOperations(state, {
+      storage,
+      submit: async () => ({ status: "saved" }),
+    });
+    state = runnerReducer(state, { type: "select_cardio", mode: "walker" });
+    expect(state.loggedCardio).toBeUndefined();
+    expect(() => runnerReducer(state, { type: "complete_session" })).toThrow(
+      /required cardio/,
+    );
+
+    const missing = makeCardioState();
+    expect(() => runnerReducer(missing, { type: "complete_session" })).toThrow(
+      /required cardio/,
+    );
+  });
+
+  it("abandons a session through a durable operation and protects navigation until saved", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let state = runnerReducer(makeState(), {
+      type: "abandon_session",
+      reason: "Stopped early",
+    });
+    expect(state.status).toBe("abandoning");
+    expect(state.operations.at(-1)).toMatchObject({
+      kind: "abandon_session",
+      status: "pending",
+    });
+    expect(isNavigationBlocked(state)).toBe(true);
+    state = await syncRunnerOperations(state, {
+      storage,
+      submit: async () => ({ status: "saved", persistedId: "abandoned-1" }),
+    });
+    expect(state.status).toBe("abandoned");
     expect(isNavigationBlocked(state)).toBe(false);
   });
 });
