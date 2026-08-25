@@ -137,11 +137,14 @@ Refresh resumes the same server session and overlays unacknowledged local operat
 ## YouTube curation and custom-video boundaries
 
 - Normalize accepted YouTube watch, short-link, and embed URLs to a video ID at the validated input boundary. Reject Shorts and malformed or unsupported hosts before persistence.
-- Custom exercises accept zero, one, or two unique normalized video IDs. They never accept more than two IDs, and they never persist a caller-provided embed URL or markup.
+- Custom exercises accept zero, one, or two unique normalized IDs from HTTPS YouTube watch, short-link, or embed URLs. They reject raw IDs, duplicate normalized URLs, and more than two inputs before persistence. They never persist a caller-provided embed URL or markup.
 - Discovery keeps relevance-ordered and view-count-ordered searches as separate candidate sources. Mechanical eligibility runs before ranking, and view count breaks ties only among candidates that pass every hard gate.
+- Pair proposals prefer a distinct channel when its mechanically eligible score is comparable, reject materially redundant second videos, and remain proposals until human review and full-watch confirmation.
 - Mechanical gates reject unavailable, private, processing, non-embeddable, non-syndicated, regionally unavailable, live, unsafe, misleading, disallowed-category, wrong-movement, wrong-equipment, duplicate, near-duplicate, Shorts, and out-of-range duration candidates.
-- The curator writes a local checkpoint and review report that contains query provenance, hydrated IDs, rejection codes, quota estimates, and review state. The checkpoint stays outside production data and publication paths, and reruns resume without replaying completed hydration work.
+- The curator writes a local checkpoint and review report that contains query provenance, hydrated IDs, rejection codes, quota estimates, review state, ranked eligible candidates, proposed pairs, and any quota block. Configurable request and page budgets stop before the next API request would exceed the budget and preserve the next page token.
 - Seed validation requires exactly two distinct approved, fully watched videos in display order one and two for every canonical exercise and equipment variation. Durable seed records keep approval and availability metadata, but do not treat view counts or ranking scores as product truth.
+- Refresh assessment checks existing approved IDs for missing, private, restricted, non-embeddable, and non-syndicated states. It retains any available fallback and emits a replacement-required proposal without mutating the seed.
+- A `syndicated` decision records whether the ID came through the filtered search or has verified evidence. Direct `videos.list` metadata without that evidence remains unknown and cannot be presented as syndicated.
 
 ## Loading, empty, error, and worst-case behavior
 

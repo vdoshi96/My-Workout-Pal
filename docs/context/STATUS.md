@@ -41,7 +41,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
 - Vercel Marketplace provisioning reported Neon resource `my-workout-pal-db` ready on billing plan `free_v3`; a follow-up environment inspection confirmed database variables are attached without printing their values.
 - `pnpm typecheck`, `pnpm lint`, 92 unit and integration tests, generated-service-worker parity, and `pnpm docs:check` pass before the pending worktree integrations.
-- YouTube curation TDD evidence: the four new focused suites failed before implementation with unresolved domain-module imports, then passed with 23 tests after implementation.
+- YouTube curation TDD evidence: the initial focused suites failed before implementation with unresolved domain-module imports, then passed; the correction regression run also failed on the unbounded page loop, syndication truth, custom-input message, and missing pair workflow before the fixes, then passed with 20 focused tests.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
 - Production `next start` inspection returned the strict CSP, a unique matching rendered nonce, `strict-origin-when-cross-origin`, popup-safe opener policy, frame denial, HSTS, and the remaining declared security headers. The nonce policy intentionally makes application HTML request-rendered; the manifest remains static.
 - The production output retains the design contract seed `ba529732` and its full contract text inside the first authored body element.
@@ -59,6 +59,6 @@ Authenticated-domain and persistence integration after the verified guest-produc
 ## Worktrees
 
 - The completed analytics worktree was integrated as `fedfba4` and removed after patch-equivalence verification.
-- `/private/tmp/mwp-youtube` on `agent/youtube`: correction pass in progress for the executable workflow, quota stop, custom URL duplicates, pair diversity, and refresh assessment.
+- `/private/tmp/mwp-youtube` on `agent/youtube`: completed correction pass and is undergoing primary integration and verification.
 - `/private/tmp/mwp-database` on `agent/database`: final schema correction is in progress for curated-video variation, snapshot target shape, bounded set positions, tied PR sources, and published active revisions.
 - `/private/tmp/mwp-runner` on `agent/runner-domain`: correction pass in progress for completion, substitution, outbox, conflict, cardio, and abandonment invariants.

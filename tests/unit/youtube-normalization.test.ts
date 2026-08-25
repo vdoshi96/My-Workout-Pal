@@ -42,19 +42,19 @@ describe("YouTube reference normalization", () => {
     });
   });
 
-  it("allows at most two unique normalized custom-exercise videos", () => {
-    expect(
+  it("requires HTTPS URLs and rejects duplicate normalized custom-exercise videos explicitly", () => {
+    expect(() =>
       normalizeCustomExerciseVideoIds([
         `https://youtu.be/${VIDEO_ID_ONE}`,
         `https://www.youtube.com/embed/${VIDEO_ID_ONE}`,
-        `https://www.youtube.com/watch?v=${VIDEO_ID_TWO}`,
       ]),
-    ).toEqual([VIDEO_ID_ONE, VIDEO_ID_TWO]);
+    ).toThrow("duplicate");
+    expect(() => normalizeCustomExerciseVideoIds([VIDEO_ID_ONE])).toThrow("HTTPS URL");
     expect(() =>
       normalizeCustomExerciseVideoIds([
-        VIDEO_ID_ONE,
-        VIDEO_ID_TWO,
-        "QqRrSsTtUuV",
+        `https://www.youtube.com/watch?v=${VIDEO_ID_ONE}`,
+        `https://www.youtube.com/watch?v=${VIDEO_ID_TWO}`,
+        "https://www.youtube.com/watch?v=QqRrSsTtUuV",
       ]),
     ).toThrow("two");
   });

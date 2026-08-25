@@ -1,5 +1,5 @@
-import { normalizeYouTubeReference } from "@/domain/youtube/normalization";
-import { YOUTUBE_VIDEO_ID_PATTERN } from "@/domain/youtube/normalization";
+import { normalizeYouTubeReference } from "./normalization.ts";
+import { YOUTUBE_VIDEO_ID_PATTERN } from "./normalization.ts";
 import type {
   RankedYouTubeCandidate,
   YouTubeCandidate,
@@ -7,7 +7,7 @@ import type {
   YouTubeCurationTarget,
   YouTubeHumanReview,
   YouTubeRejectionCode,
-} from "@/domain/youtube/types";
+} from "./types.ts";
 
 export const MIN_YOUTUBE_DURATION_SECONDS = 30;
 export const MAX_YOUTUBE_DURATION_SECONDS = 6 * 60;
@@ -287,26 +287,10 @@ export function rankEligibleCandidates(
   target: YouTubeCurationTarget,
   options: Readonly<{ requireHumanReview?: boolean }> = {},
 ): readonly RankedYouTubeCandidate[] {
-  const seenIds = new Set<string>();
-  const seenFingerprints = new Set<string>();
-  const ranked: RankedYouTubeCandidate[] = [];
-
-  for (const candidate of candidates) {
+  const ranked = candidates.flatMap((candidate): RankedYouTubeCandidate[] => {
     const decision = evaluateYouTubeCandidate(candidate, target, options);
-    const normalizedId = decision.normalizedVideoId;
-    if (normalizedId && seenIds.has(normalizedId)) continue;
-    if (normalizedId) seenIds.add(normalizedId);
-    if (!decision.eligible) continue;
-
-    const fingerprint = "materialFingerprint" in candidate && typeof candidate.materialFingerprint === "string"
-      ? candidate.materialFingerprint
-      : undefined;
-    if (fingerprint && seenFingerprints.has(fingerprint)) continue;
-    if (fingerprint) seenFingerprints.add(fingerprint);
-    ranked.push({ candidate, decision });
-  }
-
-  return ranked.sort((left, right) => {
+    return decision.eligible ? [{ candidate, decision }] : [];
+  }).sort((left, right) => {
     if (right.decision.relevanceScore !== left.decision.relevanceScore) {
       return right.decision.relevanceScore - left.decision.relevanceScore;
     }
@@ -314,6 +298,18 @@ export function rankEligibleCandidates(
     const rightViews = Number.isFinite(right.candidate.viewCount) ? right.candidate.viewCount ?? 0 : 0;
     if (rightViews !== leftViews) return rightViews - leftViews;
     return (left.decision.normalizedVideoId ?? "").localeCompare(right.decision.normalizedVideoId ?? "");
+  });
+
+  const seenIds = new Set<string>();
+  const seenFingerprints = new Set<string>();
+  return ranked.filter((item) => {
+    const normalizedId = item.decision.normalizedVideoId;
+    if (normalizedId && seenIds.has(normalizedId)) return false;
+    if (normalizedId) seenIds.add(normalizedId);
+    const fingerprint = item.candidate.materialFingerprint;
+    if (fingerprint && seenFingerprints.has(fingerprint)) return false;
+    if (fingerprint) seenFingerprints.add(fingerprint);
+    return true;
   });
 }
 

@@ -1,14 +1,16 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { evaluateYouTubeCandidate, rankEligibleCandidates } from "@/domain/youtube/eligibility";
-import { normalizeYouTubeReference } from "@/domain/youtube/normalization";
+import { evaluateYouTubeCandidate, rankEligibleCandidates } from "./eligibility.ts";
+import { normalizeYouTubeReference } from "./normalization.ts";
 import type {
   CurationCheckpoint,
+  CurationRunBudget,
   CurationQueryOrder,
   CurationReport,
   CurationReportCandidate,
   CurationReviewStatus,
+  ProposedVideoPair,
   RequiredVideoVariation,
   YouTubeCandidate,
   YouTubeCurationTarget,
@@ -17,7 +19,7 @@ import type {
   YouTubeRejectionCode,
   YouTubeSearchRequest,
   YouTubeSearchResponse,
-} from "@/domain/youtube/types";
+} from "./types.ts";
 
 export const DEFAULT_YOUTUBE_CURATION_STATE_DIR = ".local/youtube-curation";
 export const MISSING_YOUTUBE_API_KEY_MESSAGE = "Missing YOUTUBE_API_KEY; refusing to run YouTube curation.";
@@ -27,6 +29,12 @@ export const DEFAULT_YOUTUBE_REGION_CODE = "US";
 export const DEFAULT_YOUTUBE_MAX_RESULTS = 25;
 export const YOUTUBE_SEARCH_REQUEST_UNITS = 100;
 export const YOUTUBE_HYDRATE_REQUEST_UNITS = 1;
+export const DEFAULT_YOUTUBE_CURATION_BUDGET: CurationRunBudget = {
+  maxQuotaUnits: 1_000,
+  maxSearchRequests: 10,
+  maxHydrateRequests: 10,
+  maxPagesPerQuery: 1,
+};
 
 type JsonRecord = Record<string, unknown> & {
   schemaVersion?: unknown;
@@ -203,6 +211,7 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
       hydrateRequests: numberOrZero(quota.hydrateRequests),
       unitsEstimated: numberOrZero(quota.unitsEstimated),
     },
+    ...(typeof input["blockedReason"] === "string" ? { blockedReason: input["blockedReason"] } : {}),
   };
 }
 
@@ -396,7 +405,8 @@ export function createYouTubeDataApiClient(options: Readonly<{
               privacyStatus: typeof status.privacyStatus === "string" ? status.privacyStatus : undefined,
               uploadStatus: typeof status.uploadStatus === "string" ? status.uploadStatus : undefined,
               embeddable: typeof status.embeddable === "boolean" ? status.embeddable : undefined,
-              syndicated: true,
+              syndicated: undefined,
+              syndicationEvidence: "unknown",
               regionAvailable: !blocked && allowed,
               liveBroadcastContent: typeof snippet.liveBroadcastContent === "string" ? snippet.liveBroadcastContent : undefined,
               language: typeof snippet.defaultLanguage === "string" ? snippet.defaultLanguage : undefined,
@@ -418,6 +428,120 @@ function addQuota(checkpoint: CurationCheckpoint, searchUnits: number, hydrateUn
   checkpoint.quota.unitsEstimated += searchUnits + hydrateUnits;
 }
 
+type CurationRunUsage = {
+  searchRequests: number;
+  hydrateRequests: number;
+  unitsEstimated: number;
+};
+
+function nonNegativeIntegerOrFallback(value: number | undefined, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : fallback;
+}
+
+function resolveCurationBudget(input: Partial<CurationRunBudget> | undefined): CurationRunBudget {
+  return {
+    maxQuotaUnits: nonNegativeIntegerOrFallback(input?.maxQuotaUnits, DEFAULT_YOUTUBE_CURATION_BUDGET.maxQuotaUnits),
+    maxSearchRequests: nonNegativeIntegerOrFallback(input?.maxSearchRequests, DEFAULT_YOUTUBE_CURATION_BUDGET.maxSearchRequests),
+    maxHydrateRequests: nonNegativeIntegerOrFallback(input?.maxHydrateRequests, DEFAULT_YOUTUBE_CURATION_BUDGET.maxHydrateRequests),
+    maxPagesPerQuery: nonNegativeIntegerOrFallback(input?.maxPagesPerQuery, DEFAULT_YOUTUBE_CURATION_BUDGET.maxPagesPerQuery),
+  };
+}
+
+function canSpend(
+  usage: CurationRunUsage,
+  budget: CurationRunBudget,
+  kind: "search" | "hydrate",
+  units: number,
+): boolean {
+  if (usage.unitsEstimated + units > budget.maxQuotaUnits) return false;
+  if (kind === "search") return usage.searchRequests < budget.maxSearchRequests;
+  return usage.hydrateRequests < budget.maxHydrateRequests;
+}
+
+function recordRunUsage(usage: CurationRunUsage, kind: "search" | "hydrate", units: number): void {
+  usage.unitsEstimated += units;
+  if (kind === "search") usage.searchRequests += 1;
+  else usage.hydrateRequests += 1;
+}
+
+function candidateChannelKey(candidate: YouTubeCandidate): string | undefined {
+  const value = candidate.channelId ?? candidate.channelTitle;
+  const normalized = value?.trim().toLocaleLowerCase("en-US");
+  return normalized || undefined;
+}
+
+function materiallyRedundant(left: YouTubeCandidate, right: YouTubeCandidate): boolean {
+  if (left.materialFingerprint && right.materialFingerprint && left.materialFingerprint === right.materialFingerprint) {
+    return true;
+  }
+  return left.nearDuplicateOf === right.videoId || right.nearDuplicateOf === left.videoId;
+}
+
+export function proposeVideoPair(
+  target: YouTubeCurationTarget & RequiredVideoVariation,
+  candidates: readonly YouTubeCandidate[],
+): ProposedVideoPair {
+  const eligibleCandidates = candidates.filter((candidate) => evaluateYouTubeCandidate(candidate, target).eligible);
+  const ranked = rankEligibleCandidates(candidates, target);
+  const first = ranked[0]?.candidate;
+  if (!first) {
+    return {
+      target: { canonicalExerciseSlug: target.canonicalExerciseSlug, variationId: target.variationId },
+      status: "needs-second-candidate",
+      videoIds: [],
+      distinctChannels: false,
+      reason: "fewer-than-two-eligible-candidates",
+    };
+  }
+
+  const nonRedundant = eligibleCandidates.filter(
+    (candidate) => candidate.videoId !== first.videoId && !materiallyRedundant(first, candidate),
+  );
+  if (nonRedundant.length === 0) {
+    return {
+      target: { canonicalExerciseSlug: target.canonicalExerciseSlug, variationId: target.variationId },
+      status: "needs-second-candidate",
+      videoIds: [first.videoId],
+      distinctChannels: false,
+      reason: eligibleCandidates.length > 1 ? "materially-redundant-second" : "fewer-than-two-eligible-candidates",
+    };
+  }
+
+  const rankedAlternatives = rankEligibleCandidates(nonRedundant, target);
+  const bestAlternativeRanked = rankedAlternatives[0];
+  const bestAlternative = bestAlternativeRanked?.candidate;
+  const firstChannel = candidateChannelKey(first);
+  const distinctAlternative = rankedAlternatives.find((rankedCandidate) => {
+    const channel = candidateChannelKey(rankedCandidate.candidate);
+    return Boolean(firstChannel && channel && channel !== firstChannel);
+  });
+  // A distinct channel wins when its hard-gated relevance is comparable. View count
+  // is already a final tie-breaker inside rankEligibleCandidates.
+  const second = distinctAlternative && bestAlternativeRanked
+    ? distinctAlternative.decision.relevanceScore >= bestAlternativeRanked.decision.relevanceScore - 2
+      ? distinctAlternative.candidate
+      : bestAlternative
+    : bestAlternative ?? distinctAlternative?.candidate;
+  if (!second) {
+    return {
+      target: { canonicalExerciseSlug: target.canonicalExerciseSlug, variationId: target.variationId },
+      status: "needs-second-candidate",
+      videoIds: [first.videoId],
+      distinctChannels: false,
+      reason: "fewer-than-two-eligible-candidates",
+    };
+  }
+  const secondChannel = candidateChannelKey(second);
+  return {
+    target: { canonicalExerciseSlug: target.canonicalExerciseSlug, variationId: target.variationId },
+    status: "ready-for-review",
+    videoIds: [first.videoId, second.videoId],
+    distinctChannels: Boolean(firstChannel && secondChannel && firstChannel !== secondChannel),
+  };
+}
+
 export async function curateYouTubeCandidates(options: Readonly<{
   api: YouTubeDataApi;
   targets: readonly (YouTubeCurationTarget & RequiredVideoVariation)[];
@@ -425,11 +549,15 @@ export async function curateYouTubeCandidates(options: Readonly<{
   now?: () => string;
   maxResults?: number;
   regionCode?: string;
+  budget?: Partial<CurationRunBudget>;
 }>): Promise<Readonly<{ checkpoint: CurationCheckpoint; report: CurationReport; reportPath: string }>> {
   const stateDirectory = options.stateDirectory ?? DEFAULT_YOUTUBE_CURATION_STATE_DIR;
   const now = options.now ?? (() => new Date().toISOString());
   const regionCode = options.regionCode ?? DEFAULT_YOUTUBE_REGION_CODE;
+  const budget = resolveCurationBudget(options.budget);
+  const usage: CurationRunUsage = { searchRequests: 0, hydrateRequests: 0, unitsEstimated: 0 };
   const checkpoint = await loadCurationCheckpoint(stateDirectory);
+  delete checkpoint.blockedReason;
   const queryItems = new Map<string, { target: YouTubeCurationTarget & RequiredVideoVariation; queryKeys: string[]; item: YouTubeCandidate }>();
   for (const [candidateKey, discovered] of Object.entries(checkpoint.discoveredCandidates)) {
     queryItems.set(candidateKey, {
@@ -439,26 +567,43 @@ export async function curateYouTubeCandidates(options: Readonly<{
     });
   }
 
-  for (const target of options.targets) {
+  let quotaBlockedReason: string | undefined;
+  let pageLimitReached = false;
+  curationLoop: for (const target of options.targets) {
     for (const [index, query] of buildCurationQueries(target).entries()) {
       for (const order of ["relevance", "viewCount"] as const) {
         const request = buildYouTubeSearchRequest(target, query, order, index, {
           regionCode,
           maxResults: options.maxResults,
-          ...(checkpoint.pageTokens[queryKey(target, query, order, index)]
+          ...(typeof checkpoint.pageTokens[queryKey(target, query, order, index)] === "string"
             ? { pageToken: checkpoint.pageTokens[queryKey(target, query, order, index)] ?? undefined }
             : {}),
         });
         if (checkpoint.completedQueries.some((completed) => completed.queryKey === request.queryKey)) continue;
         let pageToken = checkpoint.pageTokens[request.queryKey] ?? undefined;
-        while (true) {
+        let pagesFetched = 0;
+        while (!quotaBlockedReason) {
+          if (pagesFetched >= budget.maxPagesPerQuery) {
+            pageLimitReached = true;
+            checkpoint.blockedReason = `Per-query page limit reached for ${request.queryKey}; resume to fetch the next page.`;
+            await saveCurationCheckpoint(stateDirectory, checkpoint);
+            break;
+          }
+          if (!canSpend(usage, budget, "search", YOUTUBE_SEARCH_REQUEST_UNITS)) {
+            quotaBlockedReason = `quota budget would be exceeded before the next search request for ${request.queryKey}.`;
+            checkpoint.blockedReason = quotaBlockedReason;
+            await saveCurationCheckpoint(stateDirectory, checkpoint);
+            break curationLoop;
+          }
           const pageRequest = buildYouTubeSearchRequest(target, query, order, index, {
             regionCode,
             maxResults: options.maxResults,
             ...(pageToken ? { pageToken } : {}),
           });
           const response = await options.api.searchVideos(pageRequest);
-          addQuota(checkpoint, response.quotaUnits ?? YOUTUBE_SEARCH_REQUEST_UNITS, 0);
+          recordRunUsage(usage, "search", YOUTUBE_SEARCH_REQUEST_UNITS);
+          addQuota(checkpoint, YOUTUBE_SEARCH_REQUEST_UNITS, 0);
+          pagesFetched += 1;
           checkpoint.pageTokens[request.queryKey] = response.nextPageToken ?? null;
           for (const item of response.items) {
             let normalizedId: string;
@@ -471,10 +616,18 @@ export async function curateYouTubeCandidates(options: Readonly<{
             const existing = queryItems.get(key);
             if (existing) {
               if (!existing.queryKeys.includes(request.queryKey)) existing.queryKeys.push(request.queryKey);
+              existing.item = {
+                ...existing.item,
+                syndicated: existing.item.syndicated === false ? false : true,
+                syndicationEvidence: "search-filter",
+                searchSources: [...new Set([...(existing.item.searchSources ?? []), order])],
+                queryKeys: [...new Set([...(existing.item.queryKeys ?? []), request.queryKey])],
+              };
               const discovered = checkpoint.discoveredCandidates[key];
               if (discovered && !discovered.queryKeys.includes(request.queryKey)) {
                 discovered.queryKeys.push(request.queryKey);
               }
+              if (discovered) discovered.item = existing.item;
             } else {
               const discovered = {
                 target,
@@ -482,6 +635,8 @@ export async function curateYouTubeCandidates(options: Readonly<{
                 item: {
                   ...item,
                   videoId: normalizedId,
+                  syndicated: true,
+                  syndicationEvidence: "search-filter" as const,
                   searchSources: [order],
                   queryKeys: [request.queryKey],
                 },
@@ -492,11 +647,19 @@ export async function curateYouTubeCandidates(options: Readonly<{
           }
           await saveCurationCheckpoint(stateDirectory, checkpoint);
           if (!response.nextPageToken) {
-            checkpoint.completedQueries.push({ queryKey: request.queryKey, pageToken: null });
+            if (!checkpoint.completedQueries.some((completed) => completed.queryKey === request.queryKey)) {
+              checkpoint.completedQueries.push({ queryKey: request.queryKey, pageToken: null });
+            }
             await saveCurationCheckpoint(stateDirectory, checkpoint);
             break;
           }
           pageToken = response.nextPageToken;
+          if (pagesFetched >= budget.maxPagesPerQuery) {
+            pageLimitReached = true;
+            checkpoint.blockedReason = `Per-query page limit reached for ${request.queryKey}; resume to fetch the next page.`;
+            await saveCurationCheckpoint(stateDirectory, checkpoint);
+            break;
+          }
         }
       }
     }
@@ -510,12 +673,24 @@ export async function curateYouTubeCandidates(options: Readonly<{
   for (const [videoId, candidate] of Object.entries(checkpoint.hydratedCandidates)) {
     hydratedById.set(videoId, candidate);
   }
-  for (let index = 0; index < pendingIds.length; index += 50) {
+  for (let index = 0; index < pendingIds.length && !quotaBlockedReason; index += 50) {
     const batch = pendingIds.slice(index, index + 50);
+    if (!canSpend(usage, budget, "hydrate", YOUTUBE_HYDRATE_REQUEST_UNITS)) {
+      quotaBlockedReason = "quota budget would be exceeded before the next hydration request.";
+      checkpoint.blockedReason = quotaBlockedReason;
+      await saveCurationCheckpoint(stateDirectory, checkpoint);
+      break;
+    }
     const response: YouTubeHydrateResponse = await options.api.hydrateVideos(batch, regionCode);
-    addQuota(checkpoint, 0, response.quotaUnits ?? YOUTUBE_HYDRATE_REQUEST_UNITS);
+    recordRunUsage(usage, "hydrate", YOUTUBE_HYDRATE_REQUEST_UNITS);
+    addQuota(checkpoint, 0, YOUTUBE_HYDRATE_REQUEST_UNITS);
     for (const candidate of response.items) {
-      const normalizedId = normalizeYouTubeReference(candidate.videoId);
+      let normalizedId: string;
+      try {
+        normalizedId = normalizeYouTubeReference(candidate.videoId);
+      } catch {
+        continue;
+      }
       hydratedById.set(normalizedId, { ...candidate, videoId: normalizedId });
       checkpoint.hydratedCandidates[normalizedId] = { ...candidate, videoId: normalizedId };
       if (!checkpoint.hydratedVideoIds.includes(normalizedId)) checkpoint.hydratedVideoIds.push(normalizedId);
@@ -527,23 +702,75 @@ export async function curateYouTubeCandidates(options: Readonly<{
   for (const entry of queryItems.values()) {
     const hydrated = hydratedById.get(entry.item.videoId);
     if (!hydrated) continue;
-    const decision = evaluateYouTubeCandidate(hydrated, entry.target);
+    const evidence = hydrated.syndicationEvidence === "verified"
+      ? "verified"
+      : entry.item.syndicationEvidence ?? hydrated.syndicationEvidence ?? "unknown";
+    const merged: YouTubeCandidate = {
+      ...entry.item,
+      ...hydrated,
+      videoId: entry.item.videoId,
+      title: hydrated.title || entry.item.title,
+      ...(hydrated.description === undefined && entry.item.description !== undefined ? { description: entry.item.description } : {}),
+      syndicated: hydrated.syndicated === undefined
+        ? evidence === "search-filter"
+          ? true
+          : undefined
+        : hydrated.syndicated,
+      syndicationEvidence: evidence,
+      searchSources: [...new Set([...(entry.item.searchSources ?? []), ...(hydrated.searchSources ?? [])])],
+      queryKeys: [...new Set([...(entry.item.queryKeys ?? []), ...(hydrated.queryKeys ?? []), ...entry.queryKeys])],
+    };
+    hydratedById.set(entry.item.videoId, merged);
+    checkpoint.hydratedCandidates[entry.item.videoId] = merged;
+    const decision = evaluateYouTubeCandidate(merged, entry.target);
     checkpoint.rejectionCodes[entry.item.videoId] = [...decision.rejectionCodes];
     if (!checkpoint.reviewStatus[entry.item.videoId]) checkpoint.reviewStatus[entry.item.videoId] = "pending";
     reportCandidates.push({
       videoId: entry.item.videoId,
       target: { canonicalExerciseSlug: entry.target.canonicalExerciseSlug, variationId: entry.target.variationId },
       queryKeys: entry.queryKeys,
-      candidate: hydrated,
+      candidate: merged,
       decision,
       reviewStatus: checkpoint.reviewStatus[entry.item.videoId] ?? "pending",
     });
   }
 
+  const rankedEligibleCandidates: CurationReportCandidate[] = [];
+  const proposedPairs: ProposedVideoPair[] = [];
+  for (const target of options.targets) {
+    const targetCandidates = reportCandidates.filter(
+      (candidate) => candidate.target.canonicalExerciseSlug === target.canonicalExerciseSlug && candidate.target.variationId === target.variationId,
+    );
+    const ranked = rankEligibleCandidates(targetCandidates.map((candidate) => candidate.candidate), target);
+    const byId = new Map(targetCandidates.map((candidate) => [candidate.videoId, candidate]));
+    ranked.forEach((rankedCandidate, rank) => {
+      const original = byId.get(rankedCandidate.candidate.videoId);
+      if (original) rankedEligibleCandidates.push({ ...original, rank: rank + 1 });
+    });
+    proposedPairs.push(proposeVideoPair(target, targetCandidates.map((candidate) => candidate.candidate)));
+  }
+
+  const status: CurationReport["status"] = quotaBlockedReason
+    ? "quota-blocked"
+    : pageLimitReached
+      ? "page-limit"
+      : options.targets.length === 0
+        ? "blocked"
+        : "ready-for-review";
+  const blockedReason = quotaBlockedReason
+    ?? (pageLimitReached ? "Per-query page limit reached; resume the local checkpoint to continue." : undefined)
+    ?? (options.targets.length === 0 ? "No curation targets were provided." : undefined);
+  if (blockedReason) checkpoint.blockedReason = blockedReason;
+  else delete checkpoint.blockedReason;
   const report: CurationReport = {
     generatedAt: now(),
-    status: "ready-for-review",
+    status,
     candidates: reportCandidates,
+    rankedEligibleCandidates,
+    proposedPairs,
+    quota: { ...checkpoint.quota, budget },
+    ...(blockedReason ? { blockedReason } : {}),
+    nextPageTokens: { ...checkpoint.pageTokens },
   };
   const reportPath = await writeCurationReport(stateDirectory, report);
   await saveCurationCheckpoint(stateDirectory, checkpoint);

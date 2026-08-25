@@ -2,7 +2,7 @@ import type {
   CustomExerciseVideoErrorCode,
   YouTubeReferenceErrorCode,
   YouTubeReferenceParseResult,
-} from "@/domain/youtube/types";
+} from "./types.ts";
 
 export const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
@@ -156,9 +156,30 @@ export function validateCustomExerciseVideoIds(
   const seen = new Set<string>();
 
   for (const input of inputs) {
-    const parsed = parseYouTubeReference(input);
+    const trimmed = input.trim();
+    if (YOUTUBE_VIDEO_ID_PATTERN.test(trimmed)) {
+      return {
+        ok: false,
+        code: "raw-video-id-not-allowed",
+        message: "Custom exercise videos must use an HTTPS URL, not raw video IDs.",
+      };
+    }
+    const parsed = parseYouTubeReference(trimmed);
     if (!parsed.ok) return parsed;
-    if (seen.has(parsed.videoId)) continue;
+    if (parsed.kind === "id") {
+      return {
+        ok: false,
+        code: "raw-video-id-not-allowed",
+        message: "Custom exercise videos must use an HTTPS URL, not raw video IDs.",
+      };
+    }
+    if (seen.has(parsed.videoId)) {
+      return {
+        ok: false,
+        code: "duplicate-video-id",
+        message: "duplicate normalized YouTube video URLs are not allowed.",
+      };
+    }
     seen.add(parsed.videoId);
     uniqueIds.push(parsed.videoId);
   }

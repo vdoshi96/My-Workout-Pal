@@ -12,8 +12,10 @@ import {
   loadCurationCheckpoint,
   saveCurationCheckpoint,
   writeCurationReport,
+  proposeVideoPair,
 } from "@/domain/youtube/curation";
 import type { YouTubeDataApi } from "@/domain/youtube/types";
+import { assessApprovedVideoPair } from "@/domain/youtube/refresh";
 
 describe("resumable YouTube curation state", () => {
   it("persists completed queries, hydrated IDs, rejection codes, quota, and review status", async () => {
@@ -116,6 +118,21 @@ describe("resumable YouTube curation state", () => {
     try {
       const first = await curateYouTubeCandidates({ api, targets: [target], stateDirectory: directory });
       expect(first.report.candidates).toHaveLength(1);
+      expect(first.report.candidates[0]).toMatchObject({
+        videoId: "AbCdEfGhI01",
+        decision: { eligible: true, rejectionCodes: [] },
+      });
+      expect(first.report.candidates[0]?.queryKeys.length).toBe(2);
+      expect(first.report.rankedEligibleCandidates).toMatchObject([
+        { videoId: "AbCdEfGhI01", rank: 1 },
+      ]);
+      expect(first.report.proposedPairs).toMatchObject([
+        {
+          status: "needs-second-candidate",
+          videoIds: ["AbCdEfGhI01"],
+          reason: "fewer-than-two-eligible-candidates",
+        },
+      ]);
       expect(searchCalls).toBe(2);
       expect(hydrateCalls).toBe(1);
 
@@ -159,6 +176,138 @@ describe("resumable YouTube curation state", () => {
     expect(new URL(requests[0]!).searchParams.get("videoEmbeddable")).toBe("true");
     expect(new URL(requests[0]!).searchParams.get("videoSyndicated")).toBe("true");
     expect(new URL(requests[1]!).searchParams.get("part")).toBe("snippet,contentDetails,status,statistics");
-    expect(hydrated.items[0]).toMatchObject({ duration: "PT2M", viewCount: 12, embeddable: true });
+    expect(hydrated.items[0]).toMatchObject({
+      duration: "PT2M",
+      viewCount: 12,
+      embeddable: true,
+      syndicated: undefined,
+      syndicationEvidence: "unknown",
+    });
+  });
+
+  it("stops before an over-budget request and preserves the next page token", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-budget-"));
+    let searchCalls = 0;
+    let hydrateCalls = 0;
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        searchCalls += 1;
+        return {
+          items: [{ videoId: "AbCdEfGhI01", title: "Dumbbell bench press tutorial" }],
+          nextPageToken: "resume-token",
+        };
+      },
+      async hydrateVideos() {
+        hydrateCalls += 1;
+        return { items: [] };
+      },
+    };
+
+    try {
+      const result = await curateYouTubeCandidates({
+        api,
+        targets: [
+          {
+            canonicalExerciseSlug: "dumbbell-bench-press",
+            variationId: "dumbbells",
+            exerciseName: "Dumbbell bench press",
+            requiredEquipmentTerms: ["dumbbell"],
+          },
+        ],
+        stateDirectory: directory,
+        budget: {
+          maxQuotaUnits: 100,
+          maxSearchRequests: 1,
+          maxHydrateRequests: 1,
+          maxPagesPerQuery: 5,
+        },
+      });
+
+      expect(searchCalls).toBe(1);
+      expect(hydrateCalls).toBe(0);
+      expect(result.report.status).toBe("quota-blocked");
+      expect(result.report.blockedReason).toContain("quota");
+      expect(Object.values(result.checkpoint.pageTokens)).toContain("resume-token");
+      expect(result.checkpoint.completedQueries).toEqual([]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("proposes a distinct-channel second candidate and flags redundant seconds", () => {
+    const base = {
+      title: "Dumbbell bench press tutorial",
+      description: "A concise dumbbell bench press guide.",
+      duration: "PT2M",
+      privacyStatus: "public" as const,
+      uploadStatus: "processed" as const,
+      embeddable: true,
+      syndicated: true,
+      regionAvailable: true,
+      liveBroadcastContent: "none" as const,
+      language: "en",
+    };
+    const target = {
+      canonicalExerciseSlug: "dumbbell-bench-press",
+      variationId: "dumbbells",
+      exerciseName: "Dumbbell bench press",
+      requiredEquipmentTerms: ["dumbbell"],
+    } as const;
+    const distinct = proposeVideoPair(
+      target,
+      [
+        { ...base, videoId: "AbCdEfGhI01", channelId: "channel-a", viewCount: 100 },
+        { ...base, videoId: "ZyXwVuTsR98", channelId: "channel-a", viewCount: 90 },
+        { ...base, videoId: "QqRrSsTtUuV", channelId: "channel-b", viewCount: 80 },
+      ],
+    );
+    expect(distinct).toMatchObject({ status: "ready-for-review", videoIds: ["AbCdEfGhI01", "QqRrSsTtUuV"], distinctChannels: true });
+
+    const redundant = proposeVideoPair(target, [
+      { ...base, videoId: "AbCdEfGhI01", channelId: "channel-a", materialFingerprint: "same-material" },
+      { ...base, videoId: "ZyXwVuTsR98", channelId: "channel-a", materialFingerprint: "same-material" },
+    ]);
+    expect(redundant).toMatchObject({ status: "needs-second-candidate", reason: "materially-redundant-second" });
+  });
+
+  it("assesses existing pairs without mutating them and retains an available fallback", () => {
+    const assessment = assessApprovedVideoPair(
+      [
+        { videoId: "AbCdEfGhI01", displayOrder: 1 },
+        { videoId: "ZyXwVuTsR98", displayOrder: 2 },
+      ],
+      new Map([
+        ["AbCdEfGhI01", {
+          videoId: "AbCdEfGhI01",
+          title: "Dumbbell bench press",
+          privacyStatus: "public",
+          uploadStatus: "processed",
+          embeddable: true,
+          syndicated: true,
+          syndicationEvidence: "search-filter",
+          regionAvailable: true,
+        }],
+        ["ZyXwVuTsR98", {
+          videoId: "ZyXwVuTsR98",
+          title: "Dumbbell bench press",
+          privacyStatus: "private",
+          uploadStatus: "processed",
+          embeddable: true,
+          syndicated: true,
+          syndicationEvidence: "search-filter",
+          regionAvailable: true,
+        }],
+      ]),
+    );
+
+    expect(assessment).toMatchObject({
+      replacementRequired: true,
+      fallbackVideoId: "AbCdEfGhI01",
+      proposal: { action: "replacement-required" },
+    });
+    expect(assessment.videos).toEqual([
+      { videoId: "AbCdEfGhI01", displayOrder: 1, status: "available", available: true },
+      { videoId: "ZyXwVuTsR98", displayOrder: 2, status: "private", available: false },
+    ]);
   });
 });

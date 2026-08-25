@@ -20,7 +20,7 @@
     "test:e2e": "playwright test",
     "pwa:build": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/render-service-worker.mjs",
     "pwa:check": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/render-service-worker.mjs --check",
-    "youtube:curate": "node scripts/youtube-curate.mjs",
+    "youtube:curate": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/youtube-curate.ts",
     "seed:check": "node scripts/seed-check.mjs",
     "docs:build": "node scripts/render-docs.mjs",
     "docs:check": "node scripts/render-docs.mjs --check",

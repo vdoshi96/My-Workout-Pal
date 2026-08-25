@@ -8,7 +8,7 @@ Every seeded canonical exercise and equipment variation must have exactly two or
 
 `YOUTUBE_API_KEY` is a server-side development and curation secret. It is never bundled into the application, printed in reports, committed, or copied into public QA evidence.
 
-The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, and review status. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.
+The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, review status, ranked eligible candidates, and proposed pairs. A configurable request and page budget stops before the next API request would exceed its limit. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.
 
 ## Discovery sequence
 
@@ -52,7 +52,7 @@ The reviewer watches each proposed video from start to finish and records the fo
 - The candidate adds material value beyond the first selected video.
 - The title and channel attribution match the live YouTube page.
 
-Prefer distinct channels when quality is comparable. Skip a materially worse second result rather than filling a slot. View count breaks a tie only after both candidates pass eligibility and quality gates. The March 31, 2025, change to Shorts view counting is another reason not to treat view count as quality.
+Prefer distinct channels when mechanical and human quality is comparable. Reject or flag a materially redundant second result rather than filling a slot. View count breaks a tie only after both candidates pass eligibility and quality gates. The March 31, 2025, change to Shorts view counting is another reason not to treat view count as quality.
 
 ## Approval record
 
@@ -76,13 +76,13 @@ The checker also confirms that reused starter prescriptions point to the same ca
 
 ## Refresh and replacement
 
-`pnpm youtube:refresh` checks seeded IDs with `videos.list` and proposes action when a video becomes missing, private, restricted, removed, unembeddable, or regionally unavailable. It does not mutate production.
+The typed `assessApprovedVideoPair` refresh helper checks seeded IDs with hydrated metadata and proposes action when a video becomes missing, private, restricted, removed, unembeddable, non-syndicated, or regionally unavailable. It does not mutate production.
 
-The application keeps the remaining approved video and direct YouTube fallback available. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.
+The application keeps the remaining approved video and direct YouTube fallback available. A refresh assessment checks both IDs and emits a replacement-required proposal when one or both are unavailable. It never mutates the approved seed. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.
 
 ## Local command scaffold
 
-Run `pnpm youtube:curate` with an official `YOUTUBE_API_KEY` and a private target manifest. The command resumes from `.local/youtube-curation/checkpoint.json` and writes the review proposal to `.local/youtube-curation/review-report.json`. These paths are ignored by Git and contain no production data.
+Run `pnpm youtube:curate` with an official `YOUTUBE_API_KEY` and a private target manifest. The command invokes the typed curation workflow, resumes from `.local/youtube-curation/checkpoint.json`, and writes the review proposal to `.local/youtube-curation/review-report.json`. The report includes query provenance, mechanical rejection codes, ranked eligible candidates, proposed pairs, and quota-blocked state when a budget stops progress. Set `YOUTUBE_CURATION_MAX_QUOTA_UNITS`, `YOUTUBE_CURATION_MAX_SEARCH_REQUESTS`, `YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS`, and `YOUTUBE_CURATION_MAX_PAGES_PER_QUERY` (or the matching command-line flags) to bound a run. These paths are ignored by Git and contain no production data.
 
 If `YOUTUBE_API_KEY` is missing, the command exits before creating state or making a request and prints exactly:
 

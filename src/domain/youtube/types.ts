@@ -25,6 +25,8 @@ export type YouTubeReferenceParseResult =
 
 export type CustomExerciseVideoErrorCode =
   | YouTubeReferenceErrorCode
+  | "raw-video-id-not-allowed"
+  | "duplicate-video-id"
   | "too-many-videos";
 
 export type YouTubeCandidateSource = "relevance" | "viewCount";
@@ -43,6 +45,7 @@ export type YouTubeCandidate = Readonly<{
   available?: boolean | undefined;
   embeddable?: boolean | undefined;
   syndicated?: boolean | undefined;
+  syndicationEvidence?: "search-filter" | "verified" | "unknown" | undefined;
   regionAvailable?: boolean | undefined;
   liveBroadcastContent?: "none" | "live" | "upcoming" | string | undefined;
   isLive?: boolean | undefined;
@@ -201,7 +204,15 @@ export type CurationCheckpoint = {
     unitsEstimated: number;
   };
   reviewStatus: Record<string, CurationReviewStatus>;
+  blockedReason?: string | undefined;
 };
+
+export type CurationRunBudget = Readonly<{
+  maxQuotaUnits: number;
+  maxSearchRequests: number;
+  maxHydrateRequests: number;
+  maxPagesPerQuery: number;
+}>;
 
 export type YouTubeSearchRequest = Readonly<{
   queryKey: string;
@@ -244,10 +255,66 @@ export type CurationReportCandidate = Readonly<{
   candidate: YouTubeCandidate;
   decision: YouTubeCandidateDecision;
   reviewStatus: CurationReviewStatus;
+  rank?: number | undefined;
+}>;
+
+export type ProposedPairReason =
+  | "fewer-than-two-eligible-candidates"
+  | "materially-redundant-second";
+
+export type ProposedVideoPair = Readonly<{
+  target: RequiredVideoVariation;
+  status: "ready-for-review" | "needs-second-candidate";
+  videoIds: readonly string[];
+  distinctChannels: boolean;
+  reason?: ProposedPairReason | undefined;
+}>;
+
+export type CurationQuotaSummary = Readonly<{
+  searchRequests: number;
+  hydrateRequests: number;
+  unitsEstimated: number;
+  budget: CurationRunBudget;
 }>;
 
 export type CurationReport = Readonly<{
   generatedAt: string;
-  status: "ready-for-review" | "blocked" | "complete";
+  status: "ready-for-review" | "blocked" | "quota-blocked" | "page-limit" | "complete";
   candidates: readonly CurationReportCandidate[];
+  rankedEligibleCandidates?: readonly CurationReportCandidate[] | undefined;
+  proposedPairs?: readonly ProposedVideoPair[] | undefined;
+  quota?: CurationQuotaSummary | undefined;
+  blockedReason?: string | undefined;
+  nextPageTokens?: Readonly<Record<string, string | null>> | undefined;
+}>;
+
+export type ApprovedVideoReference = Readonly<{
+  videoId: string;
+  displayOrder: number;
+}>;
+
+export type RefreshVideoStatus =
+  | "available"
+  | "missing"
+  | "private"
+  | "restricted"
+  | "not-embeddable"
+  | "not-syndicated"
+  | "unavailable";
+
+export type RefreshVideoAssessment = Readonly<{
+  videoId: string;
+  displayOrder: number;
+  status: RefreshVideoStatus;
+  available: boolean;
+}>;
+
+export type RefreshPairAssessment = Readonly<{
+  videos: readonly RefreshVideoAssessment[];
+  fallbackVideoId: string | undefined;
+  replacementRequired: boolean;
+  proposal: Readonly<{
+    action: "none" | "replacement-required";
+    reason: string | undefined;
+  }>;
 }>;

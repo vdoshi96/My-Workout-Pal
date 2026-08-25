@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="7f1dcacb4574abd14072c6900003220552361aaca9f5a0dce319cc632537755a">
+  <meta name="source-sha256" content="bb2f4bd0b4f20e26a9fe772bb5e03fed12574d595e42585f3452ea3abb74cc3f">
   <title>YouTube curation and video policy · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -32,7 +32,7 @@
 <p>Every seeded canonical exercise and equipment variation must have exactly two ordered, unique demonstrations that passed mechanical eligibility, human quality review, and a complete human viewing. A missing API key, exhausted quota, or incomplete watch review blocks production seeding. The application must not substitute arbitrary links.</p>
 <h2>Credential and quota boundary</h2>
 <p><code>YOUTUBE_API_KEY</code> is a server-side development and curation secret. It is never bundled into the application, printed in reports, committed, or copied into public QA evidence.</p>
-<p>The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, and review status. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.</p>
+<p>The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, review status, ranked eligible candidates, and proposed pairs. A configurable request and page budget stops before the next API request would exceed its limit. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.</p>
 <h2>Discovery sequence</h2>
 <ol>
 <li>Deduplicate the required canonical exercise and equipment variations from the seed specification.</li>
@@ -72,7 +72,7 @@
 <li>The candidate adds material value beyond the first selected video.</li>
 <li>The title and channel attribution match the live YouTube page.</li>
 </ul>
-<p>Prefer distinct channels when quality is comparable. Skip a materially worse second result rather than filling a slot. View count breaks a tie only after both candidates pass eligibility and quality gates. The March 31, 2025, change to Shorts view counting is another reason not to treat view count as quality.</p>
+<p>Prefer distinct channels when mechanical and human quality is comparable. Reject or flag a materially redundant second result rather than filling a slot. View count breaks a tie only after both candidates pass eligibility and quality gates. The March 31, 2025, change to Shorts view counting is another reason not to treat view count as quality.</p>
 <h2>Approval record</h2>
 <p>The durable seed stores the following fields:</p>
 <ul>
@@ -89,10 +89,10 @@
 <p><code>pnpm seed:check</code> must reject any seed with a missing required mapping, count other than two, invalid ID syntax, duplicate ID within a variation, wrong variation, missing approval, missing full-watch confirmation, duplicate order, or unsupported canonical exercise reference.</p>
 <p>The checker also confirms that reused starter prescriptions point to the same canonical exercise and therefore reuse the same approved demonstrations.</p>
 <h2>Refresh and replacement</h2>
-<p><code>pnpm youtube:refresh</code> checks seeded IDs with <code>videos.list</code> and proposes action when a video becomes missing, private, restricted, removed, unembeddable, or regionally unavailable. It does not mutate production.</p>
-<p>The application keeps the remaining approved video and direct YouTube fallback available. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.</p>
+<p>The typed <code>assessApprovedVideoPair</code> refresh helper checks seeded IDs with hydrated metadata and proposes action when a video becomes missing, private, restricted, removed, unembeddable, non-syndicated, or regionally unavailable. It does not mutate production.</p>
+<p>The application keeps the remaining approved video and direct YouTube fallback available. A refresh assessment checks both IDs and emits a replacement-required proposal when one or both are unavailable. It never mutates the approved seed. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.</p>
 <h2>Local command scaffold</h2>
-<p>Run <code>pnpm youtube:curate</code> with an official <code>YOUTUBE_API_KEY</code> and a private target manifest. The command resumes from <code>.local/youtube-curation/checkpoint.json</code> and writes the review proposal to <code>.local/youtube-curation/review-report.json</code>. These paths are ignored by Git and contain no production data.</p>
+<p>Run <code>pnpm youtube:curate</code> with an official <code>YOUTUBE_API_KEY</code> and a private target manifest. The command invokes the typed curation workflow, resumes from <code>.local/youtube-curation/checkpoint.json</code>, and writes the review proposal to <code>.local/youtube-curation/review-report.json</code>. The report includes query provenance, mechanical rejection codes, ranked eligible candidates, proposed pairs, and quota-blocked state when a budget stops progress. Set <code>YOUTUBE_CURATION_MAX_QUOTA_UNITS</code>, <code>YOUTUBE_CURATION_MAX_SEARCH_REQUESTS</code>, <code>YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS</code>, and <code>YOUTUBE_CURATION_MAX_PAGES_PER_QUERY</code> (or the matching command-line flags) to bound a run. These paths are ignored by Git and contain no production data.</p>
 <p>If <code>YOUTUBE_API_KEY</code> is missing, the command exits before creating state or making a request and prints exactly:</p>
 <pre><code>Missing YOUTUBE_API_KEY; refusing to run YouTube curation.
 </code></pre>
