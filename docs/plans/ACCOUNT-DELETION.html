@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="c6f7585f43d08b87a17deabac7e9ed5011d5f4b99773b31199ab7e0262df6077">
+  <meta name="source-sha256" content="fafd534af7dd2f42e15a40909609cc0b6e1dba8486f1228db49cad3a05c79efd">
   <title>Account Deletion Implementation Plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -74,6 +74,7 @@
 <h2>Automated tests and browser evidence</h2>
 <p>Retained failing-first domain tests cover confirmation normalization, recent-auth gates, monotonic saga transitions, safe Firebase error classification, and idempotency hashing. PGlite integration tests use the real migration and seed to prove exact owner-table deletion, another-owner preservation, global-row preservation, rollback, retry after profile removal, completed replay, concurrent running state, and ownership derived from the viewer. Route tests prove CSRF and session verification before body/database/Firebase access, private cache headers, cookie behavior, stable error mapping, and absence of UID input.</p>
 <p>Client tests cover password and Google reauthentication, wrong-password/popup-cancel/network errors, same-UID verification, exact phrase, disabled duplicate action, local namespace clearing only after completed deletion, and retained retry UI after partial failure. Browser evidence requires phone/tablet/desktop Chromium and WebKit cancellation, keyboard completion, slow/offline failure, duplicate submit, partial retry, protected-route denial, and post-success public navigation. Live provider deletion is blocked until a disposable configured Firebase test account exists; production-user deletion is never used as QA evidence.</p>
+<p>The local Settings implementation now covers the dialog, exact phrase, provider-specific reauthentication adapters, same-UID check, fresh server session, stable retry key, confirmed-only cleanup, and interrupted-result UI. Pure tests cover the destructive ordering and cleanup gates. The responsive browser matrix, wrong-password and popup-cancel interaction evidence, and real disposable-account deletion remain pending until Firebase is explicitly configured.</p>
 
   </main>
 </body>

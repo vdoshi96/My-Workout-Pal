@@ -20,6 +20,8 @@ Published program revisions and accepted workout history remain immutable during
 
 The account-deletion service resolves Firebase Admin configuration before it asks the repository to reserve or delete database data. After the database transaction commits, a provider failure records only a classified safe code, reports the Firebase identity state as unknown, and preserves the secure session for retry. Cookies are expired only after provider success or `auth/user-not-found` and a successful durable completion write. A completion-write failure is not mislabeled as a Firebase error; its still-running job requires the planned trusted reconciler, because a deleted Firebase identity may no longer pass revocation-aware viewer verification.
 
+Client cleanup follows confirmation, never optimism. Settings reauthenticates the currently active Firebase user, rejects a changed or mismatched UID, exchanges a forced-fresh ID token for the secure session, and waits for the server's completed response before clearing the matching IndexedDB namespace or signing out the Firebase client. A partial server result retains both for retry. If local cleanup fails after confirmed deletion, Firebase client sign-out is still attempted and the UI reports the residual site-data action without claiming cleanup succeeded.
+
 ## 2026-08-25: Store canonical metric values
 
 Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.

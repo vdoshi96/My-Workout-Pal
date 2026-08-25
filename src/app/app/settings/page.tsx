@@ -44,6 +44,7 @@ export default async function SettingsPage() {
       firebaseConfig={firebasePublicConfig()}
       initialPreferences={data.model.preferences}
       ownerUid={data.model.profile.firebaseUid}
+      viewerProvider={data.viewer.provider}
     />
   );
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="8441213292907fdb0a984aadce57419934cc49b93b34ea0e487255fa0fbe0ddb">
+  <meta name="source-sha256" content="d8b236d35fee047d5cf3ea89e1592607996c9ced7b9ae9af8700f711b2c7eff0">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -41,6 +41,9 @@
 <li>Retained a missing-route failure before adding private <code>DELETE /api/app/account</code> with CSRF, server identity, strict 2 KiB owner-free input, safe private output, partial-Firebase retry truth, and session/CSRF expiry only after durable completion.</li>
 <li>Passed 10 focused service and direct-route assertions. Completion-write failure stays distinct from provider failure and leaves a durable running job; a trusted reconciler and the Settings reauthentication/client-cleanup flow remain required. No credential-backed provider call or external mutation was performed.</li>
 <li>Retained the production-build failure that rejected a test factory exported from an App Router route module, moved the factory to the server HTTP layer, and passed the replayed tests, strict type checking, scoped lint, and webpack build with <code>/api/app/account</code> listed as a dynamic route.</li>
+<li>Retained a missing-client-module failure before implementing exact-confirmation, same-UID provider reauthentication, forced ID-token refresh, secure-session replacement, server completion, owner-only IndexedDB cleanup, and Firebase client sign-out as one ordered orchestration contract.</li>
+<li>Replaced the disabled Settings placeholder with a phone-safe scrolling review dialog, sticky actions, keyboard focus, explicit impact list, password/Google-specific UI, live progress, partial retry, exact <code>DELETE</code> gate, active-request unload protection, and post-completion cleanup warnings.</li>
+<li>Direct review caught and closed an adapter race that could have reused the earlier Firebase user object if the live client user disappeared or changed before reauthentication. Twenty-two focused client/API/storage assertions cover popup cancellation and post-deletion sign-out failure in addition to the owner cleanup gates; strict TypeScript, scoped lint, and the production build pass. Live provider and browser evidence remain blocked by absent Firebase configuration, and no external state changed.</li>
 </ul>
 <h2>2026-08-25: Immutable program publication repository</h2>
 <ul>

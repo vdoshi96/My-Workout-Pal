@@ -1,10 +1,21 @@
 "use client";
 
-import { signOut } from "firebase/auth";
+import {
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  signOut,
+} from "firebase/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
+import {
+  AccountDeletionClientError,
+  performAccountDeletion,
+} from "@/client/account-deletion";
+import { mapFirebaseAuthError } from "@/client/auth-errors";
 import type { FirebasePublicConfig } from "@/client/firebase";
 import { getFirebaseClientAuth } from "@/client/firebase";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
@@ -15,6 +26,7 @@ import type {
   PreferencesReadModel,
   ProfileProgramReadModel,
 } from "@/server/repositories/profile-program";
+import type { ViewerProvider } from "@/server/auth/viewer";
 
 function operationKey(): string {
   return globalThis.crypto.randomUUID();
@@ -30,12 +42,14 @@ export function SettingsForm({
   firebaseConfig,
   initialPreferences,
   ownerUid,
+  viewerProvider,
 }: Readonly<{
   canMutate: boolean;
   equipmentProfileKind: EquipmentProfileKind;
   firebaseConfig: FirebasePublicConfig | null;
   initialPreferences: PreferencesReadModel;
   ownerUid: string;
+  viewerProvider: ViewerProvider;
 }>) {
   const router = useRouter();
   const [preferences, setPreferences] = useState(initialPreferences);
@@ -44,7 +58,27 @@ export function SettingsForm({
   const [reducedMotion, setReducedMotion] = useState(initialPreferences.reducedMotion);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deletionFinished, setDeletionFinished] = useState(false);
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  const deleteHeading = useRef<HTMLHeadingElement>(null);
+  const deleteKey = useRef<string | undefined>(undefined);
   const saveKey = useRef<string | undefined>(undefined);
+  const providerSupported = viewerProvider === "google" || viewerProvider === "password";
+  const deletionAvailable = canMutate && firebaseConfig !== null && providerSupported;
+
+  useEffect(() => {
+    if (!deleteBusy) return;
+    const protectNavigation = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", protectNavigation);
+    return () => window.removeEventListener("beforeunload", protectNavigation);
+  }, [deleteBusy]);
 
   function changed() {
     saveKey.current = undefined;
@@ -88,7 +122,7 @@ export function SettingsForm({
   }
 
   async function signOutAccount() {
-    if (busy) return;
+    if (busy || deleteBusy) return;
     setBusy(true);
     setMessage("Clearing this account’s local workout drafts…");
     try {
@@ -103,6 +137,120 @@ export function SettingsForm({
     } catch (error) {
       setMessage(errorMessage(error, "Sign out did not finish safely. Try again."));
       setBusy(false);
+    }
+  }
+
+  function openDeletionReview() {
+    if (!deletionAvailable || busy || deleteBusy) return;
+    deleteKey.current = operationKey();
+    setDeleteConfirmation("");
+    setDeletePassword("");
+    setDeleteMessage("");
+    setDeletionFinished(false);
+    deleteDialog.current?.showModal();
+    globalThis.requestAnimationFrame(() => deleteHeading.current?.focus());
+  }
+
+  function deletionFailureMessage(error: unknown): string {
+    if (error instanceof AccountDeletionClientError) return error.message;
+    if (error instanceof PrivateApiClientError) return error.message;
+    return mapFirebaseAuthError(error);
+  }
+
+  async function deleteAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!deletionAvailable || deleteBusy || deletionFinished || !firebaseConfig) return;
+    const idempotencyKey = deleteKey.current ?? operationKey();
+    deleteKey.current = idempotencyKey;
+    const auth = getFirebaseClientAuth(firebaseConfig);
+    setDeleteBusy(true);
+    setDeleteMessage("Reauthenticating this Firebase account…");
+
+    try {
+      await performAccountDeletion(
+        {
+          clearOwner: async (uid) => {
+            setDeleteMessage("Clearing this account’s local workout drafts…");
+            const storage = createIndexedDBRunnerStorage({ ownerUid: uid });
+            if (!storage.clearOwner) throw new Error("Local owner cleanup is unavailable.");
+            await storage.clearOwner(uid);
+          },
+          deleteAccount: async (input) => {
+            setDeleteMessage("Deleting fitness data and Firebase identity…");
+            const response = await privateApiMutation<{
+              deletion: { status: string };
+            }>("/api/app/account", { body: input, method: "DELETE" });
+            return response.deletion;
+          },
+          getCurrentUser: () => auth.currentUser,
+          reauthenticateGoogle: async (user) => {
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+              throw new AccountDeletionClientError(
+                "identity_unavailable",
+                "Your Firebase session is unavailable. Sign in again before deleting the account.",
+              );
+            }
+            if (currentUser.uid !== user.uid) {
+              throw new AccountDeletionClientError(
+                "identity_mismatch",
+                "The active Firebase identity changed before reauthentication.",
+              );
+            }
+            return (await reauthenticateWithPopup(currentUser, new GoogleAuthProvider())).user;
+          },
+          reauthenticatePassword: async (user, email, password) => {
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+              throw new AccountDeletionClientError(
+                "identity_unavailable",
+                "Your Firebase session is unavailable. Sign in again before deleting the account.",
+              );
+            }
+            if (currentUser.uid !== user.uid) {
+              throw new AccountDeletionClientError(
+                "identity_mismatch",
+                "The active Firebase identity changed before reauthentication.",
+              );
+            }
+            return (
+              await reauthenticateWithCredential(
+                currentUser,
+                EmailAuthProvider.credential(email, password),
+              )
+            ).user;
+          },
+          refreshServerSession: async (idToken) => {
+            setDeleteMessage("Refreshing the secure server session…");
+            await privateApiMutation<{ authenticated: true }>("/api/auth/session", {
+              body: { idToken },
+              method: "POST",
+            });
+          },
+          signOut: async () => {
+            setDeleteMessage("Finishing Firebase sign-out…");
+            await signOut(auth);
+          },
+        },
+        {
+          confirmation: deleteConfirmation,
+          idempotencyKey,
+          ownerUid,
+          password: deletePassword,
+          provider: viewerProvider,
+        },
+      );
+      deleteKey.current = undefined;
+      setDeletionFinished(true);
+      setDeleteMessage("Account and fitness data deleted. Returning to the public site…");
+      router.replace("/?account=deleted");
+      router.refresh();
+    } catch (error) {
+      const accountDeleted = error instanceof AccountDeletionClientError && error.accountDeleted;
+      setDeletionFinished(accountDeleted);
+      setDeleteMessage(deletionFailureMessage(error));
+    } finally {
+      setDeleteBusy(false);
     }
   }
 
@@ -178,14 +326,94 @@ export function SettingsForm({
         <span className="eyebrow">Account</span>
         <h2 id="account-settings-title">Session and data</h2>
         <p>Signing out clears only this Firebase account’s local workout draft namespace, then removes the secure server session.</p>
-        <button disabled={busy} onClick={() => void signOutAccount()} type="button"><Icon name="sign-in" /> Sign out</button>
+        <button disabled={busy || deleteBusy} onClick={() => void signOutAccount()} type="button"><Icon name="sign-in" /> Sign out</button>
         <div className="settings-delete-preview">
           <strong>Delete account and fitness data</strong>
-          <p>Deletion will require recent provider reauthentication and an explicit irreversible confirmation. It remains closed until the deletion saga and configured Firebase project pass their failure-path tests.</p>
-          <button disabled type="button">Deletion connection pending</button>
+          <p>This permanently removes the Firebase sign-in, program revisions, workout history, records, analytics, preferences, and custom exercises. It cannot be undone.</p>
+          {!firebaseConfig ? <small>Deletion remains unavailable until Firebase is configured.</small> : null}
+          {!providerSupported ? <small>This sign-in provider does not support deletion yet.</small> : null}
+          <button
+            className="danger-action"
+            disabled={!deletionAvailable || busy || deleteBusy}
+            onClick={openDeletionReview}
+            type="button"
+          >Review permanent deletion</button>
         </div>
       </section>
       <p aria-live="polite" className="member-save-status" role="status">{message}</p>
+
+      <dialog
+        aria-describedby="account-delete-impact"
+        aria-labelledby="account-delete-heading"
+        className="account-delete-dialog"
+        onCancel={(event) => {
+          if (deleteBusy) event.preventDefault();
+        }}
+        ref={deleteDialog}
+      >
+        <form className="account-delete-form" onSubmit={(event) => void deleteAccount(event)}>
+          <span className="eyebrow">Permanent account action</span>
+          <h2 id="account-delete-heading" ref={deleteHeading} tabIndex={-1}>Delete everything owned by this account?</h2>
+          <div id="account-delete-impact">
+            <p>The server deletes fitness data first, then the matching Firebase identity. If identity deletion is interrupted, the screen reports that partial state and offers a safe retry.</p>
+            <ul>
+              <li>Programs, custom exercises, workout snapshots, set and cardio logs</li>
+              <li>History, personal records, analytics summaries, equipment and preferences</li>
+              <li>The matching Firebase sign-in after a fresh {viewerProvider === "google" ? "Google popup" : "password"} check</li>
+            </ul>
+          </div>
+
+          {deletionFinished ? null : (
+            <>
+              {viewerProvider === "password" ? (
+                <>
+                  <label htmlFor="account-delete-password">Current password</label>
+                  <input
+                    autoComplete="current-password"
+                    disabled={deleteBusy}
+                    id="account-delete-password"
+                    onChange={(event) => setDeletePassword(event.target.value)}
+                    required
+                    type="password"
+                    value={deletePassword}
+                  />
+                </>
+              ) : null}
+              <label htmlFor="account-delete-confirmation">Type DELETE to confirm</label>
+              <input
+                autoCapitalize="characters"
+                autoComplete="off"
+                disabled={deleteBusy}
+                id="account-delete-confirmation"
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                required
+                spellCheck={false}
+                value={deleteConfirmation}
+              />
+            </>
+          )}
+
+          <p aria-live="polite" className="account-delete-status" role="status">{deleteMessage}</p>
+          <div className="account-delete-actions">
+            {deletionFinished ? (
+              <button onClick={() => router.replace("/")} type="button">Return to public site</button>
+            ) : (
+              <>
+                <button
+                  className="danger-action"
+                  disabled={
+                    deleteBusy ||
+                    deleteConfirmation !== "DELETE" ||
+                    (viewerProvider === "password" && deletePassword.length === 0)
+                  }
+                  type="submit"
+                >{deleteBusy ? "Deletion in progress…" : "Reauthenticate and permanently delete"}</button>
+                <button disabled={deleteBusy} onClick={() => deleteDialog.current?.close()} type="button">Cancel</button>
+              </>
+            )}
+          </div>
+        </form>
+      </dialog>
     </section>
   );
 }
