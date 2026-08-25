@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="331a495f6a180316a3e8a3251e5e73d187b0d89c20f284e0cd6e1a747753cd23">
+  <title>Program Editor Implementation Plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Program Editor Implementation Plan</h1>
+<h2>User outcome and navigation</h2>
+<p>An eligible signed-in member can open <strong>Program → Edit program</strong>, change the name and prescription details of the active five-day program, reorder exercises with explicit buttons, and publish one new immutable revision. The editor never changes an in-progress or completed workout snapshot. Cancel returns to the active program without writing data. A successful publish returns to the program overview and names the new revision.</p>
+<h2>Interface and state model</h2>
+<p>The server page loads the active owner-scoped revision and converts it to a serializable draft. The client editor exposes one day at a time on a phone and a day list beside the selected day on wider screens. Every exercise keeps a stable prescription identifier while the draft is open.</p>
+<p>The interface represents these states explicitly:</p>
+<ul>
+<li>clean and dirty drafts;</li>
+<li>field-level validation errors plus a summary linked to the first invalid field;</li>
+<li>save in progress, saved, server failure, and retry;</li>
+<li>a stale-revision conflict that preserves the local draft and asks the member to reload before another publish;</li>
+<li>an unverified-email gate that permits inspection but no permanent write;</li>
+<li>offline and interrupted submissions with no claim that data was saved;</li>
+<li>navigation away from an unsaved draft, guarded by an in-app confirmation and the browser <code>beforeunload</code> signal;</li>
+<li>empty exercise lists and unavailable referenced exercises as blocking errors rather than silently dropped rows.</li>
+</ul>
+<h2>Domain types and invariants</h2>
+<p>Publication accepts an owner-free envelope containing <code>programId</code>, <code>baseRevisionId</code>, <code>name</code>, five days, prescriptions, cardio prescriptions, and an idempotency key. IDs are UUIDs and malformed, missing, or foreign IDs all use the same not-found response.</p>
+<p>The active program must retain exactly the five starter day keys in day-number order. Every day must contain at least one prescription, every prescription belongs to exactly one section in the same day, and each prescription references exactly one active catalog exercise or one active custom exercise owned by the viewer. Exercise logging kind and required equipment come from the canonical record; the client cannot redefine either.</p>
+<p>Sets are whole numbers from 1–20. Rest is whole seconds from 0–900. Repetition and duration ranges are positive, ascending, and mutually exclusive. Target weight is finite and non-negative; canonical weight remains kilograms. Cardio duration and pace are integer seconds, distance is a non-negative integer in metres, incline is finite and bounded to a practical range, and walker/runner modes occur once per day.</p>
+<p>The published revision number is the locked active revision plus one. Publication inserts a complete graph, marks the previous revision archived, marks the new revision published, and advances the program pointer in one transaction. A request replay with the same owner, operation, key, and request hash returns the original result. Reusing a key for different content is a conflict.</p>
+<h2>Persistence, authentication, and authorization</h2>
+<p>The route verifies the secure Firebase session and permanent-mutation eligibility before parsing the request body or touching storage. The repository derives ownership only from the verified server viewer. The program root, active revision, every custom exercise, and every referenced catalog record are resolved inside the transaction. Owner UID is not accepted in the request.</p>
+<p>Publication writes new <code>program_revisions</code>, <code>program_days</code>, <code>program_sections</code>, <code>program_prescriptions</code>, and <code>program_cardio_prescriptions</code> rows. It never updates rows that give an older revision its meaning. Existing workout sessions retain their revision and snapshot references. A concurrent equipment change or editor publication produces a conflict rather than a last-write-wins overwrite.</p>
+<h2>Loading, empty, error, interrupted, and worst-case behavior</h2>
+<p>The route uses the private authenticated loading and error boundaries. No active program redirects to onboarding. A corrupt active graph, unsupported exercise, incompatible equipment requirement, foreign custom exercise, duplicate prescription identifier, missing section, stale base revision, or database rollback produces a truthful blocking message and leaves the active pointer unchanged.</p>
+<p>If the request disconnects after commit, the client retries with the same idempotency key. If the server is unreachable, the draft remains in memory and the UI says the publish is unsaved. This slice does not claim cross-device draft persistence. A later local-draft feature may add owner-scoped storage without changing publication semantics.</p>
+<h2>Phone, tablet, and desktop behavior</h2>
+<p>Phone layout uses a day switcher, a linear exercise list, explicit Move up/Move down controls, and an expandable exercise editor. Tablet and desktop expose persistent day navigation beside the selected day editor. Cardio settings follow strength prescriptions in logical DOM order. Layout changes do not change keyboard order or hide required validation context.</p>
+<h2>Accessibility and motion</h2>
+<p>The page uses semantic headings, lists, fieldsets, legends, labels, described errors, and a status region. Reorder controls announce the moved exercise and its new position. Focus moves to the error summary after failed validation and to the success heading after publication. Destructive or navigation confirmation uses a labeled modal with focus return. No interaction depends on dragging, hover, color, or animation. Reduced-motion preference disables non-essential transitions.</p>
+<h2>Privacy and security</h2>
+<p>No Firebase UID, email, secret, raw token, or cross-user identifier is serialized into the mutation body. Private responses use <code>no-store</code>; server errors do not disclose foreign-resource existence or database details. Text fields are bounded and rendered as text. The same-origin CSRF token and origin policy apply to publication. SQL ownership predicates and foreign keys provide defense in depth.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>A verified member can rename a program, edit valid prescription targets, reorder exercises, and publish revision <code>n + 1</code>.</li>
+<li>Reload shows the new active revision; the prior revision graph is byte-for-byte unchanged.</li>
+<li>Replaying the same request returns the same revision; a changed payload with the same key conflicts.</li>
+<li>A stale editor, foreign program, foreign custom exercise, malformed UUID, incompatible exercise, or unverified password account cannot publish.</li>
+<li>Invalid field data returns precise client validation without a write; server validation independently rejects a forged payload.</li>
+<li>Keyboard-only editing, focus management, phone/tablet/desktop layout, dark mode, and reduced motion remain usable.</li>
+<li>Offline, slow, duplicate, interrupted, and server-error states never claim success.</li>
+</ul>
+<h2>Automated tests and browser evidence</h2>
+<p>Retained failing-first tests cover publication validation, immutable prior revisions, stale bases, idempotent replay, conflicting replay, malformed and foreign identifiers, custom-exercise ownership, equipment compatibility, five-day structure, transaction rollback, and session eligibility. Route tests prove authentication precedes body parsing and database access. Component tests cover field errors, reorder controls, dirty navigation, duplicate submit, and retry copy.</p>
+<p>Browser evidence must show a verified member editing and publishing on phone, tablet, and desktop; a keyboard reorder; a stale-conflict recovery; an interrupted request retry; an offline failure; reload of the new revision; and a database-backed check that an earlier workout snapshot still names its original revision. Chromium and WebKit, automated accessibility, dark mode, and reduced motion are required before release.</p>
+
+  </main>
+</body>
+</html>
