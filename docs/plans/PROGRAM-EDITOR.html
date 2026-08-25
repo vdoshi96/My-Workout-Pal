@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="331a495f6a180316a3e8a3251e5e73d187b0d89c20f284e0cd6e1a747753cd23">
+  <meta name="source-sha256" content="808bbab0c475c1518086b3b94b5c64e2b64e7e60f84cafadb5dd6b1c158e7082">
   <title>Program Editor Implementation Plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -47,7 +47,7 @@
 <p>Publication accepts an owner-free envelope containing <code>programId</code>, <code>baseRevisionId</code>, <code>name</code>, five days, prescriptions, cardio prescriptions, and an idempotency key. IDs are UUIDs and malformed, missing, or foreign IDs all use the same not-found response.</p>
 <p>The active program must retain exactly the five starter day keys in day-number order. Every day must contain at least one prescription, every prescription belongs to exactly one section in the same day, and each prescription references exactly one active catalog exercise or one active custom exercise owned by the viewer. Exercise logging kind and required equipment come from the canonical record; the client cannot redefine either.</p>
 <p>Sets are whole numbers from 1–20. Rest is whole seconds from 0–900. Repetition and duration ranges are positive, ascending, and mutually exclusive. Target weight is finite and non-negative; canonical weight remains kilograms. Cardio duration and pace are integer seconds, distance is a non-negative integer in metres, incline is finite and bounded to a practical range, and walker/runner modes occur once per day.</p>
-<p>The published revision number is the locked active revision plus one. Publication inserts a complete graph, marks the previous revision archived, marks the new revision published, and advances the program pointer in one transaction. A request replay with the same owner, operation, key, and request hash returns the original result. Reusing a key for different content is a conflict.</p>
+<p>The published revision number is the locked active revision plus one. Publication inserts a complete graph, leaves the previous published revision unchanged, marks the new revision published, and advances the program pointer in one transaction. A request replay with the same owner, operation, key, and request hash returns the original result. Reusing a key for different content is a conflict.</p>
 <h2>Persistence, authentication, and authorization</h2>
 <p>The route verifies the secure Firebase session and permanent-mutation eligibility before parsing the request body or touching storage. The repository derives ownership only from the verified server viewer. The program root, active revision, every custom exercise, and every referenced catalog record are resolved inside the transaction. Owner UID is not accepted in the request.</p>
 <p>Publication writes new <code>program_revisions</code>, <code>program_days</code>, <code>program_sections</code>, <code>program_prescriptions</code>, and <code>program_cardio_prescriptions</code> rows. It never updates rows that give an older revision its meaning. Existing workout sessions retain their revision and snapshot references. A concurrent equipment change or editor publication produces a conflict rather than a last-write-wins overwrite.</p>

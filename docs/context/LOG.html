@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="25a623753d6a905a3031ddd293299bb39f808eb73bb21686d251dbce21e2a5df">
+  <meta name="source-sha256" content="32bae09a5e5d64b7b0f8ce5b806c2697e29fcc328cab10e4ea51f1286421d754">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Immutable program publication repository</h2>
+<ul>
+<li>Retained a failing-first API and PGlite repository suite before adding the publication method.</li>
+<li>Added one shared strict publication schema with canonical five-day order, bounded prescription/cardio fields, exercise-reference XOR, unique source-prescription identities, and no client ownership or measurement-kind field.</li>
+<li>Published the edited graph in one owner-scoped transaction after locking the active program revision. Canonical catalog data or the viewer&#39;s custom exercise supplies logging meaning and required equipment; foreign and incompatible references fail without advancing the pointer.</li>
+<li>Kept the prior published revision unchanged, preserved target metadata only when a source prescription retains the same exercise identity, and generated all new revision child identifiers independently.</li>
+<li>Verified idempotent replay, changed-payload key conflict, stale base, unverified mutation, cross-user custom exercise, incompatible equipment, graph immutability, and rollback with 23 focused tests plus TypeScript and scoped lint.</li>
+</ul>
 <h2>2026-08-25: Conflict-safe settings and sign-out</h2>
 <ul>
 <li>Added owner-scoped preference updates for units, IANA time zone, and reduced motion with strict input, verification gating, row locking, expected-update timestamps, stable idempotent replay, and stale-page conflict refusal.</li>

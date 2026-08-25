@@ -17,7 +17,8 @@ const programPrescriptionPublishSchema = z
     restSeconds: z.number().int().min(0).max(900),
     setCount: z.number().int().min(1).max(20),
     setKind: z.enum(["warmup", "work"]),
-    targetDistanceM: z.number().int().min(0).max(10_000_000).nullable(),
+    sourcePrescriptionId: z.string().uuid().nullable(),
+    targetDistanceM: z.number().int().positive().max(10_000_000).nullable(),
     targetWeightKg: z.number().finite().min(0).max(100_000).nullable(),
   })
   .strict()
@@ -113,6 +114,20 @@ export const programPublishRequestSchema = z
   })
   .strict()
   .superRefine((value, context) => {
+    const sourcePrescriptionIds = value.days.flatMap((day) =>
+      day.sections.flatMap((section) =>
+        section.prescriptions.flatMap(({ sourcePrescriptionId }) =>
+          sourcePrescriptionId === null ? [] : [sourcePrescriptionId],
+        ),
+      ),
+    );
+    if (new Set(sourcePrescriptionIds).size !== sourcePrescriptionIds.length) {
+      context.addIssue({
+        code: "custom",
+        message: "A source prescription can be published only once.",
+        path: ["days"],
+      });
+    }
     value.days.forEach((day, index) => {
       if (day.dayNumber !== index + 1 || day.dayKey !== expectedProgramDays[index]) {
         context.addIssue({

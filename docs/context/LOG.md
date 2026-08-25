@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Immutable program publication repository
+
+- Retained a failing-first API and PGlite repository suite before adding the publication method.
+- Added one shared strict publication schema with canonical five-day order, bounded prescription/cardio fields, exercise-reference XOR, unique source-prescription identities, and no client ownership or measurement-kind field.
+- Published the edited graph in one owner-scoped transaction after locking the active program revision. Canonical catalog data or the viewer's custom exercise supplies logging meaning and required equipment; foreign and incompatible references fail without advancing the pointer.
+- Kept the prior published revision unchanged, preserved target metadata only when a source prescription retains the same exercise identity, and generated all new revision child identifiers independently.
+- Verified idempotent replay, changed-payload key conflict, stale base, unverified mutation, cross-user custom exercise, incompatible equipment, graph immutability, and rollback with 23 focused tests plus TypeScript and scoped lint.
+
 ## 2026-08-25: Conflict-safe settings and sign-out
 
 - Added owner-scoped preference updates for units, IANA time zone, and reduced motion with strict input, verification gating, row locking, expected-update timestamps, stable idempotent replay, and stale-page conflict refusal.

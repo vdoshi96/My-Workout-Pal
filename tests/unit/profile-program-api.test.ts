@@ -84,6 +84,7 @@ describe("profile program API contract", () => {
       restSeconds: 90,
       setCount: 3,
       setKind: "work",
+      sourcePrescriptionId: null,
       targetDistanceM: null,
       targetWeightKg: 20,
     };
@@ -177,6 +178,32 @@ describe("profile program API contract", () => {
                         ...prescription,
                         catalogExerciseId: null,
                         customExerciseId: null,
+                      },
+                    ],
+                  },
+                ],
+              }
+            : entry,
+        ),
+      }).success,
+    ).toBe(false);
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.map((entry, index) =>
+          index === 0 || index === 1
+            ? {
+                ...entry,
+                sections: [
+                  {
+                    ...entry.sections[0],
+                    prescriptions: [
+                      {
+                        ...prescription,
+                        catalogExerciseId: index === 1 ? null : prescription.catalogExerciseId,
+                        customExerciseId:
+                          index === 1 ? "55555555-5555-4555-8555-555555555555" : null,
+                        sourcePrescriptionId: "44444444-4444-4444-8444-444444444444",
                       },
                     ],
                   },

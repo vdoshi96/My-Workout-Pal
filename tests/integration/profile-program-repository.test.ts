@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Database } from "@/db/client";
 import { schema } from "@/db/schema";
 import { seedStarterDatabase } from "@/db/starter-seed";
+import type { ProgramPublishInput } from "@/domain/programs/publication";
 import {
   createProfileProgramRepository,
   RepositoryConflictError,
@@ -61,11 +62,206 @@ function slugsByDay(
   );
 }
 
+function publishInputFromProgram(
+  program: NonNullable<Awaited<ReturnType<ReturnType<typeof createProfileProgramRepository>["getViewerData"]>>["activeProgram"]>,
+  overrides: Partial<Pick<ProgramPublishInput, "idempotencyKey" | "name">> = {},
+): ProgramPublishInput {
+  return {
+    baseRevisionId: program.revisionId,
+    idempotencyKey: overrides.idempotencyKey ?? "publish-program-1",
+    name: overrides.name ?? program.name,
+    programId: program.id,
+    days: program.days.map((day) => ({
+      cardio: day.cardio.map((cardio) => ({
+        distanceM: cardio.distanceM,
+        durationSeconds: cardio.durationSeconds,
+        inclinePercent: cardio.inclinePercent,
+        mode: cardio.mode,
+        notes: cardio.notes,
+        paceSecondsPerKm: cardio.paceSecondsPerKm,
+      })) as ProgramPublishInput["days"][number]["cardio"],
+      dayKey: day.dayKey as ProgramPublishInput["days"][number]["dayKey"],
+      dayNumber: day.dayNumber,
+      displayName: day.displayName,
+      sections: day.sections.map((section) => ({
+        kind: section.kind as "strength" | "accessory" | "core",
+        title: section.title,
+        prescriptions: section.prescriptions.map((prescription) => ({
+          catalogExerciseId: prescription.catalogExerciseId,
+          customExerciseId: prescription.customExerciseId,
+          displayName: prescription.displayName,
+          maximumReps: prescription.maximumReps,
+          maximumSeconds: prescription.maximumSeconds,
+          minimumReps: prescription.minimumReps,
+          minimumSeconds: prescription.minimumSeconds,
+          notes: prescription.notes,
+          restSeconds: prescription.restSeconds,
+          setCount: prescription.setCount,
+          setKind: prescription.setKind,
+          sourcePrescriptionId: prescription.id,
+          targetDistanceM: prescription.targetDistanceM,
+          targetWeightKg: prescription.targetWeightKg,
+        })),
+      })),
+    })) as ProgramPublishInput["days"],
+  };
+}
+
 afterEach(async () => {
   await Promise.all(openDatabases.splice(0).map((database) => database.close()));
 });
 
 describe("profile and active-program repository", () => {
+  it("publishes an edited immutable revision with owner, compatibility, conflict, and replay gates", async () => {
+    const { database, raw } = await openDatabase();
+    const repository = createProfileProgramRepository(database);
+    const initial = await repository.onboard(viewer("member-editor"), {
+      equipmentProfileKind: "dumbbells",
+    });
+    const source = initial.activeProgram;
+    if (!source) throw new Error("onboarding did not create an active program");
+    const oldGraph = await raw.query<{ value: unknown }>(
+      `SELECT jsonb_build_object(
+        'revision', (SELECT to_jsonb(r) FROM program_revisions r WHERE r.id = $1),
+        'days', (SELECT jsonb_agg(to_jsonb(d) ORDER BY d.day_number) FROM program_days d WHERE d.revision_id = $1),
+        'sections', (SELECT jsonb_agg(to_jsonb(s) ORDER BY s.day_id, s.display_order) FROM program_sections s WHERE s.revision_id = $1),
+        'prescriptions', (SELECT jsonb_agg(to_jsonb(p) ORDER BY p.section_id, p.display_order) FROM program_prescriptions p WHERE p.revision_id = $1),
+        'cardio', (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.day_id, c.mode) FROM program_cardio_prescriptions c WHERE c.revision_id = $1)
+      ) AS value;`,
+      [source.revisionId],
+    );
+    const input = publishInputFromProgram(source, {
+      idempotencyKey: "publish-editor-1",
+      name: "My durable route",
+    });
+    const firstSection = input.days[0]!.sections[0]!;
+    const edited: ProgramPublishInput = {
+      ...input,
+      days: input.days.map((day, dayIndex) =>
+        dayIndex === 0
+          ? {
+              ...day,
+              sections: day.sections.map((section, sectionIndex) =>
+                sectionIndex === 0
+                  ? {
+                      ...section,
+                      prescriptions: [...firstSection.prescriptions]
+                        .reverse()
+                        .map((prescription, prescriptionIndex) =>
+                          prescriptionIndex === 0
+                            ? { ...prescription, notes: "Edited in the immutable publisher.", restSeconds: 120 }
+                            : prescription,
+                        ),
+                    }
+                  : section,
+              ),
+            }
+          : day,
+      ) as ProgramPublishInput["days"],
+    };
+
+    const published = await repository.publishProgram(viewer("member-editor"), edited);
+    const replay = await repository.publishProgram(viewer("member-editor"), edited);
+    expect(replay).toEqual(published);
+    await expect(
+      repository.publishProgram(viewer("member-editor"), {
+        ...edited,
+        name: "Changed replay content",
+      }),
+    ).rejects.toBeInstanceOf(RepositoryConflictError);
+    expect(published.activeProgram).toMatchObject({
+      name: "My durable route",
+      revisionNumber: 2,
+      equipmentProfileKind: "dumbbells",
+    });
+    expect(
+      published.activeProgram?.days[0]?.sections[0]?.prescriptions.map(({ id, notes, restSeconds }) => ({ id, notes, restSeconds })),
+    ).toEqual(
+      [...source.days[0]!.sections[0]!.prescriptions]
+        .reverse()
+        .map((prescription, index) => ({
+          id: expect.not.stringMatching(new RegExp(`^${prescription.id}$`)),
+          notes: index === 0 ? "Edited in the immutable publisher." : prescription.notes,
+          restSeconds: index === 0 ? 120 : prescription.restSeconds,
+        })),
+    );
+    await expect(
+      raw.query<{ value: unknown }>(
+        `SELECT jsonb_build_object(
+          'revision', (SELECT to_jsonb(r) FROM program_revisions r WHERE r.id = $1),
+          'days', (SELECT jsonb_agg(to_jsonb(d) ORDER BY d.day_number) FROM program_days d WHERE d.revision_id = $1),
+          'sections', (SELECT jsonb_agg(to_jsonb(s) ORDER BY s.day_id, s.display_order) FROM program_sections s WHERE s.revision_id = $1),
+          'prescriptions', (SELECT jsonb_agg(to_jsonb(p) ORDER BY p.section_id, p.display_order) FROM program_prescriptions p WHERE p.revision_id = $1),
+          'cardio', (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.day_id, c.mode) FROM program_cardio_prescriptions c WHERE c.revision_id = $1)
+        ) AS value;`,
+        [source.revisionId],
+      ),
+    ).resolves.toEqual(oldGraph);
+
+    await expect(
+      repository.publishProgram(viewer("member-editor"), {
+        ...edited,
+        idempotencyKey: "publish-editor-stale",
+        name: "Stale overwrite",
+      }),
+    ).rejects.toBeInstanceOf(RepositoryConflictError);
+    await expect(
+      repository.publishProgram(viewer("member-editor", false), {
+        ...edited,
+        baseRevisionId: published.activeProgram!.revisionId,
+        idempotencyKey: "publish-editor-unverified",
+      }),
+    ).rejects.toMatchObject({ code: "email_unverified" });
+
+    const barbellExerciseId = (
+      await raw.query<{ id: string }>("SELECT id FROM catalog_exercises WHERE slug = 'barbell-back-squat';")
+    ).rows[0]!.id;
+    const incompatible = publishInputFromProgram(published.activeProgram!, {
+      idempotencyKey: "publish-editor-incompatible",
+    });
+    incompatible.days[0]!.sections[0]!.prescriptions[0] = {
+      ...incompatible.days[0]!.sections[0]!.prescriptions[0]!,
+      catalogExerciseId: barbellExerciseId,
+      customExerciseId: null,
+      sourcePrescriptionId: null,
+    };
+    await expect(
+      repository.publishProgram(viewer("member-editor"), incompatible),
+    ).rejects.toBeInstanceOf(RepositoryValidationError);
+
+    const foreignCustomId = "66666666-6666-4666-8666-666666666666";
+    await raw.exec(
+      `INSERT INTO user_profiles (firebase_uid, display_name)
+       VALUES ('member-editor-foreign', 'Foreign owner');
+       INSERT INTO custom_exercises (
+         id, owner_firebase_uid, exercise_key, name, logging_kind
+       ) VALUES (
+         '${foreignCustomId}', 'member-editor-foreign', 'foreign-row', 'Foreign row', 'weight_reps'
+       );
+       INSERT INTO custom_exercise_equipment (
+         owner_firebase_uid, custom_exercise_id, equipment_id
+       ) VALUES (
+         'member-editor-foreign', '${foreignCustomId}', 'dumbbells'
+       );`,
+    );
+    const foreign = publishInputFromProgram(published.activeProgram!, {
+      idempotencyKey: "publish-editor-foreign",
+    });
+    foreign.days[0]!.sections[0]!.prescriptions[0] = {
+      ...foreign.days[0]!.sections[0]!.prescriptions[0]!,
+      catalogExerciseId: null,
+      customExerciseId: foreignCustomId,
+      sourcePrescriptionId: null,
+    };
+    await expect(
+      repository.publishProgram(viewer("member-editor"), foreign),
+    ).rejects.toBeInstanceOf(RepositoryNotFoundError);
+    await expect(
+      raw.query<{ count: string }>(
+        "SELECT count(*)::text AS count FROM program_revisions WHERE owner_firebase_uid = 'member-editor';",
+      ),
+    ).resolves.toMatchObject({ rows: [{ count: "2" }] });
+  });
   it("onboards one complete dumbbell profile and replays stably", async () => {
     const { database, raw } = await openDatabase();
     const repository = createProfileProgramRepository(database);

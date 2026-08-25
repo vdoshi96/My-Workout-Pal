@@ -27,7 +27,7 @@ The active program must retain exactly the five starter day keys in day-number o
 
 Sets are whole numbers from 1–20. Rest is whole seconds from 0–900. Repetition and duration ranges are positive, ascending, and mutually exclusive. Target weight is finite and non-negative; canonical weight remains kilograms. Cardio duration and pace are integer seconds, distance is a non-negative integer in metres, incline is finite and bounded to a practical range, and walker/runner modes occur once per day.
 
-The published revision number is the locked active revision plus one. Publication inserts a complete graph, marks the previous revision archived, marks the new revision published, and advances the program pointer in one transaction. A request replay with the same owner, operation, key, and request hash returns the original result. Reusing a key for different content is a conflict.
+The published revision number is the locked active revision plus one. Publication inserts a complete graph, leaves the previous published revision unchanged, marks the new revision published, and advances the program pointer in one transaction. A request replay with the same owner, operation, key, and request hash returns the original result. Reusing a key for different content is a conflict.
 
 ## Persistence, authentication, and authorization
 
