@@ -64,6 +64,7 @@ export const workoutExerciseStateStatus = pgEnum("workout_exercise_state_status"
   "skipped",
 ]);
 export const cardioMode = pgEnum("cardio_mode", ["walker", "runner"]);
+export const cardioPaceSource = pgEnum("cardio_pace_source", ["entered", "derived"]);
 export const recordType = pgEnum("record_type", [
   "max_weight",
   "estimated_1rm",
@@ -957,6 +958,7 @@ export const setLogs = pgTable(
     setKind: prescriptionSetKind("set_kind").notNull(),
     weightKg: numeric("weight_kg", { precision: 10, scale: 3, mode: "number" }),
     repetitions: integer("repetitions"),
+    addedWeightKg: numeric("added_weight_kg", { precision: 10, scale: 3, mode: "number" }),
     durationSeconds: integer("duration_seconds"),
     distanceM: numeric("distance_m", { precision: 12, scale: 3, mode: "number" }),
     formRating: numeric("form_rating", { precision: 2, scale: 1, mode: "number" }),
@@ -987,13 +989,14 @@ export const setLogs = pgTable(
     index("set_logs_owner_recorded_idx").on(table.ownerFirebaseUid, table.recordedAt),
     check("set_logs_position_positive", sql`${table.setPosition} > 0`),
     check("set_logs_weight_nonnegative", sql`${table.weightKg} is null or ${table.weightKg} >= 0`),
+    check("set_logs_added_weight_nonnegative", sql`${table.addedWeightKg} is null or ${table.addedWeightKg} >= 0`),
     check("set_logs_repetitions_nonnegative", sql`${table.repetitions} is null or ${table.repetitions} >= 0`),
     check("set_logs_duration_nonnegative", sql`${table.durationSeconds} is null or ${table.durationSeconds} >= 0`),
     check("set_logs_distance_nonnegative", sql`${table.distanceM} is null or ${table.distanceM} >= 0`),
     check("set_logs_form_rating_range", sql`${table.formRating} is null or ${table.formRating} between 1 and 5`),
     check(
       "set_logs_measurement_shape",
-      sql`(${table.measurementKind} = 'weight_reps' and ${table.weightKg} is not null and ${table.repetitions} is not null and ${table.durationSeconds} is null and ${table.distanceM} is null) or (${table.measurementKind} = 'bodyweight_reps' and ${table.weightKg} is null and ${table.repetitions} is not null and ${table.durationSeconds} is null and ${table.distanceM} is null) or (${table.measurementKind} = 'duration' and ${table.weightKg} is null and ${table.repetitions} is null and ${table.durationSeconds} is not null and ${table.distanceM} is null) or (${table.measurementKind} = 'distance_duration' and ${table.weightKg} is null and ${table.repetitions} is null and ${table.durationSeconds} is not null and ${table.distanceM} is not null)`,
+      sql`(${table.measurementKind} = 'weight_reps' and ${table.weightKg} is not null and ${table.repetitions} is not null and ${table.addedWeightKg} is null and ${table.durationSeconds} is null and ${table.distanceM} is null) or (${table.measurementKind} = 'bodyweight_reps' and ${table.weightKg} is null and ${table.repetitions} is not null and ${table.durationSeconds} is null and ${table.distanceM} is null) or (${table.measurementKind} = 'duration' and ${table.weightKg} is null and ${table.repetitions} is null and ${table.addedWeightKg} is null and ${table.durationSeconds} is not null and ${table.distanceM} is null) or (${table.measurementKind} = 'distance_duration' and ${table.weightKg} is null and ${table.repetitions} is null and ${table.addedWeightKg} is null and ${table.durationSeconds} is not null and ${table.distanceM} is not null)`,
     ),
   ],
 );
@@ -1008,6 +1011,7 @@ export const cardioLogs = pgTable(
     durationSeconds: integer("duration_seconds").notNull(),
     distanceM: numeric("distance_m", { precision: 12, scale: 3, mode: "number" }),
     paceSecondsPerKm: integer("pace_seconds_per_km"),
+    paceSource: cardioPaceSource("pace_source"),
     inclinePercent: numeric("incline_percent", { precision: 5, scale: 2, mode: "number" }),
     noteSnapshot: text("note_snapshot"),
     recordedAt: timestamp("recorded_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
@@ -1027,6 +1031,7 @@ export const cardioLogs = pgTable(
     check("cardio_logs_duration_positive", sql`${table.durationSeconds} > 0`),
     check("cardio_logs_distance_nonnegative", sql`${table.distanceM} is null or ${table.distanceM} >= 0`),
     check("cardio_logs_pace_positive", sql`${table.paceSecondsPerKm} is null or ${table.paceSecondsPerKm} > 0`),
+    check("cardio_logs_pace_source_shape", sql`(${table.paceSource} is null and ${table.paceSecondsPerKm} is null) or (${table.paceSource} is not null and ${table.paceSecondsPerKm} is not null)`),
     check("cardio_logs_incline_reasonable", sql`${table.inclinePercent} is null or ${table.inclinePercent} between 0 and 100`),
   ],
 );
