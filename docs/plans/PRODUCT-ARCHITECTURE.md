@@ -106,6 +106,14 @@ The exact movement order and equipment substitutions are maintained in `docs/ref
 - Migrations are append-only, versioned, tested from an empty database, and tested as upgrades from the preceding release fixture.
 - Canonical seed rows use deterministic RFC 4122 version-five UUIDs derived from a public, fixed application namespace plus a bounded entity kind and stable domain key. Re-running a seed therefore converges on the same catalog and template identities across preview and production.
 
+### Database implementation slice
+
+The first persistence slice is a single append-only PostgreSQL migration represented by Drizzle tables under `src/db/schema.ts`. Firebase UID remains the external owner key; internal UUIDs are opaque row identifiers. Owned rows repeat the owner key and use composite foreign keys where a child points to another owned row, so an owner-scoped repository query cannot accidentally join across accounts. Catalog and curated records are global, while custom exercises, programs, sessions, logs, and projections are owned.
+
+The migration creates user profile, preference, and equipment rows; catalog equipment, exercises, compatibility edges, aliases, and curated-video records; custom exercises and their normalized video IDs; immutable template and user-program revision trees; workout session prescription snapshots, set/cardio logs, idempotency records, personal records, progress summaries and their source-log links; and the account-deletion job boundary. PostgreSQL enums, checks, partial unique indexes, and restrictive foreign keys enforce known states, canonical kilograms/meters/seconds, measurement-kind field shapes, one active resumable session per owner and revision, revision numbering, ordered prescriptions/video slots, and mutation idempotency.
+
+Published program revisions and all descendants are protected by database triggers. Workout snapshots and accepted set/cardio logs are append-only. The first migration is exercised from an empty PGlite database, including cross-owner composite-FK failures, canonical-measurement failures, duplicate active sessions/idempotency keys, and immutability failures. The database connector is lazy and import-safe: missing `DATABASE_URL` is reported only when a caller asks for a live connection, never while importing server modules or Drizzle configuration.
+
 ## Authentication and session design
 
 1. The Firebase client SDK completes Google or email/password authentication.
