@@ -11,6 +11,7 @@ import {
   createEmptyCurationCheckpoint,
   getYouTubeCandidateStateKey,
   loadCurationCheckpoint,
+  rankCurationReportCandidates,
   saveCurationCheckpoint,
   writeCurationReport,
   proposeVideoPair,
@@ -124,6 +125,7 @@ describe("resumable YouTube curation state", () => {
         decision: { eligible: true, rejectionCodes: [] },
       });
       expect(first.report.candidates[0]?.queryKeys.length).toBe(2);
+      expect(first.checkpoint.discoveredCandidates[getYouTubeCandidateStateKey("dumbbell-bench-press", "dumbbells", "AbCdEfGhI01")]).toBeDefined();
       expect(first.report.rankedEligibleCandidates).toMatchObject([
         { videoId: "AbCdEfGhI01", rank: 1 },
       ]);
@@ -141,6 +143,51 @@ describe("resumable YouTube curation state", () => {
       expect(second.report.candidates).toHaveLength(1);
       expect(searchCalls).toBe(2);
       expect(hydrateCalls).toBe(1);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("persists omitted hydration IDs as unavailable report candidates and retries only after refresh", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-missing-hydration-"));
+    let searchCalls = 0;
+    let hydrateCalls = 0;
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        searchCalls += 1;
+        return { items: [{ videoId: "AbCdEfGhI01", title: "Dumbbell bench press tutorial" }] };
+      },
+      async hydrateVideos() {
+        hydrateCalls += 1;
+        return { items: [] };
+      },
+    };
+    const target = {
+      canonicalExerciseSlug: "dumbbell-bench-press",
+      variationId: "dumbbells",
+      exerciseName: "Dumbbell bench press",
+      requiredEquipmentTerms: ["dumbbell"],
+    } as const;
+
+    try {
+      const first = await curateYouTubeCandidates({ api, targets: [target], stateDirectory: directory });
+      expect(first.report.candidates).toHaveLength(1);
+      expect(first.report.candidates[0]?.decision.rejectionCodes).toContain("video-unavailable");
+      expect(first.checkpoint.unavailableVideoIds).toEqual(["AbCdEfGhI01"]);
+
+      const second = await curateYouTubeCandidates({ api, targets: [target], stateDirectory: directory });
+      expect(second.report.candidates).toHaveLength(1);
+      expect(hydrateCalls).toBe(1);
+      expect(searchCalls).toBe(2);
+
+      const refreshed = await curateYouTubeCandidates({
+        api,
+        targets: [target],
+        stateDirectory: directory,
+        refreshUnavailable: true,
+      });
+      expect(refreshed.report.candidates).toHaveLength(1);
+      expect(hydrateCalls).toBe(2);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -389,6 +436,49 @@ describe("resumable YouTube curation state", () => {
       { ...base, videoId: "ZyXwVuTsR98", channelId: "channel-a", materialFingerprint: "same-material" },
     ]);
     expect(redundant).toMatchObject({ status: "needs-second-candidate", reason: "materially-redundant-second" });
+  });
+
+  it("scopes report ranking to the requested variation when one is supplied", () => {
+    const target = {
+      canonicalExerciseSlug: "shared-exercise",
+      variationId: "dumbbells",
+      exerciseName: "Dumbbell bench press",
+      requiredEquipmentTerms: ["dumbbell"],
+    } as const;
+    const candidate = {
+      videoId: "AbCdEfGhI01",
+      title: "Dumbbell bench press tutorial",
+      duration: "PT2M",
+      privacyStatus: "public" as const,
+      uploadStatus: "processed" as const,
+      embeddable: true,
+      syndicated: true,
+      regionAvailable: true,
+      liveBroadcastContent: "none" as const,
+      language: "en",
+    };
+    const rows = [
+      {
+        videoId: candidate.videoId,
+        target: { canonicalExerciseSlug: "shared-exercise", variationId: "dumbbells" },
+        queryKeys: ["dumbbells"],
+        candidate,
+        decision: { eligible: true, rejectionCodes: [], durationSeconds: 120, relevanceScore: 15, normalizedVideoId: candidate.videoId },
+        reviewStatus: "pending" as const,
+      },
+      {
+        ...candidate,
+        videoId: "ZyXwVuTsR98",
+        title: "Dumbbell bench press tutorial",
+        target: { canonicalExerciseSlug: "shared-exercise", variationId: "barbell" },
+        queryKeys: ["barbell"],
+        candidate: { ...candidate, videoId: "ZyXwVuTsR98" },
+        decision: { eligible: true, rejectionCodes: [], durationSeconds: 120, relevanceScore: 15, normalizedVideoId: "ZyXwVuTsR98" },
+        reviewStatus: "pending" as const,
+      },
+    ];
+
+    expect(rankCurationReportCandidates(rows, target).map((row) => row.target.variationId)).toEqual(["dumbbells"]);
   });
 
   it("assesses existing pairs without mutating them and retains an available fallback", () => {

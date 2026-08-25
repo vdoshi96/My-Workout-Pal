@@ -221,14 +221,19 @@ function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget
   else if (durationSeconds > MAX_YOUTUBE_DURATION_SECONDS) rejectionCodes.push("duration-too-long");
 
   const privacyStatus = candidate.privacyStatus?.toLocaleLowerCase("en-US");
-  if (candidate.available === false) rejectionCodes.push("video-unavailable");
-  if (candidate.regionAvailable !== true) rejectionCodes.push("region-unavailable");
+  const unavailable = candidate.available === false;
+  if (unavailable) rejectionCodes.push("video-unavailable");
+  if (candidate.regionAvailable === false || (!unavailable && candidate.regionAvailable !== true)) {
+    rejectionCodes.push("region-unavailable");
+  }
   if (privacyStatus === "private") rejectionCodes.push("private-video");
   else if (privacyStatus === "unlisted") rejectionCodes.push("unlisted-video");
-  else if (privacyStatus !== "public") rejectionCodes.push("video-unavailable");
-  if (candidate.uploadStatus !== "processed") rejectionCodes.push("upload-not-processed");
-  if (candidate.embeddable !== true) rejectionCodes.push("not-embeddable");
-  if (candidate.syndicated !== true) rejectionCodes.push("not-syndicated");
+  else if (privacyStatus !== undefined && privacyStatus !== "public") rejectionCodes.push("video-unavailable");
+  else if (!unavailable && privacyStatus !== "public") rejectionCodes.push("video-unavailable");
+  if (candidate.uploadStatus !== undefined && candidate.uploadStatus !== "processed") rejectionCodes.push("upload-not-processed");
+  else if (!unavailable && candidate.uploadStatus !== "processed") rejectionCodes.push("upload-not-processed");
+  if (candidate.embeddable === false || (!unavailable && candidate.embeddable !== true)) rejectionCodes.push("not-embeddable");
+  if (candidate.syndicated === false || (!unavailable && candidate.syndicated !== true)) rejectionCodes.push("not-syndicated");
   if (candidate.isLive || candidate.liveBroadcastContent === "live" || candidate.liveBroadcastContent === "upcoming") {
     rejectionCodes.push("live-or-upcoming");
   }

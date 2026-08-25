@@ -147,6 +147,9 @@ export type CuratedVideoSeed = Readonly<{
 export type SeedValidationErrorCode =
   | "required-video-count"
   | "unsupported-canonical-exercise"
+  | "missing-required-variation"
+  | "duplicate-required-variation"
+  | "wrong-required-variation"
   | "wrong-variation"
   | "invalid-video-id"
   | "duplicate-video-id"
@@ -188,6 +191,7 @@ export type CurationCheckpoint = {
   completedQueries: CurationQueryCheckpoint[];
   pageTokens: Record<string, string | null>;
   hydratedVideoIds: string[];
+  unavailableVideoIds: string[];
   hydratedCandidates: Record<string, YouTubeCandidate>;
   discoveredCandidates: Record<
     string,

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { validateCuratedVideoSeed } from "@/domain/youtube/seed-validation";
+import {
+  buildDefaultRequiredVideoVariations,
+  validateCuratedVideoSeed,
+} from "@/domain/youtube/seed-validation";
 import type { CuratedVideoSeed, RequiredVideoVariation } from "@/domain/youtube/types";
 
 const VIDEO_ID_ONE = "AbCdEfGhI01";
@@ -85,5 +88,45 @@ describe("curated video seed validation", () => {
     expect(result.errors).toContainEqual(
       expect.objectContaining({ code: "required-video-count" }),
     );
+  });
+
+  it("reports duplicate and missing required mappings when production coverage is required", () => {
+    const result = validateCuratedVideoSeed(
+      [required[0]!, required[0]!],
+      [seed(), seed({ videoId: VIDEO_ID_TWO, displayOrder: 2 })],
+      { requireDefaultCatalogCoverage: true },
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((error) => error.code)).toEqual(
+      expect.arrayContaining(["duplicate-required-variation", "missing-required-variation"]),
+    );
+  });
+
+  it("derives all catalog canonical variations for the production checker", () => {
+    const defaults = buildDefaultRequiredVideoVariations();
+
+    expect(defaults).toHaveLength(27);
+    expect(new Set(defaults.map((variation) => `${variation.canonicalExerciseSlug}::${variation.variationId}`)).size).toBe(27);
+    expect(defaults.every((variation) => variation.variationId === "canonical")).toBe(true);
+  });
+
+  it("rejects reuse of one video ID across two required variations", () => {
+    const secondVariation: RequiredVideoVariation = {
+      canonicalExerciseSlug: "barbell-bench-press",
+      variationId: "canonical",
+    };
+    const result = validateCuratedVideoSeed(
+      [required[0]!, secondVariation],
+      [
+        seed(),
+        seed({ videoId: VIDEO_ID_TWO, displayOrder: 2 }),
+        seed({ canonicalExerciseSlug: secondVariation.canonicalExerciseSlug, variationId: secondVariation.variationId, displayOrder: 1 }),
+        seed({ canonicalExerciseSlug: secondVariation.canonicalExerciseSlug, variationId: secondVariation.variationId, videoId: VIDEO_ID_THREE, displayOrder: 2 }),
+      ],
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((error) => error.code)).toContain("duplicate-video-id");
   });
 });

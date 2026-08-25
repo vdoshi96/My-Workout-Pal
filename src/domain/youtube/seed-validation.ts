@@ -1,4 +1,5 @@
 import { CATALOG_EXERCISES } from "../exercises/catalog.ts";
+import { DEFAULT_YOUTUBE_VARIATION_ID } from "./targets.ts";
 import { YOUTUBE_VIDEO_ID_PATTERN } from "./normalization.ts";
 import type {
   CuratedVideoSeed,
@@ -31,24 +32,65 @@ function hasOwnValue(record: Record<string, unknown>, property: string): boolean
   return Object.prototype.hasOwnProperty.call(record, property);
 }
 
+export function buildDefaultRequiredVideoVariations(): readonly RequiredVideoVariation[] {
+  return Object.keys(CATALOG_EXERCISES).map((canonicalExerciseSlug) => ({
+    canonicalExerciseSlug,
+    variationId: DEFAULT_YOUTUBE_VARIATION_ID,
+  }));
+}
+
 export function validateCuratedVideoSeed(
   requiredVariations: readonly RequiredVideoVariation[],
   seedRows: readonly CuratedVideoSeed[],
-  options: Readonly<{ supportedCanonicalExerciseSlugs?: readonly string[] }> = {},
+  options: Readonly<{
+    supportedCanonicalExerciseSlugs?: readonly string[];
+    requireDefaultCatalogCoverage?: boolean;
+  }> = {},
 ): SeedValidationResult {
   const errors: SeedValidationError[] = [];
   const supportedCanonicalExerciseSlugs = new Set(
-    options.supportedCanonicalExerciseSlugs ?? Object.keys(CATALOG_EXERCISES),
+    options.requireDefaultCatalogCoverage
+      ? Object.keys(CATALOG_EXERCISES)
+      : options.supportedCanonicalExerciseSlugs ?? Object.keys(CATALOG_EXERCISES),
   );
   const requiredKeys = new Set(requiredVariations.map((variation) => key(variation.canonicalExerciseSlug, variation.variationId)));
   const rowsByKey = new Map<string, CuratedVideoSeed[]>();
+  const requiredOccurrences = new Map<string, number>();
+  const defaultRequiredKeys = new Set(
+    buildDefaultRequiredVideoVariations().map((variation) => key(variation.canonicalExerciseSlug, variation.variationId)),
+  );
 
   for (const required of requiredVariations) {
+    const requiredKey = key(required.canonicalExerciseSlug, required.variationId);
+    const occurrence = (requiredOccurrences.get(requiredKey) ?? 0) + 1;
+    requiredOccurrences.set(requiredKey, occurrence);
+    if (occurrence > 1) {
+      errors.push(error("duplicate-required-variation", "The required variation manifest contains a duplicate mapping.", required));
+    }
     if (!supportedCanonicalExerciseSlugs.has(required.canonicalExerciseSlug)) {
       errors.push(error("unsupported-canonical-exercise", "A required mapping references an unsupported canonical exercise.", required));
+    } else if (options.requireDefaultCatalogCoverage && required.variationId !== DEFAULT_YOUTUBE_VARIATION_ID) {
+      errors.push(error("wrong-required-variation", "The production required manifest must use the canonical variation for each catalog exercise.", required));
     }
   }
 
+  if (options.requireDefaultCatalogCoverage) {
+    for (const defaultKey of defaultRequiredKeys) {
+      if (!requiredKeys.has(defaultKey)) {
+        const separatorIndex = defaultKey.indexOf("::");
+        const canonicalExerciseSlug = defaultKey.slice(0, separatorIndex);
+        const variationId = defaultKey.slice(separatorIndex + 2);
+        errors.push({
+          code: "missing-required-variation",
+          message: "The production required manifest must cover every catalog canonical variation.",
+          canonicalExerciseSlug,
+          variationId,
+        });
+      }
+    }
+  }
+
+  const firstRowByVideoId = new Map<string, CuratedVideoSeed>();
   for (const row of seedRows) {
     const rowRecord = row as SeedCandidate;
     if (!supportedCanonicalExerciseSlugs.has(row.canonicalExerciseSlug)) {
@@ -86,6 +128,12 @@ export function validateCuratedVideoSeed(
     }
 
     const rowKey = key(row.canonicalExerciseSlug, row.variationId);
+    const firstRow = firstRowByVideoId.get(row.videoId);
+    if (firstRow && key(firstRow.canonicalExerciseSlug, firstRow.variationId) !== rowKey) {
+      errors.push(error("duplicate-video-id", "A production seed cannot reuse one video ID across variations.", row));
+    } else if (!firstRow) {
+      firstRowByVideoId.set(row.videoId, row);
+    }
     const rows = rowsByKey.get(rowKey) ?? [];
     rows.push(row);
     rowsByKey.set(rowKey, rows);

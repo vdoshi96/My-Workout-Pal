@@ -44,6 +44,7 @@ type JsonRecord = Record<string, unknown> & {
   queryKey?: unknown;
   pageToken?: unknown;
   hydratedVideoIds?: unknown;
+  unavailableVideoIds?: unknown;
   hydratedCandidates?: unknown;
   discoveredCandidates?: unknown;
   target?: JsonRecord;
@@ -132,6 +133,7 @@ export function createEmptyCurationCheckpoint(updatedAt: string = new Date().toI
     completedQueries: [],
     pageTokens: {},
     hydratedVideoIds: [],
+    unavailableVideoIds: [],
     hydratedCandidates: {},
     discoveredCandidates: {},
     rejectionCodes: {},
@@ -169,6 +171,9 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
   const hydratedVideoIds = Array.isArray(input.hydratedVideoIds)
     ? [...new Set(input.hydratedVideoIds.filter((value): value is string => typeof value === "string"))]
     : [];
+  const unavailableVideoIds = Array.isArray(input.unavailableVideoIds)
+    ? [...new Set(input.unavailableVideoIds.filter((value): value is string => typeof value === "string"))]
+    : [];
   const hydratedCandidates: Record<string, YouTubeCandidate> = {};
   if (isRecord(input.hydratedCandidates)) {
     for (const [videoId, candidate] of Object.entries(input.hydratedCandidates)) {
@@ -179,7 +184,7 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
   }
   const discoveredCandidates: CurationCheckpoint["discoveredCandidates"] = {};
   if (isRecord(input.discoveredCandidates)) {
-    for (const [candidateKey, discovered] of Object.entries(input.discoveredCandidates)) {
+    for (const discovered of Object.values(input.discoveredCandidates)) {
       if (!isRecord(discovered) || !isRecord(discovered.target) || !isRecord(discovered.item)) continue;
       if (
         typeof discovered.target.canonicalExerciseSlug !== "string" ||
@@ -190,7 +195,12 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
         typeof discovered.item.videoId !== "string" ||
         typeof discovered.item.title !== "string"
       ) continue;
-      discoveredCandidates[candidateKey] = {
+      const scopedCandidateKey = getYouTubeCandidateStateKey(
+        discovered.target.canonicalExerciseSlug,
+        discovered.target.variationId,
+        discovered.item.videoId,
+      );
+      discoveredCandidates[scopedCandidateKey] = {
         target: {
           canonicalExerciseSlug: discovered.target.canonicalExerciseSlug,
           variationId: discovered.target.variationId,
@@ -240,6 +250,7 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
     ...empty,
     completedQueries,
     hydratedVideoIds,
+    unavailableVideoIds,
     hydratedCandidates,
     discoveredCandidates,
     rejectionCodes,
@@ -590,6 +601,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
   maxResults?: number;
   regionCode?: string;
   budget?: Partial<CurationRunBudget>;
+  refreshUnavailable?: boolean;
 }>): Promise<Readonly<{ checkpoint: CurationCheckpoint; report: CurationReport; reportPath: string }>> {
   const stateDirectory = options.stateDirectory ?? DEFAULT_YOUTUBE_CURATION_STATE_DIR;
   const now = options.now ?? (() => new Date().toISOString());
@@ -597,8 +609,12 @@ export async function curateYouTubeCandidates(options: Readonly<{
   const budget = resolveCurationBudget(options.budget);
   const usage: CurationRunUsage = { searchRequests: 0, hydrateRequests: 0, unitsEstimated: 0 };
   const checkpoint = await loadCurationCheckpoint(stateDirectory);
+  const refreshUnavailableIds = options.refreshUnavailable
+    ? new Set(checkpoint.unavailableVideoIds)
+    : new Set<string>();
   delete checkpoint.blockedReason;
   const targets = deduplicateYouTubeCurationTargets(options.targets);
+  const activeTargetKeys = new Set(targets.map((target) => `${target.canonicalExerciseSlug}::${target.variationId}`));
   const queryItems = new Map<string, { target: CurationTarget; queryKeys: string[]; item: YouTubeCandidate }>();
   for (const [candidateKey, discovered] of Object.entries(checkpoint.discoveredCandidates)) {
     queryItems.set(candidateKey, {
@@ -653,7 +669,11 @@ export async function curateYouTubeCandidates(options: Readonly<{
             } catch {
               continue;
             }
-            const key = `${target.canonicalExerciseSlug}:${target.variationId}:${normalizedId}`;
+            const key = getYouTubeCandidateStateKey(
+              target.canonicalExerciseSlug,
+              target.variationId,
+              normalizedId,
+            );
             const existing = queryItems.get(key);
             if (existing) {
               if (!existing.queryKeys.includes(request.queryKey)) existing.queryKeys.push(request.queryKey);
@@ -707,10 +727,12 @@ export async function curateYouTubeCandidates(options: Readonly<{
   }
 
   const hydratedIds = new Set(checkpoint.hydratedVideoIds);
+  const unavailableIds = new Set(checkpoint.unavailableVideoIds);
   const pendingIds = [...new Set(
     [...queryItems.values()]
+      .filter((entry) => activeTargetKeys.has(`${entry.target.canonicalExerciseSlug}::${entry.target.variationId}`))
       .map((entry) => entry.item.videoId)
-      .filter((videoId) => !hydratedIds.has(videoId)),
+      .filter((videoId) => !hydratedIds.has(videoId) && (!unavailableIds.has(videoId) || refreshUnavailableIds.has(videoId))),
   )];
   const hydratedById = new Map<string, YouTubeCandidate>();
   for (const [videoId, candidate] of Object.entries(checkpoint.hydratedCandidates)) {
@@ -727,6 +749,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
     const response: YouTubeHydrateResponse = await options.api.hydrateVideos(batch, regionCode);
     recordRunUsage(usage, "hydrate", YOUTUBE_HYDRATE_REQUEST_UNITS);
     addQuota(checkpoint, 0, YOUTUBE_HYDRATE_REQUEST_UNITS);
+    const returnedIds = new Set<string>();
     for (const candidate of response.items) {
       let normalizedId: string;
       try {
@@ -734,15 +757,31 @@ export async function curateYouTubeCandidates(options: Readonly<{
       } catch {
         continue;
       }
+      returnedIds.add(normalizedId);
       hydratedById.set(normalizedId, { ...candidate, videoId: normalizedId });
       checkpoint.hydratedCandidates[normalizedId] = { ...candidate, videoId: normalizedId };
       if (!checkpoint.hydratedVideoIds.includes(normalizedId)) checkpoint.hydratedVideoIds.push(normalizedId);
+      checkpoint.unavailableVideoIds = checkpoint.unavailableVideoIds.filter((videoId) => videoId !== normalizedId);
+    }
+    for (const requestedId of batch) {
+      if (returnedIds.has(requestedId)) continue;
+      const discovered = [...queryItems.values()].find((entry) => entry.item.videoId === requestedId);
+      const unavailableCandidate: YouTubeCandidate = {
+        ...(discovered?.item ?? { videoId: requestedId, title: requestedId }),
+        videoId: requestedId,
+        url: discovered?.item.url ?? `https://www.youtube.com/watch?v=${requestedId}`,
+        available: false,
+      };
+      hydratedById.set(requestedId, unavailableCandidate);
+      checkpoint.hydratedCandidates[requestedId] = unavailableCandidate;
+      if (!checkpoint.unavailableVideoIds.includes(requestedId)) checkpoint.unavailableVideoIds.push(requestedId);
     }
     await saveCurationCheckpoint(stateDirectory, checkpoint);
   }
 
   const reportCandidates: CurationReportCandidate[] = [];
   for (const entry of queryItems.values()) {
+    if (!activeTargetKeys.has(`${entry.target.canonicalExerciseSlug}::${entry.target.variationId}`)) continue;
     const hydrated = hydratedById.get(entry.item.videoId);
     if (!hydrated) continue;
     const evidence = hydrated.syndicationEvidence === "verified"
@@ -827,15 +866,17 @@ export async function curateYouTubeCandidates(options: Readonly<{
 
 export function rankCurationReportCandidates(
   candidates: readonly CurationReportCandidate[],
-  target: YouTubeCurationTarget,
+  target: YouTubeCurationTarget & Partial<RequiredVideoVariation>,
 ): readonly CurationReportCandidate[] {
+  const targetVariationId = target.variationId;
+  const scopedCandidates = candidates
+    .filter((candidate) => candidate.target.canonicalExerciseSlug === target.canonicalExerciseSlug)
+    .filter((candidate) => targetVariationId === undefined || candidate.target.variationId === targetVariationId);
   const eligible = rankEligibleCandidates(
-    candidates
-      .filter((candidate) => candidate.target.canonicalExerciseSlug === target.canonicalExerciseSlug)
-      .map((candidate) => candidate.candidate),
+    scopedCandidates.map((candidate) => candidate.candidate),
     target,
   );
-  const byId = new Map(candidates.map((candidate) => [candidate.videoId, candidate]));
+  const byId = new Map(scopedCandidates.map((candidate) => [candidate.videoId, candidate]));
   return eligible.flatMap((item) => {
     const original = byId.get(item.candidate.videoId);
     return original ? [original] : [];

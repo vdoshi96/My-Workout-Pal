@@ -87,6 +87,7 @@ async function main(): Promise<void> {
     regionCode: process.env["YOUTUBE_REGION_CODE"] ?? "US",
     ...(maxResults === undefined ? {} : { maxResults }),
     budget: budgetFromEnvironment(args),
+    ...(args.includes("--refresh-unavailable") ? { refreshUnavailable: true } : {}),
   });
   const checkpointPath = path.join(stateDirectory, "checkpoint.json");
   console.log(`YouTube curation status: ${result.report.status}`);

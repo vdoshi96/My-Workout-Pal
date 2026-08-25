@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="57be5536421069397c5c17a7ea2573c488ad254a75f764bae6e6fdb04be63dcc">
+  <meta name="source-sha256" content="d6a9e09c82a093bece462a9f1977f21eaac58575af3c8f20c531ae8268670a6f">
   <title>YouTube curation and video policy · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -33,7 +33,7 @@
 <h2>Credential and quota boundary</h2>
 <p><code>YOUTUBE_API_KEY</code> is a server-side development and curation secret. It is never bundled into the application, printed in reports, committed, or copied into public QA evidence.</p>
 <p>Without a target manifest, the command derives exactly one target with stable <code>variationId: &quot;canonical&quot;</code> from each of the 27 catalog records. Each target carries a movement stem, useful aliases, and only relevant barbell/dumbbell discriminator terms; bodyweight targets do not require a title to contain <code>bodyweight</code>. A private <code>--targets</code> manifest or <code>YOUTUBE_CURATION_TARGETS</code> path explicitly overrides this default, including an intentional empty array.</p>
-<p>The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, review status, ranked eligible candidates, and proposed pairs. Input targets are deduplicated by canonical exercise plus variation, pending hydration IDs are deduplicated across targets, and the report emits one target entry per key. A configurable request and page budget stops before the next API request would exceed its limit. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.</p>
+<p>The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, review status, ranked eligible candidates, and proposed pairs. Input targets are deduplicated by canonical exercise plus variation, pending hydration IDs are deduplicated across targets, and the report emits one target entry per key. Discovered-candidate, review, and rejection maps use the scoped <code>canonicalExerciseSlug::variationId::videoId</code> key. A configurable request and page budget stops before the next API request would exceed its limit. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.</p>
 <h2>Discovery sequence</h2>
 <ol>
 <li>Deduplicate the required canonical exercise and equipment variations from the seed specification.</li>
@@ -45,6 +45,7 @@
 <li>Apply mechanical rejection before any ranking.</li>
 <li>Produce a human-review report with query provenance, metadata, mechanical decisions, rejection reasons, and proposed candidates.</li>
 </ol>
+<p>If <code>videos.list</code> omits an ID returned by search, the curator records a checked unavailable candidate with <code>video-unavailable</code>, persists that ID in the checkpoint, and includes it in the private report. It does not retry the same omitted ID on ordinary resume. An explicit <code>--refresh-unavailable</code> run clears those checked IDs and permits a new hydration request. A missing response is never treated as an approval or silently discarded.</p>
 <p>Official API references:</p>
 <ul>
 <li><a href="https://developers.google.com/youtube/v3/docs/search/list">Search: list</a></li>
@@ -87,18 +88,18 @@
 </ul>
 <p>The seed does not store indefinite ranking scores or stale view counts as product truth.</p>
 <h2>Validation</h2>
-<p><code>pnpm seed:check</code> must reject any seed with a missing required mapping, count other than two, invalid ID syntax, duplicate ID within a variation, wrong variation, missing approval, missing full-watch confirmation, duplicate order, or unsupported canonical exercise reference.</p>
+<p><code>pnpm seed:check</code> derives the required set from all 27 catalog records when <code>--required</code> is omitted: each record maps to the durable <code>variationId: &quot;canonical&quot;</code>. A supplied required manifest must contain unique keys, cover every default catalog mapping, and contain no unsupported or non-canonical mapping. The checker must reject any seed with a missing required mapping, count other than two, invalid ID syntax, duplicate ID within a variation or anywhere else in the production seed, wrong variation, missing approval, missing full-watch confirmation, duplicate order, or unsupported canonical exercise reference.</p>
 <p>The checker also confirms that reused starter prescriptions point to the same canonical exercise and therefore reuse the same approved demonstrations.</p>
 <h2>Refresh and replacement</h2>
 <p>The typed <code>assessApprovedVideoPair</code> refresh helper checks seeded IDs with hydrated metadata and proposes action when a video becomes missing, private, restricted, removed, unembeddable, non-syndicated, or regionally unavailable. It does not mutate production.</p>
 <p>The application keeps the remaining approved video and direct YouTube fallback available. A refresh assessment checks both IDs and emits a replacement-required proposal when one or both are unavailable. It never mutates the approved seed. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.</p>
 <p>Checkpoint schema is versioned. State from the earlier unscoped schema is rejected with an actionable incompatibility message instead of being treated as target-specific state.</p>
 <h2>Local command scaffold</h2>
-<p>Run <code>pnpm youtube:curate</code> with an official <code>YOUTUBE_API_KEY</code> and a private target manifest. The command invokes the typed curation workflow, resumes from <code>.local/youtube-curation/checkpoint.json</code>, and writes the review proposal to <code>.local/youtube-curation/review-report.json</code>. The report includes query provenance, mechanical rejection codes, ranked eligible candidates, proposed pairs, and quota-blocked state when a budget stops progress. Set <code>YOUTUBE_CURATION_MAX_QUOTA_UNITS</code>, <code>YOUTUBE_CURATION_MAX_SEARCH_REQUESTS</code>, <code>YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS</code>, and <code>YOUTUBE_CURATION_MAX_PAGES_PER_QUERY</code> (or the matching command-line flags) to bound a run. These paths are ignored by Git and contain no production data.</p>
+<p>Run <code>pnpm youtube:curate</code> with an official <code>YOUTUBE_API_KEY</code>. Without <code>--targets</code> (or <code>YOUTUBE_CURATION_TARGETS</code>), the command invokes the typed workflow for the complete 27-record catalog-derived target set. A private target manifest explicitly overrides that set, including an intentional empty array. The command resumes from <code>.local/youtube-curation/checkpoint.json</code>, and writes the review proposal to <code>.local/youtube-curation/review-report.json</code>. The report includes query provenance, mechanical rejection codes, ranked eligible candidates, proposed pairs, and quota-blocked state when a budget stops progress. Set <code>YOUTUBE_CURATION_MAX_QUOTA_UNITS</code>, <code>YOUTUBE_CURATION_MAX_SEARCH_REQUESTS</code>, <code>YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS</code>, and <code>YOUTUBE_CURATION_MAX_PAGES_PER_QUERY</code> (or the matching command-line flags) to bound a run. Use <code>--refresh-unavailable</code> to explicitly retry IDs previously omitted by <code>videos.list</code>. These paths are ignored by Git and contain no production data.</p>
 <p>If <code>YOUTUBE_API_KEY</code> is missing, the command exits before creating state or making a request and prints exactly:</p>
 <pre><code>Missing YOUTUBE_API_KEY; refusing to run YouTube curation.
 </code></pre>
-<p>Run <code>pnpm seed:check --required REQUIRED.json --seed SEED.json</code> to validate a proposed mapping through the typed domain seed validator. The checker rejects incomplete exact-two mappings and never writes production data.</p>
+<p>Run <code>pnpm seed:check --seed SEED.json</code> to validate against the complete catalog-derived requirement, or add <code>--required REQUIRED.json</code> to validate a private override that still must cover the complete default set. Both paths use the typed domain seed validator, reject incomplete exact-two mappings, and never write production data.</p>
 <h2>Player requirements</h2>
 <ul>
 <li>Render one active iframe at a time and never autoplay.</li>
