@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f18682faeba9fc8bef7b59f0d455d6e46b796fedd9ce199f7030e216ecd047a9">
+  <meta name="source-sha256" content="c5c1037149a1a66a7c93d584703b4b4bf6f53156b36033cf558f1f9e9dd6f7df">
   <title>Account Deletion Implementation Plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -41,15 +41,15 @@
 <h2>Persistence and deletion order</h2>
 <p>The first database transaction locks the job/owner boundary, creates or resumes the job, marks the profile <code>deletion_pending</code> when it still exists, and removes owner rows in explicit foreign-key order:</p>
 <ol>
-<li>progress-summary and personal-record source links;</li>
-<li>progress summaries and personal records;</li>
+<li>progress-summary source links;</li>
+<li>personal records, progress summaries, and mutation idempotency rows except the deletion saga record;</li>
 <li>set logs, cardio logs, exercise outcome states, exercise snapshots, and workout sessions;</li>
-<li>program cardio prescriptions, prescriptions, sections, days, revisions, and program roots;</li>
+<li>program cardio prescriptions, prescriptions, sections, days, revisions, and program roots after clearing the active-revision pointer;</li>
 <li>custom exercise videos, aliases, equipment links, and custom exercises;</li>
-<li>mutation idempotency rows except the deletion saga record;</li>
 <li>preferences, equipment profile, and user profile.</li>
 </ol>
 <p>Catalog, curated videos, equipment catalog, templates, template revisions, template days/sections/prescriptions/cardio, and every other user&#39;s rows remain untouched. All owner-data deletion either commits together or rolls back together. The job is updated to the Firebase phase in the same transaction so a network interruption after commit can resume safely.</p>
+<p>The immutable program-revision and workout-history triggers admit one deliberate exception for this transaction. A transaction-local setting contains the server-derived owner UID, and each trigger permits only <code>DELETE</code> when the affected row has that exact owner. It does not authorize inserts, updates, another owner&#39;s rows, or any request that bypasses the repository transaction.</p>
 <p>After database commit, Firebase Admin deletes exactly the server-derived UID. <code>auth/user-not-found</code> is idempotent success. On success, a second small transaction marks the durable job completed. On retryable or unknown Firebase failure, the job records only a stable safe code and remains failed/blocked for the same freshly reauthenticated UID to retry. Fitness data is never restored and the UI must say that database data is already gone. Session-cookie clearing occurs on completed deletion; partial Firebase failure preserves only the minimum session needed to retry and denies ordinary account surfaces through the missing/deletion-pending profile boundary.</p>
 <h2>Authentication, authorization, CSRF, and privacy</h2>
 <p>The route verifies same-origin double-submit CSRF before work, resolves the revocation-aware secure session before parsing a hostile body or opening the database, asserts verified email and recent authentication, and derives ownership only from the session UID. Firebase client reauthentication is not trusted as authorization; it is useful only because the server subsequently verifies the fresh token and creates a recent secure session.</p>

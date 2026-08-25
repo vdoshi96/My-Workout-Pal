@@ -24,15 +24,16 @@ The confirmation phrase is case-sensitive `DELETE`. Keys are nonblank and bounde
 
 The first database transaction locks the job/owner boundary, creates or resumes the job, marks the profile `deletion_pending` when it still exists, and removes owner rows in explicit foreign-key order:
 
-1. progress-summary and personal-record source links;
-2. progress summaries and personal records;
+1. progress-summary source links;
+2. personal records, progress summaries, and mutation idempotency rows except the deletion saga record;
 3. set logs, cardio logs, exercise outcome states, exercise snapshots, and workout sessions;
-4. program cardio prescriptions, prescriptions, sections, days, revisions, and program roots;
+4. program cardio prescriptions, prescriptions, sections, days, revisions, and program roots after clearing the active-revision pointer;
 5. custom exercise videos, aliases, equipment links, and custom exercises;
-6. mutation idempotency rows except the deletion saga record;
-7. preferences, equipment profile, and user profile.
+6. preferences, equipment profile, and user profile.
 
 Catalog, curated videos, equipment catalog, templates, template revisions, template days/sections/prescriptions/cardio, and every other user's rows remain untouched. All owner-data deletion either commits together or rolls back together. The job is updated to the Firebase phase in the same transaction so a network interruption after commit can resume safely.
+
+The immutable program-revision and workout-history triggers admit one deliberate exception for this transaction. A transaction-local setting contains the server-derived owner UID, and each trigger permits only `DELETE` when the affected row has that exact owner. It does not authorize inserts, updates, another owner's rows, or any request that bypasses the repository transaction.
 
 After database commit, Firebase Admin deletes exactly the server-derived UID. `auth/user-not-found` is idempotent success. On success, a second small transaction marks the durable job completed. On retryable or unknown Firebase failure, the job records only a stable safe code and remains failed/blocked for the same freshly reauthenticated UID to retry. Fitness data is never restored and the UI must say that database data is already gone. Session-cookie clearing occurs on completed deletion; partial Firebase failure preserves only the minimum session needed to retry and denies ordinary account surfaces through the missing/deletion-pending profile boundary.
 

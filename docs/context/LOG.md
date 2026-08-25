@@ -5,6 +5,10 @@
 - Retained a missing-module failure, then added the strict owner-free deletion request, stable intent hash, monotonic database/Firebase saga transitions, and safe provider-error classification with five passing domain tests.
 - Retained the missing migration failure, then removed the deletion job's restrictive profile foreign key and added bounded phase, retry-key, request-hash, and completion-shape constraints.
 - Proved in PGlite that the minimal saga row survives profile deletion, invalid metadata is rejected, and a legacy job causes an actionable migration refusal rather than guessed state. The migration remains local and unapplied to Neon.
+- Added the server-only account-deletion repository with verified/recent/provider viewer gates, a strict owner-free request, an explicit foreign-key deletion order, and one transaction that preserves the durable job while deleting profile, preference, equipment, custom-exercise, program, workout, record, summary, and mutation-idempotency data.
+- Replaced immutable-history trigger functions with a deletion-only, transaction-local, exact-owner exception. Ordinary history deletion still fails, and an Alice-scoped transaction cannot delete Bob's row.
+- Closed the simultaneous-first-request race by re-reading the durable job after acquiring the profile lock, so a waiting retry resumes the first transaction's Firebase phase even though the profile has been removed.
+- Passed 35 focused domain, schema, and PGlite repository assertions covering exact-owner/global preservation, late rollback, concurrent replay, post-profile retry, Firebase failure/resume/completion, and authentication gates, plus strict TypeScript, scoped lint, and Drizzle validation. No migration, Firebase call, push, merge, or deployment was performed.
 
 ## 2026-08-25: Immutable program publication repository
 

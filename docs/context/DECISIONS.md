@@ -16,6 +16,8 @@ Editing a program creates a revision. Starting a workout snapshots the relevant 
 
 The account-deletion saga record is keyed by the server-derived Firebase UID but has no foreign key to `user_profiles`. It must survive the owned-data transaction so Firebase deletion can be retried after fitness data and the profile are gone. The job stores only bounded phase, status, attempt, idempotency hash, and safe error-code metadata. Migration `0001_account_deletion_saga` refuses to run if legacy job rows exist, requiring explicit review instead of inventing resumable state. This migration is checked in and tested locally but has not been applied to Neon.
 
+Published program revisions and accepted workout history remain immutable during ordinary operation. Account deletion is the narrow exception: the repository sets a transaction-local Firebase UID, and replacement trigger functions permit `DELETE` only when each row's owner exactly matches that UID. The setting cannot authorize another owner's row and does not permit inserts or updates. This keeps historical mutation guards intact while allowing a member's complete owned graph to be erased atomically.
+
 ## 2026-08-25: Store canonical metric values
 
 Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.
