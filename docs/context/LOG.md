@@ -10,6 +10,8 @@
 - Added the private `POST /api/app/program/publish` boundary with same-origin CSRF, bounded strict JSON, a server-derived viewer, private no-store output, and route-order tests that reject cross-origin or unauthenticated requests before body or storage access.
 - Added the protected program editor with phone-first day navigation, labeled prescription/cardio fields, explicit reorder controls, dirty-navigation protection, validation focus, retry-stable publication, stale-conflict copy, and a clear handoff to the separate equipment substitution confirmation.
 - Independently re-ran the isolated workout repository's focused and complete matrices, inspected its final ownership, snapshot, idempotency, previous-value, history, and transaction boundaries, and marked the clean branch ready for a separately authorized local merge without merging, pushing, deploying, or changing production.
+- Retained a five-test missing-behavior failure, then added immutable movement add/replace/remove transforms, section-and-logging defaults, bounded candidate search, same-meaning target retention, cross-meaning resets, and a distance-target publication gate.
+- Connected a keyboard-usable modal chooser to deterministic compatible catalog candidates and owner-scoped compatible custom exercises. Selection stays in the local draft; publication still re-resolves identity, ownership, equipment, and logging shape inside the immutable transaction.
 
 ## 2026-08-25: Conflict-safe settings and sign-out
 

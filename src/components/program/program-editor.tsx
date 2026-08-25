@@ -6,8 +6,14 @@ import { useRouter } from "next/navigation";
 
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import {
+  addProgramPrescription,
+  filterProgramExerciseCandidates,
   programPublishInputFromReadModel,
+  removeProgramPrescription,
+  replaceProgramPrescription,
   reorderProgramPrescription,
+  validateProgramExerciseSelections,
+  type ProgramExerciseCandidate,
 } from "@/components/program/program-editor-model";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
@@ -41,12 +47,28 @@ function publishFailure(error: unknown): string {
 
 type Prescription = ProgramPublishInput["days"][number]["sections"][number]["prescriptions"][number];
 type Cardio = ProgramPublishInput["days"][number]["cardio"][number];
+type ExerciseChooser = Readonly<
+  | {
+      dayIndex: number;
+      mode: "add";
+      sectionIndex: number;
+    }
+  | {
+      currentLoggingKind: ProgramExerciseCandidate["loggingKind"];
+      dayIndex: number;
+      mode: "replace";
+      prescriptionIndex: number;
+      sectionIndex: number;
+    }
+>;
 
 export function ProgramEditor({
   canMutate,
+  candidates,
   initialProgram,
 }: Readonly<{
   canMutate: boolean;
+  candidates: readonly ProgramExerciseCandidate[];
   initialProgram: ActiveProgramReadModel;
 }>) {
   const router = useRouter();
@@ -59,6 +81,11 @@ export function ProgramEditor({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
+  const [chooser, setChooser] = useState<ExerciseChooser | null>(null);
+  const [candidateQuery, setCandidateQuery] = useState("");
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const errorRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const dirty = useMemo(() => JSON.stringify(draft) !== baseline, [baseline, draft]);
@@ -72,6 +99,50 @@ export function ProgramEditor({
       ),
     [program],
   );
+  const candidateById = useMemo(
+    () => new Map(candidates.map((candidate) => [candidate.id, candidate] as const)),
+    [candidates],
+  );
+  const filteredCandidates = useMemo(
+    () => filterProgramExerciseCandidates(candidates, candidateQuery),
+    [candidateQuery, candidates],
+  );
+
+  function meaningForPrescription(prescription: Prescription) {
+    const id = prescription.catalogExerciseId ?? prescription.customExerciseId;
+    const source = prescription.sourcePrescriptionId
+      ? meaningBySourceId.get(prescription.sourcePrescriptionId)
+      : undefined;
+    const sourceId = source?.catalogExerciseId ?? source?.customExerciseId;
+    if (source && id === sourceId) {
+      return { label: source.label, measurementKind: source.measurementKind };
+    }
+    const candidate = id ? candidateById.get(id) : undefined;
+    return candidate
+      ? { label: candidate.name, measurementKind: candidate.loggingKind }
+      : undefined;
+  }
+
+  function dismissChooser() {
+    setChooser(null);
+    setCandidateQuery("");
+    queueMicrotask(() => returnFocusRef.current?.focus());
+  }
+
+  function openChooser(next: ExerciseChooser) {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    setCandidateQuery("");
+    setChooser(next);
+  }
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!chooser || !dialog || dialog.open) return;
+    dialog.showModal();
+    queueMicrotask(() => searchRef.current?.focus());
+  }, [chooser]);
 
   useEffect(() => {
     if (!dirty || busy) return;
@@ -164,14 +235,67 @@ export function ProgramEditor({
       reorderProgramPrescription(current, dayIndex, sectionIndex, prescriptionIndex, direction),
     );
     const prescription = draft.days[dayIndex]?.sections[sectionIndex]?.prescriptions[prescriptionIndex];
-    const name = prescription?.sourcePrescriptionId
-      ? meaningBySourceId.get(prescription.sourcePrescriptionId)?.label
-      : "Exercise";
+    const name = prescription ? meaningForPrescription(prescription)?.label : "Exercise";
     setMessage(`${name ?? "Exercise"} moved ${direction < 0 ? "up" : "down"}.`);
+  }
+
+  function chooseCandidate(candidate: ProgramExerciseCandidate) {
+    if (!chooser) return;
+    if (chooser.mode === "add") {
+      setDraft((current) => addProgramPrescription(
+        current,
+        chooser.dayIndex,
+        chooser.sectionIndex,
+        candidate,
+      ));
+      setMessage(`${candidate.name} added with editable defaults. This draft is still unpublished.`);
+    } else {
+      const reset = chooser.currentLoggingKind !== candidate.loggingKind;
+      setDraft((current) => replaceProgramPrescription(
+        current,
+        chooser.dayIndex,
+        chooser.sectionIndex,
+        chooser.prescriptionIndex,
+        candidate,
+        chooser.currentLoggingKind,
+      ));
+      setMessage(
+        reset
+          ? `${candidate.name} selected. Sets, rest, and notes were retained; the range and incompatible targets were reset.`
+          : `${candidate.name} selected. Compatible range and targets were retained.`,
+      );
+    }
+    dialogRef.current?.close();
+  }
+
+  function removePrescription(
+    dayIndex: number,
+    sectionIndex: number,
+    prescriptionIndex: number,
+    label: string,
+  ) {
+    try {
+      setDraft((current) => removeProgramPrescription(
+        current,
+        dayIndex,
+        sectionIndex,
+        prescriptionIndex,
+      ));
+      setMessage(`${label} removed from this unpublished draft.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The movement could not be removed.");
+    }
   }
 
   async function publish() {
     if (!canMutate || busy) return;
+    const selectionErrors = validateProgramExerciseSelections(draft, candidates);
+    if (selectionErrors.length > 0) {
+      setErrors([...selectionErrors]);
+      setMessage("The draft has exercise selection errors and was not sent.");
+      queueMicrotask(() => errorRef.current?.focus());
+      return;
+    }
     const checked = programPublishRequestSchema.safeParse(draft);
     if (!checked.success) {
       const nextErrors = checked.error.issues.map((issue) =>
@@ -285,9 +409,7 @@ export function ProgramEditor({
                 <legend>{section.title}</legend>
                 <ol>
                   {section.prescriptions.map((prescription, prescriptionIndex) => {
-                    const meaning = prescription.sourcePrescriptionId
-                      ? meaningBySourceId.get(prescription.sourcePrescriptionId)
-                      : undefined;
+                    const meaning = meaningForPrescription(prescription);
                     const duration = meaning?.measurementKind === "duration" || meaning?.measurementKind === "distance_duration";
                     return (
                       <li className="program-editor-prescription" key={prescription.sourcePrescriptionId ?? `${section.kind}-${prescriptionIndex}`}>
@@ -296,17 +418,43 @@ export function ProgramEditor({
                             <span>{section.kind} · {meaning?.measurementKind.replaceAll("_", " ") ?? "exercise"}</span>
                             <h3>{meaning?.label ?? prescription.displayName ?? "Exercise"}</h3>
                           </div>
-                          <div className="program-editor-reorder" aria-label={`Reorder ${meaning?.label ?? "exercise"}`}>
+                          <div className="program-editor-prescription-actions">
+                            <div className="program-editor-reorder" aria-label={`Reorder ${meaning?.label ?? "exercise"}`}>
+                              <button
+                                disabled={prescriptionIndex === 0}
+                                onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, -1)}
+                                type="button"
+                              >Up</button>
+                              <button
+                                disabled={prescriptionIndex === section.prescriptions.length - 1}
+                                onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, 1)}
+                                type="button"
+                              >Down</button>
+                            </div>
                             <button
-                              disabled={prescriptionIndex === 0}
-                              onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, -1)}
+                              disabled={!meaning}
+                              onClick={() => {
+                                if (!meaning) return;
+                                openChooser({
+                                  currentLoggingKind: meaning.measurementKind,
+                                  dayIndex: selectedDay,
+                                  mode: "replace",
+                                  prescriptionIndex,
+                                  sectionIndex,
+                                });
+                              }}
                               type="button"
-                            >Up</button>
+                            >Replace</button>
                             <button
-                              disabled={prescriptionIndex === section.prescriptions.length - 1}
-                              onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, 1)}
+                              disabled={section.prescriptions.length <= 1}
+                              onClick={() => removePrescription(
+                                selectedDay,
+                                sectionIndex,
+                                prescriptionIndex,
+                                meaning?.label ?? "Exercise",
+                              )}
                               type="button"
-                            >Down</button>
+                            >Remove</button>
                           </div>
                         </header>
                         <div className="program-editor-grid">
@@ -335,6 +483,15 @@ export function ProgramEditor({
                     );
                   })}
                 </ol>
+                <button
+                  className="program-editor-add"
+                  onClick={() => openChooser({
+                    dayIndex: selectedDay,
+                    mode: "add",
+                    sectionIndex,
+                  })}
+                  type="button"
+                >Add movement</button>
               </fieldset>
             ))}
 
@@ -375,6 +532,76 @@ export function ProgramEditor({
           <div aria-live="polite" className="member-save-status" ref={statusRef} role="status" tabIndex={-1}>{message}</div>
         </div>
       </div>
+
+      {chooser ? (
+        <dialog
+          aria-labelledby="exercise-chooser-title"
+          className="program-exercise-chooser"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) event.currentTarget.close();
+          }}
+          onClose={dismissChooser}
+          ref={dialogRef}
+        >
+          <div className="program-exercise-chooser-sheet">
+            <header>
+              <div>
+                <span className="eyebrow">Compatible with this program</span>
+                <h2 id="exercise-chooser-title">
+                  {chooser.mode === "add" ? "Add movement" : "Replace movement"}
+                </h2>
+              </div>
+              <button
+                aria-label="Close exercise chooser"
+                onClick={() => dialogRef.current?.close()}
+                type="button"
+              >Close</button>
+            </header>
+            <label className="program-exercise-search">
+              <span>Search compatible movements</span>
+              <input
+                maxLength={120}
+                onChange={(event) => setCandidateQuery(event.target.value)}
+                placeholder="Name, equipment, or logging type"
+                ref={searchRef}
+                type="search"
+                value={candidateQuery}
+              />
+            </label>
+            <p className="program-exercise-result-count" aria-live="polite">
+              {filteredCandidates.length} compatible result{filteredCandidates.length === 1 ? "" : "s"}
+            </p>
+            {filteredCandidates.length > 0 ? (
+              <ul className="program-exercise-results">
+                {filteredCandidates.map((candidate) => (
+                  <li key={`${candidate.kind}-${candidate.id}`}>
+                    <button onClick={() => chooseCandidate(candidate)} type="button">
+                      <span>
+                        <strong>{candidate.name}</strong>
+                        <small>
+                          {candidate.loggingKind.replaceAll("_", " ")} · {candidate.requiredEquipment.join(" + ")}
+                        </small>
+                      </span>
+                      <span>{candidate.kind === "custom" ? "Private" : "Canonical"}</span>
+                      <Icon name="chevron-right" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="program-exercise-empty">
+                <strong>No compatible match</strong>
+                <p>Try a broader search, or create a private exercise for this equipment profile.</p>
+                <Link href="/app/library/custom/new">Create private exercise</Link>
+              </div>
+            )}
+            <footer>
+              <p>Choosing a movement changes only this unpublished draft.</p>
+              <button onClick={() => dialogRef.current?.close()} type="button">Cancel</button>
+            </footer>
+          </div>
+        </dialog>
+      ) : null}
     </section>
   );
 }
