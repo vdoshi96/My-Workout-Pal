@@ -8,6 +8,7 @@ import {
   DEFAULT_YOUTUBE_CURATION_STATE_DIR,
   MISSING_YOUTUBE_API_KEY_MESSAGE,
 } from "../src/domain/youtube/curation.ts";
+import { buildDefaultYouTubeCurationTargets } from "../src/domain/youtube/targets.ts";
 import type { CurationRunBudget, RequiredVideoVariation, YouTubeCurationTarget } from "../src/domain/youtube/types.ts";
 
 function optionValue(args: readonly string[], name: string): string | undefined {
@@ -75,7 +76,8 @@ async function main(): Promise<void> {
 
   const args = process.argv.slice(2);
   const stateDirectory = optionValue(args, "--state-dir") ?? process.env["YOUTUBE_CURATION_STATE_DIR"] ?? DEFAULT_YOUTUBE_CURATION_STATE_DIR;
-  const targets = await loadTargets(optionValue(args, "--targets") ?? process.env["YOUTUBE_CURATION_TARGETS"]);
+  const targetPath = optionValue(args, "--targets") ?? process.env["YOUTUBE_CURATION_TARGETS"];
+  const targets = targetPath ? await loadTargets(targetPath) : buildDefaultYouTubeCurationTargets();
   const api = createYouTubeDataApiClient({ apiKey });
   const maxResults = positiveInteger(process.env["YOUTUBE_CURATION_MAX_RESULTS"]);
   const result = await curateYouTubeCandidates({

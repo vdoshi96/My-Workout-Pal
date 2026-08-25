@@ -22,7 +22,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - Double progression can only suggest considering a load increase after the exact number of weight-and-repetition work sets all reach the range top with form explicitly marked appropriate. It ignores warm-ups and never emits a load or increment.
 - The service worker is generated from a tested public-cache policy. It caches only public program/library/sample routes, hashed Next static output, and explicit app artwork; authentication, APIs, future owned-data routes, arbitrary images, cross-origin assets, and non-GET requests remain outside the cache.
 - Vercel project `vdoshi96s-projects/my-workout-pal` is linked locally as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`. Neon resource `my-workout-pal-db` is connected on the Marketplace `free_v3` plan in `iad1`, with Neon Auth disabled and database variables attached to development, preview, and production. It has no deployment yet.
-- Pure YouTube URL normalization, candidate hard-gate/ranking, exact-two seed validation, and private resumable curation checkpoint modules with offline tests.
+- Pure YouTube URL normalization, catalog-derived curation targets, candidate hard-gate/ranking, exact-two seed validation, and private resumable curation checkpoint modules with offline tests.
 
 ## Work in progress
 
@@ -41,7 +41,8 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
 - Vercel Marketplace provisioning reported Neon resource `my-workout-pal-db` ready on billing plan `free_v3`; a follow-up environment inspection confirmed database variables are attached without printing their values.
 - `pnpm typecheck`, `pnpm lint`, 92 unit and integration tests, generated-service-worker parity, and `pnpm docs:check` pass before the pending worktree integrations.
-- YouTube curation TDD evidence: the initial focused suites failed before implementation with unresolved domain-module imports, then passed; the correction regression run also failed on the unbounded page loop, syndication truth, custom-input message, and missing pair workflow before the fixes, then passed with 20 focused tests.
+- YouTube curation TDD evidence: the initial focused suites failed before implementation with unresolved domain-module imports, then passed; the first correction run failed on the unbounded page loop, syndication truth, custom-input message, and missing pair workflow, then passed; this correction run failed on missing catalog targets, duplicate proposals, unscoped state, and accepted schema-one checkpoints, then passed with 32 tests.
+- The default curation smoke generated 27 canonical proposals without making a request under a zero-search budget. An explicit empty target manifest produced a blocked report with zero proposals. The typed `seed:check` smoke passed a two-video fixture.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
 - Production `next start` inspection returned the strict CSP, a unique matching rendered nonce, `strict-origin-when-cross-origin`, popup-safe opener policy, frame denial, HSTS, and the remaining declared security headers. The nonce policy intentionally makes application HTML request-rendered; the manifest remains static.
 - The production output retains the design contract seed `ba529732` and its full contract text inside the first authored body element.

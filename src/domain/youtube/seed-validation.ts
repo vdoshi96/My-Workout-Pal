@@ -1,5 +1,5 @@
-import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
-import { YOUTUBE_VIDEO_ID_PATTERN } from "@/domain/youtube/normalization";
+import { CATALOG_EXERCISES } from "../exercises/catalog.ts";
+import { YOUTUBE_VIDEO_ID_PATTERN } from "./normalization.ts";
 import type {
   CuratedVideoSeed,
   RequiredVideoVariation,

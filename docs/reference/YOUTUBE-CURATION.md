@@ -8,7 +8,9 @@ Every seeded canonical exercise and equipment variation must have exactly two or
 
 `YOUTUBE_API_KEY` is a server-side development and curation secret. It is never bundled into the application, printed in reports, committed, or copied into public QA evidence.
 
-The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, review status, ranked eligible candidates, and proposed pairs. A configurable request and page budget stops before the next API request would exceed its limit. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.
+Without a target manifest, the command derives exactly one target with stable `variationId: "canonical"` from each of the 27 catalog records. Each target carries a movement stem, useful aliases, and only relevant barbell/dumbbell discriminator terms; bodyweight targets do not require a title to contain `bodyweight`. A private `--targets` manifest or `YOUTUBE_CURATION_TARGETS` path explicitly overrides this default, including an intentional empty array.
+
+The curation command stores resumable progress outside production data. It records completed queries, page tokens, hydrated IDs, rejection codes, quota estimates, review status, ranked eligible candidates, and proposed pairs. Input targets are deduplicated by canonical exercise plus variation, pending hydration IDs are deduplicated across targets, and the report emits one target entry per key. A configurable request and page budget stops before the next API request would exceed its limit. Re-running continues from the last safe checkpoint and checks existing IDs before spending search quota.
 
 ## Discovery sequence
 
@@ -80,6 +82,8 @@ The typed `assessApprovedVideoPair` refresh helper checks seeded IDs with hydrat
 
 The application keeps the remaining approved video and direct YouTube fallback available. A refresh assessment checks both IDs and emits a replacement-required proposal when one or both are unavailable. It never mutates the approved seed. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.
 
+Checkpoint schema is versioned. State from the earlier unscoped schema is rejected with an actionable incompatibility message instead of being treated as target-specific state.
+
 ## Local command scaffold
 
 Run `pnpm youtube:curate` with an official `YOUTUBE_API_KEY` and a private target manifest. The command invokes the typed curation workflow, resumes from `.local/youtube-curation/checkpoint.json`, and writes the review proposal to `.local/youtube-curation/review-report.json`. The report includes query provenance, mechanical rejection codes, ranked eligible candidates, proposed pairs, and quota-blocked state when a budget stops progress. Set `YOUTUBE_CURATION_MAX_QUOTA_UNITS`, `YOUTUBE_CURATION_MAX_SEARCH_REQUESTS`, `YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS`, and `YOUTUBE_CURATION_MAX_PAGES_PER_QUERY` (or the matching command-line flags) to bound a run. These paths are ignored by Git and contain no production data.
@@ -90,7 +94,7 @@ If `YOUTUBE_API_KEY` is missing, the command exits before creating state or maki
 Missing YOUTUBE_API_KEY; refusing to run YouTube curation.
 ```
 
-Run `pnpm seed:check --required REQUIRED.json --seed SEED.json` to validate a proposed mapping. The checker rejects incomplete exact-two mappings and never writes production data.
+Run `pnpm seed:check --required REQUIRED.json --seed SEED.json` to validate a proposed mapping through the typed domain seed validator. The checker rejects incomplete exact-two mappings and never writes production data.
 
 ## Player requirements
 

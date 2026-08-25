@@ -22,6 +22,7 @@ import type {
 } from "./types.ts";
 
 export const DEFAULT_YOUTUBE_CURATION_STATE_DIR = ".local/youtube-curation";
+export const YOUTUBE_CURATION_CHECKPOINT_SCHEMA_VERSION = 2;
 export const MISSING_YOUTUBE_API_KEY_MESSAGE = "Missing YOUTUBE_API_KEY; refusing to run YouTube curation.";
 export const YOUTUBE_CURATION_CHECKPOINT_FILENAME = "checkpoint.json";
 export const YOUTUBE_CURATION_REPORT_FILENAME = "review-report.json";
@@ -51,9 +52,11 @@ type JsonRecord = Record<string, unknown> & {
   variationId?: unknown;
   exerciseName?: unknown;
   movement?: unknown;
+  movementTerms?: unknown;
   aliases?: unknown;
   requiredEquipmentTerms?: unknown;
   equipment?: unknown;
+  disallowedEquipmentTerms?: unknown;
   queryKeys?: unknown;
   rejectionCodes?: unknown;
   pageTokens?: unknown;
@@ -92,6 +95,28 @@ type JsonRecord = Record<string, unknown> & {
   defaultAudioLanguage?: unknown;
 };
 
+type CurationTarget = YouTubeCurationTarget & RequiredVideoVariation;
+
+export function getYouTubeCandidateStateKey(
+  canonicalExerciseSlug: string,
+  variationId: string,
+  videoId: string,
+): string {
+  return `${canonicalExerciseSlug}::${variationId}::${videoId}`;
+}
+
+export function deduplicateYouTubeCurationTargets(
+  targets: readonly CurationTarget[],
+): readonly CurationTarget[] {
+  const seen = new Set<string>();
+  return targets.filter((target) => {
+    const key = `${target.canonicalExerciseSlug}::${target.variationId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null;
 }
@@ -102,7 +127,7 @@ function checkpointPath(stateDirectory: string): string {
 
 export function createEmptyCurationCheckpoint(updatedAt: string = new Date().toISOString()): CurationCheckpoint {
   return {
-    schemaVersion: 1,
+    schemaVersion: YOUTUBE_CURATION_CHECKPOINT_SCHEMA_VERSION,
     updatedAt,
     completedQueries: [],
     pageTokens: {},
@@ -120,7 +145,15 @@ export function createEmptyCurationCheckpoint(updatedAt: string = new Date().toI
 }
 
 function parseCheckpoint(input: unknown): CurationCheckpoint {
-  if (!isRecord(input) || input.schemaVersion !== 1) {
+  if (!isRecord(input)) {
+    throw new Error("YouTube curation checkpoint has an unsupported schema version.");
+  }
+  if (input.schemaVersion !== YOUTUBE_CURATION_CHECKPOINT_SCHEMA_VERSION) {
+    if (input.schemaVersion === 1) {
+      throw new Error(
+        "YouTube curation checkpoint schema version 1 is incompatible with scoped candidate state; start a new checkpoint or migrate it explicitly.",
+      );
+    }
     throw new Error("YouTube curation checkpoint has an unsupported schema version.");
   }
 
@@ -134,7 +167,7 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
       )
     : [];
   const hydratedVideoIds = Array.isArray(input.hydratedVideoIds)
-    ? input.hydratedVideoIds.filter((value): value is string => typeof value === "string")
+    ? [...new Set(input.hydratedVideoIds.filter((value): value is string => typeof value === "string"))]
     : [];
   const hydratedCandidates: Record<string, YouTubeCandidate> = {};
   if (isRecord(input.hydratedCandidates)) {
@@ -163,11 +196,17 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
           variationId: discovered.target.variationId,
           exerciseName: discovered.target.exerciseName,
           ...(typeof discovered.target.movement === "string" ? { movement: discovered.target.movement } : {}),
+          ...(Array.isArray(discovered.target.movementTerms)
+            ? { movementTerms: discovered.target.movementTerms.filter((value): value is string => typeof value === "string") }
+            : {}),
           ...(Array.isArray(discovered.target.aliases) ? { aliases: discovered.target.aliases.filter((value): value is string => typeof value === "string") } : {}),
           ...(Array.isArray(discovered.target.requiredEquipmentTerms)
             ? { requiredEquipmentTerms: discovered.target.requiredEquipmentTerms.filter((value): value is string => typeof value === "string") }
             : {}),
           ...(typeof discovered.target.equipment === "string" ? { equipment: discovered.target.equipment } : {}),
+          ...(Array.isArray(discovered.target.disallowedEquipmentTerms)
+            ? { disallowedEquipmentTerms: discovered.target.disallowedEquipmentTerms.filter((value): value is string => typeof value === "string") }
+            : {}),
         },
         queryKeys: discovered.queryKeys,
         item: discovered.item as unknown as YouTubeCandidate,
@@ -268,7 +307,8 @@ export const loadYouTubeCurationCheckpoint = loadCurationCheckpoint;
 export const saveYouTubeCurationCheckpoint = saveCurationCheckpoint;
 
 function queryKey(target: YouTubeCurationTarget, query: string, order: CurationQueryOrder, index: number): string {
-  return `${target.canonicalExerciseSlug}:${order}:${index}:${query}`;
+  const variationId = "variationId" in target && typeof target.variationId === "string" ? target.variationId : "canonical";
+  return `${target.canonicalExerciseSlug}:${variationId}:${order}:${index}:${query}`;
 }
 
 export function buildCurationQueries(target: YouTubeCurationTarget): readonly string[] {
@@ -544,7 +584,7 @@ export function proposeVideoPair(
 
 export async function curateYouTubeCandidates(options: Readonly<{
   api: YouTubeDataApi;
-  targets: readonly (YouTubeCurationTarget & RequiredVideoVariation)[];
+  targets: readonly CurationTarget[];
   stateDirectory?: string;
   now?: () => string;
   maxResults?: number;
@@ -558,7 +598,8 @@ export async function curateYouTubeCandidates(options: Readonly<{
   const usage: CurationRunUsage = { searchRequests: 0, hydrateRequests: 0, unitsEstimated: 0 };
   const checkpoint = await loadCurationCheckpoint(stateDirectory);
   delete checkpoint.blockedReason;
-  const queryItems = new Map<string, { target: YouTubeCurationTarget & RequiredVideoVariation; queryKeys: string[]; item: YouTubeCandidate }>();
+  const targets = deduplicateYouTubeCurationTargets(options.targets);
+  const queryItems = new Map<string, { target: CurationTarget; queryKeys: string[]; item: YouTubeCandidate }>();
   for (const [candidateKey, discovered] of Object.entries(checkpoint.discoveredCandidates)) {
     queryItems.set(candidateKey, {
       target: discovered.target,
@@ -569,7 +610,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
 
   let quotaBlockedReason: string | undefined;
   let pageLimitReached = false;
-  curationLoop: for (const target of options.targets) {
+  curationLoop: for (const target of targets) {
     for (const [index, query] of buildCurationQueries(target).entries()) {
       for (const order of ["relevance", "viewCount"] as const) {
         const request = buildYouTubeSearchRequest(target, query, order, index, {
@@ -666,9 +707,11 @@ export async function curateYouTubeCandidates(options: Readonly<{
   }
 
   const hydratedIds = new Set(checkpoint.hydratedVideoIds);
-  const pendingIds = [...queryItems.values()]
-    .map((entry) => entry.item.videoId)
-    .filter((videoId) => !hydratedIds.has(videoId));
+  const pendingIds = [...new Set(
+    [...queryItems.values()]
+      .map((entry) => entry.item.videoId)
+      .filter((videoId) => !hydratedIds.has(videoId)),
+  )];
   const hydratedById = new Map<string, YouTubeCandidate>();
   for (const [videoId, candidate] of Object.entries(checkpoint.hydratedCandidates)) {
     hydratedById.set(videoId, candidate);
@@ -723,21 +766,26 @@ export async function curateYouTubeCandidates(options: Readonly<{
     hydratedById.set(entry.item.videoId, merged);
     checkpoint.hydratedCandidates[entry.item.videoId] = merged;
     const decision = evaluateYouTubeCandidate(merged, entry.target);
-    checkpoint.rejectionCodes[entry.item.videoId] = [...decision.rejectionCodes];
-    if (!checkpoint.reviewStatus[entry.item.videoId]) checkpoint.reviewStatus[entry.item.videoId] = "pending";
+    const candidateStateKey = getYouTubeCandidateStateKey(
+      entry.target.canonicalExerciseSlug,
+      entry.target.variationId,
+      entry.item.videoId,
+    );
+    checkpoint.rejectionCodes[candidateStateKey] = [...decision.rejectionCodes];
+    if (!checkpoint.reviewStatus[candidateStateKey]) checkpoint.reviewStatus[candidateStateKey] = "pending";
     reportCandidates.push({
       videoId: entry.item.videoId,
       target: { canonicalExerciseSlug: entry.target.canonicalExerciseSlug, variationId: entry.target.variationId },
       queryKeys: entry.queryKeys,
       candidate: merged,
       decision,
-      reviewStatus: checkpoint.reviewStatus[entry.item.videoId] ?? "pending",
+      reviewStatus: checkpoint.reviewStatus[candidateStateKey] ?? "pending",
     });
   }
 
   const rankedEligibleCandidates: CurationReportCandidate[] = [];
   const proposedPairs: ProposedVideoPair[] = [];
-  for (const target of options.targets) {
+  for (const target of targets) {
     const targetCandidates = reportCandidates.filter(
       (candidate) => candidate.target.canonicalExerciseSlug === target.canonicalExerciseSlug && candidate.target.variationId === target.variationId,
     );
@@ -754,12 +802,12 @@ export async function curateYouTubeCandidates(options: Readonly<{
     ? "quota-blocked"
     : pageLimitReached
       ? "page-limit"
-      : options.targets.length === 0
+      : targets.length === 0
         ? "blocked"
         : "ready-for-review";
   const blockedReason = quotaBlockedReason
     ?? (pageLimitReached ? "Per-query page limit reached; resume the local checkpoint to continue." : undefined)
-    ?? (options.targets.length === 0 ? "No curation targets were provided." : undefined);
+    ?? (targets.length === 0 ? "No curation targets were provided." : undefined);
   if (blockedReason) checkpoint.blockedReason = blockedReason;
   else delete checkpoint.blockedReason;
   const report: CurationReport = {

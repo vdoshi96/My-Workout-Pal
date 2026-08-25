@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -9,6 +9,7 @@ import {
   createYouTubeDataApiClient,
   curateYouTubeCandidates,
   createEmptyCurationCheckpoint,
+  getYouTubeCandidateStateKey,
   loadCurationCheckpoint,
   saveCurationCheckpoint,
   writeCurationReport,
@@ -25,19 +26,19 @@ describe("resumable YouTube curation state", () => {
       const checkpoint = createEmptyCurationCheckpoint("2026-08-25T12:00:00.000Z");
       checkpoint.completedQueries.push({ queryKey: "dumbbell-bench-press:relevance:0", pageToken: null });
       checkpoint.hydratedVideoIds.push("AbCdEfGhI01");
-      checkpoint.rejectionCodes["AbCdEfGhI01"] = ["duration-too-short"];
+      checkpoint.rejectionCodes[getYouTubeCandidateStateKey("dumbbell-bench-press", "dumbbells", "AbCdEfGhI01")] = ["duration-too-short"];
       checkpoint.quota.searchRequests = 1;
       checkpoint.quota.hydrateRequests = 1;
-      checkpoint.reviewStatus["AbCdEfGhI01"] = "pending";
+      checkpoint.reviewStatus[getYouTubeCandidateStateKey("dumbbell-bench-press", "dumbbells", "AbCdEfGhI01")] = "pending";
 
       await saveCurationCheckpoint(directory, checkpoint);
       const loaded = await loadCurationCheckpoint(directory);
 
       expect(loaded.completedQueries).toEqual(checkpoint.completedQueries);
       expect(loaded.hydratedVideoIds).toEqual(["AbCdEfGhI01"]);
-      expect(loaded.rejectionCodes["AbCdEfGhI01"]).toEqual(["duration-too-short"]);
+      expect(loaded.rejectionCodes[getYouTubeCandidateStateKey("dumbbell-bench-press", "dumbbells", "AbCdEfGhI01")]).toEqual(["duration-too-short"]);
       expect(loaded.quota).toEqual({ searchRequests: 1, hydrateRequests: 1, unitsEstimated: 101 });
-      expect(loaded.reviewStatus["AbCdEfGhI01"]).toBe("pending");
+      expect(loaded.reviewStatus[getYouTubeCandidateStateKey("dumbbell-bench-press", "dumbbells", "AbCdEfGhI01")]).toBe("pending");
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -229,6 +230,126 @@ describe("resumable YouTube curation state", () => {
       expect(result.report.blockedReason).toContain("quota");
       expect(Object.values(result.checkpoint.pageTokens)).toContain("resume-token");
       expect(result.checkpoint.completedQueries).toEqual([]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("deduplicates repeated targets and hydrates a shared video ID only once", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-target-dedupe-"));
+    let searchCalls = 0;
+    let hydrateCalls = 0;
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        searchCalls += 1;
+        return { items: [{ videoId: "AbCdEfGhI01", title: "Dumbbell bench press tutorial" }] };
+      },
+      async hydrateVideos(videoIds) {
+        hydrateCalls += 1;
+        expect(videoIds).toEqual(["AbCdEfGhI01"]);
+        return {
+          items: [{
+            videoId: "AbCdEfGhI01",
+            title: "Dumbbell bench press tutorial",
+            duration: "PT2M",
+            privacyStatus: "public",
+            uploadStatus: "processed",
+            embeddable: true,
+            syndicated: true,
+            regionAvailable: true,
+            liveBroadcastContent: "none",
+            language: "en",
+          }],
+        };
+      },
+    };
+    const target = {
+      canonicalExerciseSlug: "dumbbell-bench-press",
+      variationId: "dumbbells",
+      exerciseName: "Dumbbell bench press",
+      requiredEquipmentTerms: ["dumbbell"],
+    } as const;
+
+    try {
+      const result = await curateYouTubeCandidates({
+        api,
+        targets: [target, target],
+        stateDirectory: directory,
+      });
+
+      expect(searchCalls).toBe(2);
+      expect(hydrateCalls).toBe(1);
+      expect(result.report.candidates).toHaveLength(1);
+      expect(result.report.proposedPairs).toHaveLength(1);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps review and rejection state scoped when a video appears under two variations", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-state-scope-"));
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        return { items: [{ videoId: "AbCdEfGhI01", title: "Dumbbell bench press tutorial" }] };
+      },
+      async hydrateVideos() {
+        return {
+          items: [{
+            videoId: "AbCdEfGhI01",
+            title: "Dumbbell bench press tutorial",
+            duration: "PT2M",
+            privacyStatus: "public",
+            uploadStatus: "processed",
+            embeddable: true,
+            syndicated: true,
+            regionAvailable: true,
+            liveBroadcastContent: "none",
+            language: "en",
+          }],
+        };
+      },
+    };
+    const targets = [
+      {
+        canonicalExerciseSlug: "dumbbell-bench-press",
+        variationId: "dumbbells",
+        exerciseName: "Dumbbell bench press",
+        requiredEquipmentTerms: ["dumbbell"],
+      },
+      {
+        canonicalExerciseSlug: "barbell-bent-over-row",
+        variationId: "barbell",
+        exerciseName: "Barbell bent-over row",
+        requiredEquipmentTerms: ["barbell"],
+      },
+    ] as const;
+
+    try {
+      const result = await curateYouTubeCandidates({ api, targets, stateDirectory: directory });
+      const firstKey = getYouTubeCandidateStateKey(targets[0].canonicalExerciseSlug, targets[0].variationId, "AbCdEfGhI01");
+      const secondKey = getYouTubeCandidateStateKey(targets[1].canonicalExerciseSlug, targets[1].variationId, "AbCdEfGhI01");
+
+      expect(result.report.candidates).toHaveLength(2);
+      expect(result.checkpoint.rejectionCodes[firstKey]).toEqual([]);
+      expect(result.checkpoint.rejectionCodes[secondKey]).toContain("wrong-movement");
+      expect(result.checkpoint.reviewStatus[firstKey]).toBe("pending");
+      expect(result.checkpoint.reviewStatus[secondKey]).toBe("pending");
+      expect(result.checkpoint.rejectionCodes["AbCdEfGhI01"]).toBeUndefined();
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects incompatible schema-one checkpoints instead of reusing unscoped state", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-schema-"));
+
+    try {
+      await writeFile(
+        path.join(directory, "checkpoint.json"),
+        `${JSON.stringify({ ...createEmptyCurationCheckpoint(), schemaVersion: 1 })}\n`,
+      );
+
+      await expect(loadCurationCheckpoint(directory)).rejects.toThrow("incompatible");
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

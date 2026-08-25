@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="bf37f6799e678c43fb90a95d51210bdd9d65af1f4503452abb17d405df5bf651">
+  <meta name="source-sha256" content="4fad4a16269352e99974fb08e766fedd9931df1b9b2e229c597b735328c4f832">
   <title>Product and architecture plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -145,13 +145,16 @@
 <ul>
 <li>Normalize accepted YouTube watch, short-link, and embed URLs to a video ID at the validated input boundary. Reject Shorts and malformed or unsupported hosts before persistence.</li>
 <li>Custom exercises accept zero, one, or two unique normalized IDs from HTTPS YouTube watch, short-link, or embed URLs. They reject raw IDs, duplicate normalized URLs, and more than two inputs before persistence. They never persist a caller-provided embed URL or markup.</li>
+<li>The curator&#39;s default target manifest is derived from every catalog record: exactly one target per catalog exercise, with stable <code>variationId: &quot;canonical&quot;</code>, a movement stem, useful aliases, and only relevant barbell/dumbbell discriminator terms. Bodyweight records do not require the word <code>bodyweight</code> in a title. A private <code>--targets</code> manifest may explicitly override this complete default, including an intentional empty array.</li>
+<li>Default and override target inputs are deduplicated by <code>canonicalExerciseSlug</code> plus <code>variationId</code>; the report and proposed pairs contain one target entry per such key. Pending hydration IDs are deduplicated across targets while candidate decisions remain target-specific.</li>
 <li>Discovery keeps relevance-ordered and view-count-ordered searches as separate candidate sources. Mechanical eligibility runs before ranking, and view count breaks ties only among candidates that pass every hard gate.</li>
 <li>Pair proposals prefer a distinct channel when its mechanically eligible score is comparable, reject materially redundant second videos, and remain proposals until human review and full-watch confirmation.</li>
 <li>Mechanical gates reject unavailable, private, processing, non-embeddable, non-syndicated, regionally unavailable, live, unsafe, misleading, disallowed-category, wrong-movement, wrong-equipment, duplicate, near-duplicate, Shorts, and out-of-range duration candidates.</li>
-<li>The curator writes a local checkpoint and review report that contains query provenance, hydrated IDs, rejection codes, quota estimates, review state, ranked eligible candidates, proposed pairs, and any quota block. Configurable request and page budgets stop before the next API request would exceed the budget and preserve the next page token.</li>
+<li>The curator writes a local checkpoint and review report that contains query provenance, hydrated IDs, rejection codes, quota estimates, review state, ranked eligible candidates, proposed pairs, and any quota block. Configurable request and page budgets stop before the next API request would exceed the budget and preserve the next page token. Review and rejection state is keyed by canonical exercise, variation, and video ID so one video cannot overwrite another variation&#39;s state. Checkpoint schema changes reject incompatible unscoped state rather than silently reusing it.</li>
 <li>Seed validation requires exactly two distinct approved, fully watched videos in display order one and two for every canonical exercise and equipment variation. Durable seed records keep approval and availability metadata, but do not treat view counts or ranking scores as product truth.</li>
 <li>Refresh assessment checks existing approved IDs for missing, private, restricted, non-embeddable, and non-syndicated states. It retains any available fallback and emits a replacement-required proposal without mutating the seed.</li>
 <li>A <code>syndicated</code> decision records whether the ID came through the filtered search or has verified evidence. Direct <code>videos.list</code> metadata without that evidence remains unknown and cannot be presented as syndicated.</li>
+<li><code>pnpm seed:check</code> invokes the typed seed validator used by the domain rather than maintaining a separate JavaScript validation implementation.</li>
 </ul>
 <h2>Loading, empty, error, and worst-case behavior</h2>
 <ul>
