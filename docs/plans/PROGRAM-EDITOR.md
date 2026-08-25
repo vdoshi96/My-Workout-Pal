@@ -68,3 +68,42 @@ No Firebase UID, email, secret, raw token, or cross-user identifier is serialize
 Retained failing-first tests cover publication validation, immutable prior revisions, stale bases, idempotent replay, conflicting replay, malformed and foreign identifiers, custom-exercise ownership, equipment compatibility, five-day structure, transaction rollback, and session eligibility. Route tests prove authentication precedes body parsing and database access. Component tests cover field errors, reorder controls, dirty navigation, duplicate submit, and retry copy.
 
 Browser evidence must show a verified member editing and publishing on phone, tablet, and desktop; a keyboard reorder; a stale-conflict recovery; an interrupted request retry; an offline failure; reload of the new revision; and a database-backed check that an earlier workout snapshot still names its original revision. Chromium and WebKit, automated accessibility, dark mode, and reduced motion are required before release.
+
+## Compatible exercise selection increment
+
+### User outcome and navigation
+
+Within any strength, accessory, or core section, a member can add a compatible canonical or owner-only custom movement, replace an existing movement, or remove a movement while keeping at least one movement in the section. Add and Replace open the same searchable chooser without leaving the unpublished draft. The chooser links to private-exercise creation only as a separate navigation that remains subject to dirty-draft confirmation.
+
+### UI states and interaction
+
+The server loads the active program and one compatibility-filtered candidate list before rendering the client editor. The chooser distinguishes canonical and private candidates, exposes name, logging meaning, and required equipment, and searches those bounded text fields locally. It has explicit open, search-results, no-match, selected, cancelled, and unavailable-candidate states. A selected replacement announces whether its targets were preserved or reset. Remove is disabled when it would empty a section; it never silently removes the final prescription.
+
+The chooser is a labeled modal dialog. Opening it moves focus to search, Escape and Cancel close it, backdrop dismissal is supported, and closing returns focus to the invoking Add or Replace control. Results are ordinary buttons in DOM order, not drag targets. Status copy is announced through the editor's existing polite live region.
+
+### Domain types, defaults, and invariants
+
+A serializable candidate contains only its stable exercise ID, catalog-or-custom kind, display name, logging kind, role when canonical, required equipment, and bounded normalized search text. Catalog IDs use the same deterministic public seed identity as the database. Custom candidates come only from the verified viewer's owner-scoped query. Both lists are filtered against the active immutable revision's equipment profile before serialization.
+
+Adding a movement creates a new prescription with no source prescription ID. Strength defaults to 3 sets of 8–12 with 90 seconds rest; accessory defaults to 2 sets of 10–15 with 60 seconds rest; repetition core defaults to 2 sets of 8–15 with 60 seconds rest; timed core defaults to 2 sets of 20–45 seconds with 60 seconds rest. Loads are always null. Distance-plus-duration movements start without a distance target and block publication until the member enters a positive distance; no arbitrary performance target is invented.
+
+Replacing with the same logging kind preserves sets, range, rest, notes, and compatible optional targets. Replacing across logging kinds preserves only sets, rest, set kind, and notes; it applies the new range defaults and clears incompatible weight or distance targets with an explicit announcement. The source prescription ID remains attached so publication can verify that the replacement originated in the active revision, while the server independently clears stale target metadata when exercise identity changes. Removing and reordering never mutate the loaded active graph.
+
+### Persistence, auth, error, and worst-case behavior
+
+Selection itself writes nothing. Publication continues through the strict owner-free envelope and one immutable transaction described above. The server independently resolves every chosen canonical ID or owner custom ID, checks the active equipment profile and logging-shape match, and hides missing, deactivated, foreign, or incompatible custom exercises behind the same safe error boundary. A custom movement deleted in another tab therefore produces a truthful publish failure and leaves the draft intact.
+
+An absent active program redirects to onboarding. A candidate query failure uses the private route error boundary and never renders an incomplete chooser as usable. An empty compatible catalog remains a real empty state with a private-exercise creation path. Offline selection remains local and unsaved; retry uses the same publication idempotency key. Duplicate candidate IDs, malformed stable IDs, an emptied section, or a distance movement without a positive target block publication before a write.
+
+### Responsive behavior, accessibility, privacy, and security
+
+The dialog fills the available phone width below the safe-area inset, uses a bounded scroll region for results, and becomes a centered sheet on tablet and desktop. It preserves the page's semantic order, dark mode, reduced-motion preference, minimum touch targets, visible focus, and zoom-safe text. No result is conveyed by color alone.
+
+The candidate payload contains no Firebase UID, email, aliases not needed for bounded search, token, or approval metadata. Custom candidates remain inside the private server-rendered page and are never placed in public caches. Text is rendered as text, search is length-bounded, and publication still derives ownership exclusively from the verified HTTP-only session.
+
+### Acceptance criteria, tests, and browser evidence
+
+- Pure failing-first tests prove add defaults for strength, accessory, repetition core, and timed core; same-kind replacement preservation; cross-kind reset; final-row removal refusal; non-mutating transforms; candidate search; and the missing-distance publication blocker.
+- Repository tests continue to prove foreign, missing, and incompatible candidate denial, exercise-identity metadata clearing, exact five-day publication, idempotency, rollback, and immutable source revisions.
+- Component evidence covers dialog focus/return, Escape/Cancel, keyboard selection, empty search, removal guard, reset announcement, dirty navigation, duplicate publish, and retained draft after server failure.
+- Phone, tablet, and desktop Chromium plus WebKit evidence must add, replace, remove, cancel, search, publish, reload, and confirm the prior revision stayed unchanged. Automated accessibility, keyboard-only use, dark mode, reduced motion, offline failure, stale custom deletion, and slow/error responses remain release gates.
