@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="32bae09a5e5d64b7b0f8ce5b806c2697e29fcc328cab10e4ea51f1286421d754">
+  <meta name="source-sha256" content="b7df59df8e321ca4bc8f76ae31f09e7fb84a1897db197244cbc317957befeaa1">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -35,6 +35,7 @@
 <li>Published the edited graph in one owner-scoped transaction after locking the active program revision. Canonical catalog data or the viewer&#39;s custom exercise supplies logging meaning and required equipment; foreign and incompatible references fail without advancing the pointer.</li>
 <li>Kept the prior published revision unchanged, preserved target metadata only when a source prescription retains the same exercise identity, and generated all new revision child identifiers independently.</li>
 <li>Verified idempotent replay, changed-payload key conflict, stale base, unverified mutation, cross-user custom exercise, incompatible equipment, graph immutability, and rollback with 23 focused tests plus TypeScript and scoped lint.</li>
+<li>Added the private <code>POST /api/app/program/publish</code> boundary with same-origin CSRF, bounded strict JSON, a server-derived viewer, private no-store output, and route-order tests that reject cross-origin or unauthenticated requests before body or storage access.</li>
 </ul>
 <h2>2026-08-25: Conflict-safe settings and sign-out</h2>
 <ul>

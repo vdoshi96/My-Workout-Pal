@@ -9,6 +9,7 @@ import { GET as getProfileProgram } from "@/app/api/app/profile-program/route";
 import { POST as onboardProfileProgram } from "@/app/api/app/profile-program/onboard/route";
 import { POST as changeEquipment } from "@/app/api/app/profile-program/equipment/route";
 import { PATCH as updatePreferences } from "@/app/api/app/preferences/route";
+import { POST as publishProgram } from "@/app/api/app/program/publish/route";
 import { CSRF_COOKIE_NAME } from "@/server/auth/cookies";
 
 const origin = "http://127.0.0.1:3000";
@@ -44,6 +45,7 @@ describe("profile-program route authorization order", () => {
     ["onboarding", onboardProfileProgram, "/api/app/profile-program/onboard"],
     ["equipment change", changeEquipment, "/api/app/profile-program/equipment"],
     ["preference change", updatePreferences, "/api/app/preferences"],
+    ["program publication", publishProgram, "/api/app/program/publish"],
   ])("rejects a cross-origin %s before identity, body, or storage", async (_name, handler, path) => {
     const response = await handler(
       request(path, {
@@ -60,6 +62,7 @@ describe("profile-program route authorization order", () => {
     ["onboarding", onboardProfileProgram, "/api/app/profile-program/onboard"],
     ["equipment change", changeEquipment, "/api/app/profile-program/equipment"],
     ["preference change", updatePreferences, "/api/app/preferences"],
+    ["program publication", publishProgram, "/api/app/program/publish"],
   ])("denies unauthenticated same-origin %s before parsing a hostile body", async (_name, handler, path) => {
     const response = await handler(request(path, { body: { ownerUid: "other-user" } }));
 
