@@ -29,6 +29,7 @@ Authenticated repositories and runner-surface integration after the verified gue
 - A reusable curated-video presentation contract validates an approved, fully watched exact pair before mounting one privacy-enhanced non-autoplay iframe at a time. Production exercise pages remain unavailable until the reviewed seed exists.
 - A server-protected account shell derives identity from the verified HTTP-only session, exposes verified and read-only account states, and provides responsive program, history, progress, and settings navigation. Private account paths remain outside the public service-worker cache policy.
 - Owner-scoped custom exercises have private collection/resource API handlers with authenticated `no-store` reads, bounded strict JSON, same-origin CSRF mutations, UUID validation, optimistic update timestamps, idempotent replay, and stable private errors.
+- Authenticated custom-exercise list, create, and edit surfaces expose all supported logging meanings, required-equipment controls, instructions, aliases, up to two normalized YouTube references, retry-safe saves, verification gating, and guarded deletion without inventing custom-video approval.
 
 ## Work in progress
 

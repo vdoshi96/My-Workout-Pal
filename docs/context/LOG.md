@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Authenticated custom-exercise editor
+
+- Mounted an authenticated private-library list plus create and edit routes without exposing the Firebase ownership key in any route or mutation input.
+- Added all four logging meanings, required-equipment selection, bounded instructions and aliases, and zero-to-two normalized YouTube references with explicit custom-video policy copy.
+- Kept unverified accounts read-only, reused idempotency keys across interrupted retries, advanced optimistic timestamps after every successful edit, and rendered server conflict, in-use, auth, and network outcomes instead of synthetic success.
+- Added an explicit deletion review state with focus movement and a guarded result, plus a same-origin client mutation helper that bootstraps CSRF for each permanent request.
+- Passed eight focused client, API-body, authorization-order, cache, and CSRF assertions with regenerated route types, strict type checking, focused lint, and diff validation.
+
 ## 2026-08-25: Private custom-exercise API
 
 - Added authenticated `no-store` collection and resource handlers for owner-scoped custom exercise reads, creation, optimistic updates, and guarded deletion.

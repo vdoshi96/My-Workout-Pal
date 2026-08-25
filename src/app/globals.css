@@ -213,6 +213,43 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .member-state { margin: clamp(3rem, 12vh, 8rem) auto; max-width: 45rem; padding: 2rem clamp(1rem, 4vw, 3rem); }
 .member-state h1 { font-family: var(--font-display); font-size: clamp(3rem, 10vw, 6rem); letter-spacing: -.03em; line-height: .85; margin: 1rem 0; text-transform: uppercase; }
 .member-state p { color: var(--ink-soft); font-size: 1.05rem; max-width: 50ch; }
+.member-page, .custom-editor { margin: 0 auto; max-width: 76rem; padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 5vw, 4rem) 6rem; }
+.member-page-heading { align-items: end; border-bottom: 1px solid var(--rule); display: grid; gap: 1.5rem; padding-bottom: clamp(1.5rem, 4vw, 3rem); }
+.member-page-heading h1 { font-family: var(--font-display); font-size: clamp(3.4rem, 10vw, 7rem); letter-spacing: -.035em; line-height: .8; margin: .7rem 0 1rem; text-transform: uppercase; }
+.member-page-heading p { color: var(--ink-soft); margin: 0; max-width: 58ch; }
+.member-page-heading .primary-action { width: fit-content; }
+.member-inline-notice { background: var(--coral); color: #fffaf0; margin-top: 1.5rem; padding: 1rem; }
+.member-empty-sheet { border: 1px dashed var(--rule); margin-top: 2rem; padding: clamp(1.5rem, 4vw, 3rem); }
+.member-empty-sheet h2 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 4rem); line-height: .9; margin: .7rem 0; text-transform: uppercase; }
+.member-empty-sheet p { color: var(--ink-soft); max-width: 54ch; }
+.custom-exercise-list { border-top: 1px solid var(--rule); list-style: none; margin: 2rem 0 0; padding: 0; }
+.custom-exercise-list li { border-bottom: 1px solid var(--rule); }
+.custom-exercise-list a { align-items: center; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr) auto auto; min-height: 5.5rem; padding: .8rem 0; text-decoration: none; }
+.custom-exercise-list strong, .custom-exercise-list small { display: block; }
+.custom-exercise-list strong { font-size: 1.15rem; }
+.custom-exercise-list small, .custom-exercise-list a > span:nth-child(2) { color: var(--ink-soft); }
+.custom-exercise-list a > span:nth-child(2) { font-size: .85rem; }
+.custom-exercise-form { display: grid; gap: .55rem; margin-top: 2rem; max-width: 52rem; }
+.custom-exercise-form > label, .custom-exercise-form legend { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.custom-exercise-form input, .custom-exercise-form select, .custom-exercise-form textarea { background: var(--white); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); min-height: 3.25rem; padding: .75rem; width: 100%; }
+.custom-exercise-form textarea { line-height: 1.45; resize: vertical; }
+.custom-exercise-form > small, .custom-exercise-form fieldset > p { color: var(--ink-soft); margin: 0 0 1rem; }
+.custom-exercise-form fieldset { border: 1px solid var(--rule); margin: 1rem 0; padding: 1rem; }
+.custom-exercise-form fieldset legend { padding: 0 .4rem; }
+.custom-equipment-grid { display: grid; gap: .65rem; }
+.custom-equipment-grid label { align-items: center; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); display: flex; gap: .65rem; min-height: 2.8rem; }
+.custom-equipment-grid input { min-height: 1.15rem; width: 1.15rem; }
+.custom-exercise-form fieldset > label { display: grid; gap: .35rem; margin-top: 1rem; }
+.custom-form-actions { align-items: center; display: grid; gap: .75rem; margin-top: 1rem; }
+.custom-form-actions .primary-action { width: fit-content; }
+.custom-form-actions p { color: var(--ink-soft); margin: 0; min-height: 1.4rem; }
+.custom-danger-zone { border: 1px solid var(--danger); margin-top: 4rem; max-width: 52rem; padding: clamp(1rem, 4vw, 2rem); }
+.custom-danger-zone h2 { font-family: var(--font-display); font-size: 2.2rem; margin: .6rem 0; text-transform: uppercase; }
+.custom-danger-zone p { color: var(--ink-soft); }
+.danger-action { background: var(--danger); border: 0; color: #fffaf0; cursor: pointer; font-family: var(--font-display); font-weight: 600; min-height: 3rem; padding: .65rem 1rem; text-transform: uppercase; }
+.custom-delete-confirm { border-top: 1px solid var(--danger); margin-top: 1rem; padding-top: 1rem; }
+.custom-delete-confirm > div { display: flex; flex-wrap: wrap; gap: .75rem; }
+.custom-delete-confirm > div button:not(.danger-action) { background: transparent; border: 1px solid var(--rule); cursor: pointer; min-height: 3rem; padding: .65rem 1rem; }
 
 @media (min-width: 60rem) {
   .member-frame { display: grid; grid-template-columns: 15rem minmax(0, 1fr); padding-bottom: 0; }
@@ -224,6 +261,9 @@ svg { display: block; height: 1.4em; width: 1.4em; }
   .member-nav a[aria-current="page"] { border-color: currentColor; }
   .verification-banner { grid-column: 2; }
   .member-main { grid-column: 2; }
+  .member-page-heading { grid-template-columns: minmax(0, 1fr) auto; }
+  .custom-equipment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .custom-form-actions { grid-template-columns: auto minmax(0, 1fr); }
 }
 
 .eyebrow { color: var(--lichen); display: block; font-family: var(--font-display); font-size: .85rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
