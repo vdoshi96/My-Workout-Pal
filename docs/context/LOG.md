@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-08-25: Protected account shell
+
+- Added the server-protected `/app` route group around the revocation-aware `ViewerContext`; an absent, expired, or revoked session returns to the bounded sign-in path rather than rendering private scaffolding.
+- Added a responsive account shell with explicit verified versus read-only identity status, phone bottom navigation, desktop rail navigation, skip-link support, semantic current-page state, and truthful loading and retry boundaries.
+- Kept account navigation outside the public service-worker cache policy, so private HTML is neither precached nor runtime cached.
+- Added focused route-selection tests and regenerated Next route types before type checking and focused lint.
+
 ## 2026-08-25: Owner-scoped custom exercises
 
 - Retained missing-module failures before adding the custom-exercise domain and repository boundaries.

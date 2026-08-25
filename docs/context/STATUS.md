@@ -27,12 +27,13 @@ Authenticated repositories and runner-surface integration after the verified gue
 - Vercel project `vdoshi96s-projects/my-workout-pal` is linked locally as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`. Neon resource `my-workout-pal-db` is connected on the Marketplace `free_v3` plan in `iad1`, with Neon Auth disabled and database variables attached to development, preview, and production. The database is migrated and seeded; the Vercel project has no deployment yet.
 - Pure YouTube URL normalization, catalog-derived curation targets, candidate hard-gate/ranking, exact-two seed validation, and private resumable curation checkpoint modules with offline tests.
 - A reusable curated-video presentation contract validates an approved, fully watched exact pair before mounting one privacy-enhanced non-autoplay iframe at a time. Production exercise pages remain unavailable until the reviewed seed exists.
+- A server-protected account shell derives identity from the verified HTTP-only session, exposes verified and read-only account states, and provides responsive program, history, progress, and settings navigation. Private account paths remain outside the public service-worker cache policy.
 
 ## Work in progress
 
-- Finish direct review and integration of the owner-scoped IndexedDB adapter and active runner component after their recovery-race correction passes.
-- Add owner-scoped repositories and authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces after the schema corrections land.
-- Verify the service worker and offline fallback against a production server rather than the development server.
+- Directly review and integrate the isolated profile/program and workout-session repositories, then connect them to authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces.
+- Mount the active runner on an owned workout route and personally verify local pending-state recovery against server synchronization.
+- Re-run production service-worker and offline-fallback evidence after the authenticated routes are complete.
 
 ## Verification run
 
@@ -54,6 +55,7 @@ Authenticated repositories and runner-surface integration after the verified gue
 - Playwright CLI personally replayed the guest equipment switch, Pull substitution, day links, library compatibility search and recovery, exercise detail approval gate, and desktop sample analytics. Phone inspection found and verified fixes for the desktop navigation overlap, mobile route stamp collision, dev watcher loop, and exercise-detail horizontal overflow.
 - A production-server Playwright replay on Chromium phone confirmed that an opened Push route reloads from the public cache with the network disabled, `/sign-in` is absent from that cache, and the app announces the interruption after a same-origin reachability probe. The equivalent service-worker-control case is skipped on WebKit because Playwright documents service-worker support as Chromium-only; ordinary WebKit product flows remain part of the broader browser matrix.
 - Auth tests cover duplicate and invalid client errors, CSRF mismatch and cross-origin denial, malformed identity input, absent server credentials, unverified permanent mutations, recent-auth deletion gates, expired and revoked sessions, and cross-user denial. Live provider success cannot run before Firebase credentials exist.
+- The reviewed runner, IndexedDB, and custom-exercise integrations brought the combined matrix to 31 test files and 225 passing tests with type checking, lint, Drizzle validation, generated service-worker parity, 23 Markdown/HTML documentation pairs, and a production webpack build. The protected account-shell slice added two focused navigation assertions and passed regenerated Next route types plus focused lint.
 
 ## Blockers and credential gates
 
@@ -68,5 +70,7 @@ Authenticated repositories and runner-surface integration after the verified gue
 - The completed YouTube worktree was integrated through `6b633b0`; its selected files matched the reviewed worktree before cleanup.
 - The completed database worktree was integrated through `ff3d69c`, compared for selected-file equality, and removed.
 - The completed runner worktree was integrated through `785db9a`; its selected files matched the reviewed worktree before cleanup.
-- `/private/tmp/mwp-runner-storage` on `agent/runner-storage`: final corrected IndexedDB adapter is awaiting integration after direct review.
-- `/private/tmp/mwp-runner-ui` on `agent/runner-ui`: active runner component is correcting serialized persistence/sync and owner-switch restoration races found in direct review.
+- The completed IndexedDB worktree was integrated through `36b6cc3`, compared for selected-file equality, and removed.
+- The completed runner-UI worktree was integrated through `c133e93`, compared for selected-file equality after teardown and deferred-sync corrections, and removed.
+- `/private/tmp/mwp-profile-program` on `agent/profile-program`: active profile, starter-program, and equipment-revision repository slice.
+- `/private/tmp/mwp-workout-repository` on `agent/workout-repository`: active immutable workout-snapshot, operation, history, and terminal-session repository slice.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="a464bc80b2536d3156af41d4a2dcc0ede588579ae43937b95eed9dc625c1e6b3">
+  <meta name="source-sha256" content="949f4cb9ebea97dd57e41513fa9f2a980d8b101128830ccb99193ebbcc80b972">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,13 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Protected account shell</h2>
+<ul>
+<li>Added the server-protected <code>/app</code> route group around the revocation-aware <code>ViewerContext</code>; an absent, expired, or revoked session returns to the bounded sign-in path rather than rendering private scaffolding.</li>
+<li>Added a responsive account shell with explicit verified versus read-only identity status, phone bottom navigation, desktop rail navigation, skip-link support, semantic current-page state, and truthful loading and retry boundaries.</li>
+<li>Kept account navigation outside the public service-worker cache policy, so private HTML is neither precached nor runtime cached.</li>
+<li>Added focused route-selection tests and regenerated Next route types before type checking and focused lint.</li>
+</ul>
 <h2>2026-08-25: Owner-scoped custom exercises</h2>
 <ul>
 <li>Retained missing-module failures before adding the custom-exercise domain and repository boundaries.</li>

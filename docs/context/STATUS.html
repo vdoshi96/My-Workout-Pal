@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="50fde719517824099bcb8b989a65907654ebafad1748354f16d91be093b7e7a6">
+  <meta name="source-sha256" content="7caa2cea6b0b8f5ee53621578c34e162f9d6534f2feb288a1dca1807c6b34545">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -53,12 +53,13 @@
 <li>Vercel project <code>vdoshi96s-projects/my-workout-pal</code> is linked locally as <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code>. Neon resource <code>my-workout-pal-db</code> is connected on the Marketplace <code>free_v3</code> plan in <code>iad1</code>, with Neon Auth disabled and database variables attached to development, preview, and production. The database is migrated and seeded; the Vercel project has no deployment yet.</li>
 <li>Pure YouTube URL normalization, catalog-derived curation targets, candidate hard-gate/ranking, exact-two seed validation, and private resumable curation checkpoint modules with offline tests.</li>
 <li>A reusable curated-video presentation contract validates an approved, fully watched exact pair before mounting one privacy-enhanced non-autoplay iframe at a time. Production exercise pages remain unavailable until the reviewed seed exists.</li>
+<li>A server-protected account shell derives identity from the verified HTTP-only session, exposes verified and read-only account states, and provides responsive program, history, progress, and settings navigation. Private account paths remain outside the public service-worker cache policy.</li>
 </ul>
 <h2>Work in progress</h2>
 <ul>
-<li>Finish direct review and integration of the owner-scoped IndexedDB adapter and active runner component after their recovery-race correction passes.</li>
-<li>Add owner-scoped repositories and authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces after the schema corrections land.</li>
-<li>Verify the service worker and offline fallback against a production server rather than the development server.</li>
+<li>Directly review and integrate the isolated profile/program and workout-session repositories, then connect them to authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces.</li>
+<li>Mount the active runner on an owned workout route and personally verify local pending-state recovery against server synchronization.</li>
+<li>Re-run production service-worker and offline-fallback evidence after the authenticated routes are complete.</li>
 </ul>
 <h2>Verification run</h2>
 <ul>
@@ -80,6 +81,7 @@
 <li>Playwright CLI personally replayed the guest equipment switch, Pull substitution, day links, library compatibility search and recovery, exercise detail approval gate, and desktop sample analytics. Phone inspection found and verified fixes for the desktop navigation overlap, mobile route stamp collision, dev watcher loop, and exercise-detail horizontal overflow.</li>
 <li>A production-server Playwright replay on Chromium phone confirmed that an opened Push route reloads from the public cache with the network disabled, <code>/sign-in</code> is absent from that cache, and the app announces the interruption after a same-origin reachability probe. The equivalent service-worker-control case is skipped on WebKit because Playwright documents service-worker support as Chromium-only; ordinary WebKit product flows remain part of the broader browser matrix.</li>
 <li>Auth tests cover duplicate and invalid client errors, CSRF mismatch and cross-origin denial, malformed identity input, absent server credentials, unverified permanent mutations, recent-auth deletion gates, expired and revoked sessions, and cross-user denial. Live provider success cannot run before Firebase credentials exist.</li>
+<li>The reviewed runner, IndexedDB, and custom-exercise integrations brought the combined matrix to 31 test files and 225 passing tests with type checking, lint, Drizzle validation, generated service-worker parity, 23 Markdown/HTML documentation pairs, and a production webpack build. The protected account-shell slice added two focused navigation assertions and passed regenerated Next route types plus focused lint.</li>
 </ul>
 <h2>Blockers and credential gates</h2>
 <ul>
@@ -94,8 +96,10 @@
 <li>The completed YouTube worktree was integrated through <code>6b633b0</code>; its selected files matched the reviewed worktree before cleanup.</li>
 <li>The completed database worktree was integrated through <code>ff3d69c</code>, compared for selected-file equality, and removed.</li>
 <li>The completed runner worktree was integrated through <code>785db9a</code>; its selected files matched the reviewed worktree before cleanup.</li>
-<li><code>/private/tmp/mwp-runner-storage</code> on <code>agent/runner-storage</code>: final corrected IndexedDB adapter is awaiting integration after direct review.</li>
-<li><code>/private/tmp/mwp-runner-ui</code> on <code>agent/runner-ui</code>: active runner component is correcting serialized persistence/sync and owner-switch restoration races found in direct review.</li>
+<li>The completed IndexedDB worktree was integrated through <code>36b6cc3</code>, compared for selected-file equality, and removed.</li>
+<li>The completed runner-UI worktree was integrated through <code>c133e93</code>, compared for selected-file equality after teardown and deferred-sync corrections, and removed.</li>
+<li><code>/private/tmp/mwp-profile-program</code> on <code>agent/profile-program</code>: active profile, starter-program, and equipment-revision repository slice.</li>
+<li><code>/private/tmp/mwp-workout-repository</code> on <code>agent/workout-repository</code>: active immutable workout-snapshot, operation, history, and terminal-session repository slice.</li>
 </ul>
 
   </main>
