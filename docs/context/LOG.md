@@ -9,6 +9,7 @@
 - Verified idempotent replay, changed-payload key conflict, stale base, unverified mutation, cross-user custom exercise, incompatible equipment, graph immutability, and rollback with 23 focused tests plus TypeScript and scoped lint.
 - Added the private `POST /api/app/program/publish` boundary with same-origin CSRF, bounded strict JSON, a server-derived viewer, private no-store output, and route-order tests that reject cross-origin or unauthenticated requests before body or storage access.
 - Added the protected program editor with phone-first day navigation, labeled prescription/cardio fields, explicit reorder controls, dirty-navigation protection, validation focus, retry-stable publication, stale-conflict copy, and a clear handoff to the separate equipment substitution confirmation.
+- Independently re-ran the isolated workout repository's focused and complete matrices, inspected its final ownership, snapshot, idempotency, previous-value, history, and transaction boundaries, and marked the clean branch ready for a separately authorized local merge without merging, pushing, deploying, or changing production.
 
 ## 2026-08-25: Conflict-safe settings and sign-out
 

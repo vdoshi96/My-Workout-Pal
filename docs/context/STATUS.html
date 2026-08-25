@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="388780133482aa661c7a6a86bf31b64f2a75af945beba3e7db889a08ea1e324f">
+  <meta name="source-sha256" content="890d96dcd0e9dada9bbef1c3e0d72ce6ef0c1f047319a589b6835d4e77af85af">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -67,7 +67,7 @@
 </ul>
 <h2>Work in progress</h2>
 <ul>
-<li>Complete the correction review and integrate the isolated workout-session repository, then connect it to the authenticated runner and history surfaces.</li>
+<li>The isolated workout-session repository correction review is complete. Its owner-scoped session, immutable snapshot, retry-safe operation, exact previous-value, and history boundaries are ready for integration once the user explicitly authorizes a local merge; it remains unmerged under the current no-merge boundary.</li>
 <li>Extend authenticated program editing, records, persisted analytics, settings/preferences, and account deletion after the workout boundary is stable.</li>
 <li>Mount the active runner on an owned workout route and personally verify local pending-state recovery against server synchronization.</li>
 <li>Re-run production service-worker and offline-fallback evidence after the authenticated routes are complete.</li>
@@ -97,6 +97,8 @@
 <li>Profile/program API TDD retained unauthenticated 500/invalid-body 400 failures before authentication ordering was corrected. Eleven focused contract and direct-route tests now prove strict owner-free envelopes, private cache headers, cross-origin CSRF rejection, auth-before-storage, and generic unexpected failures. Three additional preview tests prove pre-write custom-equipment blockers.</li>
 <li>Current-main verification after the authenticated profile/program surface: 39 test files and 263 tests, strict TypeScript, full ESLint, Drizzle metadata validation, generated service-worker parity, 23 Markdown/HTML pairs, and the Next.js 16.3.2 webpack production build all pass. The build lists <code>/app</code>, <code>/app/program/[day]</code>, and all three private profile/program API routes as dynamic server-rendered surfaces.</li>
 <li>Current-main verification after compatible library and settings: 39 test files and 268 tests pass when run without competing PGlite processes, with strict TypeScript, full lint, Drizzle, generated PWA, and 23-pair documentation parity also green. One intentionally retained parallel verification attempt timed out the initial PGlite schema case at 5.56 seconds while all other 267 assertions passed; the schema file then passed alone and the complete suite passed on immediate sequential replay. The production build includes <code>/app/library</code>, <code>/app/settings</code>, and <code>/api/app/preferences</code> as dynamic routes.</li>
+<li>The authenticated program-editor checkpoint passed 39 focused editor, publication-contract, route, and PGlite repository tests, strict TypeScript, scoped lint, 24-pair documentation parity, and a production webpack build that lists <code>/app/program/edit</code> and <code>/api/app/program/publish</code> as dynamic routes.</li>
+<li>Independent verification of <code>agent/workout-repository</code> passed 84 focused workout/database tests, all 217 tests on that isolated baseline, strict TypeScript, full lint, Drizzle metadata validation, 22-pair documentation parity, and a production webpack build. Direct review confirmed owner-derived predicates, immutable snapshots, transaction-scoped idempotency, optimistic exercise versions, exact latest-completed previous values, interruption-safe resume data, and bounded terminal history. The branch remains local and unmerged.</li>
 </ul>
 <h2>Blockers and credential gates</h2>
 <ul>
@@ -114,7 +116,7 @@
 <li>The completed IndexedDB worktree was integrated through <code>36b6cc3</code>, compared for selected-file equality, and removed.</li>
 <li>The completed runner-UI worktree was integrated through <code>c133e93</code>, compared for selected-file equality after teardown and deferred-sync corrections, and removed.</li>
 <li>The profile/program worktree was integrated through <code>cbf72ba</code>, compared byte-for-byte for its selected source and test files, and removed. Main then consolidated the shared day-scoped substitution rule and private surface integration.</li>
-<li><code>/private/tmp/mwp-workout-repository</code> on <code>agent/workout-repository</code>: active correction pass for bounded previous-value selection, malformed identifiers, populated-database migration safety, and canonical integer validation.</li>
+<li><code>/private/tmp/mwp-workout-repository</code> on <code>agent/workout-repository</code>: clean, independently verified, and intentionally retained because the user has not authorized merging it into <code>main</code>.</li>
 </ul>
 
   </main>

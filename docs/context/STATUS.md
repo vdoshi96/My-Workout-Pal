@@ -41,7 +41,7 @@ Authenticated repositories and runner-surface integration after the verified gue
 
 ## Work in progress
 
-- Complete the correction review and integrate the isolated workout-session repository, then connect it to the authenticated runner and history surfaces.
+- The isolated workout-session repository correction review is complete. Its owner-scoped session, immutable snapshot, retry-safe operation, exact previous-value, and history boundaries are ready for integration once the user explicitly authorizes a local merge; it remains unmerged under the current no-merge boundary.
 - Extend authenticated program editing, records, persisted analytics, settings/preferences, and account deletion after the workout boundary is stable.
 - Mount the active runner on an owned workout route and personally verify local pending-state recovery against server synchronization.
 - Re-run production service-worker and offline-fallback evidence after the authenticated routes are complete.
@@ -71,6 +71,8 @@ Authenticated repositories and runner-surface integration after the verified gue
 - Profile/program API TDD retained unauthenticated 500/invalid-body 400 failures before authentication ordering was corrected. Eleven focused contract and direct-route tests now prove strict owner-free envelopes, private cache headers, cross-origin CSRF rejection, auth-before-storage, and generic unexpected failures. Three additional preview tests prove pre-write custom-equipment blockers.
 - Current-main verification after the authenticated profile/program surface: 39 test files and 263 tests, strict TypeScript, full ESLint, Drizzle metadata validation, generated service-worker parity, 23 Markdown/HTML pairs, and the Next.js 16.3.2 webpack production build all pass. The build lists `/app`, `/app/program/[day]`, and all three private profile/program API routes as dynamic server-rendered surfaces.
 - Current-main verification after compatible library and settings: 39 test files and 268 tests pass when run without competing PGlite processes, with strict TypeScript, full lint, Drizzle, generated PWA, and 23-pair documentation parity also green. One intentionally retained parallel verification attempt timed out the initial PGlite schema case at 5.56 seconds while all other 267 assertions passed; the schema file then passed alone and the complete suite passed on immediate sequential replay. The production build includes `/app/library`, `/app/settings`, and `/api/app/preferences` as dynamic routes.
+- The authenticated program-editor checkpoint passed 39 focused editor, publication-contract, route, and PGlite repository tests, strict TypeScript, scoped lint, 24-pair documentation parity, and a production webpack build that lists `/app/program/edit` and `/api/app/program/publish` as dynamic routes.
+- Independent verification of `agent/workout-repository` passed 84 focused workout/database tests, all 217 tests on that isolated baseline, strict TypeScript, full lint, Drizzle metadata validation, 22-pair documentation parity, and a production webpack build. Direct review confirmed owner-derived predicates, immutable snapshots, transaction-scoped idempotency, optimistic exercise versions, exact latest-completed previous values, interruption-safe resume data, and bounded terminal history. The branch remains local and unmerged.
 
 ## Blockers and credential gates
 
@@ -88,4 +90,4 @@ Authenticated repositories and runner-surface integration after the verified gue
 - The completed IndexedDB worktree was integrated through `36b6cc3`, compared for selected-file equality, and removed.
 - The completed runner-UI worktree was integrated through `c133e93`, compared for selected-file equality after teardown and deferred-sync corrections, and removed.
 - The profile/program worktree was integrated through `cbf72ba`, compared byte-for-byte for its selected source and test files, and removed. Main then consolidated the shared day-scoped substitution rule and private surface integration.
-- `/private/tmp/mwp-workout-repository` on `agent/workout-repository`: active correction pass for bounded previous-value selection, malformed identifiers, populated-database migration safety, and canonical integer validation.
+- `/private/tmp/mwp-workout-repository` on `agent/workout-repository`: clean, independently verified, and intentionally retained because the user has not authorized merging it into `main`.

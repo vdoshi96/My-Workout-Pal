@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="88527876ec296ed05f98d0fe8a2b0a0f7741f01cce12b1c3da283fdd35c1a9d1">
+  <meta name="source-sha256" content="d60c83a4a42a420c7a0b77c5945210762e1e532e879a9a7a3f1bf951cd1cd22b">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,6 +37,7 @@
 <li>Verified idempotent replay, changed-payload key conflict, stale base, unverified mutation, cross-user custom exercise, incompatible equipment, graph immutability, and rollback with 23 focused tests plus TypeScript and scoped lint.</li>
 <li>Added the private <code>POST /api/app/program/publish</code> boundary with same-origin CSRF, bounded strict JSON, a server-derived viewer, private no-store output, and route-order tests that reject cross-origin or unauthenticated requests before body or storage access.</li>
 <li>Added the protected program editor with phone-first day navigation, labeled prescription/cardio fields, explicit reorder controls, dirty-navigation protection, validation focus, retry-stable publication, stale-conflict copy, and a clear handoff to the separate equipment substitution confirmation.</li>
+<li>Independently re-ran the isolated workout repository&#39;s focused and complete matrices, inspected its final ownership, snapshot, idempotency, previous-value, history, and transaction boundaries, and marked the clean branch ready for a separately authorized local merge without merging, pushing, deploying, or changing production.</li>
 </ul>
 <h2>2026-08-25: Conflict-safe settings and sign-out</h2>
 <ul>
