@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="0bc518a93eb4733aa6f1e7471f5aa34f35b4ede19981e41a23567a25138ca450">
+  <meta name="source-sha256" content="0978203425908b915d00678c38f867ae76e0f5e02af036757303ccadbc5e0d1c">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -34,6 +34,8 @@
 <p>Guest equipment and runner interactions remain in memory or tab-scoped browser storage. The interface labels sample data and never reports that guest activity is saved to an account.</p>
 <h2>2026-08-25: Use immutable program and workout revisions</h2>
 <p>Editing a program creates a revision. Starting a workout snapshots the relevant prescription and exercise meaning. Later program or catalog edits do not alter completed or in-progress history.</p>
+<h2>2026-08-25: Keep the deletion job outside profile ownership</h2>
+<p>The account-deletion saga record is keyed by the server-derived Firebase UID but has no foreign key to <code>user_profiles</code>. It must survive the owned-data transaction so Firebase deletion can be retried after fitness data and the profile are gone. The job stores only bounded phase, status, attempt, idempotency hash, and safe error-code metadata. Migration <code>0001_account_deletion_saga</code> refuses to run if legacy job rows exist, requiring explicit review instead of inventing resumable state. This migration is checked in and tested locally but has not been applied to Neon.</p>
 <h2>2026-08-25: Store canonical metric values</h2>
 <p>Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.</p>
 <h2>2026-08-25: Verify identity only on the server</h2>

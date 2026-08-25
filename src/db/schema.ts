@@ -80,6 +80,11 @@ export const deletionJobStatus = pgEnum("deletion_job_status", [
   "completed",
   "failed",
 ]);
+export const deletionJobPhase = pgEnum("deletion_job_phase", [
+  "database",
+  "firebase",
+  "complete",
+]);
 export const progressSourceKind = pgEnum("progress_source_kind", ["set", "cardio"]);
 
 const createdAt = () => timestamp("created_at", { withTimezone: true, mode: "date" }).defaultNow().notNull();
@@ -1194,19 +1199,25 @@ export const progressSummarySources = pgTable(
 export const accountDeletionJobs = pgTable(
   "account_deletion_jobs",
   {
-    ownerFirebaseUid: text("owner_firebase_uid")
-      .primaryKey()
-      .references(() => userProfiles.firebaseUid, { onDelete: "restrict", onUpdate: "cascade" }),
+    ownerFirebaseUid: text("owner_firebase_uid").primaryKey(),
+    phase: deletionJobPhase("phase").default("database").notNull(),
     status: deletionJobStatus("status").default("pending").notNull(),
     attemptCount: integer("attempt_count").default(0).notNull(),
-    lastError: text("last_error"),
+    idempotencyKey: varchar("idempotency_key", { length: 180 }).notNull(),
+    requestHash: varchar("request_hash", { length: 64 }).notNull(),
+    lastErrorCode: text("last_error"),
     requestedAt: timestamp("requested_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
     updatedAt: updatedAt(),
   },
   (table) => [
     check("account_deletion_jobs_attempt_nonnegative", sql`${table.attemptCount} >= 0`),
-    check("account_deletion_jobs_completion_shape", sql`${table.status} <> 'completed' or ${table.completedAt} is not null`),
+    check("account_deletion_jobs_idempotency_key_not_blank", sql`length(trim(${table.idempotencyKey})) > 0`),
+    check("account_deletion_jobs_request_hash_shape", sql`${table.requestHash} ~ '^[0-9a-f]{64}$'`),
+    check(
+      "account_deletion_jobs_completion_shape",
+      sql`(${table.status} = 'completed' and ${table.phase} = 'complete' and ${table.completedAt} is not null) or (${table.status} <> 'completed' and ${table.phase} <> 'complete' and ${table.completedAt} is null)`,
+    ),
   ],
 );
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="7f8291f6fdba0c6766d5ce1fa21ec6131079363f1b499563536db22b92c55621">
+  <meta name="source-sha256" content="cf97d1e8f585420f83154241519178626599c93abdaa91587ff4df427cc0f7a4">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,12 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Durable account-deletion boundary</h2>
+<ul>
+<li>Retained a missing-module failure, then added the strict owner-free deletion request, stable intent hash, monotonic database/Firebase saga transitions, and safe provider-error classification with five passing domain tests.</li>
+<li>Retained the missing migration failure, then removed the deletion job&#39;s restrictive profile foreign key and added bounded phase, retry-key, request-hash, and completion-shape constraints.</li>
+<li>Proved in PGlite that the minimal saga row survives profile deletion, invalid metadata is rejected, and a legacy job causes an actionable migration refusal rather than guessed state. The migration remains local and unapplied to Neon.</li>
+</ul>
 <h2>2026-08-25: Immutable program publication repository</h2>
 <ul>
 <li>Retained a failing-first API and PGlite repository suite before adding the publication method.</li>

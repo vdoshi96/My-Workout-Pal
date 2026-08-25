@@ -12,6 +12,10 @@ Guest equipment and runner interactions remain in memory or tab-scoped browser s
 
 Editing a program creates a revision. Starting a workout snapshots the relevant prescription and exercise meaning. Later program or catalog edits do not alter completed or in-progress history.
 
+## 2026-08-25: Keep the deletion job outside profile ownership
+
+The account-deletion saga record is keyed by the server-derived Firebase UID but has no foreign key to `user_profiles`. It must survive the owned-data transaction so Firebase deletion can be retried after fitness data and the profile are gone. The job stores only bounded phase, status, attempt, idempotency hash, and safe error-code metadata. Migration `0001_account_deletion_saga` refuses to run if legacy job rows exist, requiring explicit review instead of inventing resumable state. This migration is checked in and tested locally but has not been applied to Neon.
+
 ## 2026-08-25: Store canonical metric values
 
 Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.

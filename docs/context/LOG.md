@@ -1,5 +1,11 @@
 # Project log
 
+## 2026-08-25: Durable account-deletion boundary
+
+- Retained a missing-module failure, then added the strict owner-free deletion request, stable intent hash, monotonic database/Firebase saga transitions, and safe provider-error classification with five passing domain tests.
+- Retained the missing migration failure, then removed the deletion job's restrictive profile foreign key and added bounded phase, retry-key, request-hash, and completion-shape constraints.
+- Proved in PGlite that the minimal saga row survives profile deletion, invalid metadata is rejected, and a legacy job causes an actionable migration refusal rather than guessed state. The migration remains local and unapplied to Neon.
+
 ## 2026-08-25: Immutable program publication repository
 
 - Retained a failing-first API and PGlite repository suite before adding the publication method.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="c1678c44c119f358e2e9cd165be43b1445731f4965041133ff753a89148c7349">
+  <meta name="source-sha256" content="2c9b551038b2a8ee690b3e953bba5720fb743ee568b883cdb13571a9b6098672">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -47,6 +47,7 @@
 <li>A database-neutral, deterministic seed manifest derives all six equipment rows, 27 catalog exercises, compatibility edges, aliases, and both five-day equipment revisions from the canonical product domain. It preserves the Lower-day “Heavy goblet squat” label as revision metadata without duplicating the catalog exercise.</li>
 <li>Canonical database rows have stable RFC 4122 version-five identities derived from a fixed public namespace and bounded seed keys. The checked-in migration and transactional seeder have been applied to Neon, rerun without material change, and verified read-only.</li>
 <li>The complete bounded Drizzle schema is integrated: 30 user, catalog, template, program, immutable workout, idempotency, personal-record, progress-summary, and account-deletion tables plus composite ownership constraints and publication/history guards.</li>
+<li>The local account-deletion migration removes the deletion job&#39;s restrictive profile foreign key, adds bounded saga phase/idempotency metadata and completion invariants, and refuses a non-empty legacy job table. PGlite proves the minimal job survives profile deletion. Migration <code>0001_account_deletion_saga</code> is not applied to Neon under the current no-production-change boundary.</li>
 <li>Authentication return targets are normalized to bounded same-origin paths and reject protocol-relative, encoded-control, auth-loop, and external destinations.</li>
 <li>Double progression can only suggest considering a load increase after the exact number of weight-and-repetition work sets all reach the range top with form explicitly marked appropriate. It ignores warm-ups and never emits a load or increment.</li>
 <li>The service worker is generated from a tested public-cache policy. It caches only public program/library/sample routes, hashed Next static output, and explicit app artwork; authentication, APIs, future owned-data routes, arbitrary images, cross-origin assets, and non-GET requests remain outside the cache.</li>
