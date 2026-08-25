@@ -320,13 +320,19 @@ function parseOnboardingInput(input: OnboardingInput): NormalizedOnboardingInput
   const result = onboardingSchema.safeParse(input);
   if (!result.success) throw new RepositoryValidationError("The onboarding data is invalid.");
   const parsed = result.data;
+  const timezone = parsed.timezone ?? "UTC";
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: timezone }).format();
+  } catch {
+    throw new RepositoryValidationError("The onboarding data is invalid.");
+  }
   return {
     equipmentProfileKind: parseEquipmentProfileKind(
       parsed.equipmentProfileKind,
       parsed.profileKind,
     ),
     unitSystem: parsed.unitSystem ?? "metric",
-    timezone: parsed.timezone ?? "UTC",
+    timezone,
     reducedMotion: parsed.reducedMotion ?? false,
     idempotencyKey: parsed.idempotencyKey,
   };
@@ -336,7 +342,11 @@ function parseEquipmentChangeInput(input: EquipmentChangeInput): NormalizedEquip
   const result = equipmentChangeSchema.safeParse(input);
   if (!result.success) {
     // Malformed or foreign IDs intentionally map to the same not-found shape.
-    if (result.error.issues.some((issue) => issue.path[0] === "programId")) {
+    if (
+      result.error.issues.some(
+        (issue) => issue.path[0] === "programId" || issue.path[0] === "baseRevisionId",
+      )
+    ) {
       throw new RepositoryNotFoundError();
     }
     throw new RepositoryValidationError("The equipment change data is invalid.");
@@ -1038,22 +1048,50 @@ async function cloneTemplateRevision(
   return revisionId;
 }
 
+function substitutionKey(
+  dayKey: string,
+  sectionKind: ProgramSectionRow["kind"],
+  sectionDisplayOrder: number,
+  sourceSlug: string,
+): string {
+  return `${dayKey}:${sectionKind}:${sectionDisplayOrder}:${sourceSlug}`;
+}
+
+/**
+ * Canonical starter substitutions are deliberately slot-scoped. The same
+ * source exercise can be intentionally retained in one starter day (for
+ * example, push dumbbell bench press) while being replaced in another (upper
+ * dumbbell bench press). Day/section context comes from durable template
+ * fields, not the mutable prescription display order.
+ */
 const substitutionByTarget: Readonly<
   Record<EquipmentProfileKind, Readonly<Record<string, string>>>
 > = {
   barbell: {
-    "chest-supported-dumbbell-row": "barbell-bent-over-row",
-    "dumbbell-bench-press": "barbell-bench-press",
-    "goblet-squat": "barbell-back-squat",
-    "dumbbell-romanian-deadlift": "barbell-romanian-deadlift",
-    "dumbbell-hip-thrust": "barbell-hip-thrust",
+    [substitutionKey("pull", "strength", 1, "chest-supported-dumbbell-row")]:
+      "barbell-bent-over-row",
+    [substitutionKey("upper", "strength", 1, "dumbbell-bench-press")]:
+      "barbell-bench-press",
+    [substitutionKey("upper", "strength", 1, "chest-supported-dumbbell-row")]:
+      "barbell-bent-over-row",
+    [substitutionKey("lower", "strength", 1, "goblet-squat")]: "barbell-back-squat",
+    [substitutionKey("lower", "strength", 1, "dumbbell-romanian-deadlift")]:
+      "barbell-romanian-deadlift",
+    [substitutionKey("lower", "strength", 1, "dumbbell-hip-thrust")]:
+      "barbell-hip-thrust",
   },
   dumbbells: {
-    "barbell-bent-over-row": "chest-supported-dumbbell-row",
-    "barbell-bench-press": "dumbbell-bench-press",
-    "barbell-back-squat": "goblet-squat",
-    "barbell-romanian-deadlift": "dumbbell-romanian-deadlift",
-    "barbell-hip-thrust": "dumbbell-hip-thrust",
+    [substitutionKey("pull", "strength", 1, "barbell-bent-over-row")]:
+      "chest-supported-dumbbell-row",
+    [substitutionKey("upper", "strength", 1, "barbell-bench-press")]:
+      "dumbbell-bench-press",
+    [substitutionKey("upper", "strength", 1, "barbell-bent-over-row")]:
+      "chest-supported-dumbbell-row",
+    [substitutionKey("lower", "strength", 1, "barbell-back-squat")]: "goblet-squat",
+    [substitutionKey("lower", "strength", 1, "barbell-romanian-deadlift")]:
+      "dumbbell-romanian-deadlift",
+    [substitutionKey("lower", "strength", 1, "barbell-hip-thrust")]:
+      "dumbbell-hip-thrust",
   },
 };
 
@@ -1123,9 +1161,7 @@ async function cloneEquipmentRevision(
     throw new RepositoryNotFoundError();
   }
   const sourceSlugs = [...allExerciseRows.values()].map((row) => row.slug);
-  const targetSlugs = sourceSlugs
-    .map((slug) => substitutionByTarget[targetProfile][slug])
-    .filter((slug): slug is string => Boolean(slug));
+  const targetSlugs = Object.values(substitutionByTarget[targetProfile]);
   const targetExerciseRows = await database
     .select()
     .from(catalogExercises)
@@ -1263,7 +1299,10 @@ async function cloneEquipmentRevision(
         // dumbbells, but still reroute goblet squat to back squat). Any
         // unmapped catalog exercise stays on its canonical ID when physically
         // compatible, even if a template position would differ.
-        const replacementSlug = substitutionByTarget[targetProfile][sourceExercise.slug];
+        const replacementSlug =
+          substitutionByTarget[targetProfile][
+            substitutionKey(day.dayKey, section.kind, section.displayOrder, sourceExercise.slug)
+          ];
         if (!replacementSlug && !physicallyCompatible) {
           throw new RepositoryValidationError(
             "A catalog exercise is incompatible with the selected equipment profile.",

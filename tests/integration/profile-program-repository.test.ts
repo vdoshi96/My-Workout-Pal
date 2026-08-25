@@ -43,6 +43,24 @@ function viewer(
   };
 }
 
+function slugsByDay(
+  program: Readonly<{
+    days: readonly Readonly<{
+      dayKey: string;
+      prescriptions: readonly Readonly<{
+        exercise: Readonly<{ slug: string }>;
+      }>[];
+    }>[];
+  }>,
+): Record<string, string[]> {
+  return Object.fromEntries(
+    program.days.map((day) => [
+      day.dayKey,
+      day.prescriptions.map((prescription) => prescription.exercise.slug),
+    ]),
+  );
+}
+
 afterEach(async () => {
   await Promise.all(openDatabases.splice(0).map((database) => database.close()));
 });
@@ -126,6 +144,28 @@ describe("profile and active-program repository", () => {
     ).resolves.toMatchObject({ rows: [{ count: "0" }] });
   });
 
+  it("accepts valid IANA timezones and rejects invalid labels before writing", async () => {
+    const { database, raw } = await openDatabase();
+    const repository = createProfileProgramRepository(database);
+    const valid = await repository.onboard(viewer("timezone-valid"), {
+      equipmentProfileKind: "dumbbells",
+      timezone: "America/Chicago",
+    });
+    expect(valid.preferences.timezone).toBe("America/Chicago");
+
+    await expect(
+      repository.onboard(viewer("timezone-invalid"), {
+        equipmentProfileKind: "dumbbells",
+        timezone: "Mars/Olympus",
+      }),
+    ).rejects.toMatchObject({ code: "validation" });
+    await expect(
+      raw.query<{ count: string }>(
+        "SELECT count(*)::text AS count FROM user_profiles WHERE firebase_uid = 'timezone-invalid';",
+      ),
+    ).resolves.toMatchObject({ rows: [{ count: "0" }] });
+  });
+
   it("keeps active reads owner-scoped and maps foreign IDs to the same not-found error", async () => {
     const { database } = await openDatabase();
     const repository = createProfileProgramRepository(database);
@@ -140,6 +180,24 @@ describe("profile and active-program repository", () => {
     ).rejects.toBeInstanceOf(RepositoryNotFoundError);
     await expect(
       repository.getActiveProgram(viewer("member-b"), "00000000-0000-0000-0000-000000000000"),
+    ).rejects.toBeInstanceOf(RepositoryNotFoundError);
+  });
+
+  it("maps a malformed equipment base revision ID to the stable not-found error", async () => {
+    const { database } = await openDatabase();
+    const repository = createProfileProgramRepository(database);
+    const own = await repository.onboard(viewer("member-malformed-base"), {
+      equipmentProfileKind: "dumbbells",
+    });
+    const ownProgram = own.activeProgram;
+    if (!ownProgram) throw new Error("onboarding did not create an active program");
+
+    await expect(
+      repository.confirmEquipmentChange(viewer("member-malformed-base"), {
+        programId: ownProgram.id,
+        baseRevisionId: "not-a-uuid",
+        equipmentProfileKind: "barbell",
+      }),
     ).rejects.toBeInstanceOf(RepositoryNotFoundError);
   });
 
@@ -194,6 +252,126 @@ describe("profile and active-program repository", () => {
       rows: [
         { status: "published", revision_number: 1 },
         { status: "published", revision_number: 2 },
+      ],
+    });
+  });
+
+  it("applies only the canonical day-scoped substitutions in both directions", async () => {
+    const { database } = await openDatabase();
+    const repository = createProfileProgramRepository(database);
+    const dumbbellProfile = await repository.onboard(viewer("member-mapping-dumbbells"), {
+      equipmentProfileKind: "dumbbells",
+    });
+    const dumbbellProgram = dumbbellProfile.activeProgram;
+    if (!dumbbellProgram) throw new Error("onboarding did not create an active program");
+    const barbellResult = await repository.confirmEquipmentChange(
+      viewer("member-mapping-dumbbells"),
+      {
+        programId: dumbbellProgram.id,
+        baseRevisionId: dumbbellProgram.revisionId,
+        equipmentProfileKind: "barbell",
+      },
+    );
+    const barbellProgram = barbellResult.activeProgram;
+    if (!barbellProgram) throw new Error("equipment change removed the active program");
+    expect(slugsByDay(barbellProgram)).toEqual({
+      push: [
+        "dumbbell-bench-press",
+        "seated-dumbbell-shoulder-press",
+        "incline-dumbbell-press",
+        "overhead-dumbbell-triceps-extension",
+        "dead-bug",
+        "front-plank",
+      ],
+      pull: [
+        "barbell-bent-over-row",
+        "one-arm-dumbbell-row",
+        "dumbbell-pullover",
+        "dumbbell-curl",
+        "bird-dog",
+        "side-plank",
+      ],
+      legs: [
+        "goblet-squat",
+        "dumbbell-romanian-deadlift",
+        "reverse-lunge",
+        "standing-calf-raise",
+        "plank-shoulder-tap",
+        "reverse-crunch",
+      ],
+      upper: [
+        "barbell-bench-press",
+        "barbell-bent-over-row",
+        "seated-dumbbell-shoulder-press",
+        "one-arm-dumbbell-row",
+        "bicycle-crunch",
+        "hollow-hold",
+      ],
+      lower: [
+        "barbell-back-squat",
+        "barbell-romanian-deadlift",
+        "bulgarian-split-squat",
+        "barbell-hip-thrust",
+        "dead-bug",
+        "side-plank",
+      ],
+    });
+
+    const barbellProfile = await repository.onboard(viewer("member-mapping-barbell"), {
+      equipmentProfileKind: "barbell",
+    });
+    const initialBarbellProgram = barbellProfile.activeProgram;
+    if (!initialBarbellProgram) throw new Error("onboarding did not create an active program");
+    const dumbbellResult = await repository.confirmEquipmentChange(
+      viewer("member-mapping-barbell"),
+      {
+        programId: initialBarbellProgram.id,
+        baseRevisionId: initialBarbellProgram.revisionId,
+        equipmentProfileKind: "dumbbells",
+      },
+    );
+    const finalDumbbellProgram = dumbbellResult.activeProgram;
+    if (!finalDumbbellProgram) throw new Error("equipment change removed the active program");
+    expect(slugsByDay(finalDumbbellProgram)).toEqual({
+      push: [
+        "dumbbell-bench-press",
+        "seated-dumbbell-shoulder-press",
+        "incline-dumbbell-press",
+        "overhead-dumbbell-triceps-extension",
+        "dead-bug",
+        "front-plank",
+      ],
+      pull: [
+        "chest-supported-dumbbell-row",
+        "one-arm-dumbbell-row",
+        "dumbbell-pullover",
+        "dumbbell-curl",
+        "bird-dog",
+        "side-plank",
+      ],
+      legs: [
+        "goblet-squat",
+        "dumbbell-romanian-deadlift",
+        "reverse-lunge",
+        "standing-calf-raise",
+        "plank-shoulder-tap",
+        "reverse-crunch",
+      ],
+      upper: [
+        "dumbbell-bench-press",
+        "chest-supported-dumbbell-row",
+        "seated-dumbbell-shoulder-press",
+        "one-arm-dumbbell-row",
+        "bicycle-crunch",
+        "hollow-hold",
+      ],
+      lower: [
+        "goblet-squat",
+        "dumbbell-romanian-deadlift",
+        "bulgarian-split-squat",
+        "dumbbell-hip-thrust",
+        "dead-bug",
+        "side-plank",
       ],
     });
   });
