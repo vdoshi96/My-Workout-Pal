@@ -5,10 +5,17 @@ import type { FirebasePublicConfig } from "@/client/firebase";
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { PublicShell } from "@/components/layout/public-shell";
 import { Icon } from "@/components/ui/icon";
+import { normalizeReturnPath } from "@/server/navigation/return-path";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-export default function SignInPage() {
+type PageProps = {
+  searchParams: Promise<{ returnTo?: string }>;
+};
+
+export default async function SignInPage({ searchParams }: PageProps) {
+  const { returnTo: rawReturnTo } = await searchParams;
+  const returnTo = normalizeReturnPath(rawReturnTo);
   const apiKey = process.env["NEXT_PUBLIC_FIREBASE_API_KEY"];
   const appId = process.env["NEXT_PUBLIC_FIREBASE_APP_ID"];
   const authDomain = process.env["NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"];
@@ -32,7 +39,7 @@ export default function SignInPage() {
         </section>
         <section className="auth-sheet" aria-labelledby="auth-heading">
           {config ? (
-            <AuthPanel config={config} />
+            <AuthPanel config={config} returnTo={returnTo} />
           ) : (
             <>
               <div className="status-stamp">Credential gate</div>

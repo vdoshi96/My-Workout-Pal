@@ -1,4 +1,5 @@
 import type { EquipmentId } from "@/domain/equipment";
+import { getExerciseMetadata } from "@/domain/exercises/metadata";
 
 export type ExerciseRole = "compound" | "accessory" | "core-reps" | "core-timed";
 export type LoggingKind =
@@ -12,7 +13,11 @@ export type CatalogExercise = Readonly<{
   name: string;
   role: ExerciseRole;
   loggingKind: LoggingKind;
+  movementFamily: string;
   requiredEquipment: readonly EquipmentId[];
+  primaryMuscles: readonly string[];
+  aliases: readonly string[];
+  instructions: readonly string[];
 }>;
 
 const catalog = [
@@ -55,7 +60,14 @@ export const CATALOG_EXERCISES = Object.freeze(
   Object.fromEntries(
     catalog.map(([slug, name, role, loggingKind, requiredEquipment]) => [
       slug,
-      Object.freeze({ slug, name, role, loggingKind, requiredEquipment }),
+      Object.freeze({
+        slug,
+        name,
+        role,
+        loggingKind,
+        requiredEquipment: Object.freeze([...requiredEquipment]),
+        ...getExerciseMetadata(slug),
+      }),
     ]),
   ) as Readonly<Record<string, CatalogExercise>>,
 );

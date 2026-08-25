@@ -32,3 +32,10 @@
 - Built the production application and inspected a real `next start` response. The CSP nonce matched rendered output, production contained no unsafe inline or evaluation directive, and the YouTube referrer policy remained compliant.
 - Linked the local checkout to the empty Vercel project `vdoshi96s-projects/my-workout-pal` without deploying, connecting Neon, or changing billing controls.
 - Returned the first database and YouTube slices for correction after direct diff review found cross-program revision gaps, missing custom equipment and aliases, missing volume-record persistence, a weaker executable curation path, and incomplete pair and refresh behavior.
+
+## 2026-08-25: Canonical exercise metadata and safe return paths
+
+- Added original route cues, movement families, aliases, and primary-muscle metadata for all 27 canonical starter exercises.
+- Expanded compatibility-first library search to discover exercises by equipment, movement family, alias, and primary muscle without introducing medical claims.
+- Added a bounded same-origin authentication return-path policy that rejects external, protocol-relative, encoded-control, API-session, and sign-in-loop targets.
+- Removed the completed analytics worktree after verifying that its patch exactly matched the integrated commit.

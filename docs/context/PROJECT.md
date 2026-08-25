@@ -25,6 +25,7 @@ My Workout Pal is a trustworthy bridge between a prescribed routine and the reco
 - Firebase Auth for identity and Firebase Admin for server-side session and revocation checks.
 - Neon Postgres through Vercel Marketplace, accessed through Drizzle ORM and versioned migrations.
 - Zod validation at every untrusted input boundary.
+- Authentication return targets are server-normalized to bounded local paths before client navigation.
 - Vitest for domain and integration tests. Playwright covers Chromium and WebKit browser flows.
 - Vercel Pro hosts preview and production deployments from GitHub.
 

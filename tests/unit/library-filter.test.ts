@@ -31,4 +31,22 @@ describe("exercise library filtering", () => {
       listCatalogExercises({ profile: EQUIPMENT_PROFILES.dumbbells, query: "barbell squat" }),
     ).toEqual([]);
   });
+
+  it("searches aliases, muscles, movement families, and equipment", () => {
+    expect(
+      listCatalogExercises({ profile: EQUIPMENT_PROFILES.dumbbells, query: "pecs" }).some(
+        (exercise) => exercise.slug === "dumbbell-bench-press",
+      ),
+    ).toBe(true);
+    expect(
+      listCatalogExercises({ profile: EQUIPMENT_PROFILES.dumbbells, query: "RDL" }).map(
+        (exercise) => exercise.slug,
+      ),
+    ).toEqual(["dumbbell-romanian-deadlift"]);
+    expect(
+      listCatalogExercises({ profile: EQUIPMENT_PROFILES.barbell, query: "rack squat" }).map(
+        (exercise) => exercise.slug,
+      ),
+    ).toEqual(["barbell-back-squat"]);
+  });
 });

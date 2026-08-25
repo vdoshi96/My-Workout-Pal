@@ -15,9 +15,16 @@ function matchesQuery(exercise: CatalogExercise, query: string): boolean {
 
   if (terms.length === 0) return true;
 
-  const searchableText = `${exercise.name} ${exercise.slug.replaceAll("-", " ")}`.toLocaleLowerCase(
-    "en-US",
-  );
+  const searchableText = [
+    exercise.name,
+    exercise.slug.replaceAll("-", " "),
+    exercise.movementFamily.replaceAll("-", " "),
+    ...exercise.aliases,
+    ...exercise.primaryMuscles,
+    ...exercise.requiredEquipment,
+  ]
+    .join(" ")
+    .toLocaleLowerCase("en-US");
   return terms.every((term) => searchableText.includes(term));
 }
 

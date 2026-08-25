@@ -39,7 +39,10 @@ async function createServerSession(user: User): Promise<void> {
   }
 }
 
-export function AuthPanel({ config }: Readonly<{ config: FirebasePublicConfig }>) {
+export function AuthPanel({
+  config,
+  returnTo,
+}: Readonly<{ config: FirebasePublicConfig; returnTo: string }>) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [busy, setBusy] = useState(false);
@@ -53,7 +56,7 @@ export function AuthPanel({ config }: Readonly<{ config: FirebasePublicConfig }>
         ? "Signed in securely. Opening your route."
         : "Signed in. Verify your email before saving permanent changes.",
     );
-    router.push("/");
+    router.replace(returnTo);
     router.refresh();
   }
 

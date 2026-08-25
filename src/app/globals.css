@@ -238,6 +238,9 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .exercise-facts dl div { border-bottom: 1px solid color-mix(in srgb, var(--paper) 35%, transparent); display: grid; gap: .3rem; padding: 1rem 0; }
 .exercise-facts dt { font-family: var(--font-display); letter-spacing: .06em; text-transform: uppercase; }
 .exercise-facts dd { color: color-mix(in srgb, var(--paper) 78%, transparent); margin: 0; }
+.field-note-heading { color: var(--lichen-light); font-family: var(--font-display); font-size: 1rem; letter-spacing: .08em; margin: 1.5rem 0 .55rem; text-transform: uppercase; }
+.exercise-cues { display: grid; gap: .65rem; margin: 0; padding-inline-start: 1.25rem; }
+.exercise-cues li { color: color-mix(in srgb, var(--paper) 86%, transparent); line-height: 1.45; padding-inline-start: .25rem; }
 .safety-note { color: color-mix(in srgb, var(--paper) 78%, transparent); font-size: .9rem; line-height: 1.45; }
 .video-slots { display: grid; gap: 1rem; }
 .video-unavailable { aspect-ratio: 16 / 9; background: var(--paper-deep); border: 1px dashed var(--rule); display: flex; flex-direction: column; justify-content: end; padding: clamp(1rem, 4vw, 2rem); }

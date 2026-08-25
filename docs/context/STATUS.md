@@ -10,17 +10,19 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - A fully inspected private reference recording, with temporary inspection artifacts outside the repository.
 - The initial product record and context documentation.
 - A strict Next.js 16.3.2 foundation with the approved route-atlas program overview, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout and analytics, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
-- Pure starter-program, equipment-substitution, program-draft editing, library-filter, and persisted-data analytics domains.
+- Pure starter-program, equipment-substitution, program-draft editing, library-filter, canonical exercise-metadata, safe authenticated-return, and persisted-data analytics domains.
 - A verified baseline commit, `168f2a5`, from which bounded analytics, YouTube, and database worktrees were created.
 - Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No Firebase project is configured yet.
 - A nonce-based strict Content Security Policy and companion browser security headers. Next.js request rendering applies a fresh nonce to framework output; the YouTube referrer and Firebase popup policies are explicit.
 - Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.
+- All 27 canonical starter exercises have original route cues, movement families, aliases, and primary-muscle metadata. Library search includes those fields while still applying equipment compatibility first.
+- Authentication return targets are normalized to bounded same-origin paths and reject protocol-relative, encoded-control, auth-loop, and external destinations.
 - Vercel project `vdoshi96s-projects/my-workout-pal` is linked locally as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`. It has no deployment or connected Marketplace resource.
 
 ## Work in progress
 
-- Correct and re-review the YouTube and database worktrees after primary review found incomplete curation execution and cross-program persistence invariants.
-- Finish and review the pure interruption-safe runner state machine.
+- Review the corrected database worktree after its cross-program persistence corrections completed.
+- Finish and review correction passes for the YouTube curation workflow and pure interruption-safe runner state machine.
 - Add owner-scoped repositories and authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces after the schema corrections land.
 - Verify the service worker and offline fallback against a production server rather than the development server.
 
@@ -32,7 +34,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - The workspace inventory found only the private MP4 before initialization.
 - GitHub target repository lookup confirmed that `vdoshi96/My-Workout-Pal` does not exist.
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
-- `pnpm typecheck`, `pnpm lint`, 46 unit and integration tests, and `pnpm docs:check` pass before the pending worktree integrations.
+- `pnpm typecheck`, `pnpm lint`, 59 unit and integration tests, and `pnpm docs:check` pass before the pending worktree integrations.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
 - Production `next start` inspection returned the strict CSP, a unique matching rendered nonce, `strict-origin-when-cross-origin`, popup-safe opener policy, frame denial, HSTS, and the remaining declared security headers. The nonce policy intentionally makes application HTML request-rendered; the manifest remains static.
 - The production output retains the design contract seed `ba529732` and its full contract text inside the first authored body element.
@@ -49,7 +51,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 
 ## Worktrees
 
-- `/private/tmp/mwp-analytics` on `agent/analytics`: completed and integrated as `fedfba4`; cleanup awaits the final integration pass.
+- The completed analytics worktree was integrated as `fedfba4` and removed after patch-equivalence verification.
 - `/private/tmp/mwp-youtube` on `agent/youtube`: correction pass in progress for the executable workflow, quota stop, custom URL duplicates, pair diversity, and refresh assessment.
-- `/private/tmp/mwp-database` on `agent/database`: correction pass in progress for cross-program revision scope, custom compatibility and aliases, and volume records.
-- `/private/tmp/mwp-runner` on `agent/runner-domain`: active pure runner state and outbox slice.
+- `/private/tmp/mwp-database` on `agent/database`: correction pass completed for cross-program revision scope, custom compatibility and aliases, and volume records; primary re-review is pending.
+- `/private/tmp/mwp-runner` on `agent/runner-domain`: correction pass in progress for completion, substitution, outbox, conflict, cardio, and abandonment invariants.

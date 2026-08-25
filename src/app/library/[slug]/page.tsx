@@ -64,7 +64,12 @@ export default async function ExercisePage({ params, searchParams }: PageProps) 
             <div><dt>Default</dt><dd>{roleDefaults[exercise.role]}</dd></div>
             <div><dt>Track</dt><dd>{loggingLabels[exercise.loggingKind]}</dd></div>
             <div><dt>Equipment</dt><dd>{exercise.requiredEquipment.join(", ")}</dd></div>
+            <div><dt>Primary muscles</dt><dd>{exercise.primaryMuscles.join(", ")}</dd></div>
           </dl>
+          <h3 className="field-note-heading">Route cues</h3>
+          <ol className="exercise-cues">
+            {exercise.instructions.map((instruction) => <li key={instruction}>{instruction}</li>)}
+          </ol>
           <p className="safety-note">Use a load and range of motion you can control. My Workout Pal never auto-prescribes weight and does not provide medical advice.</p>
         </section>
 
