@@ -124,6 +124,10 @@
 
 **Acceptance, tests, and evidence:** TDD covers all logging kinds, warm-up exclusion, progression suggestion, idempotency, duplicate submit, interruption, ordering, substitution, conflict, completion, and ownership. Playwright personally replays a full representative workout in Chromium and WebKit, including refresh, back, tab-close simulation, offline queue, slow save, failure retry, expired auth, duplicate completion, and resume on phone, tablet, and desktop.
 
+See [`docs/plans/WORKOUT-RUNNER.md`](WORKOUT-RUNNER.md) for the reusable
+`WorkoutRunner` client contract, injected storage and submitter boundaries,
+presentation helpers, accessibility behavior, and acceptance matrix.
+
 ## Sample workout
 
 **Outcome and navigation:** A guest can try the runner interaction with representative values while understanding that the activity is temporary and does not become history.
