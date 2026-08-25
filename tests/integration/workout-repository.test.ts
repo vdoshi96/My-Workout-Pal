@@ -18,7 +18,11 @@ import {
   programSections,
   userProfiles,
   userEquipmentProfiles,
+  idempotencyKeys,
+  setLogs,
   workoutExerciseSnapshots,
+  workoutExerciseStates,
+  workoutSessions,
   userPrograms,
   schema,
 } from "@/db/schema";
@@ -237,6 +241,180 @@ async function createFixture(database: Database): Promise<Fixture> {
   return { database, ownerUid, otherUid, programId, dayId: dayIds.get(pushDay.id)!, compatibleCustomId, barbellExerciseId };
 }
 
+async function insertCompletedHistoricalOutcome(
+  database: Database,
+  fixture: Fixture,
+  options: Readonly<{
+    sourceSnapshotId: string;
+    historicalSnapshotId: string;
+    setCount: number;
+    setPositions: readonly number[];
+    completedAt: Date;
+    weightKg?: number;
+    repetitions?: number;
+    effectiveCatalogExerciseId?: string;
+    effectiveCustomExerciseId?: string;
+  }>,
+): Promise<void> {
+  const program = await database
+    .select({ activeRevisionId: userPrograms.activeRevisionId })
+    .from(userPrograms)
+    .where(eq(userPrograms.id, fixture.programId))
+    .limit(1);
+  const revisionId = program[0]?.activeRevisionId;
+  if (!revisionId) throw new Error("fixture revision is missing");
+  const sourceSnapshots = await database
+    .select({
+      catalogExerciseId: workoutExerciseSnapshots.catalogExerciseId,
+      customExerciseId: workoutExerciseSnapshots.customExerciseId,
+      displayName: workoutExerciseSnapshots.displayName,
+      loggingKind: workoutExerciseSnapshots.loggingKind,
+      minimumReps: workoutExerciseSnapshots.minimumReps,
+      maximumReps: workoutExerciseSnapshots.maximumReps,
+    })
+    .from(workoutExerciseSnapshots)
+    .where(eq(workoutExerciseSnapshots.id, options.sourceSnapshotId))
+    .limit(1);
+  const sourceSnapshot = sourceSnapshots[0];
+  if (!sourceSnapshot) throw new Error("fixture snapshot is missing");
+  const sessionId = randomUUID();
+  const startedAt = new Date(options.completedAt.getTime() - 60_000);
+  await database.insert(workoutSessions).values({
+    id: sessionId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programId: fixture.programId,
+    programRevisionId: revisionId,
+    state: "active",
+    idempotencyKey: `historical-${sessionId}`,
+    startedAt,
+  });
+  await database.insert(workoutExerciseSnapshots).values({
+    id: options.historicalSnapshotId,
+    ownerFirebaseUid: fixture.ownerUid,
+    sessionId,
+    position: 1,
+    sectionKind: "strength",
+    displayName: sourceSnapshot.displayName,
+    loggingKind: sourceSnapshot.loggingKind,
+    catalogExerciseId: sourceSnapshot.catalogExerciseId,
+    customExerciseId: sourceSnapshot.customExerciseId,
+    minimumReps: sourceSnapshot.minimumReps,
+    maximumReps: sourceSnapshot.maximumReps,
+    setCount: options.setCount,
+    prescriptionSnapshot: {
+      schemaVersion: 1,
+      revisionId,
+      dayId: fixture.dayId,
+      dayName: "Push",
+      setKind: "work",
+      availableEquipment: ["dumbbells", "bodyweight", "bench"],
+    },
+  });
+  const effectiveCatalogExerciseId = options.effectiveCustomExerciseId ? null : (options.effectiveCatalogExerciseId ?? sourceSnapshot.catalogExerciseId);
+  const effectiveCustomExerciseId = options.effectiveCustomExerciseId ?? (options.effectiveCatalogExerciseId ? null : sourceSnapshot.customExerciseId);
+  await database.insert(workoutExerciseStates).values({
+    ownerFirebaseUid: fixture.ownerUid,
+    sessionId,
+    snapshotId: options.historicalSnapshotId,
+    status: "pending",
+    effectiveCatalogExerciseId,
+    effectiveCustomExerciseId,
+    effectiveDisplayName: sourceSnapshot.displayName,
+    effectiveLoggingKind: sourceSnapshot.loggingKind,
+    lastClientOperationId: `historical-create-${sessionId}`,
+    version: 1,
+  });
+  await database.insert(setLogs).values(options.setPositions.map((setPosition) => ({
+    ownerFirebaseUid: fixture.ownerUid,
+    sessionId,
+    snapshotId: options.historicalSnapshotId,
+    setPosition,
+    measurementKind: sourceSnapshot.loggingKind,
+    setKind: "work" as const,
+    weightKg: options.weightKg ?? 30,
+    repetitions: options.repetitions ?? 9,
+    clientIdempotencyKey: `historical-set-${sessionId}-${setPosition}`,
+    recordedAt: new Date(options.completedAt.getTime() - 30_000),
+  })));
+  await database
+    .update(workoutExerciseStates)
+    .set({ status: "completed", version: 2, lastClientOperationId: `historical-complete-${sessionId}` })
+    .where(eq(workoutExerciseStates.snapshotId, options.historicalSnapshotId));
+  await database
+    .update(workoutSessions)
+    .set({ state: "completed", completedAt: options.completedAt })
+    .where(eq(workoutSessions.id, sessionId));
+}
+
+async function insertCustomProgramForHistory(database: Database, fixture: Fixture): Promise<Readonly<{ programId: string; dayId: string }>> {
+  const programId = randomUUID();
+  const revisionId = randomUUID();
+  const dayId = randomUUID();
+  const sectionId = randomUUID();
+  await database.insert(userPrograms).values({
+    id: programId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programKey: `replacement-history-${programId}`,
+    name: "Replacement history program",
+  });
+  await database.insert(programRevisions).values({
+    id: revisionId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programId,
+    revisionNumber: 1,
+    status: "draft",
+    equipmentProfileKind: "dumbbells",
+  });
+  await database.insert(programDays).values({
+    id: dayId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programId,
+    revisionId,
+    dayNumber: 1,
+    dayKey: "replacement-history-day",
+    displayName: "Replacement history day",
+  });
+  await database.insert(programSections).values({
+    id: sectionId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programId,
+    revisionId,
+    dayId,
+    kind: "strength",
+    displayOrder: 1,
+    title: "Replacement",
+  });
+  await database.insert(programPrescriptions).values({
+    id: randomUUID(),
+    ownerFirebaseUid: fixture.ownerUid,
+    programId,
+    revisionId,
+    sectionId,
+    catalogExerciseId: null,
+    customExerciseId: fixture.compatibleCustomId,
+    displayName: null,
+    displayOrder: 1,
+    setKind: "work",
+    setCount: 1,
+    measurementKind: "weight_reps",
+    minimumReps: 1,
+    maximumReps: 12,
+    minimumSeconds: null,
+    maximumSeconds: null,
+    restSeconds: 30,
+    targetWeightKg: null,
+    targetDistanceM: null,
+    notes: null,
+    targetMetadata: {},
+  });
+  await database
+    .update(programRevisions)
+    .set({ status: "published", publishedAt: new Date("2026-08-25T00:00:00.000Z") })
+    .where(eq(programRevisions.id, revisionId));
+  await database.update(userPrograms).set({ activeRevisionId: revisionId }).where(eq(userPrograms.id, programId));
+  return { programId, dayId };
+}
+
 describe("owner-scoped workout repository", () => {
   it("requires a verified server viewer and hides foreign sessions as missing", async () => {
     const { database } = await openDatabase();
@@ -257,6 +435,95 @@ describe("owner-scoped workout repository", () => {
     await expect(
       repository.loadResume(viewer(fixture.otherUid), { sessionId: started.model.session.id }),
     ).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("maps malformed resource UUIDs to stable errors before typed database predicates", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    await expect(repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: "not-a-uuid",
+      dayId: fixture.dayId,
+      idempotencyKey: "bad-program-id",
+    })).rejects.toMatchObject({ code: "not_found" });
+    await expect(repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: "not-a-uuid",
+      idempotencyKey: "bad-day-id",
+    })).rejects.toMatchObject({ code: "not_found" });
+
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "valid-resource-session",
+    });
+    await expect(repository.loadResume(viewer(fixture.ownerUid), { sessionId: "not-a-uuid" }))
+      .rejects.toMatchObject({ code: "not_found" });
+    await expect(repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: "not-a-uuid",
+      idempotencyKey: "bad-operation-session",
+      kind: "abandon_session",
+      payload: { kind: "abandon_session", sessionId: "not-a-uuid", reason: "bad id" },
+    })).rejects.toMatchObject({ code: "not_found" });
+    await expect(repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "bad-exercise-id",
+      kind: "save_note",
+      expectedVersion: 1,
+      payload: { kind: "save_note", exerciseId: "not-a-uuid", note: "bad id" },
+    })).rejects.toMatchObject({ code: "not_found" });
+    await expect(repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "bad-set-snapshot-id",
+      kind: "save_set",
+      expectedVersion: 1,
+      payload: {
+        kind: "save_set",
+        setId: "not-a-uuid:1",
+        exerciseId: "not-a-uuid",
+        phase: "work",
+        measurement: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+      },
+    })).rejects.toMatchObject({ code: "not_found" });
+    const target = started.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "weight_reps")!;
+    await expect(repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "bad-replacement-id",
+      kind: "substitute_exercise",
+      expectedVersion: 1,
+      payload: {
+        kind: "substitute_exercise",
+        exerciseId: target.id,
+        replacement: { id: "not-a-uuid", name: "spoof", loggingKind: "weight_reps" },
+        reason: "bad id",
+      },
+    })).rejects.toMatchObject({ code: "not_found" });
+
+    const runnerOperation: RunnerOperation = {
+      idempotencyKey: "bad-runner-revision",
+      kind: "complete_session",
+      payload: { kind: "complete_session", sessionId: started.model.session.id },
+      ownerUid: fixture.ownerUid,
+      sessionId: started.model.session.id,
+      baseRevision: "not-a-uuid",
+      sequence: 1,
+      createdAt: Date.now(),
+      attempts: 0,
+      status: "pending",
+      persistedId: undefined,
+      errorCode: undefined,
+      errorMessage: undefined,
+      retryable: undefined,
+      failureKind: undefined,
+    };
+    await expect(repository.submitRunnerOperation(viewer(fixture.ownerUid), runnerOperation))
+      .resolves.toMatchObject({ status: "failed", code: "not_found" });
+    const malformedCursor = Buffer.from(JSON.stringify({
+      occurredAt: new Date().toISOString(),
+      sessionId: "not-a-uuid",
+    }), "utf8").toString("base64url");
+    await expect(repository.history(viewer(fixture.ownerUid), { cursor: malformedCursor }))
+      .rejects.toMatchObject({ code: "invalid_request" });
   });
 
   it("atomically starts one snapshot and resumes it for duplicate/concurrent calls", async () => {
@@ -407,6 +674,106 @@ describe("owner-scoped workout repository", () => {
     })).rejects.toBeInstanceOf(WorkoutRepositoryError);
   });
 
+  it("rejects fractional integer measurements before integer-column writes", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "fractional-measurements",
+    });
+    const durationExercise = started.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "duration")!;
+    const durationSet = durationExercise.sets[0]!;
+    await expect(repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "fractional-set-duration",
+      kind: "save_set",
+      expectedVersion: 1,
+      payload: {
+        kind: "save_set",
+        setId: durationSet.id,
+        exerciseId: durationExercise.id,
+        phase: durationSet.phase,
+        measurement: { kind: "duration", durationSeconds: 30.5 },
+      },
+    })).rejects.toMatchObject({ code: "invalid_request" });
+    await expect(repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "fractional-cardio-duration",
+      kind: "save_cardio",
+      payload: {
+        kind: "save_cardio",
+        mode: "walker",
+        cardio: {
+          mode: "walker",
+          durationSeconds: 1200.5,
+          distanceMeters: 1500.25,
+          paceSecondsPerKilometer: 800,
+          paceSource: "entered",
+          inclinePercent: 2.5,
+          notes: "fractional duration",
+        },
+      },
+    })).rejects.toMatchObject({ code: "invalid_request" });
+    await expect(repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "fractional-cardio-pace",
+      kind: "save_cardio",
+      payload: {
+        kind: "save_cardio",
+        mode: "walker",
+        cardio: {
+          mode: "walker",
+          durationSeconds: 1200,
+          distanceMeters: 1500.25,
+          paceSecondsPerKilometer: 800.5,
+          paceSource: "entered",
+          inclinePercent: 2.5,
+          notes: "fractional pace",
+        },
+      },
+    })).rejects.toMatchObject({ code: "invalid_request" });
+  });
+
+  it("does not return an unvalidated stored idempotency payload", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "corrupt-idempotency-start",
+    });
+    const target = started.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "weight_reps")!;
+    const set = target.sets[0]!;
+    const payload = {
+      kind: "save_set" as const,
+      setId: set.id,
+      exerciseId: target.id,
+      phase: set.phase,
+      measurement: { kind: "weight_reps" as const, weightKg: 20, repetitions: 8 },
+    };
+    await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "corrupt-idempotency",
+      kind: "save_set",
+      expectedVersion: 1,
+      payload,
+    });
+    await database
+      .update(idempotencyKeys)
+      .set({ resultPayload: { unexpected: true } })
+      .where(eq(idempotencyKeys.idempotencyKey, "corrupt-idempotency"));
+    await expect(repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "corrupt-idempotency",
+      kind: "save_set",
+      expectedVersion: 1,
+      payload,
+    })).rejects.toMatchObject({ code: "conflict" });
+  });
+
   it("validates runner operation identity without using client ownership selectors", async () => {
     const { database } = await openDatabase();
     const fixture = await createFixture(database);
@@ -549,6 +916,107 @@ describe("owner-scoped workout repository", () => {
     const history = await repository.history(viewer(fixture.ownerUid));
     expect(history.sessions).toHaveLength(1);
     expect(history.sessions[0]?.cardioLog?.cardio.paceSource).toBe("entered");
+  });
+
+  it("uses only one latest completed outcome per effective meaning without hybrid positions", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    const seed = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "previous-bound-seed",
+    });
+    const target = seed.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "weight_reps")!;
+    await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: seed.model.session.id,
+      idempotencyKey: "previous-bound-seed-abandon",
+      kind: "abandon_session",
+      payload: { kind: "abandon_session", sessionId: seed.model.session.id, reason: "fixture history" },
+      now: new Date("2026-08-25T00:30:00.000Z"),
+    });
+    await insertCompletedHistoricalOutcome(database, fixture, {
+      sourceSnapshotId: target.id,
+      historicalSnapshotId: randomUUID(),
+      setCount: 3,
+      setPositions: [1, 2, 3],
+      weightKg: 30,
+      repetitions: 9,
+      completedAt: new Date("2026-08-25T01:00:00.000Z"),
+    });
+    await insertCompletedHistoricalOutcome(database, fixture, {
+      sourceSnapshotId: target.id,
+      historicalSnapshotId: randomUUID(),
+      setCount: 2,
+      setPositions: [1, 2],
+      weightKg: 40,
+      repetitions: 8,
+      completedAt: new Date("2026-08-25T02:00:00.000Z"),
+    });
+    const current = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "previous-bound-current",
+      now: new Date("2026-08-25T03:00:00.000Z"),
+    });
+    const currentTarget = current.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "weight_reps")!;
+    expect(currentTarget.sets.map(({ previous }) => previous)).toEqual([
+      { kind: "weight_reps", weightKg: 40, repetitions: 8 },
+      { kind: "weight_reps", weightKg: 40, repetitions: 8 },
+      undefined,
+    ]);
+  });
+
+  it("follows substituted history by effective identity without attributing it to the original", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    const seed = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "previous-substitution-seed",
+    });
+    const target = seed.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "weight_reps")!;
+    await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: seed.model.session.id,
+      idempotencyKey: "previous-substitution-seed-abandon",
+      kind: "abandon_session",
+      payload: { kind: "abandon_session", sessionId: seed.model.session.id, reason: "fixture history" },
+    });
+    await insertCompletedHistoricalOutcome(database, fixture, {
+      sourceSnapshotId: target.id,
+      historicalSnapshotId: randomUUID(),
+      setCount: 1,
+      setPositions: [1],
+      effectiveCustomExerciseId: fixture.compatibleCustomId,
+      weightKg: 55,
+      repetitions: 5,
+      completedAt: new Date("2026-08-25T02:00:00.000Z"),
+    });
+    const current = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "previous-substitution-current",
+    });
+    const currentTarget = current.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "weight_reps")!;
+    expect(currentTarget.sets.every(({ previous }) => previous === undefined)).toBe(true);
+    await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: current.model.session.id,
+      idempotencyKey: "previous-substitution-current-abandon",
+      kind: "abandon_session",
+      payload: { kind: "abandon_session", sessionId: current.model.session.id, reason: "fixture history" },
+    });
+    const replacementProgram = await insertCustomProgramForHistory(database, fixture);
+    const replacement = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: replacementProgram.programId,
+      dayId: replacementProgram.dayId,
+      idempotencyKey: "previous-substitution-replacement",
+    });
+    expect(replacement.model.snapshot.exercises[0]?.sets[0]?.previous).toEqual({
+      kind: "weight_reps",
+      weightKg: 55,
+      repetitions: 5,
+    });
   });
 
   it("bounds history pages and advances with an opaque cursor", async () => {

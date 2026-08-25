@@ -67,6 +67,14 @@ async function openDatabase() {
   return database;
 }
 
+async function openInitialDatabase() {
+  const database = new PGlite();
+  await database.waitReady;
+  await database.exec(await readFile(migrationUrl, "utf8"));
+  openDatabases.push(database);
+  return database;
+}
+
 async function seedOwner(database: PGlite, firebaseUid: string) {
   await database.exec(`
     INSERT INTO user_profiles (firebase_uid, display_name)
@@ -1592,6 +1600,35 @@ describe("initial database migration", () => {
         );
       `),
     ).rejects.toThrow(/cardio_logs_one_per_session_unique|cardio_logs_pace_source_shape|check constraint/i);
+  });
+
+  it("upgrades a populated 0000 cardio pace row by backfilling its source before constraints", async () => {
+    const database = await openInitialDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+    await database.exec(`
+      INSERT INTO cardio_logs (
+        id, owner_firebase_uid, session_id, mode, duration_seconds,
+        distance_m, pace_seconds_per_km, client_idempotency_key
+      ) VALUES (
+        '${ids.aliceCardioLog}', 'alice', '${ids.aliceSession}', 'runner',
+        600, 1000, 600, 'legacy-cardio'
+      );
+    `);
+    await database.exec(await readFile(upgradeMigrationUrl, "utf8"));
+    await expect(
+      database.query<{ pace_source: string }>(
+        `SELECT pace_source FROM cardio_logs WHERE id = '${ids.aliceCardioLog}';`,
+      ),
+    ).resolves.toMatchObject({ rows: [{ pace_source: "entered" }] });
+    await expect(
+      database.exec(`
+        UPDATE cardio_logs
+        SET pace_source = null
+        WHERE id = '${ids.aliceCardioLog}';
+      `),
+    ).rejects.toThrow(/cardio_logs_pace_source_shape|check constraint|violates/i);
   });
 
   it("keeps Drizzle configuration and the live connector import-safe without credentials", async () => {

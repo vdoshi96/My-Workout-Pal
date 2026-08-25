@@ -350,6 +350,10 @@ const MAX_NOTE_LENGTH = 2_000;
 const MAX_REASON_LENGTH = 500;
 const DEFAULT_HISTORY_LIMIT = 20;
 const MAX_HISTORY_LIMIT = 100;
+/** Previous values are selected per requested meaning, with a bounded log read. */
+const MAX_PREVIOUS_IDENTITIES = 100;
+const MAX_PREVIOUS_SET_ROWS = 100;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -364,6 +368,19 @@ function nonblank(value: unknown, field: string, maxLength = 180): string {
     throw new WorkoutRepositoryError("invalid_request", `${field} is invalid.`);
   }
   return trimmed;
+}
+
+function resourceUuid(value: unknown, field: string): string {
+  const candidate = typeof value === "string" ? value.trim() : "";
+  if (!UUID_PATTERN.test(candidate)) notFound(`The requested ${field} was not found.`);
+  return candidate;
+}
+
+function cursorUuid(value: unknown): string {
+  if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
+    throw new WorkoutRepositoryError("invalid_request", "history cursor is invalid.");
+  }
+  return value;
 }
 
 function optionalText(value: unknown, field: string, maxLength: number): string | undefined {
@@ -652,11 +669,11 @@ function assertMeasurementForSnapshot(
   if (phase === "work" && parsed.isWarmup === true) {
     throw new WorkoutRepositoryError("invalid_request", "Work measurements cannot be marked as warm-up.");
   }
-  if (parsed.kind === "duration" && parsed.durationSeconds <= 0) {
-    throw new WorkoutRepositoryError("invalid_request", "Duration must be positive.");
+  if (parsed.kind === "duration" && (!Number.isInteger(parsed.durationSeconds) || parsed.durationSeconds <= 0)) {
+    throw new WorkoutRepositoryError("invalid_request", "Duration must be a positive integer.");
   }
-  if (parsed.kind === "distance_duration" && (parsed.distanceMeters <= 0 || parsed.durationSeconds <= 0)) {
-    throw new WorkoutRepositoryError("invalid_request", "Distance and duration must be positive.");
+  if (parsed.kind === "distance_duration" && (parsed.distanceMeters <= 0 || !Number.isInteger(parsed.durationSeconds) || parsed.durationSeconds <= 0)) {
+    throw new WorkoutRepositoryError("invalid_request", "Distance must be positive and duration must be a positive integer.");
   }
   return parsed;
 }
@@ -669,14 +686,14 @@ function assertCardio(
   if (cardio.mode !== mode || !options.some((option) => option.mode === mode)) {
     throw new WorkoutRepositoryError("invalid_request", "The cardio mode is not available for this workout.");
   }
-  if (!Number.isFinite(cardio.durationSeconds) || cardio.durationSeconds <= 0) {
-    throw new WorkoutRepositoryError("invalid_request", "Cardio duration must be positive.");
+  if (!Number.isInteger(cardio.durationSeconds) || cardio.durationSeconds <= 0) {
+    throw new WorkoutRepositoryError("invalid_request", "Cardio duration must be a positive integer.");
   }
   if (cardio.distanceMeters !== undefined && (!Number.isFinite(cardio.distanceMeters) || cardio.distanceMeters <= 0)) {
     throw new WorkoutRepositoryError("invalid_request", "Cardio distance must be positive.");
   }
-  if (cardio.paceSecondsPerKilometer !== undefined && (!Number.isFinite(cardio.paceSecondsPerKilometer) || cardio.paceSecondsPerKilometer <= 0)) {
-    throw new WorkoutRepositoryError("invalid_request", "Cardio pace must be positive.");
+  if (cardio.paceSecondsPerKilometer !== undefined && (!Number.isInteger(cardio.paceSecondsPerKilometer) || cardio.paceSecondsPerKilometer <= 0)) {
+    throw new WorkoutRepositoryError("invalid_request", "Cardio pace must be a positive integer.");
   }
   if (cardio.paceSource !== undefined && cardio.paceSource !== "entered" && cardio.paceSource !== "derived") {
     throw new WorkoutRepositoryError("invalid_request", "Cardio pace source is invalid.");
@@ -909,6 +926,15 @@ function exerciseIdentity(catalogExerciseId: string | null, customExerciseId: st
   throw new WorkoutRepositoryError("conflict", "The published workout exercise identity is invalid.");
 }
 
+function previousMeaningIdentity(
+  catalogExerciseId: string | null,
+  customExerciseId: string | null,
+  setKind: "warmup" | "work",
+  measurementKind: MeasurementKind,
+): string {
+  return `${exerciseIdentity(catalogExerciseId, customExerciseId)}:${setKind}:${measurementKind}`;
+}
+
 function availableEquipmentFromSnapshot(snapshot: SnapshotRow): readonly EquipmentId[] {
   const value = snapshot.prescriptionSnapshot["availableEquipment"];
   if (!Array.isArray(value)) {
@@ -987,7 +1013,7 @@ function createSnapshotRows(
           cardioOptions,
           equipmentProfileKind,
           availableEquipment,
-          previousValuesByExercise.get(exerciseIdentity(row.catalogExerciseId, row.customExerciseId)) ?? new Map(),
+          previousValuesByExercise.get(previousMeaningIdentity(row.catalogExerciseId, row.customExerciseId, row.setKind, row.measurementKind)) ?? new Map(),
         ),
       };
     });
@@ -1209,61 +1235,94 @@ async function selectPreviousValues(
   ownerUid: string,
   prescriptions: readonly PrescriptionRow[],
 ): Promise<Map<string, Map<number, WorkoutMeasurement>>> {
-  const requested = new Set(
-    prescriptions.map(({ catalogExerciseId, customExerciseId }) => exerciseIdentity(catalogExerciseId, customExerciseId)),
-  );
-  if (requested.size === 0) return new Map();
-  const rows = await tx
-    .select({
-      snapshotCatalogExerciseId: workoutExerciseSnapshots.catalogExerciseId,
-      snapshotCustomExerciseId: workoutExerciseSnapshots.customExerciseId,
-      effectiveCatalogExerciseId: workoutExerciseStates.effectiveCatalogExerciseId,
-      effectiveCustomExerciseId: workoutExerciseStates.effectiveCustomExerciseId,
-      setPosition: setLogs.setPosition,
-      measurementKind: setLogs.measurementKind,
-      setKind: setLogs.setKind,
-      weightKg: setLogs.weightKg,
-      addedWeightKg: setLogs.addedWeightKg,
-      repetitions: setLogs.repetitions,
-      durationSeconds: setLogs.durationSeconds,
-      distanceM: setLogs.distanceM,
-      noteSnapshot: setLogs.noteSnapshot,
-    })
-    .from(workoutSessions)
-    .innerJoin(workoutExerciseSnapshots, and(
-      eq(workoutExerciseSnapshots.ownerFirebaseUid, workoutSessions.ownerFirebaseUid),
-      eq(workoutExerciseSnapshots.sessionId, workoutSessions.id),
-    ))
-    .innerJoin(workoutExerciseStates, and(
-      eq(workoutExerciseStates.ownerFirebaseUid, workoutExerciseSnapshots.ownerFirebaseUid),
-      eq(workoutExerciseStates.sessionId, workoutExerciseSnapshots.sessionId),
-      eq(workoutExerciseStates.snapshotId, workoutExerciseSnapshots.id),
-    ))
-    .innerJoin(setLogs, and(
-      eq(setLogs.ownerFirebaseUid, workoutExerciseSnapshots.ownerFirebaseUid),
-      eq(setLogs.sessionId, workoutExerciseSnapshots.sessionId),
-      eq(setLogs.snapshotId, workoutExerciseSnapshots.id),
-    ))
-    .where(and(
-      eq(workoutSessions.ownerFirebaseUid, ownerUid),
-      eq(workoutSessions.state, "completed"),
-    ))
-    .orderBy(desc(workoutSessions.completedAt), desc(workoutSessions.createdAt), desc(workoutSessions.id), desc(setLogs.recordedAt));
   const result = new Map<string, Map<number, WorkoutMeasurement>>();
-  for (const row of rows) {
-    const keys = [
-      row.snapshotCatalogExerciseId ? exerciseIdentity(row.snapshotCatalogExerciseId, null) : undefined,
-      row.snapshotCustomExerciseId ? exerciseIdentity(null, row.snapshotCustomExerciseId) : undefined,
-      row.effectiveCatalogExerciseId ? exerciseIdentity(row.effectiveCatalogExerciseId, null) : undefined,
-      row.effectiveCustomExerciseId ? exerciseIdentity(null, row.effectiveCustomExerciseId) : undefined,
-    ].filter((key): key is string => key !== undefined && requested.has(key));
-    if (keys.length === 0) continue;
-    const measurement = decodeMeasurement(row);
-    for (const key of keys) {
-      const values = result.get(key) ?? new Map<number, WorkoutMeasurement>();
-      if (!values.has(row.setPosition)) values.set(row.setPosition, measurement);
-      result.set(key, values);
+  const requested = new Map<string, PrescriptionRow>();
+  for (const prescription of prescriptions) {
+    const key = previousMeaningIdentity(
+      prescription.catalogExerciseId,
+      prescription.customExerciseId,
+      prescription.setKind,
+      prescription.measurementKind,
+    );
+    requested.set(key, prescription);
+  }
+  if (requested.size === 0) return result;
+  if (requested.size > MAX_PREVIOUS_IDENTITIES) {
+    throw new WorkoutRepositoryError("not_ready", "This workout has too many exercise meanings to select previous values safely.");
+  }
+
+  // Each meaning gets one latest completed outcome. The log query is scoped to
+  // that exact session, so a shorter latest workout can never be backfilled by
+  // positions from an older session.
+  for (const [key, prescription] of requested) {
+    const effectiveIdentity = prescription.catalogExerciseId
+      ? eq(workoutExerciseStates.effectiveCatalogExerciseId, prescription.catalogExerciseId)
+      : eq(workoutExerciseStates.effectiveCustomExerciseId, prescription.customExerciseId!);
+    const latest = await tx
+      .select({ sessionId: workoutSessions.id })
+      .from(workoutSessions)
+      .innerJoin(workoutExerciseSnapshots, and(
+        eq(workoutExerciseSnapshots.ownerFirebaseUid, workoutSessions.ownerFirebaseUid),
+        eq(workoutExerciseSnapshots.sessionId, workoutSessions.id),
+      ))
+      .innerJoin(workoutExerciseStates, and(
+        eq(workoutExerciseStates.ownerFirebaseUid, workoutExerciseSnapshots.ownerFirebaseUid),
+        eq(workoutExerciseStates.sessionId, workoutExerciseSnapshots.sessionId),
+        eq(workoutExerciseStates.snapshotId, workoutExerciseSnapshots.id),
+      ))
+      .where(and(
+        eq(workoutSessions.ownerFirebaseUid, ownerUid),
+        eq(workoutSessions.state, "completed"),
+        eq(workoutExerciseStates.status, "completed"),
+        effectiveIdentity,
+        eq(workoutExerciseStates.effectiveLoggingKind, prescription.measurementKind),
+        sql`${workoutExerciseSnapshots.prescriptionSnapshot}->>'setKind' = ${prescription.setKind}`,
+      ))
+      .orderBy(desc(workoutSessions.completedAt), desc(workoutSessions.createdAt), desc(workoutSessions.id))
+      .limit(1);
+    const sessionId = latest[0]?.sessionId;
+    if (!sessionId) continue;
+
+    const rows = await tx
+      .select({
+        setPosition: setLogs.setPosition,
+        measurementKind: setLogs.measurementKind,
+        setKind: setLogs.setKind,
+        weightKg: setLogs.weightKg,
+        addedWeightKg: setLogs.addedWeightKg,
+        repetitions: setLogs.repetitions,
+        durationSeconds: setLogs.durationSeconds,
+        distanceM: setLogs.distanceM,
+        noteSnapshot: setLogs.noteSnapshot,
+      })
+      .from(setLogs)
+      .innerJoin(workoutExerciseSnapshots, and(
+        eq(workoutExerciseSnapshots.ownerFirebaseUid, setLogs.ownerFirebaseUid),
+        eq(workoutExerciseSnapshots.sessionId, setLogs.sessionId),
+        eq(workoutExerciseSnapshots.id, setLogs.snapshotId),
+      ))
+      .innerJoin(workoutExerciseStates, and(
+        eq(workoutExerciseStates.ownerFirebaseUid, setLogs.ownerFirebaseUid),
+        eq(workoutExerciseStates.sessionId, setLogs.sessionId),
+        eq(workoutExerciseStates.snapshotId, setLogs.snapshotId),
+      ))
+      .where(and(
+        eq(setLogs.ownerFirebaseUid, ownerUid),
+        eq(setLogs.sessionId, sessionId),
+        eq(setLogs.setKind, prescription.setKind),
+        eq(setLogs.measurementKind, prescription.measurementKind),
+        eq(workoutExerciseStates.status, "completed"),
+        effectiveIdentity,
+        eq(workoutExerciseStates.effectiveLoggingKind, prescription.measurementKind),
+      ))
+      .orderBy(asc(setLogs.setPosition), desc(setLogs.recordedAt))
+      .limit(MAX_PREVIOUS_SET_ROWS);
+    if (rows.length === 0) continue;
+    const values = new Map<number, WorkoutMeasurement>();
+    for (const row of rows) {
+      if (!values.has(row.setPosition)) values.set(row.setPosition, decodeMeasurement(row));
     }
+    result.set(key, values);
   }
   return result;
 }
@@ -1340,8 +1399,32 @@ async function existingIdempotency(
   if (row.operation !== input.kind || row.requestHash !== hash || row.sessionId !== input.sessionId) {
     throw new WorkoutRepositoryError("conflict", "The idempotency key was already used for another request.");
   }
-  const result = jsonObject(row.resultPayload, "idempotency result") as unknown as WorkoutOperationResult;
-  return { ...result, status: "duplicate" };
+  let value: Record<string, unknown>;
+  try {
+    value = jsonObject(row.resultPayload, "idempotency result");
+  } catch {
+    throw new WorkoutRepositoryError("conflict", "The stored idempotency result is malformed.");
+  }
+  const storedStatus = value["status"];
+  const storedSessionState = value["sessionState"];
+  const storedPersistedId = value["persistedId"];
+  const storedExerciseVersion = value["exerciseVersion"];
+  if (
+    Object.keys(value).some((key) => !["status", "persistedId", "sessionState", "exerciseVersion"].includes(key)) ||
+    storedStatus !== "saved"
+    || typeof storedSessionState !== "string"
+    || !(["draft", "active", "completing", "completed", "abandoned"] as readonly string[]).includes(storedSessionState)
+    || (storedPersistedId !== undefined && (typeof storedPersistedId !== "string" || storedPersistedId.trim().length === 0 || storedPersistedId.length > 180))
+    || (storedExerciseVersion !== undefined && (typeof storedExerciseVersion !== "number" || !Number.isInteger(storedExerciseVersion) || storedExerciseVersion < 1))
+  ) {
+    throw new WorkoutRepositoryError("conflict", "The stored idempotency result is malformed.");
+  }
+  return {
+    status: "duplicate",
+    persistedId: storedPersistedId,
+    sessionState: storedSessionState as WorkoutSessionState,
+    exerciseVersion: storedExerciseVersion as number | undefined,
+  };
 }
 
 async function insertIdempotency(
@@ -1396,6 +1479,32 @@ function operationPayload(input: SubmitWorkoutOperationInput): RunnerOperationPa
   return input.payload;
 }
 
+function validateOperationResourceIds(payload: RunnerOperationPayload): void {
+  switch (payload.kind) {
+    case "save_set":
+      resourceUuid(payload.exerciseId, "exerciseId");
+      parseSetId(stringProperty(payload.setId, "setId"));
+      return;
+    case "save_note":
+    case "skip_exercise":
+    case "complete_exercise":
+      resourceUuid(payload.exerciseId, "exerciseId");
+      return;
+    case "substitute_exercise": {
+      resourceUuid(payload.exerciseId, "exerciseId");
+      const replacement = jsonObject(payload.replacement, "replacement");
+      resourceUuid(replacement["id"], "replacement.id");
+      return;
+    }
+    case "complete_session":
+    case "abandon_session":
+      resourceUuid(payload.sessionId, "sessionId");
+      return;
+    case "save_cardio":
+      return;
+  }
+}
+
 function stringProperty(value: unknown, field: string, maxLength = 180): string {
   return nonblank(value, field, maxLength);
 }
@@ -1403,13 +1512,14 @@ function stringProperty(value: unknown, field: string, maxLength = 180): string 
 function parseSetId(setId: string): Readonly<{ snapshotId: string; position: number }> {
   const separator = setId.lastIndexOf(":");
   if (separator <= 0) throw new WorkoutRepositoryError("invalid_request", "setId is invalid.");
-  const snapshotId = setId.slice(0, separator);
+  const snapshotId = resourceUuid(setId.slice(0, separator), "snapshotId");
   const position = Number(setId.slice(separator + 1));
   if (!Number.isInteger(position) || position < 1) throw new WorkoutRepositoryError("invalid_request", "setId is invalid.");
   return { snapshotId, position };
 }
 
 async function selectSnapshotForOperation(tx: TxDatabase, ownerUid: string, sessionId: string, snapshotId: string): Promise<SnapshotRow> {
+  const validatedSnapshotId = resourceUuid(snapshotId, "snapshotId");
   const rows = await tx
     .select({
       id: workoutExerciseSnapshots.id,
@@ -1432,7 +1542,7 @@ async function selectSnapshotForOperation(tx: TxDatabase, ownerUid: string, sess
       prescriptionSnapshot: workoutExerciseSnapshots.prescriptionSnapshot,
     })
     .from(workoutExerciseSnapshots)
-    .where(and(eq(workoutExerciseSnapshots.ownerFirebaseUid, ownerUid), eq(workoutExerciseSnapshots.sessionId, sessionId), eq(workoutExerciseSnapshots.id, snapshotId)))
+    .where(and(eq(workoutExerciseSnapshots.ownerFirebaseUid, ownerUid), eq(workoutExerciseSnapshots.sessionId, sessionId), eq(workoutExerciseSnapshots.id, validatedSnapshotId)))
     .limit(1);
   const row = rows[0] as SnapshotRow | undefined;
   if (!row) notFound();
@@ -1440,6 +1550,7 @@ async function selectSnapshotForOperation(tx: TxDatabase, ownerUid: string, sess
 }
 
 async function selectStateForOperation(tx: TxDatabase, ownerUid: string, sessionId: string, snapshotId: string): Promise<ExerciseStateRow> {
+  const validatedSnapshotId = resourceUuid(snapshotId, "snapshotId");
   const rows = await tx
     .select({
       snapshotId: workoutExerciseStates.snapshotId,
@@ -1454,7 +1565,7 @@ async function selectStateForOperation(tx: TxDatabase, ownerUid: string, session
       version: workoutExerciseStates.version,
     })
     .from(workoutExerciseStates)
-    .where(and(eq(workoutExerciseStates.ownerFirebaseUid, ownerUid), eq(workoutExerciseStates.sessionId, sessionId), eq(workoutExerciseStates.snapshotId, snapshotId)))
+    .where(and(eq(workoutExerciseStates.ownerFirebaseUid, ownerUid), eq(workoutExerciseStates.sessionId, sessionId), eq(workoutExerciseStates.snapshotId, validatedSnapshotId)))
     .limit(1);
   const row = rows[0] as ExerciseStateRow | undefined;
   if (!row) notFound();
@@ -1554,7 +1665,7 @@ async function applyOperation(
   if (input.kind === "save_set") {
     const setPayload = payload as Extract<RunnerOperationPayload, { kind: "save_set" }>;
     const setId = stringProperty(setPayload.setId, "setId");
-    const exerciseId = stringProperty(setPayload.exerciseId, "exerciseId");
+    const exerciseId = resourceUuid(setPayload.exerciseId, "exerciseId");
     const phase = setPayload.phase;
     if (phase !== "warmup" && phase !== "work") throw new WorkoutRepositoryError("invalid_request", "phase is invalid.");
     const parsedSet = parseSetId(setId);
@@ -1621,7 +1732,7 @@ async function applyOperation(
 
   if (input.kind === "save_note") {
     const notePayload = payload as Extract<RunnerOperationPayload, { kind: "save_note" }>;
-    const exerciseId = stringProperty(notePayload.exerciseId, "exerciseId");
+    const exerciseId = resourceUuid(notePayload.exerciseId, "exerciseId");
     const state = await selectStateForOperation(tx, ownerUid, session.id, exerciseId);
     assertStateVersion(input, state.version);
     assertExercisePending(state);
@@ -1634,7 +1745,7 @@ async function applyOperation(
 
   if (input.kind === "skip_exercise") {
     const skipPayload = payload as Extract<RunnerOperationPayload, { kind: "skip_exercise" }>;
-    const exerciseId = stringProperty(skipPayload.exerciseId, "exerciseId");
+    const exerciseId = resourceUuid(skipPayload.exerciseId, "exerciseId");
     const state = await selectStateForOperation(tx, ownerUid, session.id, exerciseId);
     assertStateVersion(input, state.version);
     assertExercisePending(state);
@@ -1648,7 +1759,7 @@ async function applyOperation(
 
   if (input.kind === "substitute_exercise") {
     const substitutePayload = payload as Extract<RunnerOperationPayload, { kind: "substitute_exercise" }>;
-    const exerciseId = stringProperty(substitutePayload.exerciseId, "exerciseId");
+    const exerciseId = resourceUuid(substitutePayload.exerciseId, "exerciseId");
     const state = await selectStateForOperation(tx, ownerUid, session.id, exerciseId);
     const snapshot = await selectSnapshotForOperation(tx, ownerUid, session.id, exerciseId);
     assertStateVersion(input, state.version);
@@ -1656,7 +1767,7 @@ async function applyOperation(
     const logged = await tx.select({ id: setLogs.id }).from(setLogs).where(and(eq(setLogs.ownerFirebaseUid, ownerUid), eq(setLogs.sessionId, session.id), eq(setLogs.snapshotId, snapshot.id))).limit(1);
     if (logged[0]) throw new WorkoutRepositoryError("conflict", "An exercise cannot be substituted after a set is logged.");
     const replacement = jsonObject(substitutePayload.replacement, "replacement") as unknown as ExerciseSubstitution;
-    const replacementId = stringProperty(replacement.id, "replacement.id");
+    const replacementId = resourceUuid(replacement.id, "replacement.id");
     let serverName: string | null = null;
     let serverLoggingKind: MeasurementKind | null = null;
     let catalogId: string | null = null;
@@ -1706,7 +1817,7 @@ async function applyOperation(
 
   if (input.kind === "complete_exercise") {
     const completePayload = payload as Extract<RunnerOperationPayload, { kind: "complete_exercise" }>;
-    const exerciseId = stringProperty(completePayload.exerciseId, "exerciseId");
+    const exerciseId = resourceUuid(completePayload.exerciseId, "exerciseId");
     const state = await selectStateForOperation(tx, ownerUid, session.id, exerciseId);
     assertStateVersion(input, state.version);
     assertExercisePending(state);
@@ -1725,7 +1836,7 @@ async function applyOperation(
 
   if (input.kind === "complete_session") {
     const completePayload = payload as Extract<RunnerOperationPayload, { kind: "complete_session" }>;
-    if (stringProperty(completePayload.sessionId, "sessionId") !== session.id) notFound();
+    if (resourceUuid(completePayload.sessionId, "sessionId") !== session.id) notFound();
     const snapshots = await selectSnapshots(tx, ownerUid, session.id);
     const states = await selectStates(tx, ownerUid, session.id);
     if (states.some((state) => state.status === "pending")) throw new WorkoutRepositoryError("not_ready", "Complete or skip every exercise before completing the workout.");
@@ -1753,7 +1864,7 @@ async function applyOperation(
 
   if (input.kind === "abandon_session") {
     const abandonPayload = payload as Extract<RunnerOperationPayload, { kind: "abandon_session" }>;
-    if (stringProperty(abandonPayload.sessionId, "sessionId") !== session.id) notFound();
+    if (resourceUuid(abandonPayload.sessionId, "sessionId") !== session.id) notFound();
     operationReason(abandonPayload.reason);
     const update = await tx.update(workoutSessions).set({ state: "abandoned", abandonedAt: now }).where(and(eq(workoutSessions.ownerFirebaseUid, ownerUid), eq(workoutSessions.id, session.id), inArray(workoutSessions.state, RESUMABLE_STATES))).returning({ id: workoutSessions.id });
     if (!update[0]) throw new WorkoutRepositoryError("conflict", "The workout changed before it could be abandoned.", { retryable: true });
@@ -1783,8 +1894,8 @@ export type WorkoutRepository = Readonly<{
 
 export async function startOrResumeWorkout(database: Database, viewer: ViewerContext | null | undefined, input: StartWorkoutInput): Promise<StartWorkoutResult> {
   const current = requireMutationViewer(viewer);
-  const programId = nonblank(input.programId, "programId");
-  const dayId = nonblank(input.dayId, "dayId");
+  const programId = resourceUuid(input.programId, "programId");
+  const dayId = resourceUuid(input.dayId, "dayId");
   const idempotencyKey = nonblank(input.idempotencyKey, "idempotencyKey");
   const now = dateOrNow(input.now);
   return database.transaction(async (transaction) => {
@@ -1870,7 +1981,7 @@ export async function startOrResumeWorkout(database: Database, viewer: ViewerCon
 
 export async function loadResumeWorkout(database: Database, viewer: ViewerContext | null | undefined, input: LoadResumeInput): Promise<WorkoutResumeReadModel> {
   const current = requireViewer(viewer);
-  const sessionId = nonblank(input.sessionId, "sessionId");
+  const sessionId = resourceUuid(input.sessionId, "sessionId");
   return database.transaction(async (transaction) => {
     const tx = transaction as unknown as Database;
     const session = await selectSession(tx, current.uid, sessionId);
@@ -1881,10 +1992,11 @@ export async function loadResumeWorkout(database: Database, viewer: ViewerContex
 
 async function submitWorkoutOperationInternal(database: Database, viewer: ViewerContext | null | undefined, input: InternalSubmitWorkoutOperationInput): Promise<WorkoutOperationResult> {
   const current = requireMutationViewer(viewer);
-  const sessionId = nonblank(input.sessionId, "sessionId");
+  const sessionId = resourceUuid(input.sessionId, "sessionId");
   const idempotencyKey = nonblank(input.idempotencyKey, "idempotencyKey");
   const kind = input.kind;
   const payload = operationPayload(input);
+  validateOperationResourceIds(payload);
   const hash = requestHash({ sessionId, kind, payload, expectedVersion: input.expectedVersion });
   return database.transaction(async (transaction) => {
     const tx = transaction as unknown as Database;
@@ -1912,16 +2024,17 @@ export async function submitRunnerOperation(database: Database, viewer: ViewerCo
     if (operation.ownerUid !== current.uid) {
       throw new WorkoutRepositoryError("conflict", "The runner operation identity does not match the signed-in viewer.");
     }
-    const baseRevision = nonblank(operation.baseRevision, "baseRevision");
+    const baseRevision = resourceUuid(operation.baseRevision, "baseRevision");
+    const sessionId = resourceUuid(operation.sessionId, "sessionId");
     await database.transaction(async (transaction) => {
       const tx = transaction as unknown as Database;
-      const session = await selectSession(tx, current.uid, nonblank(operation.sessionId, "sessionId"));
+      const session = await selectSession(tx, current.uid, sessionId);
       if (session.programRevisionId !== baseRevision) {
         throw new WorkoutRepositoryError("conflict", "The runner operation targets an outdated workout revision.");
       }
     });
     const result = await submitWorkoutOperationInternal(database, viewer, {
-      sessionId: operation.sessionId,
+      sessionId,
       idempotencyKey: operation.idempotencyKey,
       kind: operation.kind,
       payload: operation.payload,
@@ -1970,10 +2083,10 @@ function decodeHistoryCursor(value: string | undefined): HistoryCursor | undefin
       throw new Error("invalid cursor");
     }
     const occurredAt = new Date(parsed["occurredAt"]);
-    if (Number.isNaN(occurredAt.getTime()) || parsed["sessionId"].trim().length === 0) {
+    if (Number.isNaN(occurredAt.getTime())) {
       throw new Error("invalid cursor");
     }
-    return { occurredAt, sessionId: parsed["sessionId"] };
+    return { occurredAt, sessionId: cursorUuid(parsed["sessionId"]) };
   } catch {
     throw new WorkoutRepositoryError("invalid_request", "history cursor is invalid.");
   }
