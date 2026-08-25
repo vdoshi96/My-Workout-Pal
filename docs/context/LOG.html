@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b7df59df8e321ca4bc8f76ae31f09e7fb84a1897db197244cbc317957befeaa1">
+  <meta name="source-sha256" content="88527876ec296ed05f98d0fe8a2b0a0f7741f01cce12b1c3da283fdd35c1a9d1">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -36,6 +36,7 @@
 <li>Kept the prior published revision unchanged, preserved target metadata only when a source prescription retains the same exercise identity, and generated all new revision child identifiers independently.</li>
 <li>Verified idempotent replay, changed-payload key conflict, stale base, unverified mutation, cross-user custom exercise, incompatible equipment, graph immutability, and rollback with 23 focused tests plus TypeScript and scoped lint.</li>
 <li>Added the private <code>POST /api/app/program/publish</code> boundary with same-origin CSRF, bounded strict JSON, a server-derived viewer, private no-store output, and route-order tests that reject cross-origin or unauthenticated requests before body or storage access.</li>
+<li>Added the protected program editor with phone-first day navigation, labeled prescription/cardio fields, explicit reorder controls, dirty-navigation protection, validation focus, retry-stable publication, stale-conflict copy, and a clear handoff to the separate equipment substitution confirmation.</li>
 </ul>
 <h2>2026-08-25: Conflict-safe settings and sign-out</h2>
 <ul>

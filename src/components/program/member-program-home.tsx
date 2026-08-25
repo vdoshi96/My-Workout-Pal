@@ -107,6 +107,9 @@ export function MemberProgramHome({
           </p>
         </div>
         <div className="member-program-actions">
+          <Link className="secondary-action" href="/app/program/edit">
+            <Icon name="settings" /> Edit program
+          </Link>
           <Link className="secondary-action" href="/app/library/custom">
             <Icon name="library" /> Private exercises
           </Link>
@@ -135,7 +138,7 @@ export function MemberProgramHome({
         </ol>
       </section>
 
-      <section className="member-equipment" aria-labelledby="member-equipment-title">
+      <section className="member-equipment" id="equipment-profile" aria-labelledby="member-equipment-title">
         <header>
           <span className="eyebrow">Program settings</span>
           <h2 id="member-equipment-title">Equipment profile</h2>
