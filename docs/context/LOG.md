@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Owner-scoped custom exercises
+
+- Retained missing-module failures before adding the custom-exercise domain and repository boundaries.
+- Normalized bounded names, instructions, aliases, equipment, logging kinds, and zero-to-two YouTube URLs into durable video IDs without fetching user-provided links.
+- Added server-only create, read, list, update, and delete operations that derive ownership from `ViewerContext`, deny unverified permanent changes, reserve owner-scoped idempotency keys transactionally, hide foreign IDs as not found, and use optimistic update timestamps.
+- Required a semantic clone before changing the logging kind of an exercise already referenced by a program or workout, and blocked deletion while any persisted program, snapshot, record, or summary still references it.
+- Retained 14 focused fail-then-pass domain and PGlite repository tests across normalization, invalid input, replay, request-hash conflict, verification, IDOR, semantic history, stale update, and deletion.
+
 ## 2026-08-25: Transactional Neon bootstrap
 
 - Wrote the operator plan before implementation, then retained the focused missing-module failure before adding the seeder.

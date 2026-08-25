@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="187fb014f4fd3a53d056772469cba50b9bb2396e79efb63e0ab0660d2adffcee">
+  <meta name="source-sha256" content="a464bc80b2536d3156af41d4a2dcc0ede588579ae43937b95eed9dc625c1e6b3">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Owner-scoped custom exercises</h2>
+<ul>
+<li>Retained missing-module failures before adding the custom-exercise domain and repository boundaries.</li>
+<li>Normalized bounded names, instructions, aliases, equipment, logging kinds, and zero-to-two YouTube URLs into durable video IDs without fetching user-provided links.</li>
+<li>Added server-only create, read, list, update, and delete operations that derive ownership from <code>ViewerContext</code>, deny unverified permanent changes, reserve owner-scoped idempotency keys transactionally, hide foreign IDs as not found, and use optimistic update timestamps.</li>
+<li>Required a semantic clone before changing the logging kind of an exercise already referenced by a program or workout, and blocked deletion while any persisted program, snapshot, record, or summary still references it.</li>
+<li>Retained 14 focused fail-then-pass domain and PGlite repository tests across normalization, invalid input, replay, request-hash conflict, verification, IDOR, semantic history, stale update, and deletion.</li>
+</ul>
 <h2>2026-08-25: Transactional Neon bootstrap</h2>
 <ul>
 <li>Wrote the operator plan before implementation, then retained the focused missing-module failure before adding the seeder.</li>
