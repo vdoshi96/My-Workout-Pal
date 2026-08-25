@@ -4,6 +4,7 @@ import {
   equipmentChangeRequestSchema,
   onboardingRequestSchema,
   preferencesUpdateRequestSchema,
+  programPublishRequestSchema,
   profileProgramApiError,
 } from "@/server/http/profile-program-api";
 import { AuthPolicyError } from "@/server/auth/policy";
@@ -66,6 +67,123 @@ describe("profile program API contract", () => {
         reducedMotion: false,
         timezone: "America/Chicago",
         unitSystem: "imperial",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts only an owner-free, canonical five-day program publication", () => {
+    const prescription = {
+      catalogExerciseId: "11111111-1111-4111-8111-111111111111",
+      customExerciseId: null,
+      displayName: null,
+      maximumReps: 12,
+      maximumSeconds: null,
+      minimumReps: 8,
+      minimumSeconds: null,
+      notes: "Keep two repetitions in reserve.",
+      restSeconds: 90,
+      setCount: 3,
+      setKind: "work",
+      targetDistanceM: null,
+      targetWeightKg: 20,
+    };
+    const cardio = [
+      {
+        distanceM: null,
+        durationSeconds: 1_200,
+        inclinePercent: 2,
+        mode: "walker",
+        notes: null,
+        paceSecondsPerKm: null,
+      },
+      {
+        distanceM: 5_000,
+        durationSeconds: 1_800,
+        inclinePercent: null,
+        mode: "runner",
+        notes: null,
+        paceSecondsPerKm: 360,
+      },
+    ];
+    const day = (dayKey: string, dayNumber: number) => ({
+      cardio,
+      dayKey,
+      dayNumber,
+      displayName: dayKey[0]!.toUpperCase() + dayKey.slice(1),
+      sections: [
+        {
+          kind: "strength",
+          prescriptions: [prescription],
+          title: "Strength",
+        },
+      ],
+    });
+    const valid = {
+      baseRevisionId: "22222222-2222-4222-8222-222222222222",
+      days: [
+        day("push", 1),
+        day("pull", 2),
+        day("legs", 3),
+        day("upper", 4),
+        day("lower", 5),
+      ],
+      idempotencyKey: "publish-program-1",
+      name: "My five-day plan",
+      programId: "33333333-3333-4333-8333-333333333333",
+    };
+
+    expect(programPublishRequestSchema.safeParse(valid).success).toBe(true);
+    expect(
+      programPublishRequestSchema.safeParse({ ...valid, ownerUid: "other-user" }).success,
+    ).toBe(false);
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.slice(0, 4),
+      }).success,
+    ).toBe(false);
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.map((entry, index) =>
+          index === 0
+            ? {
+                ...entry,
+                sections: [
+                  {
+                    ...entry.sections[0],
+                    prescriptions: [
+                      { ...prescription, measurementKind: "weight_reps" },
+                    ],
+                  },
+                ],
+              }
+            : entry,
+        ),
+      }).success,
+    ).toBe(false);
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.map((entry, index) =>
+          index === 0
+            ? {
+                ...entry,
+                sections: [
+                  {
+                    ...entry.sections[0],
+                    prescriptions: [
+                      {
+                        ...prescription,
+                        catalogExerciseId: null,
+                        customExerciseId: null,
+                      },
+                    ],
+                  },
+                ],
+              }
+            : entry,
+        ),
       }).success,
     ).toBe(false);
   });
