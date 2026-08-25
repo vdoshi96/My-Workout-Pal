@@ -55,6 +55,7 @@ CREATE TABLE "catalog_exercises" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"slug" varchar(120) NOT NULL,
 	"name" varchar(180) NOT NULL,
+	"movement_family" varchar(80) NOT NULL,
 	"role" "catalog_exercise_role" NOT NULL,
 	"logging_kind" "logging_kind" NOT NULL,
 	"modality" varchar(80) DEFAULT 'strength' NOT NULL,
@@ -63,12 +64,14 @@ CREATE TABLE "catalog_exercises" (
 	"variation_parent_id" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "catalog_exercises_slug_not_blank" CHECK (length(trim("catalog_exercises"."slug")) > 0)
+	CONSTRAINT "catalog_exercises_slug_not_blank" CHECK (length(trim("catalog_exercises"."slug")) > 0),
+	CONSTRAINT "catalog_exercises_movement_family_not_blank" CHECK (length(trim("catalog_exercises"."movement_family")) > 0)
 );
 --> statement-breakpoint
 CREATE TABLE "curated_videos" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"exercise_id" uuid NOT NULL,
+	"variation_id" varchar(120) DEFAULT 'canonical' NOT NULL,
 	"youtube_video_id" varchar(11) NOT NULL,
 	"title" varchar(240) NOT NULL,
 	"channel_title" varchar(180) NOT NULL,
@@ -80,6 +83,7 @@ CREATE TABLE "curated_videos" (
 	"restriction_reason" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "curated_videos_variation_not_blank" CHECK (length(trim("curated_videos"."variation_id")) > 0),
 	CONSTRAINT "curated_videos_youtube_id_shape" CHECK ("curated_videos"."youtube_video_id" ~ '^[A-Za-z0-9_-]{11}$'),
 	CONSTRAINT "curated_videos_order_shape" CHECK ("curated_videos"."display_order" is null or "curated_videos"."display_order" between 1 and 2),
 	CONSTRAINT "curated_videos_approval_metadata" CHECK ("curated_videos"."approval_status" <> 'approved' or ("curated_videos"."display_order" is not null and "curated_videos"."watched_in_full_at" is not null and "curated_videos"."approved_at" is not null and "curated_videos"."approved_by" is not null))
@@ -229,7 +233,7 @@ CREATE TABLE "program_prescriptions" (
 	CONSTRAINT "program_prescriptions_seconds_range" CHECK (("program_prescriptions"."minimum_seconds" is null and "program_prescriptions"."maximum_seconds" is null) or ("program_prescriptions"."minimum_seconds" is not null and "program_prescriptions"."maximum_seconds" is not null and "program_prescriptions"."minimum_seconds" > 0 and "program_prescriptions"."minimum_seconds" <= "program_prescriptions"."maximum_seconds")),
 	CONSTRAINT "program_prescriptions_weight_nonnegative" CHECK ("program_prescriptions"."target_weight_kg" is null or "program_prescriptions"."target_weight_kg" >= 0),
 	CONSTRAINT "program_prescriptions_distance_nonnegative" CHECK ("program_prescriptions"."target_distance_m" is null or "program_prescriptions"."target_distance_m" >= 0),
-	CONSTRAINT "program_prescriptions_measurement_shape" CHECK (("program_prescriptions"."measurement_kind" in ('weight_reps', 'bodyweight_reps') and "program_prescriptions"."minimum_reps" is not null and "program_prescriptions"."maximum_reps" is not null and "program_prescriptions"."minimum_seconds" is null and "program_prescriptions"."maximum_seconds" is null) or ("program_prescriptions"."measurement_kind" = 'duration' and "program_prescriptions"."minimum_seconds" is not null and "program_prescriptions"."maximum_seconds" is not null and "program_prescriptions"."minimum_reps" is null and "program_prescriptions"."maximum_reps" is null and "program_prescriptions"."target_distance_m" is null) or ("program_prescriptions"."measurement_kind" = 'distance_duration' and "program_prescriptions"."minimum_seconds" is not null and "program_prescriptions"."maximum_seconds" is not null and "program_prescriptions"."target_distance_m" is not null and "program_prescriptions"."minimum_reps" is null and "program_prescriptions"."maximum_reps" is null)),
+	CONSTRAINT "program_prescriptions_measurement_shape" CHECK (("program_prescriptions"."measurement_kind" in ('weight_reps', 'bodyweight_reps') and "program_prescriptions"."minimum_reps" is not null and "program_prescriptions"."maximum_reps" is not null and "program_prescriptions"."minimum_seconds" is null and "program_prescriptions"."maximum_seconds" is null and "program_prescriptions"."target_distance_m" is null) or ("program_prescriptions"."measurement_kind" = 'duration' and "program_prescriptions"."minimum_seconds" is not null and "program_prescriptions"."maximum_seconds" is not null and "program_prescriptions"."minimum_reps" is null and "program_prescriptions"."maximum_reps" is null and "program_prescriptions"."target_distance_m" is null and "program_prescriptions"."target_weight_kg" is null) or ("program_prescriptions"."measurement_kind" = 'distance_duration' and "program_prescriptions"."minimum_seconds" is not null and "program_prescriptions"."maximum_seconds" is not null and "program_prescriptions"."target_distance_m" is not null and "program_prescriptions"."target_weight_kg" is null and "program_prescriptions"."minimum_reps" is null and "program_prescriptions"."maximum_reps" is null)),
 	CONSTRAINT "program_prescriptions_bodyweight_target_shape" CHECK ("program_prescriptions"."measurement_kind" <> 'bodyweight_reps' or "program_prescriptions"."target_weight_kg" is null)
 );
 --> statement-breakpoint
@@ -393,7 +397,7 @@ CREATE TABLE "template_prescriptions" (
 	CONSTRAINT "template_prescriptions_seconds_range" CHECK (("template_prescriptions"."minimum_seconds" is null and "template_prescriptions"."maximum_seconds" is null) or ("template_prescriptions"."minimum_seconds" is not null and "template_prescriptions"."maximum_seconds" is not null and "template_prescriptions"."minimum_seconds" > 0 and "template_prescriptions"."minimum_seconds" <= "template_prescriptions"."maximum_seconds")),
 	CONSTRAINT "template_prescriptions_weight_nonnegative" CHECK ("template_prescriptions"."target_weight_kg" is null or "template_prescriptions"."target_weight_kg" >= 0),
 	CONSTRAINT "template_prescriptions_distance_nonnegative" CHECK ("template_prescriptions"."target_distance_m" is null or "template_prescriptions"."target_distance_m" >= 0),
-	CONSTRAINT "template_prescriptions_measurement_shape" CHECK (("template_prescriptions"."measurement_kind" in ('weight_reps', 'bodyweight_reps') and "template_prescriptions"."minimum_reps" is not null and "template_prescriptions"."maximum_reps" is not null and "template_prescriptions"."minimum_seconds" is null and "template_prescriptions"."maximum_seconds" is null) or ("template_prescriptions"."measurement_kind" = 'duration' and "template_prescriptions"."minimum_seconds" is not null and "template_prescriptions"."maximum_seconds" is not null and "template_prescriptions"."minimum_reps" is null and "template_prescriptions"."maximum_reps" is null and "template_prescriptions"."target_distance_m" is null) or ("template_prescriptions"."measurement_kind" = 'distance_duration' and "template_prescriptions"."minimum_seconds" is not null and "template_prescriptions"."maximum_seconds" is not null and "template_prescriptions"."target_distance_m" is not null and "template_prescriptions"."minimum_reps" is null and "template_prescriptions"."maximum_reps" is null)),
+	CONSTRAINT "template_prescriptions_measurement_shape" CHECK (("template_prescriptions"."measurement_kind" in ('weight_reps', 'bodyweight_reps') and "template_prescriptions"."minimum_reps" is not null and "template_prescriptions"."maximum_reps" is not null and "template_prescriptions"."minimum_seconds" is null and "template_prescriptions"."maximum_seconds" is null and "template_prescriptions"."target_distance_m" is null) or ("template_prescriptions"."measurement_kind" = 'duration' and "template_prescriptions"."minimum_seconds" is not null and "template_prescriptions"."maximum_seconds" is not null and "template_prescriptions"."minimum_reps" is null and "template_prescriptions"."maximum_reps" is null and "template_prescriptions"."target_distance_m" is null and "template_prescriptions"."target_weight_kg" is null) or ("template_prescriptions"."measurement_kind" = 'distance_duration' and "template_prescriptions"."minimum_seconds" is not null and "template_prescriptions"."maximum_seconds" is not null and "template_prescriptions"."target_distance_m" is not null and "template_prescriptions"."target_weight_kg" is null and "template_prescriptions"."minimum_reps" is null and "template_prescriptions"."maximum_reps" is null)),
 	CONSTRAINT "template_prescriptions_bodyweight_target_shape" CHECK ("template_prescriptions"."measurement_kind" <> 'bodyweight_reps' or "template_prescriptions"."target_weight_kg" is null)
 );
 --> statement-breakpoint
@@ -470,7 +474,10 @@ CREATE TABLE "workout_exercise_snapshots" (
 	CONSTRAINT "workout_snapshots_rest_nonnegative" CHECK ("workout_exercise_snapshots"."rest_seconds" >= 0),
 	CONSTRAINT "workout_snapshots_exercise_xor" CHECK (num_nonnulls("workout_exercise_snapshots"."catalog_exercise_id", "workout_exercise_snapshots"."custom_exercise_id") <= 1),
 	CONSTRAINT "workout_snapshots_weight_nonnegative" CHECK ("workout_exercise_snapshots"."target_weight_kg" is null or "workout_exercise_snapshots"."target_weight_kg" >= 0),
-	CONSTRAINT "workout_snapshots_distance_nonnegative" CHECK ("workout_exercise_snapshots"."target_distance_m" is null or "workout_exercise_snapshots"."target_distance_m" >= 0)
+	CONSTRAINT "workout_snapshots_distance_nonnegative" CHECK ("workout_exercise_snapshots"."target_distance_m" is null or "workout_exercise_snapshots"."target_distance_m" >= 0),
+	CONSTRAINT "workout_snapshots_reps_range" CHECK (("workout_exercise_snapshots"."minimum_reps" is null and "workout_exercise_snapshots"."maximum_reps" is null) or ("workout_exercise_snapshots"."minimum_reps" is not null and "workout_exercise_snapshots"."maximum_reps" is not null and "workout_exercise_snapshots"."minimum_reps" > 0 and "workout_exercise_snapshots"."minimum_reps" <= "workout_exercise_snapshots"."maximum_reps")),
+	CONSTRAINT "workout_snapshots_seconds_range" CHECK (("workout_exercise_snapshots"."minimum_seconds" is null and "workout_exercise_snapshots"."maximum_seconds" is null) or ("workout_exercise_snapshots"."minimum_seconds" is not null and "workout_exercise_snapshots"."maximum_seconds" is not null and "workout_exercise_snapshots"."minimum_seconds" > 0 and "workout_exercise_snapshots"."minimum_seconds" <= "workout_exercise_snapshots"."maximum_seconds")),
+	CONSTRAINT "workout_snapshots_measurement_shape" CHECK (("workout_exercise_snapshots"."logging_kind" = 'weight_reps' and "workout_exercise_snapshots"."minimum_reps" is not null and "workout_exercise_snapshots"."maximum_reps" is not null and "workout_exercise_snapshots"."minimum_seconds" is null and "workout_exercise_snapshots"."maximum_seconds" is null and "workout_exercise_snapshots"."target_distance_m" is null) or ("workout_exercise_snapshots"."logging_kind" = 'bodyweight_reps' and "workout_exercise_snapshots"."minimum_reps" is not null and "workout_exercise_snapshots"."maximum_reps" is not null and "workout_exercise_snapshots"."minimum_seconds" is null and "workout_exercise_snapshots"."maximum_seconds" is null and "workout_exercise_snapshots"."target_weight_kg" is null and "workout_exercise_snapshots"."target_distance_m" is null) or ("workout_exercise_snapshots"."logging_kind" = 'duration' and "workout_exercise_snapshots"."minimum_seconds" is not null and "workout_exercise_snapshots"."maximum_seconds" is not null and "workout_exercise_snapshots"."minimum_reps" is null and "workout_exercise_snapshots"."maximum_reps" is null and "workout_exercise_snapshots"."target_weight_kg" is null and "workout_exercise_snapshots"."target_distance_m" is null) or ("workout_exercise_snapshots"."logging_kind" = 'distance_duration' and "workout_exercise_snapshots"."minimum_seconds" is not null and "workout_exercise_snapshots"."maximum_seconds" is not null and "workout_exercise_snapshots"."minimum_reps" is null and "workout_exercise_snapshots"."maximum_reps" is null and "workout_exercise_snapshots"."target_weight_kg" is null and "workout_exercise_snapshots"."target_distance_m" is not null))
 );
 --> statement-breakpoint
 CREATE TABLE "workout_sessions" (
@@ -566,9 +573,9 @@ CREATE INDEX "catalog_equipment_sort_idx" ON "catalog_equipment" USING btree ("s
 CREATE UNIQUE INDEX "catalog_exercises_slug_unique" ON "catalog_exercises" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "catalog_exercises_role_idx" ON "catalog_exercises" USING btree ("role");--> statement-breakpoint
 CREATE INDEX "catalog_exercises_logging_kind_idx" ON "catalog_exercises" USING btree ("logging_kind");--> statement-breakpoint
-CREATE UNIQUE INDEX "curated_videos_exercise_video_unique" ON "curated_videos" USING btree ("exercise_id","youtube_video_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "curated_videos_approved_order_unique" ON "curated_videos" USING btree ("exercise_id","display_order") WHERE "curated_videos"."approval_status" = 'approved';--> statement-breakpoint
-CREATE INDEX "curated_videos_exercise_status_idx" ON "curated_videos" USING btree ("exercise_id","approval_status");--> statement-breakpoint
+CREATE UNIQUE INDEX "curated_videos_exercise_variation_video_unique" ON "curated_videos" USING btree ("exercise_id","variation_id","youtube_video_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "curated_videos_approved_order_unique" ON "curated_videos" USING btree ("exercise_id","variation_id","display_order") WHERE "curated_videos"."approval_status" = 'approved';--> statement-breakpoint
+CREATE INDEX "curated_videos_exercise_variation_status_idx" ON "curated_videos" USING btree ("exercise_id","variation_id","approval_status");--> statement-breakpoint
 CREATE UNIQUE INDEX "custom_exercise_aliases_owner_normalized_unique" ON "custom_exercise_aliases" USING btree ("owner_firebase_uid","normalized_alias");--> statement-breakpoint
 CREATE UNIQUE INDEX "custom_exercise_aliases_owner_exercise_normalized_unique" ON "custom_exercise_aliases" USING btree ("owner_firebase_uid","custom_exercise_id","normalized_alias");--> statement-breakpoint
 CREATE INDEX "custom_exercise_aliases_owner_exercise_idx" ON "custom_exercise_aliases" USING btree ("owner_firebase_uid","custom_exercise_id");--> statement-breakpoint
@@ -588,8 +595,8 @@ CREATE INDEX "exercise_equipment_equipment_idx" ON "exercise_equipment" USING bt
 CREATE UNIQUE INDEX "idempotency_keys_owner_key_unique" ON "idempotency_keys" USING btree ("owner_firebase_uid","idempotency_key");--> statement-breakpoint
 CREATE INDEX "idempotency_keys_expiry_idx" ON "idempotency_keys" USING btree ("expires_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "personal_records_owner_id_unique" ON "personal_records" USING btree ("owner_firebase_uid","id");--> statement-breakpoint
-CREATE UNIQUE INDEX "personal_records_catalog_type_unique" ON "personal_records" USING btree ("owner_firebase_uid","catalog_exercise_id","type") WHERE "personal_records"."catalog_exercise_id" is not null;--> statement-breakpoint
-CREATE UNIQUE INDEX "personal_records_custom_type_unique" ON "personal_records" USING btree ("owner_firebase_uid","custom_exercise_id","type") WHERE "personal_records"."custom_exercise_id" is not null;--> statement-breakpoint
+CREATE UNIQUE INDEX "personal_records_catalog_source_unique" ON "personal_records" USING btree ("owner_firebase_uid","catalog_exercise_id","type","source_set_log_id") WHERE "personal_records"."catalog_exercise_id" is not null;--> statement-breakpoint
+CREATE UNIQUE INDEX "personal_records_custom_source_unique" ON "personal_records" USING btree ("owner_firebase_uid","custom_exercise_id","type","source_set_log_id") WHERE "personal_records"."custom_exercise_id" is not null;--> statement-breakpoint
 CREATE INDEX "personal_records_owner_achieved_idx" ON "personal_records" USING btree ("owner_firebase_uid","achieved_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_cardio_prescriptions_mode_unique" ON "program_cardio_prescriptions" USING btree ("owner_firebase_uid","revision_id","day_id","mode");--> statement-breakpoint
 CREATE UNIQUE INDEX "program_days_owner_revision_id_unique" ON "program_days" USING btree ("owner_firebase_uid","revision_id","id");--> statement-breakpoint
@@ -721,6 +728,33 @@ BEGIN
   RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
 END;
 $$;--> statement-breakpoint
+CREATE OR REPLACE FUNCTION prevent_unpublished_active_revision()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  revision_status text;
+  revision_published_at timestamptz;
+BEGIN
+  IF NEW.active_revision_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT status::text, published_at
+    INTO revision_status, revision_published_at
+    FROM program_revisions
+   WHERE owner_firebase_uid = NEW.owner_firebase_uid
+     AND program_id = NEW.id
+     AND id = NEW.active_revision_id;
+
+  IF revision_status IS NOT NULL
+    AND (revision_status IS DISTINCT FROM 'published' OR revision_published_at IS NULL)
+  THEN
+    RAISE EXCEPTION 'active program revision must be published' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;--> statement-breakpoint
 CREATE OR REPLACE FUNCTION prevent_terminal_workout_session_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -796,6 +830,7 @@ DECLARE
   owning_state text;
   owner_key text;
   session_key uuid;
+  snapshot_set_count integer;
 BEGIN
   IF TG_OP = 'INSERT' THEN
     owner_key := NEW.owner_firebase_uid;
@@ -816,6 +851,20 @@ BEGIN
     END IF;
     owner_key := OLD.owner_firebase_uid;
     session_key := OLD.session_id;
+  END IF;
+
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
+    SELECT set_count
+      INTO snapshot_set_count
+      FROM workout_exercise_snapshots
+     WHERE owner_firebase_uid = NEW.owner_firebase_uid
+       AND id = NEW.snapshot_id
+       AND session_id = NEW.session_id
+       AND logging_kind = NEW.measurement_kind;
+
+    IF snapshot_set_count IS NOT NULL AND NEW.set_position > snapshot_set_count THEN
+      RAISE EXCEPTION 'set position exceeds snapshot set count' USING ERRCODE = 'check_violation';
+    END IF;
   END IF;
 
   SELECT state::text
@@ -870,6 +919,9 @@ BEGIN
   RAISE EXCEPTION 'completed or abandoned workout history is immutable' USING ERRCODE = 'check_violation';
 END;
 $$;--> statement-breakpoint
+CREATE TRIGGER user_programs_active_revision_guard
+BEFORE INSERT OR UPDATE ON user_programs
+FOR EACH ROW EXECUTE FUNCTION prevent_unpublished_active_revision();--> statement-breakpoint
 CREATE TRIGGER workout_sessions_terminal_guard
 BEFORE UPDATE ON workout_sessions
 FOR EACH ROW EXECUTE FUNCTION prevent_terminal_workout_session_mutation();--> statement-breakpoint

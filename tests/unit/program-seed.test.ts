@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
+import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
 import { createStarterProgram } from "@/domain/programs/starter";
 
 describe("starter program", () => {
+  it("assigns a durable movement family to every catalog exercise", () => {
+    expect(Object.values(CATALOG_EXERCISES).every((exercise) => exercise.movementFamily.trim().length > 0)).toBe(true);
+  });
+
   it("builds the exact five-day dumbbell route", () => {
     const program = createStarterProgram(EQUIPMENT_PROFILES.dumbbells);
 

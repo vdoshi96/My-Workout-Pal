@@ -30,6 +30,22 @@ const ids = {
   terminalCardioLog: "00000000-0000-4000-8000-000000000029",
   terminalSnapshot: "00000000-0000-4000-8000-000000000030",
   activeSecondSnapshot: "00000000-0000-4000-8000-000000000032",
+  snapshotShapeMissingReps: "00000000-0000-4000-8000-000000000033",
+  snapshotShapeReversedReps: "00000000-0000-4000-8000-000000000034",
+  snapshotShapeDurationWeight: "00000000-0000-4000-8000-000000000035",
+  snapshotShapeDistanceMissingTarget: "00000000-0000-4000-8000-000000000036",
+  snapshotShapeValidDuration: "00000000-0000-4000-8000-000000000037",
+  snapshotShapeValidDistance: "00000000-0000-4000-8000-000000000038",
+  boundedSetLog: "00000000-0000-4000-8000-000000000039",
+  tiedVolumeSetLog: "00000000-0000-4000-8000-000000000040",
+  tiedPersonalRecord: "00000000-0000-4000-8000-000000000041",
+  duplicatePersonalRecord: "00000000-0000-4000-8000-000000000042",
+  bobVolumeSetLog: "00000000-0000-4000-8000-000000000043",
+  crossOwnerPersonalRecord: "00000000-0000-4000-8000-000000000044",
+  template: "00000000-0000-4000-8000-000000000045",
+  templateRevision: "00000000-0000-4000-8000-000000000046",
+  templateDay: "00000000-0000-4000-8000-000000000047",
+  templateSection: "00000000-0000-4000-8000-000000000048",
 } as const;
 
 const openDatabases: PGlite[] = [];
@@ -206,10 +222,10 @@ describe("initial database migration", () => {
   it("allows a catalog alias across exercises but rejects a duplicate per exercise", async () => {
     const database = await openDatabase();
     await database.exec(`
-      INSERT INTO catalog_exercises (id, slug, name, role, logging_kind)
+      INSERT INTO catalog_exercises (id, slug, name, movement_family, role, logging_kind)
       VALUES
-        ('${ids.catalogAliasExerciseA}', 'alias-a', 'Alias A', 'compound', 'weight_reps'),
-        ('${ids.catalogAliasExerciseB}', 'alias-b', 'Alias B', 'compound', 'weight_reps');
+        ('${ids.catalogAliasExerciseA}', 'alias-a', 'Alias A', 'hinge', 'compound', 'weight_reps'),
+        ('${ids.catalogAliasExerciseB}', 'alias-b', 'Alias B', 'hinge', 'compound', 'weight_reps');
       INSERT INTO exercise_aliases (exercise_id, alias, normalized_alias)
       VALUES
         ('${ids.catalogAliasExerciseA}', 'RDL', 'rdl'),
@@ -222,6 +238,70 @@ describe("initial database migration", () => {
         VALUES ('${ids.catalogAliasExerciseA}', 'Romanian deadlift', 'rdl');
       `),
     ).rejects.toThrow(/exercise_aliases_exercise_normalized_unique|unique|duplicate/i);
+  });
+
+  it("persists curated video variation and scopes order and identity by variation", async () => {
+    const database = await openDatabase();
+    await database.exec(`
+      INSERT INTO catalog_exercises (id, slug, name, movement_family, role, logging_kind)
+      VALUES ('${ids.catalogExercise}', 'curated-variation', 'Curated variation', 'horizontal_push', 'compound', 'weight_reps');
+
+      INSERT INTO curated_videos (
+        exercise_id, youtube_video_id, title, channel_title, approval_status,
+        display_order, watched_in_full_at, approved_at, approved_by
+      ) VALUES (
+        '${ids.catalogExercise}', 'abc123XYZ_1', 'Canonical demonstration', 'Coach', 'approved',
+        1, now(), now(), 'reviewer'
+      );
+
+      INSERT INTO curated_videos (
+        exercise_id, variation_id, youtube_video_id, title, channel_title, approval_status,
+        display_order, watched_in_full_at, approved_at, approved_by
+      ) VALUES (
+        '${ids.catalogExercise}', 'barbell', 'abc123XYZ_1', 'Barbell demonstration', 'Coach', 'approved',
+        1, now(), now(), 'reviewer'
+      );
+    `);
+
+    const result = await database.query<{ variation_id: string }>(`
+      SELECT variation_id
+      FROM curated_videos
+      WHERE exercise_id = '${ids.catalogExercise}'
+      ORDER BY variation_id;
+    `);
+    expect(result.rows).toEqual([{ variation_id: "barbell" }, { variation_id: "canonical" }]);
+
+    await expect(
+      database.exec(`
+        INSERT INTO catalog_exercises (
+          id, slug, name, movement_family, role, logging_kind
+        ) VALUES (
+          '${ids.catalogAliasExerciseA}', 'blank-family', 'Blank family', '   ', 'compound', 'weight_reps'
+        );
+      `),
+    ).rejects.toThrow(/catalog_exercises_movement_family_not_blank|check|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO curated_videos (
+          exercise_id, variation_id, youtube_video_id, title, channel_title, approval_status,
+          display_order, watched_in_full_at, approved_at, approved_by
+        ) VALUES (
+          '${ids.catalogExercise}', 'canonical', 'abc123XYZ_1', 'Duplicate', 'Coach', 'approved',
+          2, now(), now(), 'reviewer'
+        );
+      `),
+    ).rejects.toThrow(/curated_videos_exercise_variation_video_unique|unique|duplicate/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO curated_videos (
+          exercise_id, variation_id, youtube_video_id, title, channel_title, approval_status
+        ) VALUES (
+          '${ids.catalogExercise}', '   ', 'abc123XYZ_2', 'Blank variation', 'Coach', 'discovered'
+        );
+      `),
+    ).rejects.toThrow(/curated_videos_variation_not_blank|check|violates/i);
   });
 
   it("rejects non-canonical measurements and wrong measurement-kind fields", async () => {
@@ -265,6 +345,176 @@ describe("initial database migration", () => {
         );
       `),
     ).rejects.toThrow(/set_logs_snapshot_scope_fk|foreign key|violates/i);
+  });
+
+  it("enforces workout snapshot target shape by logging kind", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_snapshots (
+          id, owner_firebase_uid, session_id, position, display_name, logging_kind, set_count
+        ) VALUES (
+          '${ids.snapshotShapeMissingReps}', 'alice', '${ids.aliceSession}', 2,
+          'Missing rep bounds', 'weight_reps', 1
+        );
+      `),
+    ).rejects.toThrow(/workout_snapshots_measurement_shape|check|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_snapshots (
+          id, owner_firebase_uid, session_id, position, display_name, logging_kind,
+          minimum_reps, maximum_reps, set_count
+        ) VALUES (
+          '${ids.snapshotShapeReversedReps}', 'alice', '${ids.aliceSession}', 2,
+          'Reversed rep bounds', 'bodyweight_reps', 12, 8, 1
+        );
+      `),
+    ).rejects.toThrow(/workout_snapshots_reps_range|check|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_snapshots (
+          id, owner_firebase_uid, session_id, position, display_name, logging_kind,
+          minimum_seconds, maximum_seconds, target_weight_kg, set_count
+        ) VALUES (
+          '${ids.snapshotShapeDurationWeight}', 'alice', '${ids.aliceSession}', 2,
+          'Timed with weight', 'duration', 20, 40, 10, 1
+        );
+      `),
+    ).rejects.toThrow(/workout_snapshots_measurement_shape|check|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_snapshots (
+          id, owner_firebase_uid, session_id, position, display_name, logging_kind,
+          minimum_seconds, maximum_seconds, set_count
+        ) VALUES (
+          '${ids.snapshotShapeDistanceMissingTarget}', 'alice', '${ids.aliceSession}', 2,
+          'Distance without target', 'distance_duration', 20, 40, 1
+        );
+      `),
+    ).rejects.toThrow(/workout_snapshots_measurement_shape|check|violates/i);
+
+    await database.exec(`
+      INSERT INTO workout_exercise_snapshots (
+        id, owner_firebase_uid, session_id, position, display_name, logging_kind,
+        minimum_seconds, maximum_seconds, target_distance_m, set_count
+      ) VALUES
+        ('${ids.snapshotShapeValidDuration}', 'alice', '${ids.aliceSession}', 2,
+         'Timed valid', 'duration', 20, 40, null, 1),
+        ('${ids.snapshotShapeValidDistance}', 'alice', '${ids.aliceSession}', 3,
+         'Distance valid', 'distance_duration', 20, 40, 1000, 1);
+    `);
+  });
+
+  it("bounds set logs to the owning snapshot set count", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+
+    await expect(
+      database.exec(`
+        INSERT INTO set_logs (
+          id, owner_firebase_uid, session_id, snapshot_id, set_position,
+          measurement_kind, set_kind, weight_kg, repetitions, client_idempotency_key
+        ) VALUES (
+          '${ids.boundedSetLog}', 'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}',
+          99, 'weight_reps', 'work', 20, 10, 'out-of-range-position'
+        );
+      `),
+    ).rejects.toThrow(/set position|set_count|bound|check|violates/i);
+
+    await database.exec(`
+      INSERT INTO set_logs (
+        id, owner_firebase_uid, session_id, snapshot_id, set_position,
+        measurement_kind, set_kind, weight_kg, repetitions, client_idempotency_key
+      ) VALUES (
+        '${ids.boundedSetLog}', 'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}',
+        3, 'weight_reps', 'work', 20, 10, 'boundary-position'
+      );
+    `);
+  });
+
+  it("keeps duration and distance prescription targets free of weight targets", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await database.exec(`
+      INSERT INTO catalog_exercises (id, slug, name, movement_family, role, logging_kind)
+      VALUES ('${ids.catalogExercise}', 'prescription-shape', 'Prescription shape', 'timed_core', 'compound', 'weight_reps');
+
+      INSERT INTO program_days (
+        id, owner_firebase_uid, program_id, revision_id, day_number, day_key, display_name
+      ) VALUES (
+        '${ids.aliceProgramDay}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
+        1, 'shape-day', 'Shape day'
+      );
+      INSERT INTO program_sections (
+        id, owner_firebase_uid, program_id, revision_id, day_id,
+        kind, display_order, title
+      ) VALUES (
+        '${ids.aliceProgramSection}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
+        '${ids.aliceProgramDay}', 'strength', 1, 'Shape section'
+      );
+
+      INSERT INTO program_templates (id, template_key, name)
+      VALUES ('${ids.template}', 'shape-template', 'Shape template');
+      INSERT INTO program_template_revisions (
+        id, template_id, revision_number, status
+      ) VALUES ('${ids.templateRevision}', '${ids.template}', 1, 'draft');
+      INSERT INTO template_days (
+        id, revision_id, day_number, day_key, display_name
+      ) VALUES (
+        '${ids.templateDay}', '${ids.templateRevision}', 1, 'shape-day', 'Shape day'
+      );
+      INSERT INTO template_sections (
+        id, revision_id, day_id, kind, display_order, title
+      ) VALUES (
+        '${ids.templateSection}', '${ids.templateRevision}', '${ids.templateDay}',
+        'strength', 1, 'Shape section'
+      );
+    `);
+
+    await expect(
+      database.exec(`
+        INSERT INTO program_prescriptions (
+          owner_firebase_uid, program_id, revision_id, section_id, catalog_exercise_id,
+          display_order, set_count, measurement_kind, minimum_seconds, maximum_seconds,
+          target_weight_kg
+        ) VALUES (
+          'alice', '${ids.aliceProgram}', '${ids.aliceRevision}', '${ids.aliceProgramSection}',
+          '${ids.catalogExercise}', 1, 1, 'duration', 20, 40, 10
+        );
+      `),
+    ).rejects.toThrow(/program_prescriptions_measurement_shape|check|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO template_prescriptions (
+          revision_id, section_id, exercise_id, display_order, set_count,
+          measurement_kind, minimum_seconds, maximum_seconds, target_weight_kg
+        ) VALUES (
+          '${ids.templateRevision}', '${ids.templateSection}', '${ids.catalogExercise}',
+          1, 1, 'distance_duration', 20, 40, 10
+        );
+      `),
+    ).rejects.toThrow(/template_prescriptions_measurement_shape|check|violates/i);
+
+    await database.exec(`
+      INSERT INTO template_prescriptions (
+        revision_id, section_id, exercise_id, display_order, set_count,
+        measurement_kind, minimum_reps, maximum_reps, target_weight_kg
+      ) VALUES (
+        '${ids.templateRevision}', '${ids.templateSection}', '${ids.catalogExercise}',
+        1, 1, 'weight_reps', 8, 12, 20
+      );
+    `);
   });
 
   it("allows one resumable session and one idempotency result per owner key", async () => {
@@ -320,7 +570,18 @@ describe("initial database migration", () => {
       `),
     ).rejects.toThrow(/active_revision|foreign key|violates/i);
 
+    await expect(
+      database.exec(`
+        UPDATE user_programs
+        SET active_revision_id = '${ids.aliceRevision}'
+        WHERE owner_firebase_uid = 'alice' AND id = '${ids.aliceProgram}';
+      `),
+    ).rejects.toThrow(/published|active_revision|draft|archived|violates/i);
+
     await database.exec(`
+      UPDATE program_revisions
+      SET status = 'published', published_at = now()
+      WHERE id = '${ids.aliceRevision}';
       UPDATE user_programs
       SET active_revision_id = '${ids.aliceRevision}'
       WHERE owner_firebase_uid = 'alice' AND id = '${ids.aliceProgram}';
@@ -531,13 +792,16 @@ describe("initial database migration", () => {
   it("stores volume as a personal-record type", async () => {
     const database = await openDatabase();
     await seedOwner(database, "alice");
+    await seedOwner(database, "bob");
     await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedProgram(database, "bob", ids.bobProgram, ids.bobRevision);
     await seedSession(database, "alice", ids.aliceSession);
+    await seedSession(database, "bob", ids.bobSession);
     await database.exec(`
       INSERT INTO catalog_exercises (
-        id, slug, name, role, logging_kind
+        id, slug, name, movement_family, role, logging_kind
       ) VALUES (
-        '${ids.catalogExercise}', 'volume-test', 'Volume test', 'compound', 'weight_reps'
+        '${ids.catalogExercise}', 'volume-test', 'Volume test', 'horizontal_push', 'compound', 'weight_reps'
       );
       INSERT INTO set_logs (
         id, owner_firebase_uid, session_id, snapshot_id, set_position,
@@ -546,6 +810,20 @@ describe("initial database migration", () => {
         '${ids.volumeSetLog}', 'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}',
         1, 'weight_reps', 'work', 20, 10, 'volume-source'
       );
+      INSERT INTO set_logs (
+        id, owner_firebase_uid, session_id, snapshot_id, set_position,
+        measurement_kind, set_kind, weight_kg, repetitions, client_idempotency_key
+      ) VALUES (
+        '${ids.tiedVolumeSetLog}', 'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}',
+        2, 'weight_reps', 'work', 20, 10, 'volume-tie-source'
+      );
+      INSERT INTO set_logs (
+        id, owner_firebase_uid, session_id, snapshot_id, set_position,
+        measurement_kind, set_kind, weight_kg, repetitions, client_idempotency_key
+      ) VALUES (
+        '${ids.bobVolumeSetLog}', 'bob', '${ids.bobSession}', '00000000-0000-4000-8000-000000000011',
+        1, 'weight_reps', 'work', 20, 10, 'bob-volume-source'
+      );
       INSERT INTO personal_records (
         owner_firebase_uid, catalog_exercise_id, type, value,
         source_set_log_id, calculation_version, achieved_at
@@ -553,13 +831,48 @@ describe("initial database migration", () => {
         'alice', '${ids.catalogExercise}', 'volume', 200,
         '${ids.volumeSetLog}', 'v1', now()
       );
+      INSERT INTO personal_records (
+        id, owner_firebase_uid, catalog_exercise_id, type, value,
+        source_set_log_id, calculation_version, achieved_at
+      ) VALUES (
+        '${ids.tiedPersonalRecord}', 'alice', '${ids.catalogExercise}', 'volume', 200,
+        '${ids.tiedVolumeSetLog}', 'v1', now()
+      );
     `);
 
-    const result = await database.query<{ type: string }>(`
-      SELECT type FROM personal_records
-      WHERE owner_firebase_uid = 'alice' AND source_set_log_id = '${ids.volumeSetLog}';
+    const result = await database.query<{ type: string; source_set_log_id: string }>(`
+      SELECT type, source_set_log_id FROM personal_records
+      WHERE owner_firebase_uid = 'alice' AND catalog_exercise_id = '${ids.catalogExercise}'
+      ORDER BY source_set_log_id;
     `);
-    expect(result.rows).toEqual([{ type: "volume" }]);
+    expect(result.rows).toEqual([
+      { type: "volume", source_set_log_id: ids.volumeSetLog },
+      { type: "volume", source_set_log_id: ids.tiedVolumeSetLog },
+    ]);
+
+    await expect(
+      database.exec(`
+        INSERT INTO personal_records (
+          id, owner_firebase_uid, catalog_exercise_id, type, value,
+          source_set_log_id, calculation_version, achieved_at
+        ) VALUES (
+          '${ids.duplicatePersonalRecord}', 'alice', '${ids.catalogExercise}', 'volume', 250,
+          '${ids.volumeSetLog}', 'v2', now()
+        );
+      `),
+    ).rejects.toThrow(/personal_records_catalog_source_unique|unique|duplicate/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO personal_records (
+          id, owner_firebase_uid, catalog_exercise_id, type, value,
+          source_set_log_id, calculation_version, achieved_at
+        ) VALUES (
+          '${ids.crossOwnerPersonalRecord}', 'alice', '${ids.catalogExercise}', 'volume', 200,
+          '${ids.bobVolumeSetLog}', 'v1', now()
+        );
+      `),
+    ).rejects.toThrow(/personal_records_source_log_scope_fk|foreign key|violates/i);
   });
 
   it("does not move a template child into a published revision", async () => {
@@ -632,10 +945,11 @@ describe("initial database migration", () => {
       );
 
       INSERT INTO workout_exercise_snapshots (
-        id, owner_firebase_uid, session_id, position, display_name, logging_kind, set_count
+        id, owner_firebase_uid, session_id, position, display_name, logging_kind,
+        minimum_reps, maximum_reps, set_count
       ) VALUES (
         '${ids.activeSecondSnapshot}', 'alice', '${ids.aliceSession}', 2,
-        'Second active snapshot', 'weight_reps', 1
+        'Second active snapshot', 'weight_reps', 8, 12, 1
       );
     `);
 

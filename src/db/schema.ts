@@ -142,6 +142,7 @@ export const catalogExercises = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     slug: varchar("slug", { length: 120 }).notNull(),
     name: varchar("name", { length: 180 }).notNull(),
+    movementFamily: varchar("movement_family", { length: 80 }).notNull(),
     role: catalogExerciseRole("role").notNull(),
     loggingKind: loggingKind("logging_kind").notNull(),
     modality: varchar("modality", { length: 80 }).default("strength").notNull(),
@@ -161,6 +162,7 @@ export const catalogExercises = pgTable(
       name: "catalog_exercises_variation_parent_fk",
     }).onDelete("restrict"),
     check("catalog_exercises_slug_not_blank", sql`length(trim(${table.slug})) > 0`),
+    check("catalog_exercises_movement_family_not_blank", sql`length(trim(${table.movementFamily})) > 0`),
   ],
 );
 
@@ -204,6 +206,7 @@ export const curatedVideos = pgTable(
     exerciseId: uuid("exercise_id")
       .notNull()
       .references(() => catalogExercises.id, { onDelete: "restrict", onUpdate: "cascade" }),
+    variationId: varchar("variation_id", { length: 120 }).default("canonical").notNull(),
     youtubeVideoId: varchar("youtube_video_id", { length: 11 }).notNull(),
     title: varchar("title", { length: 240 }).notNull(),
     channelTitle: varchar("channel_title", { length: 180 }).notNull(),
@@ -217,11 +220,12 @@ export const curatedVideos = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [
-    uniqueIndex("curated_videos_exercise_video_unique").on(table.exerciseId, table.youtubeVideoId),
+    uniqueIndex("curated_videos_exercise_variation_video_unique").on(table.exerciseId, table.variationId, table.youtubeVideoId),
     uniqueIndex("curated_videos_approved_order_unique")
-      .on(table.exerciseId, table.displayOrder)
+      .on(table.exerciseId, table.variationId, table.displayOrder)
       .where(sql`${table.approvalStatus} = 'approved'`),
-    index("curated_videos_exercise_status_idx").on(table.exerciseId, table.approvalStatus),
+    index("curated_videos_exercise_variation_status_idx").on(table.exerciseId, table.variationId, table.approvalStatus),
+    check("curated_videos_variation_not_blank", sql`length(trim(${table.variationId})) > 0`),
     check("curated_videos_youtube_id_shape", sql`${table.youtubeVideoId} ~ '^[A-Za-z0-9_-]{11}$'`),
     check(
       "curated_videos_order_shape",
@@ -469,7 +473,7 @@ export const templatePrescriptions = pgTable(
     check("template_prescriptions_distance_nonnegative", sql`${table.targetDistanceM} is null or ${table.targetDistanceM} >= 0`),
     check(
       "template_prescriptions_measurement_shape",
-      sql`(${table.measurementKind} in ('weight_reps', 'bodyweight_reps') and ${table.minimumReps} is not null and ${table.maximumReps} is not null and ${table.minimumSeconds} is null and ${table.maximumSeconds} is null) or (${table.measurementKind} = 'duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.minimumReps} is null and ${table.maximumReps} is null and ${table.targetDistanceM} is null) or (${table.measurementKind} = 'distance_duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.targetDistanceM} is not null and ${table.minimumReps} is null and ${table.maximumReps} is null)`,
+      sql`(${table.measurementKind} in ('weight_reps', 'bodyweight_reps') and ${table.minimumReps} is not null and ${table.maximumReps} is not null and ${table.minimumSeconds} is null and ${table.maximumSeconds} is null and ${table.targetDistanceM} is null) or (${table.measurementKind} = 'duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.minimumReps} is null and ${table.maximumReps} is null and ${table.targetDistanceM} is null and ${table.targetWeightKg} is null) or (${table.measurementKind} = 'distance_duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.targetDistanceM} is not null and ${table.targetWeightKg} is null and ${table.minimumReps} is null and ${table.maximumReps} is null)`,
     ),
     check(
       "template_prescriptions_bodyweight_target_shape",
@@ -704,7 +708,7 @@ export const programPrescriptions = pgTable(
     check("program_prescriptions_distance_nonnegative", sql`${table.targetDistanceM} is null or ${table.targetDistanceM} >= 0`),
     check(
       "program_prescriptions_measurement_shape",
-      sql`(${table.measurementKind} in ('weight_reps', 'bodyweight_reps') and ${table.minimumReps} is not null and ${table.maximumReps} is not null and ${table.minimumSeconds} is null and ${table.maximumSeconds} is null) or (${table.measurementKind} = 'duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.minimumReps} is null and ${table.maximumReps} is null and ${table.targetDistanceM} is null) or (${table.measurementKind} = 'distance_duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.targetDistanceM} is not null and ${table.minimumReps} is null and ${table.maximumReps} is null)`,
+      sql`(${table.measurementKind} in ('weight_reps', 'bodyweight_reps') and ${table.minimumReps} is not null and ${table.maximumReps} is not null and ${table.minimumSeconds} is null and ${table.maximumSeconds} is null and ${table.targetDistanceM} is null) or (${table.measurementKind} = 'duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.minimumReps} is null and ${table.maximumReps} is null and ${table.targetDistanceM} is null and ${table.targetWeightKg} is null) or (${table.measurementKind} = 'distance_duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.targetDistanceM} is not null and ${table.targetWeightKg} is null and ${table.minimumReps} is null and ${table.maximumReps} is null)`,
     ),
     check(
       "program_prescriptions_bodyweight_target_shape",
@@ -838,6 +842,18 @@ export const workoutExerciseSnapshots = pgTable(
     check("workout_snapshots_exercise_xor", sql`num_nonnulls(${table.catalogExerciseId}, ${table.customExerciseId}) <= 1`),
     check("workout_snapshots_weight_nonnegative", sql`${table.targetWeightKg} is null or ${table.targetWeightKg} >= 0`),
     check("workout_snapshots_distance_nonnegative", sql`${table.targetDistanceM} is null or ${table.targetDistanceM} >= 0`),
+    check(
+      "workout_snapshots_reps_range",
+      sql`(${table.minimumReps} is null and ${table.maximumReps} is null) or (${table.minimumReps} is not null and ${table.maximumReps} is not null and ${table.minimumReps} > 0 and ${table.minimumReps} <= ${table.maximumReps})`,
+    ),
+    check(
+      "workout_snapshots_seconds_range",
+      sql`(${table.minimumSeconds} is null and ${table.maximumSeconds} is null) or (${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.minimumSeconds} > 0 and ${table.minimumSeconds} <= ${table.maximumSeconds})`,
+    ),
+    check(
+      "workout_snapshots_measurement_shape",
+      sql`(${table.loggingKind} = 'weight_reps' and ${table.minimumReps} is not null and ${table.maximumReps} is not null and ${table.minimumSeconds} is null and ${table.maximumSeconds} is null and ${table.targetDistanceM} is null) or (${table.loggingKind} = 'bodyweight_reps' and ${table.minimumReps} is not null and ${table.maximumReps} is not null and ${table.minimumSeconds} is null and ${table.maximumSeconds} is null and ${table.targetWeightKg} is null and ${table.targetDistanceM} is null) or (${table.loggingKind} = 'duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.minimumReps} is null and ${table.maximumReps} is null and ${table.targetWeightKg} is null and ${table.targetDistanceM} is null) or (${table.loggingKind} = 'distance_duration' and ${table.minimumSeconds} is not null and ${table.maximumSeconds} is not null and ${table.minimumReps} is null and ${table.maximumReps} is null and ${table.targetWeightKg} is null and ${table.targetDistanceM} is not null)`,
+    ),
   ],
 );
 
@@ -990,11 +1006,11 @@ export const personalRecords = pgTable(
       name: "personal_records_source_log_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
     uniqueIndex("personal_records_owner_id_unique").on(table.ownerFirebaseUid, table.id),
-    uniqueIndex("personal_records_catalog_type_unique")
-      .on(table.ownerFirebaseUid, table.catalogExerciseId, table.type)
+    uniqueIndex("personal_records_catalog_source_unique")
+      .on(table.ownerFirebaseUid, table.catalogExerciseId, table.type, table.sourceSetLogId)
       .where(sql`${table.catalogExerciseId} is not null`),
-    uniqueIndex("personal_records_custom_type_unique")
-      .on(table.ownerFirebaseUid, table.customExerciseId, table.type)
+    uniqueIndex("personal_records_custom_source_unique")
+      .on(table.ownerFirebaseUid, table.customExerciseId, table.type, table.sourceSetLogId)
       .where(sql`${table.customExerciseId} is not null`),
     index("personal_records_owner_achieved_idx").on(table.ownerFirebaseUid, table.achievedAt),
     check("personal_records_exercise_xor", sql`num_nonnulls(${table.catalogExerciseId}, ${table.customExerciseId}) = 1`),

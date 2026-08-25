@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="23690a45f5843e27a0e7233d6c5c6621e861bf053e7b75615c6abc1ba8ae507a">
+  <meta name="source-sha256" content="c4f4f66ab95080046eb2057ba0d50877e7e56be3d5a80478e81fafc7a79ab15b">
   <title>Product and architecture plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -62,7 +62,7 @@
 </ul>
 <h3>Exercise and prescription</h3>
 <ul>
-<li>A canonical exercise has a stable slug, movement name, modality, muscles, instructions, equipment requirements, compatibility, logging kind, and optional variation parent.</li>
+<li>A canonical exercise has a stable slug, movement name, nonblank movement family, modality, muscles, instructions, equipment requirements, compatibility, logging kind, and optional variation parent.</li>
 <li>Logging kinds are <code>weight_reps</code>, <code>bodyweight_reps</code>, <code>duration</code>, and <code>distance_duration</code>.</li>
 <li>Custom exercises belong to exactly one Firebase UID and can contain zero to two normalized YouTube video IDs.</li>
 <li>A prescription points to a canonical or owned custom exercise and stores section, order, set count, range, rest, warm-up or work classification, and target metadata.</li>
@@ -113,14 +113,14 @@
 <ul>
 <li>Foreign keys use restrictive deletion by default. Account deletion uses an explicit owned-data transaction.</li>
 <li>Unique constraints enforce one active session boundary, revision numbers, set positions, video order, video identity per exercise variation, and idempotency scope.</li>
-<li>Check constraints enforce nonnegative canonical measures, valid ranges, two approved seed-video orders, and known states.</li>
+<li>Check constraints enforce nonnegative canonical measures, valid ranges, snapshot target shapes and set bounds, nonblank movement families and video variations, two approved seed-video orders per exercise variation, and known states.</li>
 <li>Every repository method that reads or writes user data requires a server-derived owner argument. There is no unscoped <code>findById</code> for owned records.</li>
 <li>Migrations are append-only, versioned, tested from an empty database, and tested as upgrades from the preceding release fixture.</li>
 <li>Canonical seed rows use deterministic RFC 4122 version-five UUIDs derived from a public, fixed application namespace plus a bounded entity kind and stable domain key. Re-running a seed therefore converges on the same catalog and template identities across preview and production.</li>
 </ul>
 <h3>Database implementation slice</h3>
 <p>The first persistence slice is a single append-only PostgreSQL migration represented by Drizzle tables under <code>src/db/schema.ts</code>. Firebase UID remains the external owner key; internal UUIDs are opaque row identifiers. Owned rows repeat the owner key and use composite foreign keys where a child points to another owned row, so an owner-scoped repository query cannot accidentally join across accounts. Catalog and curated records are global, while custom exercises, programs, sessions, logs, and projections are owned.</p>
-<p>The migration creates user profile, preference, and equipment rows; catalog equipment, exercises, compatibility edges, aliases, and curated-video records; custom exercises with owner-scoped equipment edges, normalized search aliases, and normalized video IDs; immutable template and user-program revision trees; workout session prescription snapshots, set/cardio logs, idempotency records, personal records, progress summaries and their source-log links; and the account-deletion job boundary. Catalog aliases are reusable across exercises while remaining unique per exercise after normalization. PostgreSQL enums, checks, partial unique indexes, and restrictive foreign keys enforce known states, canonical kilograms/meters/seconds, measurement-kind field shapes, same-program revision pointers, program-day/section parent scope, snapshot-to-set measurement-kind matching, one active resumable session per owner and revision, revision numbering, ordered prescriptions/video slots, and mutation idempotency.</p>
+<p>The migration creates user profile, preference, and equipment rows; catalog equipment, exercises with durable movement families, compatibility edges, aliases, and curated-video records with explicit variation IDs; custom exercises with owner-scoped equipment edges, normalized search aliases, and normalized video IDs; immutable template and user-program revision trees; workout session prescription snapshots, set/cardio logs, idempotency records, personal records, progress summaries and their source-log links; and the account-deletion job boundary. Catalog aliases are reusable across exercises while remaining unique per exercise after normalization. PostgreSQL enums, checks, partial unique indexes, and restrictive foreign keys enforce known states, canonical kilograms/meters/seconds, measurement-kind field shapes, same-program revision pointers, published-only active revisions, program-day/section parent scope, snapshot target shapes and set-count bounds, snapshot-to-set measurement-kind matching, one active resumable session per owner and revision, revision numbering, ordered prescriptions/video slots, tied personal-record source identities, and mutation idempotency.</p>
 <p>Published program revisions and all descendants are protected by database triggers for insert, update, and delete. Workout prescription snapshots may be inserted only while a session is resumable and are always immutable afterward; set and cardio logs may be inserted, corrected, or removed while their owning session is draft, active, or completing, then freeze after completion or abandonment. During a resumable correction, log IDs, owner/session/snapshot scope, set position or kind, idempotency keys, and creation timestamps remain fixed; measurement values, notes, form, and recorded timestamps may change, and cardio mode remains editable. Session identity and creation fields are immutable in every state. Terminal sessions cannot change state or terminal kind and enforce truthful started/completed/abandoned timestamps. The first migration is exercised from an empty PGlite database, including cross-owner composite-FK failures, canonical-measurement failures, snapshot/log measurement-kind mismatches, duplicate active sessions/idempotency keys, active-log correction, published-child insert rejection, terminal-state guards, and post-completion immutability. The database connector is lazy and import-safe: missing <code>DATABASE_URL</code> is reported only when a caller asks for a live connection, never while importing server modules or Drizzle configuration.</p>
 <h2>Authentication and session design</h2>
 <ol>

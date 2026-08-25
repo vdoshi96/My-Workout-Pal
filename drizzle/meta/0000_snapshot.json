@@ -1,5 +1,5 @@
 {
-  "id": "4c8cfef2-1245-4403-bef9-d2b996f88dec",
+  "id": "e58cfec5-263b-418d-9841-9abd641a7f38",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -356,6 +356,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "movement_family": {
+          "name": "movement_family",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "role": {
           "name": "role",
           "type": "catalog_exercise_role",
@@ -480,6 +486,10 @@
         "catalog_exercises_slug_not_blank": {
           "name": "catalog_exercises_slug_not_blank",
           "value": "length(trim(\"catalog_exercises\".\"slug\")) > 0"
+        },
+        "catalog_exercises_movement_family_not_blank": {
+          "name": "catalog_exercises_movement_family_not_blank",
+          "value": "length(trim(\"catalog_exercises\".\"movement_family\")) > 0"
         }
       },
       "isRLSEnabled": false
@@ -500,6 +510,13 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "variation_id": {
+          "name": "variation_id",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'canonical'"
         },
         "youtube_video_id": {
           "name": "youtube_video_id",
@@ -572,11 +589,17 @@
         }
       },
       "indexes": {
-        "curated_videos_exercise_video_unique": {
-          "name": "curated_videos_exercise_video_unique",
+        "curated_videos_exercise_variation_video_unique": {
+          "name": "curated_videos_exercise_variation_video_unique",
           "columns": [
             {
               "expression": "exercise_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "variation_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -603,6 +626,12 @@
               "nulls": "last"
             },
             {
+              "expression": "variation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
               "expression": "display_order",
               "isExpression": false,
               "asc": true,
@@ -615,11 +644,17 @@
           "method": "btree",
           "with": {}
         },
-        "curated_videos_exercise_status_idx": {
-          "name": "curated_videos_exercise_status_idx",
+        "curated_videos_exercise_variation_status_idx": {
+          "name": "curated_videos_exercise_variation_status_idx",
           "columns": [
             {
               "expression": "exercise_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "variation_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -656,6 +691,10 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "curated_videos_variation_not_blank": {
+          "name": "curated_videos_variation_not_blank",
+          "value": "length(trim(\"curated_videos\".\"variation_id\")) > 0"
+        },
         "curated_videos_youtube_id_shape": {
           "name": "curated_videos_youtube_id_shape",
           "value": "\"curated_videos\".\"youtube_video_id\" ~ '^[A-Za-z0-9_-]{11}$'"
@@ -1672,8 +1711,8 @@
           "method": "btree",
           "with": {}
         },
-        "personal_records_catalog_type_unique": {
-          "name": "personal_records_catalog_type_unique",
+        "personal_records_catalog_source_unique": {
+          "name": "personal_records_catalog_source_unique",
           "columns": [
             {
               "expression": "owner_firebase_uid",
@@ -1692,6 +1731,12 @@
               "isExpression": false,
               "asc": true,
               "nulls": "last"
+            },
+            {
+              "expression": "source_set_log_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": true,
@@ -1700,8 +1745,8 @@
           "method": "btree",
           "with": {}
         },
-        "personal_records_custom_type_unique": {
-          "name": "personal_records_custom_type_unique",
+        "personal_records_custom_source_unique": {
+          "name": "personal_records_custom_source_unique",
           "columns": [
             {
               "expression": "owner_firebase_uid",
@@ -1717,6 +1762,12 @@
             },
             {
               "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_set_log_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2443,7 +2494,7 @@
         },
         "program_prescriptions_measurement_shape": {
           "name": "program_prescriptions_measurement_shape",
-          "value": "(\"program_prescriptions\".\"measurement_kind\" in ('weight_reps', 'bodyweight_reps') and \"program_prescriptions\".\"minimum_reps\" is not null and \"program_prescriptions\".\"maximum_reps\" is not null and \"program_prescriptions\".\"minimum_seconds\" is null and \"program_prescriptions\".\"maximum_seconds\" is null) or (\"program_prescriptions\".\"measurement_kind\" = 'duration' and \"program_prescriptions\".\"minimum_seconds\" is not null and \"program_prescriptions\".\"maximum_seconds\" is not null and \"program_prescriptions\".\"minimum_reps\" is null and \"program_prescriptions\".\"maximum_reps\" is null and \"program_prescriptions\".\"target_distance_m\" is null) or (\"program_prescriptions\".\"measurement_kind\" = 'distance_duration' and \"program_prescriptions\".\"minimum_seconds\" is not null and \"program_prescriptions\".\"maximum_seconds\" is not null and \"program_prescriptions\".\"target_distance_m\" is not null and \"program_prescriptions\".\"minimum_reps\" is null and \"program_prescriptions\".\"maximum_reps\" is null)"
+          "value": "(\"program_prescriptions\".\"measurement_kind\" in ('weight_reps', 'bodyweight_reps') and \"program_prescriptions\".\"minimum_reps\" is not null and \"program_prescriptions\".\"maximum_reps\" is not null and \"program_prescriptions\".\"minimum_seconds\" is null and \"program_prescriptions\".\"maximum_seconds\" is null and \"program_prescriptions\".\"target_distance_m\" is null) or (\"program_prescriptions\".\"measurement_kind\" = 'duration' and \"program_prescriptions\".\"minimum_seconds\" is not null and \"program_prescriptions\".\"maximum_seconds\" is not null and \"program_prescriptions\".\"minimum_reps\" is null and \"program_prescriptions\".\"maximum_reps\" is null and \"program_prescriptions\".\"target_distance_m\" is null and \"program_prescriptions\".\"target_weight_kg\" is null) or (\"program_prescriptions\".\"measurement_kind\" = 'distance_duration' and \"program_prescriptions\".\"minimum_seconds\" is not null and \"program_prescriptions\".\"maximum_seconds\" is not null and \"program_prescriptions\".\"target_distance_m\" is not null and \"program_prescriptions\".\"target_weight_kg\" is null and \"program_prescriptions\".\"minimum_reps\" is null and \"program_prescriptions\".\"maximum_reps\" is null)"
         },
         "program_prescriptions_bodyweight_target_shape": {
           "name": "program_prescriptions_bodyweight_target_shape",
@@ -4319,7 +4370,7 @@
         },
         "template_prescriptions_measurement_shape": {
           "name": "template_prescriptions_measurement_shape",
-          "value": "(\"template_prescriptions\".\"measurement_kind\" in ('weight_reps', 'bodyweight_reps') and \"template_prescriptions\".\"minimum_reps\" is not null and \"template_prescriptions\".\"maximum_reps\" is not null and \"template_prescriptions\".\"minimum_seconds\" is null and \"template_prescriptions\".\"maximum_seconds\" is null) or (\"template_prescriptions\".\"measurement_kind\" = 'duration' and \"template_prescriptions\".\"minimum_seconds\" is not null and \"template_prescriptions\".\"maximum_seconds\" is not null and \"template_prescriptions\".\"minimum_reps\" is null and \"template_prescriptions\".\"maximum_reps\" is null and \"template_prescriptions\".\"target_distance_m\" is null) or (\"template_prescriptions\".\"measurement_kind\" = 'distance_duration' and \"template_prescriptions\".\"minimum_seconds\" is not null and \"template_prescriptions\".\"maximum_seconds\" is not null and \"template_prescriptions\".\"target_distance_m\" is not null and \"template_prescriptions\".\"minimum_reps\" is null and \"template_prescriptions\".\"maximum_reps\" is null)"
+          "value": "(\"template_prescriptions\".\"measurement_kind\" in ('weight_reps', 'bodyweight_reps') and \"template_prescriptions\".\"minimum_reps\" is not null and \"template_prescriptions\".\"maximum_reps\" is not null and \"template_prescriptions\".\"minimum_seconds\" is null and \"template_prescriptions\".\"maximum_seconds\" is null and \"template_prescriptions\".\"target_distance_m\" is null) or (\"template_prescriptions\".\"measurement_kind\" = 'duration' and \"template_prescriptions\".\"minimum_seconds\" is not null and \"template_prescriptions\".\"maximum_seconds\" is not null and \"template_prescriptions\".\"minimum_reps\" is null and \"template_prescriptions\".\"maximum_reps\" is null and \"template_prescriptions\".\"target_distance_m\" is null and \"template_prescriptions\".\"target_weight_kg\" is null) or (\"template_prescriptions\".\"measurement_kind\" = 'distance_duration' and \"template_prescriptions\".\"minimum_seconds\" is not null and \"template_prescriptions\".\"maximum_seconds\" is not null and \"template_prescriptions\".\"target_distance_m\" is not null and \"template_prescriptions\".\"target_weight_kg\" is null and \"template_prescriptions\".\"minimum_reps\" is null and \"template_prescriptions\".\"maximum_reps\" is null)"
         },
         "template_prescriptions_bodyweight_target_shape": {
           "name": "template_prescriptions_bodyweight_target_shape",
@@ -5122,6 +5173,18 @@
         "workout_snapshots_distance_nonnegative": {
           "name": "workout_snapshots_distance_nonnegative",
           "value": "\"workout_exercise_snapshots\".\"target_distance_m\" is null or \"workout_exercise_snapshots\".\"target_distance_m\" >= 0"
+        },
+        "workout_snapshots_reps_range": {
+          "name": "workout_snapshots_reps_range",
+          "value": "(\"workout_exercise_snapshots\".\"minimum_reps\" is null and \"workout_exercise_snapshots\".\"maximum_reps\" is null) or (\"workout_exercise_snapshots\".\"minimum_reps\" is not null and \"workout_exercise_snapshots\".\"maximum_reps\" is not null and \"workout_exercise_snapshots\".\"minimum_reps\" > 0 and \"workout_exercise_snapshots\".\"minimum_reps\" <= \"workout_exercise_snapshots\".\"maximum_reps\")"
+        },
+        "workout_snapshots_seconds_range": {
+          "name": "workout_snapshots_seconds_range",
+          "value": "(\"workout_exercise_snapshots\".\"minimum_seconds\" is null and \"workout_exercise_snapshots\".\"maximum_seconds\" is null) or (\"workout_exercise_snapshots\".\"minimum_seconds\" is not null and \"workout_exercise_snapshots\".\"maximum_seconds\" is not null and \"workout_exercise_snapshots\".\"minimum_seconds\" > 0 and \"workout_exercise_snapshots\".\"minimum_seconds\" <= \"workout_exercise_snapshots\".\"maximum_seconds\")"
+        },
+        "workout_snapshots_measurement_shape": {
+          "name": "workout_snapshots_measurement_shape",
+          "value": "(\"workout_exercise_snapshots\".\"logging_kind\" = 'weight_reps' and \"workout_exercise_snapshots\".\"minimum_reps\" is not null and \"workout_exercise_snapshots\".\"maximum_reps\" is not null and \"workout_exercise_snapshots\".\"minimum_seconds\" is null and \"workout_exercise_snapshots\".\"maximum_seconds\" is null and \"workout_exercise_snapshots\".\"target_distance_m\" is null) or (\"workout_exercise_snapshots\".\"logging_kind\" = 'bodyweight_reps' and \"workout_exercise_snapshots\".\"minimum_reps\" is not null and \"workout_exercise_snapshots\".\"maximum_reps\" is not null and \"workout_exercise_snapshots\".\"minimum_seconds\" is null and \"workout_exercise_snapshots\".\"maximum_seconds\" is null and \"workout_exercise_snapshots\".\"target_weight_kg\" is null and \"workout_exercise_snapshots\".\"target_distance_m\" is null) or (\"workout_exercise_snapshots\".\"logging_kind\" = 'duration' and \"workout_exercise_snapshots\".\"minimum_seconds\" is not null and \"workout_exercise_snapshots\".\"maximum_seconds\" is not null and \"workout_exercise_snapshots\".\"minimum_reps\" is null and \"workout_exercise_snapshots\".\"maximum_reps\" is null and \"workout_exercise_snapshots\".\"target_weight_kg\" is null and \"workout_exercise_snapshots\".\"target_distance_m\" is null) or (\"workout_exercise_snapshots\".\"logging_kind\" = 'distance_duration' and \"workout_exercise_snapshots\".\"minimum_seconds\" is not null and \"workout_exercise_snapshots\".\"maximum_seconds\" is not null and \"workout_exercise_snapshots\".\"minimum_reps\" is null and \"workout_exercise_snapshots\".\"maximum_reps\" is null and \"workout_exercise_snapshots\".\"target_weight_kg\" is null and \"workout_exercise_snapshots\".\"target_distance_m\" is not null)"
         }
       },
       "isRLSEnabled": false
