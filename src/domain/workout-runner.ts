@@ -385,6 +385,99 @@ export interface RunnerStorage {
   load(key: string): Promise<RunnerStorageRecord | undefined>;
   save(key: string, record: RunnerStorageRecord): Promise<void>;
   remove(key: string): Promise<void>;
+  clearOwner?(ownerUid: string): Promise<void>;
+}
+
+export type RunnerStorageErrorCode =
+  | "storage_unsupported"
+  | "storage_blocked"
+  | "storage_quota"
+  | "storage_schema_mismatch"
+  | "storage_open_failed"
+  | "storage_read_failed"
+  | "storage_write_failed"
+  | "storage_remove_failed"
+  | "storage_clear_failed"
+  | "storage_corrupt"
+  | "storage_clear_unsupported";
+
+export type RunnerStorageOperation =
+  "open" | "read" | "write" | "remove" | "clear";
+
+const RUNNER_STORAGE_ERROR_MESSAGES: Readonly<
+  Record<RunnerStorageErrorCode, string>
+> = {
+  storage_unsupported: "Workout drafts are unavailable in this browser.",
+  storage_blocked:
+    "Workout drafts are unavailable because browser storage is blocked.",
+  storage_quota: "The browser cannot store more workout draft data.",
+  storage_schema_mismatch:
+    "Workout draft storage needs an app update before it can be used.",
+  storage_open_failed: "Workout draft storage could not be opened.",
+  storage_read_failed: "Workout draft storage could not be read.",
+  storage_write_failed: "Workout draft could not be saved on this device.",
+  storage_remove_failed: "Workout draft could not be removed from this device.",
+  storage_clear_failed: "Workout drafts could not be cleared from this device.",
+  storage_corrupt:
+    "The saved workout draft is not valid and cannot be restored.",
+  storage_clear_unsupported:
+    "This storage adapter cannot clear a signed-in user's workout drafts.",
+};
+
+const NON_RETRYABLE_STORAGE_ERRORS = new Set<RunnerStorageErrorCode>([
+  "storage_unsupported",
+  "storage_schema_mismatch",
+  "storage_corrupt",
+  "storage_clear_unsupported",
+]);
+
+export class RunnerStorageError extends Error {
+  readonly code: RunnerStorageErrorCode;
+  readonly retryable: boolean;
+  override readonly cause: unknown;
+
+  constructor(
+    code: RunnerStorageErrorCode,
+    message = RUNNER_STORAGE_ERROR_MESSAGES[code],
+    options: Readonly<{ retryable?: boolean; cause?: unknown }> = {},
+  ) {
+    super(message);
+    this.name = "RunnerStorageError";
+    this.code = code;
+    this.retryable =
+      options.retryable ?? !NON_RETRYABLE_STORAGE_ERRORS.has(code);
+    this.cause = options.cause;
+  }
+}
+
+function unknownErrorName(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null || !("name" in error))
+    return undefined;
+  const name = (error as { name?: unknown }).name;
+  return typeof name === "string" ? name : undefined;
+}
+
+function storageErrorCodeFor(
+  error: unknown,
+  operation: RunnerStorageOperation,
+): RunnerStorageErrorCode {
+  const name = unknownErrorName(error);
+  if (name === "QuotaExceededError") return "storage_quota";
+  if (name === "VersionError") return "storage_schema_mismatch";
+  if (operation === "open") return "storage_open_failed";
+  if (operation === "read") return "storage_read_failed";
+  if (operation === "write") return "storage_write_failed";
+  if (operation === "remove") return "storage_remove_failed";
+  return "storage_clear_failed";
+}
+
+export function classifyRunnerStorageError(
+  error: unknown,
+  operation: RunnerStorageOperation = "open",
+): RunnerStorageError {
+  if (error instanceof RunnerStorageError) return error;
+  const code = storageErrorCodeFor(error, operation);
+  return new RunnerStorageError(code, undefined, { cause: error });
 }
 
 export type RunnerSubmitResult =
@@ -2174,10 +2267,31 @@ export class InMemoryRunnerStorage implements RunnerStorage {
   async remove(key: string): Promise<void> {
     this.records.delete(key);
   }
+
+  async clearOwner(ownerUid: string): Promise<void> {
+    assertString(ownerUid, "ownerUid");
+    const prefix = `runner:${encodeURIComponent(ownerUid)}:`;
+    for (const key of this.records.keys()) {
+      if (key.startsWith(prefix)) {
+        this.records.delete(key);
+      }
+    }
+  }
 }
 
 export function createInMemoryRunnerStorage(): InMemoryRunnerStorage {
   return new InMemoryRunnerStorage();
+}
+
+export async function clearRunnerNamespace(
+  storage: RunnerStorage,
+  ownerUid: string,
+): Promise<void> {
+  assertString(ownerUid, "ownerUid");
+  if (typeof storage.clearOwner !== "function") {
+    throw new RunnerStorageError("storage_clear_unsupported");
+  }
+  await storage.clearOwner(ownerUid);
 }
 
 export function runnerStorageRecord(

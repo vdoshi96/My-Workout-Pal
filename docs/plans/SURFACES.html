@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="69d34529e3ae145c05371765570c1c120ab8d15493cb01af2ccdd0d55f0cd2b5">
+  <meta name="source-sha256" content="43589c986d304dd317a7459c71bb6f3efe26208729981c17751b9bbb63b40970">
   <title>Surface implementation plans · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -142,7 +142,7 @@
 <h2>PWA install and offline recovery</h2>
 <p><strong>Outcome and navigation:</strong> A visitor can install the app where supported. Public content remains useful offline, and an authenticated runner retains honest local draft state without implying server persistence.</p>
 <p><strong>UI states:</strong> Show install available, installed, unsupported, dismissed, update available, offline shell, cached public data, private route unavailable, pending runner operations, retrying, conflict, and auth required.</p>
-<p><strong>Domain and persistence:</strong> The manifest defines identity, icons, theme colors, display mode, scope, and shortcuts. The service worker versions public caches. IndexedDB stores runner operations by UID and session with an explicit schema version.</p>
+<p><strong>Domain and persistence:</strong> The manifest defines identity, icons, theme colors, display mode, scope, and shortcuts. The browser runner adapter in <code>src/client/runner-storage.ts</code> stores records in one versioned IndexedDB object store keyed by owner UID and session ID, opens through an injectable factory for deterministic tests, and uses atomic one-transaction save, load, and remove operations. Unsupported, blocked, and quota failures map to UI-safe storage error codes. The owner-scoped namespace clear removes only the signing-out or deleting Firebase UID. The existing restore boundary rejects corrupt, cross-owner, cross-session, unsupported-schema, and snapshot-mismatched records.</p>
 <p><strong>Authorization and privacy:</strong> Never cache authenticated HTML, cookies, session responses, private history, or analytics. Clear user namespaces on sign-out and deletion. Update activation does not discard pending operations.</p>
 <p><strong>Device and accessibility behavior:</strong> Install guidance is optional and dismissible. Offline and update banners are landmarks with nonblocking announcements. Standalone mode respects safe areas and keyboard focus.</p>
 <p><strong>Acceptance, tests, and evidence:</strong> Tests cover manifest schema, cache allowlist, denylist, IndexedDB migration, UID isolation, update preservation, and retry ordering. Browser evidence covers installability audit, offline public navigation, offline runner queue, refresh, update, reconnection, auth expiry, and dark/reduced-motion standalone behavior.</p>

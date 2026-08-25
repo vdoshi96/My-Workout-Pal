@@ -228,7 +228,7 @@
 
 **UI states:** Show install available, installed, unsupported, dismissed, update available, offline shell, cached public data, private route unavailable, pending runner operations, retrying, conflict, and auth required.
 
-**Domain and persistence:** The manifest defines identity, icons, theme colors, display mode, scope, and shortcuts. The service worker versions public caches. IndexedDB stores runner operations by UID and session with an explicit schema version.
+**Domain and persistence:** The manifest defines identity, icons, theme colors, display mode, scope, and shortcuts. The browser runner adapter in `src/client/runner-storage.ts` stores records in one versioned IndexedDB object store keyed by owner UID and session ID, opens through an injectable factory for deterministic tests, and uses atomic one-transaction save, load, and remove operations. Unsupported, blocked, and quota failures map to UI-safe storage error codes. The owner-scoped namespace clear removes only the signing-out or deleting Firebase UID. The existing restore boundary rejects corrupt, cross-owner, cross-session, unsupported-schema, and snapshot-mismatched records.
 
 **Authorization and privacy:** Never cache authenticated HTML, cookies, session responses, private history, or analytics. Clear user namespaces on sign-out and deletion. Update activation does not discard pending operations.
 
