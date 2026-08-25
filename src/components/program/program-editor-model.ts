@@ -252,3 +252,23 @@ export function validateProgramExerciseSelections(
   }
   return issues;
 }
+
+export function stripLocalProgramPrescriptionIds(
+  input: ProgramPublishInput,
+  localIds: ReadonlySet<string>,
+): ProgramPublishInput {
+  const next = structuredClone(input);
+  for (const day of next.days) {
+    for (const section of day.sections) {
+      for (const prescription of section.prescriptions) {
+        if (
+          prescription.sourcePrescriptionId !== null &&
+          localIds.has(prescription.sourcePrescriptionId)
+        ) {
+          prescription.sourcePrescriptionId = null;
+        }
+      }
+    }
+  }
+  return next;
+}

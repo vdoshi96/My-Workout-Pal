@@ -12,6 +12,7 @@
 - Independently re-ran the isolated workout repository's focused and complete matrices, inspected its final ownership, snapshot, idempotency, previous-value, history, and transaction boundaries, and marked the clean branch ready for a separately authorized local merge without merging, pushing, deploying, or changing production.
 - Retained a five-test missing-behavior failure, then added immutable movement add/replace/remove transforms, section-and-logging defaults, bounded candidate search, same-meaning target retention, cross-meaning resets, and a distance-target publication gate.
 - Connected a keyboard-usable modal chooser to deterministic compatible catalog candidates and owner-scoped compatible custom exercises. Selection stays in the local draft; publication still re-resolves identity, ownership, equipment, and logging shape inside the immutable transaction.
+- Retained a missing-helper failure before adding stable client-only identifiers for new rows. The passing correction keeps focus attached through reorder and strips only those local identifiers from an immutable publication copy before validation or transport.
 
 ## 2026-08-25: Conflict-safe settings and sign-out
 

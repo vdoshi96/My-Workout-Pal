@@ -12,6 +12,7 @@ import {
   removeProgramPrescription,
   replaceProgramPrescription,
   reorderProgramPrescription,
+  stripLocalProgramPrescriptionIds,
   validateProgramExerciseSelections,
   type ProgramExerciseCandidate,
 } from "@/components/program/program-editor-model";
@@ -86,6 +87,7 @@ export function ProgramEditor({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const localPrescriptionIdsRef = useRef(new Set<string>());
   const errorRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const dirty = useMemo(() => JSON.stringify(draft) !== baseline, [baseline, draft]);
@@ -242,12 +244,22 @@ export function ProgramEditor({
   function chooseCandidate(candidate: ProgramExerciseCandidate) {
     if (!chooser) return;
     if (chooser.mode === "add") {
-      setDraft((current) => addProgramPrescription(
-        current,
-        chooser.dayIndex,
-        chooser.sectionIndex,
-        candidate,
-      ));
+      const localId = operationKey();
+      localPrescriptionIdsRef.current.add(localId);
+      setDraft((current) => {
+        const next = addProgramPrescription(
+          current,
+          chooser.dayIndex,
+          chooser.sectionIndex,
+          candidate,
+        );
+        const added = next.days[chooser.dayIndex]
+          ?.sections[chooser.sectionIndex]
+          ?.prescriptions.at(-1);
+        if (!added) return next;
+        added.sourcePrescriptionId = localId;
+        return next;
+      });
       setMessage(`${candidate.name} added with editable defaults. This draft is still unpublished.`);
     } else {
       const reset = chooser.currentLoggingKind !== candidate.loggingKind;
@@ -289,14 +301,18 @@ export function ProgramEditor({
 
   async function publish() {
     if (!canMutate || busy) return;
-    const selectionErrors = validateProgramExerciseSelections(draft, candidates);
+    const publishableDraft = stripLocalProgramPrescriptionIds(
+      draft,
+      localPrescriptionIdsRef.current,
+    );
+    const selectionErrors = validateProgramExerciseSelections(publishableDraft, candidates);
     if (selectionErrors.length > 0) {
       setErrors([...selectionErrors]);
       setMessage("The draft has exercise selection errors and was not sent.");
       queueMicrotask(() => errorRef.current?.focus());
       return;
     }
-    const checked = programPublishRequestSchema.safeParse(draft);
+    const checked = programPublishRequestSchema.safeParse(publishableDraft);
     if (!checked.success) {
       const nextErrors = checked.error.issues.map((issue) =>
         `${issue.path.join(" → ") || "Draft"}: ${issue.message}`,
@@ -319,6 +335,7 @@ export function ProgramEditor({
       const nextDraft = programPublishInputFromReadModel(nextProgram, operationKey());
       setProgram(nextProgram);
       setDraft(nextDraft);
+      localPrescriptionIdsRef.current.clear();
       setBaseline(JSON.stringify(nextDraft));
       setMessage(
         `Published revision ${nextProgram.revisionNumber}. Earlier program revisions and workout snapshots were not changed.`,

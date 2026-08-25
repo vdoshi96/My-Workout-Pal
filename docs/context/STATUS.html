@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="5f82288768cb17ef5d08ab7e2fcf6dd7a756205fbe7cc4a7b436c2d3b7e1e813">
+  <meta name="source-sha256" content="c1678c44c119f358e2e9cd165be43b1445731f4965041133ff753a89148c7349">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -63,7 +63,7 @@
 <li>The authenticated exercise library combines compatibility-filtered canonical records with only the signed-in owner’s custom exercises, searches private names, aliases, equipment, and logging meaning, and links to the correct public or private detail route. Account navigation now exposes Library as a first-class phone and desktop destination.</li>
 <li>Authenticated settings persist display units, a validated IANA time zone, and reduced-motion preference through an owner-scoped optimistic update with idempotent replay and stable stale-page recovery. Unit changes are explicitly presentation-only; stored workout kilograms and meters are untouched.</li>
 <li>Settings sign-out clears only the current Firebase UID’s IndexedDB runner namespace before deleting the same-origin secure session, and signs out the Firebase client when public configuration exists. Account deletion remains truthfully disabled until the deletion saga and configured Firebase reauthentication paths are implemented and verified.</li>
-<li>The program editor now maps the active owner-scoped revision into a strict unpublished draft, supports program/day names, prescription targets, notes, rest, sets, explicit reorder controls, walker/runner defaults, and compatible add/replace/remove movement editing, and publishes through the private endpoint. Its searchable modal combines deterministic canonical IDs with only the signed-in owner&#39;s compatible custom exercises. Same-meaning replacements retain compatible ranges and targets; changed logging meaning clears incompatible values with an announcement; distance-duration additions cannot publish without a positive target. Dirty navigation, retry-stable idempotency, separate equipment confirmation, validation, conflict, saving, and published states remain explicit.</li>
+<li>The program editor now maps the active owner-scoped revision into a strict unpublished draft, supports program/day names, prescription targets, notes, rest, sets, explicit reorder controls, walker/runner defaults, and compatible add/replace/remove movement editing, and publishes through the private endpoint. Its searchable modal combines deterministic canonical IDs with only the signed-in owner&#39;s compatible custom exercises. Same-meaning replacements retain compatible ranges and targets; changed logging meaning clears incompatible values with an announcement; distance-duration additions cannot publish without a positive target. New rows use client-only UUIDs for stable keyboard focus while editing, and those UUIDs are immutably stripped before validation or transport. Dirty navigation, retry-stable idempotency, separate equipment confirmation, validation, conflict, saving, and published states remain explicit.</li>
 </ul>
 <h2>Work in progress</h2>
 <ul>

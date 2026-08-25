@@ -7,6 +7,7 @@ import {
   removeProgramPrescription,
   replaceProgramPrescription,
   reorderProgramPrescription,
+  stripLocalProgramPrescriptionIds,
   validateProgramExerciseSelections,
   type ProgramExerciseCandidate,
 } from "@/components/program/program-editor-model";
@@ -308,5 +309,21 @@ describe("program editor request model", () => {
     ]);
     next.days[0]!.sections[0]!.prescriptions.at(-1)!.targetDistanceM = 500;
     expect(validateProgramExerciseSelections(next, candidates)).toEqual([]);
+  });
+
+  it("strips only client-local prescription identifiers before publication", () => {
+    const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
+    const localId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const added = addProgramPrescription(draft, 0, 0, candidate());
+    added.days[0]!.sections[0]!.prescriptions.at(-1)!.sourcePrescriptionId = localId;
+
+    const publishable = stripLocalProgramPrescriptionIds(added, new Set([localId]));
+
+    expect(publishable).not.toBe(added);
+    expect(publishable.days[0]!.sections[0]!.prescriptions.at(-1)!.sourcePrescriptionId).toBeNull();
+    expect(publishable.days[0]!.sections[0]!.prescriptions[0]!.sourcePrescriptionId).toBe(
+      "33333333-3333-4333-8333-333333333330",
+    );
+    expect(added.days[0]!.sections[0]!.prescriptions.at(-1)!.sourcePrescriptionId).toBe(localId);
   });
 });
