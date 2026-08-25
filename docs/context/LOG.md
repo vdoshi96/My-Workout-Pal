@@ -39,3 +39,9 @@
 - Expanded compatibility-first library search to discover exercises by equipment, movement family, alias, and primary muscle without introducing medical claims.
 - Added a bounded same-origin authentication return-path policy that rejects external, protocol-relative, encoded-control, API-session, and sign-in-loop targets.
 - Removed the completed analytics worktree after verifying that its patch exactly matched the integrated commit.
+
+## 2026-08-25: Bounded double progression
+
+- Retained a missing-module failing test before adding the double-progression evaluator.
+- Limited load-increase suggestions to a complete weight-and-repetition prescription whose every work set reaches the range top with appropriate form explicitly recorded.
+- Kept warm-ups outside the decision and returned a nonnumeric advisory result rather than prescribing a load or increment.
