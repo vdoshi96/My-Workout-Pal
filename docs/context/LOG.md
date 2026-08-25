@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-08-25: Private custom-exercise API
+
+- Added authenticated `no-store` collection and resource handlers for owner-scoped custom exercise reads, creation, optimistic updates, and guarded deletion.
+- Required same-origin double-submit CSRF before every mutation, bounded request bodies before JSON parsing, strict input envelopes, server-derived viewer identity, and UUID validation before database queries.
+- Preserved stable repository validation, verification, conflict, in-use, and foreign-or-missing responses without returning SQL or credential detail.
+- Retained the initial direct-route request-context failure, then supplied an explicit null-viewer test boundary and passed six focused body-size, malformed-input, identifier, cache, CSRF, and authentication assertions with type checking and lint.
+
 ## 2026-08-25: Protected account shell
 
 - Added the server-protected `/app` route group around the revocation-aware `ViewerContext`; an absent, expired, or revoked session returns to the bounded sign-in path rather than rendering private scaffolding.
