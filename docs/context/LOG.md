@@ -16,6 +16,7 @@
 - Retained a missing-client-module failure before implementing exact-confirmation, same-UID provider reauthentication, forced ID-token refresh, secure-session replacement, server completion, owner-only IndexedDB cleanup, and Firebase client sign-out as one ordered orchestration contract.
 - Replaced the disabled Settings placeholder with a phone-safe scrolling review dialog, sticky actions, keyboard focus, explicit impact list, password/Google-specific UI, live progress, partial retry, exact `DELETE` gate, active-request unload protection, and post-completion cleanup warnings.
 - Direct review caught and closed an adapter race that could have reused the earlier Firebase user object if the live client user disappeared or changed before reauthentication. Twenty-two focused client/API/storage assertions cover popup cancellation and post-deletion sign-out failure in addition to the owner cleanup gates; strict TypeScript, scoped lint, and the production build pass. Live provider and browser evidence remain blocked by absent Firebase configuration, and no external state changed.
+- Planned the trusted completion reconciler as a server-only, dry-run-default operator command. It may mark a locked Firebase-phase job complete only after Firebase Admin reports that exact job UID absent; it never deletes an existing identity, exposes a public route, prints raw ownership/provider detail, or applies to production without separate approval.
 
 ## 2026-08-25: Immutable program publication repository
 
