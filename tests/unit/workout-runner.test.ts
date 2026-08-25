@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   InMemoryRunnerStorage,
+  RunnerOwnershipError,
   createCardioDraft,
   createRunnerState,
   createSetDraft,
@@ -13,6 +14,8 @@ import {
   loadRunnerState,
   persistRunnerState,
   runnerReducer,
+  runnerStorageKey,
+  runnerStorageRecord,
   stableIdempotencyKey,
   syncRunnerOperations,
   validateCardioDraft,
@@ -20,6 +23,7 @@ import {
   type ActiveWorkoutState,
   type RunnerOperation,
   type RunnerSnapshotInput,
+  type RunnerStorageRecord,
   type WorkoutSetTargetInput,
 } from "@/domain/workout-runner";
 
@@ -426,6 +430,28 @@ describe("drafts, notes, and exercise transitions", () => {
     expect(getActiveSetDisplay(replaced).exerciseName).toBe("Barbell row");
   });
 
+  it("rejects substitution after a set has been logged or queued", () => {
+    let state = makeState();
+    state = runnerReducer(state, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+
+    expect(() =>
+      runnerReducer(state, {
+        type: "substitute_exercise",
+        exerciseId: "exercise-row",
+        replacement: {
+          id: "exercise-machine-row",
+          name: "Machine row",
+          loggingKind: "weight_reps",
+        },
+      }),
+    ).toThrow(/substitution_after_logging|logged or queued/);
+  });
+
   it("validates cardio drafts and derives or preserves entered pace", () => {
     const empty = createCardioDraft("walker");
     expect(empty).toMatchObject({
@@ -531,6 +557,268 @@ describe("durable operation identity and recovery", () => {
     ).toBe("saved");
   });
 
+  it("supersedes unsaved cardio and note corrections without discarding history", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let cardio = makeCardioState();
+    cardio = runnerReducer(cardio, { type: "select_cardio", mode: "runner" });
+    cardio = runnerReducer(cardio, {
+      type: "update_cardio_draft",
+      draft: {
+        mode: "runner",
+        durationSeconds: 900,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: undefined,
+        paceSource: undefined,
+        inclinePercent: 0,
+        notes: "First",
+      },
+    });
+    cardio = runnerReducer(cardio, { type: "save_cardio" });
+    const firstCardioKey = operation(cardio, "save_cardio").idempotencyKey;
+    cardio = runnerReducer(cardio, {
+      type: "update_cardio_draft",
+      draft: {
+        mode: "runner",
+        durationSeconds: 960,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: undefined,
+        paceSource: undefined,
+        inclinePercent: 0,
+        notes: "Second",
+      },
+    });
+    cardio = runnerReducer(cardio, { type: "save_cardio" });
+    const secondCardioKey = operation(cardio, "save_cardio").idempotencyKey;
+    expect(
+      cardio.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === firstCardioKey,
+      )?.status,
+    ).toBe("superseded");
+    cardio = runnerReducer(cardio, {
+      type: "operation_failed",
+      idempotencyKey: secondCardioKey,
+      errorCode: "conflict",
+      conflict: true,
+      retryable: false,
+    });
+    cardio = runnerReducer(cardio, {
+      type: "update_cardio_draft",
+      draft: {
+        mode: "runner",
+        durationSeconds: 1_020,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: undefined,
+        paceSource: undefined,
+        inclinePercent: 0,
+        notes: "Third",
+      },
+    });
+    cardio = runnerReducer(cardio, { type: "save_cardio" });
+    const thirdCardioKey = operation(cardio, "save_cardio").idempotencyKey;
+    expect(
+      cardio.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === secondCardioKey,
+      )?.status,
+    ).toBe("superseded");
+    const cardioSubmitted: string[] = [];
+    cardio = await syncRunnerOperations(cardio, {
+      storage,
+      submit: async ({ idempotencyKey }) => {
+        cardioSubmitted.push(idempotencyKey);
+        return { status: "saved" };
+      },
+    });
+    expect(cardioSubmitted).toEqual([thirdCardioKey]);
+    cardio = runnerReducer(cardio, {
+      type: "update_cardio_draft",
+      draft: {
+        mode: "runner",
+        durationSeconds: 1_080,
+        distanceMeters: 2_000,
+        paceSecondsPerKilometer: undefined,
+        paceSource: undefined,
+        inclinePercent: 0,
+        notes: "Fourth",
+      },
+    });
+    cardio = runnerReducer(cardio, { type: "save_cardio" });
+    expect(
+      cardio.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === thirdCardioKey,
+      )?.status,
+    ).toBe("saved");
+
+    let notes = makeState();
+    notes = runnerReducer(notes, {
+      type: "update_note",
+      exerciseId: "exercise-row",
+      note: "First",
+    });
+    notes = runnerReducer(notes, {
+      type: "save_note",
+      exerciseId: "exercise-row",
+    });
+    const firstNoteKey = operation(notes, "save_note").idempotencyKey;
+    notes = runnerReducer(notes, {
+      type: "update_note",
+      exerciseId: "exercise-row",
+      note: "Second",
+    });
+    notes = runnerReducer(notes, {
+      type: "save_note",
+      exerciseId: "exercise-row",
+    });
+    const secondNoteKey = operation(notes, "save_note").idempotencyKey;
+    expect(
+      notes.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === firstNoteKey,
+      )?.status,
+    ).toBe("superseded");
+    notes = runnerReducer(notes, {
+      type: "operation_failed",
+      idempotencyKey: secondNoteKey,
+      errorCode: "conflict",
+      conflict: true,
+      retryable: false,
+    });
+    notes = runnerReducer(notes, {
+      type: "update_note",
+      exerciseId: "exercise-row",
+      note: "Third",
+    });
+    notes = runnerReducer(notes, {
+      type: "save_note",
+      exerciseId: "exercise-row",
+    });
+    const thirdNoteKey = operation(notes, "save_note").idempotencyKey;
+    expect(
+      notes.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === secondNoteKey,
+      )?.status,
+    ).toBe("superseded");
+    const noteSubmitted: string[] = [];
+    notes = await syncRunnerOperations(notes, {
+      storage,
+      submit: async ({ idempotencyKey }) => {
+        noteSubmitted.push(idempotencyKey);
+        return { status: "saved" };
+      },
+    });
+    expect(noteSubmitted).toEqual([thirdNoteKey]);
+    notes = runnerReducer(notes, {
+      type: "update_note",
+      exerciseId: "exercise-row",
+      note: "Fourth",
+    });
+    notes = runnerReducer(notes, {
+      type: "save_note",
+      exerciseId: "exercise-row",
+    });
+    expect(
+      notes.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === thirdNoteKey,
+      )?.status,
+    ).toBe("saved");
+  });
+
+  it("ignores stale lifecycle callbacks and never resurrects closed operations", () => {
+    let failed = runnerReducer(makeState(), {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    failed = runnerReducer(failed, { type: "save_set", setId: "row-work-1" });
+    const failedKey = operation(failed, "save_set").idempotencyKey;
+    failed = runnerReducer(failed, {
+      type: "operation_failed",
+      idempotencyKey: failedKey,
+      errorCode: "conflict",
+      conflict: true,
+      retryable: false,
+    });
+    const conflicted = failed;
+    expect(
+      runnerReducer(conflicted, {
+        type: "operation_failed",
+        idempotencyKey: failedKey,
+        errorCode: "stale",
+        retryable: true,
+      }),
+    ).toBe(conflicted);
+    expect(
+      runnerReducer(conflicted, {
+        type: "operation_saved",
+        idempotencyKey: failedKey,
+        persistedId: "stale-save",
+      }),
+    ).toBe(conflicted);
+
+    let superseded = makeState();
+    superseded = runnerReducer(superseded, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    superseded = runnerReducer(superseded, {
+      type: "save_set",
+      setId: "row-work-1",
+    });
+    const supersededKey = operation(superseded, "save_set").idempotencyKey;
+    superseded = runnerReducer(superseded, {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 34, repetitions: 10 },
+    });
+    superseded = runnerReducer(superseded, {
+      type: "save_set",
+      setId: "row-work-1",
+    });
+    expect(
+      runnerReducer(superseded, {
+        type: "operation_saved",
+        idempotencyKey: supersededKey,
+      }),
+    ).toBe(superseded);
+    expect(
+      runnerReducer(superseded, {
+        type: "operation_failed",
+        idempotencyKey: supersededKey,
+        errorCode: "stale",
+      }),
+    ).toBe(superseded);
+
+    const saved = runnerReducer(makeState(), {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    const savedQueued = runnerReducer(saved, {
+      type: "save_set",
+      setId: "row-work-1",
+    });
+    const savedKey = operation(savedQueued, "save_set").idempotencyKey;
+    const savedState = runnerReducer(savedQueued, {
+      type: "operation_saved",
+      idempotencyKey: savedKey,
+      persistedId: "log-1",
+    });
+    expect(
+      runnerReducer(savedState, {
+        type: "operation_failed",
+        idempotencyKey: savedKey,
+        errorCode: "stale-failure",
+        retryable: false,
+      }),
+    ).toBe(savedState);
+    expect(
+      runnerReducer(savedState, {
+        type: "operation_saved",
+        idempotencyKey: savedKey,
+        persistedId: "stale-log",
+      }),
+    ).toBe(savedState);
+  });
+
   it("persists conflict and non-retryable failure state and counts submit attempts only", async () => {
     const storage = new InMemoryRunnerStorage();
     let state = runnerReducer(makeState(), {
@@ -579,16 +867,30 @@ describe("durable operation identity and recovery", () => {
       retryable: false,
     });
 
-    const retryable = runnerReducer(state, {
+    let retryable = runnerReducer(makeState(), {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    retryable = runnerReducer(retryable, {
+      type: "save_set",
+      setId: "row-work-1",
+    });
+    const retryableKey = operation(retryable, "save_set").idempotencyKey;
+    retryable = runnerReducer(retryable, {
+      type: "operation_attempted",
+      idempotencyKey: retryableKey,
+    });
+    retryable = runnerReducer(retryable, {
       type: "operation_failed",
-      idempotencyKey: key,
+      idempotencyKey: retryableKey,
       errorCode: "temporary",
       retryable: true,
     });
     expect(retryable.operations[0]?.attempts).toBe(1);
     const retried = runnerReducer(retryable, {
       type: "retry_operation",
-      idempotencyKey: key,
+      idempotencyKey: retryableKey,
     });
     expect(retried.operations[0]?.attempts).toBe(1);
   });
@@ -736,6 +1038,94 @@ describe("offline operation queue", () => {
     expect(resubmitted.operations[0]?.status).toBe("saved");
   });
 
+  it("rejects corrupt or mismatched persisted runner records", async () => {
+    let persistedRecord: RunnerStorageRecord | undefined;
+    const storage = {
+      load: async () => persistedRecord,
+      save: async (_key: string, record: RunnerStorageRecord) => {
+        persistedRecord = record;
+      },
+      remove: async () => {
+        persistedRecord = undefined;
+      },
+    };
+    const state = makeState();
+    const snapshot = createWorkoutSnapshot(snapshotInput);
+    const options = {
+      ownerUid: "uid-a",
+      sessionId: "session-1",
+      snapshot,
+    };
+    const record = runnerStorageRecord(state);
+    const load = () => loadRunnerState(storage, options);
+
+    persistedRecord = {
+      ...record,
+      schemaVersion: 2,
+    } as unknown as RunnerStorageRecord;
+    await expect(load()).rejects.toMatchObject({ code: "corrupt_storage" });
+
+    persistedRecord = {
+      ...record,
+      key: runnerStorageKey("uid-a", "session-other"),
+    } as RunnerStorageRecord;
+    await expect(load()).rejects.toMatchObject({ code: "corrupt_storage" });
+
+    persistedRecord = { ...record, ownerUid: "uid-b" } as RunnerStorageRecord;
+    await expect(load()).rejects.toBeInstanceOf(RunnerOwnershipError);
+
+    persistedRecord = {
+      ...record,
+      sessionId: "session-other",
+    } as RunnerStorageRecord;
+    await expect(load()).rejects.toMatchObject({ code: "corrupt_storage" });
+
+    persistedRecord = {
+      ...record,
+      state: {
+        ...record.state,
+        snapshot: { ...record.state.snapshot, ownerUid: "uid-b" },
+      },
+    } as RunnerStorageRecord;
+    await expect(load()).rejects.toBeInstanceOf(RunnerOwnershipError);
+
+    persistedRecord = {
+      ...record,
+      state: {
+        ...record.state,
+        snapshot: { ...record.state.snapshot, sessionId: "session-other" },
+      },
+    } as RunnerStorageRecord;
+    await expect(load()).rejects.toMatchObject({ code: "snapshot_conflict" });
+
+    persistedRecord = {
+      ...record,
+      state: {
+        ...record.state,
+        snapshot: { ...record.state.snapshot, dayId: "day-other" },
+      },
+    } as RunnerStorageRecord;
+    await expect(load()).rejects.toMatchObject({ code: "snapshot_conflict" });
+
+    persistedRecord = {
+      ...record,
+      state: {
+        ...record.state,
+        snapshot: {
+          ...record.state.snapshot,
+          programRevisionId: "program-revision-other",
+        },
+      },
+    } as RunnerStorageRecord;
+    await expect(load()).rejects.toMatchObject({ code: "snapshot_conflict" });
+
+    persistedRecord = {
+      ...record,
+      state: undefined,
+    } as unknown as RunnerStorageRecord;
+    await expect(load()).rejects.toMatchObject({ code: "corrupt_storage" });
+  });
+
   it("keeps an offline or expired-auth draft and retries failed operations without changing keys", async () => {
     const storage = new InMemoryRunnerStorage();
     let offline = runnerReducer(makeState(), {
@@ -818,6 +1208,63 @@ describe("offline operation queue", () => {
     expect(submitted).toHaveLength(1);
     expect(failed.operations[0]?.status).toBe("failed");
     expect(failed.operations[1]?.status).toBe("pending");
+  });
+
+  it("lets abandonment bypass an earlier permanent or conflict failure", async () => {
+    const storage = new InMemoryRunnerStorage();
+    let state = runnerReducer(makeState(), {
+      type: "update_set_draft",
+      setId: "row-work-1",
+      draft: { kind: "weight_reps", weightKg: 32, repetitions: 10 },
+    });
+    state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
+    const savedKey = operation(state, "save_set").idempotencyKey;
+    state = runnerReducer(state, {
+      type: "operation_saved",
+      idempotencyKey: savedKey,
+      persistedId: "log-before-abandon",
+    });
+    state = runnerReducer(state, {
+      type: "update_note",
+      exerciseId: "exercise-row",
+      note: "Stopped after conflict",
+    });
+    state = runnerReducer(state, {
+      type: "save_note",
+      exerciseId: "exercise-row",
+    });
+    const failedKey = operation(state, "save_note").idempotencyKey;
+    state = runnerReducer(state, {
+      type: "operation_failed",
+      idempotencyKey: failedKey,
+      errorCode: "conflict",
+      conflict: true,
+      retryable: false,
+    });
+    state = runnerReducer(state, {
+      type: "abandon_session",
+      reason: "Stopped after conflict",
+    });
+    const abandonKey = operation(state, "abandon_session").idempotencyKey;
+    expect(
+      state.operations.find(({ idempotencyKey }) => idempotencyKey === savedKey)
+        ?.status,
+    ).toBe("saved");
+    expect(
+      state.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === failedKey,
+      )?.status,
+    ).toBe("superseded");
+    const submitted: string[] = [];
+    state = await syncRunnerOperations(state, {
+      storage,
+      submit: async ({ idempotencyKey }) => {
+        submitted.push(idempotencyKey);
+        return { status: "saved", persistedId: "abandoned-2" };
+      },
+    });
+    expect(submitted).toEqual([abandonKey]);
+    expect(state.status).toBe("abandoned");
   });
 });
 

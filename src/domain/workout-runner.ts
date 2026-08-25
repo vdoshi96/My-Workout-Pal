@@ -1140,7 +1140,12 @@ function queueOperation(
   kind: RunnerOperationKind,
   payload: RunnerOperationPayload,
   at: number,
-  options: Readonly<{ supersedeSetId?: string }> = {},
+  options: Readonly<{
+    supersedeSetId?: string;
+    supersedeCardio?: boolean;
+    supersedeNoteExerciseId?: string;
+    supersedeForAbandonment?: boolean;
+  }> = {},
 ): { state: ActiveWorkoutState; operation: RunnerOperation } {
   const idempotencyKey = stableIdempotencyKey({
     ownerUid: state.snapshot.ownerUid,
@@ -1153,27 +1158,53 @@ function queueOperation(
   );
   if (existing) return { state, operation: existing };
 
-  const operations = options.supersedeSetId
-    ? state.operations.map((operation) => {
-        if (
-          operation.kind !== "save_set" ||
-          operation.status === "saved" ||
-          operation.status === "superseded" ||
-          operation.payload.kind !== "save_set" ||
-          operation.payload.setId !== options.supersedeSetId
-        ) {
-          return operation;
-        }
-        return {
-          ...operation,
-          status: "superseded" as const,
-          errorCode: "superseded",
-          errorMessage: "Superseded by a newer local value for this set.",
-          retryable: false,
-          failureKind: undefined,
-        };
-      })
-    : state.operations;
+  const shouldSupersede = (operation: RunnerOperation): boolean => {
+    if (operation.status === "saved" || operation.status === "superseded")
+      return false;
+    if (
+      options.supersedeForAbandonment === true &&
+      operation.kind !== "complete_session" &&
+      operation.kind !== "abandon_session"
+    ) {
+      return true;
+    }
+    if (
+      options.supersedeSetId !== undefined &&
+      operation.kind === "save_set" &&
+      operation.payload.kind === "save_set" &&
+      operation.payload.setId === options.supersedeSetId
+    ) {
+      return true;
+    }
+    if (options.supersedeCardio === true && operation.kind === "save_cardio") {
+      return true;
+    }
+    return (
+      options.supersedeNoteExerciseId !== undefined &&
+      operation.kind === "save_note" &&
+      operation.payload.kind === "save_note" &&
+      operation.payload.exerciseId === options.supersedeNoteExerciseId
+    );
+  };
+  const operations = state.operations.map((operation) => {
+    if (!shouldSupersede(operation)) return operation;
+    const target =
+      operation.kind === "save_set"
+        ? "set"
+        : operation.kind === "save_cardio"
+          ? "cardio"
+          : operation.kind === "save_note"
+            ? "note"
+            : "session";
+    return {
+      ...operation,
+      status: "superseded" as const,
+      errorCode: "superseded",
+      errorMessage: `Superseded by a newer local ${target} value.`,
+      retryable: false,
+      failureKind: undefined,
+    };
+  });
 
   const operation: RunnerOperation = {
     idempotencyKey,
@@ -1660,7 +1691,9 @@ export function runnerReducer(
       mode: option.mode,
       cardio: result.cardio,
     };
-    const queued = queueOperation(state, "save_cardio", payload, at);
+    const queued = queueOperation(state, "save_cardio", payload, at, {
+      supersedeCardio: true,
+    });
     return withUpdated(
       queued.state,
       {
@@ -1700,7 +1733,9 @@ export function runnerReducer(
       exerciseId: action.exerciseId,
       note,
     };
-    const queued = queueOperation(state, "save_note", payload, at);
+    const queued = queueOperation(state, "save_note", payload, at, {
+      supersedeNoteExerciseId: action.exerciseId,
+    });
     return withUpdated(
       queued.state,
       {
@@ -1740,6 +1775,22 @@ export function runnerReducer(
   }
   if (action.type === "substitute_exercise") {
     const exercise = exerciseAt(state, action.exerciseId);
+    const exerciseSetIds = new Set(exercise.sets.map(({ id }) => id));
+    const hasLoggedOrQueuedSet =
+      exercise.sets.some(({ id }) => state.loggedSets[id] !== undefined) ||
+      state.operations.some(
+        (operation) =>
+          operation.kind === "save_set" &&
+          operation.payload.kind === "save_set" &&
+          operation.payload.exerciseId === exercise.id &&
+          exerciseSetIds.has(operation.payload.setId),
+      );
+    if (hasLoggedOrQueuedSet) {
+      throw new RunnerTransitionError(
+        "substitution_after_logging",
+        "This exercise cannot be substituted after a set has been logged or queued.",
+      );
+    }
     assertString(action.replacement.id, "replacement.id");
     assertString(action.replacement.name, "replacement.name");
     assertKind(action.replacement.loggingKind, "replacement.loggingKind");
@@ -1819,7 +1870,9 @@ export function runnerReducer(
       sessionId: state.snapshot.sessionId,
       reason: action.reason,
     };
-    const queued = queueOperation(state, "abandon_session", payload, at);
+    const queued = queueOperation(state, "abandon_session", payload, at, {
+      supersedeForAbandonment: true,
+    });
     return withUpdated(queued.state, { status: "abandoning" }, at);
   }
   if (action.type === "complete_session") {
@@ -1888,6 +1941,8 @@ export function runnerReducer(
         "unknown_operation",
         "The operation no longer exists.",
       );
+    if (operation.status === "saved") return state;
+    if (operation.status !== "pending") return state;
     const saved: RunnerOperation = {
       ...operation,
       status: "saved",
@@ -1918,6 +1973,7 @@ export function runnerReducer(
         "unknown_operation",
         "The operation no longer exists.",
       );
+    if (operation.status !== "pending") return state;
     const failed: RunnerOperation = {
       ...operation,
       status: "failed",
@@ -2047,6 +2103,102 @@ export async function persistRunnerState(
   );
 }
 
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function assertRunnerStorageRecordIntegrity(
+  record: RunnerStorageRecord,
+  expectedKey: string,
+  options: LoadRunnerOptions,
+): void {
+  if (!isObjectRecord(record)) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The saved workout record is not an object.",
+    );
+  }
+  const candidate = record as unknown as Record<string, unknown>;
+  if (candidate["schemaVersion"] !== 1) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The saved workout state has an unsupported schema version.",
+    );
+  }
+  if (candidate["ownerUid"] !== options.ownerUid) {
+    throw new RunnerOwnershipError();
+  }
+  if (candidate["sessionId"] !== options.sessionId) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The saved workout record session does not match its storage key.",
+    );
+  }
+  if (candidate["key"] !== expectedKey) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The saved workout state key does not match its owner and session.",
+    );
+  }
+  if (options.snapshot.ownerUid !== options.ownerUid) {
+    throw new RunnerOwnershipError();
+  }
+  if (options.snapshot.sessionId !== options.sessionId) {
+    throw new RunnerTransitionError(
+      "snapshot_conflict",
+      "The requested workout snapshot does not match the active session.",
+    );
+  }
+  const storedState = candidate["state"];
+  if (!isObjectRecord(storedState)) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The saved workout state payload is not an object.",
+    );
+  }
+  if (!Array.isArray(storedState["operations"])) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The saved workout operations are not an array.",
+    );
+  }
+  const storedSnapshot = storedState["snapshot"];
+  if (!isObjectRecord(storedSnapshot)) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The saved workout snapshot is not an object.",
+    );
+  }
+  if (storedSnapshot["ownerUid"] !== options.ownerUid) {
+    throw new RunnerOwnershipError();
+  }
+  if (storedSnapshot["sessionId"] !== options.sessionId) {
+    throw new RunnerTransitionError(
+      "snapshot_conflict",
+      "The saved workout session identity does not match the requested session.",
+    );
+  }
+  if (
+    storedSnapshot["ownerUid"] !== candidate["ownerUid"] ||
+    storedSnapshot["sessionId"] !== candidate["sessionId"]
+  ) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The saved workout state identity does not match its record.",
+    );
+  }
+  if (
+    storedSnapshot["programRevisionId"] !==
+      options.snapshot.programRevisionId ||
+    storedSnapshot["dayId"] !== options.snapshot.dayId
+  ) {
+    throw new RunnerTransitionError(
+      "snapshot_conflict",
+      "The saved workout snapshot no longer matches this active session.",
+    );
+  }
+}
+
 export async function loadRunnerState(
   storage: RunnerStorage,
   options: LoadRunnerOptions,
@@ -2054,23 +2206,7 @@ export async function loadRunnerState(
   const key = runnerStorageKey(options.ownerUid, options.sessionId);
   const record = await storage.load(key);
   if (record === undefined) return undefined;
-  if (
-    record.ownerUid !== options.ownerUid ||
-    record.sessionId !== options.sessionId
-  ) {
-    throw new RunnerOwnershipError();
-  }
-  if (
-    record.state.snapshot.ownerUid !== options.snapshot.ownerUid ||
-    record.state.snapshot.sessionId !== options.snapshot.sessionId ||
-    record.state.snapshot.programRevisionId !==
-      options.snapshot.programRevisionId
-  ) {
-    throw new RunnerTransitionError(
-      "snapshot_conflict",
-      "The saved workout snapshot no longer matches this active session.",
-    );
-  }
+  assertRunnerStorageRecordIntegrity(record, key, options);
   const hydrated = {
     ...record.state,
     snapshot: deepFreeze(clone(options.snapshot)),
