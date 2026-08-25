@@ -46,6 +46,11 @@ const ids = {
   templateRevision: "00000000-0000-4000-8000-000000000046",
   templateDay: "00000000-0000-4000-8000-000000000047",
   templateSection: "00000000-0000-4000-8000-000000000048",
+  outcomeSecondSnapshot: "00000000-0000-4000-8000-000000000049",
+  outcomeThirdSnapshot: "00000000-0000-4000-8000-000000000050",
+  outcomeCardioLogA: "00000000-0000-4000-8000-000000000051",
+  outcomeCardioLogB: "00000000-0000-4000-8000-000000000052",
+  unpublishedSession: "00000000-0000-4000-8000-000000000053",
 } as const;
 
 const openDatabases: PGlite[] = [];
@@ -85,6 +90,11 @@ async function seedProgram(
 
 async function seedSession(database: PGlite, ownerFirebaseUid: string, sessionId: string) {
   await database.exec(`
+    UPDATE program_revisions
+    SET status = 'published', published_at = now()
+    WHERE owner_firebase_uid = '${ownerFirebaseUid}'
+      AND id = '${ownerFirebaseUid === "alice" ? ids.aliceRevision : ids.bobRevision}';
+
     INSERT INTO workout_sessions (
       id, owner_firebase_uid, program_id, program_revision_id, state, idempotency_key
     ) VALUES (
@@ -145,6 +155,7 @@ describe("initial database migration", () => {
         "user_profiles",
         "user_programs",
         "workout_exercise_snapshots",
+        "workout_exercise_states",
         "workout_sessions",
       ]),
     );
@@ -517,11 +528,239 @@ describe("initial database migration", () => {
     `);
   });
 
+  it("persists runner exercise outcomes without mutating the original snapshot", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedOwner(database, "bob");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedProgram(database, "bob", ids.bobProgram, ids.bobRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+    await seedSession(database, "bob", ids.bobSession);
+    await database.exec(`
+      UPDATE workout_sessions
+      SET state = 'active', started_at = now()
+      WHERE id = '${ids.aliceSession}';
+
+      INSERT INTO catalog_exercises (id, slug, name, movement_family, role, logging_kind)
+      VALUES ('${ids.catalogExercise}', 'outcome-substitute', 'Outcome substitute', 'horizontal_push', 'compound', 'weight_reps');
+
+      INSERT INTO custom_exercises (
+        id, owner_firebase_uid, exercise_key, name, logging_kind
+      ) VALUES (
+        '${ids.bobCustomExercise}', 'bob', 'bob-custom', 'Bob custom', 'weight_reps'
+      );
+
+      INSERT INTO workout_exercise_snapshots (
+        id, owner_firebase_uid, session_id, position, display_name, logging_kind,
+        minimum_reps, maximum_reps, set_count
+      ) VALUES
+        ('${ids.outcomeSecondSnapshot}', 'alice', '${ids.aliceSession}', 2,
+         'Second exercise', 'weight_reps', 8, 12, 1),
+        ('${ids.outcomeThirdSnapshot}', 'alice', '${ids.aliceSession}', 3,
+         'Third exercise', 'weight_reps', 8, 12, 1);
+
+      INSERT INTO workout_exercise_states (
+        owner_firebase_uid, session_id, snapshot_id, status,
+        effective_catalog_exercise_id, effective_display_name, effective_logging_kind,
+        note, substitution_reason, client_idempotency_key, version
+      ) VALUES (
+        'alice', '${ids.aliceSession}', '${ids.aliceSnapshot}', 'pending',
+        '${ids.catalogExercise}', 'Outcome substitute', 'weight_reps',
+        'Use the alternate movement', 'Equipment-compatible substitution', 'save-note-1', 1
+      );
+
+      UPDATE workout_exercise_states
+      SET status = 'completed', note = 'Completed after substitution', version = 2
+      WHERE owner_firebase_uid = 'alice'
+        AND session_id = '${ids.aliceSession}'
+        AND snapshot_id = '${ids.aliceSnapshot}';
+
+      INSERT INTO workout_exercise_states (
+        owner_firebase_uid, session_id, snapshot_id, status,
+        effective_display_name, effective_logging_kind, note,
+        client_idempotency_key, version
+      ) VALUES (
+        'alice', '${ids.aliceSession}', '${ids.outcomeSecondSnapshot}', 'skipped',
+        'Second exercise', 'weight_reps', 'Skipped for time', 'skip-1', 1
+      );
+    `);
+
+    const states = await database.query<{
+      status: string;
+      note: string | null;
+      effective_display_name: string;
+    }>(`
+      SELECT status, note, effective_display_name
+      FROM workout_exercise_states
+      WHERE owner_firebase_uid = 'alice' AND session_id = '${ids.aliceSession}'
+      ORDER BY snapshot_id;
+    `);
+    expect(states.rows).toEqual([
+      {
+        status: "completed",
+        note: "Completed after substitution",
+        effective_display_name: "Outcome substitute",
+      },
+      { status: "skipped", note: "Skipped for time", effective_display_name: "Second exercise" },
+    ]);
+
+    const originalSnapshot = await database.query<{ display_name: string; logging_kind: string }>(`
+      SELECT display_name, logging_kind
+      FROM workout_exercise_snapshots
+      WHERE owner_firebase_uid = 'alice' AND id = '${ids.aliceSnapshot}';
+    `);
+    expect(originalSnapshot.rows).toEqual([{ display_name: "Dumbbell bench press", logging_kind: "weight_reps" }]);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_states (
+          owner_firebase_uid, session_id, snapshot_id, status,
+          effective_display_name, effective_logging_kind, client_idempotency_key
+        ) VALUES (
+          'bob', '${ids.aliceSession}', '${ids.aliceSnapshot}', 'pending',
+          'Cross-owner state', 'weight_reps', 'cross-owner-state'
+        );
+      `),
+    ).rejects.toThrow(/workout_exercise_states_session_scope_fk|snapshot|foreign key|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_states (
+          owner_firebase_uid, session_id, snapshot_id, status,
+          effective_custom_exercise_id, effective_display_name, effective_logging_kind,
+          client_idempotency_key
+        ) VALUES (
+          'alice', '${ids.aliceSession}', '${ids.outcomeThirdSnapshot}', 'pending',
+          '${ids.bobCustomExercise}', 'Bob custom', 'weight_reps', 'cross-owner-custom'
+        );
+      `),
+    ).rejects.toThrow(/workout_exercise_states_custom_exercise_scope_fk|foreign key|violates/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_states (
+          owner_firebase_uid, session_id, snapshot_id, status,
+          effective_display_name, effective_logging_kind, client_idempotency_key
+        ) VALUES (
+          'alice', '${ids.bobSession}', '${ids.aliceSnapshot}', 'pending',
+          'Cross-session state', 'weight_reps', 'cross-session-state'
+        );
+      `),
+    ).rejects.toThrow(/workout_exercise_states_snapshot_scope_fk|foreign key|violates/i);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_exercise_states
+        SET effective_logging_kind = 'duration'
+        WHERE owner_firebase_uid = 'alice'
+          AND session_id = '${ids.aliceSession}'
+          AND snapshot_id = '${ids.aliceSnapshot}';
+      `),
+    ).rejects.toThrow(/logging kind|incompatible|snapshot|check|violates/i);
+
+    await database.exec(`
+      UPDATE workout_sessions
+      SET state = 'completed', completed_at = now()
+      WHERE id = '${ids.aliceSession}';
+    `);
+
+    await expect(
+      database.exec(`
+        UPDATE workout_exercise_states
+        SET note = 'Late correction', version = 3
+        WHERE owner_firebase_uid = 'alice'
+          AND session_id = '${ids.aliceSession}'
+          AND snapshot_id = '${ids.aliceSnapshot}';
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_exercise_states (
+          owner_firebase_uid, session_id, snapshot_id, status,
+          effective_display_name, effective_logging_kind, client_idempotency_key
+        ) VALUES (
+          'alice', '${ids.aliceSession}', '${ids.outcomeThirdSnapshot}', 'pending',
+          'Late state', 'weight_reps', 'late-state'
+        );
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+
+    await expect(
+      database.exec(`
+        DELETE FROM workout_exercise_states
+        WHERE owner_firebase_uid = 'alice'
+          AND session_id = '${ids.aliceSession}'
+          AND snapshot_id = '${ids.aliceSnapshot}';
+      `),
+    ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+  });
+
+  it("allows only one cardio choice per workout session", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+    await database.exec(`
+      INSERT INTO cardio_logs (
+        id, owner_firebase_uid, session_id, mode, duration_seconds,
+        distance_m, client_idempotency_key
+      ) VALUES (
+        '${ids.outcomeCardioLogA}', 'alice', '${ids.aliceSession}', 'walker',
+        600, 1000, 'cardio-choice-a'
+      );
+    `);
+
+    await expect(
+      database.exec(`
+        INSERT INTO cardio_logs (
+          id, owner_firebase_uid, session_id, mode, duration_seconds,
+          distance_m, client_idempotency_key
+        ) VALUES (
+          '${ids.outcomeCardioLogB}', 'alice', '${ids.aliceSession}', 'runner',
+          600, 1000, 'cardio-choice-b'
+        );
+      `),
+    ).rejects.toThrow(/cardio_logs_one_per_session_unique|unique|duplicate/i);
+  });
+
+  it("rejects creating a workout session from an unpublished revision", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+
+    await expect(
+      database.exec(`
+        INSERT INTO workout_sessions (
+          id, owner_firebase_uid, program_id, program_revision_id, state, idempotency_key
+        ) VALUES (
+          '${ids.unpublishedSession}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
+          'draft', 'unpublished-session'
+        );
+      `),
+    ).rejects.toThrow(/published|unpublished|revision|check|violates/i);
+
+    await database.exec(`
+      UPDATE program_revisions
+      SET status = 'published', published_at = now()
+      WHERE id = '${ids.aliceRevision}';
+      INSERT INTO workout_sessions (
+        id, owner_firebase_uid, program_id, program_revision_id, state, idempotency_key
+      ) VALUES (
+        '${ids.unpublishedSession}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
+        'draft', 'published-session'
+      );
+    `);
+  });
+
   it("allows one resumable session and one idempotency result per owner key", async () => {
     const database = await openDatabase();
     await seedOwner(database, "alice");
     await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
     await database.exec(`
+      UPDATE program_revisions
+      SET status = 'published', published_at = now()
+      WHERE owner_firebase_uid = 'alice' AND id = '${ids.aliceRevision}';
       INSERT INTO workout_sessions (
         id, owner_firebase_uid, program_id, program_revision_id, state, started_at, idempotency_key
       ) VALUES (
@@ -603,7 +842,7 @@ describe("initial database migration", () => {
           'draft', 'mismatched-revision'
         );
       `),
-    ).rejects.toThrow(/workout_sessions_revision_scope_fk|foreign key|violates/i);
+    ).rejects.toThrow(/unpublished|published|workout_sessions_revision_scope_fk|foreign key|violates/i);
   });
 
   it("scopes a program section to its parent day program", async () => {
@@ -924,10 +1163,6 @@ describe("initial database migration", () => {
       UPDATE workout_sessions
       SET state = 'active', started_at = now()
       WHERE id = '${ids.aliceSession}';
-
-      UPDATE program_revisions
-      SET status = 'published', published_at = now()
-      WHERE id = '${ids.aliceRevision}';
 
       INSERT INTO set_logs (
         id, owner_firebase_uid, session_id, snapshot_id, set_position,

@@ -58,6 +58,11 @@ export const sessionState = pgEnum("session_state", [
   "completed",
   "abandoned",
 ]);
+export const workoutExerciseStateStatus = pgEnum("workout_exercise_state_status", [
+  "pending",
+  "completed",
+  "skipped",
+]);
 export const cardioMode = pgEnum("cardio_mode", ["walker", "runner"]);
 export const recordType = pgEnum("record_type", [
   "max_weight",
@@ -857,6 +862,79 @@ export const workoutExerciseSnapshots = pgTable(
   ],
 );
 
+export const workoutExerciseStates = pgTable(
+  "workout_exercise_states",
+  {
+    ownerFirebaseUid: text("owner_firebase_uid").notNull(),
+    sessionId: uuid("session_id").notNull(),
+    snapshotId: uuid("snapshot_id").notNull(),
+    status: workoutExerciseStateStatus("status").default("pending").notNull(),
+    effectiveCatalogExerciseId: uuid("effective_catalog_exercise_id"),
+    effectiveCustomExerciseId: uuid("effective_custom_exercise_id"),
+    effectiveDisplayName: varchar("effective_display_name", { length: 180 }).notNull(),
+    effectiveLoggingKind: measurementKind("effective_logging_kind").notNull(),
+    note: text("note"),
+    substitutionReason: text("substitution_reason"),
+    clientIdempotencyKey: varchar("client_idempotency_key", { length: 180 }).notNull(),
+    version: integer("version").default(1).notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.ownerFirebaseUid, table.sessionId, table.snapshotId],
+      name: "workout_exercise_states_pk",
+    }),
+    foreignKey({
+      columns: [table.ownerFirebaseUid, table.sessionId],
+      foreignColumns: [workoutSessions.ownerFirebaseUid, workoutSessions.id],
+      name: "workout_exercise_states_session_scope_fk",
+    }).onDelete("restrict").onUpdate("cascade"),
+    foreignKey({
+      columns: [table.ownerFirebaseUid, table.snapshotId, table.sessionId],
+      foreignColumns: [
+        workoutExerciseSnapshots.ownerFirebaseUid,
+        workoutExerciseSnapshots.id,
+        workoutExerciseSnapshots.sessionId,
+      ],
+      name: "workout_exercise_states_snapshot_scope_fk",
+    }).onDelete("restrict").onUpdate("cascade"),
+    foreignKey({
+      columns: [table.effectiveCatalogExerciseId],
+      foreignColumns: [catalogExercises.id],
+      name: "workout_exercise_states_catalog_exercise_fk",
+    }).onDelete("restrict").onUpdate("cascade"),
+    foreignKey({
+      columns: [table.ownerFirebaseUid, table.effectiveCustomExerciseId],
+      foreignColumns: [customExercises.ownerFirebaseUid, customExercises.id],
+      name: "workout_exercise_states_custom_exercise_scope_fk",
+    }).onDelete("restrict").onUpdate("cascade"),
+    uniqueIndex("workout_exercise_states_owner_idempotency_unique").on(
+      table.ownerFirebaseUid,
+      table.sessionId,
+      table.clientIdempotencyKey,
+    ),
+    index("workout_exercise_states_owner_session_status_idx").on(table.ownerFirebaseUid, table.sessionId, table.status),
+    check(
+      "workout_exercise_states_effective_exercise_xor",
+      sql`num_nonnulls(${table.effectiveCatalogExerciseId}, ${table.effectiveCustomExerciseId}) <= 1`,
+    ),
+    check(
+      "workout_exercise_states_display_name_not_blank",
+      sql`length(trim(${table.effectiveDisplayName})) > 0`,
+    ),
+    check(
+      "workout_exercise_states_substitution_reason_not_blank",
+      sql`${table.substitutionReason} is null or length(trim(${table.substitutionReason})) > 0`,
+    ),
+    check(
+      "workout_exercise_states_idempotency_not_blank",
+      sql`length(trim(${table.clientIdempotencyKey})) > 0`,
+    ),
+    check("workout_exercise_states_version_positive", sql`${table.version} > 0`),
+  ],
+);
+
 export const setLogs = pgTable(
   "set_logs",
   {
@@ -933,6 +1011,7 @@ export const cardioLogs = pgTable(
       name: "cardio_logs_session_scope_fk",
     }).onDelete("restrict").onUpdate("cascade"),
     uniqueIndex("cardio_logs_owner_id_unique").on(table.ownerFirebaseUid, table.id),
+    uniqueIndex("cardio_logs_one_per_session_unique").on(table.ownerFirebaseUid, table.sessionId),
     uniqueIndex("cardio_logs_idempotency_unique").on(table.ownerFirebaseUid, table.sessionId, table.clientIdempotencyKey),
     index("cardio_logs_owner_recorded_idx").on(table.ownerFirebaseUid, table.recordedAt),
     check("cardio_logs_duration_positive", sql`${table.durationSeconds} > 0`),
@@ -1148,6 +1227,7 @@ export const schema = {
   programCardioPrescriptions,
   workoutSessions,
   workoutExerciseSnapshots,
+  workoutExerciseStates,
   setLogs,
   cardioLogs,
   idempotencyKeys,

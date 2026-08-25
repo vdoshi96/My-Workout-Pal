@@ -1,5 +1,5 @@
 {
-  "id": "e58cfec5-263b-418d-9841-9abd641a7f38",
+  "id": "1bd1dbeb-23a5-4de3-a71e-b0a3733ecd90",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -180,6 +180,27 @@
             },
             {
               "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cardio_logs_one_per_session_unique": {
+          "name": "cardio_logs_one_per_session_unique",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "session_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -5189,6 +5210,255 @@
       },
       "isRLSEnabled": false
     },
+    "public.workout_exercise_states": {
+      "name": "workout_exercise_states",
+      "schema": "",
+      "columns": {
+        "owner_firebase_uid": {
+          "name": "owner_firebase_uid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot_id": {
+          "name": "snapshot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "workout_exercise_state_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "effective_catalog_exercise_id": {
+          "name": "effective_catalog_exercise_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "effective_custom_exercise_id": {
+          "name": "effective_custom_exercise_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "effective_display_name": {
+          "name": "effective_display_name",
+          "type": "varchar(180)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_logging_kind": {
+          "name": "effective_logging_kind",
+          "type": "measurement_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "substitution_reason": {
+          "name": "substitution_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_idempotency_key": {
+          "name": "client_idempotency_key",
+          "type": "varchar(180)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "workout_exercise_states_owner_idempotency_unique": {
+          "name": "workout_exercise_states_owner_idempotency_unique",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "client_idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "workout_exercise_states_owner_session_status_idx": {
+          "name": "workout_exercise_states_owner_session_status_idx",
+          "columns": [
+            {
+              "expression": "owner_firebase_uid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "workout_exercise_states_session_scope_fk": {
+          "name": "workout_exercise_states_session_scope_fk",
+          "tableFrom": "workout_exercise_states",
+          "tableTo": "workout_sessions",
+          "columnsFrom": [
+            "owner_firebase_uid",
+            "session_id"
+          ],
+          "columnsTo": [
+            "owner_firebase_uid",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "workout_exercise_states_snapshot_scope_fk": {
+          "name": "workout_exercise_states_snapshot_scope_fk",
+          "tableFrom": "workout_exercise_states",
+          "tableTo": "workout_exercise_snapshots",
+          "columnsFrom": [
+            "owner_firebase_uid",
+            "snapshot_id",
+            "session_id"
+          ],
+          "columnsTo": [
+            "owner_firebase_uid",
+            "id",
+            "session_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "workout_exercise_states_catalog_exercise_fk": {
+          "name": "workout_exercise_states_catalog_exercise_fk",
+          "tableFrom": "workout_exercise_states",
+          "tableTo": "catalog_exercises",
+          "columnsFrom": [
+            "effective_catalog_exercise_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "workout_exercise_states_custom_exercise_scope_fk": {
+          "name": "workout_exercise_states_custom_exercise_scope_fk",
+          "tableFrom": "workout_exercise_states",
+          "tableTo": "custom_exercises",
+          "columnsFrom": [
+            "owner_firebase_uid",
+            "effective_custom_exercise_id"
+          ],
+          "columnsTo": [
+            "owner_firebase_uid",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workout_exercise_states_pk": {
+          "name": "workout_exercise_states_pk",
+          "columns": [
+            "owner_firebase_uid",
+            "session_id",
+            "snapshot_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "workout_exercise_states_effective_exercise_xor": {
+          "name": "workout_exercise_states_effective_exercise_xor",
+          "value": "num_nonnulls(\"workout_exercise_states\".\"effective_catalog_exercise_id\", \"workout_exercise_states\".\"effective_custom_exercise_id\") <= 1"
+        },
+        "workout_exercise_states_display_name_not_blank": {
+          "name": "workout_exercise_states_display_name_not_blank",
+          "value": "length(trim(\"workout_exercise_states\".\"effective_display_name\")) > 0"
+        },
+        "workout_exercise_states_substitution_reason_not_blank": {
+          "name": "workout_exercise_states_substitution_reason_not_blank",
+          "value": "\"workout_exercise_states\".\"substitution_reason\" is null or length(trim(\"workout_exercise_states\".\"substitution_reason\")) > 0"
+        },
+        "workout_exercise_states_idempotency_not_blank": {
+          "name": "workout_exercise_states_idempotency_not_blank",
+          "value": "length(trim(\"workout_exercise_states\".\"client_idempotency_key\")) > 0"
+        },
+        "workout_exercise_states_version_positive": {
+          "name": "workout_exercise_states_version_positive",
+          "value": "\"workout_exercise_states\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.workout_sessions": {
       "name": "workout_sessions",
       "schema": "",
@@ -5563,6 +5833,15 @@
         "rejected",
         "restricted",
         "retired"
+      ]
+    },
+    "public.workout_exercise_state_status": {
+      "name": "workout_exercise_state_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "completed",
+        "skipped"
       ]
     }
   },

@@ -10,6 +10,7 @@ CREATE TYPE "public"."record_type" AS ENUM('max_weight', 'estimated_1rm', 'max_r
 CREATE TYPE "public"."revision_status" AS ENUM('draft', 'published', 'archived');--> statement-breakpoint
 CREATE TYPE "public"."section_kind" AS ENUM('strength', 'accessory', 'core', 'cardio');--> statement-breakpoint
 CREATE TYPE "public"."session_state" AS ENUM('draft', 'active', 'completing', 'completed', 'abandoned');--> statement-breakpoint
+CREATE TYPE "public"."workout_exercise_state_status" AS ENUM('pending', 'completed', 'skipped');--> statement-breakpoint
 CREATE TYPE "public"."summary_kind" AS ENUM('daily', 'weekly', 'rolling');--> statement-breakpoint
 CREATE TYPE "public"."unit_system" AS ENUM('metric', 'imperial');--> statement-breakpoint
 CREATE TYPE "public"."video_approval_status" AS ENUM('discovered', 'mechanically_eligible', 'manual_review', 'approved', 'rejected', 'restricted', 'retired');--> statement-breakpoint
@@ -480,6 +481,29 @@ CREATE TABLE "workout_exercise_snapshots" (
 	CONSTRAINT "workout_snapshots_measurement_shape" CHECK (("workout_exercise_snapshots"."logging_kind" = 'weight_reps' and "workout_exercise_snapshots"."minimum_reps" is not null and "workout_exercise_snapshots"."maximum_reps" is not null and "workout_exercise_snapshots"."minimum_seconds" is null and "workout_exercise_snapshots"."maximum_seconds" is null and "workout_exercise_snapshots"."target_distance_m" is null) or ("workout_exercise_snapshots"."logging_kind" = 'bodyweight_reps' and "workout_exercise_snapshots"."minimum_reps" is not null and "workout_exercise_snapshots"."maximum_reps" is not null and "workout_exercise_snapshots"."minimum_seconds" is null and "workout_exercise_snapshots"."maximum_seconds" is null and "workout_exercise_snapshots"."target_weight_kg" is null and "workout_exercise_snapshots"."target_distance_m" is null) or ("workout_exercise_snapshots"."logging_kind" = 'duration' and "workout_exercise_snapshots"."minimum_seconds" is not null and "workout_exercise_snapshots"."maximum_seconds" is not null and "workout_exercise_snapshots"."minimum_reps" is null and "workout_exercise_snapshots"."maximum_reps" is null and "workout_exercise_snapshots"."target_weight_kg" is null and "workout_exercise_snapshots"."target_distance_m" is null) or ("workout_exercise_snapshots"."logging_kind" = 'distance_duration' and "workout_exercise_snapshots"."minimum_seconds" is not null and "workout_exercise_snapshots"."maximum_seconds" is not null and "workout_exercise_snapshots"."minimum_reps" is null and "workout_exercise_snapshots"."maximum_reps" is null and "workout_exercise_snapshots"."target_weight_kg" is null and "workout_exercise_snapshots"."target_distance_m" is not null))
 );
 --> statement-breakpoint
+CREATE TABLE "workout_exercise_states" (
+	"owner_firebase_uid" text NOT NULL,
+	"session_id" uuid NOT NULL,
+	"snapshot_id" uuid NOT NULL,
+	"status" "workout_exercise_state_status" DEFAULT 'pending' NOT NULL,
+	"effective_catalog_exercise_id" uuid,
+	"effective_custom_exercise_id" uuid,
+	"effective_display_name" varchar(180) NOT NULL,
+	"effective_logging_kind" "measurement_kind" NOT NULL,
+	"note" text,
+	"substitution_reason" text,
+	"client_idempotency_key" varchar(180) NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "workout_exercise_states_pk" PRIMARY KEY("owner_firebase_uid","session_id","snapshot_id"),
+	CONSTRAINT "workout_exercise_states_effective_exercise_xor" CHECK (num_nonnulls("workout_exercise_states"."effective_catalog_exercise_id", "workout_exercise_states"."effective_custom_exercise_id") <= 1),
+	CONSTRAINT "workout_exercise_states_display_name_not_blank" CHECK (length(trim("workout_exercise_states"."effective_display_name")) > 0),
+	CONSTRAINT "workout_exercise_states_substitution_reason_not_blank" CHECK ("workout_exercise_states"."substitution_reason" is null or length(trim("workout_exercise_states"."substitution_reason")) > 0),
+	CONSTRAINT "workout_exercise_states_idempotency_not_blank" CHECK (length(trim("workout_exercise_states"."client_idempotency_key")) > 0),
+	CONSTRAINT "workout_exercise_states_version_positive" CHECK ("workout_exercise_states"."version" > 0)
+);
+--> statement-breakpoint
 CREATE TABLE "workout_sessions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"owner_firebase_uid" text NOT NULL,
@@ -564,9 +588,14 @@ ALTER TABLE "user_programs" ADD CONSTRAINT "user_programs_active_revision_scope_
 ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_session_scope_fk" FOREIGN KEY ("owner_firebase_uid","session_id") REFERENCES "public"."workout_sessions"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_catalog_exercise_fk" FOREIGN KEY ("catalog_exercise_id") REFERENCES "public"."catalog_exercises"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "workout_exercise_snapshots" ADD CONSTRAINT "workout_snapshots_custom_exercise_scope_fk" FOREIGN KEY ("owner_firebase_uid","custom_exercise_id") REFERENCES "public"."custom_exercises"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "workout_exercise_states" ADD CONSTRAINT "workout_exercise_states_session_scope_fk" FOREIGN KEY ("owner_firebase_uid","session_id") REFERENCES "public"."workout_sessions"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "workout_exercise_states" ADD CONSTRAINT "workout_exercise_states_snapshot_scope_fk" FOREIGN KEY ("owner_firebase_uid","snapshot_id","session_id") REFERENCES "public"."workout_exercise_snapshots"("owner_firebase_uid","id","session_id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "workout_exercise_states" ADD CONSTRAINT "workout_exercise_states_catalog_exercise_fk" FOREIGN KEY ("effective_catalog_exercise_id") REFERENCES "public"."catalog_exercises"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "workout_exercise_states" ADD CONSTRAINT "workout_exercise_states_custom_exercise_scope_fk" FOREIGN KEY ("owner_firebase_uid","effective_custom_exercise_id") REFERENCES "public"."custom_exercises"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_program_scope_fk" FOREIGN KEY ("owner_firebase_uid","program_id") REFERENCES "public"."user_programs"("owner_firebase_uid","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "workout_sessions" ADD CONSTRAINT "workout_sessions_revision_scope_fk" FOREIGN KEY ("owner_firebase_uid","program_id","program_revision_id") REFERENCES "public"."program_revisions"("owner_firebase_uid","program_id","id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
 CREATE UNIQUE INDEX "cardio_logs_owner_id_unique" ON "cardio_logs" USING btree ("owner_firebase_uid","id");--> statement-breakpoint
+CREATE UNIQUE INDEX "cardio_logs_one_per_session_unique" ON "cardio_logs" USING btree ("owner_firebase_uid","session_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "cardio_logs_idempotency_unique" ON "cardio_logs" USING btree ("owner_firebase_uid","session_id","client_idempotency_key");--> statement-breakpoint
 CREATE INDEX "cardio_logs_owner_recorded_idx" ON "cardio_logs" USING btree ("owner_firebase_uid","recorded_at");--> statement-breakpoint
 CREATE INDEX "catalog_equipment_sort_idx" ON "catalog_equipment" USING btree ("sort_order");--> statement-breakpoint
@@ -755,6 +784,29 @@ BEGIN
   RETURN NEW;
 END;
 $$;--> statement-breakpoint
+CREATE OR REPLACE FUNCTION prevent_unpublished_workout_session_creation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  revision_status text;
+  revision_published_at timestamptz;
+BEGIN
+  SELECT status::text, published_at
+    INTO revision_status, revision_published_at
+    FROM program_revisions
+   WHERE owner_firebase_uid = NEW.owner_firebase_uid
+     AND program_id = NEW.program_id
+     AND id = NEW.program_revision_id;
+
+  IF revision_status IS NOT NULL
+    AND (revision_status IS DISTINCT FROM 'published' OR revision_published_at IS NULL)
+  THEN
+    RAISE EXCEPTION 'workout sessions require a published program revision' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$;--> statement-breakpoint
 CREATE OR REPLACE FUNCTION prevent_terminal_workout_session_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -795,6 +847,125 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'terminal workout sessions are immutable' USING ERRCODE = 'check_violation';
   END IF;
+  RETURN NEW;
+END;
+$$;--> statement-breakpoint
+CREATE OR REPLACE FUNCTION prevent_workout_exercise_state_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  owning_state text;
+  owner_key text;
+  session_key uuid;
+  snapshot_logging_kind text;
+  catalog_logging_kind text;
+  custom_logging_kind text;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    owner_key := NEW.owner_firebase_uid;
+    session_key := NEW.session_id;
+  ELSE
+    IF TG_OP = 'UPDATE' AND (
+      NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
+      OR NEW.session_id IS DISTINCT FROM OLD.session_id
+      OR NEW.snapshot_id IS DISTINCT FROM OLD.snapshot_id
+      OR NEW.client_idempotency_key IS DISTINCT FROM OLD.client_idempotency_key
+      OR NEW.created_at IS DISTINCT FROM OLD.created_at
+    ) THEN
+      RAISE EXCEPTION 'workout exercise state identity and correction scope are immutable' USING ERRCODE = 'check_violation';
+    END IF;
+    owner_key := OLD.owner_firebase_uid;
+    session_key := OLD.session_id;
+  END IF;
+
+  SELECT state::text
+    INTO owning_state
+    FROM workout_sessions
+   WHERE owner_firebase_uid = owner_key
+     AND id = session_key;
+
+  IF owning_state IS NULL THEN
+    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  END IF;
+
+  IF owning_state NOT IN ('draft', 'active', 'completing') THEN
+    IF TG_OP = 'UPDATE' AND ROW(
+      NEW.owner_firebase_uid,
+      NEW.session_id,
+      NEW.snapshot_id,
+      NEW.status,
+      NEW.effective_catalog_exercise_id,
+      NEW.effective_custom_exercise_id,
+      NEW.effective_display_name,
+      NEW.effective_logging_kind,
+      NEW.note,
+      NEW.substitution_reason,
+      NEW.client_idempotency_key,
+      NEW.version,
+      NEW.created_at
+    ) IS NOT DISTINCT FROM ROW(
+      OLD.owner_firebase_uid,
+      OLD.session_id,
+      OLD.snapshot_id,
+      OLD.status,
+      OLD.effective_catalog_exercise_id,
+      OLD.effective_custom_exercise_id,
+      OLD.effective_display_name,
+      OLD.effective_logging_kind,
+      OLD.note,
+      OLD.substitution_reason,
+      OLD.client_idempotency_key,
+      OLD.version,
+      OLD.created_at
+    ) THEN
+      RETURN NEW;
+    END IF;
+    RAISE EXCEPTION 'completed or abandoned workout exercise state is immutable' USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+
+  SELECT logging_kind::text
+    INTO snapshot_logging_kind
+    FROM workout_exercise_snapshots
+   WHERE owner_firebase_uid = NEW.owner_firebase_uid
+     AND id = NEW.snapshot_id
+     AND session_id = NEW.session_id;
+
+  IF snapshot_logging_kind IS NOT NULL
+    AND NEW.effective_logging_kind::text IS DISTINCT FROM snapshot_logging_kind
+  THEN
+    RAISE EXCEPTION 'workout exercise state logging kind must match snapshot' USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF NEW.effective_catalog_exercise_id IS NOT NULL THEN
+    SELECT logging_kind::text
+      INTO catalog_logging_kind
+      FROM catalog_exercises
+     WHERE id = NEW.effective_catalog_exercise_id;
+    IF catalog_logging_kind IS NOT NULL
+      AND NEW.effective_logging_kind::text IS DISTINCT FROM catalog_logging_kind
+    THEN
+      RAISE EXCEPTION 'workout exercise state substitution logging kind is incompatible' USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
+  IF NEW.effective_custom_exercise_id IS NOT NULL THEN
+    SELECT logging_kind::text
+      INTO custom_logging_kind
+      FROM custom_exercises
+     WHERE owner_firebase_uid = NEW.owner_firebase_uid
+       AND id = NEW.effective_custom_exercise_id;
+    IF custom_logging_kind IS NOT NULL
+      AND NEW.effective_logging_kind::text IS DISTINCT FROM custom_logging_kind
+    THEN
+      RAISE EXCEPTION 'workout exercise state substitution logging kind is incompatible' USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
   RETURN NEW;
 END;
 $$;--> statement-breakpoint
@@ -922,6 +1093,9 @@ $$;--> statement-breakpoint
 CREATE TRIGGER user_programs_active_revision_guard
 BEFORE INSERT OR UPDATE ON user_programs
 FOR EACH ROW EXECUTE FUNCTION prevent_unpublished_active_revision();--> statement-breakpoint
+CREATE TRIGGER workout_sessions_published_revision_guard
+BEFORE INSERT ON workout_sessions
+FOR EACH ROW EXECUTE FUNCTION prevent_unpublished_workout_session_creation();--> statement-breakpoint
 CREATE TRIGGER workout_sessions_terminal_guard
 BEFORE UPDATE ON workout_sessions
 FOR EACH ROW EXECUTE FUNCTION prevent_terminal_workout_session_mutation();--> statement-breakpoint
@@ -958,6 +1132,9 @@ FOR EACH ROW EXECUTE FUNCTION prevent_published_template_child_mutation();--> st
 CREATE TRIGGER workout_exercise_snapshots_mutation_guard
 BEFORE INSERT OR UPDATE OR DELETE ON workout_exercise_snapshots
 FOR EACH ROW EXECUTE FUNCTION prevent_workout_snapshot_mutation();--> statement-breakpoint
+CREATE TRIGGER workout_exercise_states_mutation_guard
+BEFORE INSERT OR UPDATE OR DELETE ON workout_exercise_states
+FOR EACH ROW EXECUTE FUNCTION prevent_workout_exercise_state_mutation();--> statement-breakpoint
 CREATE TRIGGER set_logs_mutation_guard
 BEFORE INSERT OR UPDATE OR DELETE ON set_logs
 FOR EACH ROW EXECUTE FUNCTION prevent_set_log_mutation();--> statement-breakpoint
