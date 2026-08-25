@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="1e715742656b1d62199b38f03683e0c588a3b9b07c61ac5cea0610c2810d3b86">
+  <meta name="source-sha256" content="7f1dcacb4574abd14072c6900003220552361aaca9f5a0dce319cc632537755a">
   <title>YouTube curation and video policy · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -91,6 +91,12 @@
 <h2>Refresh and replacement</h2>
 <p><code>pnpm youtube:refresh</code> checks seeded IDs with <code>videos.list</code> and proposes action when a video becomes missing, private, restricted, removed, unembeddable, or regionally unavailable. It does not mutate production.</p>
 <p>The application keeps the remaining approved video and direct YouTube fallback available. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.</p>
+<h2>Local command scaffold</h2>
+<p>Run <code>pnpm youtube:curate</code> with an official <code>YOUTUBE_API_KEY</code> and a private target manifest. The command resumes from <code>.local/youtube-curation/checkpoint.json</code> and writes the review proposal to <code>.local/youtube-curation/review-report.json</code>. These paths are ignored by Git and contain no production data.</p>
+<p>If <code>YOUTUBE_API_KEY</code> is missing, the command exits before creating state or making a request and prints exactly:</p>
+<pre><code>Missing YOUTUBE_API_KEY; refusing to run YouTube curation.
+</code></pre>
+<p>Run <code>pnpm seed:check --required REQUIRED.json --seed SEED.json</code> to validate a proposed mapping. The checker rejects incomplete exact-two mappings and never writes production data.</p>
 <h2>Player requirements</h2>
 <ul>
 <li>Render one active iframe at a time and never autoplay.</li>

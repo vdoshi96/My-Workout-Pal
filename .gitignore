@@ -18,6 +18,7 @@ output/playwright/
 .vercel/
 .firebase/
 firebase-debug.log*
+.local/youtube-curation/
 
 # Local data and generated state
 *.db

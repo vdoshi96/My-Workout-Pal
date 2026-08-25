@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="5a3b6a59a82185b39e529ccac4b3548d5c130ddb4db4fac7e95eff29dd866a09">
+  <meta name="source-sha256" content="45764973fcbbd553acca9b976b260cddb1fe4f1e93822c9649551a941b03814a">
   <title>Product and architecture plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -140,6 +140,15 @@
 <li>Keep logs free of tokens, cookies, private keys, full notes, and raw fitness records. Use request IDs and safe error codes.</li>
 <li>Do not use third-party product analytics in the initial release. Operational usage is measured through Vercel and database dashboards without adding a paid product.</li>
 <li>Account deletion removes owned database rows, local drafts, session cookies, and the Firebase user through an auditable saga. Partial failure leaves a restricted deletion job and retry path, not a false success.</li>
+</ul>
+<h2>YouTube curation and custom-video boundaries</h2>
+<ul>
+<li>Normalize accepted YouTube watch, short-link, and embed URLs to a video ID at the validated input boundary. Reject Shorts and malformed or unsupported hosts before persistence.</li>
+<li>Custom exercises accept zero, one, or two unique normalized video IDs. They never accept more than two IDs, and they never persist a caller-provided embed URL or markup.</li>
+<li>Discovery keeps relevance-ordered and view-count-ordered searches as separate candidate sources. Mechanical eligibility runs before ranking, and view count breaks ties only among candidates that pass every hard gate.</li>
+<li>Mechanical gates reject unavailable, private, processing, non-embeddable, non-syndicated, regionally unavailable, live, unsafe, misleading, disallowed-category, wrong-movement, wrong-equipment, duplicate, near-duplicate, Shorts, and out-of-range duration candidates.</li>
+<li>The curator writes a local checkpoint and review report that contains query provenance, hydrated IDs, rejection codes, quota estimates, and review state. The checkpoint stays outside production data and publication paths, and reruns resume without replaying completed hydration work.</li>
+<li>Seed validation requires exactly two distinct approved, fully watched videos in display order one and two for every canonical exercise and equipment variation. Durable seed records keep approval and availability metadata, but do not treat view counts or ranking scores as product truth.</li>
 </ul>
 <h2>Loading, empty, error, and worst-case behavior</h2>
 <ul>

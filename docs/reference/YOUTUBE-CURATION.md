@@ -80,6 +80,18 @@ The checker also confirms that reused starter prescriptions point to the same ca
 
 The application keeps the remaining approved video and direct YouTube fallback available. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.
 
+## Local command scaffold
+
+Run `pnpm youtube:curate` with an official `YOUTUBE_API_KEY` and a private target manifest. The command resumes from `.local/youtube-curation/checkpoint.json` and writes the review proposal to `.local/youtube-curation/review-report.json`. These paths are ignored by Git and contain no production data.
+
+If `YOUTUBE_API_KEY` is missing, the command exits before creating state or making a request and prints exactly:
+
+```
+Missing YOUTUBE_API_KEY; refusing to run YouTube curation.
+```
+
+Run `pnpm seed:check --required REQUIRED.json --seed SEED.json` to validate a proposed mapping. The checker rejects incomplete exact-two mappings and never writes production data.
+
 ## Player requirements
 
 - Render one active iframe at a time and never autoplay.

@@ -134,6 +134,15 @@ Refresh resumes the same server session and overlays unacknowledged local operat
 - Do not use third-party product analytics in the initial release. Operational usage is measured through Vercel and database dashboards without adding a paid product.
 - Account deletion removes owned database rows, local drafts, session cookies, and the Firebase user through an auditable saga. Partial failure leaves a restricted deletion job and retry path, not a false success.
 
+## YouTube curation and custom-video boundaries
+
+- Normalize accepted YouTube watch, short-link, and embed URLs to a video ID at the validated input boundary. Reject Shorts and malformed or unsupported hosts before persistence.
+- Custom exercises accept zero, one, or two unique normalized video IDs. They never accept more than two IDs, and they never persist a caller-provided embed URL or markup.
+- Discovery keeps relevance-ordered and view-count-ordered searches as separate candidate sources. Mechanical eligibility runs before ranking, and view count breaks ties only among candidates that pass every hard gate.
+- Mechanical gates reject unavailable, private, processing, non-embeddable, non-syndicated, regionally unavailable, live, unsafe, misleading, disallowed-category, wrong-movement, wrong-equipment, duplicate, near-duplicate, Shorts, and out-of-range duration candidates.
+- The curator writes a local checkpoint and review report that contains query provenance, hydrated IDs, rejection codes, quota estimates, and review state. The checkpoint stays outside production data and publication paths, and reruns resume without replaying completed hydration work.
+- Seed validation requires exactly two distinct approved, fully watched videos in display order one and two for every canonical exercise and equipment variation. Durable seed records keep approval and availability metadata, but do not treat view counts or ranking scores as product truth.
+
 ## Loading, empty, error, and worst-case behavior
 
 - Route loading uses meaningful skeletons with stable dimensions and accessible status text.
