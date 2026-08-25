@@ -1,5 +1,11 @@
 # Project log
 
+## 2026-08-25: Deterministic seed identity
+
+- Retained a missing-module failure before adding the canonical seed identity helper; three focused tests then passed with type checking and lint.
+- Derived stable RFC 4122 version-five UUIDs from a public application namespace, entity kind, and stable key so reruns cannot duplicate catalog or template identity.
+- Kept the namespace nonsecret and rejected blank or ambiguous identity input.
+
 ## 2026-08-25: Interruption-safe runner domain
 
 - Integrated the directly reviewed runner snapshot, set/cardio draft, rest timer, IndexedDB-compatible storage, owner namespace, idempotent outbox, conflict, auth-expiry, offline, substitution, skip, completion, and abandonment contracts.

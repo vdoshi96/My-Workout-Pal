@@ -104,6 +104,7 @@ The exact movement order and equipment substitutions are maintained in `docs/ref
 - Check constraints enforce nonnegative canonical measures, valid ranges, two approved seed-video orders, and known states.
 - Every repository method that reads or writes user data requires a server-derived owner argument. There is no unscoped `findById` for owned records.
 - Migrations are append-only, versioned, tested from an empty database, and tested as upgrades from the preceding release fixture.
+- Canonical seed rows use deterministic RFC 4122 version-five UUIDs derived from a public, fixed application namespace plus a bounded entity kind and stable domain key. Re-running a seed therefore converges on the same catalog and template identities across preview and production.
 
 ## Authentication and session design
 

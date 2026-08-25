@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="bf0af235469fb6987b61d73154b265a3af146024b370a51cb0e8d2147dc2dedc">
+  <meta name="source-sha256" content="ca3cb961d1aa0d5de8e8ad103b522bb2d5f09a215cc02f3b8c9a3a0633490016">
   <title>Product and architecture plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -116,6 +116,7 @@
 <li>Check constraints enforce nonnegative canonical measures, valid ranges, two approved seed-video orders, and known states.</li>
 <li>Every repository method that reads or writes user data requires a server-derived owner argument. There is no unscoped <code>findById</code> for owned records.</li>
 <li>Migrations are append-only, versioned, tested from an empty database, and tested as upgrades from the preceding release fixture.</li>
+<li>Canonical seed rows use deterministic RFC 4122 version-five UUIDs derived from a public, fixed application namespace plus a bounded entity kind and stable domain key. Re-running a seed therefore converges on the same catalog and template identities across preview and production.</li>
 </ul>
 <h2>Authentication and session design</h2>
 <ol>
