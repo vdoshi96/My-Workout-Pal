@@ -18,6 +18,8 @@ The account-deletion saga record is keyed by the server-derived Firebase UID but
 
 Published program revisions and accepted workout history remain immutable during ordinary operation. Account deletion is the narrow exception: the repository sets a transaction-local Firebase UID, and replacement trigger functions permit `DELETE` only when each row's owner exactly matches that UID. The setting cannot authorize another owner's row and does not permit inserts or updates. This keeps historical mutation guards intact while allowing a member's complete owned graph to be erased atomically.
 
+The account-deletion service resolves Firebase Admin configuration before it asks the repository to reserve or delete database data. After the database transaction commits, a provider failure records only a classified safe code, reports the Firebase identity state as unknown, and preserves the secure session for retry. Cookies are expired only after provider success or `auth/user-not-found` and a successful durable completion write. A completion-write failure is not mislabeled as a Firebase error; its still-running job requires the planned trusted reconciler, because a deleted Firebase identity may no longer pass revocation-aware viewer verification.
+
 ## 2026-08-25: Store canonical metric values
 
 Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.

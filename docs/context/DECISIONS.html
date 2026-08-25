@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="9bf9891aa038b31a3fdd60198420217d88f6d216b6c84eea65c3fb648d5b2ad2">
+  <meta name="source-sha256" content="36d4c059ed8e08887fee8259a116561a4eb8c00a2fc8dccafeb4df601a4bb497">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,6 +37,7 @@
 <h2>2026-08-25: Keep the deletion job outside profile ownership</h2>
 <p>The account-deletion saga record is keyed by the server-derived Firebase UID but has no foreign key to <code>user_profiles</code>. It must survive the owned-data transaction so Firebase deletion can be retried after fitness data and the profile are gone. The job stores only bounded phase, status, attempt, idempotency hash, and safe error-code metadata. Migration <code>0001_account_deletion_saga</code> refuses to run if legacy job rows exist, requiring explicit review instead of inventing resumable state. This migration is checked in and tested locally but has not been applied to Neon.</p>
 <p>Published program revisions and accepted workout history remain immutable during ordinary operation. Account deletion is the narrow exception: the repository sets a transaction-local Firebase UID, and replacement trigger functions permit <code>DELETE</code> only when each row&#39;s owner exactly matches that UID. The setting cannot authorize another owner&#39;s row and does not permit inserts or updates. This keeps historical mutation guards intact while allowing a member&#39;s complete owned graph to be erased atomically.</p>
+<p>The account-deletion service resolves Firebase Admin configuration before it asks the repository to reserve or delete database data. After the database transaction commits, a provider failure records only a classified safe code, reports the Firebase identity state as unknown, and preserves the secure session for retry. Cookies are expired only after provider success or <code>auth/user-not-found</code> and a successful durable completion write. A completion-write failure is not mislabeled as a Firebase error; its still-running job requires the planned trusted reconciler, because a deleted Firebase identity may no longer pass revocation-aware viewer verification.</p>
 <h2>2026-08-25: Store canonical metric values</h2>
 <p>Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.</p>
 <h2>2026-08-25: Verify identity only on the server</h2>
