@@ -664,14 +664,24 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  revision_is_published boolean;
+  old_published boolean;
+  new_published boolean;
 BEGIN
   SELECT (status = 'published' OR published_at IS NOT NULL)
-    INTO revision_is_published
+    INTO old_published
     FROM program_template_revisions
    WHERE id = OLD.revision_id;
 
-  IF coalesce(revision_is_published, false) THEN
+  IF TG_OP = 'UPDATE' THEN
+    SELECT (status = 'published' OR published_at IS NOT NULL)
+      INTO new_published
+      FROM program_template_revisions
+     WHERE id = NEW.revision_id;
+  ELSE
+    new_published := false;
+  END IF;
+
+  IF coalesce(old_published, false) OR coalesce(new_published, false) THEN
     RAISE EXCEPTION 'published template revision descendants are immutable' USING ERRCODE = 'check_violation';
   END IF;
   RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
@@ -683,6 +693,33 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   RAISE EXCEPTION 'accepted workout history is append-only' USING ERRCODE = 'check_violation';
+END;
+$$;--> statement-breakpoint
+CREATE OR REPLACE FUNCTION prevent_workout_log_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  owning_state text;
+BEGIN
+  IF TG_OP = 'UPDATE' AND (
+    NEW.owner_firebase_uid IS DISTINCT FROM OLD.owner_firebase_uid
+    OR NEW.session_id IS DISTINCT FROM OLD.session_id
+  ) THEN
+    RAISE EXCEPTION 'workout log ownership and session scope are immutable' USING ERRCODE = 'check_violation';
+  END IF;
+
+  SELECT state::text
+    INTO owning_state
+    FROM workout_sessions
+   WHERE owner_firebase_uid = OLD.owner_firebase_uid
+     AND id = OLD.session_id;
+
+  IF owning_state IN ('draft', 'active', 'completing') THEN
+    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  END IF;
+
+  RAISE EXCEPTION 'completed or abandoned workout history is immutable' USING ERRCODE = 'check_violation';
 END;
 $$;--> statement-breakpoint
 CREATE TRIGGER program_revisions_immutable_after_publish
@@ -720,7 +757,7 @@ BEFORE UPDATE OR DELETE ON workout_exercise_snapshots
 FOR EACH ROW EXECUTE FUNCTION prevent_workout_history_mutation();--> statement-breakpoint
 CREATE TRIGGER set_logs_append_only
 BEFORE UPDATE OR DELETE ON set_logs
-FOR EACH ROW EXECUTE FUNCTION prevent_workout_history_mutation();--> statement-breakpoint
+FOR EACH ROW EXECUTE FUNCTION prevent_workout_log_mutation();--> statement-breakpoint
 CREATE TRIGGER cardio_logs_append_only
 BEFORE UPDATE OR DELETE ON cardio_logs
-FOR EACH ROW EXECUTE FUNCTION prevent_workout_history_mutation();
+FOR EACH ROW EXECUTE FUNCTION prevent_workout_log_mutation();

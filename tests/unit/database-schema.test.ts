@@ -134,9 +134,9 @@ describe("initial database migration", () => {
       database.exec(`
         INSERT INTO custom_exercise_videos (
           owner_firebase_uid, custom_exercise_id, youtube_video_id, display_order
-        ) VALUES ('bob', '${ids.aliceCustomExercise}', 'abc123', 1);
+        ) VALUES ('bob', '${ids.aliceCustomExercise}', 'abc123XYZ_1', 1);
       `),
-    ).rejects.toThrow(/foreign key|violates/i);
+    ).rejects.toThrow(/custom_exercise_videos_owner_exercise_fk|foreign key|violates/i);
   });
 
   it("rejects non-canonical measurements and wrong measurement-kind fields", async () => {
@@ -209,12 +209,44 @@ describe("initial database migration", () => {
     ).rejects.toThrow(/unique|duplicate/i);
   });
 
+  it("does not move a template child into a published revision", async () => {
+    const database = await openDatabase();
+    await database.exec(`
+      INSERT INTO program_templates (id, template_key, name)
+      VALUES ('00000000-0000-4000-8000-000000000020', 'starter', 'Starter');
+      INSERT INTO program_template_revisions (
+        id, template_id, revision_number, status, published_at
+      ) VALUES
+        ('00000000-0000-4000-8000-000000000021', '00000000-0000-4000-8000-000000000020', 1, 'draft', null),
+        ('00000000-0000-4000-8000-000000000022', '00000000-0000-4000-8000-000000000020', 2, 'published', now());
+      INSERT INTO template_days (
+        id, revision_id, day_number, day_key, display_name
+      ) VALUES (
+        '00000000-0000-4000-8000-000000000023',
+        '00000000-0000-4000-8000-000000000021',
+        1, 'push', 'Push'
+      );
+    `);
+
+    await expect(
+      database.exec(`
+        UPDATE template_days
+        SET revision_id = '00000000-0000-4000-8000-000000000022'
+        WHERE id = '00000000-0000-4000-8000-000000000023';
+      `),
+    ).rejects.toThrow(/immutable|published|revision/i);
+  });
+
   it("protects published revisions and accepted workout history from mutation", async () => {
     const database = await openDatabase();
     await seedOwner(database, "alice");
     await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
     await seedSession(database, "alice", ids.aliceSession);
     await database.exec(`
+      UPDATE workout_sessions
+      SET state = 'active', started_at = now()
+      WHERE id = '${ids.aliceSession}';
+
       UPDATE program_revisions
       SET status = 'published', published_at = now()
       WHERE id = '${ids.aliceRevision}';
@@ -235,6 +267,22 @@ describe("initial database migration", () => {
       );
     `);
 
+    await database.exec(`
+      UPDATE set_logs
+      SET weight_kg = 25
+      WHERE owner_firebase_uid = 'alice' AND client_idempotency_key = 'set-1';
+      DELETE FROM cardio_logs WHERE id = '${ids.aliceCardioLog}';
+      INSERT INTO cardio_logs (
+        id, owner_firebase_uid, session_id, mode, duration_seconds,
+        distance_m, client_idempotency_key
+      ) VALUES (
+        '${ids.aliceCardioLog}', 'alice', '${ids.aliceSession}', 'runner', 720, 1200, 'cardio-2'
+      );
+      UPDATE workout_sessions
+      SET state = 'completed', completed_at = now()
+      WHERE id = '${ids.aliceSession}';
+    `);
+
     await expect(
       database.exec(`UPDATE program_revisions SET revision_number = 2 WHERE id = '${ids.aliceRevision}';`),
     ).rejects.toThrow(/immutable|published|revision/i);
@@ -244,7 +292,7 @@ describe("initial database migration", () => {
     ).rejects.toThrow(/immutable|append-only|history/i);
 
     await expect(
-      database.exec(`UPDATE set_logs SET weight_kg = 25 WHERE owner_firebase_uid = 'alice' AND client_idempotency_key = 'set-1';`),
+      database.exec(`UPDATE set_logs SET weight_kg = 30 WHERE owner_firebase_uid = 'alice' AND client_idempotency_key = 'set-1';`),
     ).rejects.toThrow(/immutable|append-only|history/i);
 
     await expect(

@@ -92,7 +92,7 @@ The exact movement order and equipment substitutions are maintained in `docs/ref
 - `custom_exercises` and `custom_exercise_videos` are user-owned.
 - `program_templates`, `program_template_revisions`, `template_days`, `template_sections`, and `template_prescriptions` hold immutable seeded templates.
 - `user_programs`, `program_revisions`, `program_days`, `program_sections`, and `program_prescriptions` hold immutable user revisions plus one active pointer.
-- `workout_sessions`, `workout_exercise_snapshots`, `set_logs`, and `cardio_logs` preserve sessions and immutable historical meaning.
+- `workout_sessions`, `workout_exercise_snapshots`, `set_logs`, and `cardio_logs` preserve sessions and historical meaning. Snapshots are always immutable; logs can change only while a session is resumable and freeze after completion or abandonment.
 - `personal_records` and `progress_summaries` are reproducible projections with source log identifiers and calculation versions.
 - `idempotency_keys` records accepted mutation results and expiry.
 - `account_deletion_jobs` tracks the deletion saga without retaining deleted fitness content.
@@ -112,7 +112,7 @@ The first persistence slice is a single append-only PostgreSQL migration represe
 
 The migration creates user profile, preference, and equipment rows; catalog equipment, exercises, compatibility edges, aliases, and curated-video records; custom exercises and their normalized video IDs; immutable template and user-program revision trees; workout session prescription snapshots, set/cardio logs, idempotency records, personal records, progress summaries and their source-log links; and the account-deletion job boundary. PostgreSQL enums, checks, partial unique indexes, and restrictive foreign keys enforce known states, canonical kilograms/meters/seconds, measurement-kind field shapes, one active resumable session per owner and revision, revision numbering, ordered prescriptions/video slots, and mutation idempotency.
 
-Published program revisions and all descendants are protected by database triggers. Workout snapshots and accepted set/cardio logs are append-only. The first migration is exercised from an empty PGlite database, including cross-owner composite-FK failures, canonical-measurement failures, duplicate active sessions/idempotency keys, and immutability failures. The database connector is lazy and import-safe: missing `DATABASE_URL` is reported only when a caller asks for a live connection, never while importing server modules or Drizzle configuration.
+Published program revisions and all descendants are protected by database triggers. Workout prescription snapshots are always immutable; set and cardio logs may be corrected or removed while their owning session is draft, active, or completing, then freeze after completion or abandonment. The first migration is exercised from an empty PGlite database, including cross-owner composite-FK failures, canonical-measurement failures, duplicate active sessions/idempotency keys, active-log correction, and post-completion immutability. The database connector is lazy and import-safe: missing `DATABASE_URL` is reported only when a caller asks for a live connection, never while importing server modules or Drizzle configuration.
 
 ## Authentication and session design
 

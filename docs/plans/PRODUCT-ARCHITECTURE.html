@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="074816c6201b49a4b3996f0a1c13a2a6fb4a13e33ee0338b5962df905930dae4">
+  <meta name="source-sha256" content="a2a841e6564b6f385f3fa215641ae84b3df29005dcb21ae88d2a092a78d82241">
   <title>Product and architecture plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -104,7 +104,7 @@
 <li><code>custom_exercises</code> and <code>custom_exercise_videos</code> are user-owned.</li>
 <li><code>program_templates</code>, <code>program_template_revisions</code>, <code>template_days</code>, <code>template_sections</code>, and <code>template_prescriptions</code> hold immutable seeded templates.</li>
 <li><code>user_programs</code>, <code>program_revisions</code>, <code>program_days</code>, <code>program_sections</code>, and <code>program_prescriptions</code> hold immutable user revisions plus one active pointer.</li>
-<li><code>workout_sessions</code>, <code>workout_exercise_snapshots</code>, <code>set_logs</code>, and <code>cardio_logs</code> preserve sessions and immutable historical meaning.</li>
+<li><code>workout_sessions</code>, <code>workout_exercise_snapshots</code>, <code>set_logs</code>, and <code>cardio_logs</code> preserve sessions and historical meaning. Snapshots are always immutable; logs can change only while a session is resumable and freeze after completion or abandonment.</li>
 <li><code>personal_records</code> and <code>progress_summaries</code> are reproducible projections with source log identifiers and calculation versions.</li>
 <li><code>idempotency_keys</code> records accepted mutation results and expiry.</li>
 <li><code>account_deletion_jobs</code> tracks the deletion saga without retaining deleted fitness content.</li>
@@ -121,7 +121,7 @@
 <h3>Database implementation slice</h3>
 <p>The first persistence slice is a single append-only PostgreSQL migration represented by Drizzle tables under <code>src/db/schema.ts</code>. Firebase UID remains the external owner key; internal UUIDs are opaque row identifiers. Owned rows repeat the owner key and use composite foreign keys where a child points to another owned row, so an owner-scoped repository query cannot accidentally join across accounts. Catalog and curated records are global, while custom exercises, programs, sessions, logs, and projections are owned.</p>
 <p>The migration creates user profile, preference, and equipment rows; catalog equipment, exercises, compatibility edges, aliases, and curated-video records; custom exercises and their normalized video IDs; immutable template and user-program revision trees; workout session prescription snapshots, set/cardio logs, idempotency records, personal records, progress summaries and their source-log links; and the account-deletion job boundary. PostgreSQL enums, checks, partial unique indexes, and restrictive foreign keys enforce known states, canonical kilograms/meters/seconds, measurement-kind field shapes, one active resumable session per owner and revision, revision numbering, ordered prescriptions/video slots, and mutation idempotency.</p>
-<p>Published program revisions and all descendants are protected by database triggers. Workout snapshots and accepted set/cardio logs are append-only. The first migration is exercised from an empty PGlite database, including cross-owner composite-FK failures, canonical-measurement failures, duplicate active sessions/idempotency keys, and immutability failures. The database connector is lazy and import-safe: missing <code>DATABASE_URL</code> is reported only when a caller asks for a live connection, never while importing server modules or Drizzle configuration.</p>
+<p>Published program revisions and all descendants are protected by database triggers. Workout prescription snapshots are always immutable; set and cardio logs may be corrected or removed while their owning session is draft, active, or completing, then freeze after completion or abandonment. The first migration is exercised from an empty PGlite database, including cross-owner composite-FK failures, canonical-measurement failures, duplicate active sessions/idempotency keys, active-log correction, and post-completion immutability. The database connector is lazy and import-safe: missing <code>DATABASE_URL</code> is reported only when a caller asks for a live connection, never while importing server modules or Drizzle configuration.</p>
 <h2>Authentication and session design</h2>
 <ol>
 <li>The Firebase client SDK completes Google or email/password authentication.</li>
