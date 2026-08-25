@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import type { FirebasePublicConfig } from "@/client/firebase";
+import { AuthPanel } from "@/components/auth/auth-panel";
 import { PublicShell } from "@/components/layout/public-shell";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "Sign in" };
 
 export default function SignInPage() {
-  const firebaseConfigured = Boolean(
-    process.env["NEXT_PUBLIC_FIREBASE_API_KEY"] &&
-    process.env["NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"] &&
-    process.env["NEXT_PUBLIC_FIREBASE_PROJECT_ID"],
-  );
+  const apiKey = process.env["NEXT_PUBLIC_FIREBASE_API_KEY"];
+  const appId = process.env["NEXT_PUBLIC_FIREBASE_APP_ID"];
+  const authDomain = process.env["NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"];
+  const projectId = process.env["NEXT_PUBLIC_FIREBASE_PROJECT_ID"];
+  const config: FirebasePublicConfig | null = apiKey && appId && authDomain && projectId
+    ? { apiKey, appId, authDomain, projectId }
+    : null;
 
   return (
     <PublicShell current="sign-in">
@@ -27,14 +31,18 @@ export default function SignInPage() {
           </ul>
         </section>
         <section className="auth-sheet" aria-labelledby="auth-heading">
-          <div className="status-stamp">{firebaseConfigured ? "Configuration detected" : "Credential gate"}</div>
-          <h2 id="auth-heading">Sign-in connection pending</h2>
-          <p>{firebaseConfigured
-            ? "Firebase public configuration is present, but server session verification is not yet enabled. Sign-in remains closed so no identity is handled insecurely."
-            : "Firebase project credentials and server session keys are not available in this workspace. Sign-in stays closed instead of simulating account creation."}</p>
-          <button className="auth-method" disabled type="button"><Icon name="sign-in" /> Continue with Google</button>
-          <button className="auth-method" disabled type="button">Continue with email</button>
-          <small>Password accounts will require verified email before permanent mutations. Google identity must be verified by Firebase Admin on the server.</small>
+          {config ? (
+            <AuthPanel config={config} />
+          ) : (
+            <>
+              <div className="status-stamp">Credential gate</div>
+              <h2 id="auth-heading">Sign-in connection pending</h2>
+              <p>Firebase project credentials and server session keys are not available in this workspace. Sign-in stays closed instead of simulating account creation.</p>
+              <button className="auth-method" disabled type="button"><Icon name="sign-in" /> Continue with Google</button>
+              <button className="auth-method" disabled type="button">Continue with email</button>
+              <small>Password accounts will require verified email before permanent mutations. Google identity must be verified by Firebase Admin on the server.</small>
+            </>
+          )}
           <Link className="back-link" href="/"><Icon name="arrow-left" /> Continue as guest</Link>
         </section>
       </div>

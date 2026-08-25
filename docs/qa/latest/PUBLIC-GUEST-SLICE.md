@@ -8,6 +8,8 @@ This run covers the equipment-aware starter route, day details, compatible exerc
 
 - `pnpm vitest run tests/unit/program-seed.test.ts tests/unit/equipment-substitution.test.ts` initially failed because the program modules did not exist. Six tests pass after the seed and substitution implementation.
 - `pnpm vitest run tests/unit/library-filter.test.ts` initially failed because `@/domain/exercises/library` did not exist. Three tests now pass for stable ordering, compatibility exclusion, and term search after equipment filtering.
+- `pnpm vitest run tests/unit/auth-policy.test.ts` initially failed because `@/server/auth/policy` did not exist. Five policy tests now pass. `tests/unit/auth-errors.test.ts` retained the same missing-module failure before five safe client-error mappings passed.
+- Session-route integration tests initially returned 403 for same-origin fixtures because `NextRequest` normalizes its URL host in the test runtime. The route now validates the platform host or forwarded host plus configured origin, while cross-origin requests still fail. Three route-boundary tests pass.
 - Browser inspection exposed a desktop navigation overlap, a mobile route-stamp collision, a Playwright artifact watcher loop that reset client state, and exercise-detail `scrollWidth` of 934 pixels in a 390-pixel viewport. After correction, the measured exercise-detail `scrollWidth`, field-notes width, and video-field width are all 390 pixels.
 
 ## Personally replayed flows
@@ -22,8 +24,8 @@ This run covers the equipment-aware starter route, day details, compatible exerc
 
 - `pnpm typecheck`
 - `pnpm lint`
-- `pnpm test`: three files and nine tests pass.
-- `pnpm build`: Next.js 16.3.2 webpack production build succeeds with ten application routes.
+- `pnpm test`: six files and 22 tests pass.
+- `pnpm build`: Next.js 16.3.2 webpack production build succeeds with the guest pages plus CSRF and session route handlers.
 
 ## Remaining verification
 

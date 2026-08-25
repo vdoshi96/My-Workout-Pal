@@ -12,6 +12,7 @@ Guest-product implementation with bounded backend domain slices in isolated work
 - A strict Next.js 16.3.2 foundation with the approved route-atlas program overview, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout and analytics, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
 - Pure starter-program, equipment-substitution, and library-filter domain modules with nine passing unit tests.
 - A verified baseline commit, `168f2a5`, from which bounded analytics, YouTube, and database worktrees were created.
+- Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No Firebase project is configured yet.
 
 ## Work in progress
 
@@ -27,10 +28,11 @@ Guest-product implementation with bounded backend domain slices in isolated work
 - The workspace inventory found only the private MP4 before initialization.
 - GitHub target repository lookup confirmed that `vdoshi96/My-Workout-Pal` does not exist.
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
-- `pnpm typecheck`, `pnpm lint`, nine domain tests, and `pnpm docs:check` pass.
+- `pnpm typecheck`, `pnpm lint`, 22 unit and integration tests, and `pnpm docs:check` pass.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
 - The production output retains the design contract seed `ba529732` and its full contract text inside the first authored body element.
 - Playwright CLI personally replayed the guest equipment switch, Pull substitution, day links, library compatibility search and recovery, exercise detail approval gate, and desktop sample analytics. Phone inspection found and verified fixes for the desktop navigation overlap, mobile route stamp collision, dev watcher loop, and exercise-detail horizontal overflow.
+- Auth tests cover duplicate and invalid client errors, CSRF mismatch and cross-origin denial, malformed identity input, absent server credentials, unverified permanent mutations, recent-auth deletion gates, expired and revoked sessions, and cross-user denial. Live provider success cannot run before Firebase credentials exist.
 
 ## Blockers and credential gates
 
