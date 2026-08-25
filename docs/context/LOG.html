@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="15ae77d50fb56b36fcb93e5d11e054ca5e4af4f6f053fa9e5ab3200156292305">
+  <meta name="source-sha256" content="1811f5ae3e9ebd87afdd6fd7e16264a51339439853d240e27bb021cd2f678feb">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,13 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Curated dual-video player contract</h2>
+<ul>
+<li>Retained a missing-module failure before implementing the production video-pair and embed contract; four focused tests then passed.</li>
+<li>Required one exact, ordered, approved, fully watched pair with durable title, channel, reviewer, and review-time metadata before rendering.</li>
+<li>Added a one-active-at-a-time privacy-enhanced player with non-autoplay controls, keyboard-operable selection, channel attribution, strict referrer behavior, and a direct YouTube fallback.</li>
+<li>Kept production exercise pages in the truthful unavailable state because no reviewed seed exists yet.</li>
+</ul>
 <h2>2026-08-25: Server-derived viewer boundary</h2>
 <ul>
 <li>Added a request-memoized viewer context whose ownership key comes exclusively from a revocation-aware Firebase Admin session-cookie result.</li>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d6a9e09c82a093bece462a9f1977f21eaac58575af3c8f20c531ae8268670a6f">
+  <meta name="source-sha256" content="18124083836eda4433174d51e22ae7c6620318c298216b6434b878cadcca2e42">
   <title>YouTube curation and video policy · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -103,17 +103,19 @@
 <h2>Player requirements</h2>
 <ul>
 <li>Render one active iframe at a time and never autoplay.</li>
-<li>Use <code>https://www.youtube.com/embed/VIDEO_ID</code> with supported parameters such as <code>playsinline=1</code> and keyboard controls enabled.</li>
+<li>Use the privacy-enhanced <code>https://www.youtube-nocookie.com/embed/VIDEO_ID</code> boundary with <code>autoplay=0</code>, visible controls, <code>playsinline=1</code>, same-channel related-video behavior, and keyboard controls enabled.</li>
 <li>Do not use deprecated branding controls such as <code>modestbranding</code>.</li>
 <li>Keep the viewport at least 200 by 200 pixels; target at least 480 by 270 pixels for a 16:9 player when the layout permits.</li>
 <li>Preserve YouTube controls and branding.</li>
 <li>Set an iframe title, constrained <code>allow</code> features, fullscreen support, and a strict referrer policy that remains compatible with the player.</li>
 <li>Provide a titled and channel-attributed selector for both videos and a direct YouTube fallback.</li>
+<li>Keep only the selected iframe mounted so two videos never play simultaneously. The two-option tab interface supports left/right, Home, and End keyboard selection.</li>
 </ul>
 <p>Official player references:</p>
 <ul>
 <li><a href="https://developers.google.com/youtube/player_parameters">YouTube embedded players and player parameters</a></li>
 <li><a href="https://developers.google.com/youtube/terms/required-minimum-functionality">YouTube API Services required minimum functionality</a></li>
+<li><a href="https://support.google.com/youtube/answer/171780?expand=PrivacyEnhancedMode&hl=en-GB">YouTube privacy-enhanced embedding</a></li>
 </ul>
 <h2>Exact credential gate</h2>
 <p>The environment has no <code>YOUTUBE_API_KEY</code>. Independent application, curation-code, seed-validation, fixture, and unavailable-state work can proceed. Discovery, quota-backed metadata hydration, final candidate selection, complete viewing, approval, exact-two production seed, and live production embed verification remain blocked until an authorized official YouTube Data API v3 key is available.</p>

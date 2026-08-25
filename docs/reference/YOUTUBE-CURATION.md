@@ -101,17 +101,19 @@ Run `pnpm seed:check --seed SEED.json` to validate against the complete catalog-
 ## Player requirements
 
 - Render one active iframe at a time and never autoplay.
-- Use `https://www.youtube.com/embed/VIDEO_ID` with supported parameters such as `playsinline=1` and keyboard controls enabled.
+- Use the privacy-enhanced `https://www.youtube-nocookie.com/embed/VIDEO_ID` boundary with `autoplay=0`, visible controls, `playsinline=1`, same-channel related-video behavior, and keyboard controls enabled.
 - Do not use deprecated branding controls such as `modestbranding`.
 - Keep the viewport at least 200 by 200 pixels; target at least 480 by 270 pixels for a 16:9 player when the layout permits.
 - Preserve YouTube controls and branding.
 - Set an iframe title, constrained `allow` features, fullscreen support, and a strict referrer policy that remains compatible with the player.
 - Provide a titled and channel-attributed selector for both videos and a direct YouTube fallback.
+- Keep only the selected iframe mounted so two videos never play simultaneously. The two-option tab interface supports left/right, Home, and End keyboard selection.
 
 Official player references:
 
 - [YouTube embedded players and player parameters](https://developers.google.com/youtube/player_parameters)
 - [YouTube API Services required minimum functionality](https://developers.google.com/youtube/terms/required-minimum-functionality)
+- [YouTube privacy-enhanced embedding](https://support.google.com/youtube/answer/171780?expand=PrivacyEnhancedMode&hl=en-GB)
 
 ## Exact credential gate
 

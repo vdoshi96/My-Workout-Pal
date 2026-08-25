@@ -23,6 +23,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - The service worker is generated from a tested public-cache policy. It caches only public program/library/sample routes, hashed Next static output, and explicit app artwork; authentication, APIs, future owned-data routes, arbitrary images, cross-origin assets, and non-GET requests remain outside the cache.
 - Vercel project `vdoshi96s-projects/my-workout-pal` is linked locally as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`. Neon resource `my-workout-pal-db` is connected on the Marketplace `free_v3` plan in `iad1`, with Neon Auth disabled and database variables attached to development, preview, and production. It has no deployment yet.
 - Pure YouTube URL normalization, catalog-derived curation targets, candidate hard-gate/ranking, exact-two seed validation, and private resumable curation checkpoint modules with offline tests.
+- A reusable curated-video presentation contract validates an approved, fully watched exact pair before mounting one privacy-enhanced non-autoplay iframe at a time. Production exercise pages remain unavailable until the reviewed seed exists.
 
 ## Work in progress
 
@@ -40,7 +41,7 @@ Authenticated-domain and persistence integration after the verified guest-produc
 - GitHub target repository lookup confirmed that `vdoshi96/My-Workout-Pal` does not exist.
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
 - Vercel Marketplace provisioning reported Neon resource `my-workout-pal-db` ready on billing plan `free_v3`; a follow-up environment inspection confirmed database variables are attached without printing their values.
-- `pnpm typecheck`, `pnpm lint`, 92 unit and integration tests, generated-service-worker parity, and `pnpm docs:check` pass before the pending worktree integrations.
+- `pnpm typecheck`, `pnpm lint`, 127 unit and integration tests, generated-service-worker parity, `pnpm docs:check`, and a production build pass after the reviewed YouTube integration and dual-player contract.
 - YouTube curation TDD evidence: the initial focused suites failed before implementation with unresolved domain-module imports, then passed; the first correction run failed on the unbounded page loop, syndication truth, custom-input message, and missing pair workflow, then passed; the second correction run failed on missing catalog targets, duplicate proposals, unscoped state, and accepted schema-one checkpoints, then passed; this final correction run failed six assertions covering omitted hydration, default seed coverage, duplicate required mappings, cross-variation seed IDs, default required derivation, and variation-scoped ranking, then passed with 37 tests.
 - The default curation smoke generated 27 canonical proposals without making a request under a zero-search budget. An explicit empty target manifest produced a blocked report with zero proposals. The default `seed:check` path rejected an incomplete one-row fixture with all 27 required-video-count errors, and the duplicate-required manifest smoke reported duplicate and missing-required-variation errors. The typed `seed:check` smoke passed a two-video fixture in the preceding correction run.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
@@ -60,6 +61,6 @@ Authenticated-domain and persistence integration after the verified guest-produc
 ## Worktrees
 
 - The completed analytics worktree was integrated as `fedfba4` and removed after patch-equivalence verification.
-- `/private/tmp/mwp-youtube` on `agent/youtube`: completed correction pass and is undergoing primary integration and verification.
+- The completed YouTube worktree was integrated through `6b633b0`; its selected files matched the reviewed worktree before cleanup.
 - `/private/tmp/mwp-database` on `agent/database`: final schema correction is in progress for curated-video variation, snapshot target shape, bounded set positions, tied PR sources, and published active revisions.
 - `/private/tmp/mwp-runner` on `agent/runner-domain`: correction pass in progress for completion, substitution, outbox, conflict, cardio, and abandonment invariants.

@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-08-25: Curated dual-video player contract
+
+- Retained a missing-module failure before implementing the production video-pair and embed contract; four focused tests then passed.
+- Required one exact, ordered, approved, fully watched pair with durable title, channel, reviewer, and review-time metadata before rendering.
+- Added a one-active-at-a-time privacy-enhanced player with non-autoplay controls, keyboard-operable selection, channel attribution, strict referrer behavior, and a direct YouTube fallback.
+- Kept production exercise pages in the truthful unavailable state because no reviewed seed exists yet.
+
 ## 2026-08-25: Server-derived viewer boundary
 
 - Added a request-memoized viewer context whose ownership key comes exclusively from a revocation-aware Firebase Admin session-cookie result.

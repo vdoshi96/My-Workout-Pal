@@ -5,6 +5,8 @@
 - [Next.js Content Security Policy guide](https://nextjs.org/docs/app/guides/content-security-policy) — nonce generation through Proxy, request-time rendering requirements, production and development directives, and performance implications.
 - [Next.js Proxy convention](https://nextjs.org/docs/app/api-reference/file-conventions/proxy) — Next.js 16 request-boundary convention.
 - [YouTube API Services Required Minimum Functionality](https://developers.google.com/youtube/terms/required-minimum-functionality) — embedded-player referrer requirement and recommended `strict-origin-when-cross-origin` policy.
+- [YouTube embedded-player parameters](https://developers.google.com/youtube/player_parameters) — current non-autoplay controls, inline playback, keyboard behavior, deprecated branding parameters, and the 200-by-200 minimum player viewport.
+- [YouTube privacy-enhanced embedding](https://support.google.com/youtube/answer/171780?expand=PrivacyEnhancedMode&hl=en-GB) — `youtube-nocookie.com` embed boundary for privacy-enhanced website playback.
 
 ## Browser verification
 
@@ -30,4 +32,4 @@ The recording shows a five-tab mobile routine, sectioned prescriptions, embedded
 
 The dedicated implementation brief dated August 25, 2026, is the authoritative source for features, equipment variants, starter prescriptions, authentication, persistence, video curation, verification, provisioning, release, and documentation requirements.
 
-Add remaining primary documentation links when implementation reaches Drizzle migration operations, YouTube Data API execution, embedded-player verification, and Vercel production release. Record access dates and the decision each source supports.
+Add remaining primary documentation links when implementation reaches live YouTube Data API execution, embed verification, and Vercel production release. Record access dates and the decision each source supports.

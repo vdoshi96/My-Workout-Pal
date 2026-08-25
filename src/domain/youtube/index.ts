@@ -1,5 +1,6 @@
 export * from "@/domain/youtube/curation";
 export * from "@/domain/youtube/eligibility";
+export * from "@/domain/youtube/embed";
 export * from "@/domain/youtube/normalization";
 export * from "@/domain/youtube/refresh";
 export * from "@/domain/youtube/seed-validation";
