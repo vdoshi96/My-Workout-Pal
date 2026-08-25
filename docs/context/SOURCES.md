@@ -10,6 +10,12 @@
 
 - [Playwright service-worker guide](https://playwright.dev/docs/service-workers) — activation guidance and the documented Chromium-only service-worker automation boundary used to scope the offline replay.
 
+## Hosting and persistence
+
+- [Neon Vercel integration plan update](https://neon.com/docs/changelog/2025-11-07) — accessed August 25, 2026; confirms that Vercel integration users can select Neon's current Free plan rather than a paid legacy plan.
+- [Connect Vercel and Neon manually](https://neon.com/docs/guides/vercel-manual) — accessed August 25, 2026; confirms the canonical `DATABASE_URL` connection boundary and supported separation between Neon and Vercel configuration.
+- [Firebase CLI reference](https://firebase.google.com/docs/cli) — accessed August 25, 2026; confirms the official project, web-app, authentication configuration, and authenticated CLI workflow. The local CLI currently has no authorized Firebase account.
+
 ## Private reference recording
 
 - Source: `bcf6af84-c33c-4bde-a2ab-09794543b489.mp4` in the initial workspace.
@@ -24,6 +30,4 @@ The recording shows a five-tab mobile routine, sectioned prescriptions, embedded
 
 The dedicated implementation brief dated August 25, 2026, is the authoritative source for features, equipment variants, starter prescriptions, authentication, persistence, video curation, verification, provisioning, release, and documentation requirements.
 
-## External sources to add
-
-Add primary documentation links when the implementation depends on Firebase, Neon, Drizzle, YouTube Data API, YouTube embedded-player requirements, Next.js, PWA behavior, Playwright, or Vercel configuration. Record access dates and the decision each source supports.
+Add remaining primary documentation links when implementation reaches Drizzle migration operations, YouTube Data API execution, embedded-player verification, and Vercel production release. Record access dates and the decision each source supports.

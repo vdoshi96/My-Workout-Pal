@@ -11,14 +11,15 @@ Secrets live only in local or Vercel environment storage. `.env.example` contain
 
 ## Vercel and Neon provisioning
 
-The target Vercel team is `vdoshi96s-projects`. Local project `my-workout-pal` is linked as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`; it currently has no deployment or Marketplace resource. Link the eventual GitHub repository and configure production from `main` with pull-request previews.
+The target Vercel team is `vdoshi96s-projects`. Local project `my-workout-pal` is linked as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`; it currently has no deployment. Link the eventual GitHub repository and configure production from `main` with pull-request previews.
 
-Install Neon through the Vercel Marketplace only after confirming the selected plan is free and does not add a paid service. The native integration can inject database environment variables and create preview branches. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.
+Neon resource `my-workout-pal-db` was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed `free_v3` plan in `iad1`. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.
 
 Primary references:
 
 - [Neon on Vercel Marketplace](https://vercel.com/marketplace/neon)
 - [Storage on Vercel Marketplace](https://vercel.com/docs/marketplace-storage)
+- [Neon Vercel integration plan update](https://neon.com/docs/changelog/2025-11-07)
 
 ## Spend management
 
@@ -93,6 +94,6 @@ Publish a new cache version, retain pending IndexedDB operations, and remove onl
 
 - GitHub repository creation and push require a valid authenticated GitHub credential.
 - Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.
-- Neon Marketplace installation requires confirmation that the selected plan is free. Any billing or trial acceptance requires the user.
+- Neon is already connected on `free_v3`; any plan change, billing method, trial acceptance, or billable add-on requires the user.
 - Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.
 - YouTube curation requires an official API key and sufficient quota.

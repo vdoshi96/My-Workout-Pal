@@ -7,6 +7,13 @@
 - Kept unverified password identities in a truthful read-only state for permanent mutations.
 - Recorded a fail-first missing-module test before implementing the boundary; three focused viewer tests, type checking, and focused lint then passed.
 
+## 2026-08-25: Free Neon provisioning
+
+- Confirmed from official Neon documentation and live Vercel Marketplace metadata that the current integration exposes a distinct `free_v3` plan.
+- Provisioned `my-workout-pal-db` in `iad1`, disabled Neon Auth in favor of Firebase identity, and connected development, preview, and production environments.
+- Kept connection values only in ignored local and Vercel environment storage; no secret value was printed into project documentation or committed.
+- Removed the Marketplace CLI's task-created agent-skill artifacts instead of publishing unrelated third-party instructions.
+
 ## 2026-08-25: Discovery and bootstrap
 
 - Inventoried the initial workspace and found one private MP4 with no Git repository or portable application.

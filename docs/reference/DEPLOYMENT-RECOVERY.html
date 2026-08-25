@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="8e7419d1bd31bc21a64ecd547af3a7def4560a01398cc0c28cac05c354609ec8">
+  <meta name="source-sha256" content="a8ef80fabe3753dda73e0f21f645c67f40d0d3e3b375677e943050353d811d42">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,12 +37,13 @@
 </ul>
 <p>Secrets live only in local or Vercel environment storage. <code>.env.example</code> contains names and setup guidance with empty values.</p>
 <h2>Vercel and Neon provisioning</h2>
-<p>The target Vercel team is <code>vdoshi96s-projects</code>. Local project <code>my-workout-pal</code> is linked as <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code>; it currently has no deployment or Marketplace resource. Link the eventual GitHub repository and configure production from <code>main</code> with pull-request previews.</p>
-<p>Install Neon through the Vercel Marketplace only after confirming the selected plan is free and does not add a paid service. The native integration can inject database environment variables and create preview branches. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.</p>
+<p>The target Vercel team is <code>vdoshi96s-projects</code>. Local project <code>my-workout-pal</code> is linked as <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code>; it currently has no deployment. Link the eventual GitHub repository and configure production from <code>main</code> with pull-request previews.</p>
+<p>Neon resource <code>my-workout-pal-db</code> was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed <code>free_v3</code> plan in <code>iad1</code>. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.</p>
 <p>Primary references:</p>
 <ul>
 <li><a href="https://vercel.com/marketplace/neon">Neon on Vercel Marketplace</a></li>
 <li><a href="https://vercel.com/docs/marketplace-storage">Storage on Vercel Marketplace</a></li>
+<li><a href="https://neon.com/docs/changelog/2025-11-07">Neon Vercel integration plan update</a></li>
 </ul>
 <h2>Spend management</h2>
 <p>The Vercel Pro plan includes a $20 monthly credit after included allocations. Credit does not make overage impossible. Spend Management can notify, call a webhook, or pause production projects at the configured spend amount. Setting a spend amount does not pause usage unless the pause action is enabled.</p>
@@ -103,7 +104,7 @@
 <ul>
 <li>GitHub repository creation and push require a valid authenticated GitHub credential.</li>
 <li>Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.</li>
-<li>Neon Marketplace installation requires confirmation that the selected plan is free. Any billing or trial acceptance requires the user.</li>
+<li>Neon is already connected on <code>free_v3</code>; any plan change, billing method, trial acceptance, or billable add-on requires the user.</li>
 <li>Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.</li>
 <li>YouTube curation requires an official API key and sufficient quota.</li>
 </ul>

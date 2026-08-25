@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="18f8a0c8f48fe2a898e12c8afbfa06ca1938aa54ae3bf2127447b0850e909053">
+  <meta name="source-sha256" content="2affcae34380278020f32a915699214a432582b834b59f4c44070bc8981092d0">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -34,6 +34,13 @@
 <li>Normalized Google, password, and other providers without promoting malformed display, email, verification, or authentication-time claims.</li>
 <li>Kept unverified password identities in a truthful read-only state for permanent mutations.</li>
 <li>Recorded a fail-first missing-module test before implementing the boundary; three focused viewer tests, type checking, and focused lint then passed.</li>
+</ul>
+<h2>2026-08-25: Free Neon provisioning</h2>
+<ul>
+<li>Confirmed from official Neon documentation and live Vercel Marketplace metadata that the current integration exposes a distinct <code>free_v3</code> plan.</li>
+<li>Provisioned <code>my-workout-pal-db</code> in <code>iad1</code>, disabled Neon Auth in favor of Firebase identity, and connected development, preview, and production environments.</li>
+<li>Kept connection values only in ignored local and Vercel environment storage; no secret value was printed into project documentation or committed.</li>
+<li>Removed the Marketplace CLI&#39;s task-created agent-skill artifacts instead of publishing unrelated third-party instructions.</li>
 </ul>
 <h2>2026-08-25: Discovery and bootstrap</h2>
 <ul>
