@@ -23,6 +23,7 @@ const loggingLabels = {
   weight_reps: "Load and reps",
   bodyweight_reps: "Bodyweight reps",
   duration: "Duration",
+  distance_duration: "Distance and duration",
 } as const;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
