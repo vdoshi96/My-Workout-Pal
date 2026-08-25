@@ -1,5 +1,11 @@
 # Sources
 
+## Runtime security and embedded media
+
+- [Next.js Content Security Policy guide](https://nextjs.org/docs/app/guides/content-security-policy) — nonce generation through Proxy, request-time rendering requirements, production and development directives, and performance implications.
+- [Next.js Proxy convention](https://nextjs.org/docs/app/api-reference/file-conventions/proxy) — Next.js 16 request-boundary convention.
+- [YouTube API Services Required Minimum Functionality](https://developers.google.com/youtube/terms/required-minimum-functionality) — embedded-player referrer requirement and recommended `strict-origin-when-cross-origin` policy.
+
 ## Private reference recording
 
 - Source: `bcf6af84-c33c-4bde-a2ab-09794543b489.mp4` in the initial workspace.

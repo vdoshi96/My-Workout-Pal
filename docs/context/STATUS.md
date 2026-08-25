@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Guest-product implementation with bounded backend domain slices in isolated worktrees.
+Authenticated-domain and persistence integration after the verified guest-product foundation.
 
 ## What exists
 
@@ -10,14 +10,18 @@ Guest-product implementation with bounded backend domain slices in isolated work
 - A fully inspected private reference recording, with temporary inspection artifacts outside the repository.
 - The initial product record and context documentation.
 - A strict Next.js 16.3.2 foundation with the approved route-atlas program overview, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout and analytics, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
-- Pure starter-program, equipment-substitution, and library-filter domain modules with nine passing unit tests.
+- Pure starter-program, equipment-substitution, program-draft editing, library-filter, and persisted-data analytics domains.
 - A verified baseline commit, `168f2a5`, from which bounded analytics, YouTube, and database worktrees were created.
 - Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No Firebase project is configured yet.
+- A nonce-based strict Content Security Policy and companion browser security headers. Next.js request rendering applies a fresh nonce to framework output; the YouTube referrer and Firebase popup policies are explicit.
+- Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.
+- Vercel project `vdoshi96s-projects/my-workout-pal` is linked locally as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`. It has no deployment or connected Marketplace resource.
 
 ## Work in progress
 
-- Finish the bounded analytics, YouTube, and database branches, then inspect their actual diffs and merge only verified work.
-- Build Firebase client and Admin session handling, user-owned program editing, the interruption-safe live runner, and persisted history.
+- Correct and re-review the YouTube and database worktrees after primary review found incomplete curation execution and cross-program persistence invariants.
+- Finish and review the pure interruption-safe runner state machine.
+- Add owner-scoped repositories and authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces after the schema corrections land.
 - Verify the service worker and offline fallback against a production server rather than the development server.
 
 ## Verification run
@@ -28,8 +32,9 @@ Guest-product implementation with bounded backend domain slices in isolated work
 - The workspace inventory found only the private MP4 before initialization.
 - GitHub target repository lookup confirmed that `vdoshi96/My-Workout-Pal` does not exist.
 - Vercel CLI authentication succeeded for `vdoshi96` and listed the `vdoshi96s-projects` team.
-- `pnpm typecheck`, `pnpm lint`, 22 unit and integration tests, and `pnpm docs:check` pass.
+- `pnpm typecheck`, `pnpm lint`, 46 unit and integration tests, and `pnpm docs:check` pass before the pending worktree integrations.
 - `next build --webpack` completed successfully. The default Turbopack build hung during compile and is recorded in `docs/context/DECISIONS.md`.
+- Production `next start` inspection returned the strict CSP, a unique matching rendered nonce, `strict-origin-when-cross-origin`, popup-safe opener policy, frame denial, HSTS, and the remaining declared security headers. The nonce policy intentionally makes application HTML request-rendered; the manifest remains static.
 - The production output retains the design contract seed `ba529732` and its full contract text inside the first authored body element.
 - Playwright CLI personally replayed the guest equipment switch, Pull substitution, day links, library compatibility search and recovery, exercise detail approval gate, and desktop sample analytics. Phone inspection found and verified fixes for the desktop navigation overlap, mobile route stamp collision, dev watcher loop, and exercise-detail horizontal overflow.
 - Auth tests cover duplicate and invalid client errors, CSRF mismatch and cross-origin denial, malformed identity input, absent server credentials, unverified permanent mutations, recent-auth deletion gates, expired and revoked sessions, and cross-user denial. Live provider success cannot run before Firebase credentials exist.
@@ -44,6 +49,7 @@ Guest-product implementation with bounded backend domain slices in isolated work
 
 ## Worktrees
 
-- `/private/tmp/mwp-analytics` on `agent/analytics`: active pure calculation and PR behavior slice.
-- `/private/tmp/mwp-youtube` on `agent/youtube`: active normalization, eligibility, ranking, validation, and curator scaffold slice.
-- `/private/tmp/mwp-database` on `agent/database`: active schema and versioned-migration slice.
+- `/private/tmp/mwp-analytics` on `agent/analytics`: completed and integrated as `fedfba4`; cleanup awaits the final integration pass.
+- `/private/tmp/mwp-youtube` on `agent/youtube`: correction pass in progress for the executable workflow, quota stop, custom URL duplicates, pair diversity, and refresh assessment.
+- `/private/tmp/mwp-database` on `agent/database`: correction pass in progress for cross-program revision scope, custom compatibility and aliases, and volume records.
+- `/private/tmp/mwp-runner` on `agent/runner-domain`: active pure runner state and outbox slice.

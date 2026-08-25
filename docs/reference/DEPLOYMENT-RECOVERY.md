@@ -11,7 +11,7 @@ Secrets live only in local or Vercel environment storage. `.env.example` contain
 
 ## Vercel and Neon provisioning
 
-The target Vercel team is `vdoshi96s-projects`. Link the GitHub repository and configure production from `main` with pull-request previews.
+The target Vercel team is `vdoshi96s-projects`. Local project `my-workout-pal` is linked as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`; it currently has no deployment or Marketplace resource. Link the eventual GitHub repository and configure production from `main` with pull-request previews.
 
 Install Neon through the Vercel Marketplace only after confirming the selected plan is free and does not add a paid service. The native integration can inject database environment variables and create preview branches. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.
 
@@ -41,6 +41,8 @@ Track the following usage separately:
 - Image optimization transformations and cache misses.
 - Neon compute, storage, data transfer, branches, and connection limits.
 - YouTube Data API daily quota and per-command estimates.
+
+Application HTML intentionally uses request-time rendering for a nonce-based CSP. Include the resulting function invocations, duration, and Fast Origin Transfer in usage review; do not assume that guest HTML receives static CDN caching.
 
 Primary references:
 

@@ -39,3 +39,9 @@ The first Next.js 16.3.2 Turbopack production compile held the build lock withou
 ## 2026-08-25: Cache public reading routes only
 
 The service worker may cache the guest program, library, samples, offline page, and static assets. It does not intercept authenticated navigation or API requests. Account writes require a confirmed server response and must expose pending, failed, and retry states instead of treating an offline queue as saved data.
+
+## 2026-08-25: Prefer a nonce CSP for fitness and account data
+
+Application HTML is request-rendered so Next.js can attach a fresh nonce to framework scripts and generated styles. This disables static HTML and ordinary CDN caching for application pages and increases function work, but avoids production `unsafe-inline` while the product handles account and fitness data. The web manifest and ordinary static assets remain static, and the service worker retains its public-only offline cache. Usage monitoring must account for this deliberate server-rendering cost.
+
+The response policy allows only the Firebase network and frame boundaries needed for authentication and the YouTube origins needed for approved embeds. `strict-origin-when-cross-origin` preserves the referrer YouTube requires. `same-origin-allow-popups` preserves Google sign-in popup behavior without weakening frame ancestry.

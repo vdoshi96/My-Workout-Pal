@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="db1df954a464474ea7f1a66b842cb6fd9e200799a596fede6412b41a3e7e2e1a">
+  <meta name="source-sha256" content="0bc518a93eb4733aa6f1e7471f5aa34f35b4ede19981e41a23567a25138ca450">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -48,6 +48,9 @@
 <p>The first Next.js 16.3.2 Turbopack production compile held the build lock without advancing diagnostics and required termination after more than one minute. The same source compiled, type-checked, prerendered, and traced in about 10 seconds with <code>next build --webpack</code>. The package build script uses webpack until a bounded Turbopack investigation proves the default reliable.</p>
 <h2>2026-08-25: Cache public reading routes only</h2>
 <p>The service worker may cache the guest program, library, samples, offline page, and static assets. It does not intercept authenticated navigation or API requests. Account writes require a confirmed server response and must expose pending, failed, and retry states instead of treating an offline queue as saved data.</p>
+<h2>2026-08-25: Prefer a nonce CSP for fitness and account data</h2>
+<p>Application HTML is request-rendered so Next.js can attach a fresh nonce to framework scripts and generated styles. This disables static HTML and ordinary CDN caching for application pages and increases function work, but avoids production <code>unsafe-inline</code> while the product handles account and fitness data. The web manifest and ordinary static assets remain static, and the service worker retains its public-only offline cache. Usage monitoring must account for this deliberate server-rendering cost.</p>
+<p>The response policy allows only the Firebase network and frame boundaries needed for authentication and the YouTube origins needed for approved embeds. <code>strict-origin-when-cross-origin</code> preserves the referrer YouTube requires. <code>same-origin-allow-popups</code> preserves Google sign-in popup behavior without weakening frame ancestry.</p>
 
   </main>
 </body>

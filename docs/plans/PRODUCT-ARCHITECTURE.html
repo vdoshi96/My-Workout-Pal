@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="19d168c911197061fd414136ffa85b74af99447e53924be2fe9aa990327294ae">
+  <meta name="source-sha256" content="5a3b6a59a82185b39e529ccac4b3548d5c130ddb4db4fac7e95eff29dd866a09">
   <title>Product and architecture plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -122,7 +122,7 @@
 <li>The Firebase client SDK completes Google or email/password authentication.</li>
 <li>The client sends the short-lived Firebase ID token to the session route with a same-origin request, an origin check, and a double-submit CSRF token.</li>
 <li>Firebase Admin verifies the ID token, provider, verification state, expiration, and revocation requirements, then creates a secure session cookie.</li>
-<li>The cookie uses the <code>__Host-</code> prefix, <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite=Lax</code>, <code>Path=/</code>, and no <code>Domain</code> attribute. The server rotates or clears it on expiry, revocation, sign-out, or identity mismatch.</li>
+<li>The cookie uses the <code>__Host-</code> prefix, <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite=Strict</code>, <code>Path=/</code>, and no <code>Domain</code> attribute. The server rotates or clears it on expiry, revocation, sign-out, or identity mismatch.</li>
 <li>Every permanent mutation verifies the session and eligibility. Sensitive mutations request revocation checking and recent authentication.</li>
 <li>Sign-out clears the server session before client SDK sign-out and clears the local user draft namespace.</li>
 </ol>
@@ -133,7 +133,7 @@
 <p>Refresh resumes the same server session and overlays unacknowledged local operations. A different signed-in UID cannot open the draft. Sign-out or account deletion clears that UID namespace. If authentication expires, the runner keeps the local draft, blocks permanent mutations, and guides reauthentication without claiming that data is saved.</p>
 <h2>Security and privacy</h2>
 <ul>
-<li>Use strict Content Security Policy with the minimum Firebase, YouTube, and Vercel sources. Frame policy permits only approved YouTube embed origins.</li>
+<li>Use a per-request nonce Content Security Policy with the minimum Firebase and YouTube sources. Application pages render at request time so Next.js can attach the nonce; frame policy permits only approved YouTube and Firebase authentication origins.</li>
 <li>Add <code>Referrer-Policy</code>, <code>Permissions-Policy</code>, <code>X-Content-Type-Options</code>, and frame-ancestor protection.</li>
 <li>Normalize and validate YouTube URLs before persistence. Render embeds from durable video IDs and never inject user-provided markup.</li>
 <li>Rate-limit authentication session exchange, recovery-adjacent routes, custom exercise writes, and sync retries by trusted identity and coarse network signal.</li>

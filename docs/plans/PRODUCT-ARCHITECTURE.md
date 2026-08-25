@@ -110,7 +110,7 @@ The exact movement order and equipment substitutions are maintained in `docs/ref
 1. The Firebase client SDK completes Google or email/password authentication.
 2. The client sends the short-lived Firebase ID token to the session route with a same-origin request, an origin check, and a double-submit CSRF token.
 3. Firebase Admin verifies the ID token, provider, verification state, expiration, and revocation requirements, then creates a secure session cookie.
-4. The cookie uses the `__Host-` prefix, `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, and no `Domain` attribute. The server rotates or clears it on expiry, revocation, sign-out, or identity mismatch.
+4. The cookie uses the `__Host-` prefix, `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`, and no `Domain` attribute. The server rotates or clears it on expiry, revocation, sign-out, or identity mismatch.
 5. Every permanent mutation verifies the session and eligibility. Sensitive mutations request revocation checking and recent authentication.
 6. Sign-out clears the server session before client SDK sign-out and clears the local user draft namespace.
 
@@ -126,7 +126,7 @@ Refresh resumes the same server session and overlays unacknowledged local operat
 
 ## Security and privacy
 
-- Use strict Content Security Policy with the minimum Firebase, YouTube, and Vercel sources. Frame policy permits only approved YouTube embed origins.
+- Use a per-request nonce Content Security Policy with the minimum Firebase and YouTube sources. Application pages render at request time so Next.js can attach the nonce; frame policy permits only approved YouTube and Firebase authentication origins.
 - Add `Referrer-Policy`, `Permissions-Policy`, `X-Content-Type-Options`, and frame-ancestor protection.
 - Normalize and validate YouTube URLs before persistence. Render embeds from durable video IDs and never inject user-provided markup.
 - Rate-limit authentication session exchange, recovery-adjacent routes, custom exercise writes, and sync retries by trusted identity and coarse network signal.

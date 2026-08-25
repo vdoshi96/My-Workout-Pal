@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="67a522850e334f06904d3c1ceba408cdbddf5a1e3924be5739bcf5196806511c">
+  <meta name="source-sha256" content="6ef99b2f95ec821f41b5aee4347287a5ba47e1e2fdb5fd932c8ac5b0fc12e446">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -51,6 +51,15 @@
 <li>Added Firebase client flows for Google and email registration, sign-in, verification, and recovery with safe duplicate, invalid-credential, throttling, pop-up, and network messages.</li>
 <li>Added Firebase Admin token verification and HTTP-only session endpoints. The server derives UID from verified claims, checks token revocation, requires recent authentication when creating a long-lived session, and never accepts client ownership.</li>
 <li>Kept live sign-in closed behind explicit public and Admin credential checks; no Firebase project was created and no secret entered the repository.</li>
+</ul>
+<h2>2026-08-25: Analytics, editing, and response security</h2>
+<ul>
+<li>Integrated and personally reviewed canonical-unit analytics for volume, estimated strength, exact personal-record ties, conversion, rounding, and time-zone-aware summaries.</li>
+<li>Retained a failing-first program-editor suite, then implemented stable draft keys, keyboard-equivalent reorder normalization, precise validation, stale-revision rejection, and non-mutating publication preparation.</li>
+<li>Replaced static baseline headers with a per-request nonce Content Security Policy using the current Next.js 16 Proxy boundary and request-time rendering.</li>
+<li>Built the production application and inspected a real <code>next start</code> response. The CSP nonce matched rendered output, production contained no unsafe inline or evaluation directive, and the YouTube referrer policy remained compliant.</li>
+<li>Linked the local checkout to the empty Vercel project <code>vdoshi96s-projects/my-workout-pal</code> without deploying, connecting Neon, or changing billing controls.</li>
+<li>Returned the first database and YouTube slices for correction after direct diff review found cross-program revision gaps, missing custom equipment and aliases, missing volume-record persistence, a weaker executable curation path, and incomplete pair and refresh behavior.</li>
 </ul>
 
   </main>

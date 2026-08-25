@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="28f2bc873f4a2929d6ebb9c289f9c853e425fe3eefca1936f91fa7e7d2819487">
+  <meta name="source-sha256" content="1e8c22dae480731c60e09ae6c970ef83c20bef75ead8639c17ec8142c488554c">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,7 +37,7 @@
 </ul>
 <p>Secrets live only in local or Vercel environment storage. <code>.env.example</code> contains names and setup guidance with empty values.</p>
 <h2>Vercel and Neon provisioning</h2>
-<p>The target Vercel team is <code>vdoshi96s-projects</code>. Link the GitHub repository and configure production from <code>main</code> with pull-request previews.</p>
+<p>The target Vercel team is <code>vdoshi96s-projects</code>. Local project <code>my-workout-pal</code> is linked as <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code>; it currently has no deployment or Marketplace resource. Link the eventual GitHub repository and configure production from <code>main</code> with pull-request previews.</p>
 <p>Install Neon through the Vercel Marketplace only after confirming the selected plan is free and does not add a paid service. The native integration can inject database environment variables and create preview branches. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.</p>
 <p>Primary references:</p>
 <ul>
@@ -64,6 +64,7 @@
 <li>Neon compute, storage, data transfer, branches, and connection limits.</li>
 <li>YouTube Data API daily quota and per-command estimates.</li>
 </ul>
+<p>Application HTML intentionally uses request-time rendering for a nonce-based CSP. Include the resulting function invocations, duration, and Fast Origin Transfer in usage review; do not assume that guest HTML receives static CDN caching.</p>
 <p>Primary references:</p>
 <ul>
 <li><a href="https://vercel.com/docs/plans/pro-plan">Vercel Pro plan</a></li>

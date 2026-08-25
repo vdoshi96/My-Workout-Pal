@@ -5,6 +5,7 @@ import "@fontsource-variable/source-sans-3";
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import type { ReactNode } from "react";
 
 import { PwaRegistration } from "@/components/pwa/pwa-registration";
@@ -51,7 +52,11 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  // Nonce-based CSP requires request-time rendering so Next can apply the
+  // per-request nonce to its framework scripts and generated styles.
+  await connection();
+
   return (
     <html data-scroll-behavior="smooth" lang="en">
       <body>
