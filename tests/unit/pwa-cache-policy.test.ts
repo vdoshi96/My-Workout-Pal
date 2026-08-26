@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 import {
+  PWA_INSTALL_ASSETS,
   isCacheablePublicNavigationPath,
   isCacheableStaticRequest,
   renderServiceWorker,
@@ -44,12 +45,23 @@ describe("PWA public-cache policy", () => {
         url: `${appOrigin}/_next/static/chunks/app.js`,
       }),
     ).toBe(true);
+    expect(PWA_INSTALL_ASSETS).toContain(
+      "/illustrations/workout-pals-gym-768.webp",
+    );
     expect(
       isCacheableStaticRequest({
         appOrigin,
         destination: "image",
         method: "GET",
         url: `${appOrigin}/icon.svg`,
+      }),
+    ).toBe(true);
+    expect(
+      isCacheableStaticRequest({
+        appOrigin,
+        destination: "image",
+        method: "GET",
+        url: `${appOrigin}/illustrations/workout-pals-gym.webp`,
       }),
     ).toBe(true);
 

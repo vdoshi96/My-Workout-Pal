@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="94c044bbdb756a65e578984c60a01fd8611e78440757ea8bcaa1f5e1d1865f01">
+  <meta name="source-sha256" content="5ec5eb6001b55e5986b4fa935d18278434f41a28474c66f82132c3ba79856855">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -123,10 +123,10 @@ pnpm account:reconcile -- --owner FIREBASE_UID --limit 1
 <h2>Credential and approval gates</h2>
 <ul>
 <li>GitHub source and Vercel Git integration are configured. Local, GitHub, and deployment commit metadata must still be checked after every release.</li>
-<li>Firebase project <code>my-workout-pal-92819</code> exists on Spark. Firebase Authentication is initialized, and Email/Password is enabled. Web-app registration, Google provider configuration, authorized domains, email templates, Admin credentials, and local/Vercel variables remain pending. Browser confirmation is required immediately before creating the web app/API key or saving the support email. Terms or 2FA remain user actions when prompted.</li>
+<li>Firebase project <code>my-workout-pal-92819</code> exists on Spark with its web app, Email/Password and Google providers, reviewed public settings, and required authorized domains configured. Ignored local storage contains the validated client/Admin values. After explicit authorization, the six non-private values are attached to Vercel Production, Preview, and Development; the Admin private key is Hidden/Sensitive in Production and Preview and intentionally absent from Development because Vercel rejects sensitive Development variables. Hosted Google, recovery, expiry, revocation, and adversarial account-flow replay remain verification work; terms or 2FA remain user actions if a provider prompts for them.</li>
 <li>Neon is already connected on <code>free_v3</code>; any plan change, billing method, trial acceptance, or billable add-on requires the user.</li>
 <li>Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.</li>
-<li>Ignored <code>.env.local</code> contains the YouTube Data API key. Curation still requires a successful bounded request, sufficient quota, mechanical eligibility, full-watch approval, and exact-two seed validation.</li>
+<li>Ignored <code>.env.local</code> contains the YouTube Data API key. The published exact-two manifest and Neon seed are complete. Any future refresh or replacement run still requires successful bounded discovery with sufficient quota, mechanical eligibility, full-watch and scoped playback approval, exact-two validation, and an explicitly reviewed publication change.</li>
 </ul>
 
   </main>

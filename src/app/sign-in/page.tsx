@@ -10,7 +10,7 @@ import { normalizeReturnPath } from "@/server/navigation/return-path";
 export const metadata: Metadata = { title: "Sign in" };
 
 type PageProps = {
-  searchParams: Promise<{ returnTo?: string }>;
+  searchParams: Promise<{ returnTo?: string | string[] }>;
 };
 
 export default async function SignInPage({ searchParams }: PageProps) {
@@ -50,7 +50,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
               <small>Password accounts will require verified email before permanent mutations. Google identity must be verified by Firebase Admin on the server.</small>
             </>
           )}
-          <Link className="back-link" href="/"><Icon name="arrow-left" /> Continue as guest</Link>
+          <Link className="back-link" href="/program"><Icon name="arrow-left" /> Browse the free program</Link>
         </section>
       </div>
     </PublicShell>

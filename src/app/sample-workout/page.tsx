@@ -5,6 +5,7 @@ import { PublicShell } from "@/components/layout/public-shell";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { getCatalogExercise } from "@/domain/exercises/catalog";
+import { exerciseDetailHref } from "@/domain/navigation/public-exercise-return";
 import { createStarterProgram } from "@/domain/programs/starter";
 
 export const metadata: Metadata = { title: "Read-only sample workout" };
@@ -31,7 +32,11 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
     <PublicShell current="sample">
       <section className="sample-runner-head contour-surface">
         <div>
-          <Link className="back-link" href={`/program/${daySlug}?equipment=${profile}`}>
+          <Link
+            className="back-link"
+            href={`/program/${daySlug}?equipment=${profile}`}
+            prefetch={false}
+          >
             <Icon name="arrow-left" /> {selectedDay.name} day
           </Link>
           <span className="eyebrow">Read-only practice snapshot</span>
@@ -58,7 +63,15 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
                   <header>
                     <span className="catalog-number">{String(index + 1).padStart(2, "0")}</span>
                     <div><strong>{prescription.displayName ?? exercise.name}</strong><small>{prescription.sets} work sets · {prescription.restSeconds}s rest</small></div>
-                    <Link href={`/library/${exercise.slug}?equipment=${profile}`}>Technique</Link>
+                    <Link
+                      href={exerciseDetailHref(exercise.slug, {
+                        equipment: profile,
+                        returnTo: `/sample-workout?day=${daySlug}&equipment=${profile}`,
+                      })}
+                      prefetch={false}
+                    >
+                      Technique
+                    </Link>
                   </header>
                   <div className="sample-set-row">
                     {exercise.loggingKind === "weight_reps" ? <span><small>Warm-up</small><strong>Light × 8</strong></span> : null}
@@ -88,7 +101,7 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
             <small>Sample note: conversational pace.</small>
           </section>
           <Link className="primary-action" href="/sign-in"><span>Save future workouts</span><Icon name="arrow-right" /></Link>
-          <p className="temporary-note">Sign-in remains unavailable until Firebase Admin session verification is configured.</p>
+          <p className="temporary-note">Sign in only when you want this work saved to your own history and analytics.</p>
         </aside>
       </div>
     </PublicShell>

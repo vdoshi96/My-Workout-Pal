@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="7fec62bf4ef9a7c5305b406b9aefff436aa1cab525f678fdc4296b3f303a52cd">
+  <title>Guest landing and contextual navigation checkpoint · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Guest landing and contextual navigation checkpoint</h1>
+<h2>Outcome</h2>
+<p>The public root is now a genuine welcome page and <code>/program</code> remains the complete five-day explorer. Guests can inspect every starter day, canonical exercise guide, approved video pair, sample workout, and sample analytic without signing in. Account copy limits sign-in to customization, persistence, workout tracking, recovery, history, records, and personal analytics.</p>
+<p>Exercise guides return to the exact recognized public source that opened them: the program overview, one of five days, a filtered library, or a supported sample workout. Invalid, repeated, private, authentication, absolute, control-containing, oversized, or unknown origins fall back to the public library.</p>
+<h2>Newest visual evidence</h2>
+<p>Desktop, 1440 by 900 CSS pixels:</p>
+<p><img src="guest-landing-desktop.png" alt="Desktop welcome page with the complete cartoon animal gym beside the public-access promise"></p>
+<p>Phone, iPhone 13 emulation at 390 by 664 CSS pixels:</p>
+<p><img src="guest-landing-phone.png" alt="Phone welcome page with the complete primary action above the fixed navigation"></p>
+<p>The hero is one cohesive, fully hand-drawn cartoon gym populated by expressive animal characters. It has no people, hotspots, tiles, labels, copied character, or photographic layer. The exact image-generation prompt is retained beside the runtime WebP.</p>
+<h2>Personally observed local flow</h2>
+<p>Environment: local production build at <code>http://127.0.0.1:3101</code>, from an uncommitted guest-landing/navigation worktree based on exact pushed commit <code>838b518d983c6d2377cc29a2b0fd1c6cd02b8ca2</code>. This checkpoint deliberately precedes its release commit; the deployed preview must identify and test the resulting immutable commit separately.</p>
+<ol>
+<li>Opened <code>/</code>, confirmed the hero loaded from the explicit precached WebP, and entered <code>/program</code>.</li>
+<li>Confirmed Push, Pull, Legs, Upper, and Lower are public in both equipment profiles.</li>
+<li>Opened Push, opened Dumbbell bench press, and used the visible <strong>Push day</strong> link to return to the exact dumbbell Push URL.</li>
+<li>Searched the barbell library for <code>bent over row</code>, opened the exercise, and returned to the same equipment and search query.</li>
+<li>Opened the Lower barbell sample workout, followed <strong>Technique</strong>, and returned through <strong>Lower sample workout</strong> to the same sample selection.</li>
+<li>Confirmed the exercise guide retained two approved demonstrations, title/channel attribution, direct fallback, and one privacy-enhanced iframe.</li>
+<li>Inspected desktop and phone layouts. The phone primary action clears the fixed navigation, the document has no horizontal overflow, and the desktop scene remains complete rather than cropped.</li>
+</ol>
+<h2>Retained red-to-green evidence</h2>
+<ul>
+<li>The public-return suite first failed because its domain module did not exist, then passed after the bounded parser and URL builder were implemented.</li>
+<li>A sample-workout origin case first failed, then passed after the fourth public context was explicitly supported.</li>
+<li>The PWA policy first failed because the hero was not an explicit public asset, then passed after the cache version and generated worker changed.</li>
+<li>Two public-shell tests first failed because shared links allowed speculative RSC prefetch. The corrected shells pass and the WebKit console remains clean.</li>
+<li>A landing-markup assertion first failed because rendered HTML referenced an uncached Next image-optimization URL. The hero now uses the exact source URL that the service worker precaches.</li>
+<li>The initial phone geometry assertion measured the CTA bottom at 615.95 CSS pixels against navigation beginning at 590.41. After the small-screen rhythm correction, the focused Chromium phone case and newest screenshot pass.</li>
+<li>Independent hostile-query replay exposed route interruptions for repeated library <code>q</code> and sign-in <code>returnTo</code> values. The two retained unit failures passed after both public boundaries accepted arrays at the type edge and failed closed before string normalization.</li>
+<li>A landing assertion retained the full-size phone preload and missing compact source. It passed after adding an explicit 768-pixel cached derivative, responsive <code>srcSet</code>/<code>sizes</code>, and removing high-priority preload signaling.</li>
+</ul>
+<h2>Automated verification</h2>
+<ul>
+<li><code>pnpm typecheck</code>: pass.</li>
+<li><code>pnpm lint</code>: pass.</li>
+<li>Permission-correct <code>pnpm test</code>: 77 files and 514 tests pass.</li>
+<li><code>pnpm build</code>: Next.js 16.3.2 Webpack production build passes.</li>
+<li><code>pnpm pwa:check</code>: generated service worker matches policy.</li>
+<li><code>pnpm docs:check</code>: 30 Markdown/HTML pairs pass, including this report and its generated counterpart.</li>
+<li>Image prompt scan: 2 responsive raster variants, 0 missing sidecars.</li>
+<li><code>PLAYWRIGHT_BASE_URL=http://127.0.0.1:3101 pnpm exec playwright test tests/e2e/public-release.spec.ts --reporter=line</code>: 40 of 40 pass across Chromium phone, Chromium tablet, Chromium desktop, and WebKit phone.</li>
+<li>Eight public surfaces per browser project have no serious or critical Axe violation; the exercise page separately verifies its titled cross-origin YouTube iframe boundary.</li>
+<li>Bounded Chromium phone inspection selected <code>/illustrations/workout-pals-gym-768.webp</code>, found zero hero preload links, and captured zero console messages.</li>
+</ul>
+<h2>Evidence boundary</h2>
+<p>This checkpoint is a local production-build verification of the guest landing and navigation slice. It does not itself prove the configured Vercel preview or public production deployment. Preview replay, production promotion, production logs, and deployed screenshots remain required before release closeout.</p>
+
+  </main>
+</body>
+</html>

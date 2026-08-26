@@ -5,11 +5,15 @@ import { PublicShell } from "@/components/layout/public-shell";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { listCatalogExercises } from "@/domain/exercises/library";
+import { exerciseDetailHref } from "@/domain/navigation/public-exercise-return";
 
 export const metadata: Metadata = { title: "Exercise library" };
 
 type PageProps = {
-  searchParams: Promise<{ equipment?: string; q?: string }>;
+  searchParams: Promise<{
+    equipment?: string | string[];
+    q?: string | string[];
+  }>;
 };
 
 function profileHref(profile: EquipmentProfileKind, query: string): string {
@@ -21,7 +25,7 @@ function profileHref(profile: EquipmentProfileKind, query: string): string {
 export default async function LibraryPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const profile: EquipmentProfileKind = query.equipment === "barbell" ? "barbell" : "dumbbells";
-  const search = query.q?.trim() ?? "";
+  const search = typeof query.q === "string" ? query.q.trim() : "";
   const exercises = listCatalogExercises({ profile: EQUIPMENT_PROFILES[profile], query: search });
 
   return (
@@ -85,7 +89,13 @@ export default async function LibraryPage({ searchParams }: PageProps) {
           <ol className="library-list">
             {exercises.map((exercise, index) => (
               <li key={exercise.slug}>
-                <Link href={`/library/${exercise.slug}?equipment=${profile}`}>
+                <Link
+                  href={exerciseDetailHref(exercise.slug, {
+                    equipment: profile,
+                    returnTo: profileHref(profile, search),
+                  })}
+                  prefetch={false}
+                >
                   <span className="catalog-number">{String(index + 1).padStart(2, "0")}</span>
                   <span>
                     <strong>{exercise.name}</strong>

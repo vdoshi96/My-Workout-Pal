@@ -2,17 +2,17 @@
 
 ## Scope and mode
 
-The primary target is the public and authenticated program overview at `src/app/(app)/program/page.tsx`. The guest landing route can select this surface as its primary demonstration. Visitor mode is **Operate** inside the app and **Persuade through proof** on the public entry.
+The primary target is the public program overview at `src/app/program/page.tsx`. The distinct welcome route at `src/app/page.tsx` persuades through a cohesive cartoon-gym scene and directs visitors here; the authenticated active-program surface remains at `src/app/app/page.tsx`. Visitor mode is **Operate** on the program route and **Persuade through proof** on the welcome route.
 
 ## Audience, job, and action
 
-A guest needs to understand the five-day program, verify that their equipment works, and inspect a day before registering. An authenticated user needs to resume or open the active program. The primary action is **Open Push day** for the selected route waypoint; resume replaces it when a session is active.
+A guest needs to understand the five-day program, verify that their equipment works, and inspect every day and exercise without registering. An authenticated user needs to resume or open the active program. The public primary action is **Open Push day** for the selected route waypoint; authenticated resume remains on the separate account surface.
 
 ## Chosen composition
 
 The approved comp is `.impeccable/mocks/route-atlas-map.png`. Approval was delegated by the user through the end-to-end ownership brief. It was selected because the map makes equipment rerouting visible while the lower route sheet keeps the immediate operating task clear.
 
-The first viewport contains a compact header, equipment profile control, dominant five-waypoint weekly route, selected-day prescription sheet, primary action, and app navigation. Only one route is visually dominant.
+The program first viewport contains a compact header, equipment profile control, dominant five-waypoint weekly route, selected-day prescription sheet, primary action, and app navigation. Only one route is visually dominant. The welcome page uses the final all-cartoon animal gym as noninteractive atmosphere and never overlays activity hotspots or route filters on the scene.
 
 ## Memorable moment
 

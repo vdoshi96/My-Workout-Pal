@@ -17,14 +17,39 @@ test("guest previews both profiles and completes the public discovery route", as
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "My Workout Pal" }),
+    page.getByRole("heading", {
+      level: 1,
+      name: "Your whole five-day plan. No account required.",
+    }),
   ).toBeVisible();
+  await expect(
+    page.getByAltText(/A lively hand-drawn cartoon gym/),
+  ).toBeVisible();
+  await expect(
+    page.locator('link[rel="preload"][as="image"][href*="workout-pals-gym"]'),
+  ).toHaveCount(0);
+  await expect(page.getByText("Open to everyone")).toBeVisible();
+  await expect(page.getByText("Sign in to make it yours")).toBeVisible();
+
+  await page.getByRole("link", { name: "Browse all five days" }).click();
+  await expect(page).toHaveURL(/\/program$/);
   await expect(page.getByText("Guest route · not saved")).toBeVisible();
   for (const [index, name] of ["Push", "Pull", "Legs", "Upper", "Lower"].entries()) {
     await expect(
       page.getByRole("button", { name: `${index + 1} ${name}` }),
     ).toBeVisible();
   }
+
+  await page.getByRole("link", { name: "Open Push day" }).click();
+  await expect(page).toHaveURL(/\/program\/push\?equipment=dumbbells$/);
+  await page.getByRole("link", { name: /Dumbbell bench press/ }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Dumbbell bench press" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Push day" }).click();
+  await expect(page).toHaveURL(/\/program\/push\?equipment=dumbbells$/);
+  await page.getByRole("link", { name: "Five-day program" }).click();
+  await expect(page).toHaveURL(/\/program\?equipment=dumbbells$/);
 
   const barbellPreview = page.getByRole("button", {
     name: "Barbell + rack",
@@ -47,7 +72,6 @@ test("guest previews both profiles and completes the public discovery route", as
     page.getByRole("link", { name: /Barbell bent-over row/ }),
   ).toBeVisible();
   await expect(page.getByText("Guest preview · not saved")).toBeVisible();
-  await page.waitForLoadState("networkidle");
 
   await page.goto("/library?equipment=barbell");
   await page.getByLabel("Search movements").fill("bent over row");
@@ -55,6 +79,12 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("link", { name: /Barbell bent-over row/ }),
   ).toBeVisible();
+  await page.getByRole("link", { name: /Barbell bent-over row/ }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Barbell bent-over row" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Exercise library" }).click();
+  await expect(page).toHaveURL(/\/library\?equipment=barbell&q=bent\+over\+row$/);
   await page.getByLabel("Search movements").fill("not a real movement");
   await page.getByRole("button", { name: "Search" }).click();
   await expect(
@@ -67,7 +97,11 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("heading", { level: 2, name: /^\d+ compatible movements$/ }),
   ).toBeVisible();
-  await page.waitForLoadState("networkidle");
+
+  await page.goto("/library?q=first&q=second");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Exercise library" }),
+  ).toBeVisible();
 
   await page.goto("/sample-workout?day=lower&equipment=barbell");
   await expect(
@@ -75,7 +109,6 @@ test("guest previews both profiles and completes the public discovery route", as
   ).toBeVisible();
   await expect(page.getByText("Not your workout · never saved")).toBeVisible();
   await expect(page.getByText("Read only")).toBeVisible();
-  await page.waitForLoadState("networkidle");
 
   await page.goto("/sample-progress");
   await expect(
@@ -83,18 +116,18 @@ test("guest previews both profiles and completes the public discovery route", as
   ).toBeVisible();
   await expect(page.getByText("Not your history · never saved")).toBeVisible();
   await expect(page.getByLabel("Sample analytics")).toBeVisible();
-  await page.waitForLoadState("networkidle");
 
-  await page.goto("/sign-in");
+  await page.goto("/sign-in?returnTo=%2Fhistory&returnTo=%2Fapp");
   await expect(page.locator("#auth-heading")).toHaveText(
     /^(Sign-in connection pending|Sign in)$/,
   );
-  await expect(page.getByRole("link", { name: "Continue as guest" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Browse the free program" })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
 const accessibilityRoutes = [
   { name: "landing", path: "/" },
+  { name: "program overview", path: "/program" },
   { name: "day detail", path: "/program/pull?equipment=barbell" },
   { name: "library", path: "/library?equipment=dumbbells" },
   {
@@ -115,7 +148,15 @@ for (const route of accessibilityRoutes) {
   }) => {
     const errors = capturePageErrors(page);
     await page.goto(route.path);
-    const results = await new AxeBuilder({ page }).analyze();
+    const axe = new AxeBuilder({ page });
+    if (route.name === "exercise detail") {
+      const embeddedDemo = page.locator(".curated-player-frame iframe");
+      await expect(embeddedDemo).toHaveAttribute("title", /\S/);
+      // YouTube owns the cross-origin player document. Audit the titled iframe
+      // boundary here without treating YouTube's internal ARIA as app markup.
+      axe.exclude(".curated-player-frame iframe");
+    }
+    const results = await axe.analyze();
     const releaseBlocking = results.violations
       .filter(({ impact }) => impact === "serious" || impact === "critical")
       .map(({ help, id, impact, nodes }) => ({
@@ -137,13 +178,28 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await page.goto("/");
 
+  if ((page.viewportSize()?.width ?? 0) <= 430) {
+    const primaryAction = await page
+      .getByRole("link", { name: "Browse all five days" })
+      .boundingBox();
+    const fixedNavigation = await page.locator(".public-nav").boundingBox();
+    expect(primaryAction).not.toBeNull();
+    expect(fixedNavigation).not.toBeNull();
+    expect(primaryAction!.y + primaryAction!.height).toBeLessThanOrEqual(
+      fixedNavigation!.y,
+    );
+  }
+
   await page.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab");
-  const skipLink = page.getByRole("link", { name: "Skip to selected day" });
+  const skipLink = page.getByRole("link", { name: "Skip to content" });
   await expect(skipLink).toBeFocused();
   await skipLink.press("Enter");
-  await expect(page).toHaveURL(/#selected-day-sheet$/);
+  await expect(page).toHaveURL(/#main-content$/);
   await expect(
-    page.getByRole("heading", { level: 2, name: "Push day" }),
+    page.getByRole("heading", {
+      level: 1,
+      name: "Your whole five-day plan. No account required.",
+    }),
   ).toBeVisible();
 
   const presentation = await page.evaluate(() => {
@@ -158,6 +214,7 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
   expect(presentation.scrollBehavior).toBe("auto");
   expect(presentation.overflow).toBeLessThanOrEqual(1);
 
+  await page.goto("/program");
   const controls = page.locator(".equipment-control button");
   for (let index = 0; index < (await controls.count()); index += 1) {
     const box = await controls.nth(index).evaluate((element) => {

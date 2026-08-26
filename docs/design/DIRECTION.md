@@ -39,6 +39,7 @@ The Impeccable direction roll assigned the third candidate with seed `ba529732`.
 
 ## Cross-surface behavior
 
+- The public welcome page opens the world with one cohesive hand-drawn cartoon gym. Cute, expressive animal characters occupy believable exercise, cardio, stretching, hydration, and social moments; the entire room and equipment use the same illustrated language. The scene is atmosphere, not a tiled diagram or navigation map.
 - The program overview maps five days as route waypoints.
 - Equipment changes reroute only substituted waypoints and show preserved or cleared details.
 - The runner advances a visible route and stamps operations as pending, saved, or failed.
@@ -53,3 +54,5 @@ Switching equipment profiles redraws only affected path segments and moves subst
 ## Honest risk
 
 Cartographic material can become decorative and reduce information density. Each surface must keep the user task, labels, controls, and status readable without the contours. No route motif can replace semantic structure or honest save feedback.
+
+The welcome illustration can also become visually incoherent if realistic architecture or animals are mixed with cartoon inserts. Its room, machinery, lighting, materials, and characters must remain visibly hand-drawn, while anatomy, grips, equipment contact, and walking paths stay plausible. Do not add hotspots, colored activity tiles, UI labels, or copied cartoon characters.

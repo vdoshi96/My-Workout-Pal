@@ -36,4 +36,12 @@ The recording shows a five-tab mobile routine, sectioned prescriptions, embedded
 
 The dedicated implementation brief dated August 25, 2026, is the authoritative source for features, equipment variants, starter prescriptions, authentication, persistence, video curation, verification, provisioning, release, and documentation requirements.
 
-Add remaining primary documentation links when implementation reaches live embed verification. Record access dates and the decision each source supports.
+## Generated landing illustration
+
+- Runtime assets: `public/illustrations/workout-pals-gym.webp` plus the source-faithful 768-pixel responsive derivative `public/illustrations/workout-pals-gym-768.webp`.
+- Prompt and derivative provenance: the same-basename JSON sidecar beside each WebP.
+- Generator: OpenAI built-in image generation on August 26, 2026.
+- Direction: an original, fully hand-drawn golden-age theatrical-cartoon gym with expressive animal characters; no real person, copied character, text, logo, hotspot, or photographic element.
+- Publication: the optimized WebP and its prompt sidecar are project assets. Superseded generated candidates and private local source outputs are excluded.
+
+Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.

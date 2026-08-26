@@ -8,6 +8,7 @@ import { ExerciseVideoField } from "@/components/video/exercise-video-field";
 import { getDatabase } from "@/db/client";
 import { EQUIPMENT_PROFILES, supportsEquipment, type EquipmentProfileKind } from "@/domain/equipment";
 import { CATALOG_EXERCISES, getCatalogExercise } from "@/domain/exercises/catalog";
+import { resolvePublicExerciseReturn } from "@/domain/navigation/public-exercise-return";
 import { getApprovedCuratedVideoPairBySlug } from "@/server/repositories/curated-videos";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,10 @@ export const revalidate = 0;
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ equipment?: string; from?: string }>;
+  searchParams: Promise<{
+    equipment?: string | string[];
+    returnTo?: string | string[];
+  }>;
 };
 
 const roleDefaults = {
@@ -46,12 +50,13 @@ export default async function ExercisePage({ params, searchParams }: PageProps) 
     .catch(() => undefined);
   const profile: EquipmentProfileKind = query.equipment === "barbell" ? "barbell" : "dumbbells";
   const compatible = supportsEquipment(EQUIPMENT_PROFILES[profile], exercise.requiredEquipment);
+  const returnContext = resolvePublicExerciseReturn(query.returnTo, profile);
 
   return (
     <PublicShell current="library">
       <header className="exercise-hero contour-surface">
-        <Link className="back-link" href={`/library?equipment=${profile}`}>
-          <Icon name="arrow-left" /> Library
+        <Link className="back-link" href={returnContext.href}>
+          <Icon name="arrow-left" /> {returnContext.label}
         </Link>
         <div className="exercise-title-row">
           <div>
