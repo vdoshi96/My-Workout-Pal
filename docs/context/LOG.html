@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="364f51c4e0762903ba1e1690933c1fdb6bf68ec3471091a0762e76d0d55d0fb6">
+  <meta name="source-sha256" content="9130271f23a245aa021f32a6cf5c364bff2b314c8592178a08ecf99c6c808fe1">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,16 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Installable PWA surface and strict-CSP visual correction</h2>
+<ul>
+<li>Retained a missing-state-module failure before adding pure standalone, captured-prompt, dismissal, and replacement-worker rules. Three focused state cases and all 17 existing public-cache cases pass.</li>
+<li>Expanded the global PWA client with an optional browser install offer, session-scoped keyboard dismissal, installed-mode suppression, accepted/dismissed/error outcomes, blocked-service-worker tolerance, update-ready disclosure, user-controlled reload, and a shared offline/install/update notice stack.</li>
+<li>Rebuilt through the supported webpack path and replayed the install offer at 390 by 844 and 1280 by 900. Keyboard dismissal persisted across reload, accepted choice closed the offer, and browser-offline mode retained its status announcement. No provider or production state changed.</li>
+<li>Rejected the first browser run as evidence because the existing development server reproduced its documented stale-loader corruption. The local production server was clean enough to expose five genuine CSP errors from blocked waypoint style attributes.</li>
+<li>Retained a failing source-policy test that named the guest route, sample chart, and authenticated progress page. Replaced fixed inline geometry with classes and the variable progress bar with a labeled semantic <code>meter</code>; the policy, security-header cases, strict TypeScript, scoped lint, and production build pass.</li>
+<li>Replayed home and sample progress in the production browser with zero console errors and visually confirmed all five waypoints and three chart bars. Authenticated progress remains build/source verified until Firebase configuration permits signed-in browser evidence.</li>
+<li>Created local commits <code>5239b9c</code> and <code>6e194b2</code> after inspecting each milestone&#39;s diff stat. Nothing was pushed, merged, deployed, migrated, or changed in production.</li>
+</ul>
 <h2>2026-08-25: Owner-scoped training history and progress</h2>
 <ul>
 <li>Retained a missing-repository-module failure before adding the server-only training-insights read model. Five PGlite integration tests then proved stable terminal pagination, immutable snapshot detail, foreign-session hiding, owner-isolated PR sources, exact ties, completed-only analytics, owner-time-zone grouping, persisted-rollup disclosure, and malformed-viewer/cursor rejection.</li>

@@ -1,5 +1,15 @@
 # Project log
 
+## 2026-08-25: Installable PWA surface and strict-CSP visual correction
+
+- Retained a missing-state-module failure before adding pure standalone, captured-prompt, dismissal, and replacement-worker rules. Three focused state cases and all 17 existing public-cache cases pass.
+- Expanded the global PWA client with an optional browser install offer, session-scoped keyboard dismissal, installed-mode suppression, accepted/dismissed/error outcomes, blocked-service-worker tolerance, update-ready disclosure, user-controlled reload, and a shared offline/install/update notice stack.
+- Rebuilt through the supported webpack path and replayed the install offer at 390 by 844 and 1280 by 900. Keyboard dismissal persisted across reload, accepted choice closed the offer, and browser-offline mode retained its status announcement. No provider or production state changed.
+- Rejected the first browser run as evidence because the existing development server reproduced its documented stale-loader corruption. The local production server was clean enough to expose five genuine CSP errors from blocked waypoint style attributes.
+- Retained a failing source-policy test that named the guest route, sample chart, and authenticated progress page. Replaced fixed inline geometry with classes and the variable progress bar with a labeled semantic `meter`; the policy, security-header cases, strict TypeScript, scoped lint, and production build pass.
+- Replayed home and sample progress in the production browser with zero console errors and visually confirmed all five waypoints and three chart bars. Authenticated progress remains build/source verified until Firebase configuration permits signed-in browser evidence.
+- Created local commits `5239b9c` and `6e194b2` after inspecting each milestone's diff stat. Nothing was pushed, merged, deployed, migrated, or changed in production.
+
 ## 2026-08-25: Owner-scoped training history and progress
 
 - Retained a missing-repository-module failure before adding the server-only training-insights read model. Five PGlite integration tests then proved stable terminal pagination, immutable snapshot detail, foreign-session hiding, owner-isolated PR sources, exact ties, completed-only analytics, owner-time-zone grouping, persisted-rollup disclosure, and malformed-viewer/cursor rejection.
