@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="ff0fd294bec2b216cbd857575ab3d5cc4a9bb68369009113fc4769515dad96f7">
+  <meta name="source-sha256" content="19e618f971748a389cd90aa746c28742ce5414113bf51b496c5e53f56e8c0c83">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,15 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Initial Vercel production and production migration</h2>
+<ul>
+<li>Deployed GitHub-backed <code>main</code> to the linked Vercel project. Vercel&#39;s first-deployment rule assigned the requested preview to production, produced Ready deployment <code>dpl_2NWnCqiUeBfEsumnSqzM8hmFsMsS</code>, and aliased it publicly at <code>https://my-workout-pal-chi.vercel.app</code>.</li>
+<li>Connected GitHub repository <code>vdoshi96/My-Workout-Pal</code> after deployment. Vercel&#39;s project API confirms production branch <code>main</code>, native preview support, preview comments, Node 24.x, Pro deployment plan, and GitHub source SHA <code>210560b3716f646a0cc43913f125d70cc1f83eee</code>.</li>
+<li>Verified public unauthenticated <code>200</code> responses, HSTS, strict nonce CSP, popup-safe opener policy, frame denial, referrer policy, and the remaining declared security headers. The full remote Chromium/WebKit matrix passed 39 cases with the documented WebKit PWA capability skip; seven public Axe gates and Chromium production offline recovery passed. The post-run error-log scan returned no entries.</li>
+<li>Reviewed and applied versioned production migrations <code>0001</code> through <code>0003</code>. Read-only database verification before and after returned identical starter counts: 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos.</li>
+<li>Official Vercel documentation confirms Pro&#39;s $20 monthly credit, 50/75/100 spend-budget notifications, and optional pause-all hard-stop behavior. It does not document a 90% Spend Management budget threshold. The in-app browser lacks a Vercel web session, and no positive overage amount is authorized, so no notification, budget, pause, billing, or paid-plan control changed.</li>
+<li>The production guest surface is verified, but this is not completion proof: Firebase remains unconfigured behind its truthful gate and no exercise videos are approved without the required YouTube API key and full manual review.</li>
+</ul>
 <h2>2026-08-25: Public GitHub publication</h2>
 <ul>
 <li>Rechecked GitHub CLI and found the keyring credential valid for active account <code>vdoshi96</code>, superseding the earlier invalid-token observation.</li>

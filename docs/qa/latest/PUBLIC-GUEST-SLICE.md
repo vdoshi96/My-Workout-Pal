@@ -2,9 +2,9 @@
 
 ## Scope
 
-This checkpoint exercises the public product through a local Next.js production server. It covers the guest equipment preview, all five starter-day controls, a barbell Pull route, compatibility-filtered library search and recovery, read-only sample workout and analytics, the truthful sign-in gate, production PWA installation and offline behavior, serious and critical automated accessibility checks, keyboard navigation, reduced motion, dark mode, phone target sizing, and horizontal overflow.
+This checkpoint exercises the public product through the deployed Vercel production alias. It covers the guest equipment preview, all five starter-day controls, a barbell Pull route, compatibility-filtered library search and recovery, read-only sample workout and analytics, the truthful sign-in gate, production PWA installation and offline behavior, serious and critical automated accessibility checks, keyboard navigation, reduced motion, dark mode, phone target sizing, and horizontal overflow.
 
-This is local production-mode evidence rerun after program-collection merge commit `ed6f96d`. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.
+This is public-production evidence for Vercel deployment `dpl_2NWnCqiUeBfEsumnSqzM8hmFsMsS` sourced from GitHub SHA `210560b` at `https://my-workout-pal-chi.vercel.app`. It covers only the public guest product and truthful unconfigured auth/video states; it does not cover configured authentication or persisted member data.
 
 ## Fail then pass evidence
 
@@ -27,13 +27,15 @@ This automation was executed against the built server and its browser-error outp
 
 ## Automated checks
 
-- `pnpm test:e2e:release`: builds once, starts the application on isolated port 3108, and runs 40 production-browser cases. Final result: 39 passed and 1 skipped.
+- `PLAYWRIGHT_BASE_URL=https://my-workout-pal-chi.vercel.app pnpm exec playwright test`: runs 40 cases against public Vercel production. Final result: 39 passed and 1 skipped.
 - Chromium phone, tablet, and desktop pass the PWA service-worker installation and offline cases.
 - Chromium and WebKit pass the guest route, seven serious-or-critical Axe scans, keyboard skip navigation, reduced-motion behavior, dark-mode rendering, phone target sizing, and overflow checks.
 - The sole skip is the WebKit service-worker-control case because Playwright supports that automation path only in Chromium. It is an explicit capability exclusion, not a reported product pass.
 - `pnpm verify`: strict TypeScript, full ESLint, 63 test files and 419 tests, generated service-worker parity, and 26-document parity pass.
 - `pnpm drizzle-kit check`: migration metadata is valid.
 - `pnpm build`: the Next.js 16.3.2 webpack production build passes and lists the protected `/app/programs` page plus private create/clone and activation APIs as dynamic routes.
+- Public header checks return `200` for `/` and `/sign-in` with HSTS, strict nonce CSP, frame denial, popup-safe opener policy, `strict-origin-when-cross-origin`, and the declared response protections.
+- The post-matrix Vercel error-log query returned no entries. This is a bounded error scan, not proof that future traffic is error-free.
 
 ## Protected collection evidence boundary
 
@@ -47,4 +49,4 @@ No configured Firebase project exists, so this run did not render or operate `/a
 - Persisted runner interruption, resume, completion, history, records, analytics, and account deletion against disposable Firebase identities.
 - Owned program creation in both profiles, cloning, activation, editing, equipment synchronization, and immutable-history inspection against disposable Firebase identities.
 - Manually watched and approved exact-two YouTube demos, live dual embeds, removal fallback, and the production seed.
-- Preview and public-production deployments, runtime logs, production database migration, Lighthouse, 200 percent zoom, forced-colors review, and public URL smoke tests.
+- Authenticated preview and production replay, Lighthouse, 200 percent zoom, and forced-colors review.

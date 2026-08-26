@@ -1,5 +1,14 @@
 # Project log
 
+## 2026-08-25: Initial Vercel production and production migration
+
+- Deployed GitHub-backed `main` to the linked Vercel project. Vercel's first-deployment rule assigned the requested preview to production, produced Ready deployment `dpl_2NWnCqiUeBfEsumnSqzM8hmFsMsS`, and aliased it publicly at `https://my-workout-pal-chi.vercel.app`.
+- Connected GitHub repository `vdoshi96/My-Workout-Pal` after deployment. Vercel's project API confirms production branch `main`, native preview support, preview comments, Node 24.x, Pro deployment plan, and GitHub source SHA `210560b3716f646a0cc43913f125d70cc1f83eee`.
+- Verified public unauthenticated `200` responses, HSTS, strict nonce CSP, popup-safe opener policy, frame denial, referrer policy, and the remaining declared security headers. The full remote Chromium/WebKit matrix passed 39 cases with the documented WebKit PWA capability skip; seven public Axe gates and Chromium production offline recovery passed. The post-run error-log scan returned no entries.
+- Reviewed and applied versioned production migrations `0001` through `0003`. Read-only database verification before and after returned identical starter counts: 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos.
+- Official Vercel documentation confirms Pro's $20 monthly credit, 50/75/100 spend-budget notifications, and optional pause-all hard-stop behavior. It does not document a 90% Spend Management budget threshold. The in-app browser lacks a Vercel web session, and no positive overage amount is authorized, so no notification, budget, pause, billing, or paid-plan control changed.
+- The production guest surface is verified, but this is not completion proof: Firebase remains unconfigured behind its truthful gate and no exercise videos are approved without the required YouTube API key and full manual review.
+
 ## 2026-08-25: Public GitHub publication
 
 - Rechecked GitHub CLI and found the keyring credential valid for active account `vdoshi96`, superseding the earlier invalid-token observation.

@@ -11,11 +11,11 @@ Secrets live only in local or Vercel environment storage. `.env.example` contain
 
 ## Vercel and Neon provisioning
 
-The target Vercel team is `vdoshi96s-projects`. Local project `my-workout-pal` is linked as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`; it currently has no deployment. Link the eventual GitHub repository and configure production from `main` with pull-request previews.
+The target Vercel team is `vdoshi96s-projects`. Project `my-workout-pal` is linked as `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9` on Pro. It is connected to public GitHub repository `vdoshi96/My-Workout-Pal` with production branch `main`, native pull-request previews, and preview comments. The first deployment was automatically assigned to production by Vercel and is publicly aliased at `https://my-workout-pal-chi.vercel.app`.
 
 Neon resource `my-workout-pal-db` was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed `free_v3` plan in `iad1`. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.
 
-The initial schema and starter graph are live. The first migration, first seed, idempotent seed rerun, and read-only verification passed on August 25, 2026. Run the same checked-in boundaries without printing connection values:
+The schema and starter graph are live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after the final migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos. Run the same checked-in boundaries without printing connection values:
 
 ```sh
 node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts
@@ -42,6 +42,8 @@ Configure the following controls only within the existing Pro plan and without i
 - Enable the supported pause-all-production-projects action at 100% of the chosen spend amount as the hard-cap behavior.
 - Record that checks can lag the threshold and that some overage can occur before pause takes effect.
 - Do not set or change the spend amount until the user approves the dollar value because it controls potential billing and can pause unrelated team projects.
+
+The production deployment confirms the team and deployment are on Pro. The in-app browser is not signed in to Vercel, so current Spend Management state and personal notification channels have not been changed or claimed. Official current documentation exposes automatic spend-budget thresholds at 50%, 75%, and 100%; a separate 90% usage notification may exist per usage category, but 90% is not a Spend Management budget threshold. No positive overage amount is authorized.
 
 Track the following usage separately:
 
@@ -123,7 +125,7 @@ Publish a new cache version, retain pending IndexedDB operations, and remove onl
 
 ## Credential and approval gates
 
-- GitHub repository creation and push require a valid authenticated GitHub credential.
+- GitHub source and Vercel Git integration are configured. Local, GitHub, and deployment commit metadata must still be checked after every release.
 - Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.
 - Neon is already connected on `free_v3`; any plan change, billing method, trial acceptance, or billable add-on requires the user.
 - Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.

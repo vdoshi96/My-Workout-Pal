@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="272f8fdb8070238d85eb61facecf94bf96a520eb0ab1ef7ac8d9059bfebef94e">
+  <meta name="source-sha256" content="28d007a299acc3d3edbbee76d8929f009d5af55589ee2a254e29c55b8dcf2143">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,9 +37,9 @@
 </ul>
 <p>Secrets live only in local or Vercel environment storage. <code>.env.example</code> contains names and setup guidance with empty values.</p>
 <h2>Vercel and Neon provisioning</h2>
-<p>The target Vercel team is <code>vdoshi96s-projects</code>. Local project <code>my-workout-pal</code> is linked as <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code>; it currently has no deployment. Link the eventual GitHub repository and configure production from <code>main</code> with pull-request previews.</p>
+<p>The target Vercel team is <code>vdoshi96s-projects</code>. Project <code>my-workout-pal</code> is linked as <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code> on Pro. It is connected to public GitHub repository <code>vdoshi96/My-Workout-Pal</code> with production branch <code>main</code>, native pull-request previews, and preview comments. The first deployment was automatically assigned to production by Vercel and is publicly aliased at <code>https://my-workout-pal-chi.vercel.app</code>.</p>
 <p>Neon resource <code>my-workout-pal-db</code> was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed <code>free_v3</code> plan in <code>iad1</code>. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.</p>
-<p>The initial schema and starter graph are live. The first migration, first seed, idempotent seed rerun, and read-only verification passed on August 25, 2026. Run the same checked-in boundaries without printing connection values:</p>
+<p>The schema and starter graph are live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after the final migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos. Run the same checked-in boundaries without printing connection values:</p>
 <pre><code class="language-sh">node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
@@ -61,6 +61,7 @@ node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 <li>Record that checks can lag the threshold and that some overage can occur before pause takes effect.</li>
 <li>Do not set or change the spend amount until the user approves the dollar value because it controls potential billing and can pause unrelated team projects.</li>
 </ul>
+<p>The production deployment confirms the team and deployment are on Pro. The in-app browser is not signed in to Vercel, so current Spend Management state and personal notification channels have not been changed or claimed. Official current documentation exposes automatic spend-budget thresholds at 50%, 75%, and 100%; a separate 90% usage notification may exist per usage category, but 90% is not a Spend Management budget threshold. No positive overage amount is authorized.</p>
 <p>Track the following usage separately:</p>
 <ul>
 <li>Vercel function invocations, duration, memory, and failures.</li>
@@ -119,7 +120,7 @@ pnpm account:reconcile -- --owner FIREBASE_UID --limit 1
 <p>Publish a new cache version, retain pending IndexedDB operations, and remove only obsolete My Workout Pal public caches during activation. The worker is generated from <code>src/domain/pwa/cache-policy.ts</code>; run <code>pnpm pwa:build</code> after an intentional policy change and <code>pnpm pwa:check</code> before release. Authentication, APIs, owned-data routes, arbitrary images, cross-origin assets, and non-GET requests must stay outside the public cache. If a worker causes a critical navigation failure, publish a compatibility worker that unregisters safely after it restores ordinary network navigation.</p>
 <h2>Credential and approval gates</h2>
 <ul>
-<li>GitHub repository creation and push require a valid authenticated GitHub credential.</li>
+<li>GitHub source and Vercel Git integration are configured. Local, GitHub, and deployment commit metadata must still be checked after every release.</li>
 <li>Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.</li>
 <li>Neon is already connected on <code>free_v3</code>; any plan change, billing method, trial acceptance, or billable add-on requires the user.</li>
 <li>Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.</li>
