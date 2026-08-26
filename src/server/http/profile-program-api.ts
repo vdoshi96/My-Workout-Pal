@@ -45,6 +45,40 @@ export const preferencesUpdateRequestSchema = z
   })
   .strict();
 
+const programNameSchema = z.string().trim().min(1).max(180);
+
+export const programCollectionMutationRequestSchema = z.discriminatedUnion(
+  "mode",
+  [
+    z
+      .object({
+        equipmentProfileKind: profileKindSchema,
+        idempotencyKey: idempotencyKeySchema,
+        mode: z.literal("starter"),
+        name: programNameSchema,
+      })
+      .strict(),
+    z
+      .object({
+        idempotencyKey: idempotencyKeySchema,
+        mode: z.literal("clone"),
+        name: programNameSchema,
+        sourceProgramId: z.string().uuid(),
+        sourceRevisionId: z.string().uuid(),
+      })
+      .strict(),
+  ],
+);
+
+export const activateProgramRequestSchema = z
+  .object({
+    expectedActiveProgramId: z.string().uuid(),
+    idempotencyKey: idempotencyKeySchema,
+    programId: z.string().uuid(),
+    revisionId: z.string().uuid(),
+  })
+  .strict();
+
 export function profileProgramApiError(error: unknown): Response {
   if (
     error instanceof RepositoryNotFoundError ||

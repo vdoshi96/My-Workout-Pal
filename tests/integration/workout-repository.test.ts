@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Database } from "@/db/client";
@@ -40,6 +40,7 @@ import {
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
 const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
+const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -48,6 +49,7 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(migrationUrl, "utf8"));
   await raw.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
   await raw.exec(await readFile(upgradeMigrationUrl, "utf8"));
+  await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   return { raw, database };
@@ -131,6 +133,7 @@ async function createFixture(database: Database): Promise<Fixture> {
     ownerFirebaseUid: ownerUid,
     programKey: "fixture-program",
     name: "Fixture program",
+    isActive: true,
   });
   await database.insert(programRevisions).values({
     id: revisionId,
@@ -354,8 +357,18 @@ async function insertCustomProgramForHistory(database: Database, fixture: Fixtur
   const revisionId = randomUUID();
   const dayId = randomUUID();
   const sectionId = randomUUID();
+  await database
+    .update(userPrograms)
+    .set({ isActive: false })
+    .where(
+      and(
+        eq(userPrograms.ownerFirebaseUid, fixture.ownerUid),
+        eq(userPrograms.id, fixture.programId),
+      ),
+    );
   await database.insert(userPrograms).values({
     id: programId,
+    isActive: true,
     ownerFirebaseUid: fixture.ownerUid,
     programKey: `replacement-history-${programId}`,
     name: "Replacement history program",

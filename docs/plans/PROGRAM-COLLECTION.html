@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="ab5346e7a3213e2444f970409fecb4900cf6868aed9c30f1eb016fe60dc8bb56">
+  <title>Program collection implementation plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Program collection implementation plan</h1>
+<h2>User outcome and navigation</h2>
+<p>A verified member can keep more than one owned five-day program, create a fresh program from either published starter equipment profile, clone any existing owned program, and choose which program is active. The existing <code>/app</code> overview, day details, editor, library compatibility, equipment confirmation, and workout start routes continue to operate on exactly one active program. A new <code>/app/programs</code> collection is reachable from the active-program header and account navigation. Creating, cloning, or activating a program returns to its active overview; editing remains a separate explicit action.</p>
+<p>Guests continue to preview the one public starter route without persistence. Onboarding still creates the first owned starter program. Program collection controls are never shown as saved or available to an unverified password identity.</p>
+<h2>Page and flow states</h2>
+<p>The collection page renders owner-scoped program summaries with name, active state, equipment profile, revision number, five-day count, and last-updated time. It exposes these distinct states:</p>
+<ul>
+<li>loading and private route error boundaries;</li>
+<li>one active starter after onboarding;</li>
+<li>multiple programs with one clearly labeled active program;</li>
+<li>create-from-starter form with name and dumbbell or barbell equipment choice;</li>
+<li>clone review naming the source program and immutable source revision;</li>
+<li>activating, creating, cloning, saved, failed, interrupted, and retry states;</li>
+<li>unverified read-only state with every permanent control disabled;</li>
+<li>stale current-active or source revision conflict that preserves entered form values;</li>
+<li>foreign, deleted, or malformed program identity using one not-found outcome;</li>
+<li>corrupt collection with zero or multiple active rows as a blocking recovery state rather than an arbitrary selection.</li>
+</ul>
+<p>No operation silently changes an in-progress workout. Switching active programs affects only future overview, editor, equipment, and workout-start navigation. Existing sessions and historical snapshots retain their original program and revision IDs.</p>
+<h2>Domain types and invariants</h2>
+<p><code>ProgramSummary</code> contains the opaque program ID, bounded display name, active published revision ID and number, equipment profile, five-day count, active flag, and updated timestamp. It contains no owner UID.</p>
+<p>Creation accepts a strict owner-free envelope with <code>mode: &quot;starter&quot;</code>, a trimmed 1–180 character name, <code>equipmentProfileKind</code>, and a required 1–180 character idempotency key. Cloning accepts <code>mode: &quot;clone&quot;</code>, the source program ID, source revision ID, name, and idempotency key. Activation accepts the target program ID, expected current program ID, target revision ID, and idempotency key.</p>
+<p>Every owner may have at most 24 program roots and exactly one active root after onboarding. The database enforces at most one active row per owner with a partial unique index; repository transactions enforce the non-empty active invariant. Every program key is server-generated and unique within the owner. A new starter program receives revision 1 cloned from the selected published template. A cloned program receives revision 1 with a complete copy of the source program&#39;s current published graph, including compatible owner custom-exercise references, display names, targets, notes, ordering, and cardio. It does not share mutable descendant rows with the source.</p>
+<p>Create and clone activate the new root atomically. Activation never creates a revision. The persisted account equipment profile follows the active revision&#39;s equipment profile so library filtering and active settings remain coherent. Equipment confirmation remains revision-producing and is rejected unless the supplied program is the current active root. The operation changes only that root plus the account&#39;s current equipment selection; other program revisions and all workout snapshots remain byte-stable.</p>
+<h2>Persistence and migrations</h2>
+<p>Add a non-null <code>is_active</code> boolean to <code>user_programs</code>, initially false. Backfill the existing owner starter row as active, then add a unique partial index on owner where <code>is_active</code> is true. The checked-in versioned migration must upgrade the real prior migration sequence and must not be applied to Neon until the release migration checkpoint is explicitly authorized and verified.</p>
+<p>Repository reads list every owner root in deterministic active-first, recently-updated order and resolve the active root by the new flag rather than the starter program key. Onboarding creates its starter root as active. Create, clone, and activate lock the owner&#39;s program roots, validate the expected current/source revision, reserve and lock the owner-scoped idempotency row, update active flags and equipment inside one transaction, and return the complete refreshed read model. A killed or disconnected request can replay the same key and obtain the original result. Reusing a key with different input conflicts.</p>
+<p>Program graph cloning inserts a new root, revision, days, sections, prescriptions, and cardio rows with new opaque identifiers. Catalog and custom exercise identities are referenced, not duplicated. Custom exercises are re-resolved with the viewer owner predicate inside the transaction. Historical revisions are never updated or deleted.</p>
+<h2>Authentication, authorization, privacy, and security</h2>
+<p>All reads derive the Firebase UID from the revocation-aware HTTP-only session. Mutations validate same-origin double-submit CSRF, require a verified permanent-mutation viewer before parsing the bounded body or opening the database, and never accept an owner UID, email, token, account status, active flag, revision number, or persistence outcome from the client.</p>
+<p>Every source, target, revision, custom exercise, and update predicate includes the server viewer&#39;s owner UID. Foreign and missing IDs share the same private 404 response. Responses use <code>Cache-Control: private, no-store</code>; logs and browser payloads contain no secret, credential, Firebase UID, workout measurement, or another member&#39;s program count. Text is bounded and rendered as text. A database or invariant failure returns a safe error and rolls back the entire active-pointer change.</p>
+<h2>Loading, empty, error, interrupted, and worst-case recovery</h2>
+<p>An owner with profile data but no active row receives a blocking recovery message and no editor or start-workout controls. The repository never guesses by update time. Multiple active rows are prevented by the partial unique index and treated as corruption if encountered before migration repair. A source deleted between render and clone returns not found; a source revision changed between render and submit returns conflict; a custom exercise deleted or transferred is impossible to clone and rolls back. Reaching 24 programs produces a validation response without a partial root.</p>
+<p>Client mutation state retains one idempotency key while a request is pending, failed, offline, or ambiguously interrupted. Duplicate clicks are disabled. Only a structurally validated success updates the page or navigates. An auth expiry returns through the bounded sign-in route with the collection destination preserved. Browser back, refresh, tab close, or network loss never turns an unconfirmed operation into a success message.</p>
+<h2>Phone, tablet, desktop, accessibility, and motion</h2>
+<p>On phones, program summaries are a single semantic list and create or clone review opens as a full-width, internally scrollable sheet above safe-area navigation. Tablet and desktop use a bounded two-column collection and action panel. Logical DOM and keyboard order remain list, active controls, create form, and status regardless of layout.</p>
+<p>Every form field has a visible label and described error. Active status uses text and <code>aria-current</code>, not color alone. Review sheets use a labeled dialog, focus the heading or first invalid field, trap focus, close with Escape and Cancel, and restore focus to the invoker. Status changes use a polite live region until a failure becomes an alert. Buttons meet 44 by 44 CSS pixel targets, zoom to 200 percent without horizontal page overflow, retain visible focus, support dark and forced-colors modes, and avoid non-essential motion when reduced motion is requested. No action depends on drag, hover, or animation.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Onboarding creates exactly one active starter program and existing upgraded owners retain their starter as active.</li>
+<li>A verified owner can create dumbbell and barbell starter programs with bounded custom names; the new program becomes active and contains the exact published five-day graph.</li>
+<li>A verified owner can clone any owned current revision; source and clone graphs have equal meaning but distinct root, revision, day, section, prescription, and cardio IDs.</li>
+<li>A verified owner can activate another owned program without creating a revision or changing either graph.</li>
+<li>The active overview, editor, day routes, compatible library, equipment confirmation, and workout start all resolve the selected active program.</li>
+<li>Equipment confirmation refuses a non-active program and changes only the active root&#39;s new revision. Other programs and workout history remain unchanged.</li>
+<li>Same-key replay returns the original create, clone, or activation result; changed input, stale expected active/source revision, duplicate submit, or concurrent activation cannot create two active rows.</li>
+<li>Unverified, unauthenticated, malformed, foreign, over-limit, and incompatible-custom-exercise paths make no write and reveal no cross-user information.</li>
+<li>Empty, offline, slow, interrupted, expired-auth, database-error, and corrupt-active states remain truthful and recoverable.</li>
+</ul>
+<h2>Test-driven implementation and browser evidence</h2>
+<p>Retain a failing-first migration/schema suite for the missing active marker and partial unique index. PGlite repository tests use the full migration sequence and cover upgraded starter activation, exact starter creation in both profiles, full custom-edited clone fidelity, distinct descendant IDs, owner isolation, source revision staleness, program limit, same-key replay, changed-key conflict, concurrent activation, equipment synchronization, non-active equipment refusal, transaction rollback, and immutable other-program/workout history.</p>
+<p>Direct route tests first fail for missing handlers, then prove strict schemas, 32 KiB body limits, CSRF before viewer resolution, viewer before body/database, owner-free payloads, safe errors, no-store responses, and structural success validation. Component tests cover dialog focus and return, field errors, duplicate disabling, retained retry keys, clone disclosure, active labeling, interrupted failure, and no false navigation.</p>
+<p>Configured browser evidence must create both starter profiles, clone an edited program, switch among three programs, publish one edit, change only the active program&#39;s equipment, start a workout, and return to the correct program on phone, tablet, and desktop in Chromium and WebKit. It must also exercise keyboard-only operation, 200 percent zoom, dark mode, reduced motion, automated accessibility, slow response, offline failure, duplicate click, stale conflict, reload, expired auth, and another-owner program denial. Database inspection must prove prior program revisions and workout snapshots are unchanged. Local browser evidence remains distinct from preview and production proof.</p>
+
+  </main>
+</body>
+</html>

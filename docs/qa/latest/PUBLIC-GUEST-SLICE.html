@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f55d73a216302e9a6cb7a27188a77325451ccd399ce8ae5dcf27f22826ff06f7">
+  <meta name="source-sha256" content="d8ccbeeedfa7b7255e1059969fa259d3a394c967d79590998dcdc5474847b7d4">
   <title>Public release browser baseline · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -30,7 +30,7 @@
 <h1>Public release browser baseline</h1>
 <h2>Scope</h2>
 <p>This checkpoint exercises the public product through a local Next.js production server. It covers the guest equipment preview, all five starter-day controls, a barbell Pull route, compatibility-filtered library search and recovery, read-only sample workout and analytics, the truthful sign-in gate, production PWA installation and offline behavior, serious and critical automated accessibility checks, keyboard navigation, reduced motion, dark mode, phone target sizing, and horizontal overflow.</p>
-<p>This is local production-mode evidence for implementation commit <code>101d6a4</code>. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.</p>
+<p>This is local production-mode evidence rerun from program-collection implementation commit <code>62bfa65</code>. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.</p>
 <h2>Fail then pass evidence</h2>
 <ul>
 <li>The first executable <code>pnpm test:e2e:release</code> matrix ran 40 cases: 30 failed, 9 passed, and 1 WebKit PWA case was skipped. The failures exposed one stale accessible-name expectation, serious color-contrast defects across public surfaces, and a genuine transport-policy defect that made WebKit upgrade HTTP localhost assets to unavailable HTTPS.</li>
@@ -55,13 +55,18 @@
 <li>Chromium phone, tablet, and desktop pass the PWA service-worker installation and offline cases.</li>
 <li>Chromium and WebKit pass the guest route, seven serious-or-critical Axe scans, keyboard skip navigation, reduced-motion behavior, dark-mode rendering, phone target sizing, and overflow checks.</li>
 <li>The sole skip is the WebKit service-worker-control case because Playwright supports that automation path only in Chromium. It is an explicit capability exclusion, not a reported product pass.</li>
-<li><code>pnpm verify</code>: strict TypeScript, full ESLint, 58 test files and 402 tests, generated service-worker parity, and 25-document parity pass.</li>
+<li><code>pnpm verify</code>: strict TypeScript, full ESLint, 63 test files and 419 tests, generated service-worker parity, and 26-document parity pass.</li>
 <li><code>pnpm drizzle-kit check</code>: migration metadata is valid.</li>
+<li><code>pnpm build</code>: the Next.js 16.3.2 webpack production build passes and lists the protected <code>/app/programs</code> page plus private create/clone and activation APIs as dynamic routes.</li>
 </ul>
+<h2>Protected collection evidence boundary</h2>
+<p>The same local gate includes migration, PGlite repository, direct-route, client-model, and static component coverage for the owned program collection. Those tests prove one active root, both starter profiles, independent clone identities, owner custom-exercise fidelity, stale and foreign denial, inactive-program workout and equipment denial, concurrent idempotent replay, strict private requests, malformed-success refusal, read-only verification gating, and the 24-program cap.</p>
+<p>No configured Firebase project exists, so this run did not render or operate <code>/app/programs</code> as a signed-in user in Chromium or WebKit. The successful production build and automated owner-scoped tests are not labeled as live authenticated browser proof.</p>
 <h2>Remaining verification</h2>
 <ul>
 <li>Configured password and Google authentication, verification, recovery, expiry, reauthentication, deletion, and cross-user denial in real browsers.</li>
 <li>Persisted runner interruption, resume, completion, history, records, analytics, and account deletion against disposable Firebase identities.</li>
+<li>Owned program creation in both profiles, cloning, activation, editing, equipment synchronization, and immutable-history inspection against disposable Firebase identities.</li>
 <li>Manually watched and approved exact-two YouTube demos, live dual embeds, removal fallback, and the production seed.</li>
 <li>Preview and public-production deployments, runtime logs, production database migration, Lighthouse, 200 percent zoom, forced-colors review, and public URL smoke tests.</li>
 </ul>

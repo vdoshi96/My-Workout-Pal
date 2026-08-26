@@ -107,6 +107,9 @@ export function MemberProgramHome({
           </p>
         </div>
         <div className="member-program-actions">
+          <Link className="secondary-action" href="/app/programs">
+            <Icon name="map" /> Manage programs
+          </Link>
           <Link className="secondary-action" href="/app/program/edit">
             <Icon name="settings" /> Edit program
           </Link>

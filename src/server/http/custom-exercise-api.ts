@@ -84,6 +84,20 @@ export function requirePrivateViewer(viewer: ViewerContext | null): ViewerContex
   return viewer;
 }
 
+export function requirePrivateMutationViewer(
+  viewer: ViewerContext | null,
+): ViewerContext {
+  const current = requirePrivateViewer(viewer);
+  if (!current.eligibleForPermanentMutations) {
+    throw new AuthPolicyError(
+      "email_unverified",
+      "Verify your email before changing permanent account data.",
+      403,
+    );
+  }
+  return current;
+}
+
 export function privateJson(value: unknown, init?: ResponseInit): NextResponse {
   const response = NextResponse.json(value, init);
   response.headers.set("Cache-Control", "private, no-store, max-age=0");

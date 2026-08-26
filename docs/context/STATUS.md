@@ -2,11 +2,11 @@
 
 ## Current phase
 
-Public-release browser hardening while Firebase, curated video, GitHub, and deployment credentials are completed.
+Owned-program collection integration and public-release hardening while Firebase, curated video, GitHub, and deployment credentials are completed.
 
 ## What exists
 
-- A local Git repository on `main`.
+- A local Git repository with the verified `feature/program-collection` branch based on local `main`.
 - A fully inspected private reference recording, with temporary inspection artifacts outside the repository.
 - The initial product record and context documentation.
 - A strict Next.js 16.3.2 foundation with the approved route-atlas program overview, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout and analytics, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
@@ -36,6 +36,9 @@ Public-release browser hardening while Firebase, curated video, GitHub, and depl
 - Owner-scoped custom exercises have private collection/resource API handlers with authenticated `no-store` reads, bounded strict JSON, same-origin CSRF mutations, UUID validation, optimistic update timestamps, idempotent replay, and stable private errors.
 - Authenticated custom-exercise list, create, and edit surfaces expose all supported logging meanings, required-equipment controls, instructions, aliases, up to two normalized YouTube references, retry-safe saves, verification gating, and guarded deletion without inventing custom-video approval.
 - The owner-scoped profile/program repository creates one verified member profile, preferences, equipment profile, and exact published five-day starter revision transactionally. Reads and changes derive ownership from the server viewer, hide foreign IDs as missing, replay idempotently, reject stale base revisions, preserve compatible custom and catalog prescriptions, and retain immutable prior revisions.
+- Verified members can own up to 24 program roots with exactly one active root. Migration `0003_program_collection` adds a partial owner-active uniqueness constraint and deterministically upgrades existing owners without rewriting revisions. Fresh starter creation supports both equipment profiles; cloning creates new root, revision, day, section, prescription, and cardio identities while preserving compatible custom exercise references, targets, notes, and ordering. Create, clone, and activation are owner-scoped, transactional, idempotent, and synchronize the account equipment projection to the selected active revision. The migration is locally tested but not applied to Neon.
+- Private collection APIs require same-origin CSRF and a verified server-derived viewer before bounded body parsing or database construction. Strict owner-free create, clone, and activate envelopes reject stale, foreign, changed-key, over-limit, and non-active workout or equipment paths without revealing another owner.
+- The protected `/app/programs` surface lists active and inactive owned programs, creates from either starter, reviews independent cloning, activates an owned revision, keeps retry keys through interrupted failures, rejects malformed success responses, and leaves unverified members read-only. The existing overview, editor, day routes, library compatibility, equipment confirmation, and future workout starts continue to resolve only the selected active root.
 - Canonical equipment changes now share one explicit day-and-section substitution rule across guest previews and persisted program revisions. Push and Legs retain their specified dumbbell movements in both profiles; only the required Pull, Upper, and Lower slots change. The private read model includes owner-scoped required-equipment facts so an incompatible custom movement blocks confirmation before any write.
 - Private profile/program API handlers provide authenticated `no-store` reads plus bounded, strict, same-origin CSRF onboarding and equipment mutations. Authentication is resolved before database access or hostile-body parsing, and input envelopes cannot accept an ownership key.
 - The authenticated `/app` route now renders either truthful one-step onboarding or the persisted active program, five owned day links, exact equipment-change disclosure, cleared-target copy, stale-revision recovery, verification gating, and retry-safe save status. Owned day detail reads the active immutable revision, labels walker/runner choices, and starts or resumes the persisted session only after a strictly validated server response.
@@ -50,6 +53,7 @@ Public-release browser hardening while Firebase, curated video, GitHub, and depl
 ## Work in progress
 
 - Replay password and Google deletion plus dry-run/apply reconciliation with disposable configured Firebase identities after provider configuration.
+- Replay create-both-profiles, clone, activate, edit, equipment-change, and workout-start flows in configured signed-in Chromium and WebKit sessions; inspect stored graphs and immutable history after each transition.
 - Personally replay start, pending save, reload, offline interruption, retry, completion, and cross-account denial against configured Firebase identities and the owner-scoped database.
 - Complete manual 200 percent zoom and forced-colors review, then repeat the supported browser matrix on preview and public production.
 
@@ -95,6 +99,8 @@ Public-release browser hardening while Firebase, curated video, GitHub, and depl
 - Local `main` contains the owned-runner integration merge `cefecdc`. Its post-merge verification passes the same 58-file and 401-test gate, Drizzle metadata validation, and the Next.js webpack production build; the completed feature branch was removed. No Git remote exists, so no branch or `main` push was possible.
 - The public-release browser checkpoint initially ran 30 failed, 9 passed, and 1 skipped case, exposing serious contrast failures, one stale accessible-name expectation, and HTTP-to-HTTPS upgrade breakage in WebKit. The final local production matrix at implementation commit `101d6a4` passes 39 cases with the sole explicit WebKit PWA capability skip. Strict TypeScript, full ESLint, 58 files and 402 tests, generated PWA parity, 25-document parity, and Drizzle metadata validation also pass.
 - Local `main` merged the release-browser branch as `9a3dd2e`. Post-merge verification repeated the 58-file and 402-test gate, Drizzle metadata validation, production build, and 40-case browser matrix with 39 passes and the same explicit WebKit capability skip. The completed branch was removed; no Git remote exists, so this merge remains local.
+- The program-collection branch retained missing migration, route, client-model, and retry-key failures before implementation. PGlite repository tests cover both starter profiles, owner custom-exercise clone fidelity, distinct descendant IDs, activation/equipment synchronization, concurrent and later-switch replay, inactive-program workout/equipment denial, foreign and stale identities, unverified mutation, and the 24-program cap. Direct-route and client tests cover auth/CSRF ordering, strict owner-free inputs, malformed success refusal, one active label, and read-only controls.
+- Commit `62bfa65` passes the complete local gate: strict TypeScript, full ESLint, 63 test files and 419 tests, generated-service-worker parity, 26-document parity, Drizzle metadata validation, and a Next.js 16.3.2 webpack production build listing `/app/programs`, `/api/app/programs`, and `/api/app/programs/activate` as dynamic routes. The local production browser regression repeats 39 passes and the one documented WebKit service-worker-control skip. That browser matrix covers public routes only; authenticated collection browser proof still requires configured Firebase identities.
 
 ## Blockers and credential gates
 
@@ -102,6 +108,7 @@ Public-release browser hardening while Firebase, curated video, GitHub, and depl
 - Firebase Console access is available in the signed-in in-app browser. The `My Workout Pal` creation form proposes project ID `my-workout-pal-c5b57`, but no project exists because the user must personally accept the Firebase terms. The optional Google Developer Programme enrollment is selected by default in that form, is not required for the application, and should be deselected unless the user explicitly wants it.
 - `YOUTUBE_API_KEY` is absent. `pnpm youtube:curate` refuses to run without it. Offline normalization, mechanical eligibility, ranking, checkpoint, and seed-validation tests do not require the key; discovery, quota-backed metadata hydration, final candidate selection, approval, exact-two production seed, and live production embed verification remain blocked.
 - No paid configuration changes are authorized.
+- The user authorized eventual push and deployment under the documented release plan. No push, deployment, production migration, or paid change has occurred in this branch; the invalid GitHub credential, Firebase terms acceptance, and missing YouTube key remain the concrete gates.
 
 ## Worktrees
 

@@ -4,7 +4,7 @@
 
 This checkpoint exercises the public product through a local Next.js production server. It covers the guest equipment preview, all five starter-day controls, a barbell Pull route, compatibility-filtered library search and recovery, read-only sample workout and analytics, the truthful sign-in gate, production PWA installation and offline behavior, serious and critical automated accessibility checks, keyboard navigation, reduced motion, dark mode, phone target sizing, and horizontal overflow.
 
-This is local production-mode evidence for implementation commit `101d6a4`. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.
+This is local production-mode evidence rerun from program-collection implementation commit `62bfa65`. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.
 
 ## Fail then pass evidence
 
@@ -31,12 +31,20 @@ This automation was executed against the built server and its browser-error outp
 - Chromium phone, tablet, and desktop pass the PWA service-worker installation and offline cases.
 - Chromium and WebKit pass the guest route, seven serious-or-critical Axe scans, keyboard skip navigation, reduced-motion behavior, dark-mode rendering, phone target sizing, and overflow checks.
 - The sole skip is the WebKit service-worker-control case because Playwright supports that automation path only in Chromium. It is an explicit capability exclusion, not a reported product pass.
-- `pnpm verify`: strict TypeScript, full ESLint, 58 test files and 402 tests, generated service-worker parity, and 25-document parity pass.
+- `pnpm verify`: strict TypeScript, full ESLint, 63 test files and 419 tests, generated service-worker parity, and 26-document parity pass.
 - `pnpm drizzle-kit check`: migration metadata is valid.
+- `pnpm build`: the Next.js 16.3.2 webpack production build passes and lists the protected `/app/programs` page plus private create/clone and activation APIs as dynamic routes.
+
+## Protected collection evidence boundary
+
+The same local gate includes migration, PGlite repository, direct-route, client-model, and static component coverage for the owned program collection. Those tests prove one active root, both starter profiles, independent clone identities, owner custom-exercise fidelity, stale and foreign denial, inactive-program workout and equipment denial, concurrent idempotent replay, strict private requests, malformed-success refusal, read-only verification gating, and the 24-program cap.
+
+No configured Firebase project exists, so this run did not render or operate `/app/programs` as a signed-in user in Chromium or WebKit. The successful production build and automated owner-scoped tests are not labeled as live authenticated browser proof.
 
 ## Remaining verification
 
 - Configured password and Google authentication, verification, recovery, expiry, reauthentication, deletion, and cross-user denial in real browsers.
 - Persisted runner interruption, resume, completion, history, records, analytics, and account deletion against disposable Firebase identities.
+- Owned program creation in both profiles, cloning, activation, editing, equipment synchronization, and immutable-history inspection against disposable Firebase identities.
 - Manually watched and approved exact-two YouTube demos, live dual embeds, removal fallback, and the production seed.
 - Preview and public-production deployments, runtime logs, production database migration, Lighthouse, 200 percent zoom, forced-colors review, and public URL smoke tests.

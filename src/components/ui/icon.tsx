@@ -3,6 +3,7 @@ import type { SVGProps } from "react";
 type IconName =
   | "arrow-left"
   | "arrow-right"
+  | "check"
   | "chevron-right"
   | "dumbbell"
   | "history"
@@ -62,6 +63,9 @@ export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGEle
   }
   if (name === "arrow-right") {
     return <svg {...common}><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
+  }
+  if (name === "check") {
+    return <svg {...common}><path d="m5 12 4 4L19 6" /></svg>;
   }
   return <svg {...common}><path d="m9 18 6-6-6-6" /></svg>;
 }

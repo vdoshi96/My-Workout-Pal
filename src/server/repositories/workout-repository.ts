@@ -1033,7 +1033,13 @@ async function selectProgram(tx: TxDatabase, ownerUid: string, programId: string
       activeRevisionId: userPrograms.activeRevisionId,
     })
     .from(userPrograms)
-    .where(and(eq(userPrograms.ownerFirebaseUid, ownerUid), eq(userPrograms.id, programId)))
+    .where(
+      and(
+        eq(userPrograms.ownerFirebaseUid, ownerUid),
+        eq(userPrograms.id, programId),
+        eq(userPrograms.isActive, true),
+      ),
+    )
     .limit(1);
   const row = rows[0] as ProgramRow | undefined;
   if (!row) notFound();
