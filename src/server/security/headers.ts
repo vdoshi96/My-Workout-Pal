@@ -6,7 +6,11 @@ function assertNonce(nonce: string): void {
   }
 }
 
-export function buildContentSecurityPolicy(nonce: string, development: boolean): string {
+export function buildContentSecurityPolicy(
+  nonce: string,
+  development: boolean,
+  secureTransport: boolean,
+): string {
   assertNonce(nonce);
 
   return [
@@ -24,16 +28,20 @@ export function buildContentSecurityPolicy(nonce: string, development: boolean):
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    ...(development ? [] : ["upgrade-insecure-requests"]),
+    ...(!development && secureTransport ? ["upgrade-insecure-requests"] : []),
   ].join("; ");
 }
 
 export function buildSecurityHeaders(
   nonce: string,
   development: boolean,
+  secureTransport: boolean,
 ): readonly (readonly [string, string])[] {
   return [
-    ["Content-Security-Policy", buildContentSecurityPolicy(nonce, development)],
+    [
+      "Content-Security-Policy",
+      buildContentSecurityPolicy(nonce, development, secureTransport),
+    ],
     ["Cross-Origin-Opener-Policy", "same-origin-allow-popups"],
     ["Cross-Origin-Resource-Policy", "same-origin"],
     ["Origin-Agent-Cluster", "?1"],
@@ -46,7 +54,7 @@ export function buildSecurityHeaders(
     ["X-DNS-Prefetch-Control", "off"],
     ["X-Frame-Options", "DENY"],
     ["X-Permitted-Cross-Domain-Policies", "none"],
-    ...(development
+    ...(development || !secureTransport
       ? []
       : ([
           ["Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload"],

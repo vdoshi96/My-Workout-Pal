@@ -1,7 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const externalBaseURL = process.env["PLAYWRIGHT_BASE_URL"];
-const baseURL = externalBaseURL ?? "http://127.0.0.1:3000";
+const releaseMode = process.env["PLAYWRIGHT_RELEASE"] === "1";
+const releasePort = 3108;
+const baseURL =
+  externalBaseURL ??
+  (releaseMode ? `http://127.0.0.1:${releasePort}` : "http://127.0.0.1:3000");
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -35,8 +39,9 @@ export default defineConfig({
   ...(externalBaseURL
     ? {}
     : { webServer: {
-        command: "pnpm dev",
+        command: releaseMode ? `pnpm start -p ${releasePort}` : "pnpm dev",
+        timeout: releaseMode ? 120_000 : 60_000,
         url: baseURL,
-        reuseExistingServer: !process.env["CI"],
+        reuseExistingServer: releaseMode ? false : !process.env["CI"],
       } }),
 });

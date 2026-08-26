@@ -8,7 +8,18 @@ import { buildSecurityHeaders } from "@/server/security/headers";
 export function proxy(request: NextRequest): NextResponse {
   const nonce = Buffer.from(randomUUID()).toString("base64");
   const development = process.env.NODE_ENV === "development";
-  const securityHeaders = buildSecurityHeaders(nonce, development);
+  const forwardedProtocol = request.headers
+    .get("x-forwarded-proto")
+    ?.split(",", 1)[0]
+    ?.trim()
+    .toLowerCase();
+  const secureTransport =
+    request.nextUrl.protocol === "https:" || forwardedProtocol === "https";
+  const securityHeaders = buildSecurityHeaders(
+    nonce,
+    development,
+    secureTransport,
+  );
   const requestHeaders = new Headers(request.headers);
 
   requestHeaders.set("x-nonce", nonce);

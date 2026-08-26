@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="ca67fa79cfd88e2b5608a7bc761192607fb7e81ac5e0feb2d6ca1669b3bb6810">
+  <meta name="source-sha256" content="967cacaa73278a587614d6c977383a5ec33a2b6e4e25181b634bec77fcb7df2c">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,16 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Public release browser baseline</h2>
+<ul>
+<li>Added one reproducible <code>pnpm test:e2e:release</code> command that builds the application, starts an isolated production server on port 3108, and runs the complete Playwright matrix without reusing an unrelated development server.</li>
+<li>Retained the first executable browser result: 30 failures, 9 passes, and 1 explicit WebKit PWA skip. The failures identified a stale accessible-name expectation, serious color-contrast defects across public surfaces, and HTTP localhost asset breakage caused by production TLS-upgrade headers.</li>
+<li>Retained a focused failing security regression before implementation: the HTTP production CSP still contained <code>upgrade-insecure-requests</code>. The corrected header boundary now enables HSTS and upgrading only on HTTPS while retaining the strict nonce CSP on HTTP production checks; all 5 focused assertions pass.</li>
+<li>Introduced surface-specific coral, lichen, danger, and inverse-ink foreground tokens. Seven public routes now pass serious and critical Axe checks in Chromium and WebKit without discarding the established light or dark palette.</li>
+<li>Exercised the guest equipment switch, barbell Pull route, compatible library result and empty recovery, read-only sample workout, sample analytics, and sign-in gate. Keyboard skip navigation, reduced motion, dark mode, phone targets, horizontal overflow, Chromium PWA installation, and Chromium offline recovery are also automated.</li>
+<li>The final browser result is 39 passes and 1 explicit skip across Chromium phone, tablet, and desktop plus WebKit phone. Playwright does not support the skipped WebKit service-worker-control path; all other WebKit cases pass.</li>
+<li>Commit <code>101d6a4</code> passes strict TypeScript, full ESLint, 58 test files and 402 tests, generated-service-worker parity, 25-document parity, Drizzle metadata validation, and the local production-browser matrix. This is local evidence only; nothing was pushed or deployed and no production resource changed.</li>
+</ul>
 <h2>2026-08-25: Owned workout route and recovery host</h2>
 <ul>
 <li>Replaced the owned day placeholder with a retry-stable start-or-resume control that sends no ownership key, preserves one idempotency key across interrupted retries, validates the complete private response before navigation, and keeps unverified accounts read-only.</li>

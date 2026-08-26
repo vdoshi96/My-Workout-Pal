@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Authenticated repositories and runner-surface integration after the verified guest-product and Neon bootstrap foundations.
+Public-release browser hardening while Firebase, curated video, GitHub, and deployment credentials are completed.
 
 ## What exists
 
@@ -44,12 +44,14 @@ Authenticated repositories and runner-surface integration after the verified gue
 - Settings sign-out clears only the current Firebase UID’s IndexedDB runner namespace before deleting the same-origin secure session, and signs out the Firebase client when public configuration exists. Account deletion now has a responsive keyboard-focused review dialog, exact phrase, password or Google reauthentication, same-UID verification, fresh secure-session exchange, stable retry key, active-request navigation protection, confirmed-only owner namespace cleanup/client sign-out, and truthful partial/local-cleanup failure states. A server-only, dry-run-default `account:reconcile` command can inspect Firebase-phase jobs, check the exact UID with Firebase Admin, and complete only identities reported absent; it never deletes an existing identity. The Settings control remains disabled while Firebase public configuration is absent.
 - The program editor now maps the active owner-scoped revision into a strict unpublished draft, supports program/day names, prescription targets, notes, rest, sets, explicit reorder controls, walker/runner defaults, and compatible add/replace/remove movement editing, and publishes through the private endpoint. Its searchable modal combines deterministic canonical IDs with only the signed-in owner's compatible custom exercises. Same-meaning replacements retain compatible ranges and targets; changed logging meaning clears incompatible values with an announcement; distance-duration additions cannot publish without a positive target. New rows use client-only UUIDs for stable keyboard focus while editing, and those UUIDs are immutably stripped before validation or transport. Dirty navigation, retry-stable idempotency, separate equipment confirmation, validation, conflict, saving, and published states remain explicit.
 - Authenticated History, workout detail, Personal Records, and Progress routes now read only the server viewer's data. History paginates completed and interrupted sessions with a stable opaque timestamp-and-ID cursor, renders immutable exercise/set/cardio snapshots, and hides foreign IDs as missing. Personal-record ties retain every winning source. Progress derives a sparse daily series only from persisted completed set/cardio logs in the owner's time zone, excludes interrupted sessions, and converts canonical kilograms/meters only for presentation. Empty states never mix sample activity into account data.
+- A reproducible `test:e2e:release` command builds once, starts an isolated local production server, and exercises the public guest route in Chromium phone, tablet, and desktop plus WebKit phone. The current 40-case matrix passes 39 supported cases and explicitly skips only Playwright's unsupported WebKit service-worker-control case. Seven public surfaces have no serious or critical Axe violation, and the matrix also covers keyboard skip navigation, reduced motion, dark mode, phone targets, overflow, Chromium PWA installation, and offline recovery.
+- Production response security is transport-aware: HTTPS retains HSTS and `upgrade-insecure-requests`, while HTTP production-mode verification retains the strict nonce CSP without forcing unavailable TLS. The public palette now uses explicit foreground tokens that pass the automated contrast gate in both color schemes.
 
 ## Work in progress
 
 - Replay password and Google deletion plus dry-run/apply reconciliation with disposable configured Firebase identities after provider configuration.
 - Personally replay start, pending save, reload, offline interruption, retry, completion, and cross-account denial against configured Firebase identities and the owner-scoped database.
-- Re-run production service-worker and offline-fallback evidence after the active runner is integrated.
+- Complete manual 200 percent zoom and forced-colors review, then repeat the supported browser matrix on preview and public production.
 
 ## Verification run
 
@@ -91,11 +93,12 @@ Authenticated repositories and runner-surface integration after the verified gue
 - The owned-route slice retained a missing route-model module failure and a missing start-controller failure before implementation. The passing checkpoint covers strict owner-free start responses, retry-stable idempotency, server/local resume reconciliation, equipment-compatible catalog and owner custom substitutions, exact effective exercise identity, runner storage, and private-cache denial with 82 focused assertions. Strict TypeScript, scoped ESLint, generated-service-worker parity, 25-pair documentation parity, and the Next.js 16.3.2 webpack production build pass; the build lists `/workout/[sessionId]` as dynamic. Signed-in browser proof remains pending Firebase configuration, so this is not production evidence.
 - The complete owned-runner branch gate passes 58 files and 401 tests, strict TypeScript, full ESLint, generated-service-worker parity, 25-pair documentation parity, and Drizzle metadata validation. Local production HTTP evidence confirms a private `no-store` streamed sign-in redirect for the unauthenticated workout page, `401` plus `no-store` for unauthenticated resume, and `403` plus `no-store` for a hostile-origin start. This proves the unauthenticated boundary, not the configured signed-in flow.
 - Local `main` contains the owned-runner integration merge `cefecdc`. Its post-merge verification passes the same 58-file and 401-test gate, Drizzle metadata validation, and the Next.js webpack production build; the completed feature branch was removed. No Git remote exists, so no branch or `main` push was possible.
+- The public-release browser checkpoint initially ran 30 failed, 9 passed, and 1 skipped case, exposing serious contrast failures, one stale accessible-name expectation, and HTTP-to-HTTPS upgrade breakage in WebKit. The final local production matrix at implementation commit `101d6a4` passes 39 cases with the sole explicit WebKit PWA capability skip. Strict TypeScript, full ESLint, 58 files and 402 tests, generated PWA parity, 25-document parity, and Drizzle metadata validation also pass.
 
 ## Blockers and credential gates
 
 - GitHub CLI reports that the stored `vdoshi96` token is invalid. Repository creation and push require reauthentication unless another authorized credential path succeeds.
-- Firebase Console access is available in the signed-in in-app browser, but no Firebase project exists. Project creation, client/Admin configuration, and live authentication verification remain release tasks.
+- Firebase Console access is available in the signed-in in-app browser. The `My Workout Pal` creation form proposes project ID `my-workout-pal-c5b57`, but no project exists because the user must personally accept the Firebase terms. The optional Google Developer Programme enrollment is selected by default in that form, is not required for the application, and should be deselected unless the user explicitly wants it.
 - `YOUTUBE_API_KEY` is absent. `pnpm youtube:curate` refuses to run without it. Offline normalization, mechanical eligibility, ranking, checkpoint, and seed-validation tests do not require the key; discovery, quota-backed metadata hydration, final candidate selection, approval, exact-two production seed, and live production embed verification remain blocked.
 - No paid configuration changes are authorized.
 

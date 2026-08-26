@@ -1,5 +1,15 @@
 # Project log
 
+## 2026-08-25: Public release browser baseline
+
+- Added one reproducible `pnpm test:e2e:release` command that builds the application, starts an isolated production server on port 3108, and runs the complete Playwright matrix without reusing an unrelated development server.
+- Retained the first executable browser result: 30 failures, 9 passes, and 1 explicit WebKit PWA skip. The failures identified a stale accessible-name expectation, serious color-contrast defects across public surfaces, and HTTP localhost asset breakage caused by production TLS-upgrade headers.
+- Retained a focused failing security regression before implementation: the HTTP production CSP still contained `upgrade-insecure-requests`. The corrected header boundary now enables HSTS and upgrading only on HTTPS while retaining the strict nonce CSP on HTTP production checks; all 5 focused assertions pass.
+- Introduced surface-specific coral, lichen, danger, and inverse-ink foreground tokens. Seven public routes now pass serious and critical Axe checks in Chromium and WebKit without discarding the established light or dark palette.
+- Exercised the guest equipment switch, barbell Pull route, compatible library result and empty recovery, read-only sample workout, sample analytics, and sign-in gate. Keyboard skip navigation, reduced motion, dark mode, phone targets, horizontal overflow, Chromium PWA installation, and Chromium offline recovery are also automated.
+- The final browser result is 39 passes and 1 explicit skip across Chromium phone, tablet, and desktop plus WebKit phone. Playwright does not support the skipped WebKit service-worker-control path; all other WebKit cases pass.
+- Commit `101d6a4` passes strict TypeScript, full ESLint, 58 test files and 402 tests, generated-service-worker parity, 25-document parity, Drizzle metadata validation, and the local production-browser matrix. This is local evidence only; nothing was pushed or deployed and no production resource changed.
+
 ## 2026-08-25: Owned workout route and recovery host
 
 - Replaced the owned day placeholder with a retry-stable start-or-resume control that sends no ownership key, preserves one idempotency key across interrupted retries, validates the complete private response before navigation, and keeps unverified accounts read-only.
