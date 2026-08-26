@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="bf2fc5688e1731647aa5a8ac468f4503f4459dd9c1c4b1606264ca6180dc13ab">
+  <meta name="source-sha256" content="8f342ba291f046146c529ac37a52dffa65a6687be13ecb3bb21feae09f1d9cec">
   <title>Verification plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -53,6 +53,11 @@
 <li>Desktop: 1,440 by 1,000.</li>
 </ul>
 <p>Cover guest program and both equipment profiles, all five days, library, exercise detail, dual videos and fallback, sample workout and analytics, registration and sign-in, program editing, custom exercise, complete workout, resume, history, records, analytics, settings, recovery, sign-out, and deletion.</p>
+<h3>Automated public release baseline</h3>
+<p>The first checked-in release baseline runs against a freshly built production server rather than the development watcher. A guest must navigate the original public shell without an account: switch from the default dumbbell-and-bench preview to the barbell profile, inspect all five day controls, open Pull and observe the profile-specific first movement, search the compatibility-filtered library, recover from a no-result query, and open the read-only workout and analytics demonstrations. Every sampled metric or completed set remains labeled as sample, read-only, temporary, or never saved. The sign-in surface may show either the truthful credential gate or configured Firebase controls; it must never invent a successful account state.</p>
+<p>Playwright supplies the only browser state for this baseline; it creates no account, cookie, program, workout, database row, or external request. URL equipment parameters and visible <code>aria-pressed</code> or <code>aria-current</code> state are the browser invariants. Loading, no-result, unavailable-video, credential-gate, and ordinary navigation states must remain usable without private persistence. A failed assertion retains only the configured local trace and screenshot; the newest completed summary replaces older QA evidence.</p>
+<p>The baseline runs on Chromium phone, tablet, and desktop plus WebKit phone. It checks the primary public landmarks and headings, keyboard focus after the skip link, minimum phone target size for the equipment controls, absence of horizontal document overflow, and <code>prefers-reduced-motion</code> and dark-colour-scheme rendering without changing semantic content. Automated Axe checks reject serious or critical violations on the landing page, day detail, library, exercise detail, sample workout, sample analytics, and sign-in. Browser console errors fail the route under test except for an explicitly documented external-player condition after approved videos exist.</p>
+<p>Acceptance requires one ordinary command to build, start, and run the baseline reproducibly; all configured projects pass without a reused development server. This baseline proves only public local-production behavior. Configured authentication, persisted ownership, approved dual embeds, preview deployment, production deployment, Lighthouse, forced colours, and 200% zoom retain their separate evidence gates.</p>
 <h2>Unhappy-path matrix</h2>
 <p>Inject slow and failed server responses, offline transitions, expired auth, duplicate input, stale revision, removed video, denied embed, database error, session exchange error, and service-worker update. Replay refresh, browser back, route navigation, tab-close event, and reopen. Confirm that local draft state, server state, and presented status agree.</p>
 <h2>Accessibility and presentation</h2>

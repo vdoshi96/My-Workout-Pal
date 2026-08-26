@@ -33,6 +33,16 @@ Run Playwright against Chromium and WebKit at the following sizes:
 
 Cover guest program and both equipment profiles, all five days, library, exercise detail, dual videos and fallback, sample workout and analytics, registration and sign-in, program editing, custom exercise, complete workout, resume, history, records, analytics, settings, recovery, sign-out, and deletion.
 
+### Automated public release baseline
+
+The first checked-in release baseline runs against a freshly built production server rather than the development watcher. A guest must navigate the original public shell without an account: switch from the default dumbbell-and-bench preview to the barbell profile, inspect all five day controls, open Pull and observe the profile-specific first movement, search the compatibility-filtered library, recover from a no-result query, and open the read-only workout and analytics demonstrations. Every sampled metric or completed set remains labeled as sample, read-only, temporary, or never saved. The sign-in surface may show either the truthful credential gate or configured Firebase controls; it must never invent a successful account state.
+
+Playwright supplies the only browser state for this baseline; it creates no account, cookie, program, workout, database row, or external request. URL equipment parameters and visible `aria-pressed` or `aria-current` state are the browser invariants. Loading, no-result, unavailable-video, credential-gate, and ordinary navigation states must remain usable without private persistence. A failed assertion retains only the configured local trace and screenshot; the newest completed summary replaces older QA evidence.
+
+The baseline runs on Chromium phone, tablet, and desktop plus WebKit phone. It checks the primary public landmarks and headings, keyboard focus after the skip link, minimum phone target size for the equipment controls, absence of horizontal document overflow, and `prefers-reduced-motion` and dark-colour-scheme rendering without changing semantic content. Automated Axe checks reject serious or critical violations on the landing page, day detail, library, exercise detail, sample workout, sample analytics, and sign-in. Browser console errors fail the route under test except for an explicitly documented external-player condition after approved videos exist.
+
+Acceptance requires one ordinary command to build, start, and run the baseline reproducibly; all configured projects pass without a reused development server. This baseline proves only public local-production behavior. Configured authentication, persisted ownership, approved dual embeds, preview deployment, production deployment, Lighthouse, forced colours, and 200% zoom retain their separate evidence gates.
+
 ## Unhappy-path matrix
 
 Inject slow and failed server responses, offline transitions, expired auth, duplicate input, stale revision, removed video, denied embed, database error, session exchange error, and service-worker update. Replay refresh, browser back, route navigation, tab-close event, and reopen. Confirm that local draft state, server state, and presented status agree.
