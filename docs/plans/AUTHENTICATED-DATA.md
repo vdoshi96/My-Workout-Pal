@@ -52,6 +52,16 @@ The browser submits only the route-scoped session, immutable base revision, idem
 
 The runner-specific repository entry verifies that the immutable session belongs to the viewer and matches the submitted base revision. It derives the applicable exercise outcome version inside the server persistence path, applies the operation under the owner lock, and returns the runner's `saved`, `duplicate`, or structured `failed` result. This boundary lets an offline queue replay after refresh without trusting client ownership or stale server-only version state.
 
+### Server resume and local recovery
+
+The active-workout route hydrates a server baseline from the immutable snapshot, saved set and cardio logs, and versioned exercise outcomes. It reconstructs confirmed operations from persisted idempotency keys so completion checks recognize server-saved work. It derives drafts from saved canonical measurements, restores notes, skips, completions, and compatible substitutions, and places the cursor on the first unfinished set. The baseline never resolves meaning from a mutable catalog or active program revision.
+
+If an owner-matched IndexedDB draft exists for the same session, revision, and day, then recovery reconciles it with the server baseline. Server rows win for operation keys that persistence confirms. Unresolved local operations overlay only the sets, cardio, notes, and exercise outcomes that they target; untouched server progress remains visible. A local operation marked saved but absent from the server baseline becomes an explicit nonretryable conflict instead of a claimed save. Cross-owner, cross-session, revision-mismatched, malformed, and terminal contradictions fail closed without hydrating the runner.
+
+Loading, empty-local-draft, reconciled-pending, conflict, expired-auth, offline, and storage-error states keep distinct visible text and live-region announcements. The same reconciliation rules apply on phone, tablet, and desktop. Keyboard order, focus, and reduced-motion behavior don't change when recovery selects a different current set.
+
+Unit tests cover all measurement kinds, saved-operation reconstruction, cardio, notes, skips, substitutions, completions, cursor selection, known-saved local replay, pending overlays, unrelated server preservation, contradiction conflicts, ownership, snapshot identity, and malformed input. Browser evidence must reload an authenticated workout with no local draft, with a pending local set, after a response interruption, and after another tab saves unrelated work.
+
 ## Authentication and authorization
 
 Every repository entry requires a non-null server viewer. Permanent mutations require `eligibleForPermanentMutations`; password verification and Google verified identity are represented by that server-derived fact. Deletion additionally requires recent authentication at the route boundary. CSRF is validated before every browser mutation. Repository APIs do not export an `ownerUid` argument, and foreign IDs return the same not-found error as missing IDs.
