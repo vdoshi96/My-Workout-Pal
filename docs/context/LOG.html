@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="06be3a8bc90be2ce9d96655fc4f935d49e8d9458e36196bb66a50360bb0395aa">
+  <meta name="source-sha256" content="567731748332046091f2444b09038558c4306134048dcb6956d7ea6a5bdac118">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -35,6 +35,7 @@
 <li>Retained a 14-case missing-migration-path failure, a fail-first full-sequence assertion that exposed the omitted account-deletion upgrade, and three training-insights failures that exposed fixtures missing the canonical workout measurement upgrade.</li>
 <li>Updated affected PGlite fixtures to apply the complete migration sequence and to identify stored pace as entered data. The focused matrix passes 131 assertions.</li>
 <li>Passed strict TypeScript, full ESLint, 56 test files and 394 tests, generated-service-worker parity, 25 Markdown/HTML pairs, Drizzle metadata validation, and the Next.js 16.3.2 webpack production build. No external state changed during this local integration checkpoint.</li>
+<li>Created merge commit <code>cec02ba</code>, confirmed that the feature tip is its parent, and removed the clean completed worktree and merged local branch.</li>
 </ul>
 <h2>2026-08-25: Persisted workout resume recovery</h2>
 <ul>

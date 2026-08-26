@@ -104,4 +104,4 @@ Authenticated repositories and runner-surface integration after the verified gue
 - The completed IndexedDB worktree was integrated through `36b6cc3`, compared for selected-file equality, and removed.
 - The completed runner-UI worktree was integrated through `c133e93`, compared for selected-file equality after teardown and deferred-sync corrections, and removed.
 - The profile/program worktree was integrated through `cbf72ba`, compared byte-for-byte for its selected source and test files, and removed. Main then consolidated the shared day-scoped substitution rule and private surface integration.
-- `/private/tmp/mwp-workout-repository` on `agent/workout-repository`: clean and retained only until the authorized merge passes the combined verification checkpoint.
+- The workout-persistence worktree was integrated through `cec02ba`, verified on combined `main`, and removed with its fully merged local feature branch.

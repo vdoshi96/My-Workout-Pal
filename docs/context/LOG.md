@@ -7,6 +7,7 @@
 - Retained a 14-case missing-migration-path failure, a fail-first full-sequence assertion that exposed the omitted account-deletion upgrade, and three training-insights failures that exposed fixtures missing the canonical workout measurement upgrade.
 - Updated affected PGlite fixtures to apply the complete migration sequence and to identify stored pace as entered data. The focused matrix passes 131 assertions.
 - Passed strict TypeScript, full ESLint, 56 test files and 394 tests, generated-service-worker parity, 25 Markdown/HTML pairs, Drizzle metadata validation, and the Next.js 16.3.2 webpack production build. No external state changed during this local integration checkpoint.
+- Created merge commit `cec02ba`, confirmed that the feature tip is its parent, and removed the clean completed worktree and merged local branch.
 
 ## 2026-08-25: Persisted workout resume recovery
 
