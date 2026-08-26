@@ -40,6 +40,17 @@ export type WorkoutStartResponse = Readonly<{
   sessionId: string;
 }>;
 
+export type WorkoutStartMutation = (
+  url: string,
+  options: Readonly<{ body: unknown; method: "POST" }>,
+) => Promise<unknown>;
+
+export type WorkoutStartController = Readonly<{
+  start: (
+    input: Readonly<{ programId: string; dayId: string }>,
+  ) => Promise<WorkoutStartResponse>;
+}>;
+
 function record(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -105,6 +116,33 @@ export function parseWorkoutStartResponse(
 
 export function workoutRoutePath(sessionId: string): `/workout/${string}` {
   return `/workout/${resourceUuid(sessionId, "workout session")}`;
+}
+
+export function createWorkoutStartController(
+  dependencies: Readonly<{
+    createId: () => string;
+    mutate: WorkoutStartMutation;
+    navigate: (path: string) => void;
+  }>,
+): WorkoutStartController {
+  let stableIdempotencyKey: string | undefined;
+  return {
+    async start(input) {
+      stableIdempotencyKey ??= idempotencyKey(dependencies.createId());
+      const request = workoutStartRequest({
+        ...input,
+        idempotencyKey: stableIdempotencyKey,
+      });
+      const response = parseWorkoutStartResponse(
+        await dependencies.mutate(request.url, {
+          body: request.body,
+          method: "POST",
+        }),
+      );
+      dependencies.navigate(workoutRoutePath(response.sessionId));
+      return response;
+    },
+  };
 }
 
 export function recoverOwnedWorkoutState(

@@ -310,6 +310,10 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .member-cardio-card ul { list-style: none; margin: 1rem 0; padding: 0; }
 .member-cardio-card li { border-top: 1px solid var(--rule); display: flex; justify-content: space-between; padding: .8rem 0; }
 .member-cardio-card p { color: var(--ink-soft); }
+.workout-start-control { margin-top: 1.25rem; }
+.workout-start-control .primary-action { width: 100%; }
+.workout-start-control .primary-action:disabled { cursor: not-allowed; opacity: .66; }
+.workout-start-control p { min-height: 2.8rem; }
 .member-library { margin: 0 auto; max-width: 79rem; padding: clamp(1.25rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3.5rem) 7rem; }
 .member-library-heading { align-items: end; border: 1px solid var(--rule); display: grid; gap: 1.5rem; padding: clamp(1.25rem, 5vw, 3.25rem); }
 .member-library-heading h1 { font-family: var(--font-display); font-size: clamp(3.4rem, 10vw, 7rem); letter-spacing: -.035em; line-height: .8; margin: .75rem 0 1rem; text-transform: uppercase; }

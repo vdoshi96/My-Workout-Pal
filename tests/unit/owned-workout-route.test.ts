@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   compatibleWorkoutSubstitutions,
+  createWorkoutStartController,
   parseWorkoutStartResponse,
   recoverOwnedWorkoutState,
   workoutRoutePath,
@@ -85,6 +86,36 @@ describe("owned workout route contract", () => {
     ]) {
       expect(() => parseWorkoutStartResponse(value)).toThrow(/response/i);
     }
+  });
+
+  it("reuses one start identity after interruption and navigates only after success", async () => {
+    const mutate = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("connection interrupted"))
+      .mockResolvedValueOnce({
+        resumed: true,
+        model: { session: { id: sessionId } },
+      });
+    const navigate = vi.fn();
+    const createId = vi.fn(() => "stable-start-key");
+    const controller = createWorkoutStartController({
+      createId,
+      mutate,
+      navigate,
+    });
+
+    await expect(controller.start({ programId, dayId })).rejects.toThrow(
+      /interrupted/,
+    );
+    expect(navigate).not.toHaveBeenCalled();
+    await expect(controller.start({ programId, dayId })).resolves.toEqual({
+      resumed: true,
+      sessionId,
+    });
+    expect(createId).toHaveBeenCalledTimes(1);
+    expect(mutate).toHaveBeenCalledTimes(2);
+    expect(mutate.mock.calls[0]).toEqual(mutate.mock.calls[1]);
+    expect(navigate).toHaveBeenCalledWith(`/workout/${sessionId}`);
   });
 
   it("uses the server baseline only when no owner-matched local draft exists", () => {
