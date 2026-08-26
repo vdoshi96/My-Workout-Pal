@@ -14,6 +14,7 @@ import {
   type RunnerOperation,
   type RunnerOperationPayload,
   type RunnerSetPhase,
+  type RunnerSyncState,
   type SetDraft,
   type WorkoutSnapshot,
 } from "@/domain/workout-runner";
@@ -581,4 +582,376 @@ export function hydrateWorkoutResumeState(
     nextOperationSequence: operations.length + 1,
     lastUpdatedAt: updatedAt,
   };
+}
+
+function stableValue(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(stableValue).join(",")}]`;
+  }
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, child]) => child !== undefined)
+    .sort(([left], [right]) => left.localeCompare(right));
+  return `{${entries
+    .map(
+      ([key, child]) => `${JSON.stringify(key)}:${stableValue(child)}`,
+    )
+    .join(",")}}`;
+}
+
+function mergedSyncState(
+  state: Pick<
+    ActiveWorkoutState,
+    "auth" | "connectivity" | "operations"
+  >,
+): RunnerSyncState {
+  const failed = state.operations.find(({ status }) => status === "failed");
+  if (failed?.failureKind === "conflict") {
+    return {
+      status: "conflict",
+      errorCode: failed.errorCode ?? "conflict",
+      errorMessage: failed.errorMessage,
+    };
+  }
+  if (failed?.retryable === false) {
+    return {
+      status: "failed",
+      errorCode: failed.errorCode ?? "operation_failed",
+      errorMessage: failed.errorMessage,
+    };
+  }
+  if (state.auth === "expired") {
+    return {
+      status: "auth_expired",
+      errorCode: "auth_expired",
+      errorMessage: undefined,
+    };
+  }
+  if (state.connectivity === "offline") {
+    return {
+      status: "offline",
+      errorCode: "offline",
+      errorMessage: undefined,
+    };
+  }
+  if (failed !== undefined) {
+    return {
+      status: "failed",
+      errorCode: failed.errorCode ?? "operation_failed",
+      errorMessage: failed.errorMessage,
+    };
+  }
+  if (state.operations.some(({ status }) => status === "pending")) {
+    return {
+      status: "pending",
+      errorCode: undefined,
+      errorMessage: undefined,
+    };
+  }
+  return { status: "idle", errorCode: undefined, errorMessage: undefined };
+}
+
+function resumeMismatch(operation: RunnerOperation): RunnerOperation {
+  return {
+    ...operation,
+    status: "failed",
+    persistedId: undefined,
+    errorCode: "resume_mismatch",
+    errorMessage:
+      "This device marked the workout change saved, but the server couldn't confirm it.",
+    retryable: false,
+    failureKind: "conflict",
+  };
+}
+
+function hasOwn(record: Readonly<Record<string, unknown>>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key);
+}
+
+function exerciseIdForOperation(
+  operation: RunnerOperation,
+): string | undefined {
+  switch (operation.payload.kind) {
+    case "save_set":
+    case "save_note":
+    case "skip_exercise":
+    case "substitute_exercise":
+    case "complete_exercise":
+      return operation.payload.exerciseId;
+    case "save_cardio":
+    case "complete_session":
+    case "abandon_session":
+      return undefined;
+  }
+}
+
+export function reconcileWorkoutResumeState(
+  server: ActiveWorkoutState,
+  local: ActiveWorkoutState,
+): ActiveWorkoutState {
+  if (
+    server.snapshot.ownerUid !== local.snapshot.ownerUid ||
+    server.snapshot.sessionId !== local.snapshot.sessionId
+  ) {
+    throw new RunnerResumeError(
+      "identity_mismatch",
+      "The local workout draft belongs to another session or account.",
+    );
+  }
+  if (stableValue(server.snapshot) !== stableValue(local.snapshot)) {
+    throw new RunnerResumeError(
+      "snapshot_mismatch",
+      "The local workout draft doesn't match the server snapshot.",
+    );
+  }
+  if (server.operations.some(({ status }) => status !== "saved")) {
+    throw new RunnerResumeError(
+      "invalid_snapshot",
+      "The server workout baseline is invalid.",
+    );
+  }
+  if (
+    local.currentExerciseIndex < 0 ||
+    local.currentExerciseIndex >= local.snapshot.exercises.length ||
+    local.currentSetIndex < 0 ||
+    local.currentSetIndex >=
+      local.snapshot.exercises[local.currentExerciseIndex]!.sets.length
+  ) {
+    throw new RunnerResumeError(
+      "snapshot_mismatch",
+      "The local workout position doesn't match the server snapshot.",
+    );
+  }
+
+  const serverByKey = new Map(
+    server.operations.map((operation) => [operation.idempotencyKey, operation]),
+  );
+  const mergedOperations = [...server.operations];
+  const unresolved: RunnerOperation[] = [];
+  for (const operation of [...local.operations].sort(
+    (left, right) => left.sequence - right.sequence,
+  )) {
+    if (
+      operation.ownerUid !== server.snapshot.ownerUid ||
+      operation.sessionId !== server.snapshot.sessionId
+    ) {
+      throw new RunnerResumeError(
+        "identity_mismatch",
+        "The local workout operation belongs to another session or account.",
+      );
+    }
+    if (operation.baseRevision !== server.snapshot.programRevisionId) {
+      throw new RunnerResumeError(
+        "snapshot_mismatch",
+        "The local workout operation targets another revision.",
+      );
+    }
+    if (operation.kind !== operation.payload.kind) {
+      throw new RunnerResumeError(
+        "invalid_exercise_state",
+        "The local workout operation is invalid.",
+      );
+    }
+    const confirmed = serverByKey.get(operation.idempotencyKey);
+    if (confirmed !== undefined) {
+      if (
+        confirmed.kind !== operation.kind ||
+        stableValue(confirmed.payload) !== stableValue(operation.payload)
+      ) {
+        throw new RunnerResumeError(
+          "duplicate_operation",
+          "A local workout operation conflicts with the server result.",
+        );
+      }
+      continue;
+    }
+    const merged = operation.status === "saved" ? resumeMismatch(operation) : operation;
+    mergedOperations.push(merged);
+    if (merged.status !== "superseded") unresolved.push(merged);
+  }
+  const operations = mergedOperations.map((operation, index) => ({
+    ...operation,
+    sequence: index + 1,
+  }));
+
+  const validSetIds = new Set(
+    server.snapshot.exercises.flatMap((exercise) =>
+      exercise.sets.map(({ id }) => id),
+    ),
+  );
+  const validExerciseIds = new Set(
+    server.snapshot.exercises.map(({ id }) => id),
+  );
+  const loggedSets = { ...server.loggedSets };
+  const drafts = { ...server.drafts };
+  const dirtySetIds: string[] = [];
+  for (const setId of local.dirtySetIds) {
+    if (!validSetIds.has(setId) || local.drafts[setId] === undefined) {
+      throw new RunnerResumeError(
+        "snapshot_mismatch",
+        "The local workout draft contains an unknown set.",
+      );
+    }
+    drafts[setId] = local.drafts[setId];
+    if (!dirtySetIds.includes(setId)) dirtySetIds.push(setId);
+  }
+
+  let cardioMode = server.cardioMode;
+  let cardioDraft = server.cardioDraft;
+  let loggedCardio = server.loggedCardio;
+  let dirtyCardio = false;
+  if (local.dirtyCardio) {
+    cardioMode = local.cardioMode;
+    cardioDraft = local.cardioDraft;
+    loggedCardio = local.loggedCardio;
+    dirtyCardio = true;
+  }
+
+  const notesByExercise: Record<string, string> = {
+    ...server.notesByExercise,
+  };
+  const dirtyNoteExerciseIds: string[] = [];
+  for (const exerciseId of local.dirtyNoteExerciseIds) {
+    if (!validExerciseIds.has(exerciseId)) {
+      throw new RunnerResumeError(
+        "snapshot_mismatch",
+        "The local workout draft contains an unknown exercise.",
+      );
+    }
+    notesByExercise[exerciseId] = local.notesByExercise[exerciseId] ?? "";
+    if (!dirtyNoteExerciseIds.includes(exerciseId)) {
+      dirtyNoteExerciseIds.push(exerciseId);
+    }
+  }
+
+  let skippedExerciseIds = [...server.skippedExerciseIds];
+  let completedExerciseIds = [...server.completedExerciseIds];
+  const substitutions = { ...server.substitutions };
+  let status = server.status;
+  for (const operation of unresolved) {
+    const exerciseId = exerciseIdForOperation(operation);
+    if (exerciseId !== undefined && !validExerciseIds.has(exerciseId)) {
+      throw new RunnerResumeError(
+        "snapshot_mismatch",
+        "The local workout operation contains an unknown exercise.",
+      );
+    }
+    const payload = operation.payload;
+    switch (payload.kind) {
+      case "save_set": {
+        const localSet = local.loggedSets[payload.setId];
+        if (
+          !validSetIds.has(payload.setId) ||
+          localSet?.operationKey !== operation.idempotencyKey
+        ) {
+          throw new RunnerResumeError(
+            "snapshot_mismatch",
+            "The local workout set doesn't match its queued operation.",
+          );
+        }
+        loggedSets[payload.setId] = localSet;
+        const draft = local.drafts[payload.setId];
+        if (draft !== undefined) drafts[payload.setId] = draft;
+        break;
+      }
+      case "save_cardio":
+        if (local.loggedCardio?.operationKey !== operation.idempotencyKey) {
+          throw new RunnerResumeError(
+            "snapshot_mismatch",
+            "The local cardio result doesn't match its queued operation.",
+          );
+        }
+        cardioMode = local.cardioMode;
+        cardioDraft = local.cardioDraft;
+        loggedCardio = local.loggedCardio;
+        dirtyCardio = local.dirtyCardio;
+        break;
+      case "save_note":
+        notesByExercise[payload.exerciseId] =
+          local.notesByExercise[payload.exerciseId] ?? "";
+        break;
+      case "skip_exercise":
+        skippedExerciseIds = local.skippedExerciseIds.includes(
+          payload.exerciseId,
+        )
+          ? [
+              ...skippedExerciseIds.filter(
+                (id) => id !== payload.exerciseId,
+              ),
+              payload.exerciseId,
+            ]
+          : skippedExerciseIds.filter(
+              (id) => id !== payload.exerciseId,
+            );
+        if (hasOwn(local.notesByExercise, payload.exerciseId)) {
+          notesByExercise[payload.exerciseId] =
+            local.notesByExercise[payload.exerciseId] ?? "";
+        }
+        break;
+      case "substitute_exercise": {
+        const replacement = local.substitutions[payload.exerciseId];
+        if (replacement === undefined) {
+          delete substitutions[payload.exerciseId];
+        } else {
+          substitutions[payload.exerciseId] = replacement;
+        }
+        const exercise = server.snapshot.exercises.find(
+          ({ id }) => id === payload.exerciseId,
+        )!;
+        for (const set of exercise.sets) {
+          if (local.loggedSets[set.id] === undefined) delete loggedSets[set.id];
+          if (local.drafts[set.id] === undefined) delete drafts[set.id];
+        }
+        break;
+      }
+      case "complete_exercise":
+        completedExerciseIds = local.completedExerciseIds.includes(
+          payload.exerciseId,
+        )
+          ? [
+              ...completedExerciseIds.filter(
+                (id) => id !== payload.exerciseId,
+              ),
+              payload.exerciseId,
+            ]
+          : completedExerciseIds.filter(
+              (id) => id !== payload.exerciseId,
+            );
+        break;
+      case "complete_session":
+        status = local.status === "completed" ? "completing" : local.status;
+        break;
+      case "abandon_session":
+        status = local.status === "abandoned" ? "abandoning" : local.status;
+        break;
+    }
+  }
+
+  const merged: ActiveWorkoutState = {
+    ...server,
+    currentExerciseIndex: local.currentExerciseIndex,
+    currentSetIndex: local.currentSetIndex,
+    status,
+    connectivity: local.connectivity,
+    auth: local.auth,
+    drafts,
+    dirtySetIds,
+    cardioMode,
+    cardioDraft,
+    dirtyCardio,
+    loggedCardio,
+    notesByExercise,
+    dirtyNoteExerciseIds,
+    loggedSets,
+    skippedExerciseIds,
+    completedExerciseIds,
+    substitutions,
+    restTimer: local.restTimer,
+    operations,
+    nextOperationSequence: operations.length + 1,
+    lastUpdatedAt: Math.max(server.lastUpdatedAt, local.lastUpdatedAt),
+  };
+  return { ...merged, sync: mergedSyncState(merged) };
 }

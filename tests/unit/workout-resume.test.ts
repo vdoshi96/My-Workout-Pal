@@ -3,9 +3,15 @@ import { describe, expect, it } from "vitest";
 import {
   RunnerResumeError,
   hydrateWorkoutResumeState,
+  reconcileWorkoutResumeState,
   type WorkoutResumeSource,
 } from "@/domain/workout-resume";
-import { createWorkoutSnapshot } from "@/domain/workout-runner";
+import {
+  createWorkoutSnapshot,
+  runnerReducer,
+  type ActiveWorkoutState,
+  type RunnerOperation,
+} from "@/domain/workout-runner";
 import type { WorkoutMeasurement } from "@/domain/analytics";
 
 const ownerUid = "owner-resume";
@@ -275,6 +281,49 @@ function measurementSource(measurement: WorkoutMeasurement): WorkoutResumeSource
   };
 }
 
+function pendingRowSet(state: ActiveWorkoutState): ActiveWorkoutState {
+  const withDraft = runnerReducer(state, {
+    type: "update_set_draft",
+    setId: `${rowId}:1`,
+    draft: { kind: "weight_reps", weightKg: 30, repetitions: 10 },
+  });
+  return runnerReducer(withDraft, {
+    type: "save_set",
+    setId: `${rowId}:1`,
+    now: state.lastUpdatedAt + 2,
+  });
+}
+
+function pendingOperation(state: ActiveWorkoutState): RunnerOperation {
+  const operation = state.operations.find(
+    ({ status }) => status === "pending",
+  );
+  if (!operation) throw new Error("expected a pending operation");
+  return operation;
+}
+
+function originalRowSource(includeCardio: boolean): WorkoutResumeSource {
+  const base = source();
+  return {
+    ...base,
+    exerciseStates: base.exerciseStates.map((state) =>
+      state.snapshotId === rowId
+        ? {
+            ...state,
+            effectiveCatalogExerciseId:
+              "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            effectiveDisplayName: "One-arm dumbbell row",
+            note: undefined,
+            substitutionReason: undefined,
+            version: 1,
+            lastClientOperationId: "initial-row",
+          }
+        : state,
+    ),
+    cardioLog: includeCardio ? base.cardioLog : undefined,
+  };
+}
+
 describe("workout resume hydration", () => {
   it("reconstructs confirmed sets, cardio, drafts, notes, and exercise outcomes", () => {
     const state = hydrateWorkoutResumeState(source());
@@ -449,5 +498,196 @@ describe("workout resume hydration", () => {
     ).toThrowError(
       new RunnerResumeError("invalid_cardio", "The saved cardio result is invalid."),
     );
+  });
+});
+
+describe("workout resume reconciliation", () => {
+  it("preserves unrelated server progress while overlaying a pending local set", () => {
+    const staleSource = { ...source(), cardioLog: undefined };
+    const local = pendingRowSet(hydrateWorkoutResumeState(staleSource));
+    const server = hydrateWorkoutResumeState(source());
+
+    const reconciled = reconcileWorkoutResumeState(server, local);
+
+    expect(reconciled.loggedCardio?.operationKey).toBe("cardio-1");
+    expect(reconciled.loggedSets[`${pressId}:1`]?.operationKey).toBe("set-press-1");
+    expect(reconciled.loggedSets[`${rowId}:1`]).toMatchObject({
+      operationKey: pendingOperation(local).idempotencyKey,
+      measurement: { weightKg: 30, repetitions: 10 },
+    });
+    expect(reconciled.operations.find(
+      ({ idempotencyKey }) => idempotencyKey === pendingOperation(local).idempotencyKey,
+    )?.status).toBe("pending");
+    expect(reconciled.sync.status).toBe("pending");
+  });
+
+  it("uses the server-confirmed result when a response was interrupted", () => {
+    const staleSource = { ...source(), cardioLog: undefined };
+    const local = pendingRowSet(hydrateWorkoutResumeState(staleSource));
+    const pending = pendingOperation(local);
+    if (pending.payload.kind !== "save_set") throw new Error("expected a set operation");
+    const serverSource = source();
+    const server = hydrateWorkoutResumeState({
+      ...serverSource,
+      setLogs: [
+        ...serverSource.setLogs,
+        {
+          id: "set-log-row",
+          snapshotId: rowId,
+          setPosition: 1,
+          setKind: "work",
+          measurement: pending.payload.measurement,
+          note: undefined,
+          recordedAt: new Date("2026-08-25T12:18:00.000Z"),
+          idempotencyKey: pending.idempotencyKey,
+        },
+      ],
+    });
+
+    const reconciled = reconcileWorkoutResumeState(server, local);
+    const matching = reconciled.operations.filter(
+      ({ idempotencyKey }) => idempotencyKey === pending.idempotencyKey,
+    );
+
+    expect(matching).toHaveLength(1);
+    expect(matching[0]).toMatchObject({ status: "saved", persistedId: "set-log-row" });
+    expect(reconciled.loggedSets[`${rowId}:1`]?.operationKey).toBe(pending.idempotencyKey);
+    expect(reconciled.sync.status).toBe("idle");
+  });
+
+  it("turns an unconfirmed local saved result into an explicit conflict", () => {
+    const staleSource = { ...source(), cardioLog: undefined };
+    const pending = pendingRowSet(hydrateWorkoutResumeState(staleSource));
+    const key = pendingOperation(pending).idempotencyKey;
+    const local = runnerReducer(pending, {
+      type: "operation_saved",
+      idempotencyKey: key,
+      persistedId: "missing-server-log",
+      now: pending.lastUpdatedAt + 1,
+    });
+    const server = hydrateWorkoutResumeState(source());
+
+    const reconciled = reconcileWorkoutResumeState(server, local);
+
+    expect(reconciled.operations.find(({ idempotencyKey }) => idempotencyKey === key)).toMatchObject({
+      status: "failed",
+      errorCode: "resume_mismatch",
+      retryable: false,
+      failureKind: "conflict",
+    });
+    expect(reconciled.loggedSets[`${rowId}:1`]?.operationKey).toBe(key);
+    expect(reconciled.sync).toMatchObject({
+      status: "conflict",
+      errorCode: "resume_mismatch",
+    });
+  });
+
+  it("preserves a dirty local draft without removing server cardio", () => {
+    const staleSource = { ...source(), cardioLog: undefined };
+    const stale = hydrateWorkoutResumeState(staleSource);
+    const local = runnerReducer(stale, {
+      type: "update_set_draft",
+      setId: `${rowId}:1`,
+      draft: { kind: "weight_reps", weightKg: 32.5, repetitions: 8 },
+    });
+    const server = hydrateWorkoutResumeState(source());
+
+    const reconciled = reconcileWorkoutResumeState(server, local);
+
+    expect(reconciled.dirtySetIds).toEqual([`${rowId}:1`]);
+    expect(reconciled.drafts[`${rowId}:1`]).toEqual({
+      kind: "weight_reps",
+      weightKg: 32.5,
+      repetitions: 8,
+    });
+    expect(reconciled.loggedCardio?.operationKey).toBe("cardio-1");
+  });
+
+  it("overlays pending note, substitution, and skip outcomes only on their exercise", () => {
+    const stale = hydrateWorkoutResumeState(originalRowSource(false));
+    const withNote = runnerReducer(stale, {
+      type: "update_note",
+      exerciseId: rowId,
+      note: "Local row cue",
+    });
+    const noteQueued = runnerReducer(withNote, {
+      type: "save_note",
+      exerciseId: rowId,
+      now: stale.lastUpdatedAt + 1,
+    });
+    const substitutionQueued = runnerReducer(noteQueued, {
+      type: "substitute_exercise",
+      exerciseId: rowId,
+      replacement: {
+        id: replacementId,
+        name: "Chest-supported dumbbell row",
+        loggingKind: "weight_reps",
+      },
+      reason: "Local bench choice",
+      now: stale.lastUpdatedAt + 2,
+    });
+    const local = runnerReducer(substitutionQueued, {
+      type: "skip_exercise",
+      exerciseId: rowId,
+      reason: "Stop here",
+      now: stale.lastUpdatedAt + 3,
+    });
+    const server = hydrateWorkoutResumeState(originalRowSource(true));
+
+    const reconciled = reconcileWorkoutResumeState(server, local);
+
+    expect(reconciled.notesByExercise[pressId]).toBe("Controlled tempo");
+    expect(reconciled.notesByExercise[rowId]).toBe("Local row cue");
+    expect(reconciled.substitutions[rowId]).toEqual({
+      id: replacementId,
+      name: "Chest-supported dumbbell row",
+      loggingKind: "weight_reps",
+    });
+    expect(reconciled.skippedExerciseIds).toContain(rowId);
+    expect(reconciled.completedExerciseIds).toContain(pressId);
+    expect(reconciled.loggedCardio?.operationKey).toBe("cardio-1");
+  });
+
+  it("reconciles a pending set and completion without hiding other server work", () => {
+    const stale = hydrateWorkoutResumeState(originalRowSource(false));
+    const withSet = pendingRowSet(stale);
+    const local = runnerReducer(withSet, {
+      type: "complete_exercise",
+      exerciseId: rowId,
+      now: stale.lastUpdatedAt + 3,
+    });
+    const server = hydrateWorkoutResumeState(originalRowSource(true));
+
+    const reconciled = reconcileWorkoutResumeState(server, local);
+
+    expect(reconciled.loggedSets[`${rowId}:1`]).toBeDefined();
+    expect(reconciled.completedExerciseIds).toContain(rowId);
+    expect(reconciled.completedExerciseIds).toContain(pressId);
+    expect(reconciled.loggedCardio?.operationKey).toBe("cardio-1");
+    expect(reconciled.operations.filter(({ status }) => status === "pending")).toHaveLength(2);
+  });
+
+  it("fails closed for cross-owner and cross-snapshot local drafts", () => {
+    const server = hydrateWorkoutResumeState(source());
+    const local = pendingRowSet(server);
+    const cases: Array<readonly [ActiveWorkoutState, string]> = [
+      [
+        { ...local, snapshot: { ...local.snapshot, ownerUid: "foreign-owner" } },
+        "identity_mismatch",
+      ],
+      [
+        {
+          ...local,
+          snapshot: { ...local.snapshot, programRevisionId: programId },
+        },
+        "snapshot_mismatch",
+      ],
+    ];
+
+    for (const [candidate, code] of cases) {
+      expect(() =>
+        reconcileWorkoutResumeState(server, candidate),
+      ).toThrowError(expect.objectContaining({ name: "RunnerResumeError", code }));
+    }
   });
 });

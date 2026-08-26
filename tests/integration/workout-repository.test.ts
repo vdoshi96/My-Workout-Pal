@@ -28,6 +28,7 @@ import {
 } from "@/db/schema";
 import { seedStarterDatabase } from "@/db/starter-seed";
 import type { WorkoutMeasurement } from "@/domain/analytics";
+import { hydrateWorkoutResumeState } from "@/domain/workout-resume";
 import type { RunnerOperation } from "@/domain/workout-runner";
 import { buildStarterDatabaseRows } from "@/domain/seed/starter-database-rows";
 import type { ViewerContext } from "@/server/auth/viewer";
@@ -542,6 +543,10 @@ describe("owner-scoped workout repository", () => {
     });
     expect(second.resumed).toBe(true);
     expect(second.model.session.id).toBe(first.model.session.id);
+    const initialRunner = hydrateWorkoutResumeState(first.model);
+    expect(initialRunner.snapshot.sessionId).toBe(first.model.session.id);
+    expect(initialRunner.operations).toEqual([]);
+    expect(initialRunner.currentExerciseIndex).toBe(0);
     const count = await fixture.database.execute(sql`SELECT count(*)::int AS count FROM workout_sessions WHERE owner_firebase_uid = ${fixture.ownerUid}`);
     expect(Number((count as unknown as { rows: Array<{ count: number }> }).rows[0]?.count)).toBe(1);
     expect(first.model.snapshot.exercises.every((exercise) => exercise.sets.length > 0)).toBe(true);
