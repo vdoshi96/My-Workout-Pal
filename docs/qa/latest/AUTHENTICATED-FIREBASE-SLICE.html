@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="808ef2aa8667dc32c2a377984ac5f5b72cc62b6cda514619813ad452dcabd4b3">
+  <title>Authenticated Firebase and Neon localhost checkpoint · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Authenticated Firebase and Neon localhost checkpoint</h1>
+<h2>Scope</h2>
+<p>This checkpoint verifies a disposable password account through the configured Firebase project and the provisioned Neon database. It covers secure-session creation, first-program onboarding, persisted workout logging, duplicate-submit truth, refresh resume, completion, immutable history, persisted analytics, password reauthentication, account deletion, and provider/database cleanup.</p>
+<p>The application ran on localhost. This is live Firebase and Neon evidence, not a claim about the protected Vercel preview or production. No Firebase value was transmitted to Vercel.</p>
+<h2>Provider state</h2>
+<ul>
+<li>Firebase project <code>my-workout-pal-92819</code> remains on Spark.</li>
+<li>My Workout Pal Web is registered.</li>
+<li>Email/Password and Google are enabled. Identity Platform and paid authentication features remain off.</li>
+<li>Localhost, Firebase-default domains, and <code>my-workout-pal-chi.vercel.app</code> are authorized.</li>
+<li>Ignored <code>.env.local</code> contains the seven matching client/Admin values and <code>DATABASE_URL</code>. No value appears in Git or this report.</li>
+<li>Firebase Admin <code>listUsers</code> succeeded after the ignored private-key value was corrected from double-escaped serialization. The raw downloaded JSON was moved to Trash.</li>
+</ul>
+<h2>Personally observed flow</h2>
+<ol>
+<li>Created an ephemeral verified password identity and signed in through the real localhost UI.</li>
+<li>Observed <code>200</code> from <code>/api/auth/session</code>. The <code>mwp_session</code> cookie was <code>HttpOnly</code> and <code>SameSite=Strict</code>; <code>Secure=false</code> was correct for localhost HTTP.</li>
+<li>Completed onboarding with the dumbbell profile and observed the persisted five-day program.</li>
+<li>Opened Push and started a resumable workout session.</li>
+<li>Logged 25 lb for 12, 11, and 10 repetitions. Repeating a submitted operation produced the honest already-saved state.</li>
+<li>Opened a fresh browser context and refreshed. The runner resumed with 3 of 15 work items persisted.</li>
+<li>Completed dumbbell bench press, skipped the remaining exercises, and saved walker cardio with 1,200 seconds, one mile, 2 percent incline, and notes.</li>
+<li>Completed the workout and reached its immutable history detail.</li>
+<li>Opened Progress and observed one workout, 825 lb volume, 20 minutes, and one mile derived from stored logs.</li>
+<li>Reloaded Settings as a full page. Deletion remained blocked because the Firebase client had no <code>currentUser</code>, rather than claiming success from the secure cookie alone.</li>
+<li>Reached Settings through ordinary client navigation, reauthenticated with the same password identity, refreshed the secure session, and deleted the account. <code>DELETE /api/app/account</code> returned <code>200</code>, and the app returned to a public route.</li>
+</ol>
+<h2>Storage and deletion evidence</h2>
+<ul>
+<li>Workout inputs crossed the presentation boundary as pounds and miles; persisted calculations retained canonical kilograms and meters. The rendered history and analytics converted them back for the selected presentation units.</li>
+<li>The immutable history snapshot retained every logged set, skipped movement, cardio field, and note after completion.</li>
+<li>Duplicate operation replay returned already-saved truth and did not create a second set.</li>
+<li>Post-deletion Firebase Admin reported zero users.</li>
+<li>Read-only Neon counts reported zero <code>user_profiles</code>, <code>user_programs</code>, and <code>workout_sessions</code>.</li>
+<li>The QA password and raw Admin JSON were removed. No raw UID, credential, private media, or database connection value is retained here.</li>
+</ul>
+<h2>Failure and recovery evidence</h2>
+<ul>
+<li>Admin authentication initially failed because the ignored private key was double escaped. Correcting only its local serialization made the live Admin query pass.</li>
+<li>A full-page Settings reload deliberately lacked Firebase client identity and blocked deletion. This is the required truthful recovery state, not a false negative from the secure server session.</li>
+<li>Client navigation retained Firebase identity. Reauthentication called Firebase and Secure Token, refreshed <code>/api/auth/session</code>, and allowed the server-derived-UID deletion saga to complete.</li>
+<li>Duplicate workout submission and fresh-context resume both preserved confirmed server state.</li>
+</ul>
+<h2>Evidence boundary</h2>
+<p>This run proves one real password-account path with the dumbbell starter. It does not yet prove Google sign-in, email verification/recovery, expired or revoked sessions, cross-user denial, the barbell starter, clone/activate/editor/equipment-change flows, offline interruption, WebKit, Vercel preview, or production authentication.</p>
+<p>YouTube remains separate. The private checkpoint has no approved video, and no embed or seed is represented as production-ready without complete discovery and full visual/audio review.</p>
+<h2>Remaining verification</h2>
+<ul>
+<li>Explicitly authorize transmitting the seven Firebase client/Admin values to the linked Vercel project, then rebuild and test the protected preview.</li>
+<li>Replay Google, verification, recovery, expiry, revocation, and cross-user paths with disposable identities.</li>
+<li>Replay both equipment profiles, program collection/editor changes, offline interruption, and immutable-history preservation in Chromium and WebKit.</li>
+<li>Complete YouTube discovery, full-watch review, exact-two validation, representative embeds, and unavailable fallback.</li>
+<li>Repeat authenticated accessibility, responsive, preview, production, logs, and deletion cleanup checks before release.</li>
+</ul>
+
+  </main>
+</body>
+</html>
