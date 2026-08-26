@@ -7,7 +7,7 @@ import {
 
 describe("response security headers", () => {
   it("builds a strict production nonce policy for Firebase and YouTube", () => {
-    const policy = buildContentSecurityPolicy("fixtureNonce123", false);
+    const policy = buildContentSecurityPolicy("fixtureNonce123", false, true);
 
     expect(policy).toContain("script-src 'self' 'nonce-fixtureNonce123' 'strict-dynamic'");
     expect(policy).toContain(
@@ -22,12 +22,12 @@ describe("response security headers", () => {
   });
 
   it("allows React development evaluation without weakening production", () => {
-    expect(buildContentSecurityPolicy("fixtureNonce123", true)).toContain("'unsafe-eval'");
-    expect(buildContentSecurityPolicy("fixtureNonce123", false)).not.toContain("'unsafe-eval'");
+    expect(buildContentSecurityPolicy("fixtureNonce123", true, false)).toContain("'unsafe-eval'");
+    expect(buildContentSecurityPolicy("fixtureNonce123", false, true)).not.toContain("'unsafe-eval'");
   });
 
   it("uses a YouTube-compliant referrer policy and popup-safe opener policy", () => {
-    const headers = Object.fromEntries(buildSecurityHeaders("fixtureNonce123", false));
+    const headers = Object.fromEntries(buildSecurityHeaders("fixtureNonce123", false, true));
 
     expect(headers["Referrer-Policy"]).toBe("strict-origin-when-cross-origin");
     expect(headers["Cross-Origin-Opener-Policy"]).toBe("same-origin-allow-popups");
@@ -36,7 +36,21 @@ describe("response security headers", () => {
     expect(headers["Permissions-Policy"]).toContain("autoplay=()");
   });
 
+  it("keeps HTTP production checks strict without forcing unavailable TLS", () => {
+    const policy = buildContentSecurityPolicy("fixtureNonce123", false, false);
+    const headers = Object.fromEntries(
+      buildSecurityHeaders("fixtureNonce123", false, false),
+    );
+
+    expect(policy).toContain("'strict-dynamic'");
+    expect(policy).not.toContain("'unsafe-eval'");
+    expect(policy).not.toContain("upgrade-insecure-requests");
+    expect(headers).not.toHaveProperty("Strict-Transport-Security");
+  });
+
   it("refuses a caller-controlled nonce with directive characters", () => {
-    expect(() => buildContentSecurityPolicy("safe'; img-src *", false)).toThrow("nonce");
+    expect(() =>
+      buildContentSecurityPolicy("safe'; img-src *", false, true),
+    ).toThrow("nonce");
   });
 });
