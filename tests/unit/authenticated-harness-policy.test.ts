@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { NextRequest } from "next/server";
@@ -67,6 +67,19 @@ describe("credential-free authenticated harness boundary", () => {
     expect(
       harnessRequestContext(
         new Headers({
+          [HARNESS_SCENARIO_HEADER]: "accept-next-runner-then-error",
+          [HARNESS_SCOPE_HEADER]: "runner-recovery",
+          [HARNESS_VIEWER_HEADER]: "alice",
+        }),
+      ),
+    ).toMatchObject({
+      scenario: "accept-next-runner-then-error",
+      scope: "runner-recovery",
+      viewer: { uid: "qa-auth-harness-alice" },
+    });
+    expect(
+      harnessRequestContext(
+        new Headers({
           [HARNESS_SCENARIO_HEADER]: "expire-session",
           [HARNESS_VIEWER_HEADER]: "alice",
         }),
@@ -106,6 +119,24 @@ describe("credential-free authenticated harness boundary", () => {
     resetHarnessFaults("one-shot");
     expect(consumeHarnessFault(context, "fail-next-save")).toBe(true);
     resetHarnessFaults("one-shot");
+  });
+
+  it("mounts the real day, workout, workout API, and history vertical slice only in the fixture", () => {
+    const fixtureRoot = resolve(repositoryRoot, "tests/fixtures/authenticated-app/app");
+    const requiredFixtureFiles = [
+      "app/program/[day]/page.tsx",
+      "workout/[sessionId]/page.tsx",
+      "app/history/[sessionId]/page.tsx",
+      "api/app/workouts/route.ts",
+      "api/app/workouts/[sessionId]/route.ts",
+      "api/app/workouts/[sessionId]/operations/route.ts",
+    ];
+
+    expect(
+      requiredFixtureFiles.filter((relativePath) =>
+        existsSync(resolve(fixtureRoot, relativePath)),
+      ),
+    ).toEqual(requiredFixtureFiles);
   });
 
   it("keeps every harness marker and fixture import outside production source", () => {
