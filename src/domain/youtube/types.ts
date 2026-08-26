@@ -265,12 +265,13 @@ export type CurationReportCandidate = Readonly<{
 }>;
 
 export type ProposedPairReason =
+  | "discovery-incomplete"
   | "fewer-than-two-eligible-candidates"
   | "materially-redundant-second";
 
 export type ProposedVideoPair = Readonly<{
   target: RequiredVideoVariation;
-  status: "ready-for-review" | "needs-second-candidate";
+  status: "discovery-incomplete" | "ready-for-review" | "needs-second-candidate";
   videoIds: readonly string[];
   distinctChannels: boolean;
   reason?: ProposedPairReason | undefined;

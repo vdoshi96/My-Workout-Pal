@@ -349,6 +349,12 @@ function queryKey(target: YouTubeCurationTarget, query: string, order: CurationQ
   return `${target.canonicalExerciseSlug}:${variationId}:${order}:${index}:${query}`;
 }
 
+function expectedQueryKeys(target: CurationTarget): readonly string[] {
+  return buildCurationQueries(target).flatMap((query, index) =>
+    (["relevance", "viewCount"] as const).map((order) => queryKey(target, query, order, index))
+  );
+}
+
 export function buildCurationQueries(target: YouTubeCurationTarget): readonly string[] {
   const movement = target.movement ?? target.exerciseName;
   const equipment = target.equipment ?? target.requiredEquipmentTerms?.join(" ") ?? "";
@@ -876,6 +882,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
 
   const rankedEligibleCandidates: CurationReportCandidate[] = [];
   const proposedPairs: ProposedVideoPair[] = [];
+  const completedQueryKeys = new Set(checkpoint.completedQueries.map((query) => query.queryKey));
   for (const target of targets) {
     const targetCandidates = reportCandidates.filter(
       (candidate) => candidate.target.canonicalExerciseSlug === target.canonicalExerciseSlug && candidate.target.variationId === target.variationId,
@@ -886,7 +893,14 @@ export async function curateYouTubeCandidates(options: Readonly<{
       const original = byId.get(rankedCandidate.candidate.videoId);
       if (original) rankedEligibleCandidates.push({ ...original, rank: rank + 1 });
     });
-    proposedPairs.push(proposeVideoPair(target, targetCandidates.map((candidate) => candidate.candidate)));
+    const proposedPair = proposeVideoPair(target, targetCandidates.map((candidate) => candidate.candidate));
+    proposedPairs.push(expectedQueryKeys(target).every((key) => completedQueryKeys.has(key))
+      ? proposedPair
+      : {
+          ...proposedPair,
+          status: "discovery-incomplete",
+          reason: "discovery-incomplete",
+        });
   }
 
   const quotaBlockedReason = searchBlockedReason ?? hydrationBlockedReason;

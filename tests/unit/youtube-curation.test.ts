@@ -5,6 +5,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  buildCurationQueries,
   buildYouTubeSearchRequest,
   createYouTubeDataApiClient,
   curateYouTubeCandidates,
@@ -513,6 +514,89 @@ describe("resumable YouTube curation state", () => {
       expect(result.report.blockedReason).not.toContain("SENSITIVE_PROVIDER_PROJECT");
       expect(result.report.candidates).toHaveLength(1);
       expect(result.checkpoint.quota).toEqual({ searchRequests: 1, hydrateRequests: 1, unitsEstimated: 2 });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("does not present a provisional pair as ready when target discovery is incomplete", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-incomplete-discovery-"));
+    const target = {
+      canonicalExerciseSlug: "dumbbell-bench-press",
+      variationId: "dumbbells",
+      exerciseName: "Dumbbell bench press",
+      requiredEquipmentTerms: ["dumbbell"],
+    } as const;
+    const candidates = [
+      {
+        videoId: "AbCdEfGhI01",
+        title: "Dumbbell bench press tutorial",
+        channelId: "channel-a",
+        channelTitle: "Coach A",
+      },
+      {
+        videoId: "ZyXwVuTsR98",
+        title: "Dumbbell bench press form guide",
+        channelId: "channel-b",
+        channelTitle: "Coach B",
+      },
+    ] as const;
+    const hydrated = candidates.map((candidate) => ({
+      ...candidate,
+      description: "A concise dumbbell bench press guide.",
+      duration: "PT2M",
+      privacyStatus: "public" as const,
+      uploadStatus: "processed" as const,
+      embeddable: true,
+      syndicated: true,
+      regionAvailable: true,
+      liveBroadcastContent: "none" as const,
+      language: "en",
+    }));
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        throw new Error("Incomplete discovery test must not call the provider.");
+      },
+      async hydrateVideos() {
+        throw new Error("Fully hydrated test state must not call the provider.");
+      },
+    };
+
+    try {
+      const checkpoint = createEmptyCurationCheckpoint();
+      const query = buildCurationQueries(target)[0];
+      if (!query) throw new Error("Expected one curation query.");
+      checkpoint.completedQueries.push({
+        queryKey: buildYouTubeSearchRequest(target, query, "relevance", 0).queryKey,
+        pageToken: null,
+      });
+      for (const candidate of hydrated) {
+        const key = getYouTubeCandidateStateKey(target.canonicalExerciseSlug, target.variationId, candidate.videoId);
+        checkpoint.discoveredCandidates[key] = {
+          target,
+          queryKeys: [checkpoint.completedQueries[0]?.queryKey ?? ""],
+          item: candidate,
+        };
+        checkpoint.hydratedVideoIds.push(candidate.videoId);
+        checkpoint.hydratedCandidates[candidate.videoId] = candidate;
+      }
+      await saveCurationCheckpoint(directory, checkpoint);
+
+      const result = await curateYouTubeCandidates({
+        api,
+        targets: [target],
+        stateDirectory: directory,
+        budget: { maxQuotaUnits: 0, maxSearchRequests: 0, maxHydrateRequests: 0, maxPagesPerQuery: 1 },
+      });
+
+      expect(result.report.status).toBe("quota-blocked");
+      expect(result.report.proposedPairs).toEqual([
+        expect.objectContaining({
+          status: "discovery-incomplete",
+          reason: "discovery-incomplete",
+          videoIds: ["AbCdEfGhI01", "ZyXwVuTsR98"],
+        }),
+      ]);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
