@@ -825,7 +825,7 @@ export function createCardioDraft(mode: CardioMode): CardioDraft {
   };
 }
 
-function derivePaceSecondsPerKilometer(
+export function derivePaceSecondsPerKilometer(
   durationSeconds: number,
   distanceMeters: number,
 ): number {
@@ -833,7 +833,11 @@ function derivePaceSecondsPerKilometer(
   if (!Number.isFinite(pace) || pace <= 0) {
     throw new RangeError("pace must be finite and positive");
   }
-  return pace;
+  const roundedPace = Math.round(pace);
+  if (roundedPace <= 0) {
+    throw new RangeError("pace must round to a positive integer");
+  }
+  return roundedPace;
 }
 
 export function validateCardioDraft(
@@ -850,9 +854,10 @@ export function validateCardioDraft(
   if (
     draft.durationSeconds === undefined ||
     !Number.isFinite(draft.durationSeconds) ||
+    !Number.isInteger(draft.durationSeconds) ||
     draft.durationSeconds <= 0
   ) {
-    issues.push("durationSeconds must be positive");
+    issues.push("durationSeconds must be a positive integer");
   }
   if (
     draft.distanceMeters !== undefined &&
@@ -863,9 +868,10 @@ export function validateCardioDraft(
   if (
     draft.paceSecondsPerKilometer !== undefined &&
     (!Number.isFinite(draft.paceSecondsPerKilometer) ||
+      !Number.isInteger(draft.paceSecondsPerKilometer) ||
       draft.paceSecondsPerKilometer <= 0)
   ) {
-    issues.push("paceSecondsPerKilometer must be positive when supplied");
+    issues.push("paceSecondsPerKilometer must be a positive integer when supplied");
   }
   if (
     draft.inclinePercent !== undefined &&

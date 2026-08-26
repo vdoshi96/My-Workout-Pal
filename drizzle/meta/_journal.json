@@ -15,6 +15,13 @@
       "when": 1787700230004,
       "tag": "0001_account_deletion_saga",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787710208052,
+      "tag": "0002_workout_canonical_measurements",
+      "breakpoints": true
     }
   ]
 }

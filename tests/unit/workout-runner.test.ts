@@ -530,6 +530,34 @@ describe("drafts, notes, and exercise transitions", () => {
       ok: true,
       cardio: { paceSecondsPerKilometer: 420, paceSource: "entered" },
     });
+    expect(
+      validateCardioDraft({
+        mode: "runner",
+        durationSeconds: 100,
+        distanceMeters: 333.25,
+        paceSecondsPerKilometer: undefined,
+        paceSource: undefined,
+        inclinePercent: undefined,
+        notes: "Non-even ratio",
+      }),
+    ).toMatchObject({
+      ok: true,
+      cardio: { paceSecondsPerKilometer: 300, paceSource: "derived" },
+    });
+    expect(
+      validateCardioDraft({
+        mode: "runner",
+        durationSeconds: 100.5,
+        distanceMeters: 333,
+        paceSecondsPerKilometer: 301.5,
+        paceSource: "entered",
+        inclinePercent: undefined,
+        notes: "Fractional values",
+      }),
+    ).toMatchObject({ ok: false, issues: expect.arrayContaining([
+      expect.stringMatching(/durationSeconds/),
+      expect.stringMatching(/paceSecondsPerKilometer/),
+    ]) });
   });
 });
 

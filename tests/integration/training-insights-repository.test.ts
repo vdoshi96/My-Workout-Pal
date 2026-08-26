@@ -19,6 +19,7 @@ import {
 
 const initialMigrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const deletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
+const workoutMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 const sessionIds = {
   aliceOlder: "10000000-0000-4000-8000-000000000001",
@@ -44,6 +45,7 @@ async function openDatabase(): Promise<{ database: Database; raw: PGlite }> {
   await raw.waitReady;
   await raw.exec(await readFile(initialMigrationUrl, "utf8"));
   await raw.exec(await readFile(deletionMigrationUrl, "utf8"));
+  await raw.exec(await readFile(workoutMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
@@ -100,8 +102,8 @@ async function insertSession(
   await raw.query(`
     INSERT INTO cardio_logs (
       id, owner_firebase_uid, session_id, mode, duration_seconds, distance_m,
-      pace_seconds_per_km, incline_percent, client_idempotency_key, recorded_at
-    ) VALUES ($1, $2, $3, 'walker', 1200, 1609.344, 746, 2, $4, $5);
+      pace_seconds_per_km, pace_source, incline_percent, client_idempotency_key, recorded_at
+    ) VALUES ($1, $2, $3, 'walker', 1200, 1609.344, 746, 'entered', 2, $4, $5);
   `, [cardioId, input.ownerUid, input.sessionId, `${input.ownerUid}-${suffix}-cardio`, input.endedAt]);
   await raw.query(`
     UPDATE workout_sessions

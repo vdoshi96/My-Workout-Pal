@@ -4,6 +4,8 @@ import { PGlite } from "@electric-sql/pglite";
 import { afterEach, describe, expect, it } from "vitest";
 
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
+const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
+const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
 
 const ids = {
   aliceProgram: "00000000-0000-4000-8000-000000000001",
@@ -61,6 +63,17 @@ async function openDatabase() {
   await database.waitReady;
   const migration = await readFile(migrationUrl, "utf8");
   await database.exec(migration);
+  await database.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
+  await database.exec(await readFile(upgradeMigrationUrl, "utf8"));
+  openDatabases.push(database);
+  return database;
+}
+
+async function openBeforeWorkoutMigration() {
+  const database = new PGlite();
+  await database.waitReady;
+  await database.exec(await readFile(migrationUrl, "utf8"));
+  await database.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
   openDatabases.push(database);
   return database;
 }
@@ -160,6 +173,22 @@ describe("initial database migration", () => {
         "workout_sessions",
       ]),
     );
+  });
+
+  it("applies every checked-in upgrade in sequence", async () => {
+    const database = await openDatabase();
+    const result = await database.query<{ table_name: string; column_name: string }>(`
+      SELECT table_name, column_name
+      FROM information_schema.columns
+      WHERE (table_name = 'account_deletion_jobs' AND column_name = 'phase')
+         OR (table_name = 'cardio_logs' AND column_name = 'pace_source')
+      ORDER BY table_name, column_name;
+    `);
+
+    expect(result.rows).toEqual([
+      { table_name: "account_deletion_jobs", column_name: "phase" },
+      { table_name: "cardio_logs", column_name: "pace_source" },
+    ]);
   });
 
   it("uses composite ownership keys to reject a cross-user child row", async () => {
@@ -1529,6 +1558,96 @@ describe("initial database migration", () => {
         );
       `),
     ).rejects.toThrow(/immutable|history|completed|abandoned/i);
+  });
+
+  it("upgrades canonical set and cardio measurements without encoding user notes", async () => {
+    const database = await openDatabase();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+    await database.exec(`
+      INSERT INTO workout_exercise_snapshots (
+        id, owner_firebase_uid, session_id, position, display_name, logging_kind,
+        minimum_reps, maximum_reps, set_count
+      ) VALUES (
+        '${ids.outcomeSecondSnapshot}', 'alice', '${ids.aliceSession}', 2,
+        'Bodyweight test', 'bodyweight_reps', 1, 20, 1
+      );
+      INSERT INTO set_logs (
+        id, owner_firebase_uid, session_id, snapshot_id, set_position,
+        measurement_kind, set_kind, repetitions, added_weight_kg, note_snapshot, client_idempotency_key
+      ) VALUES (
+        '${ids.volumeSetLog}', 'alice', '${ids.aliceSession}', '${ids.outcomeSecondSnapshot}',
+        1, 'bodyweight_reps', 'work', 10, 5.25, 'kept strict form', 'canonical-bodyweight'
+      );
+      INSERT INTO cardio_logs (
+        id, owner_firebase_uid, session_id, mode, duration_seconds,
+        distance_m, pace_seconds_per_km, pace_source, client_idempotency_key
+      ) VALUES (
+        '${ids.aliceCardioLog}', 'alice', '${ids.aliceSession}', 'runner',
+        600, 1000, 600, 'entered', 'canonical-cardio'
+      );
+    `);
+    await expect(
+      database.query<{ added_weight_kg: string; note_snapshot: string }>(
+        `SELECT added_weight_kg, note_snapshot FROM set_logs WHERE id = '${ids.volumeSetLog}';`,
+      ),
+    ).resolves.toMatchObject({ rows: [{ added_weight_kg: "5.250", note_snapshot: "kept strict form" }] });
+    await expect(
+      database.query<{ pace_source: string }>(
+        `SELECT pace_source FROM cardio_logs WHERE id = '${ids.aliceCardioLog}';`,
+      ),
+    ).resolves.toMatchObject({ rows: [{ pace_source: "entered" }] });
+    await expect(
+      database.exec(`
+        INSERT INTO set_logs (
+          owner_firebase_uid, session_id, snapshot_id, set_position,
+          measurement_kind, set_kind, weight_kg, added_weight_kg, repetitions, client_idempotency_key
+        ) VALUES (
+          'alice', '${ids.aliceSession}', '${ids.outcomeSecondSnapshot}', 2,
+          'weight_reps', 'work', 20, 1, 10, 'invalid-added-weight'
+        );
+      `),
+    ).rejects.toThrow(/set_logs_measurement_shape|check constraint/i);
+    await expect(
+      database.exec(`
+        INSERT INTO cardio_logs (
+          owner_firebase_uid, session_id, mode, duration_seconds,
+          distance_m, pace_seconds_per_km, pace_source, client_idempotency_key
+        ) VALUES (
+          'alice', '${ids.aliceSession}', 'runner', 600, 1000, 600, null, 'invalid-pace-source'
+        );
+      `),
+    ).rejects.toThrow(/cardio_logs_one_per_session_unique|cardio_logs_pace_source_shape|check constraint/i);
+  });
+
+  it("upgrades a populated 0000 cardio pace row by backfilling its source before constraints", async () => {
+    const database = await openBeforeWorkoutMigration();
+    await seedOwner(database, "alice");
+    await seedProgram(database, "alice", ids.aliceProgram, ids.aliceRevision);
+    await seedSession(database, "alice", ids.aliceSession);
+    await database.exec(`
+      INSERT INTO cardio_logs (
+        id, owner_firebase_uid, session_id, mode, duration_seconds,
+        distance_m, pace_seconds_per_km, client_idempotency_key
+      ) VALUES (
+        '${ids.aliceCardioLog}', 'alice', '${ids.aliceSession}', 'runner',
+        600, 1000, 600, 'legacy-cardio'
+      );
+    `);
+    await database.exec(await readFile(upgradeMigrationUrl, "utf8"));
+    await expect(
+      database.query<{ pace_source: string }>(
+        `SELECT pace_source FROM cardio_logs WHERE id = '${ids.aliceCardioLog}';`,
+      ),
+    ).resolves.toMatchObject({ rows: [{ pace_source: "entered" }] });
+    await expect(
+      database.exec(`
+        UPDATE cardio_logs
+        SET pace_source = null
+        WHERE id = '${ids.aliceCardioLog}';
+      `),
+    ).rejects.toThrow(/cardio_logs_pace_source_shape|check constraint|violates/i);
   });
 
   it("keeps Drizzle configuration and the live connector import-safe without credentials", async () => {

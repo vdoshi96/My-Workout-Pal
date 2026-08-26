@@ -75,6 +75,28 @@ describe("measurement-kind invariants", () => {
     expect(() => parseMeasurement({ kind: "unknown", value: 1 })).toThrow(
       /kind/,
     );
+    expect(() => parseMeasurement({ kind: "duration", durationSeconds: 30.5 })).toThrow(
+      /durationSeconds.*positive integer/,
+    );
+    expect(() => parseMeasurement({
+      kind: "distance_duration",
+      distanceMeters: 0,
+      durationSeconds: 100,
+    })).toThrow(/distanceMeters.*positive/);
+    expect(parseMeasurement({
+      kind: "distance_duration",
+      distanceMeters: 333.25,
+      durationSeconds: 100,
+    })).toEqual({
+      kind: "distance_duration",
+      distanceMeters: 333.25,
+      durationSeconds: 100,
+    });
+    expect(() => parseMeasurement({
+      kind: "distance_duration",
+      distanceMeters: 333.25,
+      durationSeconds: 100.5,
+    })).toThrow(/durationSeconds.*positive integer/);
   });
 });
 

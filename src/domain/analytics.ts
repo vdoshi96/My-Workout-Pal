@@ -199,6 +199,40 @@ function checkRequiredNonnegative(
   return value;
 }
 
+function checkRequiredPositive(
+  input: Record<string, unknown>,
+  fieldName: string,
+  issues: string[],
+): number | undefined {
+  if (!hasOwn(input, fieldName)) {
+    issues.push(`${fieldName} is required`);
+    return undefined;
+  }
+  const value = input[fieldName];
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    issues.push(`${fieldName} must be a finite positive number`);
+    return undefined;
+  }
+  return value;
+}
+
+function checkRequiredPositiveInteger(
+  input: Record<string, unknown>,
+  fieldName: string,
+  issues: string[],
+): number | undefined {
+  if (!hasOwn(input, fieldName)) {
+    issues.push(`${fieldName} is required`);
+    return undefined;
+  }
+  const value = input[fieldName];
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    issues.push(`${fieldName} must be a positive integer`);
+    return undefined;
+  }
+  return value;
+}
+
 function checkOptionalNonnegative(
   input: Record<string, unknown>,
   fieldName: string,
@@ -276,7 +310,7 @@ export function validateMeasurement(input: unknown): MeasurementValidationResult
 
   if (kind === "duration") {
     checkUnexpectedFields(input, ["kind", "isWarmup", "durationSeconds"], issues);
-    const durationSeconds = checkRequiredNonnegative(input, "durationSeconds", issues);
+    const durationSeconds = checkRequiredPositiveInteger(input, "durationSeconds", issues);
     if (issues.length > 0 || durationSeconds === undefined) {
       return { ok: false, issues };
     }
@@ -286,8 +320,8 @@ export function validateMeasurement(input: unknown): MeasurementValidationResult
   }
 
   checkUnexpectedFields(input, ["kind", "isWarmup", "distanceMeters", "durationSeconds"], issues);
-  const distanceMeters = checkRequiredNonnegative(input, "distanceMeters", issues);
-  const durationSeconds = checkRequiredNonnegative(input, "durationSeconds", issues);
+  const distanceMeters = checkRequiredPositive(input, "distanceMeters", issues);
+  const durationSeconds = checkRequiredPositiveInteger(input, "durationSeconds", issues);
   if (issues.length > 0 || distanceMeters === undefined || durationSeconds === undefined) {
     return { ok: false, issues };
   }
