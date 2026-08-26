@@ -81,7 +81,17 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 }
 
 .skip-link:focus { transform: translateY(0); }
-.offline-indicator { background: var(--danger); bottom: calc(4.8rem + env(safe-area-inset-bottom)); color: #fffaf0; font-size: .85rem; left: 50%; max-width: calc(100vw - 2rem); padding: .65rem .85rem; position: fixed; text-align: center; transform: translateX(-50%); width: max-content; z-index: 40; }
+.pwa-status-stack { bottom: calc(4.8rem + env(safe-area-inset-bottom)); display: grid; gap: .55rem; left: 50%; max-width: calc(100vw - 2rem); position: fixed; transform: translateX(-50%); width: min(38rem, calc(100vw - 2rem)); z-index: 40; }
+.offline-indicator { background: var(--danger); color: #fffaf0; font-size: .85rem; padding: .65rem .85rem; text-align: center; }
+.pwa-notice { align-items: center; background: var(--ink); border: 1px solid var(--paper); box-shadow: 0 10px 28px color-mix(in srgb, var(--ink) 30%, transparent); color: var(--paper); display: grid; gap: .65rem; grid-template-columns: minmax(0, 1fr) auto; padding: .8rem; }
+.pwa-notice > div { min-width: 0; }
+.pwa-notice strong, .pwa-notice span { display: block; }
+.pwa-notice strong { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: .03em; text-transform: uppercase; }
+.pwa-notice span { color: color-mix(in srgb, var(--paper) 76%, transparent); font-size: .8rem; line-height: 1.25; margin-top: .15rem; }
+.pwa-notice button { background: var(--coral); border: 1px solid var(--coral); color: #fffaf0; cursor: pointer; font-family: var(--font-display); min-height: 2.7rem; padding: .5rem .7rem; text-transform: uppercase; }
+.pwa-notice button:disabled { cursor: wait; opacity: .7; }
+.pwa-notice .pwa-notice-dismiss { background: transparent; border-color: color-mix(in srgb, var(--paper) 45%, transparent); color: var(--paper); grid-column: 2; }
+.pwa-install-error { background: var(--paper); border: 1px solid var(--danger); color: var(--danger); font-size: .85rem; padding: .65rem .8rem; }
 
 .app-frame { margin: 0 auto; max-width: 94rem; min-height: 100dvh; padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
 
