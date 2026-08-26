@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="92cde8131cb01e16ea61f88c158ca0a10c6393b646d0a7f1e57d334438fcd611">
+  <meta name="source-sha256" content="b16bb5bd8993bea57a433b40762be083963b77bf8d8947cda97b73d1c2a8ee5b">
   <title>Workout runner component plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -164,6 +164,79 @@ accept a UID field, put private workout data in a public cache, or send notes
 or measurements anywhere except the injected submitter. Sign-out and account
 switching are host responsibilities; the host must unmount or clear the
 private runner state before showing another identity.</p>
+<h2>Authenticated route integration</h2>
+<h3>User outcome and navigation</h3>
+<p>The owned day page exposes <strong>Start or resume workout</strong> for an eligible member.
+The client keeps one idempotency key across a failed retry, accepts only a
+strict start response, and navigates to <code>/workout/[sessionId]</code>. That dynamic
+route uses a minimal workout shell instead of the ordinary account navigation.
+The runner returns to the account program on an allowed exit and navigates to
+the immutable history detail only after completion or abandonment is confirmed
+as saved by the server.</p>
+<h3>UI states and failure recovery</h3>
+<p>The day control distinguishes ready, opening, retryable failure, verification
+required, and successful navigation. The workout route distinguishes server
+loading, local recovery, ready, reconciled pending work, conflict, blocked
+storage, expired authentication, offline queue, completing, completed, and
+abandoned states. A missing, foreign, malformed, or terminal session resolves
+as unavailable without revealing ownership. An unexpected repository or
+hydration failure reaches the private route error boundary and never renders a
+fresh runner over uncertain persisted data.</p>
+<p>The client host loads the owner-and-session IndexedDB record before it mounts
+<code>WorkoutRunner</code>. If no record exists, it uses the server baseline. If a valid
+record exists, it applies <code>reconcileWorkoutResumeState</code>. A corrupt, mismatched,
+or unreadable record blocks the runner and offers retry or a safe return; it
+does not overwrite the local record with the server baseline. Refresh, tab
+close, connection loss, an interrupted response, and another-tab save preserve
+the same reconciliation rules.</p>
+<h3>Types, persistence, and authorization</h3>
+<p>The Server Component awaits and validates the <code>sessionId</code> route parameter,
+derives the viewer from the revocation-aware HTTP-only session, loads the
+session through <code>WorkoutRepository.loadResume</code>, and hydrates one serializable
+<code>ActiveWorkoutState</code> from immutable rows. It also loads presentation units and
+compatible canonical and owner-only custom substitution candidates on the
+server. Candidate identities are durable database UUIDs; the client receives
+no ownership selector and filters candidates by the snapshot logging kind.</p>
+<p>The client host constructs <code>IndexedDBRunnerStorage</code> with the server-derived
+owner namespace and injects <code>createWorkoutRunnerSubmitter</code> over the same-origin
+CSRF client. Operations still contain a local owner identity for namespace and
+integrity checks, but <code>runnerOperationRequest</code> removes it from transport. The
+server derives ownership again and refuses client lifecycle or version fields.
+Unverified password identities can read an existing snapshot but cannot mount
+mutation controls. Public caches and the service worker must not store the
+workout route, API responses, notes, measurements, or account identity.</p>
+<h3>Responsive and accessible behavior</h3>
+<p>Phone keeps the route identity, save truth, active set, and primary action in a
+single column above safe-area insets. Tablet and desktop use the runner&#39;s
+two-column outline without changing DOM order. The loading and blocked-recovery
+surfaces use semantic headings and <code>role=&quot;status&quot;</code>; start errors remain adjacent
+to the initiating control. Keyboard focus moves to the workout heading after
+navigation, the runner protects <code>beforeunload</code> only for truthful unsaved state,
+and reduced motion changes no recovery or focus behavior.</p>
+<h3>Acceptance criteria, tests, and browser evidence</h3>
+<ul>
+<li>A start request contains only program, day, and stable idempotency values and
+routes both a created and resumed response to the returned session.</li>
+<li>Malformed success responses, duplicate clicks, offline requests, unverified
+identities, and server failures never navigate or claim a saved workout.</li>
+<li>The route awaits dynamic parameters, hides foreign IDs as unavailable, and
+passes only a server-hydrated serializable state to the client boundary.</li>
+<li>Local recovery finishes before the runner can persist. Server-confirmed keys
+win, unresolved local work remains pending, and a mismatched record blocks
+without deletion or overwrite.</li>
+<li>The real IndexedDB adapter, private submitter, unit preference, compatible
+substitutions, navigation protection, and confirmed terminal callbacks are
+wired to the reusable runner.</li>
+<li>Fail-first unit tests cover the absent start contract, malformed start
+responses, stable retry identity, route-model construction, owner/session
+recovery, and blocked reconciliation. Existing repository, API, resume,
+storage, and component harness tests remain green.</li>
+<li>Playwright replays start, duplicate resume, refresh with no local draft,
+pending local recovery, interrupted response, another-tab progress, offline
+retry, expired auth, completion, abandonment, back, and tab-close behavior.
+Evidence covers Chromium and WebKit at phone, tablet, and desktop sizes with
+keyboard, automated accessibility, dark mode, and reduced motion.</li>
+</ul>
 <h2>Acceptance criteria</h2>
 <ul>
 <li>Snapshot identity remains visible while editing.</li>

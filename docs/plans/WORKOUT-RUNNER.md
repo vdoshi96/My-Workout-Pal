@@ -158,6 +158,90 @@ or measurements anywhere except the injected submitter. Sign-out and account
 switching are host responsibilities; the host must unmount or clear the
 private runner state before showing another identity.
 
+## Authenticated route integration
+
+### User outcome and navigation
+
+The owned day page exposes **Start or resume workout** for an eligible member.
+The client keeps one idempotency key across a failed retry, accepts only a
+strict start response, and navigates to `/workout/[sessionId]`. That dynamic
+route uses a minimal workout shell instead of the ordinary account navigation.
+The runner returns to the account program on an allowed exit and navigates to
+the immutable history detail only after completion or abandonment is confirmed
+as saved by the server.
+
+### UI states and failure recovery
+
+The day control distinguishes ready, opening, retryable failure, verification
+required, and successful navigation. The workout route distinguishes server
+loading, local recovery, ready, reconciled pending work, conflict, blocked
+storage, expired authentication, offline queue, completing, completed, and
+abandoned states. A missing, foreign, malformed, or terminal session resolves
+as unavailable without revealing ownership. An unexpected repository or
+hydration failure reaches the private route error boundary and never renders a
+fresh runner over uncertain persisted data.
+
+The client host loads the owner-and-session IndexedDB record before it mounts
+`WorkoutRunner`. If no record exists, it uses the server baseline. If a valid
+record exists, it applies `reconcileWorkoutResumeState`. A corrupt, mismatched,
+or unreadable record blocks the runner and offers retry or a safe return; it
+does not overwrite the local record with the server baseline. Refresh, tab
+close, connection loss, an interrupted response, and another-tab save preserve
+the same reconciliation rules.
+
+### Types, persistence, and authorization
+
+The Server Component awaits and validates the `sessionId` route parameter,
+derives the viewer from the revocation-aware HTTP-only session, loads the
+session through `WorkoutRepository.loadResume`, and hydrates one serializable
+`ActiveWorkoutState` from immutable rows. It also loads presentation units and
+compatible canonical and owner-only custom substitution candidates on the
+server. Candidate identities are durable database UUIDs; the client receives
+no ownership selector and filters candidates by the snapshot logging kind.
+
+The client host constructs `IndexedDBRunnerStorage` with the server-derived
+owner namespace and injects `createWorkoutRunnerSubmitter` over the same-origin
+CSRF client. Operations still contain a local owner identity for namespace and
+integrity checks, but `runnerOperationRequest` removes it from transport. The
+server derives ownership again and refuses client lifecycle or version fields.
+Unverified password identities can read an existing snapshot but cannot mount
+mutation controls. Public caches and the service worker must not store the
+workout route, API responses, notes, measurements, or account identity.
+
+### Responsive and accessible behavior
+
+Phone keeps the route identity, save truth, active set, and primary action in a
+single column above safe-area insets. Tablet and desktop use the runner's
+two-column outline without changing DOM order. The loading and blocked-recovery
+surfaces use semantic headings and `role="status"`; start errors remain adjacent
+to the initiating control. Keyboard focus moves to the workout heading after
+navigation, the runner protects `beforeunload` only for truthful unsaved state,
+and reduced motion changes no recovery or focus behavior.
+
+### Acceptance criteria, tests, and browser evidence
+
+- A start request contains only program, day, and stable idempotency values and
+  routes both a created and resumed response to the returned session.
+- Malformed success responses, duplicate clicks, offline requests, unverified
+  identities, and server failures never navigate or claim a saved workout.
+- The route awaits dynamic parameters, hides foreign IDs as unavailable, and
+  passes only a server-hydrated serializable state to the client boundary.
+- Local recovery finishes before the runner can persist. Server-confirmed keys
+  win, unresolved local work remains pending, and a mismatched record blocks
+  without deletion or overwrite.
+- The real IndexedDB adapter, private submitter, unit preference, compatible
+  substitutions, navigation protection, and confirmed terminal callbacks are
+  wired to the reusable runner.
+- Fail-first unit tests cover the absent start contract, malformed start
+  responses, stable retry identity, route-model construction, owner/session
+  recovery, and blocked reconciliation. Existing repository, API, resume,
+  storage, and component harness tests remain green.
+- Playwright replays start, duplicate resume, refresh with no local draft,
+  pending local recovery, interrupted response, another-tab progress, offline
+  retry, expired auth, completion, abandonment, back, and tab-close behavior.
+  Evidence covers Chromium and WebKit at phone, tablet, and desktop sizes with
+  keyboard, automated accessibility, dark mode, and reduced motion.
+
 ## Acceptance criteria
 
 - Snapshot identity remains visible while editing.
