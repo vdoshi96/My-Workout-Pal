@@ -9,6 +9,7 @@
 - Exercised the guest equipment switch, barbell Pull route, compatible library result and empty recovery, read-only sample workout, sample analytics, and sign-in gate. Keyboard skip navigation, reduced motion, dark mode, phone targets, horizontal overflow, Chromium PWA installation, and Chromium offline recovery are also automated.
 - The final browser result is 39 passes and 1 explicit skip across Chromium phone, tablet, and desktop plus WebKit phone. Playwright does not support the skipped WebKit service-worker-control path; all other WebKit cases pass.
 - Commit `101d6a4` passes strict TypeScript, full ESLint, 58 test files and 402 tests, generated-service-worker parity, 25-document parity, Drizzle metadata validation, and the local production-browser matrix. This is local evidence only; nothing was pushed or deployed and no production resource changed.
+- Merged the three-checkpoint branch into local `main` as `9a3dd2e`, repeated the complete 58-file and 402-test gate, Drizzle validation, production build, and 39-pass browser result, then removed the completed local branch. No remote was available for push closeout.
 
 ## 2026-08-25: Owned workout route and recovery host
 

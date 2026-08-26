@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="967cacaa73278a587614d6c977383a5ec33a2b6e4e25181b634bec77fcb7df2c">
+  <meta name="source-sha256" content="c45321ea5de502ed4d0fd15d39a705a7aba29dae7ba47bf80fd49586e34152fd">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,6 +37,7 @@
 <li>Exercised the guest equipment switch, barbell Pull route, compatible library result and empty recovery, read-only sample workout, sample analytics, and sign-in gate. Keyboard skip navigation, reduced motion, dark mode, phone targets, horizontal overflow, Chromium PWA installation, and Chromium offline recovery are also automated.</li>
 <li>The final browser result is 39 passes and 1 explicit skip across Chromium phone, tablet, and desktop plus WebKit phone. Playwright does not support the skipped WebKit service-worker-control path; all other WebKit cases pass.</li>
 <li>Commit <code>101d6a4</code> passes strict TypeScript, full ESLint, 58 test files and 402 tests, generated-service-worker parity, 25-document parity, Drizzle metadata validation, and the local production-browser matrix. This is local evidence only; nothing was pushed or deployed and no production resource changed.</li>
+<li>Merged the three-checkpoint branch into local <code>main</code> as <code>9a3dd2e</code>, repeated the complete 58-file and 402-test gate, Drizzle validation, production build, and 39-pass browser result, then removed the completed local branch. No remote was available for push closeout.</li>
 </ul>
 <h2>2026-08-25: Owned workout route and recovery host</h2>
 <ul>

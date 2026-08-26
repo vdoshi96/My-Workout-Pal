@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="aab5b75666b71ad5796a303760b0e0a95848baf1fedd04d760c176a45c85d473">
+  <meta name="source-sha256" content="acfbc5ee1809d466633065e38491808cc91201e57e92388437fdb3188e0d08f2">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -120,6 +120,7 @@
 <li>The complete owned-runner branch gate passes 58 files and 401 tests, strict TypeScript, full ESLint, generated-service-worker parity, 25-pair documentation parity, and Drizzle metadata validation. Local production HTTP evidence confirms a private <code>no-store</code> streamed sign-in redirect for the unauthenticated workout page, <code>401</code> plus <code>no-store</code> for unauthenticated resume, and <code>403</code> plus <code>no-store</code> for a hostile-origin start. This proves the unauthenticated boundary, not the configured signed-in flow.</li>
 <li>Local <code>main</code> contains the owned-runner integration merge <code>cefecdc</code>. Its post-merge verification passes the same 58-file and 401-test gate, Drizzle metadata validation, and the Next.js webpack production build; the completed feature branch was removed. No Git remote exists, so no branch or <code>main</code> push was possible.</li>
 <li>The public-release browser checkpoint initially ran 30 failed, 9 passed, and 1 skipped case, exposing serious contrast failures, one stale accessible-name expectation, and HTTP-to-HTTPS upgrade breakage in WebKit. The final local production matrix at implementation commit <code>101d6a4</code> passes 39 cases with the sole explicit WebKit PWA capability skip. Strict TypeScript, full ESLint, 58 files and 402 tests, generated PWA parity, 25-document parity, and Drizzle metadata validation also pass.</li>
+<li>Local <code>main</code> merged the release-browser branch as <code>9a3dd2e</code>. Post-merge verification repeated the 58-file and 402-test gate, Drizzle metadata validation, production build, and 40-case browser matrix with 39 passes and the same explicit WebKit capability skip. The completed branch was removed; no Git remote exists, so this merge remains local.</li>
 </ul>
 <h2>Blockers and credential gates</h2>
 <ul>
