@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="5d897ada07614c02e4bc9f0ca6b125ee4d381c28c1bece6a8e336d165cc60240">
+  <meta name="source-sha256" content="ff0fd294bec2b216cbd857575ab3d5cc4a9bb68369009113fc4769515dad96f7">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,13 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Public GitHub publication</h2>
+<ul>
+<li>Rechecked GitHub CLI and found the keyring credential valid for active account <code>vdoshi96</code>, superseding the earlier invalid-token observation.</li>
+<li>Audited every tracked path and Git object before publication. Only the empty <code>.env.example</code> is tracked; no raw or derived reference media, transcripts, local databases, curation scratch, secret-pattern match, or redundant browser artifact was found.</li>
+<li>Created public repository <code>vdoshi96/My-Workout-Pal</code>, added its HTTPS <code>origin</code>, pushed local <code>main</code>, and verified the repository visibility, default branch, remote tracking, and identical local/GitHub SHA <code>b76efc58f3a9fb31aedc873fdb567ab82c3103e2</code>.</li>
+<li>This checkpoint published source only. It did not deploy Vercel, apply a Neon migration, create Firebase, call YouTube discovery, or change billing.</li>
+</ul>
 <h2>2026-08-25: Owned program collection</h2>
 <ul>
 <li>Wrote the complete collection plan before implementation, then retained a failing migration/schema suite before adding <code>user_programs.is_active</code>, deterministic upgrade backfill, and the partial unique owner-active index in migration <code>0003_program_collection</code>.</li>

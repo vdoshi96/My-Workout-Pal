@@ -6,7 +6,7 @@ Public-release provider configuration and credential-backed verification after l
 
 ## What exists
 
-- A local Git repository on `main` with the owned-program collection integrated at merge commit `ed6f96d`.
+- A public GitHub repository at `vdoshi96/My-Workout-Pal`. Local `main` tracks `origin/main`; both were verified at `b76efc5` immediately after first publication.
 - A fully inspected private reference recording, with temporary inspection artifacts outside the repository.
 - The initial product record and context documentation.
 - A strict Next.js 16.3.2 foundation with the approved route-atlas program overview, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout and analytics, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
@@ -105,11 +105,11 @@ Public-release provider configuration and credential-backed verification after l
 
 ## Blockers and credential gates
 
-- GitHub CLI reports that the stored `vdoshi96` token is invalid. Repository creation and push require reauthentication unless another authorized credential path succeeds.
+- GitHub CLI is authenticated as `vdoshi96`. The public repository exists with default branch `main`; branch/PR preview integration still depends on the planned Vercel Git connection.
 - Firebase Console access is available in the signed-in in-app browser. The `My Workout Pal` creation form proposes project ID `my-workout-pal-c5b57`, but no project exists because the user must personally accept the Firebase terms. The optional Google Developer Programme enrollment is selected by default in that form, is not required for the application, and should be deselected unless the user explicitly wants it.
 - `YOUTUBE_API_KEY` is absent. `pnpm youtube:curate` refuses to run without it. Offline normalization, mechanical eligibility, ranking, checkpoint, and seed-validation tests do not require the key; discovery, quota-backed metadata hydration, final candidate selection, approval, exact-two production seed, and live production embed verification remain blocked.
 - No paid configuration changes are authorized.
-- The user authorized eventual push and deployment under the documented release plan. No push, deployment, production migration, or paid change has occurred in this branch; the invalid GitHub credential, Firebase terms acceptance, and missing YouTube key remain the concrete gates.
+- The user authorized push and deployment under the documented release plan. The first verified public GitHub push is complete. No deployment, production migration, or paid change has occurred; Firebase terms acceptance/configuration and the missing YouTube key remain concrete release gates.
 
 ## Worktrees
 

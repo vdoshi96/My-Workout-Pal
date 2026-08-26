@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-08-25: Public GitHub publication
+
+- Rechecked GitHub CLI and found the keyring credential valid for active account `vdoshi96`, superseding the earlier invalid-token observation.
+- Audited every tracked path and Git object before publication. Only the empty `.env.example` is tracked; no raw or derived reference media, transcripts, local databases, curation scratch, secret-pattern match, or redundant browser artifact was found.
+- Created public repository `vdoshi96/My-Workout-Pal`, added its HTTPS `origin`, pushed local `main`, and verified the repository visibility, default branch, remote tracking, and identical local/GitHub SHA `b76efc58f3a9fb31aedc873fdb567ab82c3103e2`.
+- This checkpoint published source only. It did not deploy Vercel, apply a Neon migration, create Firebase, call YouTube discovery, or change billing.
+
 ## 2026-08-25: Owned program collection
 
 - Wrote the complete collection plan before implementation, then retained a failing migration/schema suite before adding `user_programs.is_active`, deterministic upgrade backfill, and the partial unique owner-active index in migration `0003_program_collection`.
