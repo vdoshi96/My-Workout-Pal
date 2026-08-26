@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Runner outbox transport alignment
+
+- Compared the integrated runner outbox with the isolated private API and found that the route required a client outcome version that the runner doesn't store.
+- Retained six failing API assertions that returned `400` for the real base-revision envelope before correcting the route.
+- Changed the route to accept the immutable base revision, derive the owner and internal lifecycle fields on the server, and call the runner-specific repository entry point without trusting a client outcome version.
+- Added strict rejection tests for client `ownerUid`, `expectedVersion`, `sequence`, and `status` fields, plus structured conflict-response coverage for offline recovery.
+- Passed 20 API contract tests, the 34-test API and PGlite repository slice, 29 test files and 237 branch tests, strict TypeScript, full ESLint, Drizzle validation, generated-service-worker parity, documentation parity, and the Next.js Webpack production build. Kept plan commit `3dd44ab` and implementation commit `8747b5b` local.
+
 ## 2026-08-25: Private workout API boundary
 
 - Retained a fail-first test that couldn't resolve the private workout API module, then implemented start or resume, resume-read, and runner-operation route handlers.
