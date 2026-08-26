@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="c2253d89c35f6def8c03f3a73afc26639d1c1cebed4141893373d09d8ca6dfaa">
+  <meta name="source-sha256" content="e7aa93f9866d5fedf688eab80fb75ad19dfccb8a58d69a3988dd7bc709a34478">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -38,7 +38,7 @@
 <li>A strict Next.js 16.3.2 foundation with the approved route-atlas program overview, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout and analytics, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.</li>
 <li>Pure starter-program, equipment-substitution, program-draft editing, library-filter, canonical exercise-metadata, safe authenticated-return, double-progression eligibility, and persisted-data analytics domains.</li>
 <li>A verified baseline commit, <code>168f2a5</code>, from which bounded analytics, YouTube, and database worktrees were created.</li>
-<li>Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No Firebase project is configured yet.</li>
+<li>Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Firebase project <code>my-workout-pal-92819</code> exists on Spark, Firebase Authentication is initialized, and Email/Password is enabled. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. The web app, Google provider, authorized production origin, Admin credential, and local/Vercel Firebase variables remain unconfigured.</li>
 <li>A request-memoized viewer context is derived only from the revocation-aware Firebase Admin session result. It normalizes provider and display claims, keeps unverified password identities read-only, and never accepts a client-provided ownership key.</li>
 <li>The integrated owner-scoped workout repository and private workout API support start or resume, resumable-session reads, and idempotent runner operations. The route layer validates CSRF before authentication, authenticates before body parsing or database construction, rejects client ownership and lifecycle fields, enforces a 32 KiB body limit, returns <code>no-store</code>, and maps foreign resources and persistence failures to safe responses. Runner submissions carry the immutable base revision without a client outcome version; the server derives ownership and delegates through the runner-specific repository path. The browser adapter emits only that owner-free envelope and rejects malformed success responses before the runner can claim a save.</li>
 <li>Persisted workout resume hydration reconstructs confirmed set, cardio, note, skip, completion, and substitution state from immutable server rows. Owner-matched offline reconciliation preserves unrelated server progress, overlays only unresolved local targets, recognizes interrupted-but-confirmed responses, and turns unconfirmed local success into an explicit conflict.</li>
@@ -79,6 +79,7 @@
 </ul>
 <h2>Work in progress</h2>
 <ul>
+<li>Register the My Workout Pal Firebase web app, enable Google with a reviewed public name and support email, add the production origin to authorized domains, create the minimum Firebase Admin credential, and add the seven required values to ignored local and Vercel development/preview/production environments without printing them.</li>
 <li>Replay password and Google deletion plus dry-run/apply reconciliation with disposable configured Firebase identities after provider configuration.</li>
 <li>Replay create-both-profiles, clone, activate, edit, equipment-change, and workout-start flows in configured signed-in Chromium and WebKit sessions; inspect stored graphs and immutable history after each transition.</li>
 <li>Personally replay start, pending save, reload, offline interruption, retry, completion, and cross-account denial against configured Firebase identities and the owner-scoped database.</li>
@@ -137,10 +138,11 @@
 <h2>Blockers and credential gates</h2>
 <ul>
 <li>GitHub CLI is authenticated as <code>vdoshi96</code>. The public repository, default <code>main</code>, and Vercel Git connection are active.</li>
-<li>Firebase Console access is available in the signed-in in-app browser. The <code>My Workout Pal</code> creation form proposes project ID <code>my-workout-pal-c5b57</code>, but no project exists because the user must personally accept the Firebase terms. The optional Google Developer Programme enrollment is selected by default in that form, is not required for the application, and should be deselected unless the user explicitly wants it.</li>
-<li><code>YOUTUBE_API_KEY</code> is absent. <code>pnpm youtube:curate</code> refuses to run without it. Offline normalization, mechanical eligibility, ranking, checkpoint, and seed-validation tests do not require the key; discovery, quota-backed metadata hydration, final candidate selection, approval, exact-two production seed, and live production embed verification remain blocked.</li>
+<li>Firebase Console access is available in the signed-in in-app browser. The verified project is <code>my-workout-pal-92819</code>, project number <code>381810672975</code>, on Spark. Firebase Authentication is initialized and Email/Password is enabled. The project has no registered app, Google requires a public project name and support email before saving, and all seven local/Vercel Firebase variables are absent.</li>
+<li><code>YOUTUBE_API_KEY</code> is present in ignored <code>.env.local</code>; only presence was checked. A quota-backed API request and the complete review workflow have not passed yet. Offline normalization, mechanical eligibility, ranking, checkpoint, and seed-validation tests remain green historical evidence; production seeding still requires exact-two eligibility and full-watch approval for every required catalog target.</li>
+<li>The Vercel CLI is authenticated and confirms the linked project. The Vercel web dashboard reached the account&#39;s two-factor challenge, so Spend Management settings remain unverified until the user completes 2FA. No budget, notification, pause, billing, or paid-plan setting changed.</li>
 <li>No paid configuration changes are authorized.</li>
-<li>The user authorized push and deployment under the documented release plan. Public GitHub, Vercel production, native Git integration, and reviewed Neon migrations are complete. Firebase terms acceptance/configuration, the missing YouTube key, and Vercel dashboard sign-in for billing controls remain concrete gates. No paid plan or overage setting changed.</li>
+<li>The user authorized push and deployment under the documented release plan. Public GitHub, Vercel production, native Git integration, and reviewed Neon migrations are complete. Browser action-time confirmation remains required before Firebase creates the web app/API key or saves the support email. Vercel dashboard 2FA remains a user action. No paid plan or overage setting changed.</li>
 </ul>
 <h2>Worktrees</h2>
 <ul>

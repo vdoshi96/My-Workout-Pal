@@ -17,7 +17,7 @@
 - [Neon Vercel integration plan update](https://neon.com/docs/changelog/2025-11-07) — accessed August 25, 2026; confirms that Vercel integration users can select Neon's current Free plan rather than a paid legacy plan.
 - [Connect Vercel and Neon manually](https://neon.com/docs/guides/vercel-manual) — accessed August 25, 2026; confirms the canonical `DATABASE_URL` connection boundary and supported separation between Neon and Vercel configuration.
 - [Drizzle ORM Neon guide](https://orm.drizzle.team/docs/connect-neon) — accessed August 25, 2026; confirms the supported Neon serverless driver and Drizzle connection boundary used by migration, seed, and verification commands.
-- [Firebase CLI reference](https://firebase.google.com/docs/cli) — accessed August 25, 2026; confirms the official project, web-app, authentication configuration, and authenticated CLI workflow. The local CLI currently has no authorized Firebase account.
+- [Firebase CLI reference](https://firebase.google.com/docs/cli) — accessed August 25, 2026; confirms the official project, web-app, authentication configuration, and authenticated CLI workflow. The local Firebase CLI is not installed; the signed-in Firebase Console verified project `my-workout-pal-92819` and initialized Authentication on August 26, 2026.
 
 ## Private reference recording
 

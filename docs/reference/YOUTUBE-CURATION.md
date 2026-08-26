@@ -117,4 +117,4 @@ Official player references:
 
 ## Exact credential gate
 
-The environment has no `YOUTUBE_API_KEY`. Independent application, curation-code, seed-validation, fixture, and unavailable-state work can proceed. Discovery, quota-backed metadata hydration, final candidate selection, complete viewing, approval, exact-two production seed, and live production embed verification remain blocked until an authorized official YouTube Data API v3 key is available.
+Ignored `.env.local` contains `YOUTUBE_API_KEY`; only presence was verified on August 26, 2026. The key is not copied to Vercel because it is a local curation credential, not an application runtime dependency. Discovery must still pass a bounded official API request and record quota use. Final selection, complete viewing, approval, exact-two production seed, and live production embed verification remain release gates until every catalog-derived target completes the policy.

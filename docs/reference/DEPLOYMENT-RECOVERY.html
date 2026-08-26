@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="28d007a299acc3d3edbbee76d8929f009d5af55589ee2a254e29c55b8dcf2143">
+  <meta name="source-sha256" content="80aa6390ff8f068cb75641513db3d80e27b00a3df4287a01f0bf38fb301cdde2">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -121,10 +121,10 @@ pnpm account:reconcile -- --owner FIREBASE_UID --limit 1
 <h2>Credential and approval gates</h2>
 <ul>
 <li>GitHub source and Vercel Git integration are configured. Local, GitHub, and deployment commit metadata must still be checked after every release.</li>
-<li>Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.</li>
+<li>Firebase project <code>my-workout-pal-92819</code> exists on Spark. Firebase Authentication is initialized, and Email/Password is enabled. Web-app registration, Google provider configuration, authorized domains, email templates, Admin credentials, and local/Vercel variables remain pending. Browser confirmation is required immediately before creating the web app/API key or saving the support email. Terms or 2FA remain user actions when prompted.</li>
 <li>Neon is already connected on <code>free_v3</code>; any plan change, billing method, trial acceptance, or billable add-on requires the user.</li>
 <li>Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.</li>
-<li>YouTube curation requires an official API key and sufficient quota.</li>
+<li>Ignored <code>.env.local</code> contains the YouTube Data API key. Curation still requires a successful bounded request, sufficient quota, mechanical eligibility, full-watch approval, and exact-two seed validation.</li>
 </ul>
 
   </main>

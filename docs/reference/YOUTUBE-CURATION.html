@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="18124083836eda4433174d51e22ae7c6620318c298216b6434b878cadcca2e42">
+  <meta name="source-sha256" content="db14d42c99c4b239af1d7008b83c32f0ab72196e2a3325e63a3caf7c1c5faef5">
   <title>YouTube curation and video policy · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -118,7 +118,7 @@
 <li><a href="https://support.google.com/youtube/answer/171780?expand=PrivacyEnhancedMode&hl=en-GB">YouTube privacy-enhanced embedding</a></li>
 </ul>
 <h2>Exact credential gate</h2>
-<p>The environment has no <code>YOUTUBE_API_KEY</code>. Independent application, curation-code, seed-validation, fixture, and unavailable-state work can proceed. Discovery, quota-backed metadata hydration, final candidate selection, complete viewing, approval, exact-two production seed, and live production embed verification remain blocked until an authorized official YouTube Data API v3 key is available.</p>
+<p>Ignored <code>.env.local</code> contains <code>YOUTUBE_API_KEY</code>; only presence was verified on August 26, 2026. The key is not copied to Vercel because it is a local curation credential, not an application runtime dependency. Discovery must still pass a bounded official API request and record quota use. Final selection, complete viewing, approval, exact-two production seed, and live production embed verification remain release gates until every catalog-derived target completes the policy.</p>
 
   </main>
 </body>

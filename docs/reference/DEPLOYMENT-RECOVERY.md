@@ -126,7 +126,7 @@ Publish a new cache version, retain pending IndexedDB operations, and remove onl
 ## Credential and approval gates
 
 - GitHub source and Vercel Git integration are configured. Local, GitHub, and deployment commit metadata must still be checked after every release.
-- Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.
+- Firebase project `my-workout-pal-92819` exists on Spark. Firebase Authentication is initialized, and Email/Password is enabled. Web-app registration, Google provider configuration, authorized domains, email templates, Admin credentials, and local/Vercel variables remain pending. Browser confirmation is required immediately before creating the web app/API key or saving the support email. Terms or 2FA remain user actions when prompted.
 - Neon is already connected on `free_v3`; any plan change, billing method, trial acceptance, or billable add-on requires the user.
 - Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.
-- YouTube curation requires an official API key and sufficient quota.
+- Ignored `.env.local` contains the YouTube Data API key. Curation still requires a successful bounded request, sufficient quota, mechanical eligibility, full-watch approval, and exact-two seed validation.
