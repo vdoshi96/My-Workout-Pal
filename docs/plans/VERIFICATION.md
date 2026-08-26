@@ -24,12 +24,14 @@ Keep the newest completed run under `docs/qa/latest/`. A concise Markdown note a
 
 - `pnpm typecheck` with strict TypeScript and no ignored errors.
 - `pnpm lint` with Next.js, React, accessibility, import, and project rules.
-- `pnpm format:check` for maintained source and documentation.
 - `pnpm test:unit` for calculations, conversions, progression, equipment compatibility, substitutions, revision rules, YouTube normalization and ranking, and state reducers.
 - `pnpm test:integration` for repositories, migrations, auth session helpers, CSRF, ownership, idempotency, deletion saga, and curation persistence.
 - `pnpm db:check` for empty migration, upgrade migration, constraints, rollback policy, and generated-schema drift.
 - `pnpm seed:check` for exact starter days, defaults, aliases, compatibility, and exactly two approved videos per required canonical variation.
 - `pnpm docs:check` for Markdown and HTML parity.
+- `pnpm build` for the exact Next.js 16.3.2 Webpack production boundary.
+
+`pnpm verify` runs that complete non-browser gate in the listed order. `pnpm verify:release` then adds the isolated public Playwright release matrix. The credential-free authenticated harness uses the separate `pnpm test:e2e:authenticated` boundary because it builds and starts a fixture server with synthetic viewers; hosted Firebase/provider evidence remains separate again.
 
 ## Security matrix
 

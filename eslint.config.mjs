@@ -8,6 +8,7 @@ export default defineConfig([
   globalIgnores([
     ".next/**",
     "coverage/**",
+    "tests/fixtures/authenticated-app/.next-authenticated/**",
     "playwright-report/**",
     "test-results/**",
     "docs/**/*.html",

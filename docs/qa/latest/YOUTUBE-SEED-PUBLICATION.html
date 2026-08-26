@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="0293e6b45b69f806ec5c203716d4af188e6d8a1f231be6e9fcab85409e22ced5">
+  <meta name="source-sha256" content="379efb505b4888a3680349df0b9481372806800419294da17c60160ae6d25ac4">
   <title>YouTube seed publication checkpoint · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -79,12 +79,11 @@
 <li><code>/library/dumbbell-romanian-deadlift</code>, whose HTML contains <code>KrRtk8KbJik</code> and <code>MprE4ppd27U</code> and omits rejected <code>tH0stBpF7ko</code>.</li>
 </ul>
 <p>A strengthened manifest-driven replay covered all 27 <code>/library/&lt;slug&gt;</code> routes and required HTTP/2 <code>200</code>, exactly the two unique approved IDs for that mapping, Approved pair copy, no manual-review-pending or incomplete-human-review copy, exactly one iframe, exactly one <code>youtube-nocookie</code> embed using display order 1, and the corresponding direct fallback. Result: 27 routes, 27 passing, zero failures. <code>vercel logs --level error --since 24h</code> returned no entries.</p>
-<p>The user&#39;s existing Firefox session then opened the exact protected preview directly, without changing deployment protection. Each corrected representative route rendered two approved tabs, visible title/channel attribution, a direct fallback, and one <code>youtube-nocookie</code> iframe at a time. Switching to Demo 2 produced the interaction-rendered second fallback, live English captions, and Firefox&#39;s playing indicator for both <code>mHBOUz9KY9A</code> and <code>MprE4ppd27U</code>, proving real playback of the corrected selections. This is catalog-complete SSR plus representative browser playback; it does not claim the remaining phone/tablet/desktop, keyboard, reduced-motion, dark-mode, reflow, Axe, unavailable-fallback, authenticated-runner, or production matrix.</p>
+<p>The user&#39;s existing Firefox session then opened the exact protected preview directly, without changing deployment protection. Each corrected representative route rendered two approved tabs, visible title/channel attribution, a direct fallback, and one <code>youtube-nocookie</code> iframe at a time. Switching to Demo 2 produced the interaction-rendered second fallback, live English captions, and Firefox&#39;s playing indicator for both <code>mHBOUz9KY9A</code> and <code>MprE4ppd27U</code>, proving real playback of the corrected selections. The later production guest replay independently proved the same two-tab/attribution/direct-fallback/one-iframe contract and Demo 2 switching on the public alias, but did not capture a production playing indicator. Together these are catalog-complete SSR, representative protected-preview playback, and production UI integration; they do not claim the remaining unavailable-fallback, authenticated-runner, or production playback-indicator matrix.</p>
 <h2>Remaining release evidence</h2>
 <ul>
-<li>Extend the representative Firefox playback to the protected preview&#39;s phone, tablet, desktop, keyboard, reduced-motion, dark-mode, reflow, Axe, direct-fallback, and authenticated-runner matrix.</li>
-<li>Replay keyboard tab selection, one active non-autoplay iframe, direct fallback, dark mode, reduced motion, 200 percent reflow, Axe, and real playback.</li>
-<li>Repeat the representative pair and fallback checks on production after promotion, then inspect runtime logs.</li>
+<li>Extend representative playback to the authenticated runner and unavailable-first fallback while preserving keyboard, reduced-motion, dark-mode, reflow, and Axe behavior.</li>
+<li>Capture a real playing indicator and unavailable-first fallback on the current public production alias, then inspect runtime logs.</li>
 </ul>
 
   </main>
