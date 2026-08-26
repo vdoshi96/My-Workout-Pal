@@ -505,6 +505,9 @@ test("an accepted runner save reconciles after an error response, replays once, 
       `GET /workout/${unknownId} 404`,
     ].sort(),
   );
+  expect(alice.failedResponses).toEqual([
+    `POST /api/app/workouts/${sessionId}/operations 500`,
+  ]);
 
   await alice.page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));
   await bob.close();
