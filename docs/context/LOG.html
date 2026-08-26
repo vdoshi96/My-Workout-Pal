@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="70dbc662095361a1109732a5d407b56a4a80b74dc021c01d85fe59def3139b62">
+  <meta name="source-sha256" content="a4af440fcaf20f8ff12355641a87ff1cd9d9099fb2fa9933953212a6a15acb65">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -33,6 +33,7 @@
 <li>Verified the user-created Firebase project <code>my-workout-pal-92819</code>, project number <code>381810672975</code>, on Spark in the signed-in Firebase Console. The earlier staged project ID was only a proposal and was never created.</li>
 <li>Initialized Firebase Authentication and enabled Email/Password while leaving email-link, phone, anonymous, Identity Platform, and paid services off. The project still has no registered web app, and Google remains unsaved pending the reviewed public name and support email.</li>
 <li>Confirmed without printing values that ignored <code>.env.local</code> contains <code>YOUTUBE_API_KEY</code> and no Firebase public or Admin value. Confirmed that Vercel development, preview, and production contain only the Neon-managed variables and no Firebase variable.</li>
+<li>Retained a focused failure proving that <code>pnpm youtube:curate</code> did not load <code>.env.local</code>, then corrected the package command. The focused test and all 36 YouTube unit tests pass with strict TypeScript and scoped lint. A zero-quota command smoke loaded the credential without making an API request and produced the expected 27-target <code>quota-blocked</code> private report.</li>
 <li>Reached the Vercel dashboard&#39;s two-factor challenge through the existing account. Spend Management remains read-only-unverified until the user completes 2FA; no billing, budget, notification, pause, plan, or overage control changed.</li>
 <li>Created the <code>release/firebase-youtube-completion</code> branch from clean released SHA <code>08ba5773d700683d646b14f2df3cd6d942dee214</code> for reversible setup, curation, authenticated QA, and release checkpoints.</li>
 </ul>

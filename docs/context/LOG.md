@@ -5,6 +5,7 @@
 - Verified the user-created Firebase project `my-workout-pal-92819`, project number `381810672975`, on Spark in the signed-in Firebase Console. The earlier staged project ID was only a proposal and was never created.
 - Initialized Firebase Authentication and enabled Email/Password while leaving email-link, phone, anonymous, Identity Platform, and paid services off. The project still has no registered web app, and Google remains unsaved pending the reviewed public name and support email.
 - Confirmed without printing values that ignored `.env.local` contains `YOUTUBE_API_KEY` and no Firebase public or Admin value. Confirmed that Vercel development, preview, and production contain only the Neon-managed variables and no Firebase variable.
+- Retained a focused failure proving that `pnpm youtube:curate` did not load `.env.local`, then corrected the package command. The focused test and all 36 YouTube unit tests pass with strict TypeScript and scoped lint. A zero-quota command smoke loaded the credential without making an API request and produced the expected 27-target `quota-blocked` private report.
 - Reached the Vercel dashboard's two-factor challenge through the existing account. Spend Management remains read-only-unverified until the user completes 2FA; no billing, budget, notification, pause, plan, or overage control changed.
 - Created the `release/firebase-youtube-completion` branch from clean released SHA `08ba5773d700683d646b14f2df3cd6d942dee214` for reversible setup, curation, authenticated QA, and release checkpoints.
 
