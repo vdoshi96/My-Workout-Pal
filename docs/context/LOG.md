@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Private workout API boundary
+
+- Retained a fail-first test that couldn't resolve the private workout API module, then implemented start or resume, resume-read, and runner-operation route handlers.
+- Enforced CSRF before viewer resolution, viewer eligibility before body parsing, a 32 KiB request limit, strict owner-free Zod payloads, canonical measurement shapes, and lazy database construction.
+- Returned `no-store` on success and failure, hid foreign workout ownership behind `404`, preserved expired-session responses, and mapped unexpected persistence errors without exposing internal details.
+- Passed 16 API contract tests, the 28-test API and PGlite repository slice, 29 test files and 231 branch tests, strict TypeScript, full ESLint, Drizzle validation, generated-service-worker parity, documentation parity, and a Next.js Webpack production build.
+- Observed the built server return `401` with `no-store` for an unauthenticated resume and `403` with `no-store` for a cross-origin start. Kept commit `bd6fd4c` local on `agent/workout-repository` because merge, push, and deployment require explicit user approval.
+
 ## 2026-08-25: Transactional Neon bootstrap
 
 - Wrote the operator plan before implementation, then retained the focused missing-module failure before adding the seeder.

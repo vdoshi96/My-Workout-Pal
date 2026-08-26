@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="187fb014f4fd3a53d056772469cba50b9bb2396e79efb63e0ab0660d2adffcee">
+  <meta name="source-sha256" content="e19bbf01589e3d597b037b865edb515f6d36e0429b24d53abc9d8e33f4fdd46b">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Private workout API boundary</h2>
+<ul>
+<li>Retained a fail-first test that couldn&#39;t resolve the private workout API module, then implemented start or resume, resume-read, and runner-operation route handlers.</li>
+<li>Enforced CSRF before viewer resolution, viewer eligibility before body parsing, a 32 KiB request limit, strict owner-free Zod payloads, canonical measurement shapes, and lazy database construction.</li>
+<li>Returned <code>no-store</code> on success and failure, hid foreign workout ownership behind <code>404</code>, preserved expired-session responses, and mapped unexpected persistence errors without exposing internal details.</li>
+<li>Passed 16 API contract tests, the 28-test API and PGlite repository slice, 29 test files and 231 branch tests, strict TypeScript, full ESLint, Drizzle validation, generated-service-worker parity, documentation parity, and a Next.js Webpack production build.</li>
+<li>Observed the built server return <code>401</code> with <code>no-store</code> for an unauthenticated resume and <code>403</code> with <code>no-store</code> for a cross-origin start. Kept commit <code>bd6fd4c</code> local on <code>agent/workout-repository</code> because merge, push, and deployment require explicit user approval.</li>
+</ul>
 <h2>2026-08-25: Transactional Neon bootstrap</h2>
 <ul>
 <li>Wrote the operator plan before implementation, then retained the focused missing-module failure before adding the seeder.</li>

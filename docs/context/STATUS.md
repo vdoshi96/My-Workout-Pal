@@ -14,6 +14,7 @@ Authenticated repositories and runner-surface integration after the verified gue
 - A verified baseline commit, `168f2a5`, from which bounded analytics, YouTube, and database worktrees were created.
 - Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No Firebase project is configured yet.
 - A request-memoized viewer context is derived only from the revocation-aware Firebase Admin session result. It normalizes provider and display claims, keeps unverified password identities read-only, and never accepts a client-provided ownership key.
+- An isolated owner-scoped workout repository and private workout API support start or resume, resumable-session reads, and idempotent runner operations. The route layer validates CSRF before authentication, authenticates before body parsing or database construction, rejects client ownership fields, enforces a 32 KiB body limit, returns `no-store`, and maps foreign resources and persistence failures to safe responses.
 - A nonce-based strict Content Security Policy and companion browser security headers. Next.js request rendering applies a fresh nonce to framework output; the YouTube referrer and Firebase popup policies are explicit.
 - Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.
 - All 27 canonical starter exercises have original route cues, movement families, aliases, and primary-muscle metadata. Library search includes those fields while still applying equipment compatibility first.
@@ -29,8 +30,8 @@ Authenticated repositories and runner-surface integration after the verified gue
 
 ## Work in progress
 
-- Finish direct review and integration of the owner-scoped IndexedDB adapter and active runner component after their recovery-race correction passes.
-- Add owner-scoped repositories and authenticated program, runner, history, records, analytics, settings, and account-lifecycle surfaces after the schema corrections land.
+- Integrate the isolated workout repository and private route checkpoint with the authenticated shell and active runner after the user authorizes a merge.
+- Connect runner operations to the private API and replay authenticated start, resume, save, retry, completion, and interruption flows after Firebase and database test credentials are available.
 - Verify the service worker and offline fallback against a production server rather than the development server.
 
 ## Verification run
@@ -53,6 +54,7 @@ Authenticated repositories and runner-surface integration after the verified gue
 - Playwright CLI personally replayed the guest equipment switch, Pull substitution, day links, library compatibility search and recovery, exercise detail approval gate, and desktop sample analytics. Phone inspection found and verified fixes for the desktop navigation overlap, mobile route stamp collision, dev watcher loop, and exercise-detail horizontal overflow.
 - A production-server Playwright replay on Chromium phone confirmed that an opened Push route reloads from the public cache with the network disabled, `/sign-in` is absent from that cache, and the app announces the interruption after a same-origin reachability probe. The equivalent service-worker-control case is skipped on WebKit because Playwright documents service-worker support as Chromium-only; ordinary WebKit product flows remain part of the broader browser matrix.
 - Auth tests cover duplicate and invalid client errors, CSRF mismatch and cross-origin denial, malformed identity input, absent server credentials, unverified permanent mutations, recent-auth deletion gates, expired and revoked sessions, and cross-user denial. Live provider success cannot run before Firebase credentials exist.
+- The isolated workout branch passes 29 test files and 231 tests serially, strict TypeScript, full ESLint, Drizzle metadata validation, generated-service-worker parity, documentation parity, and the Next.js Webpack production build. The workout API contract contributed 16 tests. A local production-server smoke observed `401` with `no-store` for an unauthenticated resume and `403` with `no-store` for a cross-origin start.
 
 ## Blockers and credential gates
 
@@ -60,6 +62,7 @@ Authenticated repositories and runner-surface integration after the verified gue
 - Firebase project and Admin credentials are absent.
 - `YOUTUBE_API_KEY` is absent. `pnpm youtube:curate` refuses to run without it. Offline normalization, mechanical eligibility, ranking, checkpoint, and seed-validation tests do not require the key; discovery, quota-backed metadata hydration, final candidate selection, approval, exact-two production seed, and live production embed verification remain blocked.
 - No paid configuration changes are authorized.
+- The user requires explicit approval before any push, merge, deployment, or production mutation. The verified workout checkpoint remains local and isolated.
 
 ## Worktrees
 
@@ -67,5 +70,4 @@ Authenticated repositories and runner-surface integration after the verified gue
 - The completed YouTube worktree was integrated through `6b633b0`; its selected files matched the reviewed worktree before cleanup.
 - The completed database worktree was integrated through `ff3d69c`, compared for selected-file equality, and removed.
 - The completed runner worktree was integrated through `785db9a`; its selected files matched the reviewed worktree before cleanup.
-- `/private/tmp/mwp-runner-storage` on `agent/runner-storage`: final corrected IndexedDB adapter is awaiting integration after direct review.
-- `/private/tmp/mwp-runner-ui` on `agent/runner-ui`: active runner component is correcting serialized persistence/sync and owner-switch restoration races found in direct review.
+- `/private/tmp/mwp-workout-repository` on `agent/workout-repository`: the owner-scoped repository and private API are verified through local commit `bd6fd4c` and await explicit merge authorization. This is the only non-main worktree.
