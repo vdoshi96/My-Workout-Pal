@@ -972,12 +972,18 @@ export async function curateYouTubeCandidates(options: Readonly<{
   }
 
   const quotaBlockedReason = searchBlockedReason ?? hydrationBlockedReason;
-  const status: CurationReport["status"] = quotaBlockedReason
+  const allTargetsHaveCompleteDiscovery = targets.length > 0
+    && proposedPairs.length === targets.length
+    && proposedPairs.every((pair) => pair.discoveryStatus !== "discovery-incomplete");
+  const effectiveQuotaBlockedReason = allTargetsHaveCompleteDiscovery
+    ? undefined
+    : quotaBlockedReason;
+  const status: CurationReport["status"] = effectiveQuotaBlockedReason
     ? "quota-blocked"
     : targets.length === 0
         ? "blocked"
         : "ready-for-review";
-  const blockedReason = quotaBlockedReason
+  const blockedReason = effectiveQuotaBlockedReason
     ?? (targets.length === 0 ? "No curation targets were provided." : undefined);
   if (blockedReason) checkpoint.blockedReason = blockedReason;
   else delete checkpoint.blockedReason;

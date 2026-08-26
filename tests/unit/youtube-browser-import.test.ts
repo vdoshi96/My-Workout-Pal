@@ -376,6 +376,7 @@ describe("private browser-discovered YouTube candidate import", () => {
 
       expect(result.checkpoint.completedQueries).toEqual([]);
       expect(result.checkpoint.quota.searchRequests).toBe(0);
+      expect(result.report.status).toBe("ready-for-review");
       expect(result.report.candidates).toHaveLength(ids.length);
       expect(result.report.candidates.every((candidate) => candidate.decision.rejectionCodes.includes("not-syndicated"))).toBe(true);
       expect(result.report.proposedPairs).toEqual([
