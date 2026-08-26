@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="9130271f23a245aa021f32a6cf5c364bff2b314c8592178a08ecf99c6c808fe1">
+  <meta name="source-sha256" content="86d760abad71560c9c68e2968314ac8f43f287938162fb1076771b01abe14adb">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Deterministic current-main verification</h2>
+<ul>
+<li>Ran the complete current-main matrix after the training-insights, PWA, and strict-CSP checkpoints. The first default fully parallel Vitest run passed 328 of 331 assertions but timed out three separate PGlite integration files at five seconds; none reported an assertion or product failure.</li>
+<li>Replayed all tests with file parallelism disabled and passed 52 files and 331 assertions. Encoded that proven scheduling policy in Vitest configuration, then ran the ordinary unmodified command and passed the same 52/331 matrix in 69.17 seconds.</li>
+<li>Passed strict TypeScript, full ESLint, Drizzle metadata validation, generated service-worker parity, 25 Markdown/HTML pairs, and the webpack production build.</li>
+<li>Against the local production server, the PWA offline E2E passed on Chromium phone, tablet, and desktop. The WebKit phone case remained intentionally skipped because the service-worker control path is unsupported by Playwright.</li>
+<li>Created local commit <code>5091a62</code> after inspecting the one-file diff stat. Main remained local and clean; no push, merge, deployment, migration, Firebase project creation, or production mutation occurred.</li>
+</ul>
 <h2>2026-08-25: Installable PWA surface and strict-CSP visual correction</h2>
 <ul>
 <li>Retained a missing-state-module failure before adding pure standalone, captured-prompt, dismissal, and replacement-worker rules. Three focused state cases and all 17 existing public-cache cases pass.</li>

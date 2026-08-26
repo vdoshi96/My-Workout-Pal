@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="2c6e0c2656476b29609524ff89d56cfbf290a92d4574ed724bd0dffdc7a36cf1">
+  <meta name="source-sha256" content="8a00c05586084321c048c8b04148aefa8745a263f08ee38aa08e9870a3d95844">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -110,6 +110,7 @@
 <li>Training-insights TDD retained the initial missing-repository-module failure and then passed five PGlite integration cases for terminal cursor pagination, immutable detail, foreign-session hiding, exact PR ties, owner isolation, completed-only analytics, time-zone grouping, and malformed input. Presentation TDD retained a missing-presenter failure and then passed four canonical-unit, duration, time-zone, and record-label cases. Strict TypeScript, scoped lint, the combined 9-test matrix, and <code>next build --webpack</code> pass; the build lists <code>/app/history</code>, <code>/app/history/[sessionId]</code>, <code>/app/progress</code>, and <code>/app/prs</code> as dynamic routes. Signed-in browser replay remains blocked until a Firebase project is created and configured, so this is local build evidence rather than live account-flow proof.</li>
 <li>PWA install/update TDD retained the missing-state-module failure and then passed three install/standalone/update cases alongside 17 public-cache cases. Production-browser replay at 390 by 844 and 1280 by 900 showed the optional install landmark, keyboard dismissal, session-scoped dismissal after reload, accepted-choice closure, and the offline announcement. The generated service worker and webpack build pass. The existing dev server remained in its documented stale-loader state, so only the production-server replay is evidence.</li>
 <li>That replay exposed five production CSP errors from waypoint style attributes. A fail-first source-policy test named all three TSX offenders; the correction moved fixed geometry to classes and personal progress to a labeled semantic meter. Home and sample progress then rendered their intended route/chart geometry with zero browser console errors under the strict nonce policy. Authenticated meter rendering is source-, type-, lint-, and build-verified but still awaits configured sign-in replay.</li>
+<li>The first current-main default Vitest run passed 328 assertions but produced three unrelated PGlite file timeouts under full file parallelism. An explicit sequential replay passed all 52 files and 331 tests. Vitest now encodes <code>fileParallelism: false</code>; the ordinary unmodified run then passed the same 52/331 matrix in 69.17 seconds. Current main also passes strict TypeScript, full ESLint, Drizzle metadata validation, generated PWA parity, 25 documentation pairs, and the webpack production build. Production-server E2E passes Chromium phone, tablet, and desktop; the WebKit phone service-worker case remains intentionally skipped because Playwright does not support that path.</li>
 </ul>
 <h2>Blockers and credential gates</h2>
 <ul>

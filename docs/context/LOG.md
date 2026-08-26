@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Deterministic current-main verification
+
+- Ran the complete current-main matrix after the training-insights, PWA, and strict-CSP checkpoints. The first default fully parallel Vitest run passed 328 of 331 assertions but timed out three separate PGlite integration files at five seconds; none reported an assertion or product failure.
+- Replayed all tests with file parallelism disabled and passed 52 files and 331 assertions. Encoded that proven scheduling policy in Vitest configuration, then ran the ordinary unmodified command and passed the same 52/331 matrix in 69.17 seconds.
+- Passed strict TypeScript, full ESLint, Drizzle metadata validation, generated service-worker parity, 25 Markdown/HTML pairs, and the webpack production build.
+- Against the local production server, the PWA offline E2E passed on Chromium phone, tablet, and desktop. The WebKit phone case remained intentionally skipped because the service-worker control path is unsupported by Playwright.
+- Created local commit `5091a62` after inspecting the one-file diff stat. Main remained local and clean; no push, merge, deployment, migration, Firebase project creation, or production mutation occurred.
+
 ## 2026-08-25: Installable PWA surface and strict-CSP visual correction
 
 - Retained a missing-state-module failure before adding pure standalone, captured-prompt, dismissal, and replacement-worker rules. Three focused state cases and all 17 existing public-cache cases pass.
