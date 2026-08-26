@@ -1,5 +1,15 @@
 # Project log
 
+## 2026-08-25: Owned program collection
+
+- Wrote the complete collection plan before implementation, then retained a failing migration/schema suite before adding `user_programs.is_active`, deterministic upgrade backfill, and the partial unique owner-active index in migration `0003_program_collection`.
+- Added owner-safe create-from-starter, full current-revision clone, and activation transactions. They cap an owner at 24 roots, create distinct descendant identities, preserve compatible custom references and editable meaning, synchronize active equipment, reject inactive equipment changes and workout starts, and lock idempotency records so concurrent identical requests collapse.
+- Retained repository failures for stale migration fixtures before applying the complete local migration sequence. The final collection repository matrix covers both equipment profiles, owner custom-exercise clone fidelity, source immutability, later-switch replay, concurrent replay, foreign, stale, unverified, over-limit, and inactive-program paths.
+- Retained a missing-route failure before adding private create/clone and activation handlers. The endpoints enforce CSRF before the verified server viewer, bound strict owner-free JSON, return private no-store responses, and keep foreign and missing identities indistinguishable.
+- Retained missing client-model and retry-key failures before implementing runtime success validation and interrupted retry identity. Added `/app/programs` with one textual active state, create-both-profiles controls, independent-clone review, activation, verification gating, truthful pending/error copy, responsive cards, and keyboard-focused native dialog behavior. The active overview now links to the collection.
+- Local commits `67faa09`, `aeb79e4`, `de42dbe`, `287f051`, and `62bfa65` form the reviewable plan, migration, repository, API, and UI checkpoints. The complete branch passes strict TypeScript, full ESLint, 63 test files and 419 tests, generated PWA parity, 26-document parity, Drizzle metadata validation, the webpack production build, and the public regression matrix with 39 passes and one documented WebKit service-worker skip.
+- No push, deployment, production migration, Firebase project creation, YouTube discovery request, or billing change occurred. Authenticated browser replay remains gated by Firebase project terms/configuration; the public browser result is not presented as signed-in collection proof.
+
 ## 2026-08-25: Public release browser baseline
 
 - Added one reproducible `pnpm test:e2e:release` command that builds the application, starts an isolated production server on port 3108, and runs the complete Playwright matrix without reusing an unrelated development server.

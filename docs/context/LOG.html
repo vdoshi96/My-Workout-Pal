@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="c45321ea5de502ed4d0fd15d39a705a7aba29dae7ba47bf80fd49586e34152fd">
+  <meta name="source-sha256" content="a39b6346e60e5b8db8c8b63bbdfdb3788d78d7cde3227913f673612927fd5bce">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,16 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Owned program collection</h2>
+<ul>
+<li>Wrote the complete collection plan before implementation, then retained a failing migration/schema suite before adding <code>user_programs.is_active</code>, deterministic upgrade backfill, and the partial unique owner-active index in migration <code>0003_program_collection</code>.</li>
+<li>Added owner-safe create-from-starter, full current-revision clone, and activation transactions. They cap an owner at 24 roots, create distinct descendant identities, preserve compatible custom references and editable meaning, synchronize active equipment, reject inactive equipment changes and workout starts, and lock idempotency records so concurrent identical requests collapse.</li>
+<li>Retained repository failures for stale migration fixtures before applying the complete local migration sequence. The final collection repository matrix covers both equipment profiles, owner custom-exercise clone fidelity, source immutability, later-switch replay, concurrent replay, foreign, stale, unverified, over-limit, and inactive-program paths.</li>
+<li>Retained a missing-route failure before adding private create/clone and activation handlers. The endpoints enforce CSRF before the verified server viewer, bound strict owner-free JSON, return private no-store responses, and keep foreign and missing identities indistinguishable.</li>
+<li>Retained missing client-model and retry-key failures before implementing runtime success validation and interrupted retry identity. Added <code>/app/programs</code> with one textual active state, create-both-profiles controls, independent-clone review, activation, verification gating, truthful pending/error copy, responsive cards, and keyboard-focused native dialog behavior. The active overview now links to the collection.</li>
+<li>Local commits <code>67faa09</code>, <code>aeb79e4</code>, <code>de42dbe</code>, <code>287f051</code>, and <code>62bfa65</code> form the reviewable plan, migration, repository, API, and UI checkpoints. The complete branch passes strict TypeScript, full ESLint, 63 test files and 419 tests, generated PWA parity, 26-document parity, Drizzle metadata validation, the webpack production build, and the public regression matrix with 39 passes and one documented WebKit service-worker skip.</li>
+<li>No push, deployment, production migration, Firebase project creation, YouTube discovery request, or billing change occurred. Authenticated browser replay remains gated by Firebase project terms/configuration; the public browser result is not presented as signed-in collection proof.</li>
+</ul>
 <h2>2026-08-25: Public release browser baseline</h2>
 <ul>
 <li>Added one reproducible <code>pnpm test:e2e:release</code> command that builds the application, starts an isolated production server on port 3108, and runs the complete Playwright matrix without reusing an unrelated development server.</li>

@@ -9,6 +9,7 @@ Use the following documents as the maintained project map:
 - `docs/context/SOURCES.md`: source provenance and publication constraints.
 - `docs/plans/PRODUCT-ARCHITECTURE.md`: application, data, security, and recovery design.
 - `docs/plans/SURFACES.md`: route-by-route implementation plans and evidence requirements.
+- `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
 - `docs/plans/VERIFICATION.md`: automated and manual release matrix.
 - `docs/design/DIRECTION.md`: original visual world and interaction grammar.
 - `docs/design/PROGRAM-OVERVIEW.md`: approved comp and implementation inventory.

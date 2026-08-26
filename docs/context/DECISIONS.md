@@ -12,6 +12,14 @@ Guest equipment and runner interactions remain in memory or tab-scoped browser s
 
 Editing a program creates a revision. Starting a workout snapshots the relevant prescription and exercise meaning. Later program or catalog edits do not alter completed or in-progress history.
 
+## 2026-08-25: Keep one explicit active owned program
+
+An owner may keep up to 24 program roots, but exactly one root is active after onboarding. A partial unique database index enforces at most one active root; repository transactions enforce that a nonempty collection never finishes with zero active roots. Reads do not guess from starter keys or timestamps when the invariant is corrupt.
+
+Creating from a starter or cloning an owned revision creates an independent root and activates it atomically. Clones share canonical catalog and owner custom-exercise identities but receive new revision and descendant record IDs. Activating another root creates no revision and cannot mutate either graph or any workout snapshot.
+
+The account equipment profile is the current active-program projection. Activation updates that projection to the target revision's equipment profile so the compatible library and new workout starts remain coherent. Equipment confirmation is allowed only for the active root and creates a new revision there; inactive roots and historical workouts remain unchanged.
+
 ## 2026-08-25: Keep the deletion job outside profile ownership
 
 The account-deletion saga record is keyed by the server-derived Firebase UID but has no foreign key to `user_profiles`. It must survive the owned-data transaction so Firebase deletion can be retried after fitness data and the profile are gone. The job stores only bounded phase, status, attempt, idempotency hash, and safe error-code metadata. Migration `0001_account_deletion_saga` refuses to run if legacy job rows exist, requiring explicit review instead of inventing resumable state. This migration is checked in and tested locally but has not been applied to Neon.
