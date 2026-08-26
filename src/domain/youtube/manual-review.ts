@@ -1,8 +1,13 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import {
+  getYouTubeEmbedVerificationKey,
+  loadYouTubeEmbedVerificationEvidence,
+} from "./embed-evidence.ts";
 import { normalizeYouTubeReference } from "./normalization.ts";
 import type {
+  ManualYouTubeInstructionEvidence,
   ManualYouTubeReviewBlocker,
   ManualYouTubeReviewDecision,
   ManualYouTubeReviewFile,
@@ -44,6 +49,7 @@ function isRejectionReason(value: unknown): value is ManualYouTubeRejectionReaso
     "no-material-value",
     "unavailable",
     "non-english",
+    "shorts-content",
     "other-policy-rejection",
   ].includes(String(value));
 }
@@ -55,6 +61,10 @@ function isBlockerReason(value: unknown): value is ManualYouTubeReviewBlocker {
     "visual-evidence-unavailable",
     "audio-evidence-unavailable",
   ].includes(String(value));
+}
+
+function isInstructionEvidence(value: unknown): value is ManualYouTubeInstructionEvidence {
+  return value === "narration" || value === "captions" || value === "visual";
 }
 
 function validateRecord(value: unknown): ManualYouTubeReviewRecord {
@@ -69,7 +79,6 @@ function validateRecord(value: unknown): ManualYouTubeReviewRecord {
   const booleanFields = [
     "fullWatchConfirmed",
     "visualReviewConfirmed",
-    "audioReviewConfirmed",
     "exactVariation",
     "conciseInstruction",
     "safeInstruction",
@@ -94,6 +103,10 @@ function validateRecord(value: unknown): ManualYouTubeReviewRecord {
 
   const rejectionReason = value["rejectionReason"];
   const blockerReason = value["blockerReason"];
+  const instructionEvidence = value["instructionEvidence"];
+  if (instructionEvidence !== undefined && !isInstructionEvidence(instructionEvidence)) {
+    throw new Error("Manual YouTube review instruction evidence is invalid.");
+  }
   if (value["decision"] === "rejected" && !isRejectionReason(rejectionReason)) {
     throw new Error("A rejected manual YouTube review requires a stable rejection reason.");
   }
@@ -116,8 +129,8 @@ function validateRecord(value: unknown): ManualYouTubeReviewRecord {
     if (!playbackCompletedAt || value["fullWatchConfirmed"] !== true) {
       throw new Error("An approved manual YouTube review requires completed full-watch evidence.");
     }
-    if (value["visualReviewConfirmed"] !== true || value["audioReviewConfirmed"] !== true) {
-      throw new Error("An approved manual YouTube review requires visual and audio review evidence.");
+    if (value["visualReviewConfirmed"] !== true || !isInstructionEvidence(instructionEvidence)) {
+      throw new Error("An approved manual YouTube review requires a full visual review and truthful narration, captions, or visual instruction evidence.");
     }
     if (
       value["exactVariation"] !== true
@@ -140,7 +153,7 @@ function validateRecord(value: unknown): ManualYouTubeReviewRecord {
     ...(playbackCompletedAt ? { playbackCompletedAt } : {}),
     fullWatchConfirmed: value["fullWatchConfirmed"] as boolean,
     visualReviewConfirmed: value["visualReviewConfirmed"] as boolean,
-    audioReviewConfirmed: value["audioReviewConfirmed"] as boolean,
+    ...(isInstructionEvidence(instructionEvidence) ? { instructionEvidence } : {}),
     exactVariation: value["exactVariation"] as boolean,
     conciseInstruction: value["conciseInstruction"] as boolean,
     safeInstruction: value["safeInstruction"] as boolean,
@@ -155,7 +168,7 @@ function reviewPath(stateDirectory: string): string {
 }
 
 function emptyReviewFile(updatedAt: string): ManualYouTubeReviewFile {
-  return { schemaVersion: 1, updatedAt, reviews: {} };
+  return { schemaVersion: 2, updatedAt, reviews: {} };
 }
 
 export async function loadManualYouTubeReviews(stateDirectory: string): Promise<ManualYouTubeReviewFile> {
@@ -166,17 +179,26 @@ export async function loadManualYouTubeReviews(stateDirectory: string): Promise<
     if (isRecord(error) && error["code"] === "ENOENT") return emptyReviewFile(new Date(0).toISOString());
     throw error;
   }
-  if (!isRecord(parsed) || parsed["schemaVersion"] !== 1 || !isRecord(parsed["reviews"])) {
+  if (!isRecord(parsed) || (parsed["schemaVersion"] !== 1 && parsed["schemaVersion"] !== 2) || !isRecord(parsed["reviews"])) {
     throw new Error("Manual YouTube review file has an unsupported schema.");
   }
+  const isLegacy = parsed["schemaVersion"] === 1;
   const reviews: Record<string, ManualYouTubeReviewRecord> = {};
   for (const [key, value] of Object.entries(parsed["reviews"])) {
-    const record = validateRecord(value);
+    const migrated = isLegacy && isRecord(value)
+      ? {
+          ...value,
+          ...(value["decision"] === "approved" && value["audioReviewConfirmed"] === true
+            ? { instructionEvidence: "narration" }
+            : {}),
+        }
+      : value;
+    const record = validateRecord(migrated);
     if (stateKey(record) !== key) throw new Error("Manual YouTube review key does not match its scoped candidate.");
     reviews[key] = record;
   }
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     updatedAt: validTimestamp(typeof parsed["updatedAt"] === "string" ? parsed["updatedAt"] : undefined)
       ? parsed["updatedAt"] as string
       : new Date(0).toISOString(),
@@ -220,6 +242,9 @@ export async function recordManualYouTubeReview(options: Readonly<{
   }
   const existingFile = await loadManualYouTubeReviews(options.stateDirectory);
   const existing = existingFile.reviews[candidateKey];
+  if (existing?.decision === "rejected" && existing.rejectionReason === "shorts-content" && options.review.decision !== "rejected") {
+    throw new Error("Refusing to approve or reopen a candidate with verified Shorts-player evidence.");
+  }
   if (existing?.decision === "approved" && options.review.decision !== "approved" && !options.replaceApproved) {
     throw new Error("Refusing to replace an approved review without --replace-approved.");
   }
@@ -229,8 +254,14 @@ export async function recordManualYouTubeReview(options: Readonly<{
       ? {}
       : { reviewedAt: options.review.reviewedAt ?? timestamp }),
   });
+  if (record.decision === "approved") {
+    const evidence = await loadYouTubeEmbedVerificationEvidence(options.stateDirectory);
+    if (!evidence.verifications[getYouTubeEmbedVerificationKey(record)]) {
+      throw new Error("An approved manual YouTube review requires scoped outside-YouTube embed verification.");
+    }
+  }
   const updated: ManualYouTubeReviewFile = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     updatedAt: timestamp,
     reviews: { ...existingFile.reviews, [candidateKey]: record },
   };

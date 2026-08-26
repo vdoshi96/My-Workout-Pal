@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="614d4c2d1743c7aacb4baed27faf81d3b6ab0dee68c8d9448778c1e0a186e68b">
+  <meta name="source-sha256" content="a5f597922f3ab880ff93cef9a96db213ed2ecede3d99d5677a78eb099db7ca6b">
   <title>Project workflows · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,14 +37,17 @@
 <h2>Documentation parity</h2>
 <p>Edit Markdown as the canonical source. Generate matching HTML with <code>pnpm docs:build</code> and verify byte-for-byte source metadata with <code>pnpm docs:check</code>.</p>
 <h2>Video curation</h2>
-<p>Run the resumable curation command only with an official YouTube Data API v3 key. Review only targets marked <code>ready-for-review</code>. Watch every proposed seed from start to finish, record the visual and audio decision, and validate complete two-video mappings before a seed or deployment.</p>
+<p>Run the resumable curation command only with an official YouTube Data API v3 key. Review only targets marked <code>ready-for-review</code>. Watch every proposed seed from start to finish, record full visual playback plus the truthful instruction basis (<code>narration</code>, <code>captions</code>, or <code>visual</code>), and validate complete two-video mappings before a seed or deployment.</p>
 <p>Record an interrupted or evidence-blocked review without approval:</p>
 <pre><code class="language-bash">pnpm youtube:review -- --target EXERCISE_SLUG --variation canonical --video VIDEO_ID --decision pending --reviewer REVIEWER_NAME --playback-completed-at REVIEW_TIMESTAMP --blocker-reason visual-evidence-unavailable
 </code></pre>
-<p>Record an approval only after the reviewer observed the complete visual and audio instruction:</p>
-<pre><code class="language-bash">pnpm youtube:review -- --target EXERCISE_SLUG --variation canonical --video VIDEO_ID --decision approved --reviewer REVIEWER_NAME --playback-completed-at REVIEW_TIMESTAMP --full-watch-confirmed --visual-review-confirmed --audio-review-confirmed --exact-variation --concise-instruction --safe-instruction --adds-material-value
+<p>First serve the privacy-enhanced player from loopback HTTP so YouTube receives a valid referrer; direct embed navigation can fail with Error 153 and is not evidence:</p>
+<pre><code class="language-bash">pnpm youtube:probe-embed -- --video VIDEO_ID
 </code></pre>
-<p>The command writes only <code>.local/youtube-curation/manual-reviews.json</code>, validates that the scoped candidate exists, and refuses to weaken an approval without <code>--replace-approved</code>. Don&#39;t commit the ignored review file, API key, raw media, screenshots, or transcripts.</p>
+<p>After playback starts there, verify visible controls, keyboard operation, the direct fallback, and whether the same ID opens YouTube&#39;s Shorts surface, then record the scoped assertion with <code>pnpm youtube:record-embed-verification</code>. Use the stable <code>shorts-content</code> rejection if the rendered Shorts player appears even when discovery supplied a standard watch URL. Record an approval only after the complete visual watch and one truthful instruction basis. Use <code>captions</code> when visible English captions supplied the instruction; do not claim narration from sound-on state alone:</p>
+<pre><code class="language-bash">pnpm youtube:review -- --target EXERCISE_SLUG --variation canonical --video VIDEO_ID --decision approved --reviewer REVIEWER_NAME --playback-completed-at REVIEW_TIMESTAMP --full-watch-confirmed --visual-review-confirmed --instruction-evidence captions --exact-variation --concise-instruction --safe-instruction --adds-material-value
+</code></pre>
+<p>The review command writes only <code>.local/youtube-curation/manual-reviews.json</code>, validates that the scoped candidate and embed verification exist for approval, and refuses to weaken an approval without <code>--replace-approved</code>. Don&#39;t commit ignored curation state, the API key, raw media, screenshots, or transcripts.</p>
 <h2>Release closeout</h2>
 <p>Release only a reviewed main commit. Confirm preview, production, runtime logs, public URL, GitHub main, local main, and deployed commit independently. Remove completed worktrees and preserve only the newest verified QA evidence.</p>
 

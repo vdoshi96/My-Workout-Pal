@@ -3,6 +3,7 @@ import process from "node:process";
 import { DEFAULT_YOUTUBE_CURATION_STATE_DIR } from "../src/domain/youtube/curation.ts";
 import { recordManualYouTubeReview } from "../src/domain/youtube/manual-review.ts";
 import type {
+  ManualYouTubeInstructionEvidence,
   ManualYouTubeReviewBlocker,
   ManualYouTubeReviewDecision,
   ManualYouTubeRejectionReason,
@@ -35,6 +36,7 @@ function rejectionReason(value: string | undefined): ManualYouTubeRejectionReaso
     "no-material-value",
     "unavailable",
     "non-english",
+    "shorts-content",
     "other-policy-rejection",
   ];
   if (allowed.includes(value as ManualYouTubeRejectionReason)) return value as ManualYouTubeRejectionReason;
@@ -53,12 +55,19 @@ function blockerReason(value: string | undefined): ManualYouTubeReviewBlocker | 
   throw new Error(`youtube:review --blocker-reason must be one of: ${allowed.join(", ")}.`);
 }
 
+function instructionEvidence(value: string | undefined): ManualYouTubeInstructionEvidence | undefined {
+  if (value === undefined) return undefined;
+  if (value === "narration" || value === "captions" || value === "visual") return value;
+  throw new Error("youtube:review --instruction-evidence must be narration, captions, or visual.");
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const stateDirectory = optionValue(args, "--state-dir")
     ?? process.env["YOUTUBE_CURATION_STATE_DIR"]
     ?? DEFAULT_YOUTUBE_CURATION_STATE_DIR;
   const reviewDecision = decision(requiredOption(args, "--decision"));
+  const instructionBasis = instructionEvidence(optionValue(args, "--instruction-evidence"));
   const savedPath = await recordManualYouTubeReview({
     stateDirectory,
     replaceApproved: args.includes("--replace-approved"),
@@ -74,7 +83,7 @@ async function main(): Promise<void> {
         : {}),
       fullWatchConfirmed: args.includes("--full-watch-confirmed"),
       visualReviewConfirmed: args.includes("--visual-review-confirmed"),
-      audioReviewConfirmed: args.includes("--audio-review-confirmed"),
+      ...(instructionBasis ? { instructionEvidence: instructionBasis } : {}),
       exactVariation: args.includes("--exact-variation"),
       conciseInstruction: args.includes("--concise-instruction"),
       safeInstruction: args.includes("--safe-instruction"),

@@ -158,7 +158,7 @@ describe("YouTube candidate eligibility", () => {
     }
   });
 
-  it("ranks only hard-gate survivors and uses views only as a tie-break", () => {
+  it("ranks hard-gate survivors by current views instead of relevance score", () => {
     const ranked = rankEligibleCandidates(
       [
         candidate({ videoId: VIDEO_ID_ONE, viewCount: 10 }),
@@ -167,13 +167,36 @@ describe("YouTube candidate eligibility", () => {
           viewCount: 100_000_000,
           embeddable: false,
         }),
-        candidate({ videoId: "QqRrSsTtUuV", viewCount: 20 }),
+        candidate({
+          videoId: "QqRrSsTtUuV",
+          title: "Dumbbell tutorial",
+          description: "Bench press form using a dumbbell.",
+          viewCount: 20,
+        }),
       ],
       target,
     );
 
     expect(ranked.map((item) => item.candidate.videoId)).toEqual(["QqRrSsTtUuV", VIDEO_ID_ONE]);
     expect(ranked.every((item) => item.decision.eligible)).toBe(true);
+    expect(ranked[0]?.decision.relevanceScore).toBeLessThan(ranked[1]?.decision.relevanceScore ?? 0);
+  });
+
+  it("puts known view counts before missing counts and resolves exact ties by video ID", () => {
+    const ranked = rankEligibleCandidates(
+      [
+        candidate({ videoId: "ZyXwVuTsR98", viewCount: undefined }),
+        candidate({ videoId: "QqRrSsTtUuV", viewCount: 0 }),
+        candidate({ videoId: "AbCdEfGhI01", viewCount: 0 }),
+      ],
+      target,
+    );
+
+    expect(ranked.map((item) => item.candidate.videoId)).toEqual([
+      "AbCdEfGhI01",
+      "QqRrSsTtUuV",
+      "ZyXwVuTsR98",
+    ]);
   });
 
   it("parses ISO 8601 durations without making a network request", () => {

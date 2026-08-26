@@ -18,6 +18,7 @@ import {
   proposeVideoPair,
 } from "@/domain/youtube/curation";
 import type { YouTubeDataApi } from "@/domain/youtube/types";
+import { recordYouTubeEmbedVerification } from "@/domain/youtube/embed-verification";
 import { recordManualYouTubeReview } from "@/domain/youtube/manual-review";
 import { assessApprovedVideoPair } from "@/domain/youtube/refresh";
 
@@ -603,7 +604,7 @@ describe("resumable YouTube curation state", () => {
     }
   });
 
-  it("excludes rejected reviews and proposes only a fully approved exact pair for seeding", async () => {
+  it("excludes a watch-URL candidate proven to be Shorts and proposes only a fully approved exact pair for seeding", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-reviewed-pair-"));
     const target = {
       canonicalExerciseSlug: "dumbbell-bench-press",
@@ -659,6 +660,20 @@ describe("resumable YouTube curation state", () => {
       }
       await saveCurationCheckpoint(directory, checkpoint);
       for (const candidate of candidates.slice(1)) {
+        await recordYouTubeEmbedVerification({
+          stateDirectory: directory,
+          verification: {
+            canonicalExerciseSlug: target.canonicalExerciseSlug,
+            variationId: target.variationId,
+            videoId: candidate.videoId,
+            verifier: "Primary reviewer",
+            privacyEnhancedEmbedConfirmed: true,
+            outsideYouTubePlaybackConfirmed: true,
+            visibleControlsConfirmed: true,
+            keyboardControlsConfirmed: true,
+            directFallbackConfirmed: true,
+          },
+        });
         await recordManualYouTubeReview({
           stateDirectory: directory,
           now: () => "2026-08-26T14:00:00.000Z",
@@ -671,7 +686,7 @@ describe("resumable YouTube curation state", () => {
             playbackCompletedAt: "2026-08-26T13:59:00.000Z",
             fullWatchConfirmed: true,
             visualReviewConfirmed: true,
-            audioReviewConfirmed: true,
+            instructionEvidence: "captions",
             exactVariation: true,
             conciseInstruction: true,
             safeInstruction: true,
@@ -703,14 +718,47 @@ describe("resumable YouTube curation state", () => {
           reviewer: "Primary reviewer",
           fullWatchConfirmed: false,
           visualReviewConfirmed: true,
-          audioReviewConfirmed: true,
           exactVariation: false,
           conciseInstruction: true,
           safeInstruction: true,
           addsMaterialValue: false,
-          rejectionReason: "wrong-movement",
+          rejectionReason: "shorts-content",
         },
       });
+
+      await writeFile(path.join(directory, "embed-verifications.json"), `${JSON.stringify({
+        schemaVersion: 1,
+        updatedAt: "2026-08-26T14:01:00.000Z",
+        verifications: {},
+      })}\n`);
+      const missingEmbedResult = await curateYouTubeCandidates({
+        api,
+        targets: [target],
+        stateDirectory: directory,
+        budget: { maxQuotaUnits: 0, maxSearchRequests: 0, maxHydrateRequests: 0, maxPagesPerQuery: 1 },
+      });
+      expect(missingEmbedResult.report.proposedPairs).toEqual([
+        expect.objectContaining({
+          status: "ready-for-review",
+          videoIds: ["ZyXwVuTsR98", "QqRrSsTtUuV"],
+        }),
+      ]);
+      for (const candidate of candidates.slice(1)) {
+        await recordYouTubeEmbedVerification({
+          stateDirectory: directory,
+          verification: {
+            canonicalExerciseSlug: target.canonicalExerciseSlug,
+            variationId: target.variationId,
+            videoId: candidate.videoId,
+            verifier: "Primary reviewer",
+            privacyEnhancedEmbedConfirmed: true,
+            outsideYouTubePlaybackConfirmed: true,
+            visibleControlsConfirmed: true,
+            keyboardControlsConfirmed: true,
+            directFallbackConfirmed: true,
+          },
+        });
+      }
 
       const result = await curateYouTubeCandidates({
         api,
@@ -729,6 +777,10 @@ describe("resumable YouTube curation state", () => {
         ["AbCdEfGhI01", "rejected"],
         ["ZyXwVuTsR98", "approved"],
         ["QqRrSsTtUuV", "approved"],
+      ]);
+      expect(result.report.rankedEligibleCandidates?.map((candidate) => candidate.videoId)).toEqual([
+        "ZyXwVuTsR98",
+        "QqRrSsTtUuV",
       ]);
     } finally {
       await rm(directory, { recursive: true, force: true });

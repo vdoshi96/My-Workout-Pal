@@ -243,7 +243,9 @@ function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget
   if (candidate.uploadStatus !== undefined && candidate.uploadStatus !== "processed") rejectionCodes.push("upload-not-processed");
   else if (!unavailable && candidate.uploadStatus !== "processed") rejectionCodes.push("upload-not-processed");
   if (candidate.embeddable === false || (!unavailable && candidate.embeddable !== true)) rejectionCodes.push("not-embeddable");
-  if (candidate.syndicated === false || (!unavailable && candidate.syndicated !== true)) rejectionCodes.push("not-syndicated");
+  if (candidate.syndicated === false || (!unavailable && candidate.syndicated !== true)) {
+    rejectionCodes.push("not-syndicated");
+  }
   if (candidate.isLive || candidate.liveBroadcastContent === "live" || candidate.liveBroadcastContent === "upcoming") {
     rejectionCodes.push("live-or-upcoming");
   }
@@ -311,12 +313,21 @@ export function rankEligibleCandidates(
     const decision = evaluateYouTubeCandidate(candidate, target, options);
     return decision.eligible ? [{ candidate, decision }] : [];
   }).sort((left, right) => {
-    if (right.decision.relevanceScore !== left.decision.relevanceScore) {
-      return right.decision.relevanceScore - left.decision.relevanceScore;
+    const leftViews = typeof left.candidate.viewCount === "number"
+      && Number.isFinite(left.candidate.viewCount)
+      && left.candidate.viewCount >= 0
+      ? left.candidate.viewCount
+      : undefined;
+    const rightViews = typeof right.candidate.viewCount === "number"
+      && Number.isFinite(right.candidate.viewCount)
+      && right.candidate.viewCount >= 0
+      ? right.candidate.viewCount
+      : undefined;
+    if (leftViews !== undefined && rightViews !== undefined && rightViews !== leftViews) {
+      return rightViews - leftViews;
     }
-    const leftViews = Number.isFinite(left.candidate.viewCount) ? left.candidate.viewCount ?? 0 : 0;
-    const rightViews = Number.isFinite(right.candidate.viewCount) ? right.candidate.viewCount ?? 0 : 0;
-    if (rightViews !== leftViews) return rightViews - leftViews;
+    if (leftViews === undefined && rightViews !== undefined) return 1;
+    if (leftViews !== undefined && rightViews === undefined) return -1;
     return (left.decision.normalizedVideoId ?? "").localeCompare(right.decision.normalizedVideoId ?? "");
   });
 

@@ -83,9 +83,11 @@ export type YouTubeHumanReview = Readonly<{
   conciseInstruction: boolean;
   safeInstruction: boolean;
   addsMaterialValue?: boolean | undefined;
+  instructionEvidence?: ManualYouTubeInstructionEvidence | undefined;
 }>;
 
 export type ManualYouTubeReviewDecision = "pending" | "approved" | "rejected";
+export type ManualYouTubeInstructionEvidence = "narration" | "captions" | "visual";
 
 export type ManualYouTubeRejectionReason =
   | "wrong-movement"
@@ -95,6 +97,7 @@ export type ManualYouTubeRejectionReason =
   | "no-material-value"
   | "unavailable"
   | "non-english"
+  | "shorts-content"
   | "other-policy-rejection";
 
 export type ManualYouTubeReviewBlocker =
@@ -113,7 +116,7 @@ export type ManualYouTubeReviewRecord = Readonly<{
   playbackCompletedAt?: string | undefined;
   fullWatchConfirmed: boolean;
   visualReviewConfirmed: boolean;
-  audioReviewConfirmed: boolean;
+  instructionEvidence?: ManualYouTubeInstructionEvidence | undefined;
   exactVariation: boolean;
   conciseInstruction: boolean;
   safeInstruction: boolean;
@@ -123,7 +126,7 @@ export type ManualYouTubeReviewRecord = Readonly<{
 }>;
 
 export type ManualYouTubeReviewFile = Readonly<{
-  schemaVersion: 1;
+  schemaVersion: 2;
   updatedAt: string;
   reviews: Readonly<Record<string, ManualYouTubeReviewRecord>>;
 }>;
@@ -312,12 +315,18 @@ export type ProposedPairReason =
   | "fewer-than-two-eligible-candidates"
   | "materially-redundant-second";
 
+export type CurationDiscoveryStatus =
+  | "api-discovery-complete"
+  | "browser-window-complete"
+  | "discovery-incomplete";
+
 export type ProposedVideoPair = Readonly<{
   target: RequiredVideoVariation;
   status: "discovery-incomplete" | "ready-for-review" | "approved-for-seed" | "needs-second-candidate";
   videoIds: readonly string[];
   distinctChannels: boolean;
   reason?: ProposedPairReason | undefined;
+  discoveryStatus?: CurationDiscoveryStatus | undefined;
 }>;
 
 export type CurationQuotaSummary = Readonly<{

@@ -11,5 +11,14 @@ describe("YouTube curation command", () => {
     expect(packageJson.scripts?.["youtube:curate"]).toBe(
       "node --env-file-if-exists=.env.local --import tsx scripts/youtube-curate.ts",
     );
+    expect(packageJson.scripts?.["youtube:import-browser"]).toBe(
+      "node --env-file-if-exists=.env.local --import tsx scripts/youtube-import-browser.ts",
+    );
+    expect(packageJson.scripts?.["youtube:probe-embed"]).toBe(
+      "node --import tsx scripts/youtube-probe-embed.ts",
+    );
+    expect(packageJson.scripts?.["youtube:record-embed-verification"]).toBe(
+      "node --import tsx scripts/youtube-record-embed-verification.ts",
+    );
   });
 });

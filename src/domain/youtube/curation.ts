@@ -1,6 +1,11 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import {
+  hasCompleteBrowserYouTubeDiscovery,
+  loadBrowserYouTubeImportReceipt,
+} from "./browser-discovery.ts";
+import { loadYouTubeEmbedVerificationEvidence } from "./embed-evidence.ts";
 import { evaluateYouTubeCandidate, rankEligibleCandidates } from "./eligibility.ts";
 import { loadManualYouTubeReviews } from "./manual-review.ts";
 import { normalizeYouTubeReference } from "./normalization.ts";
@@ -608,8 +613,9 @@ export function proposeVideoPair(
     const channel = candidateChannelKey(rankedCandidate.candidate);
     return Boolean(firstChannel && channel && channel !== firstChannel);
   });
-  // A distinct channel wins when its hard-gated relevance is comparable. View count
-  // is already a final tie-breaker inside rankEligibleCandidates.
+  // Ranking is view-count-first after hard gates. Channel diversity may override the
+  // top alternative only when the relevance diagnostic remains within two points,
+  // keeping this an explicit comparable-quality exception rather than a new ordering rule.
   const second = distinctAlternative && bestAlternativeRanked
     ? distinctAlternative.decision.relevanceScore >= bestAlternativeRanked.decision.relevanceScore - 2
       ? distinctAlternative.candidate
@@ -650,6 +656,8 @@ export async function curateYouTubeCandidates(options: Readonly<{
   const usage: CurationRunUsage = { searchRequests: 0, hydrateRequests: 0, unitsEstimated: 0 };
   const checkpoint = await loadCurationCheckpoint(stateDirectory);
   const manualReviews = await loadManualYouTubeReviews(stateDirectory);
+  const browserDiscovery = await loadBrowserYouTubeImportReceipt(stateDirectory);
+  const embedVerifications = await loadYouTubeEmbedVerificationEvidence(stateDirectory);
   const refreshUnavailableIds = options.refreshUnavailable
     ? new Set(checkpoint.unavailableVideoIds)
     : new Set<string>();
@@ -844,32 +852,38 @@ export async function curateYouTubeCandidates(options: Readonly<{
     if (!activeTargetKeys.has(`${entry.target.canonicalExerciseSlug}::${entry.target.variationId}`)) continue;
     const hydrated = hydratedById.get(entry.item.videoId);
     if (!hydrated) continue;
-    const evidence = hydrated.syndicationEvidence === "verified"
-      ? "verified"
-      : entry.item.syndicationEvidence ?? hydrated.syndicationEvidence ?? "unknown";
-    const merged: YouTubeCandidate = {
-      ...entry.item,
-      ...hydrated,
-      videoId: entry.item.videoId,
-      title: hydrated.title || entry.item.title,
-      ...(hydrated.description === undefined && entry.item.description !== undefined ? { description: entry.item.description } : {}),
-      syndicated: hydrated.syndicated === undefined
-        ? evidence === "search-filter"
-          ? true
-          : undefined
-        : hydrated.syndicated,
-      syndicationEvidence: evidence,
-      searchSources: [...new Set([...(entry.item.searchSources ?? []), ...(hydrated.searchSources ?? [])])],
-      queryKeys: [...new Set([...(entry.item.queryKeys ?? []), ...(hydrated.queryKeys ?? []), ...entry.queryKeys])],
-    };
-    hydratedById.set(entry.item.videoId, merged);
-    checkpoint.hydratedCandidates[entry.item.videoId] = merged;
-    const decision = evaluateYouTubeCandidate(merged, entry.target);
     const candidateStateKey = getYouTubeCandidateStateKey(
       entry.target.canonicalExerciseSlug,
       entry.target.variationId,
       entry.item.videoId,
     );
+    const hasScopedEmbedVerification = Boolean(embedVerifications.verifications[candidateStateKey]);
+    const providerEvidence = hydrated.syndicationEvidence === "verified"
+      ? "unknown"
+      : entry.item.syndicationEvidence ?? hydrated.syndicationEvidence ?? "unknown";
+    const providerMerged: YouTubeCandidate = {
+      ...entry.item,
+      ...hydrated,
+      videoId: entry.item.videoId,
+      title: hydrated.title || entry.item.title,
+      ...(hydrated.description === undefined && entry.item.description !== undefined ? { description: entry.item.description } : {}),
+      syndicated: hydrated.syndicationEvidence === "verified"
+        ? undefined
+        : hydrated.syndicated === undefined
+          ? providerEvidence === "search-filter"
+          ? true
+          : undefined
+          : hydrated.syndicated,
+      syndicationEvidence: providerEvidence,
+      searchSources: [...new Set([...(entry.item.searchSources ?? []), ...(hydrated.searchSources ?? [])])],
+      queryKeys: [...new Set([...(entry.item.queryKeys ?? []), ...(hydrated.queryKeys ?? []), ...entry.queryKeys])],
+    };
+    const merged: YouTubeCandidate = hasScopedEmbedVerification
+      ? { ...providerMerged, syndicated: true, syndicationEvidence: "verified" }
+      : providerMerged;
+    hydratedById.set(entry.item.videoId, merged);
+    checkpoint.hydratedCandidates[entry.item.videoId] = providerMerged;
+    const decision = evaluateYouTubeCandidate(merged, entry.target);
     const manualReview = manualReviews.reviews[candidateStateKey];
     checkpoint.rejectionCodes[candidateStateKey] = [...decision.rejectionCodes];
     if (manualReview) checkpoint.reviewStatus[candidateStateKey] = manualReview.decision;
@@ -886,6 +900,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
             conciseInstruction: manualReview.conciseInstruction,
             safeInstruction: manualReview.safeInstruction,
             addsMaterialValue: manualReview.addsMaterialValue,
+            instructionEvidence: manualReview.instructionEvidence,
           },
         }
       : merged;
@@ -902,36 +917,58 @@ export async function curateYouTubeCandidates(options: Readonly<{
   const rankedEligibleCandidates: CurationReportCandidate[] = [];
   const proposedPairs: ProposedVideoPair[] = [];
   const completedQueryKeys = new Set(checkpoint.completedQueries.map((query) => query.queryKey));
+  const checkedVideoIds = new Set([
+    ...checkpoint.hydratedVideoIds,
+    ...checkpoint.unavailableVideoIds,
+  ]);
   for (const target of targets) {
     const targetCandidates = reportCandidates.filter(
       (candidate) => candidate.target.canonicalExerciseSlug === target.canonicalExerciseSlug && candidate.target.variationId === target.variationId,
     );
-    const ranked = rankEligibleCandidates(targetCandidates.map((candidate) => candidate.candidate), target);
-    const byId = new Map(targetCandidates.map((candidate) => [candidate.videoId, candidate]));
+    const reviewableCandidates = targetCandidates.filter((candidate) => candidate.reviewStatus !== "rejected");
+    const ranked = rankEligibleCandidates(reviewableCandidates.map((candidate) => candidate.candidate), target);
+    const byId = new Map(reviewableCandidates.map((candidate) => [candidate.videoId, candidate]));
     ranked.forEach((rankedCandidate, rank) => {
       const original = byId.get(rankedCandidate.candidate.videoId);
       if (original) rankedEligibleCandidates.push({ ...original, rank: rank + 1 });
     });
     const proposedPair = proposeVideoPair(
       target,
-      targetCandidates
-        .filter((candidate) => candidate.reviewStatus !== "rejected")
-        .map((candidate) => candidate.candidate),
+      reviewableCandidates.map((candidate) => candidate.candidate),
     );
-    const discoveryComplete = expectedQueryKeys(target).every((key) => completedQueryKeys.has(key));
-    if (!discoveryComplete) {
+    const apiDiscoveryComplete = expectedQueryKeys(target).every((key) => completedQueryKeys.has(key));
+    const browserDiscoveryComplete = !apiDiscoveryComplete && hasCompleteBrowserYouTubeDiscovery({
+      receipt: browserDiscovery,
+      target,
+      expectedQueries: buildCurationQueries(target),
+      checkedVideoIds,
+    });
+    const discoveryStatus = apiDiscoveryComplete
+      ? "api-discovery-complete" as const
+      : browserDiscoveryComplete
+        ? "browser-window-complete" as const
+        : "discovery-incomplete" as const;
+    const proposalWithDiscovery = { ...proposedPair, discoveryStatus };
+    if (discoveryStatus === "discovery-incomplete") {
       proposedPairs.push({
-        ...proposedPair,
+        ...proposalWithDiscovery,
         status: "discovery-incomplete",
         reason: "discovery-incomplete",
       });
       continue;
     }
     const reviewStatusByVideoId = new Map(targetCandidates.map((candidate) => [candidate.videoId, candidate.reviewStatus]));
-    proposedPairs.push(proposedPair.status === "ready-for-review"
-      && proposedPair.videoIds.every((videoId) => reviewStatusByVideoId.get(videoId) === "approved")
-      ? { ...proposedPair, status: "approved-for-seed" }
-      : proposedPair);
+    proposedPairs.push(proposalWithDiscovery.status === "ready-for-review"
+      && proposalWithDiscovery.videoIds.every((videoId) => (
+        reviewStatusByVideoId.get(videoId) === "approved"
+        && Boolean(embedVerifications.verifications[getYouTubeCandidateStateKey(
+          target.canonicalExerciseSlug,
+          target.variationId,
+          videoId,
+        )])
+      ))
+      ? { ...proposalWithDiscovery, status: "approved-for-seed" }
+      : proposalWithDiscovery);
   }
 
   const quotaBlockedReason = searchBlockedReason ?? hydrationBlockedReason;
