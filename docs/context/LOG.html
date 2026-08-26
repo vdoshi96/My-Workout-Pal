@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="8b519f5d8584986830ed1b78b08bb454d263df23e6b86ca15ee3e3cfc562218c">
+  <meta name="source-sha256" content="0f4a0ab1646e3f0c81d2db08b355b3850955864304252db5581c9cd547b0ff4e">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -30,6 +30,7 @@
 <h1>Project log</h1>
 <h2>2026-08-26: Firebase and YouTube credential reconciliation</h2>
 <ul>
+<li>Read the installed Next.js 16.3.2 CLI, Turbopack, and upgrade guides after live verification exposed an ambiguous default-bundler development script. The guides define Turbopack as the default and <code>--webpack</code> as the supported opt-out. A focused package-script assertion failed on <code>next dev</code>, then passed after <code>pnpm dev</code> became <code>next dev --webpack</code>, matching the existing custom <code>webpack</code> function and production build. An isolated server reported <code>Next.js 16.3.2 (webpack)</code>, reached ready in 339 ms, served <code>HEAD /program</code> with <code>200</code>, logged the request, and stopped cleanly without touching the pre-existing project server.</li>
 <li>Verified the user-created Firebase project <code>my-workout-pal-92819</code>, project number <code>381810672975</code>, on Spark in the signed-in Firebase Console. The earlier staged project ID was only a proposal and was never created.</li>
 <li>Initialized Firebase Authentication and enabled Email/Password while leaving email-link, phone, anonymous, Identity Platform, and paid services off. The project still has no registered web app, and Google remains unsaved pending the reviewed public name and support email.</li>
 <li>Confirmed without printing values that ignored <code>.env.local</code> contains <code>YOUTUBE_API_KEY</code> and no Firebase public or Admin value. Confirmed that Vercel development, preview, and production contain only the Neon-managed variables and no Firebase variable.</li>

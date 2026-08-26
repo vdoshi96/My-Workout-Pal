@@ -2,6 +2,7 @@
 
 ## 2026-08-26: Firebase and YouTube credential reconciliation
 
+- Read the installed Next.js 16.3.2 CLI, Turbopack, and upgrade guides after live verification exposed an ambiguous default-bundler development script. The guides define Turbopack as the default and `--webpack` as the supported opt-out. A focused package-script assertion failed on `next dev`, then passed after `pnpm dev` became `next dev --webpack`, matching the existing custom `webpack` function and production build. An isolated server reported `Next.js 16.3.2 (webpack)`, reached ready in 339 ms, served `HEAD /program` with `200`, logged the request, and stopped cleanly without touching the pre-existing project server.
 - Verified the user-created Firebase project `my-workout-pal-92819`, project number `381810672975`, on Spark in the signed-in Firebase Console. The earlier staged project ID was only a proposal and was never created.
 - Initialized Firebase Authentication and enabled Email/Password while leaving email-link, phone, anonymous, Identity Platform, and paid services off. The project still has no registered web app, and Google remains unsaved pending the reviewed public name and support email.
 - Confirmed without printing values that ignored `.env.local` contains `YOUTUBE_API_KEY` and no Firebase public or Admin value. Confirmed that Vercel development, preview, and production contain only the Neon-managed variables and no Firebase variable.
