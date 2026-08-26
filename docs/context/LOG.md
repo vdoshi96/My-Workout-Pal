@@ -1,5 +1,14 @@
 # Project log
 
+## 2026-08-25: Production label-in-name and Lighthouse checkpoint
+
+- Lighthouse 13.4.1 exposed a serious `label-content-name-mismatch` diagnostic on the visible landing brand and five waypoint controls despite the aggregate 100 accessibility score. A focused component test failed before implementation on the shorter overriding label.
+- Removed redundant accessible-name overrides from three brand links and five waypoint buttons so native visible text is authoritative. Updated the guest browser journey to locate the truthful visible names. The focused test then passed.
+- Passed strict TypeScript, full ESLint, 64 test files and 420 tests, generated PWA and 27-document parity, Drizzle metadata, the Next.js webpack production build, and the local 40-case browser matrix with 39 passes plus the documented WebKit service-worker capability skip.
+- Published GitHub SHA `149fde9d1ea7583e1a291c8b17ad296e91f3678b` as Ready Vercel production deployment `dpl_HFFWzSg9hPTxh5q4KqW2yvhsC4WN`. The deployed browser matrix repeated 39 passes and the same explicit skip; the bounded error-log query returned no entries.
+- Ten Lighthouse mobile/desktop audits across landing, program overview, barbell Pull, dumbbell library, and the sample runner measured 97–100 performance, 100 accessibility, 100 best practices, no run warnings, and no remaining label-in-name mismatch.
+- A headed Playwright CLI pass at a 640-by-900 reflow-equivalent viewport with forced colors and reduced motion active found zero horizontal overflow and zero offscreen actions on all five routes. Keyboard focus and skip activation passed, and screenshot inspection preserved visible headings, content, selected state, boundaries, and primary actions.
+
 ## 2026-08-25: Initial Vercel production and production migration
 
 - Deployed GitHub-backed `main` to the linked Vercel project. Vercel's first-deployment rule assigned the requested preview to production, produced Ready deployment `dpl_2NWnCqiUeBfEsumnSqzM8hmFsMsS`, and aliased it publicly at `https://my-workout-pal-chi.vercel.app`.

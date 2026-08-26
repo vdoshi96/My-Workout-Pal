@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="19e618f971748a389cd90aa746c28742ce5414113bf51b496c5e53f56e8c0c83">
+  <meta name="source-sha256" content="b662f8ab691d6f72d2c634be548cce499f89434a0ef219b71db9039dc15e43c9">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,15 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Production label-in-name and Lighthouse checkpoint</h2>
+<ul>
+<li>Lighthouse 13.4.1 exposed a serious <code>label-content-name-mismatch</code> diagnostic on the visible landing brand and five waypoint controls despite the aggregate 100 accessibility score. A focused component test failed before implementation on the shorter overriding label.</li>
+<li>Removed redundant accessible-name overrides from three brand links and five waypoint buttons so native visible text is authoritative. Updated the guest browser journey to locate the truthful visible names. The focused test then passed.</li>
+<li>Passed strict TypeScript, full ESLint, 64 test files and 420 tests, generated PWA and 27-document parity, Drizzle metadata, the Next.js webpack production build, and the local 40-case browser matrix with 39 passes plus the documented WebKit service-worker capability skip.</li>
+<li>Published GitHub SHA <code>149fde9d1ea7583e1a291c8b17ad296e91f3678b</code> as Ready Vercel production deployment <code>dpl_HFFWzSg9hPTxh5q4KqW2yvhsC4WN</code>. The deployed browser matrix repeated 39 passes and the same explicit skip; the bounded error-log query returned no entries.</li>
+<li>Ten Lighthouse mobile/desktop audits across landing, program overview, barbell Pull, dumbbell library, and the sample runner measured 97–100 performance, 100 accessibility, 100 best practices, no run warnings, and no remaining label-in-name mismatch.</li>
+<li>A headed Playwright CLI pass at a 640-by-900 reflow-equivalent viewport with forced colors and reduced motion active found zero horizontal overflow and zero offscreen actions on all five routes. Keyboard focus and skip activation passed, and screenshot inspection preserved visible headings, content, selected state, boundaries, and primary actions.</li>
+</ul>
 <h2>2026-08-25: Initial Vercel production and production migration</h2>
 <ul>
 <li>Deployed GitHub-backed <code>main</code> to the linked Vercel project. Vercel&#39;s first-deployment rule assigned the requested preview to production, produced Ready deployment <code>dpl_2NWnCqiUeBfEsumnSqzM8hmFsMsS</code>, and aliased it publicly at <code>https://my-workout-pal-chi.vercel.app</code>.</li>
