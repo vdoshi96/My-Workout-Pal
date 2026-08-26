@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Owner-scoped training history and progress
+
+- Retained a missing-repository-module failure before adding the server-only training-insights read model. Five PGlite integration tests then proved stable terminal pagination, immutable snapshot detail, foreign-session hiding, owner-isolated PR sources, exact ties, completed-only analytics, owner-time-zone grouping, persisted-rollup disclosure, and malformed-viewer/cursor rejection.
+- Added dynamic server-rendered History, immutable workout detail, Personal Records, and Progress routes. Active workouts stay in the runner; interrupted workouts remain in the archive but do not inflate progress. Empty states explicitly refuse sample account activity.
+- Kept kilograms, meters, and seconds canonical in storage and converted only at presentation. Retained a missing-presenter failure, then passed four focused conversion, duration, time-zone, and record-type cases.
+- Passed strict TypeScript, scoped lint, nine focused unit/integration tests, and the webpack production build. The build confirms all four routes are dynamic. Live signed-in browser replay remains gated because the signed-in Firebase Console has no project and the user has not authorized creating or configuring one.
+- Created local commits `62d9ad3` and `6c51e41` after inspecting each checkpoint's diff stat and patch. No push, merge, deployment, migration, provider project creation, or production mutation occurred.
+
 ## 2026-08-25: Durable account-deletion boundary
 
 - Retained a missing-module failure, then added the strict owner-free deletion request, stable intent hash, monotonic database/Firebase saga transitions, and safe provider-error classification with five passing domain tests.

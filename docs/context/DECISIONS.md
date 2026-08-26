@@ -28,6 +28,14 @@ The completion reconciler is an operator command rather than an authenticated ap
 
 Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.
 
+## 2026-08-25: Derive account insights from immutable owner data
+
+History reads terminal workout sessions through a stable timestamp-and-ID cursor. Completed and interrupted sessions use their saved exercise, state, set, and cardio snapshots; active sessions remain in the resumable runner. Every query begins with the server-derived owner key, and a foreign session is indistinguishable from a missing session.
+
+Progress is rebuilt from persisted set and cardio logs belonging to completed sessions and grouped in the owner's saved time zone. Interrupted sessions are reported separately but excluded from totals. Existing summary rows are disclosed as rollup state rather than substituted for source-log truth, and an empty account produces no chart points.
+
+Personal-record values are read from persisted owner-scoped record rows and joined back to their source sets. Equal maxima remain explicit ties with every winning source session retained.
+
 ## 2026-08-25: Verify identity only on the server
 
 Firebase client identity is exchanged for a secure HTTP-only session. Server code derives Firebase UID from the verified session and applies it to every user-owned database query. Client-supplied ownership identifiers are ignored or rejected.

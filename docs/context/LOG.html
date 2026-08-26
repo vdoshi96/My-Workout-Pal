@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="fc400dc346e465432ede8a16c7f834afc58a6be95f7be5c4d5941e83e04318d4">
+  <meta name="source-sha256" content="364f51c4e0762903ba1e1690933c1fdb6bf68ec3471091a0762e76d0d55d0fb6">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Owner-scoped training history and progress</h2>
+<ul>
+<li>Retained a missing-repository-module failure before adding the server-only training-insights read model. Five PGlite integration tests then proved stable terminal pagination, immutable snapshot detail, foreign-session hiding, owner-isolated PR sources, exact ties, completed-only analytics, owner-time-zone grouping, persisted-rollup disclosure, and malformed-viewer/cursor rejection.</li>
+<li>Added dynamic server-rendered History, immutable workout detail, Personal Records, and Progress routes. Active workouts stay in the runner; interrupted workouts remain in the archive but do not inflate progress. Empty states explicitly refuse sample account activity.</li>
+<li>Kept kilograms, meters, and seconds canonical in storage and converted only at presentation. Retained a missing-presenter failure, then passed four focused conversion, duration, time-zone, and record-type cases.</li>
+<li>Passed strict TypeScript, scoped lint, nine focused unit/integration tests, and the webpack production build. The build confirms all four routes are dynamic. Live signed-in browser replay remains gated because the signed-in Firebase Console has no project and the user has not authorized creating or configuring one.</li>
+<li>Created local commits <code>62d9ad3</code> and <code>6c51e41</code> after inspecting each checkpoint&#39;s diff stat and patch. No push, merge, deployment, migration, provider project creation, or production mutation occurred.</li>
+</ul>
 <h2>2026-08-25: Durable account-deletion boundary</h2>
 <ul>
 <li>Retained a missing-module failure, then added the strict owner-free deletion request, stable intent hash, monotonic database/Firebase saga transitions, and safe provider-error classification with five passing domain tests.</li>

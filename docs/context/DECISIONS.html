@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d6af921cc20341bfd41dc8c41c66530fedb814b5744cf46381cbdcadf450b15c">
+  <meta name="source-sha256" content="71b723e4f770a058527becac29108a0e6f93c0fb5d8e46d983ffe10e5236ceea">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -42,6 +42,10 @@
 <p>The completion reconciler is an operator command rather than an authenticated application route. It receives only Firebase Admin <code>getUser</code> capability, defaults to dry run, fingerprints ownership in output, and may write only after <code>auth/user-not-found</code>. Apply locks the candidate and rejects an optimistic timestamp/status mismatch; failed or blocked jobs enter a new Firebase attempt before terminal completion. An existing identity is reported but never deleted. This separates crash recovery authority from end-user traffic and keeps production apply behind explicit approval.</p>
 <h2>2026-08-25: Store canonical metric values</h2>
 <p>Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.</p>
+<h2>2026-08-25: Derive account insights from immutable owner data</h2>
+<p>History reads terminal workout sessions through a stable timestamp-and-ID cursor. Completed and interrupted sessions use their saved exercise, state, set, and cardio snapshots; active sessions remain in the resumable runner. Every query begins with the server-derived owner key, and a foreign session is indistinguishable from a missing session.</p>
+<p>Progress is rebuilt from persisted set and cardio logs belonging to completed sessions and grouped in the owner&#39;s saved time zone. Interrupted sessions are reported separately but excluded from totals. Existing summary rows are disclosed as rollup state rather than substituted for source-log truth, and an empty account produces no chart points.</p>
+<p>Personal-record values are read from persisted owner-scoped record rows and joined back to their source sets. Equal maxima remain explicit ties with every winning source session retained.</p>
 <h2>2026-08-25: Verify identity only on the server</h2>
 <p>Firebase client identity is exchanged for a secure HTTP-only session. Server code derives Firebase UID from the verified session and applies it to every user-owned database query. Client-supplied ownership identifiers are ignored or rejected.</p>
 <h2>2026-08-25: Require confirmed video approval</h2>
