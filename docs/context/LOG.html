@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f57d82a8267b92930fb9780e0f22cefcb2a990a1dfc2767464475bc708a51ca3">
+  <meta name="source-sha256" content="efeddb7d2b91dcf7dae7b68fd3601ebabb69cc16215b17be2ae0564f872f22fc">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,6 +39,7 @@
 <li>Retained a focused failure in which reaching the search request cap suppressed otherwise affordable metadata hydration. The correction separates search and hydration blocking while preserving one honest quota-blocked report.</li>
 <li>Verified the current official quota model, retained four failing assertions, and passed all 41 YouTube tests with strict TypeScript and scoped lint. Checkpoint schema three migrates schema-two progress without loss and recomputes <code>search.list</code> and <code>videos.list</code> at one unit per successful call. A provider search-quota response is sanitized before persistence, leaves the failed query resumable, and no longer prevents pending hydration.</li>
 <li>The coordinated checkpoint had advanced to 94 successful searches before the report-verified zero-search hydration run. That run used 26 one-unit <code>videos.list</code> requests and hydrated all 1,252 unique IDs. The migrated schema-three checkpoint now records 94 search requests, 26 hydration requests, and 120 estimated units; 1,355 target-scoped candidates cover 16 catalog targets, 269 pass mechanical eligibility, and 16 proposed pairs are ready for human review. The next live search was rejected because the provider search bucket was exhausted; the local checkpoint counts successful calls only. The 160-query catalog has 66 searches left after reset. No candidate was approved or seeded.</li>
+<li>Adversarial shortlist inspection found mechanically eligible but visibly wrong adjacent variants: decline instead of flat bench, floor-seated shoulder press, curl-to-press and incline curl, incline press without a bench, reverse lunge with rotation, commentary framing, unsupported fat-loss copy, and non-English title cues. Retained eligibility and resume failures now apply catalog-scoped movement exclusions and reevaluate old checkpoint entries with current target rules. The zero-request regenerated report reduces the mechanically eligible set from 269 to 245 while preserving all discovery and hydration state. Reverse lunge remains ineligible for approval because only four of its six searches completed; no video was approved or seeded.</li>
 <li>Reached the Vercel dashboard&#39;s two-factor challenge through the existing account. Spend Management remains read-only-unverified until the user completes 2FA; no billing, budget, notification, pause, plan, or overage control changed.</li>
 <li>Created the <code>release/firebase-youtube-completion</code> branch from clean released SHA <code>08ba5773d700683d646b14f2df3cd6d942dee214</code> for reversible setup, curation, authenticated QA, and release checkpoints.</li>
 </ul>

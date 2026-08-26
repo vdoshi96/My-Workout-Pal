@@ -35,6 +35,14 @@ const ALIAS_OVERRIDES: Readonly<Record<string, readonly string[]>> = Object.free
   "dumbbell-hip-thrust": ["dumbbell glute bridge", "db hip thrust"],
 });
 
+const DISALLOWED_MOVEMENT_OVERRIDES: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  "dumbbell-bench-press": ["decline", "incline"],
+  "seated-dumbbell-shoulder-press": ["floor seated", "standing", "arnold"],
+  "incline-dumbbell-press": ["decline", "flat bench", "flat dumbbell", "floor", "without bench"],
+  "dumbbell-curl": ["curl to press", "curl and press", "incline", "hammer", "preacher", "concentration"],
+  "reverse-lunge": ["rotation", "rotate", "twist", "curtsy"],
+});
+
 function movementStem(name: string): string {
   return name
     .replace(/\b(?:dumbbells?|barbells?)\b/gi, "")
@@ -55,6 +63,7 @@ function equipmentDiscriminatorTerms(exercise: { requiredEquipment: readonly str
 function targetForCatalogRecord(exercise: (typeof CATALOG_EXERCISES)[string]): DefaultYouTubeCurationTarget {
   const aliases = ALIAS_OVERRIDES[exercise.slug] ?? [`${exercise.name.toLocaleLowerCase("en-US")} tutorial`];
   const requiredEquipmentTerms = equipmentDiscriminatorTerms(exercise);
+  const disallowedMovementTerms = DISALLOWED_MOVEMENT_OVERRIDES[exercise.slug] ?? [];
   return {
     canonicalExerciseSlug: exercise.slug,
     variationId: DEFAULT_YOUTUBE_VARIATION_ID,
@@ -62,6 +71,7 @@ function targetForCatalogRecord(exercise: (typeof CATALOG_EXERCISES)[string]): D
     movement: movementStem(exercise.name),
     aliases,
     ...(requiredEquipmentTerms.length > 0 ? { requiredEquipmentTerms } : {}),
+    ...(disallowedMovementTerms.length > 0 ? { disallowedMovementTerms } : {}),
   };
 }
 
@@ -99,6 +109,14 @@ export function assertDefaultYouTubeCurationTargets(
     const actualEquipmentTerms = target.requiredEquipmentTerms ?? [];
     if (actualEquipmentTerms.length !== expectedEquipmentTerms.length || actualEquipmentTerms.some((term, index) => term !== expectedEquipmentTerms[index])) {
       throw new Error(`Default YouTube target ${target.canonicalExerciseSlug} has incorrect equipment discriminator terms.`);
+    }
+    const expectedDisallowedMovementTerms = DISALLOWED_MOVEMENT_OVERRIDES[target.canonicalExerciseSlug] ?? [];
+    const actualDisallowedMovementTerms = target.disallowedMovementTerms ?? [];
+    if (
+      actualDisallowedMovementTerms.length !== expectedDisallowedMovementTerms.length
+      || actualDisallowedMovementTerms.some((term, index) => term !== expectedDisallowedMovementTerms[index])
+    ) {
+      throw new Error(`Default YouTube target ${target.canonicalExerciseSlug} has incorrect movement exclusions.`);
     }
   }
 }

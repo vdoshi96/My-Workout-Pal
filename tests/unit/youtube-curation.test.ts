@@ -108,6 +108,68 @@ describe("resumable YouTube curation state", () => {
     }
   });
 
+  it("reevaluates checkpoint candidates with current exact-movement target rules", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-target-rule-refresh-"));
+    const videoId = "AbCdEfGhI01";
+    const candidateKey = getYouTubeCandidateStateKey("dumbbell-bench-press", "canonical", videoId);
+    const savedTarget = {
+      canonicalExerciseSlug: "dumbbell-bench-press",
+      variationId: "canonical",
+      exerciseName: "Dumbbell bench press",
+      movement: "bench press",
+      requiredEquipmentTerms: ["dumbbell"],
+    } as const;
+    const currentTarget = {
+      ...savedTarget,
+      disallowedMovementTerms: ["decline"],
+    } as const;
+
+    try {
+      const checkpoint = createEmptyCurationCheckpoint();
+      checkpoint.discoveredCandidates[candidateKey] = {
+        target: savedTarget,
+        queryKeys: ["dumbbell-bench-press-query"],
+        item: { videoId, title: "Decline Dumbbell Bench Press" },
+      };
+      checkpoint.hydratedVideoIds.push(videoId);
+      checkpoint.hydratedCandidates[videoId] = {
+        videoId,
+        title: "Decline Dumbbell Bench Press",
+        description: "How to perform the decline dumbbell bench press.",
+        duration: "PT1M",
+        privacyStatus: "public",
+        uploadStatus: "processed",
+        embeddable: true,
+        syndicated: true,
+        regionAvailable: true,
+        liveBroadcastContent: "none",
+        language: "en",
+      };
+      await saveCurationCheckpoint(directory, checkpoint);
+
+      const result = await curateYouTubeCandidates({
+        api: {
+          async searchVideos() {
+            throw new Error("search should be blocked by the zero request cap");
+          },
+          async hydrateVideos() {
+            throw new Error("hydration should not repeat for a hydrated ID");
+          },
+        },
+        targets: [currentTarget],
+        stateDirectory: directory,
+        budget: { maxQuotaUnits: 0, maxSearchRequests: 0, maxHydrateRequests: 0, maxPagesPerQuery: 1 },
+      });
+
+      expect(result.report.candidates[0]?.decision.rejectionCodes).toContain("wrong-movement");
+      expect(result.checkpoint.discoveredCandidates[candidateKey]?.target).toMatchObject({
+        disallowedMovementTerms: ["decline"],
+      });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("builds both hard-gated API search sources without using search order as approval", () => {
     const request = buildYouTubeSearchRequest(
       {

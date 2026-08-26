@@ -58,6 +58,7 @@ type JsonRecord = Record<string, unknown> & {
   requiredEquipmentTerms?: unknown;
   equipment?: unknown;
   disallowedEquipmentTerms?: unknown;
+  disallowedMovementTerms?: unknown;
   queryKeys?: unknown;
   rejectionCodes?: unknown;
   pageTokens?: unknown;
@@ -219,6 +220,9 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
           ...(typeof discovered.target.equipment === "string" ? { equipment: discovered.target.equipment } : {}),
           ...(Array.isArray(discovered.target.disallowedEquipmentTerms)
             ? { disallowedEquipmentTerms: discovered.target.disallowedEquipmentTerms.filter((value): value is string => typeof value === "string") }
+            : {}),
+          ...(Array.isArray(discovered.target.disallowedMovementTerms)
+            ? { disallowedMovementTerms: discovered.target.disallowedMovementTerms.filter((value): value is string => typeof value === "string") }
             : {}),
         },
         queryKeys: discovered.queryKeys,
@@ -644,13 +648,24 @@ export async function curateYouTubeCandidates(options: Readonly<{
   delete checkpoint.blockedReason;
   const targets = deduplicateYouTubeCurationTargets(options.targets);
   const activeTargetKeys = new Set(targets.map((target) => `${target.canonicalExerciseSlug}::${target.variationId}`));
+  const targetByKey = new Map(targets.map((target) => [
+    `${target.canonicalExerciseSlug}::${target.variationId}`,
+    target,
+  ]));
   const queryItems = new Map<string, { target: CurationTarget; queryKeys: string[]; item: YouTubeCandidate }>();
   for (const [candidateKey, discovered] of Object.entries(checkpoint.discoveredCandidates)) {
+    const currentTarget = targetByKey.get(
+      `${discovered.target.canonicalExerciseSlug}::${discovered.target.variationId}`,
+    ) ?? discovered.target;
     queryItems.set(candidateKey, {
-      target: discovered.target,
+      target: currentTarget,
       queryKeys: [...discovered.queryKeys],
       item: discovered.item,
     });
+    checkpoint.discoveredCandidates[candidateKey] = {
+      ...discovered,
+      target: currentTarget,
+    };
   }
 
   let searchBlockedReason: string | undefined;

@@ -59,13 +59,17 @@ const DISALLOWED_TITLE_PATTERNS: readonly RegExp[] = [
   /\b(?:challenge|reaction|reacts?|podcast|interview|follow[ -]?along|routine|compilation|discussion|lecture)\b/i,
   /\b(?:top|best|ranking|ranked|listicle)\s+\d+/i,
   /\b(?:clickbait|shocking|guaranteed|cure|fix your pain|medical claim)\b/i,
+  /\b(?:overrated|underrated)\b/i,
   /#?shorts?\b/i,
 ];
 
 const UNSAFE_OR_MISLEADING_PATTERNS: readonly RegExp[] = [
   /\b(?:cure|heal|treat|diagnos|guaranteed|instant|pain[- ]?free|pain relief|injury[- ]?proof|medical)\b/i,
   /\b(?:dangerous|unsafe|do this wrong|avoid this mistake)\b/i,
+  /\b(?:lose|burn|melt)\b.{0,24}\b(?:love handles?|belly fat|body fat)\b/i,
 ];
+
+const NON_ENGLISH_TITLE_CUES = /\b(?:hindi|punjabi|spanish|espanol|portuguese|portugues|french|francais|german|deutsch|italian|italiano|arabic)\b/i;
 
 const EQUIPMENT_WORDS = new Set(EQUIPMENT_MARKERS.flatMap((marker) => marker.split(" ")));
 
@@ -209,8 +213,14 @@ function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget
   const hasRequiredEquipment = requiredEquipment.length === 0 || requiredEquipment.some((term) => equipmentMatches(titleAndDescription, term));
   const opposingEquipment = opposingEquipmentTerms(requiredEquipment, target);
   const hasOpposingEquipment = opposingEquipment.some((term) => equipmentMatches(text, term));
+  const hasDisallowedMovement = (target.disallowedMovementTerms ?? [])
+    .map(normalizeSearchText)
+    .filter(Boolean)
+    .some((term) => titleAndDescription.includes(term));
 
-  if (movementTerms.length > 0 && movementMatches.length === 0) rejectionCodes.push("wrong-movement");
+  if ((movementTerms.length > 0 && movementMatches.length === 0) || hasDisallowedMovement) {
+    rejectionCodes.push("wrong-movement");
+  }
   if (requiredEquipment.length > 0 && (!hasRequiredEquipment || hasOpposingEquipment)) {
     rejectionCodes.push("wrong-equipment-variation");
   }
@@ -239,7 +249,12 @@ function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget
   }
 
   const language = candidate.language ?? candidate.defaultAudioLanguage ?? candidate.defaultLanguage;
-  if (language && !language.toLocaleLowerCase("en-US").startsWith("en")) rejectionCodes.push("non-english");
+  if (
+    (language && !language.toLocaleLowerCase("en-US").startsWith("en"))
+    || NON_ENGLISH_TITLE_CUES.test(normalizeSearchText(candidate.title))
+  ) {
+    rejectionCodes.push("non-english");
+  }
   if (candidate.isShort || /(?:^|[\s/])#?shorts?(?:$|[\s/])/i.test(text)) {
     rejectionCodes.push("shorts-not-allowed");
   }

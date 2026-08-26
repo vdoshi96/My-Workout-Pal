@@ -46,6 +46,8 @@ Reject a candidate when any of the following conditions applies:
 
 Mechanical checks can reject obvious failures but cannot approve technical accuracy, relevance, concision, or safety.
 
+Catalog-derived targets may carry explicit disallowed movement modifiers for adjacent variants that still contain the base movement name. The curator applies the current target rules when resuming old checkpoint candidates, so a stale discovered-target snapshot cannot keep decline, floor-seated, combined-movement, or other incompatible variants mechanically eligible after policy correction.
+
 ## Human quality review
 
 The reviewer watches each proposed video from start to finish and records the following decisions:
@@ -119,4 +121,4 @@ Official player references:
 
 ## Exact credential gate
 
-Ignored `.env.local` contains `YOUTUBE_API_KEY`; bounded official API discovery and hydration ran without printing the key on August 26, 2026. The key is not copied to Vercel because it is a local curation credential, not an application runtime dependency. The ignored schema-three checkpoint currently records 94 successful search requests and 26 hydration requests, or 120 estimated units cumulatively. All 1,252 unique IDs discovered so far are hydrated, yielding 1,355 target-scoped candidates across 16 of 27 catalog targets; 269 candidates pass mechanical eligibility and 16 targets have proposed pairs ready for human review. The provider rejected the next search because the separate search bucket was exhausted. The 160-query catalog has 66 one-page searches left after reset. Final selection, complete viewing, approval, exact-two production seed, and live production embed verification remain release gates until every catalog-derived target completes the policy.
+Ignored `.env.local` contains `YOUTUBE_API_KEY`; bounded official API discovery and hydration ran without printing the key on August 26, 2026. The key is not copied to Vercel because it is a local curation credential, not an application runtime dependency. The ignored schema-three checkpoint currently records 94 successful search requests and 26 hydration requests, or 120 estimated units cumulatively. All 1,252 unique IDs discovered so far are hydrated, yielding 1,355 target-scoped candidates across 16 of 27 catalog targets. Current exact-movement rules leave 245 mechanically eligible candidates and 16 proposed pairs. The provider rejected the next search because the separate search bucket was exhausted. The 160-query catalog has 66 one-page searches left after reset, and reverse lunge is incomplete at four of six queries. Final selection, complete viewing, approval, exact-two production seed, and live production embed verification remain release gates until every catalog-derived target completes the policy.

@@ -71,6 +71,7 @@ export type YouTubeCurationTarget = Readonly<{
   requiredEquipmentTerms?: readonly string[] | undefined;
   equipment?: string | undefined;
   disallowedEquipmentTerms?: readonly string[] | undefined;
+  disallowedMovementTerms?: readonly string[] | undefined;
 }>;
 
 export type YouTubeHumanReview = Readonly<{

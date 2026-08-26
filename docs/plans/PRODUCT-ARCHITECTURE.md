@@ -163,6 +163,18 @@ Refresh resumes the same server session and overlays unacknowledged local operat
 
 **Acceptance criteria, automated tests, and browser evidence:** A red-to-green unit test proves schema-two migration preserves progress and corrects the unit estimate. A second test proves a provider search-quota error produces a sanitized resumable report and permits pending hydration. Existing budget, page-cap, checkpoint, exact-two, and secret-exclusion tests remain green. No browser evidence is required for accounting; later completion still requires full video viewing and real embed verification for every approved pair.
 
+### Exact-movement shortlist correction plan
+
+**User outcome and navigation:** Human reviewers receive a shortlist for the exact catalog movement instead of obvious adjacent variants or commentary. This changes only the ignored operator report; public exercise detail and runner routes continue to show the honest unavailable state until approved exact pairs are released.
+
+**States, domain types, and persistence:** Catalog-derived curation targets can declare normalized disallowed movement modifiers. The checkpoint preserves those modifiers with each target. A candidate that otherwise mentions the movement is still rejected as `wrong-movement` when it adds an incompatible modifier such as decline, floor-seated, press-after-curl, or rotation-after-lunge. Commentary/clickbait, localized non-English instruction cues, and unsupported fat-loss promises retain their existing stable rejection categories. Review status and hydrated metadata remain immutable inputs to regeneration; this correction does not approve, delete, or seed a candidate.
+
+**Authorization, failure recovery, privacy, and security:** The API key and ignored checkpoint remain local operator data with no Firebase identity boundary. Regeneration is deterministic and makes no API request. Unknown modifiers stay pending for human judgment rather than being silently rejected. Existing unavailable, malformed, interrupted, and quota-blocked behavior is unchanged, and no private candidate report enters Git or production.
+
+**Responsive behavior and accessibility:** This domain-only correction adds no phone, tablet, desktop, keyboard, screen-reader, motion, or dark-mode UI. Later embed browser evidence remains required for selected pairs on the existing accessible one-player surface.
+
+**Acceptance criteria, tests, and evidence:** A retained failing table covers real false-positive shapes for flat bench, seated shoulder press, curl, reverse lunge, commentary, unsupported fat-loss copy, and non-English title cues. The passing suite must keep exact tutorials eligible, regenerate the current private report without network access, and reduce those false positives before any full-watch approval. Browser evidence begins only after a mechanically eligible pair is selected.
+
 - Normalize accepted YouTube watch, short-link, and embed URLs to a video ID at the validated input boundary. Reject Shorts and malformed or unsupported hosts before persistence.
 - Custom exercises accept zero, one, or two unique normalized IDs from HTTPS YouTube watch, short-link, or embed URLs. They reject raw IDs, duplicate normalized URLs, and more than two inputs before persistence. They never persist a caller-provided embed URL or markup.
 - The curator's default target manifest is derived from every catalog record: exactly one target per catalog exercise, with stable `variationId: "canonical"`, a movement stem, useful aliases, and only relevant barbell/dumbbell discriminator terms. Bodyweight records do not require the word `bodyweight` in a title. A private `--targets` manifest may explicitly override this complete default, including an intentional empty array.

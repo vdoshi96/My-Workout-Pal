@@ -5,6 +5,7 @@ import {
   parseYouTubeDuration,
   rankEligibleCandidates,
 } from "@/domain/youtube/eligibility";
+import { buildDefaultYouTubeCurationTargets } from "@/domain/youtube/targets";
 import type { YouTubeCandidate, YouTubeCurationTarget } from "@/domain/youtube/types";
 
 const VIDEO_ID_ONE = "AbCdEfGhI01";
@@ -80,6 +81,81 @@ describe("YouTube candidate eligibility", () => {
 
     expect(wrongMovement.rejectionCodes).toContain("wrong-movement");
     expect(wrongEquipment.rejectionCodes).toContain("wrong-equipment-variation");
+  });
+
+  it("rejects exact-movement modifiers, commentary, claims, and non-English title cues", () => {
+    const targets = new Map(
+      buildDefaultYouTubeCurationTargets().map((item) => [item.canonicalExerciseSlug, item]),
+    );
+    const cases = [
+      {
+        slug: "dumbbell-bench-press",
+        title: "Decline Dumbbell Bench Press - Chest Exercise",
+        description: "How to perform the decline dumbbell bench press.",
+        rejectionCode: "wrong-movement",
+      },
+      {
+        slug: "seated-dumbbell-shoulder-press",
+        title: "Floor Seated Dumbbell Shoulder Press",
+        description: "A floor seated dumbbell shoulder press guide.",
+        rejectionCode: "wrong-movement",
+      },
+      {
+        slug: "dumbbell-curl",
+        title: "Dumbbell Curl to Press",
+        description: "Combine a dumbbell curl with an overhead press.",
+        rejectionCode: "wrong-movement",
+      },
+      {
+        slug: "dumbbell-curl",
+        title: "Incline Dumbbell Bicep Curl",
+        description: "Perform a dumbbell curl while lying on an incline bench.",
+        rejectionCode: "wrong-movement",
+      },
+      {
+        slug: "incline-dumbbell-press",
+        title: "Floor Dumbbell Incline Press Without Bench",
+        description: "Use the floor instead of a bench for an incline dumbbell press.",
+        rejectionCode: "wrong-movement",
+      },
+      {
+        slug: "reverse-lunge",
+        title: "Dumbbell Reverse Lunge and Rotation",
+        description: "Add torso rotation to every dumbbell reverse lunge.",
+        rejectionCode: "wrong-movement",
+      },
+      {
+        slug: "incline-dumbbell-press",
+        title: "Incline Dumbbell Press: Why It Is Overrated",
+        description: "Commentary about the incline dumbbell press.",
+        rejectionCode: "disallowed-title-category",
+      },
+      {
+        slug: "side-plank",
+        title: "Lose Love Handles with Side Planks",
+        description: "A side plank tutorial with guaranteed fat loss.",
+        rejectionCode: "unsafe-or-misleading",
+      },
+      {
+        slug: "side-plank",
+        title: "Side Plank Tutorial (Hindi / Punjabi)",
+        description: "Side plank instructions.",
+        rejectionCode: "non-english",
+      },
+    ] as const;
+
+    for (const item of cases) {
+      const curationTarget = targets.get(item.slug);
+      expect(curationTarget, item.slug).toBeDefined();
+      const decision = evaluateYouTubeCandidate(
+        candidate({
+          title: item.title,
+          description: item.description,
+        }),
+        curationTarget!,
+      );
+      expect(decision.rejectionCodes, item.title).toContain(item.rejectionCode);
+    }
   });
 
   it("ranks only hard-gate survivors and uses views only as a tie-break", () => {
