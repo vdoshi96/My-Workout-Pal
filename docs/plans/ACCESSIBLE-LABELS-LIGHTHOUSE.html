@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="25f4b61ed9678da52431788c09597124a36dc41596d4e1a61c67f56619f3e4cc">
+  <title>Accessible labels and production Lighthouse plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Accessible labels and production Lighthouse plan</h1>
+<h2>User outcome</h2>
+<p>Guests and members can activate the brand-home links and five starter-day waypoint controls with speech input, a screen reader, a keyboard, touch, or a pointer using names that include the controls&#39; visible text. The public production surfaces retain their visual identity and navigation behavior while clearing the WCAG 2.5.3 label-in-name finding surfaced by Lighthouse 13.4.1.</p>
+<h2>Navigation and UI states</h2>
+<ul>
+<li>The landing brand continues to navigate to <code>/</code>; public interior-page brands continue to navigate to <code>/</code>; the authenticated brand continues to navigate to <code>/app</code>.</li>
+<li>The five landing waypoints continue to select Push, Pull, Legs, Upper, or Lower in place. <code>aria-current=&quot;step&quot;</code> remains the selected-state signal.</li>
+<li>Visible brand copy, taglines, waypoint numbers, and waypoint names do not change. Loading, selected, unselected, keyboard-focus, dark, reduced-motion, forced-colors, narrow-screen, and offline-compatible public states preserve the same content and destinations.</li>
+<li>No new empty, error, interrupted, or retry state is introduced. A missing accessible-name invariant is a release-blocking test failure rather than a user-visible fallback.</li>
+</ul>
+<h2>Types, invariants, persistence, and authorization</h2>
+<ul>
+<li>This remediation changes semantic markup only; domain types, API envelopes, stored records, canonical measurements, program revisions, workout snapshots, and cache policy remain unchanged.</li>
+<li>A visible text label must be contained in the computed accessible name. Native link and button content is the source of truth; redundant overriding <code>aria-label</code> attributes must not shorten or reorder that visible text.</li>
+<li>Route access, Firebase session verification, server-derived UID ownership, CSRF checks, and verified-email mutation gates are unchanged. The authenticated shell receives the same server-verified viewer and discloses no additional identity data.</li>
+<li>The change performs no read or write against local storage, IndexedDB, Neon, Firebase, YouTube, analytics, or external services.</li>
+</ul>
+<h2>Responsive behavior and accessibility</h2>
+<ul>
+<li>Phone, tablet, and desktop layouts retain existing breakpoints and minimum target sizes. At a 640 CSS-pixel layout viewport representing 200 percent zoom from a 1,280-pixel desktop viewport, primary public routes must have no horizontal document overflow and all actions must remain reachable.</li>
+<li>With <code>forced-colors: active</code>, interactive controls retain discernible text, system-color focus outlines or borders, selected-state text, and usable SVG-independent meaning.</li>
+<li>Keyboard order, skip-link behavior, visible focus, heading structure, landmarks, reduced motion, light and dark schemes, and touch targets remain unchanged.</li>
+<li>Brand links derive their accessible names from visible brand copy and taglines. Waypoint buttons derive their accessible names from their visible number and day name; test locators must follow those truthful names rather than the removed override.</li>
+</ul>
+<h2>Privacy and security</h2>
+<p>No private user content or provider credential is needed for this public remediation. Browser and Lighthouse evidence uses the public production alias and writes raw reports only to a temporary local directory. Committed QA notes contain aggregate results and bounded diagnostics, never cookies, tokens, raw provider responses, or user data.</p>
+<h2>Acceptance criteria</h2>
+<ol>
+<li>A component-rendering regression test proves the three brand variants and landing waypoints do not use a shorter overriding accessible label and retain their visible text.</li>
+<li>The existing public Playwright journey selects all five waypoints through their native visible names and remains green in Chromium and WebKit.</li>
+<li>Lighthouse&#39;s <code>label-content-name-mismatch</code> audit passes on the landing page and public interior shells.</li>
+<li>Mobile and desktop Lighthouse audits cover <code>/</code>, <code>/program</code>, a barbell day detail, the dumbbell library, and the read-only sample runner. Performance, accessibility, and best-practices scores plus variability are recorded without turning a score into a correctness claim.</li>
+<li>Public Chrome inspection at 640 by 900 CSS pixels finds no horizontal overflow on the landing page, program overview, day detail, library, and sample workout; every primary control remains reachable by keyboard.</li>
+<li>The same routes under active forced colors retain visible content, focus, selected state, and system-color boundaries without relying on route artwork alone.</li>
+<li>Typecheck, lint, focused unit tests, the public browser matrix, production build, documentation parity, public smoke, runtime-log scan, and local/GitHub/Vercel SHA comparison pass at their stated checkpoints.</li>
+</ol>
+<h2>Fail-then-pass and browser evidence</h2>
+<ul>
+<li>Retain the pre-implementation Lighthouse 13.4.1 failure showing the landing brand and five waypoint buttons under <code>label-content-name-mismatch</code>.</li>
+<li>Add and run the component regression before implementation so it fails on the overriding attributes; rerun it after the semantic fix.</li>
+<li>Rerun the affected Lighthouse route first, then the complete requested mobile/desktop route set.</li>
+<li>Use the Playwright CLI against public production for snapshots and interaction. Use a fresh browser context with <code>forced-colors: active</code> for the high-contrast pass and a 640-pixel-wide layout viewport for the 200 percent reflow pass. Record observations and bounded metrics in <code>docs/qa/latest/</code> while keeping raw temporary reports untracked.</li>
+</ul>
+
+  </main>
+</body>
+</html>
