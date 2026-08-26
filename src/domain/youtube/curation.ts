@@ -22,13 +22,13 @@ import type {
 } from "./types.ts";
 
 export const DEFAULT_YOUTUBE_CURATION_STATE_DIR = ".local/youtube-curation";
-export const YOUTUBE_CURATION_CHECKPOINT_SCHEMA_VERSION = 2;
+export const YOUTUBE_CURATION_CHECKPOINT_SCHEMA_VERSION = 3;
 export const MISSING_YOUTUBE_API_KEY_MESSAGE = "Missing YOUTUBE_API_KEY; refusing to run YouTube curation.";
 export const YOUTUBE_CURATION_CHECKPOINT_FILENAME = "checkpoint.json";
 export const YOUTUBE_CURATION_REPORT_FILENAME = "review-report.json";
 export const DEFAULT_YOUTUBE_REGION_CODE = "US";
 export const DEFAULT_YOUTUBE_MAX_RESULTS = 25;
-export const YOUTUBE_SEARCH_REQUEST_UNITS = 100;
+export const YOUTUBE_SEARCH_REQUEST_UNITS = 1;
 export const YOUTUBE_HYDRATE_REQUEST_UNITS = 1;
 export const DEFAULT_YOUTUBE_CURATION_BUDGET: CurationRunBudget = {
   maxQuotaUnits: 1_000,
@@ -152,7 +152,8 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
   if (!isRecord(input)) {
     throw new Error("YouTube curation checkpoint has an unsupported schema version.");
   }
-  if (input.schemaVersion !== YOUTUBE_CURATION_CHECKPOINT_SCHEMA_VERSION) {
+  const isLegacySchemaTwo = input.schemaVersion === 2;
+  if (input.schemaVersion !== YOUTUBE_CURATION_CHECKPOINT_SCHEMA_VERSION && !isLegacySchemaTwo) {
     if (input.schemaVersion === 1) {
       throw new Error(
         "YouTube curation checkpoint schema version 1 is incompatible with scoped candidate state; start a new checkpoint or migrate it explicitly.",
@@ -257,7 +258,13 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
     }
   }
   const quota = isRecord(input.quota) ? input.quota : {};
-  const numberOrZero = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : 0);
+  const numberOrZero = (value: unknown) => (
+    typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0
+  );
+  const searchRequests = numberOrZero(quota.searchRequests);
+  const hydrateRequests = numberOrZero(quota.hydrateRequests);
+  const documentedUnits = searchRequests * YOUTUBE_SEARCH_REQUEST_UNITS
+    + hydrateRequests * YOUTUBE_HYDRATE_REQUEST_UNITS;
 
   return {
     ...empty,
@@ -271,9 +278,11 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
     queryPageCounts,
     reviewStatus,
     quota: {
-      searchRequests: numberOrZero(quota.searchRequests),
-      hydrateRequests: numberOrZero(quota.hydrateRequests),
-      unitsEstimated: numberOrZero(quota.unitsEstimated),
+      searchRequests,
+      hydrateRequests,
+      unitsEstimated: isLegacySchemaTwo
+        ? documentedUnits
+        : Math.max(numberOrZero(quota.unitsEstimated), documentedUnits),
     },
     ...(typeof input["blockedReason"] === "string" ? { blockedReason: input["blockedReason"] } : {}),
   };
@@ -531,6 +540,12 @@ function recordRunUsage(usage: CurationRunUsage, kind: "search" | "hydrate", uni
   else usage.hydrateRequests += 1;
 }
 
+function isProviderSearchQuotaError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const normalized = error.message.toLocaleLowerCase("en-US");
+  return normalized.includes("quota exceeded") && normalized.includes("search quer");
+}
+
 function candidateChannelKey(candidate: YouTubeCandidate): string | undefined {
   const value = candidate.channelId ?? candidate.channelTitle;
   const normalized = value?.trim().toLocaleLowerCase("en-US");
@@ -669,7 +684,16 @@ export async function curateYouTubeCandidates(options: Readonly<{
             maxResults: options.maxResults,
             ...(pageToken ? { pageToken } : {}),
           });
-          const response = await options.api.searchVideos(pageRequest);
+          let response: YouTubeSearchResponse;
+          try {
+            response = await options.api.searchVideos(pageRequest);
+          } catch (error) {
+            if (!isProviderSearchQuotaError(error)) throw error;
+            searchBlockedReason = "provider search quota is exhausted; resume after the provider reset.";
+            checkpoint.blockedReason = searchBlockedReason;
+            await saveCurationCheckpoint(stateDirectory, checkpoint);
+            break curationLoop;
+          }
           recordRunUsage(usage, "search", YOUTUBE_SEARCH_REQUEST_UNITS);
           addQuota(checkpoint, YOUTUBE_SEARCH_REQUEST_UNITS, 0);
           pagesFetched += 1;

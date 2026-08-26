@@ -7,6 +7,9 @@
 - [YouTube API Services Required Minimum Functionality](https://developers.google.com/youtube/terms/required-minimum-functionality) — embedded-player referrer requirement and recommended `strict-origin-when-cross-origin` policy.
 - [YouTube embedded-player parameters](https://developers.google.com/youtube/player_parameters) — current non-autoplay controls, inline playback, keyboard behavior, deprecated branding parameters, and the 200-by-200 minimum player viewport.
 - [YouTube privacy-enhanced embedding](https://support.google.com/youtube/answer/171780?expand=PrivacyEnhancedMode&hl=en-GB) — `youtube-nocookie.com` embed boundary for privacy-enhanced website playback.
+- [YouTube `search.list`](https://developers.google.com/youtube/v3/docs/search/list) — accessed August 26, 2026; confirms the separate default limit of 100 calls per day and one-unit cost per call in the Search Queries bucket.
+- [YouTube `videos.list`](https://developers.google.com/youtube/v3/docs/videos/list) — accessed August 26, 2026; confirms the one-unit metadata-hydration cost.
+- [YouTube Data API revision history](https://developers.google.com/youtube/v3/revision_history) — accessed August 26, 2026; records the June 1, 2026 transition of `search.list` to its own granular quota bucket.
 
 ## Browser verification
 
@@ -33,4 +36,4 @@ The recording shows a five-tab mobile routine, sectioned prescriptions, embedded
 
 The dedicated implementation brief dated August 25, 2026, is the authoritative source for features, equipment variants, starter prescriptions, authentication, persistence, video curation, verification, provisioning, release, and documentation requirements.
 
-Add remaining primary documentation links when implementation reaches live YouTube Data API execution, embed verification, and Vercel production release. Record access dates and the decision each source supports.
+Add remaining primary documentation links when implementation reaches live embed verification. Record access dates and the decision each source supports.

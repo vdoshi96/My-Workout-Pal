@@ -38,7 +38,7 @@ describe("resumable YouTube curation state", () => {
       expect(loaded.completedQueries).toEqual(checkpoint.completedQueries);
       expect(loaded.hydratedVideoIds).toEqual(["AbCdEfGhI01"]);
       expect(loaded.rejectionCodes[getYouTubeCandidateStateKey("dumbbell-bench-press", "dumbbells", "AbCdEfGhI01")]).toEqual(["duration-too-short"]);
-      expect(loaded.quota).toEqual({ searchRequests: 1, hydrateRequests: 1, unitsEstimated: 101 });
+      expect(loaded.quota).toEqual({ searchRequests: 1, hydrateRequests: 1, unitsEstimated: 2 });
       expect(loaded.reviewStatus[getYouTubeCandidateStateKey("dumbbell-bench-press", "dumbbells", "AbCdEfGhI01")]).toBe("pending");
     } finally {
       await rm(directory, { recursive: true, force: true });
@@ -51,7 +51,7 @@ describe("resumable YouTube curation state", () => {
     try {
       const checkpoint = createEmptyCurationCheckpoint("2026-08-25T12:00:00.000Z");
       checkpoint.pageTokens["bench-press-query"] = "resume-token";
-      const legacyCheckpoint: Record<string, unknown> = { ...checkpoint };
+      const legacyCheckpoint: Record<string, unknown> = { ...checkpoint, schemaVersion: 2 };
       delete legacyCheckpoint["queryPageCounts"];
       await writeFile(
         path.join(directory, "checkpoint.json"),
@@ -60,6 +60,30 @@ describe("resumable YouTube curation state", () => {
 
       const loaded = await loadCurationCheckpoint(directory);
       expect(loaded.queryPageCounts).toEqual({ "bench-press-query": 1 });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("migrates schema-two quota accounting without losing resumable progress", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-quota-migration-"));
+
+    try {
+      const legacyCheckpoint = {
+        ...createEmptyCurationCheckpoint("2026-08-25T12:00:00.000Z"),
+        schemaVersion: 2,
+        completedQueries: [{ queryKey: "bench-press-query", pageToken: null }],
+        quota: { searchRequests: 1, hydrateRequests: 1, unitsEstimated: 101 },
+      };
+      await writeFile(
+        path.join(directory, "checkpoint.json"),
+        `${JSON.stringify(legacyCheckpoint)}\n`,
+      );
+
+      const loaded = await loadCurationCheckpoint(directory);
+      expect(loaded.schemaVersion).toBe(3);
+      expect(loaded.completedQueries).toEqual([{ queryKey: "bench-press-query", pageToken: null }]);
+      expect(loaded.quota).toEqual({ searchRequests: 1, hydrateRequests: 1, unitsEstimated: 2 });
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -284,7 +308,7 @@ describe("resumable YouTube curation state", () => {
         ],
         stateDirectory: directory,
         budget: {
-          maxQuotaUnits: 100,
+          maxQuotaUnits: 1,
           maxSearchRequests: 1,
           maxHydrateRequests: 1,
           maxPagesPerQuery: 5,
@@ -357,11 +381,76 @@ describe("resumable YouTube curation state", () => {
       expect(result.checkpoint.quota).toEqual({
         searchRequests: 1,
         hydrateRequests: 1,
-        unitsEstimated: 101,
+        unitsEstimated: 2,
       });
       expect(result.report.candidates).toHaveLength(1);
       expect(result.report.status).toBe("quota-blocked");
       expect(result.report.blockedReason).toContain("search request");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("records provider search quota exhaustion safely and still hydrates discovered IDs", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-provider-quota-"));
+    let searchCalls = 0;
+    let hydrateCalls = 0;
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        searchCalls += 1;
+        if (searchCalls > 1) {
+          throw new Error("Quota exceeded for Search Queries for project_number:SENSITIVE_PROVIDER_PROJECT");
+        }
+        return { items: [{ videoId: "AbCdEfGhI01", title: "Dumbbell bench press tutorial" }] };
+      },
+      async hydrateVideos(videoIds) {
+        hydrateCalls += 1;
+        expect(videoIds).toEqual(["AbCdEfGhI01"]);
+        return {
+          items: [{
+            videoId: "AbCdEfGhI01",
+            title: "Dumbbell bench press tutorial",
+            description: "A concise dumbbell bench press guide.",
+            duration: "PT2M",
+            privacyStatus: "public",
+            uploadStatus: "processed",
+            embeddable: true,
+            syndicated: true,
+            regionAvailable: true,
+            liveBroadcastContent: "none",
+            language: "en",
+          }],
+        };
+      },
+    };
+
+    try {
+      const result = await curateYouTubeCandidates({
+        api,
+        targets: [{
+          canonicalExerciseSlug: "dumbbell-bench-press",
+          variationId: "canonical",
+          exerciseName: "Dumbbell bench press",
+          movement: "bench press",
+          aliases: ["db bench press"],
+          requiredEquipmentTerms: ["dumbbell"],
+        }],
+        stateDirectory: directory,
+        budget: {
+          maxQuotaUnits: 10,
+          maxSearchRequests: 10,
+          maxHydrateRequests: 10,
+          maxPagesPerQuery: 1,
+        },
+      });
+
+      expect(searchCalls).toBe(2);
+      expect(hydrateCalls).toBe(1);
+      expect(result.report.status).toBe("quota-blocked");
+      expect(result.report.blockedReason).toContain("provider search quota");
+      expect(result.report.blockedReason).not.toContain("SENSITIVE_PROVIDER_PROJECT");
+      expect(result.report.candidates).toHaveLength(1);
+      expect(result.checkpoint.quota).toEqual({ searchRequests: 1, hydrateRequests: 1, unitsEstimated: 2 });
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

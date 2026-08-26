@@ -186,7 +186,7 @@ export type CurationQueryCheckpoint = Readonly<{
 export type CurationReviewStatus = "pending" | "approved" | "rejected";
 
 export type CurationCheckpoint = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   updatedAt: string;
   completedQueries: CurationQueryCheckpoint[];
   pageTokens: Record<string, string | null>;
