@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="8f342ba291f046146c529ac37a52dffa65a6687be13ecb3bb21feae09f1d9cec">
+  <meta name="source-sha256" content="d4ef120f5487a6f9d123138040aef5d556196bdbc2d22e4897cd87a68bf5c35e">
   <title>Verification plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -31,6 +31,13 @@
 <h2>Evidence principles</h2>
 <p>Local green checks prove only the environment in which they ran. Preview and production require separate build, browser, runtime-log, and commit evidence. Every claim names its environment and commit.</p>
 <p>Keep the newest completed run under <code>docs/qa/latest/</code>. A concise Markdown note and generated HTML counterpart contain commands, commit, environment URLs, pass and fail counts, TDD fail-then-pass evidence, screenshots, and unresolved findings. Raw traces, videos, HAR files, and redundant screenshots remain untracked unless one is needed to explain a release blocker.</p>
+<h2>Development runtime bundler plan</h2>
+<p><strong>User outcome and navigation:</strong> A developer can run <code>pnpm dev</code> and reach the same application routes through Hot Module Reloading without a bundler/configuration mismatch. This checkpoint changes the development command only; it doesn&#39;t add or change product navigation.</p>
+<p><strong>States and invariants:</strong> Next.js 16.3.2 uses Turbopack by default, but this repository defines a custom <code>webpack</code> function and already builds production with <code>next build --webpack</code>. The development script must therefore select Webpack explicitly. Startup distinguishes a ready server, a port conflict, a second-server project lock, and a configuration failure. It must not report readiness after an immediate process exit.</p>
+<p><strong>Persistence, authentication, privacy, and security:</strong> The script change doesn&#39;t read or write Neon, Firebase, Vercel, YouTube, cookies, sessions, or user data. It loads the existing ignored development environment and keeps secrets out of terminal assertions and committed evidence.</p>
+<p><strong>Loading, error, interrupted, and worst-case states:</strong> A valid start reaches the ready state on an available isolated port. A port collision either uses the requested alternate port or exits truthfully. A pre-existing development server for this project remains untouched. Interrupting the verification server stops only the process created by that verification run.</p>
+<p><strong>Responsive behavior and accessibility:</strong> This runtime correction changes no rendered phone, tablet, desktop, keyboard, screen-reader, motion, forced-colors, or dark-mode behavior. Existing browser and accessibility matrices remain the regression gate.</p>
+<p><strong>Acceptance criteria, automated tests, and browser evidence:</strong> Retain a focused package-script failure before changing <code>dev</code> to <code>next dev --webpack</code>. Run the focused test, strict TypeScript, lint, and documentation parity. Start an isolated development instance on an unused port, verify that the terminal identifies Webpack and reaches ready, request a representative public route, inspect server logs, and stop only that instance. Production <code>next build --webpack</code> and the release browser path remain separate checks.</p>
 <h2>Static and unit verification</h2>
 <ul>
 <li><code>pnpm typecheck</code> with strict TypeScript and no ignored errors.</li>

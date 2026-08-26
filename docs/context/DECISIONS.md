@@ -52,6 +52,8 @@ Firebase client identity is exchanged for a secure HTTP-only session. Server cod
 
 Discovery scripts can propose candidates but cannot silently seed production. A seeded demonstration requires mechanical eligibility, manual review, a complete viewing, approval metadata, and complete two-video mapping validation.
 
+The production boundary independently revalidates each selected proposal instead of trusting its label. Every selected candidate must remain eligible, carry scoped `syndicationEvidence: verified`, and retain full-watch, exact-variation, concise, safe, material-value, and narration/captions/visual instruction evidence. The generated schema-one manifest contains only the canonical slug, variation, normalized ID, order, reviewed title/channel, approval state, reviewer, canonical ISO review timestamp, and full-watch confirmation. Extra fields, including view counts and private evidence, fail closed. The deterministic starter graph imports only this validated checked-in manifest; provider and private report files remain outside the application and repository.
+
 ## 2026-08-25: Defer an open-source license decision
 
 The repository can be public without granting an open-source license. No license will be added without explicit legal approval from the user.
@@ -73,3 +75,21 @@ The service worker may cache the guest program, library, samples, offline page, 
 Application HTML is request-rendered so Next.js can attach a fresh nonce to framework scripts and generated styles. This disables static HTML and ordinary CDN caching for application pages and increases function work, but avoids production `unsafe-inline` while the product handles account and fitness data. The web manifest and ordinary static assets remain static, and the service worker retains its public-only offline cache. Usage monitoring must account for this deliberate server-rendering cost.
 
 The response policy allows only the Firebase network and frame boundaries needed for authentication and the YouTube origins needed for approved embeds. `strict-origin-when-cross-origin` preserves the referrer YouTube requires. `same-origin-allow-popups` preserves Google sign-in popup behavior without weakening frame ancestry.
+
+## 2026-08-26: Separate welcome from program exploration
+
+The public root route is a welcome surface and `/program` is the five-day explorer. Guests can read every starter day, canonical exercise guide, approved demonstration pair, sample workout, and sample analytic without authentication. Sign-in is presented as optional until a visitor wants to customize or persist equipment, prescriptions, exercises, workout progress, history, records, or analytics.
+
+The welcome hero extends the route-atlas system with an original hand-drawn cartoon gym populated by expressive animal characters. The environment, equipment, and characters share one deliberately illustrated world while the exercises remain physically understandable. The image is noninteractive atmosphere. A proposed hotspot and filtered-library experiment was rejected because it made the gym read as a diagram rather than a convincing cartoon place.
+
+The hero renders from its explicit project URL with reserved intrinsic dimensions and responsive CSS. That URL is the exact asset precached by the public-only service worker. This avoids a mismatch in which cached HTML would reference an uncached Next image-optimization URL, and it avoids the generated inline image style that the nonce-only CSP correctly refuses.
+
+## 2026-08-26: Preserve recognized public navigation origins
+
+Exercise-detail links carry a bounded `returnTo` value for their actual public source. The server accepts only the program overview, one of five public day paths, a normalized filtered library, or a normalized sample-workout route. Labels are derived from that recognized destination; untrusted labels, private paths, repeated scalars, absolute URLs, controls, fragments, and unknown routes fail closed to the exercise library.
+
+This explicit context is preferred to browser history because a direct visit, reload, copied link, or interrupted navigation may have no useful prior entry. Dynamic exercise links opt out of Next.js prefetch after WebKit exposed aborted RSC prefetch requests as page errors; deliberate navigation still server-renders the destination normally without speculative request noise.
+
+## 2026-08-26: Limit generated HTML parity to publication documentation
+
+`scripts/render-docs.mjs` treats the repository root documents and `docs/` tree as the maintained publication set, and generates a same-content HTML counterpart for every Markdown file in that set. The tracked `.impeccable/surfaces/` Markdown is an internal design-tool input, not a published project document, so it is intentionally outside the generator and does not receive an HTML twin. Changes to this boundary require updating the generator and this decision together rather than relying on an implicit exclusion.

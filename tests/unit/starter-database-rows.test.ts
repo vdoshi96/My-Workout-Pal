@@ -69,7 +69,7 @@ describe("starter database seed rows", () => {
     ).toBe(true);
   });
 
-  it("publishes both equipment revisions without inventing video approvals or loads", () => {
+  it("publishes both equipment revisions and reviewed videos without inventing loads", () => {
     const rows = buildStarterDatabaseRows();
 
     expect(
@@ -88,7 +88,8 @@ describe("starter database seed rows", () => {
     expect(rows.templatePrescriptions.every(({ targetWeightKg }) => targetWeightKg === null)).toBe(
       true,
     );
-    expect(rows.curatedVideos).toEqual([]);
+    expect(rows.curatedVideos).toHaveLength(54);
+    expect(rows.curatedVideos.every(({ approvalStatus }) => approvalStatus === "approved")).toBe(true);
 
     const dumbbellRevision = rows.programTemplateRevisions.find(
       ({ equipmentProfileKind }) => equipmentProfileKind === "dumbbells",

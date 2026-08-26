@@ -6,10 +6,12 @@ My Workout Pal is a trustworthy bridge between a prescribed routine and the reco
 
 ## Confirmed workflows
 
+- Enter through a distinct public welcome page and continue to the five-day program overview.
 - Browse the starter catalog and all five days without an account.
 - Preview dumbbell-only and barbell-enabled equipment profiles.
 - Inspect two approved demonstrations for each seeded movement.
 - Review clearly labeled sample workout and analytics data.
+- Return from an exercise guide to the exact public day, filtered library, or sample workout that opened it.
 - Register or sign in with Google or email and password.
 - Verify a password account before permanent mutations.
 - Clone or create a program, edit prescriptions, and create custom exercises.
@@ -26,6 +28,7 @@ My Workout Pal is a trustworthy bridge between a prescribed routine and the reco
 - Neon Postgres through Vercel Marketplace, accessed through Drizzle ORM and versioned migrations.
 - Zod validation at every untrusted input boundary.
 - Authentication return targets are server-normalized to bounded local paths before client navigation.
+- Public exercise return targets use a separate allowlist for the program, five days, filtered library, and sample workout; direct or hostile origins fall back to the library.
 - Vitest for domain and integration tests. Playwright covers Chromium and WebKit browser flows.
 - Vercel Pro hosts preview and production deployments from GitHub.
 
@@ -34,6 +37,7 @@ My Workout Pal is a trustworthy bridge between a prescribed routine and the reco
 - Medical diagnosis, rehabilitation advice, or outcome guarantees.
 - Automatic load prescriptions.
 - Guest cloud persistence or claims that guest activity is saved.
+- Requiring sign-in to read the starter program, day prescriptions, exercise instructions, approved demonstrations, or clearly labeled sample resources.
 - Social feeds, public profiles, coaching marketplaces, or wearable integrations in the initial release.
 - Silent production data mutation by a curation or refresh script.
 - Paid service changes without explicit approval.

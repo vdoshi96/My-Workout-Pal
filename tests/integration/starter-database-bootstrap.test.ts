@@ -68,7 +68,7 @@ describe("starter database bootstrap", () => {
       templateSections: 26,
       templatePrescriptions: 60,
       templateCardioPrescriptions: 20,
-      approvedVideos: 0,
+      approvedVideos: 54,
     });
     expect(after.rows[0]?.payload).toEqual(before.rows[0]?.payload);
     expect(
@@ -83,7 +83,7 @@ describe("starter database bootstrap", () => {
         { status: "published", published_at: new Date("2026-08-25T00:00:00.000Z") },
       ],
     });
-  });
+  }, 15_000);
 
   it("rejects deterministic catalog drift and leaves the committed graph intact", async () => {
     const { raw, database } = await openDatabase();

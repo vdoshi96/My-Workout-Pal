@@ -3,8 +3,11 @@ const VALIDATION_ORIGIN = "https://return-path.invalid";
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
 const ENCODED_CONTROL_PATTERN = /%(?:0[0-9a-f]|1[0-9a-f]|7f)/i;
 
-export function normalizeReturnPath(value: string | undefined): string {
+export function normalizeReturnPath(
+  value: string | readonly string[] | undefined,
+): string {
   if (
+    typeof value !== "string" ||
     !value ||
     value.length > RETURN_PATH_LIMIT ||
     value !== value.trim() ||

@@ -23,6 +23,7 @@ describe("authenticated return paths", () => {
 
   it("falls back for a missing or oversized target", () => {
     expect(normalizeReturnPath(undefined)).toBe("/");
+    expect(normalizeReturnPath(["/history", "/app"])).toBe("/");
     expect(normalizeReturnPath(`/${"x".repeat(2_048)}`)).toBe("/");
   });
 });

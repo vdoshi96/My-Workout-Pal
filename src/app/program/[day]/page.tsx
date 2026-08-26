@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { getCatalogExercise } from "@/domain/exercises/catalog";
+import { exerciseDetailHref } from "@/domain/navigation/public-exercise-return";
 import { createStarterProgram } from "@/domain/programs/starter";
 
 const dayBySlug = {
@@ -43,9 +44,9 @@ export default async function DayPage({ params, searchParams }: PageProps) {
         Skip to day plan
       </a>
       <header className="day-header">
-        <Link className="back-link" href={`/?equipment=${profile}`}>
+        <Link className="back-link" href={`/program?equipment=${profile}`}>
           <Icon name="arrow-left" />
-          Program route
+          Five-day program
         </Link>
         <div className="guest-stamp">Guest preview · not saved</div>
       </header>
@@ -82,7 +83,13 @@ export default async function DayPage({ params, searchParams }: PageProps) {
                     : `${prescription.sets} × ${prescription.minimumReps}–${prescription.maximumReps}`;
                   return (
                     <li key={exercise.slug}>
-                      <Link href={`/library/${exercise.slug}?from=${day}&equipment=${profile}`}>
+                      <Link
+                        href={exerciseDetailHref(exercise.slug, {
+                          equipment: profile,
+                          returnTo: `/program/${day}?equipment=${profile}`,
+                        })}
+                        prefetch={false}
+                      >
                         <span>
                           <strong>{prescription.displayName ?? exercise.name}</strong>
                           <small>{target} · {prescription.restSeconds}s rest</small>

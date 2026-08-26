@@ -6,6 +6,20 @@ Local green checks prove only the environment in which they ran. Preview and pro
 
 Keep the newest completed run under `docs/qa/latest/`. A concise Markdown note and generated HTML counterpart contain commands, commit, environment URLs, pass and fail counts, TDD fail-then-pass evidence, screenshots, and unresolved findings. Raw traces, videos, HAR files, and redundant screenshots remain untracked unless one is needed to explain a release blocker.
 
+## Development runtime bundler plan
+
+**User outcome and navigation:** A developer can run `pnpm dev` and reach the same application routes through Hot Module Reloading without a bundler/configuration mismatch. This checkpoint changes the development command only; it doesn't add or change product navigation.
+
+**States and invariants:** Next.js 16.3.2 uses Turbopack by default, but this repository defines a custom `webpack` function and already builds production with `next build --webpack`. The development script must therefore select Webpack explicitly. Startup distinguishes a ready server, a port conflict, a second-server project lock, and a configuration failure. It must not report readiness after an immediate process exit.
+
+**Persistence, authentication, privacy, and security:** The script change doesn't read or write Neon, Firebase, Vercel, YouTube, cookies, sessions, or user data. It loads the existing ignored development environment and keeps secrets out of terminal assertions and committed evidence.
+
+**Loading, error, interrupted, and worst-case states:** A valid start reaches the ready state on an available isolated port. A port collision either uses the requested alternate port or exits truthfully. A pre-existing development server for this project remains untouched. Interrupting the verification server stops only the process created by that verification run.
+
+**Responsive behavior and accessibility:** This runtime correction changes no rendered phone, tablet, desktop, keyboard, screen-reader, motion, forced-colors, or dark-mode behavior. Existing browser and accessibility matrices remain the regression gate.
+
+**Acceptance criteria, automated tests, and browser evidence:** Retain a focused package-script failure before changing `dev` to `next dev --webpack`. Run the focused test, strict TypeScript, lint, and documentation parity. Start an isolated development instance on an unused port, verify that the terminal identifies Webpack and reaches ready, request a representative public route, inspect server logs, and stop only that instance. Production `next build --webpack` and the release browser path remain separate checks.
+
 ## Static and unit verification
 
 - `pnpm typecheck` with strict TypeScript and no ignored errors.

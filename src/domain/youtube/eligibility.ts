@@ -59,13 +59,17 @@ const DISALLOWED_TITLE_PATTERNS: readonly RegExp[] = [
   /\b(?:challenge|reaction|reacts?|podcast|interview|follow[ -]?along|routine|compilation|discussion|lecture)\b/i,
   /\b(?:top|best|ranking|ranked|listicle)\s+\d+/i,
   /\b(?:clickbait|shocking|guaranteed|cure|fix your pain|medical claim)\b/i,
+  /\b(?:overrated|underrated)\b/i,
   /#?shorts?\b/i,
 ];
 
 const UNSAFE_OR_MISLEADING_PATTERNS: readonly RegExp[] = [
   /\b(?:cure|heal|treat|diagnos|guaranteed|instant|pain[- ]?free|pain relief|injury[- ]?proof|medical)\b/i,
   /\b(?:dangerous|unsafe|do this wrong|avoid this mistake)\b/i,
+  /\b(?:lose|burn|melt)\b.{0,24}\b(?:love handles?|belly fat|body fat)\b/i,
 ];
+
+const NON_ENGLISH_TITLE_CUES = /\b(?:hindi|punjabi|spanish|espanol|portuguese|portugues|french|francais|german|deutsch|italian|italiano|arabic)\b/i;
 
 const EQUIPMENT_WORDS = new Set(EQUIPMENT_MARKERS.flatMap((marker) => marker.split(" ")));
 
@@ -169,6 +173,26 @@ function reviewRejectionCodes(review: YouTubeHumanReview | undefined): YouTubeRe
   return failures;
 }
 
+function hasCompleteSemanticOverrideReview(
+  review: YouTubeHumanReview | undefined,
+): boolean {
+  return Boolean(
+    review
+    && review.approved
+    && review.fullWatchConfirmed
+    && review.exactVariation
+    && review.conciseInstruction
+    && review.safeInstruction
+    && review.addsMaterialValue
+    && review.reviewer?.trim()
+    && review.reviewedAt
+    && !Number.isNaN(Date.parse(review.reviewedAt))
+    && (review.instructionEvidence === "narration"
+      || review.instructionEvidence === "captions"
+      || review.instructionEvidence === "visual"),
+  );
+}
+
 function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget): {
   normalizedVideoId: string | undefined;
   durationSeconds: number | undefined;
@@ -209,8 +233,14 @@ function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget
   const hasRequiredEquipment = requiredEquipment.length === 0 || requiredEquipment.some((term) => equipmentMatches(titleAndDescription, term));
   const opposingEquipment = opposingEquipmentTerms(requiredEquipment, target);
   const hasOpposingEquipment = opposingEquipment.some((term) => equipmentMatches(text, term));
+  const hasDisallowedMovement = (target.disallowedMovementTerms ?? [])
+    .map(normalizeSearchText)
+    .filter(Boolean)
+    .some((term) => titleAndDescription.includes(term));
 
-  if (movementTerms.length > 0 && movementMatches.length === 0) rejectionCodes.push("wrong-movement");
+  if ((movementTerms.length > 0 && movementMatches.length === 0) || hasDisallowedMovement) {
+    rejectionCodes.push("wrong-movement");
+  }
   if (requiredEquipment.length > 0 && (!hasRequiredEquipment || hasOpposingEquipment)) {
     rejectionCodes.push("wrong-equipment-variation");
   }
@@ -233,13 +263,20 @@ function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget
   if (candidate.uploadStatus !== undefined && candidate.uploadStatus !== "processed") rejectionCodes.push("upload-not-processed");
   else if (!unavailable && candidate.uploadStatus !== "processed") rejectionCodes.push("upload-not-processed");
   if (candidate.embeddable === false || (!unavailable && candidate.embeddable !== true)) rejectionCodes.push("not-embeddable");
-  if (candidate.syndicated === false || (!unavailable && candidate.syndicated !== true)) rejectionCodes.push("not-syndicated");
+  if (candidate.syndicated === false || (!unavailable && candidate.syndicated !== true)) {
+    rejectionCodes.push("not-syndicated");
+  }
   if (candidate.isLive || candidate.liveBroadcastContent === "live" || candidate.liveBroadcastContent === "upcoming") {
     rejectionCodes.push("live-or-upcoming");
   }
 
   const language = candidate.language ?? candidate.defaultAudioLanguage ?? candidate.defaultLanguage;
-  if (language && !language.toLocaleLowerCase("en-US").startsWith("en")) rejectionCodes.push("non-english");
+  if (
+    (language && !language.toLocaleLowerCase("en-US").startsWith("en"))
+    || NON_ENGLISH_TITLE_CUES.test(normalizeSearchText(candidate.title))
+  ) {
+    rejectionCodes.push("non-english");
+  }
   if (candidate.isShort || /(?:^|[\s/])#?shorts?(?:$|[\s/])/i.test(text)) {
     rejectionCodes.push("shorts-not-allowed");
   }
@@ -270,9 +307,20 @@ function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget
 export function evaluateYouTubeCandidate(
   candidate: YouTubeCandidate,
   target: YouTubeCurationTarget,
-  options: Readonly<{ requireHumanReview?: boolean }> = {},
+  options: Readonly<{
+    requireHumanReview?: boolean;
+    allowReviewedSemanticOverride?: boolean;
+  }> = {},
 ): YouTubeCandidateDecision {
   const base = baseDecision(candidate, target);
+  if (
+    options.allowReviewedSemanticOverride
+    && hasCompleteSemanticOverrideReview(candidate.humanReview)
+  ) {
+    base.rejectionCodes = base.rejectionCodes.filter(
+      (code) => code !== "wrong-movement" && code !== "wrong-equipment-variation",
+    );
+  }
   if (options.requireHumanReview) base.rejectionCodes.push(...reviewRejectionCodes(candidate.humanReview));
 
   return {
@@ -290,18 +338,33 @@ export const checkCandidateEligibility = evaluateYouTubeCandidate;
 export function rankEligibleCandidates(
   candidates: readonly YouTubeCandidate[],
   target: YouTubeCurationTarget,
-  options: Readonly<{ requireHumanReview?: boolean }> = {},
+  options: Readonly<{
+    requireHumanReview?: boolean;
+    semanticOverrideVideoIds?: ReadonlySet<string>;
+  }> = {},
 ): readonly RankedYouTubeCandidate[] {
   const ranked = candidates.flatMap((candidate): RankedYouTubeCandidate[] => {
-    const decision = evaluateYouTubeCandidate(candidate, target, options);
+    const decision = evaluateYouTubeCandidate(candidate, target, {
+      requireHumanReview: Boolean(options.requireHumanReview),
+      allowReviewedSemanticOverride: Boolean(options.semanticOverrideVideoIds?.has(candidate.videoId)),
+    });
     return decision.eligible ? [{ candidate, decision }] : [];
   }).sort((left, right) => {
-    if (right.decision.relevanceScore !== left.decision.relevanceScore) {
-      return right.decision.relevanceScore - left.decision.relevanceScore;
+    const leftViews = typeof left.candidate.viewCount === "number"
+      && Number.isFinite(left.candidate.viewCount)
+      && left.candidate.viewCount >= 0
+      ? left.candidate.viewCount
+      : undefined;
+    const rightViews = typeof right.candidate.viewCount === "number"
+      && Number.isFinite(right.candidate.viewCount)
+      && right.candidate.viewCount >= 0
+      ? right.candidate.viewCount
+      : undefined;
+    if (leftViews !== undefined && rightViews !== undefined && rightViews !== leftViews) {
+      return rightViews - leftViews;
     }
-    const leftViews = Number.isFinite(left.candidate.viewCount) ? left.candidate.viewCount ?? 0 : 0;
-    const rightViews = Number.isFinite(right.candidate.viewCount) ? right.candidate.viewCount ?? 0 : 0;
-    if (rightViews !== leftViews) return rightViews - leftViews;
+    if (leftViews === undefined && rightViews !== undefined) return 1;
+    if (leftViews !== undefined && rightViews === undefined) return -1;
     return (left.decision.normalizedVideoId ?? "").localeCompare(right.decision.normalizedVideoId ?? "");
   });
 

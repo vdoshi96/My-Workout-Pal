@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="6b7e8c1b69fcd1eedf729d224bc0dce2dd26d20fc2757fb30e0a9461ce7a51ca">
+  <title>Guest landing and contextual navigation plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Guest landing and contextual navigation plan</h1>
+<h2>User outcome</h2>
+<p>A visitor can understand My Workout Pal before entering the application, browse every starter day and exercise resource without an account, and return from exercise details to the exact public context that opened them. Sign-in copy distinguishes optional account benefits from public access.</p>
+<h2>Navigation</h2>
+<ul>
+<li><code>/</code> becomes the public welcome page.</li>
+<li><code>/program</code> becomes the five-day guest program overview for both equipment profiles.</li>
+<li><code>/program/push</code>, <code>/program/pull</code>, <code>/program/legs</code>, <code>/program/upper</code>, and <code>/program/lower</code> remain public day routes.</li>
+<li>Public day and library links pass a validated <code>returnTo</code> context to <code>/library/[slug]</code>.</li>
+<li>Exercise details derive their back destination and label from an allowlisted public route. Missing, malformed, encoded-control, external, authentication, and unknown destinations fall back to the public library.</li>
+<li>Public brand links open the welcome page. Program navigation opens <code>/program</code>.</li>
+<li>Authentication returns remain separate and continue to use the existing server-normalized <code>returnTo</code> contract.</li>
+</ul>
+<h2>UI states</h2>
+<p>The welcome page includes a loaded hero, a reserved image frame during loading, useful alternative text, a clear primary route into the program, a secondary account explanation, and truthful guest and account capability sections. Public program, day, library, exercise, sample workout, and sample analytics surfaces remain available without authentication.</p>
+<p>Exercise details show a contextual back link when the origin is valid. Direct visits and invalid origins show <strong>Exercise library</strong>. Video loading, unavailable, approved-pair, and direct YouTube fallback states remain unchanged.</p>
+<h2>Domain types and invariants</h2>
+<p><code>PublicExerciseReturnContext</code> contains a bounded same-origin <code>href</code> and a derived label. The parser accepts only:</p>
+<ul>
+<li><code>/program</code> with an optional supported equipment profile.</li>
+<li>One of the five public day paths with an optional supported equipment profile.</li>
+<li><code>/library</code> with supported public library filters.</li>
+<li><code>/sample-workout</code> with a supported day and optional equipment profile.</li>
+</ul>
+<p>The parser never accepts an absolute URL, protocol-relative URL, fragment-only target, authentication route, application-account route, control character, repeated scalar value, or arbitrary label. Labels come from the recognized destination rather than untrusted input.</p>
+<h2>Persistence contracts</h2>
+<p>This slice adds no guest persistence. Equipment selection remains temporary. Public exploration and sample activity never appear in member history. Existing authenticated profile, program revision, workout, history, record, analytics, and settings persistence remains unchanged.</p>
+<h2>Authentication and authorization</h2>
+<p>No public landing, program, day, catalog, exercise instruction, approved demonstration, sample workout, or sample analytics read requires authentication. Sign-in is required only for owned data and permanent mutations, including saving an equipment profile, changing prescriptions, adding or substituting exercises, tracking workouts, resuming saved sessions, and viewing member history or analytics.</p>
+<p>The contextual return parameter grants no data access. Private paths are rejected at the parsing boundary.</p>
+<h2>Failure and recovery states</h2>
+<ul>
+<li>If the hero asset fails, alternative text and the complete landing-page navigation remain usable.</li>
+<li>If an origin is missing or invalid, the exercise page returns to the filtered public library.</li>
+<li>If an exercise video is unavailable, the existing second-video and direct-link fallbacks remain usable.</li>
+<li>If the network is interrupted, cached public program, day, library, and explicit artwork assets follow the public-only PWA policy. No guest action reports a saved result.</li>
+<li>Slow navigation retains the existing public loading shell and interruptible Next.js transitions.</li>
+<li>Repeated scalar search or authentication-return parameters fail closed to their public defaults instead of reaching string-only transformations or interrupting the route.</li>
+</ul>
+<h2>Responsive behavior</h2>
+<p>Phone and tablet layouts place the welcome copy before the overhead gym illustration and keep the primary program action in the first viewport. Wide desktop layouts use the illustration as a dominant scene beside the welcome copy without obscuring navigation. The browser selects a 768-pixel responsive derivative on compact viewports instead of preloading the full 1536-pixel source. The capability comparison becomes a readable single column when horizontal space is constrained. Program, day, and exercise routes retain their established responsive atlas layouts.</p>
+<h2>Accessibility</h2>
+<ul>
+<li>The welcome page has one <code>h1</code>, ordered headings, semantic sections, descriptive links, and nondecorative alternative text for the gym scene.</li>
+<li>Keyboard focus follows document order from the skip link through the primary action.</li>
+<li>The contextual back link has a destination-specific accessible name.</li>
+<li>Content remains available with reduced motion, dark mode, forced colors, 200% zoom, and images unavailable.</li>
+<li>Touch targets retain the project minimum, and no meaning depends on color or illustration alone.</li>
+</ul>
+<h2>Privacy and security</h2>
+<p>The generated illustration contains no real person, user data, brand, embedded text, or third-party asset. Its exact generation prompt is preserved as asset provenance. Return destinations are server-validated and same-origin. Guest navigation sends no notes, set values, weights, or identity data to the server.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li><code>/</code> is a distinct welcome page rather than a program alias.</li>
+<li>The page explicitly states that the five-day plan, all days, exercise instructions, both approved demonstrations, and sample resources are available without an account.</li>
+<li>The page explicitly states that sign-in is for saving, customization, tracking, recovery, history, records, and personal analytics.</li>
+<li><code>/program</code> exposes all five days for both equipment profiles without authentication.</li>
+<li>Each public day opens every prescribed exercise and preserves a return path to that day.</li>
+<li>Library-origin exercise navigation returns to the filtered library.</li>
+<li>Sample-workout-origin exercise navigation returns to the same supported day and equipment selection.</li>
+<li>Direct or hostile exercise origins fall back safely to the library.</li>
+<li>The hero uses the original project-owned overhead gym illustration through explicit precached 768- and 1536-pixel sources, reserved intrinsic dimensions, and responsive CSS with no layout shift or unnecessary full-size phone preload.</li>
+<li>The hero is a cohesive, entirely hand-drawn cartoon gym with expressive animal characters and no interactive hotspots, tiles, labels, copied characters, or photorealistic elements.</li>
+<li>Public navigation, PWA shortcuts, and sign-in guest links point to the intended welcome or program route.</li>
+</ul>
+<h2>Automated tests</h2>
+<ul>
+<li>Add fail-first unit tests for accepted day, program, library, and sample-workout return contexts plus hostile and malformed fallbacks.</li>
+<li>Add component assertions for the landing-page guest/account boundary and contextual exercise back label.</li>
+<li>Update the public Playwright flow to start on the welcome page, enter <code>/program</code>, inspect all five days, open Push, open an exercise, and return to Push.</li>
+<li>Cover direct exercise entry, library-origin return, both equipment profiles, keyboard navigation, phone overflow, dark mode, reduced motion, image alternative text, and serious or critical Axe violations.</li>
+<li>Update PWA public asset and navigation expectations for the landing hero and stable <code>/program</code> route.</li>
+<li>Prove repeated library <code>q</code> and authentication <code>returnTo</code> scalars fail closed without a route interruption.</li>
+</ul>
+<h2>Browser evidence</h2>
+<p>Capture one bounded browser pass on phone, tablet, and desktop. The pass must show the welcome first viewport, all five guest days, Push-to-exercise-to-Push return behavior, library-to-exercise-to-library and sample-workout-to-exercise-to-sample-workout return behavior, both equipment profiles, approved video selection, sign-in boundary copy, keyboard-only navigation, 200% reflow, forced colors, reduced motion, and dark mode. Repeat the critical guest flow on the configured Vercel preview before production promotion.</p>
+
+  </main>
+</body>
+</html>

@@ -11,6 +11,7 @@ import {
   createWorkoutRepository,
   WorkoutRepositoryError,
 } from "@/server/repositories/workout-repository";
+import { listApprovedCuratedVideoPairsByExerciseIds } from "@/server/repositories/curated-videos";
 import {
   buildWorkoutRouteCandidates,
   effectiveWorkoutExerciseIds,
@@ -30,7 +31,18 @@ async function loadOwnedWorkoutData(
       getViewerProfileProgram(database, viewer),
       listCustomExercises(database, viewer),
     ]);
-    return { resume, profileProgram, customExercises };
+    const effectiveIds = effectiveWorkoutExerciseIds(resume.exerciseStates);
+    const curatedVideosByExerciseId = await listApprovedCuratedVideoPairsByExerciseIds(
+      database,
+      Object.values(effectiveIds),
+    ).catch(() => ({}));
+    return {
+      resume,
+      profileProgram,
+      customExercises,
+      effectiveIds,
+      curatedVideosByExerciseId,
+    };
   } catch (error) {
     if (
       error instanceof WorkoutRepositoryError &&
@@ -56,7 +68,13 @@ export default async function OwnedWorkoutPage({
 
   const returnTo = `/workout/${encodeURIComponent(sessionId)}`;
 
-  const { resume, profileProgram, customExercises } =
+  const {
+    resume,
+    profileProgram,
+    customExercises,
+    effectiveIds,
+    curatedVideosByExerciseId,
+  } =
     await loadOwnedWorkoutData(getDatabase(), viewer, sessionId);
   const initialState = hydrateWorkoutResumeState(resume);
 
@@ -69,9 +87,8 @@ export default async function OwnedWorkoutPage({
       </header>
       {viewer.eligibleForPermanentMutations ? (
         <OwnedWorkoutRunner
-          effectiveExerciseIdBySnapshot={effectiveWorkoutExerciseIds(
-            resume.exerciseStates,
-          )}
+          curatedVideosByExerciseId={curatedVideosByExerciseId}
+          effectiveExerciseIdBySnapshot={effectiveIds}
           initialState={initialState}
           substitutionCandidates={buildWorkoutRouteCandidates(
             profileProgram.equipment.profileKind,

@@ -1,4 +1,4 @@
-export const PWA_CACHE_NAME = "my-workout-pal-public-v2";
+export const PWA_CACHE_NAME = "my-workout-pal-public-v3";
 
 export const PWA_INSTALL_ASSETS = Object.freeze([
   "/",
@@ -8,6 +8,8 @@ export const PWA_INSTALL_ASSETS = Object.freeze([
   "/icon-192.png",
   "/icon-512.png",
   "/icon.svg",
+  "/illustrations/workout-pals-gym-768.webp",
+  "/illustrations/workout-pals-gym.webp",
 ] as const);
 
 export const PWA_PUBLIC_ASSETS = Object.freeze([
@@ -16,6 +18,8 @@ export const PWA_PUBLIC_ASSETS = Object.freeze([
   "/icon-192.png",
   "/icon-512.png",
   "/icon.svg",
+  "/illustrations/workout-pals-gym-768.webp",
+  "/illustrations/workout-pals-gym.webp",
 ] as const);
 
 const publicNavigationExact = new Set([

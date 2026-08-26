@@ -14,17 +14,17 @@
 
 ## Landing and program overview
 
-**Outcome and navigation:** A guest sees what the product does, the five-day structure, the selected equipment profile, and clear routes to inspect a day, sample workout, sample analytics, or sign in. An authenticated user sees their active program and resume action instead of fabricated marketing proof.
+**Outcome and navigation:** `/` welcomes a guest, states what remains public, and leads into `/program`. The program route shows the five-day structure, selected equipment profile, and clear routes to inspect a day, sample workout, sample analytics, or optional sign-in. The protected `/app` route shows an authenticated member's active program and resume action instead of fabricated marketing proof.
 
-**UI states:** Render seeded overview, alternate-equipment preview, signed-in program, active-session resume, loading, catalog unavailable, and offline-cached states. Sample content is marked **Sample** at its heading and at any metric group. Guest actions say **Try this session** or **Preview**, never **Save**.
+**UI states:** Render the welcome hero with reserved dimensions and useful alternative text, seeded overview, alternate-equipment preview, signed-in program, active-session resume, loading, image unavailable, catalog unavailable, and offline-cached states. Sample content is marked **Sample** at its heading and at any metric group. Guest actions say **Try this session** or **Preview**, never **Save**.
 
 **Domain and persistence:** The public starter template is immutable seed data. Guest equipment choice is tab-scoped. An authenticated overview reads the active program revision and latest session through owner-scoped repositories.
 
 **Security and worst cases:** A missing user program offers a clone action only to an eligible account. Cross-user or stale IDs resolve as not found. A failed clone keeps the public overview and shows a retryable result.
 
-**Device and accessibility behavior:** Phone leads with the next useful action and a horizontal day index with alternative non-scroll navigation. Desktop combines the weekly route and selected-day preview. All program diagrams have a list equivalent.
+**Device and accessibility behavior:** The welcome page keeps its primary program action in the phone's first viewport and places the cohesive all-cartoon gym scene after the copy; tablet and desktop pair the copy with the complete scene. The program page leads with the next useful action and a horizontal day index with alternative non-scroll navigation. Desktop combines the weekly route and selected-day preview. All program diagrams have a list equivalent.
 
-**Acceptance, tests, and evidence:** Tests verify five exact days, guest labeling, equipment parity, owned active-program selection, and clone idempotency. Browser evidence covers both guest profiles, an authenticated overview, sample labeling, offline public load, and slow/error behavior.
+**Acceptance, tests, and evidence:** Tests verify the route split, explicit public/account boundary, five exact days, guest labeling, equipment parity, owned active-program selection, and clone idempotency. Browser evidence covers the welcome page, both guest profiles, an authenticated overview, sample labeling, offline public load, and slow/error behavior.
 
 ## Equipment selector and onboarding
 
@@ -56,17 +56,17 @@
 
 ## Exercise detail and video player
 
-**Outcome and navigation:** A visitor understands the movement, equipment, logging kind, prescription context, and can select either approved demonstration without autoplay. The runner can return without losing draft state.
+**Outcome and navigation:** A visitor understands the movement, equipment, logging kind, prescription context, and can select either approved demonstration without autoplay. A visible back link returns to the exact recognized public day, program, filtered library, or sample workout that opened the guide; direct or hostile origins fall back to the library. The runner can return without losing draft state.
 
 **UI states:** Show two approved choices, one active embed, embed loading, unavailable primary, alternate available, both unavailable, offline metadata, direct YouTube fallback, custom exercise with zero to two links, and removed-video review flag.
 
 **Domain and persistence:** Seeded records require exactly two ordered, unique, approved videos for the exact variation. Durable fields include video ID, title, channel, order, variation, approval reviewer, and review timestamp. View count is not a production ranking field.
 
-**Security and privacy:** Only normalized video IDs enter embed URLs. The iframe uses compliant YouTube parameters, title, allow list, referrer policy, responsive minimum size, and no autoplay. Custom videos remain owner-scoped.
+**Security and privacy:** Only normalized video IDs enter embed URLs. The iframe uses compliant YouTube parameters, title, allow list, referrer policy, responsive minimum size, and no autoplay. Public `returnTo` values pass a bounded same-origin allowlist and never grant access. Custom videos remain owner-scoped.
 
 **Device and accessibility behavior:** One player appears at a time. Selectors are real radio or tab semantics with title and channel. The direct-link fallback names the destination. Phone keeps the video within viewport width; desktop avoids an oversized player.
 
-**Acceptance, tests, and evidence:** Tests cover URL normalization, exact-two seed validation, duplicates, wrong variation, missing approval, responsive parameters, and fallback selection. Browser evidence uses two representative live embeds, selection, keyboard control, failed embed fallback, narrow and desktop sizes, and referrer inspection.
+**Acceptance, tests, and evidence:** Tests cover URL normalization, exact-two seed validation, duplicates, wrong variation, missing approval, responsive parameters, fallback selection, recognized origins, filtered-query retention, and hostile-origin rejection. Browser evidence includes Push-to-exercise-to-Push, filtered-library and sample-workout returns, two representative live embeds, selection, keyboard control, failed embed fallback, narrow and desktop sizes, and referrer inspection.
 
 ## Searchable exercise library
 

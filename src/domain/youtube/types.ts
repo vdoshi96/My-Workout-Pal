@@ -71,6 +71,7 @@ export type YouTubeCurationTarget = Readonly<{
   requiredEquipmentTerms?: readonly string[] | undefined;
   equipment?: string | undefined;
   disallowedEquipmentTerms?: readonly string[] | undefined;
+  disallowedMovementTerms?: readonly string[] | undefined;
 }>;
 
 export type YouTubeHumanReview = Readonly<{
@@ -82,6 +83,52 @@ export type YouTubeHumanReview = Readonly<{
   conciseInstruction: boolean;
   safeInstruction: boolean;
   addsMaterialValue?: boolean | undefined;
+  instructionEvidence?: ManualYouTubeInstructionEvidence | undefined;
+}>;
+
+export type ManualYouTubeReviewDecision = "pending" | "approved" | "rejected";
+export type ManualYouTubeInstructionEvidence = "narration" | "captions" | "visual";
+
+export type ManualYouTubeRejectionReason =
+  | "wrong-movement"
+  | "wrong-equipment"
+  | "unsafe-instruction"
+  | "not-concise"
+  | "no-material-value"
+  | "unavailable"
+  | "non-english"
+  | "shorts-content"
+  | "other-policy-rejection";
+
+export type ManualYouTubeReviewBlocker =
+  | "review-in-progress"
+  | "playback-interrupted"
+  | "visual-evidence-unavailable"
+  | "audio-evidence-unavailable";
+
+export type ManualYouTubeReviewRecord = Readonly<{
+  canonicalExerciseSlug: string;
+  variationId: string;
+  videoId: string;
+  decision: ManualYouTubeReviewDecision;
+  reviewer: string;
+  reviewedAt?: string | undefined;
+  playbackCompletedAt?: string | undefined;
+  fullWatchConfirmed: boolean;
+  visualReviewConfirmed: boolean;
+  instructionEvidence?: ManualYouTubeInstructionEvidence | undefined;
+  exactVariation: boolean;
+  conciseInstruction: boolean;
+  safeInstruction: boolean;
+  addsMaterialValue: boolean;
+  rejectionReason?: ManualYouTubeRejectionReason | undefined;
+  blockerReason?: ManualYouTubeReviewBlocker | undefined;
+}>;
+
+export type ManualYouTubeReviewFile = Readonly<{
+  schemaVersion: 2;
+  updatedAt: string;
+  reviews: Readonly<Record<string, ManualYouTubeReviewRecord>>;
 }>;
 
 export type YouTubeRejectionCode =
@@ -186,10 +233,11 @@ export type CurationQueryCheckpoint = Readonly<{
 export type CurationReviewStatus = "pending" | "approved" | "rejected";
 
 export type CurationCheckpoint = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   updatedAt: string;
   completedQueries: CurationQueryCheckpoint[];
   pageTokens: Record<string, string | null>;
+  queryPageCounts: Record<string, number>;
   hydratedVideoIds: string[];
   unavailableVideoIds: string[];
   hydratedCandidates: Record<string, YouTubeCandidate>;
@@ -257,21 +305,29 @@ export type CurationReportCandidate = Readonly<{
   target: RequiredVideoVariation;
   queryKeys: readonly string[];
   candidate: YouTubeCandidate;
+  mechanicalDecision?: YouTubeCandidateDecision | undefined;
   decision: YouTubeCandidateDecision;
   reviewStatus: CurationReviewStatus;
   rank?: number | undefined;
 }>;
 
 export type ProposedPairReason =
+  | "discovery-incomplete"
   | "fewer-than-two-eligible-candidates"
   | "materially-redundant-second";
 
+export type CurationDiscoveryStatus =
+  | "api-discovery-complete"
+  | "browser-window-complete"
+  | "discovery-incomplete";
+
 export type ProposedVideoPair = Readonly<{
   target: RequiredVideoVariation;
-  status: "ready-for-review" | "needs-second-candidate";
+  status: "discovery-incomplete" | "ready-for-review" | "approved-for-seed" | "needs-second-candidate";
   videoIds: readonly string[];
   distinctChannels: boolean;
   reason?: ProposedPairReason | undefined;
+  discoveryStatus?: CurationDiscoveryStatus | undefined;
 }>;
 
 export type CurationQuotaSummary = Readonly<{

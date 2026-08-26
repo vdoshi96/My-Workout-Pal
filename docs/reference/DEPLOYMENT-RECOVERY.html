@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="28d007a299acc3d3edbbee76d8929f009d5af55589ee2a254e29c55b8dcf2143">
+  <meta name="source-sha256" content="5ec5eb6001b55e5986b4fa935d18278434f41a28474c66f82132c3ba79856855">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,12 +39,14 @@
 <h2>Vercel and Neon provisioning</h2>
 <p>The target Vercel team is <code>vdoshi96s-projects</code>. Project <code>my-workout-pal</code> is linked as <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code> on Pro. It is connected to public GitHub repository <code>vdoshi96/My-Workout-Pal</code> with production branch <code>main</code>, native pull-request previews, and preview comments. The first deployment was automatically assigned to production by Vercel and is publicly aliased at <code>https://my-workout-pal-chi.vercel.app</code>.</p>
 <p>Neon resource <code>my-workout-pal-db</code> was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed <code>free_v3</code> plan in <code>iad1</code>. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.</p>
-<p>The schema and starter graph are live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after the final migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos. Run the same checked-in boundaries without printing connection values:</p>
+<p>The complete starter graph is live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after that migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos at that pre-video checkpoint. On August 26, 2026, exact pushed commit <code>6f582b4</code> supplied the reviewed 54-video manifest. Baseline verification failed closed only on those expected missing IDs; the first seed installed all 54 approved videos; the idempotent replay returned identical counts; and both post-seed read-only verifications passed without drift or unexpected rows. Run the same checked-in boundaries without printing connection values:</p>
 <pre><code class="language-sh">node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 </code></pre>
-<p>The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. Production video rows remain outside this starter seed until the exact-two manual approval gate is satisfied.</p>
+<p>The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. The 54 video rows pass the exact-two manual approval gate, are part of the checked-in deterministic starter seed, and are verified in Neon. Replaying both public/runtime pairs in protected preview and production browsers remains a separate release action.</p>
+<p>Exact protected preview <code>dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF</code> from source <code>b470f51</code> has catalog-complete SSR and representative Firefox playback evidence. A manifest-driven authenticated <code>vercel curl</code> verifier passed all 27 public exercise routes with HTTP/2 <code>200</code>, exactly the mapping&#39;s two unique approved IDs, no pending/incomplete-review copy, and exactly one display-order-1 <code>youtube-nocookie</code> iframe plus direct fallback per response. The user&#39;s protected Firefox session then showed the two approved tabs, title/channel/direct fallback, one privacy-enhanced iframe at a time, and live English captions plus the browser playing indicator after switching to Demo 2 on both corrected representative routes. A 24-hour error-log query returned no entries. This evidence confirms Neon-backed catalog rendering and playback in one real preview browser; it does not replace the remaining responsive/accessibility matrix or Firebase-authenticated replay.</p>
+<p>Vercel Firebase configuration was explicitly authorized on August 26, 2026. Six non-private browser/identity values are attached to Production, Preview, and Development. <code>FIREBASE_PRIVATE_KEY</code> is Hidden/Sensitive in Production and Preview. Vercel does not accept sensitive Development values, so the private key remains absent from that scope and continues to live only in ignored local development storage. Do not work around that safety boundary by uploading it as non-sensitive. No value was printed or copied into documentation.</p>
 <p>Primary references:</p>
 <ul>
 <li><a href="https://vercel.com/marketplace/neon">Neon on Vercel Marketplace</a></li>
@@ -121,10 +123,10 @@ pnpm account:reconcile -- --owner FIREBASE_UID --limit 1
 <h2>Credential and approval gates</h2>
 <ul>
 <li>GitHub source and Vercel Git integration are configured. Local, GitHub, and deployment commit metadata must still be checked after every release.</li>
-<li>Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.</li>
+<li>Firebase project <code>my-workout-pal-92819</code> exists on Spark with its web app, Email/Password and Google providers, reviewed public settings, and required authorized domains configured. Ignored local storage contains the validated client/Admin values. After explicit authorization, the six non-private values are attached to Vercel Production, Preview, and Development; the Admin private key is Hidden/Sensitive in Production and Preview and intentionally absent from Development because Vercel rejects sensitive Development variables. Hosted Google, recovery, expiry, revocation, and adversarial account-flow replay remain verification work; terms or 2FA remain user actions if a provider prompts for them.</li>
 <li>Neon is already connected on <code>free_v3</code>; any plan change, billing method, trial acceptance, or billable add-on requires the user.</li>
 <li>Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.</li>
-<li>YouTube curation requires an official API key and sufficient quota.</li>
+<li>Ignored <code>.env.local</code> contains the YouTube Data API key. The published exact-two manifest and Neon seed are complete. Any future refresh or replacement run still requires successful bounded discovery with sufficient quota, mechanical eligibility, full-watch and scoped playback approval, exact-two validation, and an explicitly reviewed publication change.</li>
 </ul>
 
   </main>

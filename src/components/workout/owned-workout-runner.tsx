@@ -22,6 +22,7 @@ import {
   type ExerciseSubstitution,
 } from "@/domain/workout-runner";
 import type { RunnerUnitSystem } from "@/components/workout/workout-runner-presenters";
+import type { CuratedVideoPair } from "@/domain/youtube/embed";
 
 type RecoveryState =
   | Readonly<{ status: "loading" }>
@@ -41,11 +42,13 @@ function recoveryErrorMessage(error: unknown): string {
 }
 
 export function OwnedWorkoutRunner({
+  curatedVideosByExerciseId,
   effectiveExerciseIdBySnapshot,
   initialState,
   substitutionCandidates,
   unitSystem,
 }: Readonly<{
+  curatedVideosByExerciseId: Readonly<Record<string, CuratedVideoPair>>;
   effectiveExerciseIdBySnapshot: Readonly<Record<string, string>>;
   initialState: ActiveWorkoutState;
   substitutionCandidates: readonly ExerciseSubstitution[];
@@ -149,6 +152,8 @@ export function OwnedWorkoutRunner({
 
   return (
     <WorkoutRunner
+      curatedVideosByExerciseId={curatedVideosByExerciseId}
+      effectiveExerciseIdBySnapshot={effectiveExerciseIdBySnapshot}
       getCompatibleSubstitutions={(exercise) =>
         compatibleWorkoutSubstitutions(
           exercise,

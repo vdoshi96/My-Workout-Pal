@@ -4,12 +4,22 @@ import { notFound } from "next/navigation";
 
 import { PublicShell } from "@/components/layout/public-shell";
 import { Icon } from "@/components/ui/icon";
+import { ExerciseVideoField } from "@/components/video/exercise-video-field";
+import { getDatabase } from "@/db/client";
 import { EQUIPMENT_PROFILES, supportsEquipment, type EquipmentProfileKind } from "@/domain/equipment";
 import { CATALOG_EXERCISES, getCatalogExercise } from "@/domain/exercises/catalog";
+import { resolvePublicExerciseReturn } from "@/domain/navigation/public-exercise-return";
+import { getApprovedCuratedVideoPairBySlug } from "@/server/repositories/curated-videos";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ equipment?: string; from?: string }>;
+  searchParams: Promise<{
+    equipment?: string | string[];
+    returnTo?: string | string[];
+  }>;
 };
 
 const roleDefaults = {
@@ -36,14 +46,17 @@ export default async function ExercisePage({ params, searchParams }: PageProps) 
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   if (!CATALOG_EXERCISES[slug]) notFound();
   const exercise = getCatalogExercise(slug);
+  const videos = await getApprovedCuratedVideoPairBySlug(getDatabase(), slug)
+    .catch(() => undefined);
   const profile: EquipmentProfileKind = query.equipment === "barbell" ? "barbell" : "dumbbells";
   const compatible = supportsEquipment(EQUIPMENT_PROFILES[profile], exercise.requiredEquipment);
+  const returnContext = resolvePublicExerciseReturn(query.returnTo, profile);
 
   return (
     <PublicShell current="library">
       <header className="exercise-hero contour-surface">
-        <Link className="back-link" href={`/library?equipment=${profile}`}>
-          <Icon name="arrow-left" /> Library
+        <Link className="back-link" href={returnContext.href}>
+          <Icon name="arrow-left" /> {returnContext.label}
         </Link>
         <div className="exercise-title-row">
           <div>
@@ -73,25 +86,7 @@ export default async function ExercisePage({ params, searchParams }: PageProps) 
           <p className="safety-note">Use a load and range of motion you can control. My Workout Pal never auto-prescribes weight and does not provide medical advice.</p>
         </section>
 
-        <section className="video-field" aria-labelledby="demo-heading">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Two-source technique check</span>
-              <h2 id="demo-heading">Curated demos</h2>
-            </div>
-            <span className="status-stamp">Approval gate</span>
-          </div>
-          <div className="video-slots">
-            {[1, 2].map((slot) => (
-              <article className="video-unavailable" key={slot}>
-                <span>Demo {slot}</span>
-                <h3>Manual review pending</h3>
-                <p>No placeholder video is shown. This slot opens only after the exact movement and equipment variation is watched in full and approved.</p>
-              </article>
-            ))}
-          </div>
-          <p className="temporary-note">The catalog record is ready, but the required YouTube API credential and human review have not been completed. Direct links and embeds will be verified together.</p>
-        </section>
+        <ExerciseVideoField videos={videos} />
       </div>
     </PublicShell>
   );

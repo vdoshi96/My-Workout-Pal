@@ -11,11 +11,11 @@ import type { ReactNode } from "react";
 import { PwaRegistration } from "@/components/pwa/pwa-registration";
 
 const designContract = `<!--
-THESIS: My Workout Pal makes equipment-aware programming visible as a route that can change without redrawing completed ground; it refuses the generic fitness dashboard.
-OWN-WORLD: Warm mineral paper, deep blue-green ink, coral routes, lichen compatibility marks, contour geometry, waypoint controls, and ruled field sheets.
-STORY: A guest sees five useful days, tests an equipment route, opens the selected day, and understands that account persistence is separate.
-FIRST VIEWPORT: Compact brand and equipment control lead into a five-waypoint map; a selected-day sheet overlaps the route and holds the primary action above app navigation.
-FORM: Grounded direction 3, training route atlas, seed ba529732.
+THESIS: My Workout Pal welcomes everyone into a complete public workout world, then makes equipment-aware programming visible as a route that can change without redrawing completed ground; it refuses the generic fitness dashboard.
+OWN-WORLD: Warm mineral paper, deep blue-green ink, coral routes, lichen compatibility marks, hand-painted cartoon workout pals, contour geometry, waypoint controls, and ruled field sheets.
+STORY: A guest learns that every starter day and exercise resource is open, enters the five-day route, tests an equipment profile, and signs in only when they choose to customize or save.
+FIRST VIEWPORT: A plain-language guest promise and direct program action sit beside a dominant hand-drawn animal gym scene; account benefits remain secondary and explicit.
+FORM: Grounded direction 3, training route atlas with a cartoon welcome-world extension, seed ba529732.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 -->`;
 

@@ -15,7 +15,7 @@ The target Vercel team is `vdoshi96s-projects`. Project `my-workout-pal` is link
 
 Neon resource `my-workout-pal-db` was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed `free_v3` plan in `iad1`. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.
 
-The schema and starter graph are live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after the final migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos. Run the same checked-in boundaries without printing connection values:
+The complete starter graph is live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after that migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos at that pre-video checkpoint. On August 26, 2026, exact pushed commit `6f582b4` supplied the reviewed 54-video manifest. Baseline verification failed closed only on those expected missing IDs; the first seed installed all 54 approved videos; the idempotent replay returned identical counts; and both post-seed read-only verifications passed without drift or unexpected rows. Run the same checked-in boundaries without printing connection values:
 
 ```sh
 node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts
@@ -23,7 +23,11 @@ node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 ```
 
-The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. Production video rows remain outside this starter seed until the exact-two manual approval gate is satisfied.
+The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. The 54 video rows pass the exact-two manual approval gate, are part of the checked-in deterministic starter seed, and are verified in Neon. Replaying both public/runtime pairs in protected preview and production browsers remains a separate release action.
+
+Exact protected preview `dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF` from source `b470f51` has catalog-complete SSR and representative Firefox playback evidence. A manifest-driven authenticated `vercel curl` verifier passed all 27 public exercise routes with HTTP/2 `200`, exactly the mapping's two unique approved IDs, no pending/incomplete-review copy, and exactly one display-order-1 `youtube-nocookie` iframe plus direct fallback per response. The user's protected Firefox session then showed the two approved tabs, title/channel/direct fallback, one privacy-enhanced iframe at a time, and live English captions plus the browser playing indicator after switching to Demo 2 on both corrected representative routes. A 24-hour error-log query returned no entries. This evidence confirms Neon-backed catalog rendering and playback in one real preview browser; it does not replace the remaining responsive/accessibility matrix or Firebase-authenticated replay.
+
+Vercel Firebase configuration was explicitly authorized on August 26, 2026. Six non-private browser/identity values are attached to Production, Preview, and Development. `FIREBASE_PRIVATE_KEY` is Hidden/Sensitive in Production and Preview. Vercel does not accept sensitive Development values, so the private key remains absent from that scope and continues to live only in ignored local development storage. Do not work around that safety boundary by uploading it as non-sensitive. No value was printed or copied into documentation.
 
 Primary references:
 
@@ -126,7 +130,7 @@ Publish a new cache version, retain pending IndexedDB operations, and remove onl
 ## Credential and approval gates
 
 - GitHub source and Vercel Git integration are configured. Local, GitHub, and deployment commit metadata must still be checked after every release.
-- Firebase project creation, provider configuration, authorized domains, email templates, and Admin credentials require Firebase console access. Terms or 2FA remain user actions when prompted.
+- Firebase project `my-workout-pal-92819` exists on Spark with its web app, Email/Password and Google providers, reviewed public settings, and required authorized domains configured. Ignored local storage contains the validated client/Admin values. After explicit authorization, the six non-private values are attached to Vercel Production, Preview, and Development; the Admin private key is Hidden/Sensitive in Production and Preview and intentionally absent from Development because Vercel rejects sensitive Development variables. Hosted Google, recovery, expiry, revocation, and adversarial account-flow replay remain verification work; terms or 2FA remain user actions if a provider prompts for them.
 - Neon is already connected on `free_v3`; any plan change, billing method, trial acceptance, or billable add-on requires the user.
 - Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.
-- YouTube curation requires an official API key and sufficient quota.
+- Ignored `.env.local` contains the YouTube Data API key. The published exact-two manifest and Neon seed are complete. Any future refresh or replacement run still requires successful bounded discovery with sufficient quota, mechanical eligibility, full-watch and scoped playback approval, exact-two validation, and an explicitly reviewed publication change.
