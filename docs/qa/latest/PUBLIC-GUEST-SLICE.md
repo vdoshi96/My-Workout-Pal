@@ -1,32 +1,42 @@
-# Public guest slice verification
+# Public release browser baseline
 
 ## Scope
 
-This run covers the equipment-aware starter route, day details, compatible exercise library, exercise detail approval state, read-only sample workout and analytics, guarded sign-in destination, and PWA production build surface. It is local evidence, not preview or production proof.
+This checkpoint exercises the public product through a local Next.js production server. It covers the guest equipment preview, all five starter-day controls, a barbell Pull route, compatibility-filtered library search and recovery, read-only sample workout and analytics, the truthful sign-in gate, production PWA installation and offline behavior, serious and critical automated accessibility checks, keyboard navigation, reduced motion, dark mode, phone target sizing, and horizontal overflow.
+
+This is local production-mode evidence for implementation commit `101d6a4`. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.
 
 ## Fail then pass evidence
 
-- `pnpm vitest run tests/unit/program-seed.test.ts tests/unit/equipment-substitution.test.ts` initially failed because the program modules did not exist. Six tests pass after the seed and substitution implementation.
-- `pnpm vitest run tests/unit/library-filter.test.ts` initially failed because `@/domain/exercises/library` did not exist. Three tests now pass for stable ordering, compatibility exclusion, and term search after equipment filtering.
-- `pnpm vitest run tests/unit/auth-policy.test.ts` initially failed because `@/server/auth/policy` did not exist. Five policy tests now pass. `tests/unit/auth-errors.test.ts` retained the same missing-module failure before five safe client-error mappings passed.
-- Session-route integration tests initially returned 403 for same-origin fixtures because `NextRequest` normalizes its URL host in the test runtime. The route now validates the platform host or forwarded host plus configured origin, while cross-origin requests still fail. Three route-boundary tests pass.
-- Browser inspection exposed a desktop navigation overlap, a mobile route-stamp collision, a Playwright artifact watcher loop that reset client state, and exercise-detail `scrollWidth` of 934 pixels in a 390-pixel viewport. After correction, the measured exercise-detail `scrollWidth`, field-notes width, and video-field width are all 390 pixels.
+- The first executable `pnpm test:e2e:release` matrix ran 40 cases: 30 failed, 9 passed, and 1 WebKit PWA case was skipped. The failures exposed one stale accessible-name expectation, serious color-contrast defects across public surfaces, and a genuine transport-policy defect that made WebKit upgrade HTTP localhost assets to unavailable HTTPS.
+- The color correction introduced surface-specific foreground tokens and retained the established light and dark visual system. The browser matrix then cleared the landing, day, library, exercise, sample, and sign-in accessibility gates.
+- A focused security-header regression was retained failing before implementation: 1 of 5 assertions failed because an HTTP production response still contained `upgrade-insecure-requests`. After transport-aware CSP and HSTS handling, all 5 security-header assertions passed. HTTPS production responses retain HSTS and insecure-request upgrading; local HTTP production checks retain the strict nonce policy without claiming TLS.
+- The first WebKit guest-flow replay exposed test-induced cancellation of prefetched React Server Component requests during immediate route replacement. Waiting for the route to become idle before the next explicit navigation removed that artificial interruption. The focused WebKit matrix then passed all 9 supported cases.
 
-## Personally replayed flows
+## Executed route
 
-- Selected Barbell + rack and observed the announcement that six route changes were applied without saving guest state.
-- Selected Pull and observed Barbell bent-over row in the preview and a profile-preserving `/program/pull?equipment=barbell` link.
-- Searched `barbell squat` under Dumbbells and observed the explicit zero-result compatibility state, then changed to Barbell + rack and observed exactly one compatible Barbell back squat result with the query retained.
-- Opened Barbell back squat and observed truthful starter facts plus two separate manual-review video slots with no fabricated embeds.
-- Inspected the read-only sample analytics at desktop width and confirmed that every metric and historical row is labeled sample data.
+This automation was executed against the built server and its browser-error output was reviewed. It performs these user-visible actions and fails on browser console or page errors:
+
+1. Opens the landing page and confirms the guest activity is not saved.
+2. Confirms Push, Pull, Legs, Upper, and Lower are all reachable controls.
+3. Selects Barbell + rack, opens Pull, and confirms Barbell bent-over row.
+4. Opens the barbell Pull day and confirms the matching exercise destination.
+5. Searches the compatible library, verifies a real result, verifies the explicit no-match state, and clears the search.
+6. Opens the Lower sample workout and sample analytics, confirming both are read only and never represented as user history.
+7. Opens the sign-in gate and accepts either the truthful unconfigured state or configured sign-in heading.
 
 ## Automated checks
 
-- `pnpm typecheck`
-- `pnpm lint`
-- `pnpm test`: six files and 22 tests pass.
-- `pnpm build`: Next.js 16.3.2 webpack production build succeeds with the guest pages plus CSRF and session route handlers.
+- `pnpm test:e2e:release`: builds once, starts the application on isolated port 3108, and runs 40 production-browser cases. Final result: 39 passed and 1 skipped.
+- Chromium phone, tablet, and desktop pass the PWA service-worker installation and offline cases.
+- Chromium and WebKit pass the guest route, seven serious-or-critical Axe scans, keyboard skip navigation, reduced-motion behavior, dark-mode rendering, phone target sizing, and overflow checks.
+- The sole skip is the WebKit service-worker-control case because Playwright supports that automation path only in Chromium. It is an explicit capability exclusion, not a reported product pass.
+- `pnpm verify`: strict TypeScript, full ESLint, 58 test files and 402 tests, generated service-worker parity, and 25-document parity pass.
+- `pnpm drizzle-kit check`: migration metadata is valid.
 
 ## Remaining verification
 
-Production-server service-worker installation, offline navigation, Chromium and WebKit matrices, automated accessibility, reduced motion, dark mode, tablet layout, slow and failed requests, authenticated persistence, preview deployment, production deployment, and runtime logs remain open.
+- Configured password and Google authentication, verification, recovery, expiry, reauthentication, deletion, and cross-user denial in real browsers.
+- Persisted runner interruption, resume, completion, history, records, analytics, and account deletion against disposable Firebase identities.
+- Manually watched and approved exact-two YouTube demos, live dual embeds, removal fallback, and the production seed.
+- Preview and public-production deployments, runtime logs, production database migration, Lighthouse, 200 percent zoom, forced-colors review, and public URL smoke tests.
