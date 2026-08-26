@@ -61,6 +61,7 @@ type JsonRecord = Record<string, unknown> & {
   queryKeys?: unknown;
   rejectionCodes?: unknown;
   pageTokens?: unknown;
+  queryPageCounts?: unknown;
   reviewStatus?: unknown;
   quota?: JsonRecord;
   searchRequests?: unknown;
@@ -132,6 +133,7 @@ export function createEmptyCurationCheckpoint(updatedAt: string = new Date().toI
     updatedAt,
     completedQueries: [],
     pageTokens: {},
+    queryPageCounts: {},
     hydratedVideoIds: [],
     unavailableVideoIds: [],
     hydratedCandidates: {},
@@ -237,6 +239,17 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
       if (typeof token === "string" || token === null) pageTokens[key] = token;
     }
   }
+  const queryPageCounts: Record<string, number> = {};
+  if (isRecord(input.queryPageCounts)) {
+    for (const [key, count] of Object.entries(input.queryPageCounts)) {
+      if (typeof count === "number" && Number.isSafeInteger(count) && count >= 0) {
+        queryPageCounts[key] = count;
+      }
+    }
+  }
+  for (const key of Object.keys(pageTokens)) {
+    queryPageCounts[key] ??= 1;
+  }
   const reviewStatus: Record<string, CurationReviewStatus> = {};
   if (isRecord(input.reviewStatus)) {
     for (const [videoId, status] of Object.entries(input.reviewStatus)) {
@@ -255,6 +268,7 @@ function parseCheckpoint(input: unknown): CurationCheckpoint {
     discoveredCandidates,
     rejectionCodes,
     pageTokens,
+    queryPageCounts,
     reviewStatus,
     quota: {
       searchRequests: numberOrZero(quota.searchRequests),
@@ -625,7 +639,6 @@ export async function curateYouTubeCandidates(options: Readonly<{
   }
 
   let quotaBlockedReason: string | undefined;
-  let pageLimitReached = false;
   curationLoop: for (const target of targets) {
     for (const [index, query] of buildCurationQueries(target).entries()) {
       for (const order of ["relevance", "viewCount"] as const) {
@@ -638,14 +651,13 @@ export async function curateYouTubeCandidates(options: Readonly<{
         });
         if (checkpoint.completedQueries.some((completed) => completed.queryKey === request.queryKey)) continue;
         let pageToken = checkpoint.pageTokens[request.queryKey] ?? undefined;
-        let pagesFetched = 0;
+        let pagesFetched = checkpoint.queryPageCounts[request.queryKey] ?? 0;
+        if (pagesFetched >= budget.maxPagesPerQuery) {
+          checkpoint.completedQueries.push({ queryKey: request.queryKey, pageToken: pageToken ?? null });
+          await saveCurationCheckpoint(stateDirectory, checkpoint);
+          continue;
+        }
         while (!quotaBlockedReason) {
-          if (pagesFetched >= budget.maxPagesPerQuery) {
-            pageLimitReached = true;
-            checkpoint.blockedReason = `Per-query page limit reached for ${request.queryKey}; resume to fetch the next page.`;
-            await saveCurationCheckpoint(stateDirectory, checkpoint);
-            break;
-          }
           if (!canSpend(usage, budget, "search", YOUTUBE_SEARCH_REQUEST_UNITS)) {
             quotaBlockedReason = `quota budget would be exceeded before the next search request for ${request.queryKey}.`;
             checkpoint.blockedReason = quotaBlockedReason;
@@ -661,6 +673,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
           recordRunUsage(usage, "search", YOUTUBE_SEARCH_REQUEST_UNITS);
           addQuota(checkpoint, YOUTUBE_SEARCH_REQUEST_UNITS, 0);
           pagesFetched += 1;
+          checkpoint.queryPageCounts[request.queryKey] = pagesFetched;
           checkpoint.pageTokens[request.queryKey] = response.nextPageToken ?? null;
           for (const item of response.items) {
             let normalizedId: string;
@@ -716,8 +729,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
           }
           pageToken = response.nextPageToken;
           if (pagesFetched >= budget.maxPagesPerQuery) {
-            pageLimitReached = true;
-            checkpoint.blockedReason = `Per-query page limit reached for ${request.queryKey}; resume to fetch the next page.`;
+            checkpoint.completedQueries.push({ queryKey: request.queryKey, pageToken: pageToken ?? null });
             await saveCurationCheckpoint(stateDirectory, checkpoint);
             break;
           }
@@ -839,13 +851,10 @@ export async function curateYouTubeCandidates(options: Readonly<{
 
   const status: CurationReport["status"] = quotaBlockedReason
     ? "quota-blocked"
-    : pageLimitReached
-      ? "page-limit"
-      : targets.length === 0
+    : targets.length === 0
         ? "blocked"
         : "ready-for-review";
   const blockedReason = quotaBlockedReason
-    ?? (pageLimitReached ? "Per-query page limit reached; resume the local checkpoint to continue." : undefined)
     ?? (targets.length === 0 ? "No curation targets were provided." : undefined);
   if (blockedReason) checkpoint.blockedReason = blockedReason;
   else delete checkpoint.blockedReason;

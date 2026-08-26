@@ -190,6 +190,7 @@ export type CurationCheckpoint = {
   updatedAt: string;
   completedQueries: CurationQueryCheckpoint[];
   pageTokens: Record<string, string | null>;
+  queryPageCounts: Record<string, number>;
   hydratedVideoIds: string[];
   unavailableVideoIds: string[];
   hydratedCandidates: Record<string, YouTubeCandidate>;

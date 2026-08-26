@@ -45,6 +45,26 @@ describe("resumable YouTube curation state", () => {
     }
   });
 
+  it("infers one fetched page when loading a schema-two checkpoint from before durable page counts", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-page-count-migration-"));
+
+    try {
+      const checkpoint = createEmptyCurationCheckpoint("2026-08-25T12:00:00.000Z");
+      checkpoint.pageTokens["bench-press-query"] = "resume-token";
+      const legacyCheckpoint: Record<string, unknown> = { ...checkpoint };
+      delete legacyCheckpoint["queryPageCounts"];
+      await writeFile(
+        path.join(directory, "checkpoint.json"),
+        `${JSON.stringify(legacyCheckpoint)}\n`,
+      );
+
+      const loaded = await loadCurationCheckpoint(directory);
+      expect(loaded.queryPageCounts).toEqual({ "bench-press-query": 1 });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("writes a report without secrets and keeps it under the local state directory", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-report-"));
 
@@ -277,6 +297,65 @@ describe("resumable YouTube curation state", () => {
       expect(result.report.blockedReason).toContain("quota");
       expect(Object.values(result.checkpoint.pageTokens)).toContain("resume-token");
       expect(result.checkpoint.completedQueries).toEqual([]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("treats the per-query page limit as a durable cap across resumes", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-page-cap-"));
+    let searchCalls = 0;
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        searchCalls += 1;
+        return {
+          items: [{ videoId: "AbCdEfGhI01", title: "Dumbbell bench press tutorial" }],
+          nextPageToken: "another-page",
+        };
+      },
+      async hydrateVideos() {
+        return {
+          items: [{
+            videoId: "AbCdEfGhI01",
+            title: "Dumbbell bench press tutorial",
+            description: "A concise dumbbell bench press guide.",
+            duration: "PT2M",
+            privacyStatus: "public",
+            uploadStatus: "processed",
+            embeddable: true,
+            syndicated: true,
+            regionAvailable: true,
+            liveBroadcastContent: "none",
+            language: "en",
+          }],
+        };
+      },
+    };
+    const target = {
+      canonicalExerciseSlug: "dumbbell-bench-press",
+      variationId: "dumbbells",
+      exerciseName: "Dumbbell bench press",
+      requiredEquipmentTerms: ["dumbbell"],
+    } as const;
+
+    try {
+      const first = await curateYouTubeCandidates({
+        api,
+        targets: [target],
+        stateDirectory: directory,
+        budget: { maxQuotaUnits: 1_000, maxSearchRequests: 10, maxHydrateRequests: 10, maxPagesPerQuery: 1 },
+      });
+      expect(searchCalls).toBe(2);
+      expect(first.report.status).toBe("ready-for-review");
+
+      const second = await curateYouTubeCandidates({
+        api,
+        targets: [target],
+        stateDirectory: directory,
+        budget: { maxQuotaUnits: 1_000, maxSearchRequests: 10, maxHydrateRequests: 10, maxPagesPerQuery: 1 },
+      });
+      expect(searchCalls).toBe(2);
+      expect(second.report.status).toBe("ready-for-review");
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
