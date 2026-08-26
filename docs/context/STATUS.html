@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4a4877ae8b587de2681399bc82924f61f3192b84867e8cde35cdfa7be8c7da24">
+  <meta name="source-sha256" content="2cb814bc5c0a0d1072d526edbea22ffb09841a018ac7ea22dd08e1a481016698">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -40,7 +40,7 @@
 <li>A verified baseline commit, <code>168f2a5</code>, from which bounded analytics, YouTube, and database worktrees were created.</li>
 <li>Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No Firebase project is configured yet.</li>
 <li>A request-memoized viewer context is derived only from the revocation-aware Firebase Admin session result. It normalizes provider and display claims, keeps unverified password identities read-only, and never accepts a client-provided ownership key.</li>
-<li>An isolated owner-scoped workout repository and private workout API support start or resume, resumable-session reads, and idempotent runner operations. The route layer validates CSRF before authentication, authenticates before body parsing or database construction, rejects client ownership and lifecycle fields, enforces a 32 KiB body limit, returns <code>no-store</code>, and maps foreign resources and persistence failures to safe responses. Runner submissions carry the immutable base revision without a client outcome version; the server derives ownership and delegates through the runner-specific repository path.</li>
+<li>An isolated owner-scoped workout repository and private workout API support start or resume, resumable-session reads, and idempotent runner operations. The route layer validates CSRF before authentication, authenticates before body parsing or database construction, rejects client ownership and lifecycle fields, enforces a 32 KiB body limit, returns <code>no-store</code>, and maps foreign resources and persistence failures to safe responses. Runner submissions carry the immutable base revision without a client outcome version; the server derives ownership and delegates through the runner-specific repository path. The browser adapter emits only that owner-free envelope and rejects malformed success responses before the runner can claim a save.</li>
 <li>A nonce-based strict Content Security Policy and companion browser security headers. Next.js request rendering applies a fresh nonce to framework output; the YouTube referrer and Firebase popup policies are explicit.</li>
 <li>Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.</li>
 <li>All 27 canonical starter exercises have original route cues, movement families, aliases, and primary-muscle metadata. Library search includes those fields while still applying equipment compatibility first.</li>
@@ -80,7 +80,7 @@
 <li>Playwright CLI personally replayed the guest equipment switch, Pull substitution, day links, library compatibility search and recovery, exercise detail approval gate, and desktop sample analytics. Phone inspection found and verified fixes for the desktop navigation overlap, mobile route stamp collision, dev watcher loop, and exercise-detail horizontal overflow.</li>
 <li>A production-server Playwright replay on Chromium phone confirmed that an opened Push route reloads from the public cache with the network disabled, <code>/sign-in</code> is absent from that cache, and the app announces the interruption after a same-origin reachability probe. The equivalent service-worker-control case is skipped on WebKit because Playwright documents service-worker support as Chromium-only; ordinary WebKit product flows remain part of the broader browser matrix.</li>
 <li>Auth tests cover duplicate and invalid client errors, CSRF mismatch and cross-origin denial, malformed identity input, absent server credentials, unverified permanent mutations, recent-auth deletion gates, expired and revoked sessions, and cross-user denial. Live provider success cannot run before Firebase credentials exist.</li>
-<li>The isolated workout branch passes 29 test files and 237 tests serially, strict TypeScript, full ESLint, Drizzle metadata validation, generated-service-worker parity, documentation parity, and the Next.js Webpack production build. The workout API contract contributes 20 tests. A local production-server smoke observed <code>401</code> with <code>no-store</code> for an unauthenticated resume and <code>403</code> with <code>no-store</code> for a cross-origin start.</li>
+<li>The isolated workout branch passes 30 test files and 247 tests serially, strict TypeScript, full ESLint, Drizzle metadata validation, generated-service-worker parity, documentation parity, and the Next.js Webpack production build. The server API contract contributes 20 tests, and the browser adapter contributes 10 tests. A local production-server smoke observed <code>401</code> with <code>no-store</code> for an unauthenticated resume and <code>403</code> with <code>no-store</code> for a cross-origin start.</li>
 </ul>
 <h2>Blockers and credential gates</h2>
 <ul>
@@ -96,7 +96,7 @@
 <li>The completed YouTube worktree was integrated through <code>6b633b0</code>; its selected files matched the reviewed worktree before cleanup.</li>
 <li>The completed database worktree was integrated through <code>ff3d69c</code>, compared for selected-file equality, and removed.</li>
 <li>The completed runner worktree was integrated through <code>785db9a</code>; its selected files matched the reviewed worktree before cleanup.</li>
-<li><code>/private/tmp/mwp-workout-repository</code> on <code>agent/workout-repository</code>: the owner-scoped repository and private API are verified through runner-transport commit <code>8747b5b</code> and await explicit merge authorization. This is the only non-main worktree.</li>
+<li><code>/private/tmp/mwp-workout-repository</code> on <code>agent/workout-repository</code>: the owner-scoped repository, private API, and strict browser adapter are verified through local commit <code>e0f00f5</code> and await explicit merge authorization. This is the only non-main worktree.</li>
 </ul>
 
   </main>

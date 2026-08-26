@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-25: Strict runner API client adapter
+
+- Retained a fail-first missing-module result before implementing the browser runner API adapter.
+- Mapped each queued operation to a route-scoped body that contains only the idempotency key, immutable base revision, kind, and payload.
+- Rejected corrupt queued identities and malformed `saved`, `duplicate`, or `failed` responses instead of letting the runner claim an unverified save.
+- Preserved private-client network errors so the runner can classify offline and authentication interruptions without discarding its local draft.
+- Passed 10 client adapter tests, the 30-test client and server transport slice, 30 test files and 247 branch tests, strict TypeScript, full ESLint, Drizzle validation, generated-service-worker parity, documentation parity, and the Next.js Webpack production build. Kept implementation commit `e0f00f5` local.
+
 ## 2026-08-25: Runner outbox transport alignment
 
 - Compared the integrated runner outbox with the isolated private API and found that the route required a client outcome version that the runner doesn't store.

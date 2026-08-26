@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="9d2ea95733ea0381931f5f2bf61c3da5d2bf7ebdd7f5a77bcdeb80894dcebefc">
+  <meta name="source-sha256" content="2c224ca39c3b8f5b8a769bdcac04ea95e3bb7e54eaf8c2df85f9b197bff1d3f5">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Strict runner API client adapter</h2>
+<ul>
+<li>Retained a fail-first missing-module result before implementing the browser runner API adapter.</li>
+<li>Mapped each queued operation to a route-scoped body that contains only the idempotency key, immutable base revision, kind, and payload.</li>
+<li>Rejected corrupt queued identities and malformed <code>saved</code>, <code>duplicate</code>, or <code>failed</code> responses instead of letting the runner claim an unverified save.</li>
+<li>Preserved private-client network errors so the runner can classify offline and authentication interruptions without discarding its local draft.</li>
+<li>Passed 10 client adapter tests, the 30-test client and server transport slice, 30 test files and 247 branch tests, strict TypeScript, full ESLint, Drizzle validation, generated-service-worker parity, documentation parity, and the Next.js Webpack production build. Kept implementation commit <code>e0f00f5</code> local.</li>
+</ul>
 <h2>2026-08-25: Runner outbox transport alignment</h2>
 <ul>
 <li>Compared the integrated runner outbox with the isolated private API and found that the route required a client outcome version that the runner doesn&#39;t store.</li>
