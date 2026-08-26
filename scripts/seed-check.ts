@@ -20,12 +20,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const requiredPath = optionValue(args, "--required") ?? process.env["YOUTUBE_REQUIRED_VARIATIONS"];
-  const seedPath = optionValue(args, "--seed") ?? process.env["YOUTUBE_SEED"];
-  if (!seedPath) {
-    console.error("seed:check requires --seed SEED.json; no production seed was created.");
-    process.exitCode = 1;
-    return;
-  }
+  const seedPath =
+    optionValue(args, "--seed") ??
+    process.env["YOUTUBE_SEED"] ??
+    new URL("../src/domain/youtube/curated-video-seed.json", import.meta.url);
 
   const requiredPayload: unknown = requiredPath ? JSON.parse(await readFile(requiredPath, "utf8")) : undefined;
   const seedPayload: unknown = JSON.parse(await readFile(seedPath, "utf8"));

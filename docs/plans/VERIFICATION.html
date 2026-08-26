@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d4ef120f5487a6f9d123138040aef5d556196bdbc2d22e4897cd87a68bf5c35e">
+  <meta name="source-sha256" content="1b763e3e0f5603e4133fc5cb5776c810dec8ed86a643714e00adde0dda387d1f">
   <title>Verification plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -42,13 +42,14 @@
 <ul>
 <li><code>pnpm typecheck</code> with strict TypeScript and no ignored errors.</li>
 <li><code>pnpm lint</code> with Next.js, React, accessibility, import, and project rules.</li>
-<li><code>pnpm format:check</code> for maintained source and documentation.</li>
 <li><code>pnpm test:unit</code> for calculations, conversions, progression, equipment compatibility, substitutions, revision rules, YouTube normalization and ranking, and state reducers.</li>
 <li><code>pnpm test:integration</code> for repositories, migrations, auth session helpers, CSRF, ownership, idempotency, deletion saga, and curation persistence.</li>
 <li><code>pnpm db:check</code> for empty migration, upgrade migration, constraints, rollback policy, and generated-schema drift.</li>
 <li><code>pnpm seed:check</code> for exact starter days, defaults, aliases, compatibility, and exactly two approved videos per required canonical variation.</li>
 <li><code>pnpm docs:check</code> for Markdown and HTML parity.</li>
+<li><code>pnpm build</code> for the exact Next.js 16.3.2 Webpack production boundary.</li>
 </ul>
+<p><code>pnpm verify</code> runs that complete non-browser gate in the listed order. <code>pnpm verify:release</code> then adds the isolated public Playwright release matrix. The credential-free authenticated harness uses the separate <code>pnpm test:e2e:authenticated</code> boundary because it builds and starts a fixture server with synthetic viewers; hosted Firebase/provider evidence remains separate again.</p>
 <h2>Security matrix</h2>
 <p>Automated tests must cover invalid and missing sessions, unverified password accounts, verified Google identities, expired and revoked sessions, CSRF mismatch, invalid origin, duplicate submit, stale revision, guessed identifiers, cross-user reads and writes, custom exercise ownership, workout ownership, analytics ownership, account deletion, and reauthentication freshness.</p>
 <p>Run an adversarial route matrix with two seeded test users. For every owned resource, user B attempts list, read, update, delete, attach, substitute, resume, complete, and analytics access against user A&#39;s identifiers. Responses must not disclose existence and database state must remain unchanged.</p>

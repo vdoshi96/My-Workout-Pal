@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="61e3ff32bedffe0fb8bc8f9131a8c99a7d9ca6f5939771c0e5b5757af2bf9c66">
+  <meta name="source-sha256" content="3ad9e398286ab142a521c9e8a7668e9fea1f832a4063c90a91ce332d9c914a09">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,24 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-26: Credential-free authenticated onboarding harness</h2>
+<ul>
+<li>Added a separate production-mode Next.js fixture under <code>tests/fixtures/authenticated-app</code>, outside production <code>src/app</code>. It uses the real migrations, starter seed, production repositories, onboarding/member components, strict transport schemas, and synthetic server-derived Alice/Bob viewers against isolated in-memory PGlite.</li>
+<li>Retained fail-first evidence for missing package/harness contracts, bundled migration paths, contaminated development evidence, document title, prefetch and contour failures, stale equipment/focus assertions, strict clone-adapter input, inherited provider credentials, missing private <code>no-store</code>, hard-coded-port collision risk, and expired/revoked viewers that did not fail closed.</li>
+<li>The runner now builds/starts the fixture in production mode on an available exact-loopback port, copies and removes the one maintained public asset it needs, and passes only an explicit non-provider runtime environment. A source-policy test and post-build route-manifest check keep fixture controls out of production.</li>
+<li>The newest synthetic-data replay passes 4 of 4 cases across Chromium desktop and WebKit phone. It verifies expired/revoked/unverified states, both five-day starter profiles, engine-correct keyboard skip navigation, no horizontal overflow, serious/critical Axe, one-shot failed-save retry with the same idempotency key, and owner-indistinguishable clone denial without a database side effect.</li>
+<li>The first full <code>pnpm verify</code> attempt passed 78 files and 521 tests plus 4 database files and 33 assertions, then failed truthfully because the newly wired <code>seed:check</code> stage lacked its production manifest argument. The checker now defaults to the checked-in 54-row manifest when neither the explicit CLI nor environment override is supplied. The exact-source rerun passes the complete gate: strict types, lint, 78 files and 521 tests, database metadata and 33 migration/bootstrap assertions, all 27 exact-two video variations, PWA parity, 33 documentation pairs, the production Webpack build, and 41-entry route-manifest isolation.</li>
+<li>The primary public production-mode browser replay passes 43 cases with the one documented WebKit PWA skip across Chromium phone/tablet/desktop and WebKit phone. Independent read-only review reproduced the focused, authenticated, full non-browser, and public gates, inspected the complete source/documentation/screenshot diff, and returned explicit approval with no actionable finding. One transient cross-origin YouTube Permissions-Policy warning in the reviewer&#39;s first tablet run passed on exact-case and clean full reruns; no source filter was added for it.</li>
+<li>This is credential-free downstream authorization and UI evidence only. Program collection/editor/runner/insights/settings/deletion harness slices plus hosted Firebase/provider, secure-cookie, production-authenticated, authenticated-media, and Spend Management evidence remain open.</li>
+</ul>
+<h2>2026-08-26: Authenticated verification planning and command truth</h2>
+<ul>
+<li>Audited released commit <code>5f7f00167d5a418357b8a36f3413222d03723364</code> rather than the concurrently changing checkout. The release remains aligned across local <code>main</code>, GitHub, and Vercel production, while the remaining product evidence is concentrated in hosted Firebase/provider lifecycle, configured authenticated browser flows, interruption recovery, authenticated accessibility/media, and Vercel Spend Management.</li>
+<li>Planned a credential-free authenticated browser harness outside <code>src/app</code>. It will use two synthetic server-derived viewers, real migrations and repositories against isolated PGlite, production client controllers, and real IndexedDB. A source-policy gate must prove that no viewer switch, fixture route, or scenario control enters the production application or build.</li>
+<li>Planned the separate hosted password lifecycle with a single disposable Firebase identity, bounded external-account approval, exact-project/origin allowlists, secure-cookie assertions, <code>finally</code> cleanup, and no Neon mutation. Google consent, email delivery, cross-user hosted replay, and paid/dashboard settings remain separate evidence gates.</li>
+<li>Reconciled the verification contract with package commands. A retained script assertion failed when <code>db:check</code> was only <code>drizzle-kit check</code>; metadata validation alone could not prove empty migration, upgrade, constraint, rollback, and seed-drift behavior. The corrected command also runs the initial-schema, account-deletion migration, program-collection migration, and starter-bootstrap suites. The focused script test passes, and <code>db:check</code> passes Drizzle metadata plus four files and 33 database assertions.</li>
+<li>Corrected released-document drift for the account-deletion migration, exact <code>5f7f001</code> production deployment, and the remaining production-video boundary. These changes describe verified state only; no provider, database, Git remote, deployment, spend, or paid setting changed in this checkpoint.</li>
+</ul>
 <h2>2026-08-26: Guest welcome and contextual exercise navigation</h2>
 <ul>
 <li>Split the public entry so <code>/</code> is a genuine welcome page and <code>/program</code> remains the five-day equipment-aware explorer. Public copy now says that all five starter days, exercise guides, both approved demonstrations, the sample workout, and sample analytics are open without an account; sign-in is reserved for customization, saving, tracking, recovery, history, records, and personal analytics.</li>
