@@ -17,12 +17,18 @@ import {
 import type { ViewerContext } from "@/server/auth/viewer";
 
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
+const deletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
+const workoutMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
+const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   const raw = new PGlite();
   await raw.waitReady;
   await raw.exec(await readFile(migrationUrl, "utf8"));
+  await raw.exec(await readFile(deletionMigrationUrl, "utf8"));
+  await raw.exec(await readFile(workoutMigrationUrl, "utf8"));
+  await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);

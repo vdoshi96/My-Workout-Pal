@@ -40,6 +40,7 @@ import {
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
 const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
+const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -48,6 +49,7 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(migrationUrl, "utf8"));
   await raw.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
   await raw.exec(await readFile(upgradeMigrationUrl, "utf8"));
+  await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   return { raw, database };

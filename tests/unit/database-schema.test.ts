@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
 const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
+const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 
 const ids = {
   aliceProgram: "00000000-0000-4000-8000-000000000001",
@@ -65,6 +66,7 @@ async function openDatabase() {
   await database.exec(migration);
   await database.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
   await database.exec(await readFile(upgradeMigrationUrl, "utf8"));
+  await database.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   openDatabases.push(database);
   return database;
 }
@@ -182,12 +184,14 @@ describe("initial database migration", () => {
       FROM information_schema.columns
       WHERE (table_name = 'account_deletion_jobs' AND column_name = 'phase')
          OR (table_name = 'cardio_logs' AND column_name = 'pace_source')
+         OR (table_name = 'user_programs' AND column_name = 'is_active')
       ORDER BY table_name, column_name;
     `);
 
     expect(result.rows).toEqual([
       { table_name: "account_deletion_jobs", column_name: "phase" },
       { table_name: "cardio_logs", column_name: "pace_source" },
+      { table_name: "user_programs", column_name: "is_active" },
     ]);
   });
 

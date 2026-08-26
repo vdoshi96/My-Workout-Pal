@@ -544,6 +544,7 @@ export const userPrograms = pgTable(
     programKey: varchar("program_key", { length: 120 }).notNull(),
     name: varchar("name", { length: 180 }).notNull(),
     activeRevisionId: uuid("active_revision_id"),
+    isActive: boolean("is_active").default(false).notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -555,6 +556,9 @@ export const userPrograms = pgTable(
     }).onDelete("restrict").onUpdate("cascade"),
     uniqueIndex("user_programs_owner_key_unique").on(table.ownerFirebaseUid, table.programKey),
     uniqueIndex("user_programs_owner_id_unique").on(table.ownerFirebaseUid, table.id),
+    uniqueIndex("user_programs_owner_active_unique")
+      .on(table.ownerFirebaseUid)
+      .where(sql`${table.isActive}`),
     index("user_programs_owner_updated_idx").on(table.ownerFirebaseUid, table.updatedAt),
   ],
 );
