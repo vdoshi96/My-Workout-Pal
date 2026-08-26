@@ -3,6 +3,11 @@ import type { LoggingKind } from "@/domain/exercises/catalog";
 import type { ProgramSectionKind } from "@/domain/programs/types";
 import { deterministicSeedUuid } from "@/domain/seed/identity";
 import {
+  buildDefaultRequiredVideoVariations,
+  validateCuratedVideoSeed,
+} from "@/domain/youtube/seed-validation";
+import type { CuratedVideoSeed } from "@/domain/youtube/types";
+import {
   buildStarterDatabaseSeed,
   type StarterDatabaseSeed,
 } from "@/domain/seed/starter-database";
@@ -100,7 +105,20 @@ export type StarterDatabaseRows = Readonly<{
     inclinePercent: Nullable<number>;
     notes: Nullable<string>;
   }>[];
-  curatedVideos: readonly never[];
+  curatedVideos: readonly Readonly<{
+    id: string;
+    exerciseId: string;
+    variationId: string;
+    youtubeVideoId: string;
+    title: string;
+    channelTitle: string;
+    approvalStatus: "approved";
+    displayOrder: 1 | 2;
+    watchedInFullAt: string;
+    approvedAt: string;
+    approvedBy: string;
+    restrictionReason: null;
+  }>[];
 }>;
 
 function uuid(kind: string, key: string): string {
@@ -117,8 +135,44 @@ function nullable<T>(value: T | undefined): T | null {
   return value ?? null;
 }
 
+export function buildCuratedVideoDatabaseRows(
+  seedRows: readonly CuratedVideoSeed[],
+): StarterDatabaseRows["curatedVideos"] {
+  const validation = validateCuratedVideoSeed(
+    buildDefaultRequiredVideoVariations(),
+    seedRows,
+    { requireDefaultCatalogCoverage: true },
+  );
+  if (!validation.valid) {
+    const summary = validation.errors
+      .map(({ code, canonicalExerciseSlug, videoId }) =>
+        [code, canonicalExerciseSlug, videoId].filter(Boolean).join(":"),
+      )
+      .join(", ");
+    throw new TypeError(`Curated video production seed is invalid: ${summary}.`);
+  }
+  return seedRows.map((video) => ({
+    id: uuid(
+      "curated-video",
+      `${video.canonicalExerciseSlug}:${video.variationId}:${video.videoId}`,
+    ),
+    exerciseId: uuid("catalog-exercise", video.canonicalExerciseSlug),
+    variationId: video.variationId,
+    youtubeVideoId: video.videoId,
+    title: video.title.trim(),
+    channelTitle: video.channelTitle.trim(),
+    approvalStatus: "approved",
+    displayOrder: video.displayOrder as 1 | 2,
+    watchedInFullAt: video.reviewedAt,
+    approvedAt: video.reviewedAt,
+    approvedBy: video.reviewer.trim(),
+    restrictionReason: null,
+  }));
+}
+
 export function buildStarterDatabaseRows(
   seed: StarterDatabaseSeed = buildStarterDatabaseSeed(),
+  curatedVideoSeed: readonly CuratedVideoSeed[] = [],
 ): StarterDatabaseRows {
   const exerciseIds = new Map(
     seed.exercises.map(({ slug }) => [slug, uuid("catalog-exercise", slug)] as const),
@@ -253,6 +307,8 @@ export function buildStarterDatabaseRows(
     templateSections,
     templatePrescriptions,
     templateCardioPrescriptions,
-    curatedVideos: [],
+    curatedVideos: curatedVideoSeed.length > 0
+      ? buildCuratedVideoDatabaseRows(curatedVideoSeed)
+      : [],
   };
 }

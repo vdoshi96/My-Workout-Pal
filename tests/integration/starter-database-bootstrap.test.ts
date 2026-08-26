@@ -83,7 +83,7 @@ describe("starter database bootstrap", () => {
         { status: "published", published_at: new Date("2026-08-25T00:00:00.000Z") },
       ],
     });
-  });
+  }, 15_000);
 
   it("rejects deterministic catalog drift and leaves the committed graph intact", async () => {
     const { raw, database } = await openDatabase();

@@ -870,6 +870,8 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .runner-rest .runner-button { border-color: color-mix(in srgb, var(--paper) 50%, transparent); color: var(--paper); }
 .runner-rest .runner-button--quiet { color: color-mix(in srgb, var(--paper) 75%, transparent); }
 .runner-notes, .runner-substitution, .runner-exercise-actions, .runner-recovery, .runner-cardio { display: grid; gap: .85rem; }
+.runner-technique { border-block: 1px solid var(--rule); display: grid; gap: .85rem; margin: 1.25rem 0 0; padding: 1.25rem 0; }
+.runner-technique .curated-player { margin: 0; }
 .runner-notes .runner-button { justify-self: start; }
 .runner-target { background: var(--paper-deep); border-inline-start: 3px solid var(--coral); display: grid; gap: .25rem; margin-top: .8rem; padding: .65rem .75rem; }
 .runner-target--dark { border-inline-start-color: var(--lichen); }

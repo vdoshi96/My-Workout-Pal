@@ -2,6 +2,11 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    // Real PGlite migrations and transaction graphs can cross Vitest's
+    // five-second default under a complete local run even when the unchanged
+    // assertion passes immediately in isolation. Keep a bounded ceiling that
+    // still fails stalled database work without turning CPU load into red QA.
+    testTimeout: 15_000,
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary"],

@@ -52,6 +52,8 @@ import {
   type RunnerUnitSystem,
   type RunnerStatusPresentation,
 } from "@/components/workout/workout-runner-presenters";
+import { CuratedVideoPlayer } from "@/components/video/curated-video-player";
+import type { CuratedVideoPair } from "@/domain/youtube/embed";
 
 export type RunnerNavigationProtection = Readonly<{
   blocked: boolean;
@@ -241,6 +243,8 @@ export type WorkoutRunnerProps = RunnerInput &
     ) =>
       | readonly ExerciseSubstitution[]
       | Promise<readonly ExerciseSubstitution[]>;
+    effectiveExerciseIdBySnapshot?: Readonly<Record<string, string>>;
+    curatedVideosByExerciseId?: Readonly<Record<string, CuratedVideoPair>>;
     title?: string;
     className?: string;
   }>;
@@ -711,6 +715,12 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const activeSet = getActiveSetDisplay(state);
   const currentExerciseName =
     state.substitutions[currentExercise.id]?.name ?? currentExercise.name;
+  const currentEffectiveExerciseId =
+    state.substitutions[currentExercise.id]?.id
+    ?? props.effectiveExerciseIdBySnapshot?.[currentExercise.id];
+  const currentCuratedVideos = currentEffectiveExerciseId
+    ? props.curatedVideosByExerciseId?.[currentEffectiveExerciseId]
+    : undefined;
   const workSetCount = state.snapshot.exercises.reduce(
     (total, exercise) =>
       total + exercise.sets.filter(({ phase }) => phase === "work").length,
@@ -1290,6 +1300,26 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 {activeSet.isWarmup ? "Warm-up" : "Work"}
               </span>
             </header>
+
+            {props.curatedVideosByExerciseId ? (
+              <section
+                aria-labelledby="runner-technique-heading"
+                className="runner-technique"
+              >
+                <div className="runner-section-heading">
+                  <div>
+                    <span className="runner-eyebrow">Two-source technique check</span>
+                    <h3 id="runner-technique-heading">Technique demonstrations</h3>
+                  </div>
+                  <span>{currentCuratedVideos ? "Approved pair" : "Unavailable"}</span>
+                </div>
+                {currentCuratedVideos ? (
+                  <CuratedVideoPlayer videos={currentCuratedVideos} />
+                ) : (
+                  <p className="runner-empty">No approved catalog pair is available for this movement. Workout logging remains available.</p>
+                )}
+              </section>
+            ) : null}
 
             <div
               className="runner-set-tabs"

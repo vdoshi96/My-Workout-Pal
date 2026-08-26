@@ -1,4 +1,4 @@
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import type { Database } from "@/db/client";
 import {
@@ -162,6 +162,31 @@ async function verifyCatalog(
   assertExactRows("exercise_aliases", actualAliases, rows.exerciseAliases);
 }
 
+async function verifyCuratedVideos(
+  database: Database,
+  rows: StarterDatabaseRows,
+): Promise<void> {
+  const exerciseIds = rows.catalogExercises.map(({ id }) => id);
+  const actual = await database
+    .select({
+      id: curatedVideos.id,
+      exerciseId: curatedVideos.exerciseId,
+      variationId: curatedVideos.variationId,
+      youtubeVideoId: curatedVideos.youtubeVideoId,
+      title: curatedVideos.title,
+      channelTitle: curatedVideos.channelTitle,
+      approvalStatus: curatedVideos.approvalStatus,
+      displayOrder: curatedVideos.displayOrder,
+      watchedInFullAt: curatedVideos.watchedInFullAt,
+      approvedAt: curatedVideos.approvedAt,
+      approvedBy: curatedVideos.approvedBy,
+      restrictionReason: curatedVideos.restrictionReason,
+    })
+    .from(curatedVideos)
+    .where(inArray(curatedVideos.exerciseId, exerciseIds));
+  assertExactRows("curated_videos", actual, rows.curatedVideos);
+}
+
 async function verifyTemplateChildren(
   database: Database,
   rows: StarterDatabaseRows,
@@ -284,17 +309,8 @@ export async function verifyStarterDatabase(
   rows: StarterDatabaseRows = buildStarterDatabaseRows(),
 ): Promise<StarterDatabaseVerification> {
   await verifyCatalog(database, rows);
+  await verifyCuratedVideos(database, rows);
   await verifyTemplate(database, rows);
-  const exerciseIds = rows.catalogExercises.map(({ id }) => id);
-  const approved = await database
-    .select({ value: count() })
-    .from(curatedVideos)
-    .where(
-      and(
-        inArray(curatedVideos.exerciseId, exerciseIds),
-        eq(curatedVideos.approvalStatus, "approved"),
-      ),
-    );
   return {
     catalogEquipment: rows.catalogEquipment.length,
     catalogExercises: rows.catalogExercises.length,
@@ -305,7 +321,7 @@ export async function verifyStarterDatabase(
     templateSections: rows.templateSections.length,
     templatePrescriptions: rows.templatePrescriptions.length,
     templateCardioPrescriptions: rows.templateCardioPrescriptions.length,
-    approvedVideos: approved[0]?.value ?? 0,
+    approvedVideos: rows.curatedVideos.length,
   };
 }
 
@@ -337,6 +353,17 @@ export async function seedStarterDatabase(
       .values([...rows.exerciseAliases])
       .onConflictDoNothing();
     await verifyCatalog(tx, rows);
+    if (rows.curatedVideos.length > 0) {
+      await tx
+        .insert(curatedVideos)
+        .values(rows.curatedVideos.map((row) => ({
+          ...row,
+          watchedInFullAt: new Date(row.watchedInFullAt),
+          approvedAt: new Date(row.approvedAt),
+        })))
+        .onConflictDoNothing();
+    }
+    await verifyCuratedVideos(tx, rows);
 
     await tx.insert(programTemplates).values(rows.programTemplate).onConflictDoNothing();
     const revisionIds = rows.programTemplateRevisions.map(({ id }) => id);
