@@ -638,7 +638,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
     });
   }
 
-  let quotaBlockedReason: string | undefined;
+  let searchBlockedReason: string | undefined;
   curationLoop: for (const target of targets) {
     for (const [index, query] of buildCurationQueries(target).entries()) {
       for (const order of ["relevance", "viewCount"] as const) {
@@ -657,10 +657,10 @@ export async function curateYouTubeCandidates(options: Readonly<{
           await saveCurationCheckpoint(stateDirectory, checkpoint);
           continue;
         }
-        while (!quotaBlockedReason) {
+        while (!searchBlockedReason) {
           if (!canSpend(usage, budget, "search", YOUTUBE_SEARCH_REQUEST_UNITS)) {
-            quotaBlockedReason = `quota budget would be exceeded before the next search request for ${request.queryKey}.`;
-            checkpoint.blockedReason = quotaBlockedReason;
+            searchBlockedReason = `quota budget would be exceeded before the next search request for ${request.queryKey}.`;
+            checkpoint.blockedReason = searchBlockedReason;
             await saveCurationCheckpoint(stateDirectory, checkpoint);
             break curationLoop;
           }
@@ -750,11 +750,12 @@ export async function curateYouTubeCandidates(options: Readonly<{
   for (const [videoId, candidate] of Object.entries(checkpoint.hydratedCandidates)) {
     hydratedById.set(videoId, candidate);
   }
-  for (let index = 0; index < pendingIds.length && !quotaBlockedReason; index += 50) {
+  let hydrationBlockedReason: string | undefined;
+  for (let index = 0; index < pendingIds.length && !hydrationBlockedReason; index += 50) {
     const batch = pendingIds.slice(index, index + 50);
     if (!canSpend(usage, budget, "hydrate", YOUTUBE_HYDRATE_REQUEST_UNITS)) {
-      quotaBlockedReason = "quota budget would be exceeded before the next hydration request.";
-      checkpoint.blockedReason = quotaBlockedReason;
+      hydrationBlockedReason = "quota budget would be exceeded before the next hydration request.";
+      checkpoint.blockedReason = hydrationBlockedReason;
       await saveCurationCheckpoint(stateDirectory, checkpoint);
       break;
     }
@@ -849,6 +850,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
     proposedPairs.push(proposeVideoPair(target, targetCandidates.map((candidate) => candidate.candidate)));
   }
 
+  const quotaBlockedReason = searchBlockedReason ?? hydrationBlockedReason;
   const status: CurationReport["status"] = quotaBlockedReason
     ? "quota-blocked"
     : targets.length === 0

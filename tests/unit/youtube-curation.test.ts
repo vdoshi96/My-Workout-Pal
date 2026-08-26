@@ -302,6 +302,71 @@ describe("resumable YouTube curation state", () => {
     }
   });
 
+  it("hydrates discovered IDs after the search request cap stops remaining queries", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-hydrate-after-search-cap-"));
+    let searchCalls = 0;
+    let hydrateCalls = 0;
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        searchCalls += 1;
+        return {
+          items: [{ videoId: "AbCdEfGhI01", title: "Dumbbell bench press tutorial" }],
+        };
+      },
+      async hydrateVideos(videoIds) {
+        hydrateCalls += 1;
+        expect(videoIds).toEqual(["AbCdEfGhI01"]);
+        return {
+          items: [{
+            videoId: "AbCdEfGhI01",
+            title: "Dumbbell bench press tutorial",
+            description: "A concise dumbbell bench press guide.",
+            duration: "PT2M",
+            privacyStatus: "public",
+            uploadStatus: "processed",
+            embeddable: true,
+            syndicated: true,
+            regionAvailable: true,
+            liveBroadcastContent: "none",
+            language: "en",
+          }],
+        };
+      },
+    };
+
+    try {
+      const result = await curateYouTubeCandidates({
+        api,
+        targets: [{
+          canonicalExerciseSlug: "dumbbell-bench-press",
+          variationId: "dumbbells",
+          exerciseName: "Dumbbell bench press",
+          requiredEquipmentTerms: ["dumbbell"],
+        }],
+        stateDirectory: directory,
+        budget: {
+          maxQuotaUnits: 1_000,
+          maxSearchRequests: 1,
+          maxHydrateRequests: 1,
+          maxPagesPerQuery: 1,
+        },
+      });
+
+      expect(searchCalls).toBe(1);
+      expect(hydrateCalls).toBe(1);
+      expect(result.checkpoint.quota).toEqual({
+        searchRequests: 1,
+        hydrateRequests: 1,
+        unitsEstimated: 101,
+      });
+      expect(result.report.candidates).toHaveLength(1);
+      expect(result.report.status).toBe("quota-blocked");
+      expect(result.report.blockedReason).toContain("search request");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("treats the per-query page limit as a durable cap across resumes", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-page-cap-"));
     let searchCalls = 0;
