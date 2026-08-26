@@ -909,7 +909,7 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .runner-rest .runner-eyebrow { color: var(--lichen-light); }
 .runner-rest h3 { font-family: var(--font-display); font-size: 1.8rem; margin: .2rem 0; text-transform: uppercase; }
 .runner-rest p { color: color-mix(in srgb, var(--paper) 78%, transparent); margin: 0; }
-.runner-rest > strong { color: var(--coral); font-family: var(--font-display); font-size: clamp(2.8rem, 13vw, 5rem); line-height: .8; }
+.runner-rest > strong { color: var(--coral-on-ink); font-family: var(--font-display); font-size: clamp(2.8rem, 13vw, 5rem); line-height: .8; }
 .runner-rest .runner-inline-actions { grid-column: 1 / -1; }
 .runner-rest .runner-button { border-color: color-mix(in srgb, var(--paper) 50%, transparent); color: var(--paper); }
 .runner-rest .runner-button--quiet { color: color-mix(in srgb, var(--paper) 75%, transparent); }

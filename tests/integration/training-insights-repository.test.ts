@@ -104,8 +104,10 @@ async function insertSession(
   await raw.query(`
     INSERT INTO cardio_logs (
       id, owner_firebase_uid, session_id, mode, duration_seconds, distance_m,
-      pace_seconds_per_km, pace_source, incline_percent, client_idempotency_key, recorded_at
-    ) VALUES ($1, $2, $3, 'walker', 1200, 1609.344, 746, 'entered', 2, $4, $5);
+      pace_seconds_per_km, pace_source, incline_percent, note_snapshot,
+      client_idempotency_key, recorded_at
+    ) VALUES ($1, $2, $3, 'walker', 1200, 1609.344, 746, 'entered', 2,
+      'Immutable cardio note', $4, $5);
   `, [cardioId, input.ownerUid, input.sessionId, `${input.ownerUid}-${suffix}-cardio`, input.endedAt]);
   await raw.query(`
     UPDATE workout_sessions
@@ -232,6 +234,7 @@ describe("training insights repository", () => {
       status: "completed",
     });
     expect(detail.exercises[0]!.sets[0]).toMatchObject({ repetitions: 10, weightKg: 45 });
+    expect(detail.cardio).toMatchObject({ notes: "Immutable cardio note" });
     await expect(
       loadTrainingSession(database, viewer("alice"), sessionIds.bob),
     ).rejects.toBeInstanceOf(TrainingInsightsRepositoryError);

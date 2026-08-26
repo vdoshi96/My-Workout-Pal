@@ -48,7 +48,7 @@ No UI may report success before the production reducer accepts a repository-shap
 
 ## Authentication and authorization
 
-Alice and Bob are fixed synthetic `ViewerContext` values selected before navigation by test-only headers. The browser never sends or chooses a UID in an application body. Every fixture page and handler derives the viewer from the request headers on the server.
+Alice and Bob are fixed synthetic `ViewerContext` values selected before navigation by test-only headers. The browser never sends or chooses a UID in an application body. The harness injects those headers only into exact-loopback first-party requests; it must not leak them to YouTube or any other third-party origin. Every fixture page and handler derives the viewer from the request headers on the server.
 
 Verified Alice may mutate. Unverified Alice can view program data but cannot start or change a workout. Bob receives the same `404 not_found` response and no-store policy for Alice's session as for an unknown session. Fixture routes remain outside `src/app`, production builds remain free of harness markers, and no Firebase, Neon, Vercel, YouTube, ADC, or user environment variable reaches the child processes.
 
@@ -66,15 +66,17 @@ Verified Alice may mutate. Unverified Alice can view program data but cannot sta
 
 ## Phone, tablet, and desktop behavior
 
-The runner flow runs in Chromium desktop and WebKit phone using the existing dynamic exact-loopback production fixture. The day card, set editor, exercise outline, cardio fields, recovery state, footer controls, and history detail must remain reachable without horizontal overflow. Sticky/fixed controls must not cover the active field at the initial phone viewport. A later full private matrix adds Chromium phone/tablet and WebKit desktop once the vertical behavior is stable.
+The runner flow runs in Chromium desktop and WebKit phone using the existing dynamic exact-loopback production fixture. The day card, set editor, exercise outline, cardio fields, recovery state, footer controls, and history detail must remain reachable without horizontal overflow. Authenticated dynamic day links use explicit navigation without speculative App Router prefetch so rapid WebKit navigation cannot leave aborted first-party requests or console errors. Sticky/fixed controls must not cover the active field at the initial phone viewport. A later full private matrix adds Chromium phone/tablet and WebKit desktop once the vertical behavior is stable.
 
 ## Accessibility
 
-The browser test uses keyboard navigation for entering the day and at least one runner action, confirms the skip link, and runs Axe serious/critical scans on day detail, ready runner, material failure/recovery, and immutable history. Status changes use existing live regions; failure must be an alert or named recovery region; every set, cardio, note, skip, and completion control retains a programmatic name. Focus must survive reload at a sensible document landmark, and reduced-motion behavior must not be required for persistence correctness.
+The browser test uses keyboard navigation for entering the day and at least one runner action, confirms the skip link, and runs Axe serious/critical scans on day detail, ready runner, material failure/recovery, and immutable history. The scan covers the complete first-party document but excludes the cross-origin YouTube player subtree, whose internal markup is owned by YouTube and cannot be remediated here. The harness intercepts only the external `youtube-nocookie.com/embed/*` document with an inert response, while the app-owned iframe URL/title, supported media permissions, and direct fallback remain rendered. Unsupported iframe feature tokens must not produce first-party console warnings. Real playback and one-active-player behavior remain covered by the deployed public-video evidence and are not claimed by this runner test. Status changes use existing live regions; failure must be an alert or named recovery region; every set, cardio, note, skip, and completion control retains a programmatic name. Focus must survive reload at a sensible document landmark, and reduced-motion behavior must not be required for persistence correctness.
 
 ## Privacy and security
 
 Only synthetic Alice/Bob identifiers, notes, and measurements enter QA evidence. Route logs and assertions must not print raw request bodies or secret environment values. The runner command retains its explicit environment allowlist and loopback-only listener. Generated screenshots contain only synthetic data and the local-harness banner. Teardown closes only the test scope's in-memory database and clears its fault receipt.
+
+Console collection remains fail-closed for all warnings, errors, and page exceptions. No console message is suppressed for this slice. The exact external embed interception prevents third-party player scripts or telemetry from running and is unit-tested not to match ordinary YouTube, application, or other cross-origin requests.
 
 ## Acceptance criteria
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="751bd975b59b5b8314ed891d2779ca4c5072f6383177e785454316e1a01f7e24">
+  <meta name="source-sha256" content="f17827b07b5c6edafffbc5f08baef0ae20b4220891ef3871cab21626acd96371">
   <title>Authenticated runner recovery harness plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -70,7 +70,7 @@
 <li>The accepted-then-error scenario submits the real operation first, then discards its successful HTTP response in favor of a bounded <code>500 no-store</code> response. The database and receipt stay committed, so reload can prove reconciliation. The evidence must call this an accepted operation followed by an error response, not a literal network disconnect.</li>
 </ul>
 <h2>Authentication and authorization</h2>
-<p>Alice and Bob are fixed synthetic <code>ViewerContext</code> values selected before navigation by test-only headers. The browser never sends or chooses a UID in an application body. Every fixture page and handler derives the viewer from the request headers on the server.</p>
+<p>Alice and Bob are fixed synthetic <code>ViewerContext</code> values selected before navigation by test-only headers. The browser never sends or chooses a UID in an application body. The harness injects those headers only into exact-loopback first-party requests; it must not leak them to YouTube or any other third-party origin. Every fixture page and handler derives the viewer from the request headers on the server.</p>
 <p>Verified Alice may mutate. Unverified Alice can view program data but cannot start or change a workout. Bob receives the same <code>404 not_found</code> response and no-store policy for Alice&#39;s session as for an unknown session. Fixture routes remain outside <code>src/app</code>, production builds remain free of harness markers, and no Firebase, Neon, Vercel, YouTube, ADC, or user environment variable reaches the child processes.</p>
 <h2>Loading, empty, error, interrupted, and worst-case behavior</h2>
 <ul>
@@ -85,11 +85,12 @@
 <li>The bounded first slice does not claim literal browser offline, tab-close, post-load auth expiry, or multi-tab conflict evidence. Those remain explicit follow-up acceptance items.</li>
 </ul>
 <h2>Phone, tablet, and desktop behavior</h2>
-<p>The runner flow runs in Chromium desktop and WebKit phone using the existing dynamic exact-loopback production fixture. The day card, set editor, exercise outline, cardio fields, recovery state, footer controls, and history detail must remain reachable without horizontal overflow. Sticky/fixed controls must not cover the active field at the initial phone viewport. A later full private matrix adds Chromium phone/tablet and WebKit desktop once the vertical behavior is stable.</p>
+<p>The runner flow runs in Chromium desktop and WebKit phone using the existing dynamic exact-loopback production fixture. The day card, set editor, exercise outline, cardio fields, recovery state, footer controls, and history detail must remain reachable without horizontal overflow. Authenticated dynamic day links use explicit navigation without speculative App Router prefetch so rapid WebKit navigation cannot leave aborted first-party requests or console errors. Sticky/fixed controls must not cover the active field at the initial phone viewport. A later full private matrix adds Chromium phone/tablet and WebKit desktop once the vertical behavior is stable.</p>
 <h2>Accessibility</h2>
-<p>The browser test uses keyboard navigation for entering the day and at least one runner action, confirms the skip link, and runs Axe serious/critical scans on day detail, ready runner, material failure/recovery, and immutable history. Status changes use existing live regions; failure must be an alert or named recovery region; every set, cardio, note, skip, and completion control retains a programmatic name. Focus must survive reload at a sensible document landmark, and reduced-motion behavior must not be required for persistence correctness.</p>
+<p>The browser test uses keyboard navigation for entering the day and at least one runner action, confirms the skip link, and runs Axe serious/critical scans on day detail, ready runner, material failure/recovery, and immutable history. The scan covers the complete first-party document but excludes the cross-origin YouTube player subtree, whose internal markup is owned by YouTube and cannot be remediated here. The harness intercepts only the external <code>youtube-nocookie.com/embed/*</code> document with an inert response, while the app-owned iframe URL/title, supported media permissions, and direct fallback remain rendered. Unsupported iframe feature tokens must not produce first-party console warnings. Real playback and one-active-player behavior remain covered by the deployed public-video evidence and are not claimed by this runner test. Status changes use existing live regions; failure must be an alert or named recovery region; every set, cardio, note, skip, and completion control retains a programmatic name. Focus must survive reload at a sensible document landmark, and reduced-motion behavior must not be required for persistence correctness.</p>
 <h2>Privacy and security</h2>
 <p>Only synthetic Alice/Bob identifiers, notes, and measurements enter QA evidence. Route logs and assertions must not print raw request bodies or secret environment values. The runner command retains its explicit environment allowlist and loopback-only listener. Generated screenshots contain only synthetic data and the local-harness banner. Teardown closes only the test scope&#39;s in-memory database and clears its fault receipt.</p>
+<p>Console collection remains fail-closed for all warnings, errors, and page exceptions. No console message is suppressed for this slice. The exact external embed interception prevents third-party player scripts or telemetry from running and is unit-tested not to match ordinary YouTube, application, or other cross-origin requests.</p>
 <h2>Acceptance criteria</h2>
 <ul>
 <li>Alice can onboard, open Push, start a persisted session, and reach the production <code>OwnedWorkoutRunner</code> in Chromium and WebKit.</li>

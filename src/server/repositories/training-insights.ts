@@ -66,6 +66,7 @@ export type TrainingCardioView = Readonly<{
   durationSeconds: number;
   inclinePercent: number | undefined;
   mode: "runner" | "walker";
+  notes: string;
   paceSecondsPerKilometer: number | undefined;
 }>;
 
@@ -243,6 +244,7 @@ function cardioView(row: typeof cardioLogs.$inferSelect | undefined): TrainingCa
     durationSeconds: row.durationSeconds,
     inclinePercent: row.inclinePercent ?? undefined,
     mode: row.mode,
+    notes: row.noteSnapshot ?? "",
     paceSecondsPerKilometer: row.paceSecondsPerKm ?? undefined,
   };
 }

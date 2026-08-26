@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 
+import { CSRF_COOKIE_NAME } from "@/server/auth/cookies";
 import {
   HARNESS_SCENARIO_HEADER,
   HARNESS_SCOPE_HEADER,
@@ -14,6 +15,8 @@ import {
   consumeHarnessFault,
   resetHarnessFaults,
 } from "../../tests/fixtures/authenticated-app/server/fault-injection";
+import { HARNESS_CSRF_COOKIE_NAME } from "../../tests/fixtures/authenticated-app/server/csrf";
+import { adaptHarnessWorkoutMutation } from "../../tests/fixtures/authenticated-app/server/workout-request";
 import { DELETE as deleteHarnessScope } from "../../tests/fixtures/authenticated-app/app/api/harness/scope/route";
 
 const repositoryRoot = resolve(import.meta.dirname, "../..");
@@ -139,6 +142,30 @@ describe("credential-free authenticated harness boundary", () => {
     ).toEqual(requiredFixtureFiles);
   });
 
+  it("adapts only the harness CSRF cookie before delegating the untouched workout body", async () => {
+    const body = JSON.stringify({
+      dayId: "10000000-0000-4000-8000-000000000001",
+      idempotencyKey: "fixture-start",
+      programId: "10000000-0000-4000-8000-000000000002",
+    });
+    const request = new NextRequest("http://127.0.0.1:3110/api/app/workouts", {
+      body,
+      headers: {
+        cookie: `${HARNESS_CSRF_COOKIE_NAME}=fixture-token`,
+        "content-type": "application/json",
+        origin: "http://127.0.0.1:3110",
+        "x-csrf-token": "fixture-token",
+      },
+      method: "POST",
+    });
+
+    const adapted = await adaptHarnessWorkoutMutation(request);
+    expect(adapted.cookies.get(HARNESS_CSRF_COOKIE_NAME)?.value).toBe("fixture-token");
+    expect(adapted.cookies.get(CSRF_COOKIE_NAME)?.value).toBe("fixture-token");
+    expect(await adapted.json()).toEqual(JSON.parse(body));
+    expect(adapted.headers.get("x-mwp-harness-viewer")).toBeNull();
+  });
+
   it("keeps every harness marker and fixture import outside production source", () => {
     const source = maintainedSourceText(resolve(repositoryRoot, "src"));
 
@@ -204,6 +231,29 @@ describe("credential-free authenticated harness boundary", () => {
     );
     expect(packageJson.scripts?.["production:check"]).toBe(
       "node scripts/check-production-boundary.mjs",
+    );
+  });
+
+  it("keeps synthetic headers first-party and stubs only the external embed document", () => {
+    const browserSpec = readFileSync(
+      resolve(repositoryRoot, "tests/authenticated-e2e/onboarding.spec.ts"),
+      "utf8",
+    );
+    expect(browserSpec).toContain('.exclude(\'iframe[src*="youtube-nocookie.com"]\')');
+    expect(browserSpec).toContain("context.route(/^http:\\/\\/127\\.0\\.0\\.1:\\d+\\//");
+    expect(browserSpec).toContain(
+      "context.route(/^https:\\/\\/www\\.youtube-nocookie\\.com\\/embed\\//",
+    );
+    expect(browserSpec).not.toContain("youtubei/v1");
+    expect(browserSpec).not.toContain("api/stats/atr");
+    expect(browserSpec).not.toContain("extraHTTPHeaders");
+
+    const memberProgramHome = readFileSync(
+      resolve(repositoryRoot, "src/components/program/member-program-home.tsx"),
+      "utf8",
+    );
+    expect(memberProgramHome).toContain(
+      '<Link href={`/app/program/${day.dayKey}`} prefetch={false}>',
     );
   });
 });
