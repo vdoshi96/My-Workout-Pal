@@ -47,3 +47,5 @@ The connection string stays in environment variables and is never logged. Errors
 ## Automated tests and evidence
 
 PGlite integration tests apply the real SQL migration, demonstrate the initial failure before the seeder exists, seed an empty database, rerun it, inspect exact counts and publication states, and prove catalog and published-child drift roll back. Typecheck, lint, migration metadata validation, documentation parity, and a production build remain required. Deployment evidence records sanitized command outcomes and read-only row counts; local success is not production proof.
+
+Production Neon verification on August 26, 2026 used exact pushed commit `6f582b4`. The baseline read-only check failed closed only on the 54 expected missing curated-video IDs. The first seed produced 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 54 approved videos. Read-only verification passed, a second seed returned the identical counts, and a final read-only verification passed without drift or unexpected rows. No connection value was printed.

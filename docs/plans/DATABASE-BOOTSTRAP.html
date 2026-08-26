@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="dd106d1140e158aa7dc9b27754092cdd0dcfb1057a4e73dad44ec43ca6b8154f">
+  <meta name="source-sha256" content="95552475d1db7e9843fb22117268f9c7bdc4153484ec458c398d7622976a8d95">
   <title>Database bootstrap plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -62,6 +62,7 @@
 </ul>
 <h2>Automated tests and evidence</h2>
 <p>PGlite integration tests apply the real SQL migration, demonstrate the initial failure before the seeder exists, seed an empty database, rerun it, inspect exact counts and publication states, and prove catalog and published-child drift roll back. Typecheck, lint, migration metadata validation, documentation parity, and a production build remain required. Deployment evidence records sanitized command outcomes and read-only row counts; local success is not production proof.</p>
+<p>Production Neon verification on August 26, 2026 used exact pushed commit <code>6f582b4</code>. The baseline read-only check failed closed only on the 54 expected missing curated-video IDs. The first seed produced 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 54 approved videos. Read-only verification passed, a second seed returned the identical counts, and a final read-only verification passed without drift or unexpected rows. No connection value was printed.</p>
 
   </main>
 </body>

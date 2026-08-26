@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="89224ba3641b91a7e577cdc124ee424b04e8ea9579b11e1fcf971cf863268653">
+  <meta name="source-sha256" content="0d3660cb11700f5f85976b5342bff1267038cea9fd8a5c1488c67ecf27d86cf9">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,12 +39,12 @@
 <h2>Vercel and Neon provisioning</h2>
 <p>The target Vercel team is <code>vdoshi96s-projects</code>. Project <code>my-workout-pal</code> is linked as <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code> on Pro. It is connected to public GitHub repository <code>vdoshi96/My-Workout-Pal</code> with production branch <code>main</code>, native pull-request previews, and preview comments. The first deployment was automatically assigned to production by Vercel and is publicly aliased at <code>https://my-workout-pal-chi.vercel.app</code>.</p>
 <p>Neon resource <code>my-workout-pal-db</code> was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed <code>free_v3</code> plan in <code>iad1</code>. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.</p>
-<p>The schema and pre-video starter graph are live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after that migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos. The checked-in graph now adds 54 validated approved-video rows, but that newer seed has not yet been applied to Neon; the live zero count remains truthful until an explicitly authorized seed and read-only verification pass. Run the same checked-in boundaries without printing connection values:</p>
+<p>The complete starter graph is live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after that migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos at that pre-video checkpoint. On August 26, 2026, exact pushed commit <code>6f582b4</code> supplied the reviewed 54-video manifest. Baseline verification failed closed only on those expected missing IDs; the first seed installed all 54 approved videos; the idempotent replay returned identical counts; and both post-seed read-only verifications passed without drift or unexpected rows. Run the same checked-in boundaries without printing connection values:</p>
 <pre><code class="language-sh">node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 </code></pre>
-<p>The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. The 54 video rows now pass the exact-two manual approval gate and are part of the checked-in deterministic starter seed; applying them to Neon and replaying both public/runtime pairs remain separate release actions.</p>
+<p>The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. The 54 video rows pass the exact-two manual approval gate, are part of the checked-in deterministic starter seed, and are verified in Neon. Replaying both public/runtime pairs in protected preview and production browsers remains a separate release action.</p>
 <p>Primary references:</p>
 <ul>
 <li><a href="https://vercel.com/marketplace/neon">Neon on Vercel Marketplace</a></li>
