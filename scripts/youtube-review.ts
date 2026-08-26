@@ -2,6 +2,7 @@ import process from "node:process";
 
 import { DEFAULT_YOUTUBE_CURATION_STATE_DIR } from "../src/domain/youtube/curation.ts";
 import { recordManualYouTubeReview } from "../src/domain/youtube/manual-review.ts";
+import { normalizeYouTubeReference } from "../src/domain/youtube/normalization.ts";
 import type {
   ManualYouTubeInstructionEvidence,
   ManualYouTubeReviewBlocker,
@@ -10,9 +11,18 @@ import type {
 } from "../src/domain/youtube/types.ts";
 
 function optionValue(args: readonly string[], name: string): string | undefined {
-  const index = args.indexOf(name);
-  const value = index >= 0 ? args[index + 1] : undefined;
-  return value && !value.startsWith("--") ? value : undefined;
+  const occurrences: Array<string | undefined> = [];
+  const equalsPrefix = `${name}=`;
+  args.forEach((argument, index) => {
+    if (argument === name) {
+      const following = args[index + 1];
+      occurrences.push(following && !following.startsWith("--") ? following : undefined);
+    } else if (argument.startsWith(equalsPrefix)) {
+      occurrences.push(argument.slice(equalsPrefix.length));
+    }
+  });
+  if (occurrences.length > 1) throw new Error(`youtube:review received duplicate ${name} values.`);
+  return occurrences[0];
 }
 
 function requiredOption(args: readonly string[], name: string): string {
@@ -74,7 +84,7 @@ async function main(): Promise<void> {
     review: {
       canonicalExerciseSlug: requiredOption(args, "--target"),
       variationId: requiredOption(args, "--variation"),
-      videoId: requiredOption(args, "--video"),
+      videoId: normalizeYouTubeReference(requiredOption(args, "--video")),
       decision: reviewDecision,
       reviewer: requiredOption(args, "--reviewer"),
       ...(optionValue(args, "--reviewed-at") ? { reviewedAt: optionValue(args, "--reviewed-at") } : {}),
