@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="da5915a46a5af3b520588a905bb19fd3514de889adea4ed8ff317b52f1f72020">
+  <meta name="source-sha256" content="3342a33f891d84da6abe53a43d01439e06f28225c0f3bc7066ea8ca53af4f319">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,10 +29,10 @@
   <main>
 <h1>Project status</h1>
 <h2>Current phase</h2>
-<p>Owned-program collection integration and public-release hardening while Firebase, curated video, GitHub, and deployment credentials are completed.</p>
+<p>Public-release provider configuration and credential-backed verification after local owned-program collection integration.</p>
 <h2>What exists</h2>
 <ul>
-<li>A local Git repository with the verified <code>feature/program-collection</code> branch based on local <code>main</code>.</li>
+<li>A local Git repository on <code>main</code> with the owned-program collection integrated at merge commit <code>ed6f96d</code>.</li>
 <li>A fully inspected private reference recording, with temporary inspection artifacts outside the repository.</li>
 <li>The initial product record and context documentation.</li>
 <li>A strict Next.js 16.3.2 foundation with the approved route-atlas program overview, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout and analytics, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.</li>
@@ -127,6 +127,7 @@
 <li>Local <code>main</code> merged the release-browser branch as <code>9a3dd2e</code>. Post-merge verification repeated the 58-file and 402-test gate, Drizzle metadata validation, production build, and 40-case browser matrix with 39 passes and the same explicit WebKit capability skip. The completed branch was removed; no Git remote exists, so this merge remains local.</li>
 <li>The program-collection branch retained missing migration, route, client-model, and retry-key failures before implementation. PGlite repository tests cover both starter profiles, owner custom-exercise clone fidelity, distinct descendant IDs, activation/equipment synchronization, concurrent and later-switch replay, inactive-program workout/equipment denial, foreign and stale identities, unverified mutation, and the 24-program cap. Direct-route and client tests cover auth/CSRF ordering, strict owner-free inputs, malformed success refusal, one active label, and read-only controls.</li>
 <li>Commit <code>62bfa65</code> passes the complete local gate: strict TypeScript, full ESLint, 63 test files and 419 tests, generated-service-worker parity, 26-document parity, Drizzle metadata validation, and a Next.js 16.3.2 webpack production build listing <code>/app/programs</code>, <code>/api/app/programs</code>, and <code>/api/app/programs/activate</code> as dynamic routes. The local production browser regression repeats 39 passes and the one documented WebKit service-worker-control skip. That browser matrix covers public routes only; authenticated collection browser proof still requires configured Firebase identities.</li>
+<li>Local <code>main</code> merged the complete program-collection branch as <code>ed6f96d</code>. Post-merge verification repeated strict TypeScript, full ESLint, 63 test files and 419 tests, generated PWA and 26-document parity, Drizzle metadata validation, the production webpack build, and the 40-case browser matrix with 39 passes and the same explicit WebKit capability skip. No remote exists, so the integration remains local.</li>
 </ul>
 <h2>Blockers and credential gates</h2>
 <ul>
@@ -146,6 +147,7 @@
 <li>The completed runner-UI worktree was integrated through <code>c133e93</code>, compared for selected-file equality after teardown and deferred-sync corrections, and removed.</li>
 <li>The profile/program worktree was integrated through <code>cbf72ba</code>, compared byte-for-byte for its selected source and test files, and removed. Main then consolidated the shared day-scoped substitution rule and private surface integration.</li>
 <li>The workout-persistence worktree was integrated through <code>cec02ba</code>, verified on combined <code>main</code>, and removed with its fully merged local feature branch.</li>
+<li>No auxiliary worktree remains. The completed program-collection branch was integrated into local <code>main</code> at <code>ed6f96d</code> and removed after post-merge verification.</li>
 </ul>
 
   </main>

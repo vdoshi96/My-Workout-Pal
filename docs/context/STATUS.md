@@ -2,11 +2,11 @@
 
 ## Current phase
 
-Owned-program collection integration and public-release hardening while Firebase, curated video, GitHub, and deployment credentials are completed.
+Public-release provider configuration and credential-backed verification after local owned-program collection integration.
 
 ## What exists
 
-- A local Git repository with the verified `feature/program-collection` branch based on local `main`.
+- A local Git repository on `main` with the owned-program collection integrated at merge commit `ed6f96d`.
 - A fully inspected private reference recording, with temporary inspection artifacts outside the repository.
 - The initial product record and context documentation.
 - A strict Next.js 16.3.2 foundation with the approved route-atlas program overview, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout and analytics, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
@@ -101,6 +101,7 @@ Owned-program collection integration and public-release hardening while Firebase
 - Local `main` merged the release-browser branch as `9a3dd2e`. Post-merge verification repeated the 58-file and 402-test gate, Drizzle metadata validation, production build, and 40-case browser matrix with 39 passes and the same explicit WebKit capability skip. The completed branch was removed; no Git remote exists, so this merge remains local.
 - The program-collection branch retained missing migration, route, client-model, and retry-key failures before implementation. PGlite repository tests cover both starter profiles, owner custom-exercise clone fidelity, distinct descendant IDs, activation/equipment synchronization, concurrent and later-switch replay, inactive-program workout/equipment denial, foreign and stale identities, unverified mutation, and the 24-program cap. Direct-route and client tests cover auth/CSRF ordering, strict owner-free inputs, malformed success refusal, one active label, and read-only controls.
 - Commit `62bfa65` passes the complete local gate: strict TypeScript, full ESLint, 63 test files and 419 tests, generated-service-worker parity, 26-document parity, Drizzle metadata validation, and a Next.js 16.3.2 webpack production build listing `/app/programs`, `/api/app/programs`, and `/api/app/programs/activate` as dynamic routes. The local production browser regression repeats 39 passes and the one documented WebKit service-worker-control skip. That browser matrix covers public routes only; authenticated collection browser proof still requires configured Firebase identities.
+- Local `main` merged the complete program-collection branch as `ed6f96d`. Post-merge verification repeated strict TypeScript, full ESLint, 63 test files and 419 tests, generated PWA and 26-document parity, Drizzle metadata validation, the production webpack build, and the 40-case browser matrix with 39 passes and the same explicit WebKit capability skip. No remote exists, so the integration remains local.
 
 ## Blockers and credential gates
 
@@ -120,3 +121,4 @@ Owned-program collection integration and public-release hardening while Firebase
 - The completed runner-UI worktree was integrated through `c133e93`, compared for selected-file equality after teardown and deferred-sync corrections, and removed.
 - The profile/program worktree was integrated through `cbf72ba`, compared byte-for-byte for its selected source and test files, and removed. Main then consolidated the shared day-scoped substitution rule and private surface integration.
 - The workout-persistence worktree was integrated through `cec02ba`, verified on combined `main`, and removed with its fully merged local feature branch.
+- No auxiliary worktree remains. The completed program-collection branch was integrated into local `main` at `ed6f96d` and removed after post-merge verification.

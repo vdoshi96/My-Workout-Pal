@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d8ccbeeedfa7b7255e1059969fa259d3a394c967d79590998dcdc5474847b7d4">
+  <meta name="source-sha256" content="818df82ed64fd895a8f3164490da29ec12b1996c4d1d5f596759d5d3f13fd9a3">
   <title>Public release browser baseline · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -30,7 +30,7 @@
 <h1>Public release browser baseline</h1>
 <h2>Scope</h2>
 <p>This checkpoint exercises the public product through a local Next.js production server. It covers the guest equipment preview, all five starter-day controls, a barbell Pull route, compatibility-filtered library search and recovery, read-only sample workout and analytics, the truthful sign-in gate, production PWA installation and offline behavior, serious and critical automated accessibility checks, keyboard navigation, reduced motion, dark mode, phone target sizing, and horizontal overflow.</p>
-<p>This is local production-mode evidence rerun from program-collection implementation commit <code>62bfa65</code>. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.</p>
+<p>This is local production-mode evidence rerun after program-collection merge commit <code>ed6f96d</code>. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.</p>
 <h2>Fail then pass evidence</h2>
 <ul>
 <li>The first executable <code>pnpm test:e2e:release</code> matrix ran 40 cases: 30 failed, 9 passed, and 1 WebKit PWA case was skipped. The failures exposed one stale accessible-name expectation, serious color-contrast defects across public surfaces, and a genuine transport-policy defect that made WebKit upgrade HTTP localhost assets to unavailable HTTPS.</li>

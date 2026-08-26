@@ -4,7 +4,7 @@
 
 This checkpoint exercises the public product through a local Next.js production server. It covers the guest equipment preview, all five starter-day controls, a barbell Pull route, compatibility-filtered library search and recovery, read-only sample workout and analytics, the truthful sign-in gate, production PWA installation and offline behavior, serious and critical automated accessibility checks, keyboard navigation, reduced motion, dark mode, phone target sizing, and horizontal overflow.
 
-This is local production-mode evidence rerun from program-collection implementation commit `62bfa65`. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.
+This is local production-mode evidence rerun after program-collection merge commit `ed6f96d`. It is not preview or public-production proof, and it does not cover configured authentication or persisted member data.
 
 ## Fail then pass evidence
 

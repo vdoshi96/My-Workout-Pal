@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="a39b6346e60e5b8db8c8b63bbdfdb3788d78d7cde3227913f673612927fd5bce">
+  <meta name="source-sha256" content="5d897ada07614c02e4bc9f0ca6b125ee4d381c28c1bece6a8e336d165cc60240">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -36,6 +36,7 @@
 <li>Retained a missing-route failure before adding private create/clone and activation handlers. The endpoints enforce CSRF before the verified server viewer, bound strict owner-free JSON, return private no-store responses, and keep foreign and missing identities indistinguishable.</li>
 <li>Retained missing client-model and retry-key failures before implementing runtime success validation and interrupted retry identity. Added <code>/app/programs</code> with one textual active state, create-both-profiles controls, independent-clone review, activation, verification gating, truthful pending/error copy, responsive cards, and keyboard-focused native dialog behavior. The active overview now links to the collection.</li>
 <li>Local commits <code>67faa09</code>, <code>aeb79e4</code>, <code>de42dbe</code>, <code>287f051</code>, and <code>62bfa65</code> form the reviewable plan, migration, repository, API, and UI checkpoints. The complete branch passes strict TypeScript, full ESLint, 63 test files and 419 tests, generated PWA parity, 26-document parity, Drizzle metadata validation, the webpack production build, and the public regression matrix with 39 passes and one documented WebKit service-worker skip.</li>
+<li>Merged the complete branch into local <code>main</code> as <code>ed6f96d</code>, then repeated the 63-file and 419-test gate, Drizzle validation, production build, and 39-pass browser result before removing the fully merged feature branch. No auxiliary worktree remains.</li>
 <li>No push, deployment, production migration, Firebase project creation, YouTube discovery request, or billing change occurred. Authenticated browser replay remains gated by Firebase project terms/configuration; the public browser result is not presented as signed-in collection proof.</li>
 </ul>
 <h2>2026-08-25: Public release browser baseline</h2>
