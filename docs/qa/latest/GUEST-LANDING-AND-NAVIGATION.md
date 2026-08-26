@@ -30,6 +30,21 @@ Environment: local production build at `http://127.0.0.1:3101`, from an uncommit
 6. Confirmed the exercise guide retained two approved demonstrations, title/channel attribution, direct fallback, and one privacy-enhanced iframe.
 7. Inspected desktop and phone layouts. The phone primary action clears the fixed navigation, the document has no horizontal overflow, and the desktop scene remains complete rather than cropped.
 
+## Deployed preview and production evidence
+
+Feature commit `5a1815f4489f11e1485137ca480e81ae5f927fff` deployed Ready as protected preview `dpl_ANFGkZd82kPLanMuF1XNijHDWfez`. GitHub reported the Vercel status successful. Authenticated `vercel curl` requests passed `/`, `/program`, dumbbell Push, repeated-`q` library, repeated-`returnTo` sign-in, and contextual Dumbbell bench press routes with the expected landing, Firebase-session, back-link, approved-pair, and privacy-enhanced iframe markers. The in-app browser reached Vercel's protection login rather than the application, so this is protected-preview server evidence, not a false claim of interactive preview access. The bounded one-hour error-log query returned no entry.
+
+The byte-identical release tree merged to `main` as `6f62e1e22fbaaabaa86a613992445d04cfffa310` and deployed Ready as production `dpl_CkVVS1K2yDJYXUmnZgxLRxV37yZZ` at `https://my-workout-pal-chi.vercel.app`. GitHub reported the deployment successful. A real in-app production browser then:
+
+1. Loaded the distinct welcome page, complete cartoon scene, explicit public/account boundary, and all five direct day links.
+2. Exercised the visible PWA update notice and returned to the current welcome page with the notice cleared.
+3. Navigated welcome → program → dumbbell Push → Dumbbell bench press, selected Demo 2, retained exactly one iframe, and returned through the visible **Push day** link to the exact equipment URL.
+4. Opened repeated library `q` values and observed an unfiltered library rather than a route interruption; opened repeated sign-in `returnTo` values and observed the real **Firebase session** surface rather than an application error.
+5. At 390 by 664 CSS pixels, measured the primary-action bottom at 572.92 and fixed navigation top at 590.41, selected the 768-pixel WebP, found zero preload links and zero horizontal overflow, and captured no console warning or error.
+6. At 820 by 1180 CSS pixels, confirmed the scene begins exactly after the welcome copy, with zero horizontal overflow and no console warning or error.
+
+The final production error-log query returned no entry. The stored screenshots above come from the same reviewed runtime tree's bounded local production build; the in-app production browser supplied DOM, geometry, player, URL, and console evidence but did not return a screenshot artifact.
+
 ## Retained red-to-green evidence
 
 - The public-return suite first failed because its domain module did not exist, then passed after the bounded parser and URL builder were implemented.
@@ -56,4 +71,4 @@ Environment: local production build at `http://127.0.0.1:3101`, from an uncommit
 
 ## Evidence boundary
 
-This checkpoint is a local production-build verification of the guest landing and navigation slice. It does not itself prove the configured Vercel preview or public production deployment. Preview replay, production promotion, production logs, and deployed screenshots remain required before release closeout.
+This checkpoint proves the guest landing and navigation slice in a local production build, the exact protected preview through authenticated server responses, and the public production alias through a real interactive browser. It does not prove a protection-authenticated interactive replay of this exact preview, nor the still-open Google, recovery, expiry/revocation, cross-user, full authenticated-program, interruption, production live-playback-indicator, or Spend Management lanes.
