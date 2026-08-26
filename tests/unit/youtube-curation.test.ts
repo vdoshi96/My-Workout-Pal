@@ -18,6 +18,7 @@ import {
   proposeVideoPair,
 } from "@/domain/youtube/curation";
 import type { YouTubeDataApi } from "@/domain/youtube/types";
+import { recordManualYouTubeReview } from "@/domain/youtube/manual-review";
 import { assessApprovedVideoPair } from "@/domain/youtube/refresh";
 
 describe("resumable YouTube curation state", () => {
@@ -596,6 +597,138 @@ describe("resumable YouTube curation state", () => {
           reason: "discovery-incomplete",
           videoIds: ["AbCdEfGhI01", "ZyXwVuTsR98"],
         }),
+      ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("excludes rejected reviews and proposes only a fully approved exact pair for seeding", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-reviewed-pair-"));
+    const target = {
+      canonicalExerciseSlug: "dumbbell-bench-press",
+      variationId: "canonical",
+      exerciseName: "Dumbbell bench press",
+      requiredEquipmentTerms: ["dumbbell"],
+    } as const;
+    const candidates = [
+      { videoId: "AbCdEfGhI01", channelId: "channel-a", channelTitle: "Coach A", viewCount: 300 },
+      { videoId: "ZyXwVuTsR98", channelId: "channel-b", channelTitle: "Coach B", viewCount: 200 },
+      { videoId: "QqRrSsTtUuV", channelId: "channel-c", channelTitle: "Coach C", viewCount: 100 },
+    ].map((candidate) => ({
+      ...candidate,
+      title: "Dumbbell bench press tutorial",
+      description: "A concise dumbbell bench press guide.",
+      duration: "PT2M",
+      privacyStatus: "public" as const,
+      uploadStatus: "processed" as const,
+      embeddable: true,
+      syndicated: true,
+      regionAvailable: true,
+      liveBroadcastContent: "none" as const,
+      language: "en",
+    }));
+    const api: YouTubeDataApi = {
+      async searchVideos() {
+        throw new Error("Complete discovery test must not call the provider.");
+      },
+      async hydrateVideos() {
+        throw new Error("Fully hydrated test state must not call the provider.");
+      },
+    };
+
+    try {
+      const checkpoint = createEmptyCurationCheckpoint();
+      const query = buildCurationQueries(target)[0];
+      if (!query) throw new Error("Expected one curation query.");
+      for (const order of ["relevance", "viewCount"] as const) {
+        checkpoint.completedQueries.push({
+          queryKey: buildYouTubeSearchRequest(target, query, order, 0).queryKey,
+          pageToken: null,
+        });
+      }
+      for (const candidate of candidates) {
+        const key = getYouTubeCandidateStateKey(target.canonicalExerciseSlug, target.variationId, candidate.videoId);
+        checkpoint.discoveredCandidates[key] = {
+          target,
+          queryKeys: [checkpoint.completedQueries[0]?.queryKey ?? ""],
+          item: candidate,
+        };
+        checkpoint.hydratedVideoIds.push(candidate.videoId);
+        checkpoint.hydratedCandidates[candidate.videoId] = candidate;
+      }
+      await saveCurationCheckpoint(directory, checkpoint);
+      for (const candidate of candidates.slice(1)) {
+        await recordManualYouTubeReview({
+          stateDirectory: directory,
+          now: () => "2026-08-26T14:00:00.000Z",
+          review: {
+            canonicalExerciseSlug: target.canonicalExerciseSlug,
+            variationId: target.variationId,
+            videoId: candidate.videoId,
+            decision: "approved",
+            reviewer: "Primary reviewer",
+            playbackCompletedAt: "2026-08-26T13:59:00.000Z",
+            fullWatchConfirmed: true,
+            visualReviewConfirmed: true,
+            audioReviewConfirmed: true,
+            exactVariation: true,
+            conciseInstruction: true,
+            safeInstruction: true,
+            addsMaterialValue: true,
+          },
+        });
+      }
+
+      const pendingResult = await curateYouTubeCandidates({
+        api,
+        targets: [target],
+        stateDirectory: directory,
+        budget: { maxQuotaUnits: 0, maxSearchRequests: 0, maxHydrateRequests: 0, maxPagesPerQuery: 1 },
+      });
+      expect(pendingResult.report.proposedPairs).toEqual([
+        expect.objectContaining({
+          status: "ready-for-review",
+          videoIds: ["AbCdEfGhI01", "ZyXwVuTsR98"],
+        }),
+      ]);
+
+      await recordManualYouTubeReview({
+        stateDirectory: directory,
+        review: {
+          canonicalExerciseSlug: target.canonicalExerciseSlug,
+          variationId: target.variationId,
+          videoId: candidates[0]?.videoId ?? "",
+          decision: "rejected",
+          reviewer: "Primary reviewer",
+          fullWatchConfirmed: false,
+          visualReviewConfirmed: true,
+          audioReviewConfirmed: true,
+          exactVariation: false,
+          conciseInstruction: true,
+          safeInstruction: true,
+          addsMaterialValue: false,
+          rejectionReason: "wrong-movement",
+        },
+      });
+
+      const result = await curateYouTubeCandidates({
+        api,
+        targets: [target],
+        stateDirectory: directory,
+        budget: { maxQuotaUnits: 0, maxSearchRequests: 0, maxHydrateRequests: 0, maxPagesPerQuery: 1 },
+      });
+
+      expect(result.report.proposedPairs).toEqual([
+        expect.objectContaining({
+          status: "approved-for-seed",
+          videoIds: ["ZyXwVuTsR98", "QqRrSsTtUuV"],
+        }),
+      ]);
+      expect(result.report.candidates.map((candidate) => [candidate.videoId, candidate.reviewStatus])).toEqual([
+        ["AbCdEfGhI01", "rejected"],
+        ["ZyXwVuTsR98", "approved"],
+        ["QqRrSsTtUuV", "approved"],
       ]);
     } finally {
       await rm(directory, { recursive: true, force: true });

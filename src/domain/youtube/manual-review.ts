@@ -103,6 +103,15 @@ function validateRecord(value: unknown): ManualYouTubeReviewRecord {
   if (blockerReason !== undefined && !isBlockerReason(blockerReason)) {
     throw new Error("Manual YouTube review blocker reason is invalid.");
   }
+  if (value["decision"] === "approved" && (rejectionReason !== undefined || blockerReason !== undefined)) {
+    throw new Error("An approved review can't include a rejection or blocker reason.");
+  }
+  if (value["decision"] === "rejected" && blockerReason !== undefined) {
+    throw new Error("A rejected review can't include a pending blocker reason.");
+  }
+  if (value["decision"] === "pending" && rejectionReason !== undefined) {
+    throw new Error("A pending review can't include a rejection reason.");
+  }
   if (value["decision"] === "approved") {
     if (!playbackCompletedAt || value["fullWatchConfirmed"] !== true) {
       throw new Error("An approved manual YouTube review requires completed full-watch evidence.");

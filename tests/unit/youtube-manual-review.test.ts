@@ -105,6 +105,61 @@ describe("manual YouTube review evidence", () => {
     }
   });
 
+  it.each([
+    {
+      decision: "approved" as const,
+      rejectionReason: "wrong-movement" as const,
+      blockerReason: undefined,
+      message: /approved review can't include a rejection or blocker reason/i,
+    },
+    {
+      decision: "approved" as const,
+      rejectionReason: undefined,
+      blockerReason: "review-in-progress" as const,
+      message: /approved review can't include a rejection or blocker reason/i,
+    },
+    {
+      decision: "rejected" as const,
+      rejectionReason: "wrong-movement" as const,
+      blockerReason: "review-in-progress" as const,
+      message: /rejected review can't include a pending blocker reason/i,
+    },
+  ])("refuses stale terminal-review metadata for $decision", async ({
+    decision,
+    rejectionReason,
+    blockerReason,
+    message,
+  }) => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-manual-stale-state-"));
+
+    try {
+      await seedCandidate(directory);
+      await expect(recordManualYouTubeReview({
+        stateDirectory: directory,
+        now: () => "2026-08-26T13:19:08.000Z",
+        review: {
+          canonicalExerciseSlug: target.canonicalExerciseSlug,
+          variationId: target.variationId,
+          videoId,
+          decision,
+          reviewer: "Codex GPT-5.6 Sol",
+          playbackCompletedAt: "2026-08-26T13:19:08.000Z",
+          fullWatchConfirmed: decision === "approved",
+          visualReviewConfirmed: true,
+          audioReviewConfirmed: true,
+          exactVariation: decision === "approved",
+          conciseInstruction: true,
+          safeInstruction: true,
+          addsMaterialValue: decision === "approved",
+          ...(rejectionReason ? { rejectionReason } : {}),
+          ...(blockerReason ? { blockerReason } : {}),
+        },
+      })).rejects.toThrow(message);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("records a complete approval and prevents an implicit downgrade", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-manual-approved-"));
     const approvedReview = {

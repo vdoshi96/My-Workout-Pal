@@ -314,7 +314,7 @@ export type ProposedPairReason =
 
 export type ProposedVideoPair = Readonly<{
   target: RequiredVideoVariation;
-  status: "discovery-incomplete" | "ready-for-review" | "needs-second-candidate";
+  status: "discovery-incomplete" | "ready-for-review" | "approved-for-seed" | "needs-second-candidate";
   videoIds: readonly string[];
   distinctChannels: boolean;
   reason?: ProposedPairReason | undefined;

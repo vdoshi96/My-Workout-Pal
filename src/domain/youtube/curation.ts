@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { evaluateYouTubeCandidate, rankEligibleCandidates } from "./eligibility.ts";
+import { loadManualYouTubeReviews } from "./manual-review.ts";
 import { normalizeYouTubeReference } from "./normalization.ts";
 import type {
   CurationCheckpoint,
@@ -648,6 +649,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
   const budget = resolveCurationBudget(options.budget);
   const usage: CurationRunUsage = { searchRequests: 0, hydrateRequests: 0, unitsEstimated: 0 };
   const checkpoint = await loadCurationCheckpoint(stateDirectory);
+  const manualReviews = await loadManualYouTubeReviews(stateDirectory);
   const refreshUnavailableIds = options.refreshUnavailable
     ? new Set(checkpoint.unavailableVideoIds)
     : new Set<string>();
@@ -868,13 +870,30 @@ export async function curateYouTubeCandidates(options: Readonly<{
       entry.target.variationId,
       entry.item.videoId,
     );
+    const manualReview = manualReviews.reviews[candidateStateKey];
     checkpoint.rejectionCodes[candidateStateKey] = [...decision.rejectionCodes];
-    if (!checkpoint.reviewStatus[candidateStateKey]) checkpoint.reviewStatus[candidateStateKey] = "pending";
+    if (manualReview) checkpoint.reviewStatus[candidateStateKey] = manualReview.decision;
+    else if (!checkpoint.reviewStatus[candidateStateKey]) checkpoint.reviewStatus[candidateStateKey] = "pending";
+    const reviewedCandidate: YouTubeCandidate = manualReview && manualReview.decision !== "pending"
+      ? {
+          ...merged,
+          humanReview: {
+            approved: manualReview.decision === "approved",
+            reviewer: manualReview.reviewer,
+            reviewedAt: manualReview.reviewedAt,
+            fullWatchConfirmed: manualReview.fullWatchConfirmed,
+            exactVariation: manualReview.exactVariation,
+            conciseInstruction: manualReview.conciseInstruction,
+            safeInstruction: manualReview.safeInstruction,
+            addsMaterialValue: manualReview.addsMaterialValue,
+          },
+        }
+      : merged;
     reportCandidates.push({
       videoId: entry.item.videoId,
       target: { canonicalExerciseSlug: entry.target.canonicalExerciseSlug, variationId: entry.target.variationId },
       queryKeys: entry.queryKeys,
-      candidate: merged,
+      candidate: reviewedCandidate,
       decision,
       reviewStatus: checkpoint.reviewStatus[candidateStateKey] ?? "pending",
     });
@@ -893,14 +912,26 @@ export async function curateYouTubeCandidates(options: Readonly<{
       const original = byId.get(rankedCandidate.candidate.videoId);
       if (original) rankedEligibleCandidates.push({ ...original, rank: rank + 1 });
     });
-    const proposedPair = proposeVideoPair(target, targetCandidates.map((candidate) => candidate.candidate));
-    proposedPairs.push(expectedQueryKeys(target).every((key) => completedQueryKeys.has(key))
-      ? proposedPair
-      : {
-          ...proposedPair,
-          status: "discovery-incomplete",
-          reason: "discovery-incomplete",
-        });
+    const proposedPair = proposeVideoPair(
+      target,
+      targetCandidates
+        .filter((candidate) => candidate.reviewStatus !== "rejected")
+        .map((candidate) => candidate.candidate),
+    );
+    const discoveryComplete = expectedQueryKeys(target).every((key) => completedQueryKeys.has(key));
+    if (!discoveryComplete) {
+      proposedPairs.push({
+        ...proposedPair,
+        status: "discovery-incomplete",
+        reason: "discovery-incomplete",
+      });
+      continue;
+    }
+    const reviewStatusByVideoId = new Map(targetCandidates.map((candidate) => [candidate.videoId, candidate.reviewStatus]));
+    proposedPairs.push(proposedPair.status === "ready-for-review"
+      && proposedPair.videoIds.every((videoId) => reviewStatusByVideoId.get(videoId) === "approved")
+      ? { ...proposedPair, status: "approved-for-seed" }
+      : proposedPair);
   }
 
   const quotaBlockedReason = searchBlockedReason ?? hydrationBlockedReason;
