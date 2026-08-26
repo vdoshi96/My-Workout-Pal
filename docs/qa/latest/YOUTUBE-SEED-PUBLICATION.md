@@ -56,8 +56,17 @@ The reviewed database operation ran from exact pushed commit `6f582b4` on August
 
 No connection value was printed. This operation did not deploy or mutate Vercel or Firebase.
 
+## Protected preview server rendering
+
+Exact preview deployment `dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF` at source `b470f51` is Ready. Authenticated `vercel curl` returned `200` with security headers for:
+
+- `/library/chest-supported-dumbbell-row`, whose HTML contains `vmX58YYK3-8` and `mHBOUz9KY9A` and omits rejected `sQ6jUJhKwhw`;
+- `/library/dumbbell-romanian-deadlift`, whose HTML contains `KrRtk8KbJik` and `MprE4ppd27U` and omits rejected `tH0stBpF7ko`.
+
+`vercel logs --level error --since 24h` returned no entries. This is exact-pair server-render evidence from the seeded Neon database. It does not claim that a browser started the privacy-enhanced iframes, exercised their controls/fallback, or completed Firebase-authenticated flows.
+
 ## Remaining release evidence
 
-- Render representative real pairs from Neon on the protected Vercel preview in phone, tablet, and desktop layouts.
+- Replay the representative server-rendered pairs as real iframes on the protected Vercel preview in phone, tablet, and desktop layouts.
 - Replay keyboard tab selection, one active non-autoplay iframe, direct fallback, dark mode, reduced motion, 200 percent reflow, Axe, and real playback.
 - Repeat the representative pair and fallback checks on production after promotion, then inspect runtime logs.

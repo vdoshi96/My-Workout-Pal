@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="0d3660cb11700f5f85976b5342bff1267038cea9fd8a5c1488c67ecf27d86cf9">
+  <meta name="source-sha256" content="b08f481bc4a6a7f62cc8cfbfa64e47aab0b059d5164c91cf1ce700f2a6ff66a7">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -45,6 +45,7 @@ node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 </code></pre>
 <p>The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. The 54 video rows pass the exact-two manual approval gate, are part of the checked-in deterministic starter seed, and are verified in Neon. Replaying both public/runtime pairs in protected preview and production browsers remains a separate release action.</p>
+<p>Exact protected preview <code>dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF</code> from source <code>b470f51</code> has server-render evidence for the two adversarially corrected mappings. Authenticated <code>vercel curl</code> returned <code>200</code> with security headers for both public exercise routes; the HTML contains only the corrected pairs and omits the two terminally rejected IDs. A 24-hour error-log query returned no entries. This evidence confirms the Vercel runtime reads the seeded Neon rows, but it does not replace real iframe playback or Firebase-authenticated browser replay.</p>
 <p>Primary references:</p>
 <ul>
 <li><a href="https://vercel.com/marketplace/neon">Neon on Vercel Marketplace</a></li>

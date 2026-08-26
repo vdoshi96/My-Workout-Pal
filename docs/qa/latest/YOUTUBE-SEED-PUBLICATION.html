@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d2d37d2997b1317c56b1e5c2d9d7b22c2879f85f44af79742b8d4a59aa850061">
+  <meta name="source-sha256" content="6ed0a846ba21c603d0902c36c3ccc8490db1a5a609cadd09b6af7313709cc97b">
   <title>YouTube seed publication checkpoint · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -72,9 +72,16 @@
 <li>the final read-only <code>db:verify</code> passed without drift or unexpected rows.</li>
 </ul>
 <p>No connection value was printed. This operation did not deploy or mutate Vercel or Firebase.</p>
+<h2>Protected preview server rendering</h2>
+<p>Exact preview deployment <code>dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF</code> at source <code>b470f51</code> is Ready. Authenticated <code>vercel curl</code> returned <code>200</code> with security headers for:</p>
+<ul>
+<li><code>/library/chest-supported-dumbbell-row</code>, whose HTML contains <code>vmX58YYK3-8</code> and <code>mHBOUz9KY9A</code> and omits rejected <code>sQ6jUJhKwhw</code>;</li>
+<li><code>/library/dumbbell-romanian-deadlift</code>, whose HTML contains <code>KrRtk8KbJik</code> and <code>MprE4ppd27U</code> and omits rejected <code>tH0stBpF7ko</code>.</li>
+</ul>
+<p><code>vercel logs --level error --since 24h</code> returned no entries. This is exact-pair server-render evidence from the seeded Neon database. It does not claim that a browser started the privacy-enhanced iframes, exercised their controls/fallback, or completed Firebase-authenticated flows.</p>
 <h2>Remaining release evidence</h2>
 <ul>
-<li>Render representative real pairs from Neon on the protected Vercel preview in phone, tablet, and desktop layouts.</li>
+<li>Replay the representative server-rendered pairs as real iframes on the protected Vercel preview in phone, tablet, and desktop layouts.</li>
 <li>Replay keyboard tab selection, one active non-autoplay iframe, direct fallback, dark mode, reduced motion, 200 percent reflow, Axe, and real playback.</li>
 <li>Repeat the representative pair and fallback checks on production after promotion, then inspect runtime logs.</li>
 </ul>

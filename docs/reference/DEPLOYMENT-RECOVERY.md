@@ -25,6 +25,8 @@ node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 
 The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. The 54 video rows pass the exact-two manual approval gate, are part of the checked-in deterministic starter seed, and are verified in Neon. Replaying both public/runtime pairs in protected preview and production browsers remains a separate release action.
 
+Exact protected preview `dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF` from source `b470f51` has server-render evidence for the two adversarially corrected mappings. Authenticated `vercel curl` returned `200` with security headers for both public exercise routes; the HTML contains only the corrected pairs and omits the two terminally rejected IDs. A 24-hour error-log query returned no entries. This evidence confirms the Vercel runtime reads the seeded Neon rows, but it does not replace real iframe playback or Firebase-authenticated browser replay.
+
 Primary references:
 
 - [Neon on Vercel Marketplace](https://vercel.com/marketplace/neon)
