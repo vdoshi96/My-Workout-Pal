@@ -51,9 +51,9 @@ export default function SampleProgressPage() {
           <span className="eyebrow">Illustrative trend</span>
           <h2 id="sample-chart-heading">Bench press volume</h2>
           <div className="bar-chart" role="img" aria-label="Sample bench press volume rises from 1,440 to 1,620 kilograms over three sessions">
-            <i style={{ height: "58%" }}><span>1,440</span></i>
-            <i style={{ height: "72%" }}><span>1,530</span></i>
-            <i style={{ height: "88%" }}><span>1,620</span></i>
+            <i className="sample-bar-58"><span>1,440</span></i>
+            <i className="sample-bar-72"><span>1,530</span></i>
+            <i className="sample-bar-88"><span>1,620</span></i>
           </div>
           <p>This chart is labeled sample because no signed-in workout data exists. Persisted analytics will be derived only from completed set snapshots.</p>
         </aside>

@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import Link from "next/link";
 
 import {
@@ -60,17 +59,23 @@ export default async function ProgressPage() {
           </header>
           <ol>
             {progress.series.map((point) => {
-              const width = maximumVolume === 0 ? 0 : ((point.volumeKg ?? 0) / maximumVolume) * 100;
-              const style = { "--progress-width": `${width}%` } as CSSProperties;
+              const volume = point.volumeKg ?? 0;
               return (
                 <li key={point.date}>
                   <div className="progress-row-heading">
                     <strong>{formatProgressDate(point.date)}</strong>
                     <span>{point.sessionCount} workout{point.sessionCount === 1 ? "" : "s"}</span>
                   </div>
-                  <div className="progress-bar" style={style}><span /></div>
+                  <meter
+                    aria-label={`${formatProgressDate(point.date)} training volume: ${formatInsightVolume(volume, unitSystem)}`}
+                    className="progress-bar"
+                    max={maximumVolume > 0 ? maximumVolume : 1}
+                    value={volume}
+                  >
+                    {formatInsightVolume(volume, unitSystem)}
+                  </meter>
                   <dl>
-                    <div><dt>Volume</dt><dd>{formatInsightVolume(point.volumeKg ?? 0, unitSystem)}</dd></div>
+                    <div><dt>Volume</dt><dd>{formatInsightVolume(volume, unitSystem)}</dd></div>
                     <div><dt>Duration</dt><dd>{formatInsightDuration(point.durationSeconds ?? undefined)}</dd></div>
                     <div><dt>Distance</dt><dd>{formatInsightDistance(point.distanceMeters ?? 0, unitSystem)}</dd></div>
                   </dl>

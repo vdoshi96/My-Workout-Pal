@@ -137,6 +137,11 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .route-barbell .alternate-path { transform: scaleX(-1); transform-box: fill-box; transform-origin: center; }
 .waypoints { inset: 16% 4% 6%; list-style: none; margin: 0; padding: 0; position: absolute; }
 .waypoints li { position: absolute; transform: translate(-50%, -50%); z-index: 3; }
+.waypoints .waypoint-1 { left: 41%; top: 7%; }
+.waypoints .waypoint-2 { left: 70%; top: 27%; }
+.waypoints .waypoint-3 { left: 73%; top: 58%; }
+.waypoints .waypoint-4 { left: 45%; top: 78%; }
+.waypoints .waypoint-5 { left: 13%; top: 59%; }
 .waypoints button { align-items: center; background: var(--ink); border: 3px solid var(--paper); box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 24%, transparent); color: var(--paper); cursor: pointer; display: flex; font-family: var(--font-display); min-height: 3.2rem; padding: 0 .75rem 0 0; text-transform: uppercase; }
 .waypoints button strong { align-items: center; background: var(--paper); border: 3px solid var(--ink); border-radius: 50%; color: var(--ink); display: flex; font-size: 1.65rem; height: 3.35rem; justify-content: center; margin: -3px .55rem -3px -3px; width: 3.35rem; }
 .waypoints button span { font-size: 1.1rem; letter-spacing: .04em; white-space: nowrap; }
@@ -584,6 +589,9 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .sample-chart { background: var(--paper-deep); }
 .bar-chart { align-items: end; border-bottom: 1px solid var(--ink); display: flex; gap: clamp(.75rem, 4vw, 2rem); height: 17rem; margin: 2rem 0 1rem; padding: 0 1rem; }
 .bar-chart i { background: var(--coral); display: block; flex: 1; min-width: 2rem; position: relative; }
+.bar-chart .sample-bar-58 { height: 58%; }
+.bar-chart .sample-bar-72 { height: 72%; }
+.bar-chart .sample-bar-88 { height: 88%; }
 .bar-chart i span { font-family: var(--font-display); font-style: normal; left: 50%; position: absolute; top: -.25rem; transform: translate(-50%, -100%); }
 .sample-chart p { color: var(--ink-soft); line-height: 1.45; }
 .sample-cta { align-items: center; background: var(--ink); color: var(--paper); display: grid; gap: 1.5rem; padding: clamp(2rem, 6vw, 5rem) clamp(1rem, 5vw, 5rem); }
@@ -910,8 +918,10 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .progress-row-heading { align-items: baseline; display: flex; gap: 1rem; justify-content: space-between; }
 .progress-row-heading strong { font-family: var(--font-display); font-size: 1.45rem; text-transform: uppercase; }
 .progress-row-heading span { color: var(--ink-soft); font-size: .82rem; }
-.progress-bar { background: var(--paper-deep); height: .55rem; overflow: hidden; }
-.progress-bar span { background: var(--coral); display: block; height: 100%; width: var(--progress-width); }
+.progress-bar { appearance: none; background: var(--paper-deep); border: 0; display: block; height: .55rem; overflow: hidden; width: 100%; }
+.progress-bar::-webkit-meter-bar { background: var(--paper-deep); border: 0; }
+.progress-bar::-webkit-meter-optimum-value { background: var(--coral); }
+.progress-bar::-moz-meter-bar { background: var(--coral); }
 .progress-timeline dl { display: grid; gap: .35rem; grid-template-columns: repeat(3, 1fr); margin: 0; }
 .progress-timeline dl > div { min-width: 0; }
 .progress-timeline dt { color: var(--ink-soft); font-size: .7rem; text-transform: uppercase; }

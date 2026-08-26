@@ -14,14 +14,6 @@ type Props = Readonly<{
   initialProfile: EquipmentProfileKind;
 }>;
 
-const waypointPositions = [
-  { left: "41%", top: "7%" },
-  { left: "70%", top: "27%" },
-  { left: "73%", top: "58%" },
-  { left: "45%", top: "78%" },
-  { left: "13%", top: "59%" },
-] as const;
-
 export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfile }: Props) {
   const [profile, setProfile] = useState<EquipmentProfileKind>(initialProfile);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -108,7 +100,7 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
             </svg>
             <ol className={`waypoints route-${profile}`}>
               {program.days.map((day, index) => (
-                <li key={day.name} style={waypointPositions[index]}>
+                <li className={`waypoint-${index + 1}`} key={day.name}>
                   <button
                     aria-current={selectedIndex === index ? "step" : undefined}
                     aria-label={`Day ${index + 1}: ${day.name}`}
