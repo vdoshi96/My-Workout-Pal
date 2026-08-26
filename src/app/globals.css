@@ -310,6 +310,10 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .member-cardio-card ul { list-style: none; margin: 1rem 0; padding: 0; }
 .member-cardio-card li { border-top: 1px solid var(--rule); display: flex; justify-content: space-between; padding: .8rem 0; }
 .member-cardio-card p { color: var(--ink-soft); }
+.workout-start-control { margin-top: 1.25rem; }
+.workout-start-control .primary-action { width: 100%; }
+.workout-start-control .primary-action:disabled { cursor: not-allowed; opacity: .66; }
+.workout-start-control p { min-height: 2.8rem; }
 .member-library { margin: 0 auto; max-width: 79rem; padding: clamp(1.25rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3.5rem) 7rem; }
 .member-library-heading { align-items: end; border: 1px solid var(--rule); display: grid; gap: 1.5rem; padding: clamp(1.25rem, 5vw, 3.25rem); }
 .member-library-heading h1 { font-family: var(--font-display); font-size: clamp(3.4rem, 10vw, 7rem); letter-spacing: -.035em; line-height: .8; margin: .75rem 0 1rem; text-transform: uppercase; }
@@ -712,6 +716,16 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 }
 
 /* Active workout runner */
+.owned-workout-route { background: var(--paper); min-height: 100dvh; }
+.owned-workout-route-bar { align-items: center; background: var(--ink); color: var(--paper); display: flex; font-family: var(--font-display); justify-content: space-between; min-height: 3.5rem; padding: .65rem max(1rem, env(safe-area-inset-right)) .65rem max(1rem, env(safe-area-inset-left)); text-transform: uppercase; }
+.owned-workout-route-bar a { min-height: 2.25rem; padding: .4rem 0; }
+.owned-workout-route-bar span { color: color-mix(in srgb, var(--paper) 72%, transparent); font-size: .85rem; text-align: end; }
+.owned-runner-recovery { margin: 12vh auto; max-width: 52rem; padding: clamp(1.25rem, 5vw, 3rem); }
+.owned-runner-recovery h1 { font-family: var(--font-display); font-size: clamp(3rem, 9vw, 6rem); letter-spacing: -.035em; line-height: .86; margin: .7rem 0 1rem; text-transform: uppercase; }
+.owned-runner-recovery p { color: var(--ink-soft); max-width: 58ch; }
+.owned-runner-recovery--blocked { border: 1px solid var(--danger); }
+.owned-runner-recovery > div { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+.owned-runner-recovery .primary-action, .owned-runner-recovery .secondary-action { width: fit-content; }
 .workout-runner { background: var(--paper); color: var(--ink); margin: 0 auto; max-width: 94rem; min-height: 100dvh; padding: 0 1rem calc(2rem + env(safe-area-inset-bottom)); }
 .runner-header { align-items: end; border-bottom: 1px solid var(--rule); display: flex; gap: 1rem; justify-content: space-between; padding: 2rem 0 1.25rem; }
 .runner-header h1 { font-family: var(--font-display); font-size: clamp(3rem, 15vw, 7rem); letter-spacing: -.035em; line-height: .8; margin: .6rem 0 .85rem; max-width: 9ch; text-transform: uppercase; }

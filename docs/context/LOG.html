@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="567731748332046091f2444b09038558c4306134048dcb6956d7ea6a5bdac118">
+  <meta name="source-sha256" content="f5f52d4253fbc6c978e7d756c63bc2a433fc658ffba39c32aac8712cc87ad3f8">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,16 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-25: Owned workout route and recovery host</h2>
+<ul>
+<li>Replaced the owned day placeholder with a retry-stable start-or-resume control that sends no ownership key, preserves one idempotency key across interrupted retries, validates the complete private response before navigation, and keeps unverified accounts read-only.</li>
+<li>Added the dynamic <code>/workout/[sessionId]</code> server route. It derives the viewer from the secure session, hides foreign or malformed session identities as missing, reads only owner-scoped program and custom-exercise data, and returns an unverified member to the exact session after reauthentication.</li>
+<li>Mounted the runner only after loading the owner-namespaced IndexedDB record and reconciling it with the immutable server snapshot. Identity, snapshot, ownership, storage, or reconciliation failures stop before editing and do not overwrite the device draft.</li>
+<li>Derived substitution choices from deterministic canonical database identities plus the signed-in owner&#39;s compatible custom exercises, then retained only the active equipment profile and matching logging meaning. Every workout snapshot must resolve to exactly one effective exercise identity.</li>
+<li>Retained a missing route-model module failure and a missing start-controller failure before implementation. The final focused matrix passes 82 assertions across the route contract, route model, runner, IndexedDB storage, resume reconciliation, and PWA private-cache policy; strict TypeScript, scoped ESLint, PWA parity, documentation parity, and the production webpack build also pass.</li>
+<li>Passed the complete branch gate with 58 files and 401 tests, strict TypeScript, full ESLint, generated-service-worker parity, 25-pair documentation parity, and Drizzle metadata validation. The local production server returned a private <code>no-store</code> streamed sign-in redirect for the unauthenticated workout page, <code>401</code> plus <code>no-store</code> for unauthenticated resume, and <code>403</code> plus <code>no-store</code> for a hostile-origin start; no private workout data rendered.</li>
+<li>Created local implementation commits <code>af5deee</code>, <code>8e4ae39</code>, and <code>bada22b</code> after the written plan commit <code>20b466b</code>. No push, deployment, provider configuration, database mutation, or production browser claim was made in this checkpoint; live signed-in replay awaits Firebase configuration.</li>
+</ul>
 <h2>2026-08-25: Owner-safe workout persistence integration</h2>
 <ul>
 <li>Merged the verified workout repository, private API, strict browser adapter, and resume reconciliation into the authenticated application after explicit authorization.</li>

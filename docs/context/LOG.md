@@ -1,5 +1,15 @@
 # Project log
 
+## 2026-08-25: Owned workout route and recovery host
+
+- Replaced the owned day placeholder with a retry-stable start-or-resume control that sends no ownership key, preserves one idempotency key across interrupted retries, validates the complete private response before navigation, and keeps unverified accounts read-only.
+- Added the dynamic `/workout/[sessionId]` server route. It derives the viewer from the secure session, hides foreign or malformed session identities as missing, reads only owner-scoped program and custom-exercise data, and returns an unverified member to the exact session after reauthentication.
+- Mounted the runner only after loading the owner-namespaced IndexedDB record and reconciling it with the immutable server snapshot. Identity, snapshot, ownership, storage, or reconciliation failures stop before editing and do not overwrite the device draft.
+- Derived substitution choices from deterministic canonical database identities plus the signed-in owner's compatible custom exercises, then retained only the active equipment profile and matching logging meaning. Every workout snapshot must resolve to exactly one effective exercise identity.
+- Retained a missing route-model module failure and a missing start-controller failure before implementation. The final focused matrix passes 82 assertions across the route contract, route model, runner, IndexedDB storage, resume reconciliation, and PWA private-cache policy; strict TypeScript, scoped ESLint, PWA parity, documentation parity, and the production webpack build also pass.
+- Passed the complete branch gate with 58 files and 401 tests, strict TypeScript, full ESLint, generated-service-worker parity, 25-pair documentation parity, and Drizzle metadata validation. The local production server returned a private `no-store` streamed sign-in redirect for the unauthenticated workout page, `401` plus `no-store` for unauthenticated resume, and `403` plus `no-store` for a hostile-origin start; no private workout data rendered.
+- Created local implementation commits `af5deee`, `8e4ae39`, and `bada22b` after the written plan commit `20b466b`. No push, deployment, provider configuration, database mutation, or production browser claim was made in this checkpoint; live signed-in replay awaits Firebase configuration.
+
 ## 2026-08-25: Owner-safe workout persistence integration
 
 - Merged the verified workout repository, private API, strict browser adapter, and resume reconciliation into the authenticated application after explicit authorization.

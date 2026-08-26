@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/ui/icon";
+import { StartWorkoutControl } from "@/components/workout/start-workout-control";
 import { getDatabase } from "@/db/client";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import { getViewerProfileProgram } from "@/server/repositories/profile-program";
@@ -56,8 +57,12 @@ export default async function MemberDayPage({ params }: Readonly<{ params: Promi
               <li key={cardio.id}><strong>{cardio.mode === "walker" ? "Walker" : "Runner"}</strong><span>{Math.round(cardio.durationSeconds / 60)} minutes</span></li>
             ))}
           </ul>
-          <p>Starting and resuming a persisted workout will be enabled only when a verified server session can create the immutable snapshot.</p>
-          <button className="primary-action" disabled type="button">Runner connection pending</button>
+          <p>The server snapshots this exact revision before the runner opens. A duplicate start resumes the existing active workout.</p>
+          <StartWorkoutControl
+            dayId={day.id}
+            eligible={viewer.eligibleForPermanentMutations}
+            programId={program.id}
+          />
         </aside>
       </div>
     </section>
