@@ -305,6 +305,7 @@ export type CurationReportCandidate = Readonly<{
   target: RequiredVideoVariation;
   queryKeys: readonly string[];
   candidate: YouTubeCandidate;
+  mechanicalDecision?: YouTubeCandidateDecision | undefined;
   decision: YouTubeCandidateDecision;
   reviewStatus: CurationReviewStatus;
   rank?: number | undefined;

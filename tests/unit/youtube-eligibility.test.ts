@@ -83,6 +83,48 @@ describe("YouTube candidate eligibility", () => {
     expect(wrongEquipment.rejectionCodes).toContain("wrong-equipment-variation");
   });
 
+  it("allows complete reviewed evidence to correct only semantic classifier false negatives", () => {
+    const backSquatTarget: YouTubeCurationTarget = {
+      canonicalExerciseSlug: "barbell-back-squat",
+      exerciseName: "Barbell back squat",
+      requiredEquipmentTerms: ["barbell"],
+    };
+    const fullyReviewed = candidate({
+      videoId: "ultWZbUMPL8",
+      title: "The Back Squat",
+      description: "Back squat setup and execution.",
+      duration: "PT1M7S",
+      humanReview: {
+        approved: true,
+        reviewer: "Codex GPT-5.6 Sol",
+        reviewedAt: "2026-08-26T17:00:00.000Z",
+        fullWatchConfirmed: true,
+        exactVariation: true,
+        conciseInstruction: true,
+        safeInstruction: true,
+        addsMaterialValue: true,
+        instructionEvidence: "captions",
+      },
+    });
+
+    expect(evaluateYouTubeCandidate(fullyReviewed, backSquatTarget).rejectionCodes)
+      .toContain("wrong-equipment-variation");
+    expect(evaluateYouTubeCandidate(fullyReviewed, backSquatTarget, {
+      allowReviewedSemanticOverride: true,
+    })).toMatchObject({ eligible: true, rejectionCodes: [] });
+
+    const hardFailure = evaluateYouTubeCandidate({
+      ...fullyReviewed,
+      available: false,
+      isShort: true,
+    }, backSquatTarget, { allowReviewedSemanticOverride: true });
+    expect(hardFailure.eligible).toBe(false);
+    expect(hardFailure.rejectionCodes).toEqual(expect.arrayContaining([
+      "video-unavailable",
+      "shorts-not-allowed",
+    ]));
+  });
+
   it("rejects exact-movement modifiers, commentary, claims, and non-English title cues", () => {
     const targets = new Map(
       buildDefaultYouTubeCurationTargets().map((item) => [item.canonicalExerciseSlug, item]),

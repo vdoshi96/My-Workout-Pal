@@ -787,6 +787,112 @@ describe("resumable YouTube curation state", () => {
     }
   });
 
+  it("uses scoped embed and full-review evidence to correct a generic-title equipment false negative", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-semantic-override-"));
+    const target = {
+      canonicalExerciseSlug: "barbell-back-squat",
+      variationId: "canonical",
+      exerciseName: "Barbell back squat",
+      requiredEquipmentTerms: ["barbell"],
+    } as const;
+    const candidate = {
+      videoId: "ultWZbUMPL8",
+      title: "The Back Squat",
+      description: "Back squat setup and execution.",
+      channelTitle: "CrossFit",
+      duration: "PT1M7S",
+      privacyStatus: "public" as const,
+      uploadStatus: "processed" as const,
+      embeddable: true,
+      syndicated: undefined,
+      syndicationEvidence: "unknown" as const,
+      regionAvailable: true,
+      liveBroadcastContent: "none" as const,
+      language: "en",
+      viewCount: 2_329_000,
+    };
+    const api: YouTubeDataApi = {
+      async searchVideos() { throw new Error("Complete discovery must not search."); },
+      async hydrateVideos() { throw new Error("Hydrated state must not call the provider."); },
+    };
+
+    try {
+      const checkpoint = createEmptyCurationCheckpoint();
+      for (const query of buildCurationQueries(target)) {
+        for (const order of ["relevance", "viewCount"] as const) {
+          checkpoint.completedQueries.push({
+            queryKey: buildYouTubeSearchRequest(target, query, order, 0).queryKey,
+            pageToken: null,
+          });
+        }
+      }
+      const key = getYouTubeCandidateStateKey(target.canonicalExerciseSlug, target.variationId, candidate.videoId);
+      checkpoint.discoveredCandidates[key] = { target, queryKeys: [], item: candidate };
+      checkpoint.hydratedVideoIds.push(candidate.videoId);
+      checkpoint.hydratedCandidates[candidate.videoId] = candidate;
+      await saveCurationCheckpoint(directory, checkpoint);
+
+      const beforeEvidence = await curateYouTubeCandidates({
+        api, targets: [target], stateDirectory: directory,
+        budget: { maxQuotaUnits: 0, maxSearchRequests: 0, maxHydrateRequests: 0, maxPagesPerQuery: 1 },
+      });
+      expect(beforeEvidence.report.rankedEligibleCandidates).toEqual([]);
+      expect(beforeEvidence.report.candidates[0]?.decision.rejectionCodes)
+        .toContain("wrong-equipment-variation");
+
+      await recordYouTubeEmbedVerification({
+        stateDirectory: directory,
+        verification: {
+          canonicalExerciseSlug: target.canonicalExerciseSlug,
+          variationId: target.variationId,
+          videoId: candidate.videoId,
+          verifier: "Codex GPT-5.6 Sol",
+          privacyEnhancedEmbedConfirmed: true,
+          outsideYouTubePlaybackConfirmed: true,
+          visibleControlsConfirmed: true,
+          keyboardControlsConfirmed: true,
+          directFallbackConfirmed: true,
+        },
+      });
+      await recordManualYouTubeReview({
+        stateDirectory: directory,
+        review: {
+          canonicalExerciseSlug: target.canonicalExerciseSlug,
+          variationId: target.variationId,
+          videoId: candidate.videoId,
+          decision: "approved",
+          reviewer: "Codex GPT-5.6 Sol",
+          playbackCompletedAt: "2026-08-26T16:59:00.000Z",
+          fullWatchConfirmed: true,
+          visualReviewConfirmed: true,
+          instructionEvidence: "captions",
+          exactVariation: true,
+          conciseInstruction: true,
+          safeInstruction: true,
+          addsMaterialValue: true,
+        },
+      });
+
+      const afterEvidence = await curateYouTubeCandidates({
+        api, targets: [target], stateDirectory: directory,
+        budget: { maxQuotaUnits: 0, maxSearchRequests: 0, maxHydrateRequests: 0, maxPagesPerQuery: 1 },
+      });
+      expect(afterEvidence.report.rankedEligibleCandidates?.map(({ videoId }) => videoId))
+        .toEqual([candidate.videoId]);
+      expect(afterEvidence.report.candidates[0]).toMatchObject({
+        decision: { eligible: true, rejectionCodes: [] },
+        mechanicalDecision: {
+          eligible: false,
+          rejectionCodes: expect.arrayContaining(["wrong-equipment-variation"]),
+        },
+      });
+      expect(afterEvidence.checkpoint.rejectionCodes[key])
+        .toContain("wrong-equipment-variation");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("treats the per-query page limit as a durable cap across resumes", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "mwp-youtube-page-cap-"));
     let searchCalls = 0;

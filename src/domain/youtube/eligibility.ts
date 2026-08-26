@@ -173,6 +173,26 @@ function reviewRejectionCodes(review: YouTubeHumanReview | undefined): YouTubeRe
   return failures;
 }
 
+function hasCompleteSemanticOverrideReview(
+  review: YouTubeHumanReview | undefined,
+): boolean {
+  return Boolean(
+    review
+    && review.approved
+    && review.fullWatchConfirmed
+    && review.exactVariation
+    && review.conciseInstruction
+    && review.safeInstruction
+    && review.addsMaterialValue
+    && review.reviewer?.trim()
+    && review.reviewedAt
+    && !Number.isNaN(Date.parse(review.reviewedAt))
+    && (review.instructionEvidence === "narration"
+      || review.instructionEvidence === "captions"
+      || review.instructionEvidence === "visual"),
+  );
+}
+
 function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget): {
   normalizedVideoId: string | undefined;
   durationSeconds: number | undefined;
@@ -287,9 +307,20 @@ function baseDecision(candidate: YouTubeCandidate, target: YouTubeCurationTarget
 export function evaluateYouTubeCandidate(
   candidate: YouTubeCandidate,
   target: YouTubeCurationTarget,
-  options: Readonly<{ requireHumanReview?: boolean }> = {},
+  options: Readonly<{
+    requireHumanReview?: boolean;
+    allowReviewedSemanticOverride?: boolean;
+  }> = {},
 ): YouTubeCandidateDecision {
   const base = baseDecision(candidate, target);
+  if (
+    options.allowReviewedSemanticOverride
+    && hasCompleteSemanticOverrideReview(candidate.humanReview)
+  ) {
+    base.rejectionCodes = base.rejectionCodes.filter(
+      (code) => code !== "wrong-movement" && code !== "wrong-equipment-variation",
+    );
+  }
   if (options.requireHumanReview) base.rejectionCodes.push(...reviewRejectionCodes(candidate.humanReview));
 
   return {
@@ -307,10 +338,16 @@ export const checkCandidateEligibility = evaluateYouTubeCandidate;
 export function rankEligibleCandidates(
   candidates: readonly YouTubeCandidate[],
   target: YouTubeCurationTarget,
-  options: Readonly<{ requireHumanReview?: boolean }> = {},
+  options: Readonly<{
+    requireHumanReview?: boolean;
+    semanticOverrideVideoIds?: ReadonlySet<string>;
+  }> = {},
 ): readonly RankedYouTubeCandidate[] {
   const ranked = candidates.flatMap((candidate): RankedYouTubeCandidate[] => {
-    const decision = evaluateYouTubeCandidate(candidate, target, options);
+    const decision = evaluateYouTubeCandidate(candidate, target, {
+      requireHumanReview: Boolean(options.requireHumanReview),
+      allowReviewedSemanticOverride: Boolean(options.semanticOverrideVideoIds?.has(candidate.videoId)),
+    });
     return decision.eligible ? [{ candidate, decision }] : [];
   }).sort((left, right) => {
     const leftViews = typeof left.candidate.viewCount === "number"

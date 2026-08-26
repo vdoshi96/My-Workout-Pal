@@ -578,9 +578,12 @@ function materiallyRedundant(left: YouTubeCandidate, right: YouTubeCandidate): b
 export function proposeVideoPair(
   target: YouTubeCurationTarget & RequiredVideoVariation,
   candidates: readonly YouTubeCandidate[],
+  options: Readonly<{ semanticOverrideVideoIds?: ReadonlySet<string> }> = {},
 ): ProposedVideoPair {
-  const eligibleCandidates = candidates.filter((candidate) => evaluateYouTubeCandidate(candidate, target).eligible);
-  const ranked = rankEligibleCandidates(candidates, target);
+  const eligibleCandidates = candidates.filter((candidate) => evaluateYouTubeCandidate(candidate, target, {
+    allowReviewedSemanticOverride: Boolean(options.semanticOverrideVideoIds?.has(candidate.videoId)),
+  }).eligible);
+  const ranked = rankEligibleCandidates(candidates, target, options);
   const first = ranked[0]?.candidate;
   if (!first) {
     return {
@@ -605,7 +608,7 @@ export function proposeVideoPair(
     };
   }
 
-  const rankedAlternatives = rankEligibleCandidates(nonRedundant, target);
+  const rankedAlternatives = rankEligibleCandidates(nonRedundant, target, options);
   const bestAlternativeRanked = rankedAlternatives[0];
   const bestAlternative = bestAlternativeRanked?.candidate;
   const firstChannel = candidateChannelKey(first);
@@ -883,9 +886,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
       : providerMerged;
     hydratedById.set(entry.item.videoId, merged);
     checkpoint.hydratedCandidates[entry.item.videoId] = providerMerged;
-    const decision = evaluateYouTubeCandidate(merged, entry.target);
     const manualReview = manualReviews.reviews[candidateStateKey];
-    checkpoint.rejectionCodes[candidateStateKey] = [...decision.rejectionCodes];
     if (manualReview) checkpoint.reviewStatus[candidateStateKey] = manualReview.decision;
     else if (!checkpoint.reviewStatus[candidateStateKey]) checkpoint.reviewStatus[candidateStateKey] = "pending";
     const reviewedCandidate: YouTubeCandidate = manualReview && manualReview.decision !== "pending"
@@ -904,11 +905,17 @@ export async function curateYouTubeCandidates(options: Readonly<{
           },
         }
       : merged;
+    const mechanicalDecision = evaluateYouTubeCandidate(merged, entry.target);
+    const decision = evaluateYouTubeCandidate(reviewedCandidate, entry.target, {
+      allowReviewedSemanticOverride: hasScopedEmbedVerification,
+    });
+    checkpoint.rejectionCodes[candidateStateKey] = [...mechanicalDecision.rejectionCodes];
     reportCandidates.push({
       videoId: entry.item.videoId,
       target: { canonicalExerciseSlug: entry.target.canonicalExerciseSlug, variationId: entry.target.variationId },
       queryKeys: entry.queryKeys,
       candidate: reviewedCandidate,
+      mechanicalDecision,
       decision,
       reviewStatus: checkpoint.reviewStatus[candidateStateKey] ?? "pending",
     });
@@ -926,7 +933,16 @@ export async function curateYouTubeCandidates(options: Readonly<{
       (candidate) => candidate.target.canonicalExerciseSlug === target.canonicalExerciseSlug && candidate.target.variationId === target.variationId,
     );
     const reviewableCandidates = targetCandidates.filter((candidate) => candidate.reviewStatus !== "rejected");
-    const ranked = rankEligibleCandidates(reviewableCandidates.map((candidate) => candidate.candidate), target);
+    const semanticOverrideVideoIds = new Set(
+      reviewableCandidates
+        .filter((candidate) => candidate.decision.eligible && candidate.mechanicalDecision?.eligible === false)
+        .map((candidate) => candidate.videoId),
+    );
+    const ranked = rankEligibleCandidates(
+      reviewableCandidates.map((candidate) => candidate.candidate),
+      target,
+      { semanticOverrideVideoIds },
+    );
     const byId = new Map(reviewableCandidates.map((candidate) => [candidate.videoId, candidate]));
     ranked.forEach((rankedCandidate, rank) => {
       const original = byId.get(rankedCandidate.candidate.videoId);
@@ -935,6 +951,7 @@ export async function curateYouTubeCandidates(options: Readonly<{
     const proposedPair = proposeVideoPair(
       target,
       reviewableCandidates.map((candidate) => candidate.candidate),
+      { semanticOverrideVideoIds },
     );
     const apiDiscoveryComplete = expectedQueryKeys(target).every((key) => completedQueryKeys.has(key));
     const browserDiscoveryComplete = !apiDiscoveryComplete && hasCompleteBrowserYouTubeDiscovery({
@@ -1009,10 +1026,17 @@ export function rankCurationReportCandidates(
   const targetVariationId = target.variationId;
   const scopedCandidates = candidates
     .filter((candidate) => candidate.target.canonicalExerciseSlug === target.canonicalExerciseSlug)
-    .filter((candidate) => targetVariationId === undefined || candidate.target.variationId === targetVariationId);
+    .filter((candidate) => targetVariationId === undefined || candidate.target.variationId === targetVariationId)
+    .filter((candidate) => candidate.reviewStatus !== "rejected");
+  const semanticOverrideVideoIds = new Set(
+    scopedCandidates
+      .filter((candidate) => candidate.decision.eligible && candidate.mechanicalDecision?.eligible === false)
+      .map((candidate) => candidate.videoId),
+  );
   const eligible = rankEligibleCandidates(
     scopedCandidates.map((candidate) => candidate.candidate),
     target,
+    { semanticOverrideVideoIds },
   );
   const byId = new Map(scopedCandidates.map((candidate) => [candidate.videoId, candidate]));
   return eligible.flatMap((item) => {
