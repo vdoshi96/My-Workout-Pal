@@ -15,7 +15,7 @@ The target Vercel team is `vdoshi96s-projects`. Project `my-workout-pal` is link
 
 Neon resource `my-workout-pal-db` was provisioned on August 25, 2026 through the Vercel Marketplace using the explicitly listed `free_v3` plan in `iad1`. Neon Auth is disabled because Firebase owns user identity. The integration attached database variables to development, preview, and production and pulled an ignored local development environment file. Do not accept a paid plan, trial conversion, plan upgrade, or billable add-on without explicit approval.
 
-The schema and starter graph are live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after the final migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos. Run the same checked-in boundaries without printing connection values:
+The schema and pre-video starter graph are live. The initial seed, idempotent seed rerun, account-deletion saga, canonical workout measurement, and owned-program collection migrations passed on August 25, 2026. Read-only verification before and after that migration sequence returned the same 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio choices, and 0 approved videos. The checked-in graph now adds 54 validated approved-video rows, but that newer seed has not yet been applied to Neon; the live zero count remains truthful until an explicitly authorized seed and read-only verification pass. Run the same checked-in boundaries without printing connection values:
 
 ```sh
 node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts
@@ -23,7 +23,7 @@ node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 ```
 
-The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. Production video rows remain outside this starter seed until the exact-two manual approval gate is satisfied.
+The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. The 54 video rows now pass the exact-two manual approval gate and are part of the checked-in deterministic starter seed; applying them to Neon and replaying both public/runtime pairs remain separate release actions.
 
 Primary references:
 

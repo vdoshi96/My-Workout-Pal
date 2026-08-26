@@ -20,7 +20,7 @@ This is an operator workflow rather than a page. `db:migrate` applies checked-in
 
 ## Domain types and invariants
 
-The canonical domain manifest produces stable RFC 4122 version 5 identifiers for exercises, aliases, templates, revisions, days, sections, prescriptions, and cardio choices. There are six equipment records, 27 exercises, two profile revisions, ten days, 26 sections, 60 exercise prescriptions, and 20 cardio prescriptions. Every foreign key resolves inside the planned graph. Prescription labels may specialize presentation, such as “Heavy goblet squat,” without duplicating a canonical exercise. Production video rows remain empty until exactly two eligible videos per required variation have been manually watched and approved.
+The canonical domain manifest produces stable RFC 4122 version 5 identifiers for exercises, aliases, templates, revisions, days, sections, prescriptions, and cardio choices. There are six equipment records, 27 exercises, two profile revisions, ten days, 26 sections, 60 exercise prescriptions, 20 cardio prescriptions, and 54 approved video rows. Every foreign key resolves inside the planned graph. Prescription labels may specialize presentation, such as “Heavy goblet squat,” without duplicating the catalog exercise. The video rows derive from the checked-in schema-one manifest only after every required variation has exactly two eligible, scoped-embed-verified, fully watched approvals. Review timestamps are normalized to canonical ISO milliseconds before deterministic database comparison.
 
 ## Persistence, authentication, and authorization
 
@@ -41,7 +41,7 @@ The connection string stays in environment variables and is never logged. Errors
 - Published revisions contain the exact planned children and publication timestamp.
 - A deliberately changed deterministic catalog row is rejected and rolled back.
 - A deliberately changed or missing published child is rejected rather than repaired in place.
-- Verification reports expected counts, relationship coverage, zero approved-video claims, and no secret values.
+- Verification reports expected counts, relationship coverage, 54 approved videos, and no secret values.
 - The production Neon database passes migrate, seed, rerun, and read-only verification before an application deployment is called database-ready.
 
 ## Automated tests and evidence

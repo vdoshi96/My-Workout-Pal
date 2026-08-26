@@ -68,7 +68,7 @@ describe("starter database bootstrap", () => {
       templateSections: 26,
       templatePrescriptions: 60,
       templateCardioPrescriptions: 20,
-      approvedVideos: 0,
+      approvedVideos: 54,
     });
     expect(after.rows[0]?.payload).toEqual(before.rows[0]?.payload);
     expect(

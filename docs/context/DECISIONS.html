@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="55f476f93f8a7f66a13c691898a452d841dd3a132cd14d3a1340761bbfc8316e">
+  <meta name="source-sha256" content="df8f0e4528d2d912117fc3beb595d928e0b36084f3f07be38ea05a9c1d0d1bf0">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -54,6 +54,7 @@
 <p>Firebase client identity is exchanged for a secure HTTP-only session. Server code derives Firebase UID from the verified session and applies it to every user-owned database query. Client-supplied ownership identifiers are ignored or rejected.</p>
 <h2>2026-08-25: Require confirmed video approval</h2>
 <p>Discovery scripts can propose candidates but cannot silently seed production. A seeded demonstration requires mechanical eligibility, manual review, a complete viewing, approval metadata, and complete two-video mapping validation.</p>
+<p>The production boundary independently revalidates each selected proposal instead of trusting its label. Every selected candidate must remain eligible, carry scoped <code>syndicationEvidence: verified</code>, and retain full-watch, exact-variation, concise, safe, material-value, and narration/captions/visual instruction evidence. The generated schema-one manifest contains only the canonical slug, variation, normalized ID, order, reviewed title/channel, approval state, reviewer, canonical ISO review timestamp, and full-watch confirmation. Extra fields, including view counts and private evidence, fail closed. The deterministic starter graph imports only this validated checked-in manifest; provider and private report files remain outside the application and repository.</p>
 <h2>2026-08-25: Defer an open-source license decision</h2>
 <p>The repository can be public without granting an open-source license. No license will be added without explicit legal approval from the user.</p>
 <h2>2026-08-25: Use a training route atlas visual system</h2>

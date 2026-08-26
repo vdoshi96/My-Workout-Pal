@@ -30,6 +30,7 @@
     "youtube:review": "node --import tsx scripts/youtube-review.ts",
     "youtube:probe-embed": "node --import tsx scripts/youtube-probe-embed.ts",
     "youtube:record-embed-verification": "node --import tsx scripts/youtube-record-embed-verification.ts",
+    "youtube:generate-seed": "node --import tsx scripts/youtube-generate-seed.ts",
     "seed:check": "node --import tsx scripts/seed-check.ts",
     "docs:build": "node scripts/render-docs.mjs",
     "docs:check": "node scripts/render-docs.mjs --check",

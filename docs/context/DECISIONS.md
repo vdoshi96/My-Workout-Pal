@@ -52,6 +52,8 @@ Firebase client identity is exchanged for a secure HTTP-only session. Server cod
 
 Discovery scripts can propose candidates but cannot silently seed production. A seeded demonstration requires mechanical eligibility, manual review, a complete viewing, approval metadata, and complete two-video mapping validation.
 
+The production boundary independently revalidates each selected proposal instead of trusting its label. Every selected candidate must remain eligible, carry scoped `syndicationEvidence: verified`, and retain full-watch, exact-variation, concise, safe, material-value, and narration/captions/visual instruction evidence. The generated schema-one manifest contains only the canonical slug, variation, normalized ID, order, reviewed title/channel, approval state, reviewer, canonical ISO review timestamp, and full-watch confirmation. Extra fields, including view counts and private evidence, fail closed. The deterministic starter graph imports only this validated checked-in manifest; provider and private report files remain outside the application and repository.
+
 ## 2026-08-25: Defer an open-source license decision
 
 The repository can be public without granting an open-source license. No license will be added without explicit legal approval from the user.

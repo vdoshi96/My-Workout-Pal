@@ -7,6 +7,7 @@ import {
   validateCuratedVideoSeed,
 } from "@/domain/youtube/seed-validation";
 import type { CuratedVideoSeed } from "@/domain/youtube/types";
+import { APPROVED_CURATED_VIDEO_SEED } from "@/domain/youtube/approved-curated-video-seed";
 import {
   buildStarterDatabaseSeed,
   type StarterDatabaseSeed,
@@ -172,7 +173,7 @@ export function buildCuratedVideoDatabaseRows(
 
 export function buildStarterDatabaseRows(
   seed: StarterDatabaseSeed = buildStarterDatabaseSeed(),
-  curatedVideoSeed: readonly CuratedVideoSeed[] = [],
+  curatedVideoSeed: readonly CuratedVideoSeed[] = APPROVED_CURATED_VIDEO_SEED,
 ): StarterDatabaseRows {
   const exerciseIds = new Map(
     seed.exercises.map(({ slug }) => [slug, uuid("catalog-exercise", slug)] as const),

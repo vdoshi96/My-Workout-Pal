@@ -49,12 +49,12 @@ The application ran on localhost. This is live Firebase and Neon evidence, not a
 
 This run proves one real password-account path with the dumbbell starter. It does not yet prove Google sign-in, email verification/recovery, expired or revoked sessions, cross-user denial, the barbell starter, clone/activate/editor/equipment-change flows, offline interruption, WebKit, Vercel preview, or production authentication.
 
-YouTube remains separate. The private checkpoint has no approved video, and no embed or seed is represented as production-ready without complete discovery and full visual/audio review.
+YouTube remains a separate evidence lane. At the time of this authenticated replay, the private checkpoint had no approved video. The later curation checkpoint supersedes only that media status: all 27 pairs now have full-watch and scoped embed evidence, and a validated 54-row manifest is checked in. Neon still has zero approved-video rows until the new seed is applied and verified, so this localhost account replay does not prove a persisted catalog embed.
 
 ## Remaining verification
 
 - Explicitly authorize transmitting the seven Firebase client/Admin values to the linked Vercel project, then rebuild and test the protected preview.
 - Replay Google, verification, recovery, expiry, revocation, and cross-user paths with disposable identities.
 - Replay both equipment profiles, program collection/editor changes, offline interruption, and immutable-history preservation in Chromium and WebKit.
-- Complete YouTube discovery, full-watch review, exact-two validation, representative embeds, and unavailable fallback.
+- Apply and verify the checked-in 54-row YouTube seed, then replay representative dual embeds and unavailable fallback on preview and production.
 - Repeat authenticated accessibility, responsive, preview, production, logs, and deletion cleanup checks before release.

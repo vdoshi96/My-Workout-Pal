@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 import { ExerciseVideoField } from "@/components/video/exercise-video-field";
 import { WorkoutRunner } from "@/components/workout/workout-runner";
 import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
-import { buildCuratedVideoDatabaseRows } from "@/domain/seed/starter-database-rows";
+import {
+  buildCuratedVideoDatabaseRows,
+  buildStarterDatabaseRows,
+} from "@/domain/seed/starter-database-rows";
 import {
   createInMemoryRunnerStorage,
   createWorkoutSnapshot,
@@ -41,6 +44,21 @@ function completeCatalogSeed(): readonly CuratedVideoSeed[] {
 }
 
 describe("approved curated video publication", () => {
+  it("wires the complete reviewed manifest into the default starter database graph", () => {
+    const rows = buildStarterDatabaseRows();
+    const videoIdsFor = (slug: string) => {
+      const exerciseId = rows.catalogExercises.find((exercise) => exercise.slug === slug)?.id;
+      return rows.curatedVideos
+        .filter((video) => video.exerciseId === exerciseId)
+        .map(({ youtubeVideoId }) => youtubeVideoId);
+    };
+
+    expect(rows.curatedVideos).toHaveLength(54);
+    expect(videoIdsFor("barbell-back-squat")).toEqual(["ultWZbUMPL8", "1xMaFs0L3ao"]);
+    expect(videoIdsFor("chest-supported-dumbbell-row")).toEqual(["vmX58YYK3-8", "mHBOUz9KY9A"]);
+    expect(videoIdsFor("dumbbell-romanian-deadlift")).toEqual(["KrRtk8KbJik", "MprE4ppd27U"]);
+  });
+
   it("maps a complete validated catalog manifest to deterministic database rows", () => {
     const rows = buildCuratedVideoDatabaseRows(completeCatalogSeed());
 

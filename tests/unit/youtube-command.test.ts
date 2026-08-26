@@ -15,6 +15,7 @@ import { loadManualYouTubeReviews } from "@/domain/youtube/manual-review";
 
 const execFileAsync = promisify(execFile);
 const reviewScript = new URL("../../scripts/youtube-review.ts", import.meta.url);
+const generateSeedScript = new URL("../../scripts/youtube-generate-seed.ts", import.meta.url);
 const leadingHyphenVideoId = "-Zz7dDRkcOQ";
 
 async function seedLeadingHyphenCandidate(directory: string): Promise<void> {
@@ -69,6 +70,9 @@ describe("YouTube curation command", () => {
     expect(packageJson.scripts?.["youtube:record-embed-verification"]).toBe(
       "node --import tsx scripts/youtube-record-embed-verification.ts",
     );
+    expect(packageJson.scripts?.["youtube:generate-seed"]).toBe(
+      "node --import tsx scripts/youtube-generate-seed.ts",
+    );
   });
 
   it.each([
@@ -110,5 +114,17 @@ describe("YouTube curation command", () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
+  });
+
+  it.each([
+    [["--output"], /requires a value for --output/i],
+    [["--output", "one.json", "--output", "two.json"], /duplicate --output/i],
+  ])("rejects unsafe seed-generator option shape %# before file access", async (args, message) => {
+    await expect(execFileAsync(process.execPath, [
+      "--import",
+      "tsx",
+      generateSeedScript.pathname,
+      ...args,
+    ])).rejects.toThrow(message);
   });
 });
