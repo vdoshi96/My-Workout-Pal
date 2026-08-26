@@ -22,7 +22,7 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(page.getByText("Guest route · not saved")).toBeVisible();
   for (const [index, name] of ["Push", "Pull", "Legs", "Upper", "Lower"].entries()) {
     await expect(
-      page.getByRole("button", { name: `Day ${index + 1}: ${name}` }),
+      page.getByRole("button", { name: `${index + 1} ${name}` }),
     ).toBeVisible();
   }
 
@@ -31,7 +31,7 @@ test("guest previews both profiles and completes the public discovery route", as
   });
   await barbellPreview.click();
   await expect(barbellPreview).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Day 2: Pull" }).click();
+  await page.getByRole("button", { name: "2 Pull" }).click();
   const selectedDay = page.locator("#selected-day-sheet");
   await expect(
     selectedDay.getByRole("heading", { level: 2, name: "Pull day" }),

@@ -20,7 +20,7 @@ export function PublicShell({
     <div className="public-frame">
       <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="public-header">
-        <Link className="brand" href="/" aria-label="My Workout Pal home">
+        <Link className="brand" href="/">
           <span className="brand-mark" aria-hidden="true"><Icon name="map" /></span>
           <span>
             <strong>My Workout Pal</strong>

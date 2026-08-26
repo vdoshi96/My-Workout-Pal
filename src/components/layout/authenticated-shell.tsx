@@ -16,7 +16,7 @@ export function AuthenticatedShell({
     <div className="member-frame">
       <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="member-header">
-        <Link aria-label="My Workout Pal account home" className="brand" href="/app">
+        <Link className="brand" href="/app">
           <span aria-hidden="true" className="brand-mark"><Icon name="map" /></span>
           <span>
             <strong>My Workout Pal</strong>

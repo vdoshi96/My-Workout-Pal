@@ -43,7 +43,7 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
       <a className="skip-link" href="#selected-day-sheet">Skip to selected day</a>
 
       <header className="app-header">
-        <Link className="brand" href="/" aria-label="My Workout Pal home">
+        <Link className="brand" href="/">
           <span className="brand-mark" aria-hidden="true"><Icon name="map" /></span>
           <span>
             <h1>My Workout Pal</h1>
@@ -103,7 +103,6 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
                 <li className={`waypoint-${index + 1}`} key={day.name}>
                   <button
                     aria-current={selectedIndex === index ? "step" : undefined}
-                    aria-label={`Day ${index + 1}: ${day.name}`}
                     onClick={() => setSelectedIndex(index)}
                     type="button"
                   >
