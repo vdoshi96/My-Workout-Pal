@@ -21,6 +21,14 @@ const deletionMigrationUrl = new URL(
   "../../drizzle/0001_account_deletion_saga.sql",
   import.meta.url,
 );
+const workoutMigrationUrl = new URL(
+  "../../drizzle/0002_workout_canonical_measurements.sql",
+  import.meta.url,
+);
+const programCollectionMigrationUrl = new URL(
+  "../../drizzle/0003_program_collection.sql",
+  import.meta.url,
+);
 const openDatabases: PGlite[] = [];
 
 function viewer(uid: string, now: Date): ViewerContext {
@@ -40,6 +48,8 @@ async function openDatabase(): Promise<Database> {
   await raw.waitReady;
   await raw.exec(await readFile(initialMigrationUrl, "utf8"));
   await raw.exec(await readFile(deletionMigrationUrl, "utf8"));
+  await raw.exec(await readFile(workoutMigrationUrl, "utf8"));
+  await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);

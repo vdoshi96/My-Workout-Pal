@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { z } from "zod";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import type { Database } from "@/db/client";
 import {
@@ -118,6 +118,26 @@ export type PreferencesUpdateInput = Readonly<{
 
 export type PublishProgramInput = ProgramPublishInput;
 
+export type CreateStarterProgramInput = Readonly<{
+  equipmentProfileKind: EquipmentProfileKind;
+  idempotencyKey: string;
+  name: string;
+}>;
+
+export type CloneProgramInput = Readonly<{
+  idempotencyKey: string;
+  name: string;
+  sourceProgramId: string;
+  sourceRevisionId: string;
+}>;
+
+export type ActivateProgramInput = Readonly<{
+  expectedActiveProgramId: string;
+  idempotencyKey: string;
+  programId: string;
+  revisionId: string;
+}>;
+
 type NormalizedOnboardingInput = Readonly<{
   equipmentProfileKind: EquipmentProfileKind;
   unitSystem: UnitSystem;
@@ -140,6 +160,10 @@ type NormalizedPreferencesUpdateInput = Readonly<{
   timezone: string;
   unitSystem: UnitSystem;
 }>;
+
+type NormalizedCreateStarterProgramInput = CreateStarterProgramInput;
+type NormalizedCloneProgramInput = CloneProgramInput;
+type NormalizedActivateProgramInput = ActivateProgramInput;
 
 type CatalogExerciseRow = typeof catalogExercises.$inferSelect;
 type CustomExerciseRow = typeof customExercises.$inferSelect;
@@ -251,12 +275,30 @@ export type ActiveProgramReadModel = Readonly<{
   days: readonly ActiveProgramDayReadModel[];
 }>;
 
+export type ProgramSummaryReadModel = Readonly<{
+  equipmentProfileKind: EquipmentProfileKind;
+  id: string;
+  isActive: boolean;
+  name: string;
+  programKey: string;
+  revisionId: string;
+  revisionNumber: number;
+  updatedAt: string;
+}>;
+
 export type ProfileProgramReadModel = Readonly<{
   profile: ProfileReadModel;
   preferences: PreferencesReadModel;
   equipment: EquipmentReadModel;
+  programs: readonly ProgramSummaryReadModel[];
   activeProgram: ActiveProgramReadModel | null;
 }>;
+
+export type ProgramCollectionMutationResult = Readonly<
+  ProfileProgramReadModel & {
+    affectedProgramId: string;
+  }
+>;
 
 export type EquipmentChange = Readonly<{
   dayNumber: number;
@@ -302,6 +344,18 @@ export type ProfileProgramRepository = Readonly<{
     viewer: ViewerContext | null,
     input: PublishProgramInput,
   ): Promise<ProfileProgramReadModel>;
+  createProgramFromStarter(
+    viewer: ViewerContext | null,
+    input: CreateStarterProgramInput,
+  ): Promise<ProgramCollectionMutationResult>;
+  cloneProgram(
+    viewer: ViewerContext | null,
+    input: CloneProgramInput,
+  ): Promise<ProgramCollectionMutationResult>;
+  activateProgram(
+    viewer: ViewerContext | null,
+    input: ActivateProgramInput,
+  ): Promise<ProgramCollectionMutationResult>;
 }>;
 
 const profileKindSchema = z.enum(["dumbbells", "barbell"]);
@@ -331,6 +385,31 @@ const preferencesUpdateSchema = z
     reducedMotion: z.boolean(),
     timezone: z.string().trim().min(1).max(64),
     unitSystem: z.enum(["metric", "imperial"]),
+  })
+  .strict();
+const programNameSchema = z.string().trim().min(1).max(180);
+const requiredIdempotencyKeySchema = z.string().trim().min(1).max(180);
+const createStarterProgramSchema = z
+  .object({
+    equipmentProfileKind: profileKindSchema,
+    idempotencyKey: requiredIdempotencyKeySchema,
+    name: programNameSchema,
+  })
+  .strict();
+const cloneProgramSchema = z
+  .object({
+    idempotencyKey: requiredIdempotencyKeySchema,
+    name: programNameSchema,
+    sourceProgramId: z.string().uuid(),
+    sourceRevisionId: z.string().uuid(),
+  })
+  .strict();
+const activateProgramSchema = z
+  .object({
+    expectedActiveProgramId: z.string().uuid(),
+    idempotencyKey: requiredIdempotencyKeySchema,
+    programId: z.string().uuid(),
+    revisionId: z.string().uuid(),
   })
   .strict();
 
@@ -430,6 +509,54 @@ function parsePreferencesUpdateInput(
     timezone: validTimezone(result.data.timezone),
     unitSystem: result.data.unitSystem,
   };
+}
+
+function parseCreateStarterProgramInput(
+  input: CreateStarterProgramInput,
+): NormalizedCreateStarterProgramInput {
+  const result = createStarterProgramSchema.safeParse(input);
+  if (!result.success) {
+    throw new RepositoryValidationError("The new program data is invalid.");
+  }
+  return result.data;
+}
+
+function parseCloneProgramInput(
+  input: CloneProgramInput,
+): NormalizedCloneProgramInput {
+  const result = cloneProgramSchema.safeParse(input);
+  if (!result.success) {
+    if (
+      result.error.issues.some(
+        (issue) =>
+          issue.path[0] === "sourceProgramId" ||
+          issue.path[0] === "sourceRevisionId",
+      )
+    ) {
+      throw new RepositoryNotFoundError();
+    }
+    throw new RepositoryValidationError("The program clone data is invalid.");
+  }
+  return result.data;
+}
+
+function parseActivateProgramInput(
+  input: ActivateProgramInput,
+): NormalizedActivateProgramInput {
+  const result = activateProgramSchema.safeParse(input);
+  if (!result.success) {
+    if (
+      result.error.issues.some((issue) =>
+        ["expectedActiveProgramId", "programId", "revisionId"].includes(
+          String(issue.path[0]),
+        ),
+      )
+    ) {
+      throw new RepositoryNotFoundError();
+    }
+    throw new RepositoryValidationError("The active program data is invalid.");
+  }
+  return result.data;
 }
 
 function parseProgramPublishInput(input: PublishProgramInput): ProgramPublishInput {
@@ -933,12 +1060,12 @@ async function findProgramRoot(
     await database.execute(
       programId
         ? sql`SELECT id FROM user_programs WHERE owner_firebase_uid = ${ownerFirebaseUid} AND id = ${programId} FOR UPDATE`
-        : sql`SELECT id FROM user_programs WHERE owner_firebase_uid = ${ownerFirebaseUid} AND program_key = ${STARTER_PROGRAM_KEY} FOR UPDATE`,
+        : sql`SELECT id FROM user_programs WHERE owner_firebase_uid = ${ownerFirebaseUid} AND is_active = true FOR UPDATE`,
     );
   }
   const conditions = [eq(userPrograms.ownerFirebaseUid, ownerFirebaseUid)];
   if (programId) conditions.push(eq(userPrograms.id, programId));
-  else conditions.push(eq(userPrograms.programKey, STARTER_PROGRAM_KEY));
+  else conditions.push(eq(userPrograms.isActive, true));
   const root = (
     await database
       .select()
@@ -950,6 +1077,59 @@ async function findProgramRoot(
   return root;
 }
 
+async function readProgramSummaries(
+  database: RepositoryDatabase,
+  ownerFirebaseUid: string,
+): Promise<
+  readonly Readonly<{
+    root: typeof userPrograms.$inferSelect;
+    summary: ProgramSummaryReadModel;
+  }>[]
+> {
+  const rows = await database
+    .select({ revision: programRevisions, root: userPrograms })
+    .from(userPrograms)
+    .leftJoin(
+      programRevisions,
+      and(
+        eq(programRevisions.ownerFirebaseUid, userPrograms.ownerFirebaseUid),
+        eq(programRevisions.programId, userPrograms.id),
+        eq(programRevisions.id, userPrograms.activeRevisionId),
+      ),
+    )
+    .where(eq(userPrograms.ownerFirebaseUid, ownerFirebaseUid))
+    .orderBy(
+      desc(userPrograms.isActive),
+      desc(userPrograms.updatedAt),
+      asc(userPrograms.id),
+    );
+  return rows.map(({ revision, root }) => {
+    if (
+      !revision ||
+      revision.status !== "published" ||
+      !revision.publishedAt ||
+      !root.activeRevisionId
+    ) {
+      throw new RepositoryConflictError(
+        "A saved program is incomplete and cannot be opened.",
+      );
+    }
+    return {
+      root,
+      summary: {
+        equipmentProfileKind: revision.equipmentProfileKind,
+        id: root.id,
+        isActive: root.isActive,
+        name: root.name,
+        programKey: root.programKey,
+        revisionId: revision.id,
+        revisionNumber: revision.revisionNumber,
+        updatedAt: iso(root.updatedAt),
+      },
+    };
+  });
+}
+
 async function readViewerData(
   database: RepositoryDatabase,
   ownerFirebaseUid: string,
@@ -959,21 +1139,108 @@ async function readViewerData(
     readPreferences(database, ownerFirebaseUid),
     readEquipment(database, ownerFirebaseUid),
   ]);
-  let activeProgram: ActiveProgramReadModel | null = null;
-  const root = (
-    await database
-      .select()
-      .from(userPrograms)
+  const collection = await readProgramSummaries(database, ownerFirebaseUid);
+  const active = collection.filter(({ root }) => root.isActive);
+  if (collection.length > 0 && active.length !== 1) {
+    throw new RepositoryConflictError(
+      "The active program selection needs recovery before training can continue.",
+    );
+  }
+  const activeProgram = active[0]
+    ? await readProgramModel(database, active[0].root)
+    : null;
+  return {
+    profile,
+    preferences,
+    equipment,
+    programs: collection.map(({ summary }) => summary),
+    activeProgram,
+  };
+}
+
+async function lockProgramCollection(
+  database: RepositoryDatabase,
+  ownerFirebaseUid: string,
+): Promise<readonly (typeof userPrograms.$inferSelect)[]> {
+  await database.execute(
+    sql`SELECT firebase_uid FROM user_profiles WHERE firebase_uid = ${ownerFirebaseUid} FOR UPDATE`,
+  );
+  await database.execute(
+    sql`SELECT id FROM user_programs WHERE owner_firebase_uid = ${ownerFirebaseUid} ORDER BY id FOR UPDATE`,
+  );
+  return database
+    .select()
+    .from(userPrograms)
+    .where(eq(userPrograms.ownerFirebaseUid, ownerFirebaseUid))
+    .orderBy(asc(userPrograms.id));
+}
+
+async function activateProgramRoot(
+  database: RepositoryDatabase,
+  ownerFirebaseUid: string,
+  current: typeof userPrograms.$inferSelect,
+  target: typeof userPrograms.$inferSelect,
+  targetRevision: ProgramRevisionRow,
+  now: Date,
+): Promise<void> {
+  if (
+    !target.activeRevisionId ||
+    target.activeRevisionId !== targetRevision.id ||
+    targetRevision.status !== "published" ||
+    !targetRevision.publishedAt
+  ) {
+    throw new RepositoryNotFoundError();
+  }
+  if (current.id !== target.id) {
+    const demoted = await database
+      .update(userPrograms)
+      .set({ isActive: false, updatedAt: now })
       .where(
         and(
           eq(userPrograms.ownerFirebaseUid, ownerFirebaseUid),
-          eq(userPrograms.programKey, STARTER_PROGRAM_KEY),
+          eq(userPrograms.id, current.id),
+          eq(userPrograms.isActive, true),
         ),
       )
-      .limit(1)
-  )[0];
-  if (root?.activeRevisionId) activeProgram = await readProgramModel(database, root);
-  return { profile, preferences, equipment, activeProgram };
+      .returning({ id: userPrograms.id });
+    if (demoted.length !== 1) {
+      throw new RepositoryConflictError(
+        "The active program changed before this selection could be saved.",
+      );
+    }
+    const promoted = await database
+      .update(userPrograms)
+      .set({ isActive: true, updatedAt: now })
+      .where(
+        and(
+          eq(userPrograms.ownerFirebaseUid, ownerFirebaseUid),
+          eq(userPrograms.id, target.id),
+          eq(userPrograms.activeRevisionId, targetRevision.id),
+          eq(userPrograms.isActive, false),
+        ),
+      )
+      .returning({ id: userPrograms.id });
+    if (promoted.length !== 1) {
+      throw new RepositoryConflictError(
+        "The selected program changed before it could become active.",
+      );
+    }
+  }
+  await database
+    .update(userEquipmentProfiles)
+    .set({
+      profileKind: targetRevision.equipmentProfileKind,
+      updatedAt: now,
+    })
+    .where(eq(userEquipmentProfiles.ownerFirebaseUid, ownerFirebaseUid));
+}
+
+function replayAffectedProgramId(payload: Record<string, unknown>): string {
+  const result = z.string().uuid().safeParse(payload["programId"]);
+  if (!result.success) {
+    throw new RepositoryConflictError("The stored idempotency result is invalid.");
+  }
+  return result.data;
 }
 
 async function reserveIdempotency(
@@ -994,6 +1261,9 @@ async function reserveIdempotency(
       resultPayload: { pending: true },
     })
     .onConflictDoNothing();
+  await database.execute(
+    sql`SELECT idempotency_key FROM idempotency_keys WHERE owner_firebase_uid = ${ownerFirebaseUid} AND idempotency_key = ${key} FOR UPDATE`,
+  );
   const row = (
     await database
       .select()
@@ -1188,6 +1458,142 @@ async function cloneTemplateRevision(
         eq(programRevisions.status, "draft"),
       ),
     );
+  return revisionId;
+}
+
+async function cloneProgramGraphRevision(
+  database: RepositoryDatabase,
+  ownerFirebaseUid: string,
+  targetProgramId: string,
+  source: ProgramGraph,
+  now: Date,
+): Promise<string> {
+  const customExerciseIds = source.prescriptions.flatMap((prescription) =>
+    prescription.customExerciseId ? [prescription.customExerciseId] : [],
+  );
+  const customExerciseRows = await loadCustomExercises(
+    database,
+    ownerFirebaseUid,
+    customExerciseIds,
+  );
+  if (customExerciseRows.size !== new Set(customExerciseIds).size) {
+    throw new RepositoryNotFoundError();
+  }
+
+  const revisionId = scopedUuid(
+    "program-revision",
+    ownerFirebaseUid,
+    `${targetProgramId}:clone:${source.revision.id}`,
+  );
+  const programDayId = (sourceId: string): string =>
+    scopedUuid(
+      "program-day",
+      ownerFirebaseUid,
+      `${targetProgramId}:${revisionId}:${sourceId}`,
+    );
+  const programSectionId = (sourceId: string): string =>
+    scopedUuid(
+      "program-section",
+      ownerFirebaseUid,
+      `${targetProgramId}:${revisionId}:${sourceId}`,
+    );
+
+  await database.insert(programRevisions).values({
+    equipmentProfileKind: source.revision.equipmentProfileKind,
+    id: revisionId,
+    ownerFirebaseUid,
+    programId: targetProgramId,
+    publishedAt: null,
+    revisionNumber: 1,
+    sourceTemplateRevisionId: source.revision.sourceTemplateRevisionId,
+    status: "draft",
+  });
+  await database.insert(programDays).values(
+    source.days.map((day) => ({
+      dayKey: day.dayKey,
+      dayNumber: day.dayNumber,
+      displayName: day.displayName,
+      id: programDayId(day.id),
+      ownerFirebaseUid,
+      programId: targetProgramId,
+      revisionId,
+    })),
+  );
+  await database.insert(programSections).values(
+    source.sections.map((section) => ({
+      dayId: programDayId(section.dayId),
+      displayOrder: section.displayOrder,
+      id: programSectionId(section.id),
+      kind: section.kind,
+      ownerFirebaseUid,
+      programId: targetProgramId,
+      revisionId,
+      title: section.title,
+    })),
+  );
+  await database.insert(programPrescriptions).values(
+    source.prescriptions.map((prescription) => ({
+      catalogExerciseId: prescription.catalogExerciseId,
+      customExerciseId: prescription.customExerciseId,
+      displayName: prescription.displayName,
+      displayOrder: prescription.displayOrder,
+      id: scopedUuid(
+        "program-prescription",
+        ownerFirebaseUid,
+        `${targetProgramId}:${revisionId}:${prescription.id}`,
+      ),
+      maximumReps: prescription.maximumReps,
+      maximumSeconds: prescription.maximumSeconds,
+      measurementKind: prescription.measurementKind,
+      minimumReps: prescription.minimumReps,
+      minimumSeconds: prescription.minimumSeconds,
+      notes: prescription.notes,
+      ownerFirebaseUid,
+      programId: targetProgramId,
+      restSeconds: prescription.restSeconds,
+      revisionId,
+      sectionId: programSectionId(prescription.sectionId),
+      setCount: prescription.setCount,
+      setKind: prescription.setKind,
+      targetDistanceM: prescription.targetDistanceM,
+      targetMetadata: cloneJson(prescription.targetMetadata),
+      targetWeightKg: prescription.targetWeightKg,
+    })),
+  );
+  await database.insert(programCardioPrescriptions).values(
+    source.cardio.map((cardio) => ({
+      dayId: programDayId(cardio.dayId),
+      distanceM: cardio.distanceM,
+      durationSeconds: cardio.durationSeconds,
+      id: scopedUuid(
+        "program-cardio",
+        ownerFirebaseUid,
+        `${targetProgramId}:${revisionId}:${cardio.id}`,
+      ),
+      inclinePercent: cardio.inclinePercent,
+      mode: cardio.mode,
+      notes: cardio.notes,
+      ownerFirebaseUid,
+      paceSecondsPerKm: cardio.paceSecondsPerKm,
+      programId: targetProgramId,
+      revisionId,
+    })),
+  );
+  const published = await database
+    .update(programRevisions)
+    .set({ publishedAt: now, status: "published" })
+    .where(
+      and(
+        eq(programRevisions.ownerFirebaseUid, ownerFirebaseUid),
+        eq(programRevisions.programId, targetProgramId),
+        eq(programRevisions.id, revisionId),
+        eq(programRevisions.status, "draft"),
+      ),
+    )
+    .returning({ id: programRevisions.id });
+  if (published.length !== 1) {
+    throw new RepositoryConflictError("The cloned revision could not be published.");
+  }
   return revisionId;
 }
 
@@ -1855,6 +2261,7 @@ export function createProfileProgramRepository(
           programKey: STARTER_PROGRAM_KEY,
           name: "Five-day starter route",
           activeRevisionId: null,
+          isActive: true,
         })
         .onConflictDoNothing();
       const root = await findProgramRoot(tx, viewer.uid, programId, true);
@@ -1892,6 +2299,331 @@ export function createProfileProgramRepository(
     return readProgramModel(database, root);
   }
 
+  async function createProgramFromStarter(
+    viewerInput: ViewerContext | null,
+    input: CreateStarterProgramInput,
+  ): Promise<ProgramCollectionMutationResult> {
+    const viewer = requirePermanentMutationViewer(viewerInput);
+    const normalized = parseCreateStarterProgramInput(input);
+    const requestHash = stableRequestHash("program-create", {
+      equipmentProfileKind: normalized.equipmentProfileKind,
+      name: normalized.name,
+    });
+    return database.transaction(async (transaction) => {
+      const tx = transaction as unknown as Database;
+      const roots = await lockProgramCollection(tx, viewer.uid);
+      const reservation = await reserveIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+        "program-create",
+        requestHash,
+      );
+      if (reservation?.replay) {
+        const affectedProgramId = replayAffectedProgramId(reservation.replay);
+        await findProgramRoot(tx, viewer.uid, affectedProgramId);
+        return {
+          ...(await readViewerData(tx, viewer.uid)),
+          affectedProgramId,
+        };
+      }
+      if (roots.length >= 24) {
+        throw new RepositoryValidationError(
+          "An account can keep at most 24 programs.",
+        );
+      }
+      const activeRoots = roots.filter(({ isActive }) => isActive);
+      if (activeRoots.length !== 1) {
+        throw new RepositoryConflictError(
+          "The active program selection needs recovery before creating another program.",
+        );
+      }
+      const template = await loadTemplateGraph(
+        tx,
+        normalized.equipmentProfileKind,
+      );
+      const programId = scopedUuid(
+        "user-program",
+        viewer.uid,
+        `collection:${normalized.idempotencyKey}`,
+      );
+      const programKey = `program-${programId}`;
+      const now = new Date();
+      await tx.insert(userPrograms).values({
+        activeRevisionId: null,
+        id: programId,
+        isActive: false,
+        name: normalized.name,
+        ownerFirebaseUid: viewer.uid,
+        programKey,
+        updatedAt: now,
+      });
+      const revisionId = await cloneTemplateRevision(
+        tx,
+        viewer.uid,
+        programId,
+        template,
+        now,
+      );
+      const linked = await tx
+        .update(userPrograms)
+        .set({ activeRevisionId: revisionId, updatedAt: now })
+        .where(
+          and(
+            eq(userPrograms.ownerFirebaseUid, viewer.uid),
+            eq(userPrograms.id, programId),
+            isNull(userPrograms.activeRevisionId),
+          ),
+        )
+        .returning({ id: userPrograms.id });
+      if (linked.length !== 1) {
+        throw new RepositoryConflictError(
+          "The new program revision could not be linked.",
+        );
+      }
+      const target = await findProgramRoot(tx, viewer.uid, programId);
+      const targetRevision = (
+        await tx
+          .select()
+          .from(programRevisions)
+          .where(
+            and(
+              eq(programRevisions.ownerFirebaseUid, viewer.uid),
+              eq(programRevisions.programId, programId),
+              eq(programRevisions.id, revisionId),
+            ),
+          )
+          .limit(1)
+      )[0];
+      if (!targetRevision) throw new RepositoryNotFoundError();
+      await activateProgramRoot(
+        tx,
+        viewer.uid,
+        activeRoots[0]!,
+        target,
+        targetRevision,
+        now,
+      );
+      await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        programId,
+        revisionId,
+      });
+      return {
+        ...(await readViewerData(tx, viewer.uid)),
+        affectedProgramId: programId,
+      };
+    });
+  }
+
+  async function cloneProgram(
+    viewerInput: ViewerContext | null,
+    input: CloneProgramInput,
+  ): Promise<ProgramCollectionMutationResult> {
+    const viewer = requirePermanentMutationViewer(viewerInput);
+    const normalized = parseCloneProgramInput(input);
+    const requestHash = stableRequestHash("program-clone", {
+      name: normalized.name,
+      sourceProgramId: normalized.sourceProgramId,
+      sourceRevisionId: normalized.sourceRevisionId,
+    });
+    return database.transaction(async (transaction) => {
+      const tx = transaction as unknown as Database;
+      const roots = await lockProgramCollection(tx, viewer.uid);
+      const reservation = await reserveIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+        "program-clone",
+        requestHash,
+      );
+      if (reservation?.replay) {
+        const affectedProgramId = replayAffectedProgramId(reservation.replay);
+        await findProgramRoot(tx, viewer.uid, affectedProgramId);
+        return {
+          ...(await readViewerData(tx, viewer.uid)),
+          affectedProgramId,
+        };
+      }
+      if (roots.length >= 24) {
+        throw new RepositoryValidationError(
+          "An account can keep at most 24 programs.",
+        );
+      }
+      const activeRoots = roots.filter(({ isActive }) => isActive);
+      if (activeRoots.length !== 1) {
+        throw new RepositoryConflictError(
+          "The active program selection needs recovery before cloning another program.",
+        );
+      }
+      const sourceRoot = roots.find(
+        ({ id }) => id === normalized.sourceProgramId,
+      );
+      if (!sourceRoot?.activeRevisionId) {
+        throw new RepositoryNotFoundError();
+      }
+      if (sourceRoot.activeRevisionId !== normalized.sourceRevisionId) {
+        throw new RepositoryConflictError(
+          "The source program changed after this clone was prepared.",
+        );
+      }
+      const source = await loadProgramGraph(
+        tx,
+        viewer.uid,
+        sourceRoot.id,
+        normalized.sourceRevisionId,
+      );
+      const programId = scopedUuid(
+        "user-program",
+        viewer.uid,
+        `collection:${normalized.idempotencyKey}`,
+      );
+      const now = new Date();
+      await tx.insert(userPrograms).values({
+        activeRevisionId: null,
+        id: programId,
+        isActive: false,
+        name: normalized.name,
+        ownerFirebaseUid: viewer.uid,
+        programKey: `program-${programId}`,
+        updatedAt: now,
+      });
+      const revisionId = await cloneProgramGraphRevision(
+        tx,
+        viewer.uid,
+        programId,
+        source,
+        now,
+      );
+      const linked = await tx
+        .update(userPrograms)
+        .set({ activeRevisionId: revisionId, updatedAt: now })
+        .where(
+          and(
+            eq(userPrograms.ownerFirebaseUid, viewer.uid),
+            eq(userPrograms.id, programId),
+            isNull(userPrograms.activeRevisionId),
+          ),
+        )
+        .returning({ id: userPrograms.id });
+      if (linked.length !== 1) {
+        throw new RepositoryConflictError(
+          "The cloned program revision could not be linked.",
+        );
+      }
+      const target = await findProgramRoot(tx, viewer.uid, programId);
+      const targetRevision = (
+        await tx
+          .select()
+          .from(programRevisions)
+          .where(
+            and(
+              eq(programRevisions.ownerFirebaseUid, viewer.uid),
+              eq(programRevisions.programId, programId),
+              eq(programRevisions.id, revisionId),
+            ),
+          )
+          .limit(1)
+      )[0];
+      if (!targetRevision) throw new RepositoryNotFoundError();
+      await activateProgramRoot(
+        tx,
+        viewer.uid,
+        activeRoots[0]!,
+        target,
+        targetRevision,
+        now,
+      );
+      await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        programId,
+        revisionId,
+      });
+      return {
+        ...(await readViewerData(tx, viewer.uid)),
+        affectedProgramId: programId,
+      };
+    });
+  }
+
+  async function activateProgram(
+    viewerInput: ViewerContext | null,
+    input: ActivateProgramInput,
+  ): Promise<ProgramCollectionMutationResult> {
+    const viewer = requirePermanentMutationViewer(viewerInput);
+    const normalized = parseActivateProgramInput(input);
+    const requestHash = stableRequestHash("program-activate", {
+      expectedActiveProgramId: normalized.expectedActiveProgramId,
+      programId: normalized.programId,
+      revisionId: normalized.revisionId,
+    });
+    return database.transaction(async (transaction) => {
+      const tx = transaction as unknown as Database;
+      const roots = await lockProgramCollection(tx, viewer.uid);
+      const reservation = await reserveIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+        "program-activate",
+        requestHash,
+      );
+      if (reservation?.replay) {
+        const affectedProgramId = replayAffectedProgramId(reservation.replay);
+        await findProgramRoot(tx, viewer.uid, affectedProgramId);
+        return {
+          ...(await readViewerData(tx, viewer.uid)),
+          affectedProgramId,
+        };
+      }
+      const activeRoots = roots.filter(({ isActive }) => isActive);
+      if (
+        activeRoots.length !== 1 ||
+        activeRoots[0]!.id !== normalized.expectedActiveProgramId
+      ) {
+        throw new RepositoryConflictError(
+          "The active program changed after this page loaded.",
+        );
+      }
+      const target = roots.find(({ id }) => id === normalized.programId);
+      if (!target?.activeRevisionId) {
+        throw new RepositoryNotFoundError();
+      }
+      if (target.activeRevisionId !== normalized.revisionId) {
+        throw new RepositoryConflictError(
+          "The selected program changed after this page loaded.",
+        );
+      }
+      const targetRevision = (
+        await tx
+          .select()
+          .from(programRevisions)
+          .where(
+            and(
+              eq(programRevisions.ownerFirebaseUid, viewer.uid),
+              eq(programRevisions.programId, target.id),
+              eq(programRevisions.id, normalized.revisionId),
+            ),
+          )
+          .limit(1)
+      )[0];
+      if (!targetRevision) throw new RepositoryNotFoundError();
+      await activateProgramRoot(
+        tx,
+        viewer.uid,
+        activeRoots[0]!,
+        target,
+        targetRevision,
+        new Date(),
+      );
+      await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        programId: target.id,
+        revisionId: targetRevision.id,
+      });
+      return {
+        ...(await readViewerData(tx, viewer.uid)),
+        affectedProgramId: target.id,
+      };
+    });
+  }
+
   async function confirmEquipmentChange(
     viewerInput: ViewerContext | null,
     input: EquipmentChangeInput,
@@ -1926,6 +2658,11 @@ export function createProfileProgramRepository(
           const current = await readViewerData(tx, viewer.uid);
           return { ...current, changes: stored.changes };
         }
+      }
+      if (!root.isActive) {
+        throw new RepositoryConflictError(
+          "Choose this program as active before changing its equipment.",
+        );
       }
       if (!root.activeRevisionId) throw new RepositoryNotFoundError();
       if (root.activeRevisionId !== normalized.baseRevisionId) {
@@ -2110,6 +2847,11 @@ export function createProfileProgramRepository(
           return readViewerData(tx, viewer.uid);
         }
       }
+      if (!root.isActive) {
+        throw new RepositoryConflictError(
+          "Choose this program as active before publishing an edit.",
+        );
+      }
       if (!root.activeRevisionId) throw new RepositoryNotFoundError();
       if (root.activeRevisionId !== normalized.baseRevisionId) {
         throw new RepositoryConflictError(
@@ -2171,6 +2913,9 @@ export function createProfileProgramRepository(
     onboard,
     getViewerData,
     getActiveProgram,
+    createProgramFromStarter,
+    cloneProgram,
+    activateProgram,
     confirmEquipmentChange,
     updatePreferences,
     publishProgram,
@@ -2199,6 +2944,33 @@ export async function getActiveProgram(
   programId?: string,
 ): Promise<ActiveProgramReadModel> {
   return createProfileProgramRepository(database).getActiveProgram(viewer, programId);
+}
+
+export async function createViewerProgramFromStarter(
+  database: Database,
+  viewer: ViewerContext | null,
+  input: CreateStarterProgramInput,
+): Promise<ProgramCollectionMutationResult> {
+  return createProfileProgramRepository(database).createProgramFromStarter(
+    viewer,
+    input,
+  );
+}
+
+export async function cloneViewerProgram(
+  database: Database,
+  viewer: ViewerContext | null,
+  input: CloneProgramInput,
+): Promise<ProgramCollectionMutationResult> {
+  return createProfileProgramRepository(database).cloneProgram(viewer, input);
+}
+
+export async function activateViewerProgram(
+  database: Database,
+  viewer: ViewerContext | null,
+  input: ActivateProgramInput,
+): Promise<ProgramCollectionMutationResult> {
+  return createProfileProgramRepository(database).activateProgram(viewer, input);
 }
 
 export async function confirmEquipmentChange(

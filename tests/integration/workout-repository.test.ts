@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Database } from "@/db/client";
@@ -133,6 +133,7 @@ async function createFixture(database: Database): Promise<Fixture> {
     ownerFirebaseUid: ownerUid,
     programKey: "fixture-program",
     name: "Fixture program",
+    isActive: true,
   });
   await database.insert(programRevisions).values({
     id: revisionId,
@@ -356,8 +357,18 @@ async function insertCustomProgramForHistory(database: Database, fixture: Fixtur
   const revisionId = randomUUID();
   const dayId = randomUUID();
   const sectionId = randomUUID();
+  await database
+    .update(userPrograms)
+    .set({ isActive: false })
+    .where(
+      and(
+        eq(userPrograms.ownerFirebaseUid, fixture.ownerUid),
+        eq(userPrograms.id, fixture.programId),
+      ),
+    );
   await database.insert(userPrograms).values({
     id: programId,
+    isActive: true,
     ownerFirebaseUid: fixture.ownerUid,
     programKey: `replacement-history-${programId}`,
     name: "Replacement history program",
