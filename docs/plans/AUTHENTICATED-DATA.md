@@ -46,6 +46,12 @@ A verified member can finish onboarding, keep one active equipment-aware program
 
 Repositories are server-only and receive a verified viewer object, never a client UID. Onboarding, template cloning, revision publication/pointer movement, session snapshot creation, operation application, and deletion each use one database transaction. Reads select owner plus resource ID together. Mutation results are recorded with an idempotency key before returning. Database constraints are the final boundary; repository validation turns expected conflicts into stable application errors.
 
+### Runner transport boundary
+
+The browser submits only the route-scoped session, immutable base revision, idempotency key, operation kind, and strict operation payload. It doesn't submit an owner UID, local queue status, attempt count, persisted identifier, or exercise outcome version. The route derives the viewer from the secure session and rejects unknown transport fields before persistence.
+
+The runner-specific repository entry verifies that the immutable session belongs to the viewer and matches the submitted base revision. It derives the applicable exercise outcome version inside the server persistence path, applies the operation under the owner lock, and returns the runner's `saved`, `duplicate`, or structured `failed` result. This boundary lets an offline queue replay after refresh without trusting client ownership or stale server-only version state.
+
 ## Authentication and authorization
 
 Every repository entry requires a non-null server viewer. Permanent mutations require `eligibleForPermanentMutations`; password verification and Google verified identity are represented by that server-derived fact. Deletion additionally requires recent authentication at the route boundary. CSRF is validated before every browser mutation. Repository APIs do not export an `ownerUid` argument, and foreign IDs return the same not-found error as missing IDs.
@@ -71,10 +77,11 @@ Private notes, loads, bodyweight additions, cardio details, history, and analyti
 - Foreign program/session/custom-exercise IDs are indistinguishable from missing IDs and produce no write.
 - Start/resume is idempotent under duplicate and concurrent submission and never exposes a partial snapshot.
 - Every set/cardio/outcome operation validates snapshot scope, kind, position, version, terminal state, and request-hash replay.
+- A queued runner operation succeeds without a client-supplied outcome version, while the server still rejects a foreign owner, foreign session, stale base revision, mismatched payload kind, and reused idempotency key with different content.
 - Completed and abandoned sessions are immutable and appear in owner-only history from snapshots.
 - Records and progress use persisted logs, canonical units, declared calculation versions, and exact-tie behavior.
 - Slow, failed, expired-auth, duplicate, stale, offline, refresh, and back-navigation paths never claim unsaved data succeeded.
 
 ## Automated tests and browser evidence
 
-PGlite integration tests use the real migration and starter seed. Retained fail-then-pass evidence covers verified/unverified onboarding, duplicate replay, exact profile clones, active-pointer ownership, revision immutability, equipment substitution, foreign-ID denial, concurrent start/resume, immutable snapshots, all four measurement shapes, set bounds, cardio uniqueness, operation hash conflict, outcome versions, terminal freeze, and history isolation. Unit tests cover request hashing and stable error mapping. Browser evidence must replay onboarding, both equipment profiles, program edit/confirmation, active runner save/offline/reload/resume/retry/complete, history, records, analytics, auth expiry, and deletion on phone, tablet, and desktop in Chromium and WebKit with keyboard, reduced motion, dark mode, and automated accessibility checks.
+PGlite integration tests use the real migration and starter seed. Retained fail-then-pass evidence covers verified/unverified onboarding, duplicate replay, exact profile clones, active-pointer ownership, revision immutability, equipment substitution, foreign-ID denial, concurrent start/resume, immutable snapshots, all four measurement shapes, set bounds, cardio uniqueness, operation hash conflict, outcome versions, terminal freeze, and history isolation. API contract tests submit the exact owner-free runner envelope, reject client lifecycle and ownership fields, and prove that authentication happens before body parsing or database construction. Unit tests cover request hashing and stable error mapping. Browser evidence must replay onboarding, both equipment profiles, program edit/confirmation, active runner save/offline/reload/resume/retry/complete, history, records, analytics, auth expiry, and deletion on phone, tablet, and desktop in Chromium and WebKit with keyboard, reduced motion, dark mode, and automated accessibility checks.
