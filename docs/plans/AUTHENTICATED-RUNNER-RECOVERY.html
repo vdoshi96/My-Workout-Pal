@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="751bd975b59b5b8314ed891d2779ca4c5072f6383177e785454316e1a01f7e24">
+  <title>Authenticated runner recovery harness plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Authenticated runner recovery harness plan</h1>
+<h2>User outcome</h2>
+<p>A verified member can start a real persisted workout from the selected program day, log canonical set and cardio data, survive a response interruption and full-page reload, finish the workout, and open the immutable result. The browser evidence must use the production runner, client adapters, IndexedDB storage, workout API parser, repository, migrations, and seed against the credential-free PGlite harness. It must not simulate saved activity in fixture-only state or imply that synthetic auth proves Firebase.</p>
+<p>This checkpoint is the first bounded runner slice. It proves start/resume, an accepted operation whose response fails, server/device reconciliation, duplicate idempotency, terminal completion, and owner isolation. A later checkpoint extends the same boundary to offline events, expired authentication after page load, personal records, the full progress surface, substitution, and multi-tab conflicts.</p>
+<h2>Navigation</h2>
+<ol>
+<li>Alice opens <code>/app</code>, chooses the dumbbells profile, and creates the real five-day starter program.</li>
+<li>Alice opens Push at <code>/app/program/push</code> and selects <strong>Start or resume workout</strong>.</li>
+<li>The production start controller posts the owner-free program/day envelope and navigates to <code>/workout/&lt;opaque-session-id&gt;</code>.</li>
+<li>The fixture workout page loads Alice through the server-derived harness context, resolves the session through the owner-scoped repository, hydrates the immutable snapshot, and mounts <code>OwnedWorkoutRunner</code>.</li>
+<li>Alice logs the first work set while a one-shot harness scenario lets the repository accept the operation but replaces the response with a truthful server error.</li>
+<li>Alice reloads. Server-confirmed progress and the matching IndexedDB draft reconcile without duplicating the set or claiming that unrelated work was saved.</li>
+<li>Alice completes the remaining required movement decisions and cardio, completes the session, and follows the production terminal navigation to <code>/app/history/&lt;session-id&gt;</code>.</li>
+<li>Bob requests Alice&#39;s session through both the read endpoint and route. The result must match an unknown UUID in status, body shape, cache policy, rendered state, and effects.</li>
+</ol>
+<p>The fixture adds explicit <code>/app/program/[day]</code>, <code>/workout/[sessionId]</code>, workout API, and history-detail routes. The existing catch-all remains an honest unmounted state for every route outside this slice.</p>
+<h2>UI states</h2>
+<ul>
+<li>Day detail: ready, unverified/disabled, opening, resumed, failed start, and missing day.</li>
+<li>Runner: recovery loading, ready, pending, saved, failed, retryable, server-confirmed-after-response-error, current exercise/set navigation, cardio selected/saved, completing, completed, and blocked local-reconciliation error.</li>
+<li>History: immutable completed detail with sets, skipped/completed movements, cardio, units, and no invented values.</li>
+<li>Foreign/missing route: indistinguishable not-found output without an owner identifier.</li>
+<li>The harness banner remains visible so screenshots cannot be represented as hosted production evidence.</li>
+</ul>
+<p>No UI may report success before the production reducer accepts a repository-shaped response. The deliberate accepted-then-error scenario must first show failure or pending recovery; only a subsequent server reload may promote the matching idempotency key to saved.</p>
+<h2>Domain types and invariants</h2>
+<ul>
+<li><code>HarnessScenario</code> gains one bounded value: <code>accept-next-runner-then-error</code>. It preserves the verified server viewer and is consumed only after one successful runner operation.</li>
+<li>Program, day, session, snapshot, exercise, set, cardio, and idempotency identities remain UUID/opaque values created by the production repositories or client controller. Requests never contain a Firebase UID.</li>
+<li>Set measurements enter the client in display units, cross the validated boundary, and persist in kilograms. Cardio distance enters in the member&#39;s display units and persists in meters.</li>
+<li>The immutable <code>baseRevision</code> originates from the loaded session; clients cannot supply lifecycle or ownership state.</li>
+<li>A repeated operation with the same idempotency key and payload is a replay, not a second log. A key reused with another payload remains a conflict.</li>
+<li>A terminal session cannot accept later operations. History reads snapshot names and measurements rather than live catalog labels.</li>
+</ul>
+<h2>Persistence contracts</h2>
+<ul>
+<li>The fixture keeps one isolated PGlite database per test scope, applies migrations <code>0000</code> through <code>0003</code>, and runs the deterministic starter seed.</li>
+<li>Start, resume, and operation fixture route handlers delegate to <code>createWorkoutApi</code> and <code>createWorkoutRepository</code>. The fixture may adapt only its harness CSRF cookie into the production cookie name before delegation; it must not copy workout schemas, operation construction, response mapping, or ownership rules.</li>
+<li>The workout page uses <code>loadResume</code>, <code>hydrateWorkoutResumeState</code>, <code>getViewerProfileProgram</code>, approved-video lookup, and the production route-model helpers.</li>
+<li>IndexedDB remains browser storage, namespaced by the server-derived owner UID. Reload retains the matching draft; foreign-owner, foreign-session, corrupt, and snapshot-mismatch records remain rejected by production code.</li>
+<li>The accepted-then-error scenario submits the real operation first, then discards its successful HTTP response in favor of a bounded <code>500 no-store</code> response. The database and receipt stay committed, so reload can prove reconciliation. The evidence must call this an accepted operation followed by an error response, not a literal network disconnect.</li>
+</ul>
+<h2>Authentication and authorization</h2>
+<p>Alice and Bob are fixed synthetic <code>ViewerContext</code> values selected before navigation by test-only headers. The browser never sends or chooses a UID in an application body. Every fixture page and handler derives the viewer from the request headers on the server.</p>
+<p>Verified Alice may mutate. Unverified Alice can view program data but cannot start or change a workout. Bob receives the same <code>404 not_found</code> response and no-store policy for Alice&#39;s session as for an unknown session. Fixture routes remain outside <code>src/app</code>, production builds remain free of harness markers, and no Firebase, Neon, Vercel, YouTube, ADC, or user environment variable reaches the child processes.</p>
+<h2>Loading, empty, error, interrupted, and worst-case behavior</h2>
+<ul>
+<li>A start failure retains the retry-stable client key and stays on the day page.</li>
+<li>A server-accepted set followed by a <code>500</code> is left in IndexedDB with its original key and an honest failed state.</li>
+<li>Full reload obtains the authoritative server snapshot, overlays only unresolved local targets, recognizes the already-confirmed operation, and removes the false failure without creating another set row.</li>
+<li>A duplicate replay returns the same persisted identity and changes no counts.</li>
+<li>Refresh during recovery shows the reconciliation surface and never overwrites a mismatched draft.</li>
+<li>Completion stays unavailable until every movement is completed or skipped and cardio is saved.</li>
+<li>A terminal failure does not navigate to history. Navigation occurs only after the completion operation is confirmed.</li>
+<li>Unknown, malformed, foreign, and terminal session requests fail closed with <code>no-store</code>.</li>
+<li>The bounded first slice does not claim literal browser offline, tab-close, post-load auth expiry, or multi-tab conflict evidence. Those remain explicit follow-up acceptance items.</li>
+</ul>
+<h2>Phone, tablet, and desktop behavior</h2>
+<p>The runner flow runs in Chromium desktop and WebKit phone using the existing dynamic exact-loopback production fixture. The day card, set editor, exercise outline, cardio fields, recovery state, footer controls, and history detail must remain reachable without horizontal overflow. Sticky/fixed controls must not cover the active field at the initial phone viewport. A later full private matrix adds Chromium phone/tablet and WebKit desktop once the vertical behavior is stable.</p>
+<h2>Accessibility</h2>
+<p>The browser test uses keyboard navigation for entering the day and at least one runner action, confirms the skip link, and runs Axe serious/critical scans on day detail, ready runner, material failure/recovery, and immutable history. Status changes use existing live regions; failure must be an alert or named recovery region; every set, cardio, note, skip, and completion control retains a programmatic name. Focus must survive reload at a sensible document landmark, and reduced-motion behavior must not be required for persistence correctness.</p>
+<h2>Privacy and security</h2>
+<p>Only synthetic Alice/Bob identifiers, notes, and measurements enter QA evidence. Route logs and assertions must not print raw request bodies or secret environment values. The runner command retains its explicit environment allowlist and loopback-only listener. Generated screenshots contain only synthetic data and the local-harness banner. Teardown closes only the test scope&#39;s in-memory database and clears its fault receipt.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Alice can onboard, open Push, start a persisted session, and reach the production <code>OwnedWorkoutRunner</code> in Chromium and WebKit.</li>
+<li>The start request contains program/day/idempotency only; the operation request contains session/base revision/idempotency/payload only; neither contains ownership data.</li>
+<li>The one-shot accepted-then-error set is present exactly once in PGlite, first appears failed/pending locally, and becomes saved after reload through production reconciliation.</li>
+<li>Replaying the captured request returns the same persisted operation without adding a set log.</li>
+<li>Alice can satisfy or skip every exercise, save walker cardio, complete, and reach immutable history with the exact logged values.</li>
+<li>Bob&#39;s Alice-session read equals an unknown-session read, remains no-store, and causes no database mutation.</li>
+<li>The runner and history have no serious/critical Axe violations or horizontal overflow in Chromium desktop and WebKit phone.</li>
+<li>Production <code>pnpm build</code> and the 41-route production boundary contain no harness route or marker.</li>
+<li>Hosted Firebase cookies/provider behavior and literal disconnection remain unclaimed.</li>
+</ul>
+<h2>Automated tests and fail-first evidence</h2>
+<p>Retain a focused failing test before implementation that expects the fixture to mount <code>/app/program/[day]</code>, <code>/workout/[sessionId]</code>, and owner-scoped workout handlers rather than the catch-all. A second fail-first browser assertion must expect the first accepted set to survive the deliberate error response and reload exactly once.</p>
+<p>Focused tests cover scenario parsing/one-shot consumption, harness CSRF request adaptation, no provider environment regression, foreign/missing equivalence, accepted-then-error response semantics, and production-boundary exclusion. Browser tests cover the complete vertical flow in both configured projects. Verification commands are:</p>
+<pre><code class="language-bash">pnpm exec vitest run tests/unit/authenticated-harness-policy.test.ts tests/integration/workout-api-contract.test.ts tests/integration/workout-repository.test.ts
+pnpm test:e2e:authenticated
+pnpm verify
+pnpm test:e2e:release
+</code></pre>
+<h2>Browser evidence required for completion</h2>
+<p>The newest authenticated QA record must name the exact commit, the two browsers/viewports, session scope, initial <code>500</code>, recovered saved set count, duplicate replay result, terminal history values, Bob/missing equivalence, zero serious/critical Axe findings, overflow result, and production-build exclusion. Retain only the newest minimal synthetic screenshots: interrupted runner and completed immutable history. Never label this fixture evidence as Firebase, Neon, hosted Vercel, literal offline, or production persistence proof.</p>
+
+  </main>
+</body>
+</html>
