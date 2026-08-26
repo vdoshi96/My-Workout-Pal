@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f17827b07b5c6edafffbc5f08baef0ae20b4220891ef3871cab21626acd96371">
+  <meta name="source-sha256" content="18783e6b08cfde8f20a28e5512ffaa55882fc803b65315568a7a9c23b33f20cf">
   <title>Authenticated runner recovery harness plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -71,7 +71,7 @@
 </ul>
 <h2>Authentication and authorization</h2>
 <p>Alice and Bob are fixed synthetic <code>ViewerContext</code> values selected before navigation by test-only headers. The browser never sends or chooses a UID in an application body. The harness injects those headers only into exact-loopback first-party requests; it must not leak them to YouTube or any other third-party origin. Every fixture page and handler derives the viewer from the request headers on the server.</p>
-<p>Verified Alice may mutate. Unverified Alice can view program data but cannot start or change a workout. Bob receives the same <code>404 not_found</code> response and no-store policy for Alice&#39;s session as for an unknown session. Fixture routes remain outside <code>src/app</code>, production builds remain free of harness markers, and no Firebase, Neon, Vercel, YouTube, ADC, or user environment variable reaches the child processes.</p>
+<p>Verified Alice may mutate. Unverified Alice can view program data but cannot start or change a workout. Bob receives the same <code>404 not_found</code> response and no-store policy for Alice&#39;s session as for an unknown session. Rendered route documents must also match after replacing only the caller-supplied session token that Next necessarily echoes in its router payload; no owner or existence-dependent content may differ. Fixture routes remain outside <code>src/app</code>, production builds remain free of harness markers, and no Firebase, Neon, Vercel, YouTube, ADC, or user environment variable reaches the child processes.</p>
 <h2>Loading, empty, error, interrupted, and worst-case behavior</h2>
 <ul>
 <li>A start failure retains the retry-stable client key and stays on the day page.</li>

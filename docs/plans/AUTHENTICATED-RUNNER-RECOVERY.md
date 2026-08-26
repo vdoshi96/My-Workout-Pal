@@ -50,7 +50,7 @@ No UI may report success before the production reducer accepts a repository-shap
 
 Alice and Bob are fixed synthetic `ViewerContext` values selected before navigation by test-only headers. The browser never sends or chooses a UID in an application body. The harness injects those headers only into exact-loopback first-party requests; it must not leak them to YouTube or any other third-party origin. Every fixture page and handler derives the viewer from the request headers on the server.
 
-Verified Alice may mutate. Unverified Alice can view program data but cannot start or change a workout. Bob receives the same `404 not_found` response and no-store policy for Alice's session as for an unknown session. Fixture routes remain outside `src/app`, production builds remain free of harness markers, and no Firebase, Neon, Vercel, YouTube, ADC, or user environment variable reaches the child processes.
+Verified Alice may mutate. Unverified Alice can view program data but cannot start or change a workout. Bob receives the same `404 not_found` response and no-store policy for Alice's session as for an unknown session. Rendered route documents must also match after replacing only the caller-supplied session token that Next necessarily echoes in its router payload; no owner or existence-dependent content may differ. Fixture routes remain outside `src/app`, production builds remain free of harness markers, and no Firebase, Neon, Vercel, YouTube, ADC, or user environment variable reaches the child processes.
 
 ## Loading, empty, error, interrupted, and worst-case behavior
 

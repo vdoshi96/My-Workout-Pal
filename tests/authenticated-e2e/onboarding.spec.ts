@@ -156,7 +156,12 @@ async function programCount(page: Page): Promise<number> {
   });
 }
 
-async function saveWeightSet(page: Page, weight: string, repetitions: string) {
+async function saveWeightSet(
+  page: Page,
+  weight: string,
+  repetitions: string,
+  activation: "keyboard" | "pointer" = "pointer",
+) {
   await page.getByLabel("Weight (lb)").fill(weight);
   await page.getByLabel("Repetitions").fill(repetitions);
   const responsePromise = page.waitForResponse(
@@ -164,7 +169,14 @@ async function saveWeightSet(page: Page, weight: string, repetitions: string) {
       /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Save set" }).click();
+  const saveButton = page.getByRole("button", { name: "Save set" });
+  if (activation === "keyboard") {
+    await saveButton.focus();
+    await expect(saveButton).toBeFocused();
+    await saveButton.press("Enter");
+  } else {
+    await saveButton.click();
+  }
   return responsePromise;
 }
 
@@ -323,7 +335,10 @@ test("an accepted runner save reconciles after an error response, replays once, 
   const onboarded = await submitOnboarding(alice.page, "dumbbells");
   expect(onboarded.response.status()).toBe(201);
 
-  await alice.page.getByRole("link", { name: /Push/ }).click();
+  const pushDay = alice.page.getByRole("link", { name: /Push/ });
+  await pushDay.focus();
+  await expect(pushDay).toBeFocused();
+  await pushDay.press("Enter");
   await expect(alice.page).toHaveURL(/\/app\/program\/push$/u);
   await expect(alice.page.getByRole("heading", { name: "Push" })).toBeVisible();
   await assertAccessible(alice.page);
@@ -344,13 +359,25 @@ test("an accepted runner save reconciles after an error response, replays once, 
   ).toBeVisible();
   await assertAccessible(alice.page);
 
-  const interrupted = await saveWeightSet(alice.page, "25", "12");
+  const interrupted = await saveWeightSet(alice.page, "25", "12", "keyboard");
   expect(interrupted.status()).toBe(500);
   const interruptedBody = interrupted.request().postDataJSON() as Record<string, unknown>;
   expect(interruptedBody).not.toHaveProperty("ownerUid");
   expect(interruptedBody).not.toHaveProperty("sequence");
   await expect(alice.page.getByRole("heading", { name: "Save activity" })).toBeVisible();
   await expect(alice.page.getByText("1 failed")).toBeVisible();
+  await expect(
+    alice.page.getByText("Local authenticated QA harness · synthetic data only"),
+  ).toBeVisible();
+  await assertAccessible(alice.page);
+  const interruptedEvidencePath = testInfo.outputPath(
+    "authenticated-runner-interrupted.png",
+  );
+  await alice.page.screenshot({ fullPage: true, path: interruptedEvidencePath });
+  await testInfo.attach("authenticated-runner-interrupted", {
+    contentType: "image/png",
+    path: interruptedEvidencePath,
+  });
 
   const duplicate = await privateMutation(
     alice.page,
@@ -362,6 +389,9 @@ test("an accepted runner save reconciles after an error response, replays once, 
     status: 200,
   });
   expect(duplicate.cacheControl).toContain("no-store");
+  expect(alice.failedResponses).toEqual([
+    `POST /api/app/workouts/${sessionId}/operations 500`,
+  ]);
 
   await alice.page.reload();
   await expect(
@@ -443,12 +473,38 @@ test("an accepted runner save reconciles after an error response, replays once, 
   expect(foreign).toMatchObject({ status: 404, body: { error: "not_found" } });
   expect(foreign.cacheControl).toContain("no-store");
 
-  const foreignRoute = await bob.page.goto(`/workout/${sessionId}`);
-  expect(foreignRoute?.status()).toBe(404);
+  const foreignRouteResponse = await bob.page.goto(`/workout/${sessionId}`);
+  expect(foreignRouteResponse).not.toBeNull();
+  const foreignRouteBody = await foreignRouteResponse!.text();
+  expect(foreignRouteBody).toContain(sessionId);
+  const foreignRoute = {
+    body: foreignRouteBody.replaceAll(sessionId, "<requested-session-id>"),
+    cacheControl: foreignRouteResponse!.headers()["cache-control"],
+    status: foreignRouteResponse!.status(),
+  };
   await expect(bob.page.getByText("This page could not be found.")).toBeVisible();
-  const missingRoute = await bob.page.goto(`/workout/${unknownId}`);
-  expect(missingRoute?.status()).toBe(404);
+  const missingRouteResponse = await bob.page.goto(`/workout/${unknownId}`);
+  expect(missingRouteResponse).not.toBeNull();
+  const missingRouteBody = await missingRouteResponse!.text();
+  expect(missingRouteBody).toContain(unknownId);
+  const missingRoute = {
+    body: missingRouteBody.replaceAll(unknownId, "<requested-session-id>"),
+    cacheControl: missingRouteResponse!.headers()["cache-control"],
+    status: missingRouteResponse!.status(),
+  };
   await expect(bob.page.getByText("This page could not be found.")).toBeVisible();
+  expect(foreignRoute).toEqual(missingRoute);
+  expect(foreignRoute).toMatchObject({ status: 404 });
+  expect(foreignRoute.cacheControl).toContain("no-store");
+
+  expect([...bob.failedResponses].sort()).toEqual(
+    [
+      `GET /api/app/workouts/${sessionId} 404`,
+      `GET /api/app/workouts/${unknownId} 404`,
+      `GET /workout/${sessionId} 404`,
+      `GET /workout/${unknownId} 404`,
+    ].sort(),
+  );
 
   await alice.page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));
   await bob.close();

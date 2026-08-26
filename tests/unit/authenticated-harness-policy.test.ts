@@ -255,5 +255,20 @@ describe("credential-free authenticated harness boundary", () => {
     expect(memberProgramHome).toContain(
       '<Link href={`/app/program/${day.dayKey}`} prefetch={false}>',
     );
+
+    const fixtureDay = readFileSync(
+      resolve(
+        repositoryRoot,
+        "tests/fixtures/authenticated-app/app/app/program/[day]/page.tsx",
+      ),
+      "utf8",
+    );
+    expect(fixtureDay.match(/prefetch=\{false\}/gu)).toHaveLength(2);
+
+    const productionDay = readFileSync(
+      resolve(repositoryRoot, "src/app/app/program/[day]/page.tsx"),
+      "utf8",
+    );
+    expect(productionDay.match(/prefetch=\{false\}/gu)).toHaveLength(2);
   });
 });

@@ -58,11 +58,17 @@ export default async function HarnessMemberDayPage({
                       </small>
                     </span>
                     {prescription.exercise.kind === "catalog" ? (
-                      <Link href={`/library/${prescription.exercise.slug}`}>
+                      <Link
+                        href={`/library/${prescription.exercise.slug}`}
+                        prefetch={false}
+                      >
                         Details <Icon name="chevron-right" />
                       </Link>
                     ) : (
-                      <Link href={`/app/library/custom/${prescription.exercise.id}`}>
+                      <Link
+                        href={`/app/library/custom/${prescription.exercise.id}`}
+                        prefetch={false}
+                      >
                         Private details <Icon name="chevron-right" />
                       </Link>
                     )}

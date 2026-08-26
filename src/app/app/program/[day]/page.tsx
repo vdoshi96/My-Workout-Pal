@@ -39,9 +39,9 @@ export default async function MemberDayPage({ params }: Readonly<{ params: Promi
                       <small>{prescription.setCount} × {prescription.minimumReps ?? prescription.minimumSeconds}–{prescription.maximumReps ?? prescription.maximumSeconds}{prescription.minimumSeconds ? " sec" : " reps"} · {prescription.restSeconds}s rest</small>
                     </span>
                     {prescription.exercise.kind === "catalog" ? (
-                      <Link href={`/library/${prescription.exercise.slug}`}>Details <Icon name="chevron-right" /></Link>
+                      <Link href={`/library/${prescription.exercise.slug}`} prefetch={false}>Details <Icon name="chevron-right" /></Link>
                     ) : (
-                      <Link href={`/app/library/custom/${prescription.exercise.id}`}>Private details <Icon name="chevron-right" /></Link>
+                      <Link href={`/app/library/custom/${prescription.exercise.id}`} prefetch={false}>Private details <Icon name="chevron-right" /></Link>
                     )}
                   </li>
                 ))}
