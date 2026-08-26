@@ -7,9 +7,12 @@ import { assertValidMutationRequest } from "@/server/auth/request";
 import type { ViewerContext } from "@/server/auth/viewer";
 import {
   WorkoutRepositoryError,
-  type SubmitWorkoutOperationInput,
   type WorkoutRepository,
 } from "@/server/repositories/workout-repository";
+import type {
+  RunnerOperation,
+  RunnerOperationPayload,
+} from "@/domain/workout-runner";
 
 const MAX_BODY_BYTES = 32 * 1_024;
 const MAX_IDEMPOTENCY_KEY_LENGTH = 180;
@@ -18,7 +21,6 @@ const MAX_REASON_LENGTH = 500;
 
 const resourceId = z.string().trim().uuid();
 const idempotencyKey = z.string().trim().min(1).max(MAX_IDEMPOTENCY_KEY_LENGTH);
-const expectedVersion = z.number().int().min(1);
 const optionalWarmup = z.boolean().optional();
 
 const measurement = z.discriminatedUnion("kind", [
@@ -73,13 +75,13 @@ const startInput = z.object({
 const paramsInput = z.object({ sessionId: resourceId }).strict();
 const operationCommon = {
   idempotencyKey,
+  baseRevision: resourceId,
 };
 
 const operationInput = z.discriminatedUnion("kind", [
   z.object({
     ...operationCommon,
     kind: z.literal("save_set"),
-    expectedVersion,
     payload: z.object({
       kind: z.literal("save_set"),
       setId: z.string().trim().min(1).max(220),
@@ -100,7 +102,6 @@ const operationInput = z.discriminatedUnion("kind", [
   z.object({
     ...operationCommon,
     kind: z.literal("save_note"),
-    expectedVersion,
     payload: z.object({
       kind: z.literal("save_note"),
       exerciseId: resourceId,
@@ -110,7 +111,6 @@ const operationInput = z.discriminatedUnion("kind", [
   z.object({
     ...operationCommon,
     kind: z.literal("skip_exercise"),
-    expectedVersion,
     payload: z.object({
       kind: z.literal("skip_exercise"),
       exerciseId: resourceId,
@@ -120,7 +120,6 @@ const operationInput = z.discriminatedUnion("kind", [
   z.object({
     ...operationCommon,
     kind: z.literal("substitute_exercise"),
-    expectedVersion,
     payload: z.object({
       kind: z.literal("substitute_exercise"),
       exerciseId: resourceId,
@@ -135,7 +134,6 @@ const operationInput = z.discriminatedUnion("kind", [
   z.object({
     ...operationCommon,
     kind: z.literal("complete_exercise"),
-    expectedVersion,
     payload: z.object({
       kind: z.literal("complete_exercise"),
       exerciseId: resourceId,
@@ -165,6 +163,7 @@ class RequestBodyTooLargeError extends Error {}
 type WorkoutApiDependencies = Readonly<{
   getViewer(): Promise<ViewerContext | null>;
   getRepository(): WorkoutRepository;
+  now?: () => number;
 }>;
 
 type WorkoutRouteParams = Readonly<{ sessionId: string }>;
@@ -275,71 +274,62 @@ async function readJson(request: NextRequest): Promise<unknown> {
   return JSON.parse(text) as unknown;
 }
 
-function operationForRepository(
-  sessionId: string,
+function payloadForRepository(
   input: z.infer<typeof operationInput>,
-): SubmitWorkoutOperationInput {
+): RunnerOperationPayload {
   switch (input.kind) {
     case "save_set":
       return {
-        sessionId,
-        idempotencyKey: input.idempotencyKey,
-        kind: input.kind,
-        payload: {
-          ...input.payload,
-          measurement: measurementForRepository(input.payload.measurement),
-        },
-        expectedVersion: input.expectedVersion,
+        ...input.payload,
+        measurement: measurementForRepository(input.payload.measurement),
       };
     case "save_note":
     case "complete_exercise":
-      return {
-        sessionId,
-        idempotencyKey: input.idempotencyKey,
-        kind: input.kind,
-        payload: input.payload,
-        expectedVersion: input.expectedVersion,
-      };
+      return input.payload;
     case "save_cardio":
       return {
-        sessionId,
-        idempotencyKey: input.idempotencyKey,
-        kind: input.kind,
-        payload: {
-          ...input.payload,
-          cardio: {
-            ...input.payload.cardio,
-            distanceMeters: input.payload.cardio.distanceMeters,
-            paceSecondsPerKilometer: input.payload.cardio.paceSecondsPerKilometer,
-            paceSource: input.payload.cardio.paceSource,
-            inclinePercent: input.payload.cardio.inclinePercent,
-          },
+        ...input.payload,
+        cardio: {
+          ...input.payload.cardio,
+          distanceMeters: input.payload.cardio.distanceMeters,
+          paceSecondsPerKilometer: input.payload.cardio.paceSecondsPerKilometer,
+          paceSource: input.payload.cardio.paceSource,
+          inclinePercent: input.payload.cardio.inclinePercent,
         },
       };
     case "skip_exercise":
     case "substitute_exercise":
-      return {
-        sessionId,
-        idempotencyKey: input.idempotencyKey,
-        kind: input.kind,
-        payload: { ...input.payload, reason: input.payload.reason },
-        expectedVersion: input.expectedVersion,
-      };
+      return { ...input.payload, reason: input.payload.reason };
     case "abandon_session":
-      return {
-        sessionId,
-        idempotencyKey: input.idempotencyKey,
-        kind: input.kind,
-        payload: { ...input.payload, reason: input.payload.reason },
-      };
+      return { ...input.payload, reason: input.payload.reason };
     case "complete_session":
-      return {
-        sessionId,
-        idempotencyKey: input.idempotencyKey,
-        kind: input.kind,
-        payload: input.payload,
-      };
+      return input.payload;
   }
+}
+
+function operationForRepository(
+  viewer: ViewerContext,
+  sessionId: string,
+  input: z.infer<typeof operationInput>,
+  createdAt: number,
+): RunnerOperation {
+  return {
+    sessionId,
+    ownerUid: viewer.uid,
+    baseRevision: input.baseRevision,
+    idempotencyKey: input.idempotencyKey,
+    kind: input.kind,
+    payload: payloadForRepository(input),
+    sequence: 0,
+    createdAt,
+    attempts: 0,
+    status: "pending",
+    persistedId: undefined,
+    errorCode: undefined,
+    errorMessage: undefined,
+    retryable: undefined,
+    failureKind: undefined,
+  };
 }
 
 function measurementForRepository(
@@ -411,7 +401,15 @@ export function createWorkoutApi(dependencies: WorkoutApiDependencies) {
         const input = operationInput.parse(await readJson(request));
         const result = await dependencies
           .getRepository()
-          .submitOperation(viewer, operationForRepository(sessionId, input));
+          .submitRunnerOperation(
+            viewer,
+            operationForRepository(
+              viewer,
+              sessionId,
+              input,
+              dependencies.now?.() ?? Date.now(),
+            ),
+          );
         return json(result);
       } catch (error) {
         return errorResponse(error, true);

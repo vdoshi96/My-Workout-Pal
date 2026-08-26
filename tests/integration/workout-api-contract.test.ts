@@ -255,7 +255,12 @@ describe("private workout API contract", () => {
     });
   });
 
-  it("rejects client identity and extra operation fields", async () => {
+  it.each([
+    ["ownerUid", "attacker"],
+    ["expectedVersion", 1],
+    ["sequence", 7],
+    ["status", "pending"],
+  ] as const)("rejects the client-controlled %s operation field", async (field, value) => {
     const getRepository = vi.fn(() => repository());
     const api = createWorkoutApi({ getRepository, getViewer: async () => viewer });
 
@@ -263,9 +268,10 @@ describe("private workout API contract", () => {
       workoutRequest(`/api/app/workouts/${sessionId}/operations`, {
         body: {
           idempotencyKey: "note-1",
+          baseRevision: "55555555-5555-4555-8555-555555555555",
           kind: "save_note",
-          ownerUid: "attacker",
           payload: { kind: "save_note", exerciseId, note: "Felt steady" },
+          [field]: value,
         },
       }),
       { sessionId },
@@ -275,37 +281,82 @@ describe("private workout API contract", () => {
     expect(getRepository).not.toHaveBeenCalled();
   });
 
-  it("strictly normalizes a valid operation before persistence", async () => {
-    const submitOperation = vi.fn(async () => ({
-      status: "saved" as const,
-      persistedId: exerciseId,
-      sessionState: "active" as const,
-      exerciseVersion: 2,
+  it("returns a structured runner conflict for local retry and recovery handling", async () => {
+    const submitRunnerOperation = vi.fn(async () => ({
+      status: "failed" as const,
+      code: "conflict",
+      message: "The workout revision changed.",
+      retryable: false,
+      conflict: true,
     }));
-    const workouts = repository({ submitOperation });
+    const workouts = repository({ submitRunnerOperation });
     const api = createWorkoutApi({ getRepository: () => workouts, getViewer: async () => viewer });
 
     const response = await api.operate(
       workoutRequest(`/api/app/workouts/${sessionId}/operations`, {
         body: {
+          idempotencyKey: "note-conflict",
+          baseRevision: "55555555-5555-4555-8555-555555555555",
+          kind: "save_note",
+          payload: { kind: "save_note", exerciseId, note: "Felt steady" },
+        },
+      }),
+      { sessionId },
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      status: "failed",
+      code: "conflict",
+      message: "The workout revision changed.",
+      retryable: false,
+      conflict: true,
+    });
+  });
+
+  it("strictly normalizes a queued runner operation without trusting client lifecycle state", async () => {
+    const submitRunnerOperation = vi.fn(async () => ({
+      status: "saved" as const,
+      persistedId: exerciseId,
+    }));
+    const workouts = repository({ submitRunnerOperation });
+    const api = createWorkoutApi({
+      getRepository: () => workouts,
+      getViewer: async () => viewer,
+      now: () => 1_800_000_000_000,
+    });
+
+    const response = await api.operate(
+      workoutRequest(`/api/app/workouts/${sessionId}/operations`, {
+        body: {
           idempotencyKey: " note-1 ",
+          baseRevision: " 55555555-5555-4555-8555-555555555555 ",
           kind: "save_note",
           payload: { kind: "save_note", exerciseId: ` ${exerciseId} `, note: "Felt steady" },
-          expectedVersion: 1,
         },
       }),
       { sessionId: ` ${sessionId} ` },
     );
 
     expect(response.status).toBe(200);
-    expect(submitOperation).toHaveBeenCalledWith(viewer, {
+    expect(submitRunnerOperation).toHaveBeenCalledWith(viewer, {
       sessionId,
+      ownerUid: viewer.uid,
+      baseRevision: "55555555-5555-4555-8555-555555555555",
       idempotencyKey: "note-1",
       kind: "save_note",
       payload: { kind: "save_note", exerciseId, note: "Felt steady" },
-      expectedVersion: 1,
+      sequence: 0,
+      createdAt: 1_800_000_000_000,
+      attempts: 0,
+      status: "pending",
+      persistedId: undefined,
+      errorCode: undefined,
+      errorMessage: undefined,
+      retryable: undefined,
+      failureKind: undefined,
     });
-    await expect(response.json()).resolves.toMatchObject({ status: "saved", exerciseVersion: 2 });
+    await expect(response.json()).resolves.toMatchObject({ status: "saved", persistedId: exerciseId });
   });
 
   it.each([
@@ -316,19 +367,21 @@ describe("private workout API contract", () => {
     ["terminal", 409],
     ["not_ready", 409],
   ] as const)("maps %s repository failures to a safe %i response", async (code, status) => {
-    const submitOperation = vi.fn(async () => {
+    const submitRunnerOperation = vi.fn(async () => {
       throw new WorkoutRepositoryError(code, "Sensitive persistence detail");
     });
-    const workouts = repository({ submitOperation: submitOperation as WorkoutRepository["submitOperation"] });
+    const workouts = repository({
+      submitRunnerOperation: submitRunnerOperation as WorkoutRepository["submitRunnerOperation"],
+    });
     const api = createWorkoutApi({ getRepository: () => workouts, getViewer: async () => viewer });
 
     const response = await api.operate(
       workoutRequest(`/api/app/workouts/${sessionId}/operations`, {
         body: {
           idempotencyKey: "complete-1",
+          baseRevision: "55555555-5555-4555-8555-555555555555",
           kind: "complete_exercise",
           payload: { kind: "complete_exercise", exerciseId },
-          expectedVersion: 1,
         },
       }),
       { sessionId },
