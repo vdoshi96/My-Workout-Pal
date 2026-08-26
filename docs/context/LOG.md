@@ -9,6 +9,7 @@
 - Retained a missing route-model module failure and a missing start-controller failure before implementation. The final focused matrix passes 82 assertions across the route contract, route model, runner, IndexedDB storage, resume reconciliation, and PWA private-cache policy; strict TypeScript, scoped ESLint, PWA parity, documentation parity, and the production webpack build also pass.
 - Passed the complete branch gate with 58 files and 401 tests, strict TypeScript, full ESLint, generated-service-worker parity, 25-pair documentation parity, and Drizzle metadata validation. The local production server returned a private `no-store` streamed sign-in redirect for the unauthenticated workout page, `401` plus `no-store` for unauthenticated resume, and `403` plus `no-store` for a hostile-origin start; no private workout data rendered.
 - Created local implementation commits `af5deee`, `8e4ae39`, and `bada22b` after the written plan commit `20b466b`. No push, deployment, provider configuration, database mutation, or production browser claim was made in this checkpoint; live signed-in replay awaits Firebase configuration.
+- Merged the clean feature branch into local `main` as `cefecdc`, reran the complete 58-file and 401-test gate, Drizzle metadata validation, and the Next.js webpack production build successfully, then removed the merged local branch. No Git remote exists yet, so push closeout is not applicable at this checkpoint.
 
 ## 2026-08-25: Owner-safe workout persistence integration
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b885824364d872ace71208caf3c67874dfa39e09ab6a8e34569c92a718e134ef">
+  <meta name="source-sha256" content="ddcee7292497fb3861ee4d414cb0416ea331391a725324740560c7f2085b8328">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -116,6 +116,7 @@
 <li>The authorized workout-persistence integration retained a 14-case missing-migration-path failure, then passed all 131 focused database, repository, API, adapter, resume, runner, and analytics assertions after generating migration <code>0002</code>. A second fail-first sequence check caught omission of migration <code>0001</code>, and the complete run caught three training-insights fixtures that lacked the new measurement columns. The corrected ordinary matrix passes strict TypeScript, full ESLint, 56 test files and 394 tests, generated-service-worker parity, 25 documentation pairs, Drizzle metadata validation, and the Next.js 16.3.2 webpack production build. The build lists all three private workout API routes as dynamic server-rendered surfaces.</li>
 <li>The owned-route slice retained a missing route-model module failure and a missing start-controller failure before implementation. The passing checkpoint covers strict owner-free start responses, retry-stable idempotency, server/local resume reconciliation, equipment-compatible catalog and owner custom substitutions, exact effective exercise identity, runner storage, and private-cache denial with 82 focused assertions. Strict TypeScript, scoped ESLint, generated-service-worker parity, 25-pair documentation parity, and the Next.js 16.3.2 webpack production build pass; the build lists <code>/workout/[sessionId]</code> as dynamic. Signed-in browser proof remains pending Firebase configuration, so this is not production evidence.</li>
 <li>The complete owned-runner branch gate passes 58 files and 401 tests, strict TypeScript, full ESLint, generated-service-worker parity, 25-pair documentation parity, and Drizzle metadata validation. Local production HTTP evidence confirms a private <code>no-store</code> streamed sign-in redirect for the unauthenticated workout page, <code>401</code> plus <code>no-store</code> for unauthenticated resume, and <code>403</code> plus <code>no-store</code> for a hostile-origin start. This proves the unauthenticated boundary, not the configured signed-in flow.</li>
+<li>Local <code>main</code> contains the owned-runner integration merge <code>cefecdc</code>. Its post-merge verification passes the same 58-file and 401-test gate, Drizzle metadata validation, and the Next.js webpack production build; the completed feature branch was removed. No Git remote exists, so no branch or <code>main</code> push was possible.</li>
 </ul>
 <h2>Blockers and credential gates</h2>
 <ul>

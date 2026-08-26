@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f5f52d4253fbc6c978e7d756c63bc2a433fc658ffba39c32aac8712cc87ad3f8">
+  <meta name="source-sha256" content="ca67fa79cfd88e2b5608a7bc761192607fb7e81ac5e0feb2d6ca1669b3bb6810">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,6 +37,7 @@
 <li>Retained a missing route-model module failure and a missing start-controller failure before implementation. The final focused matrix passes 82 assertions across the route contract, route model, runner, IndexedDB storage, resume reconciliation, and PWA private-cache policy; strict TypeScript, scoped ESLint, PWA parity, documentation parity, and the production webpack build also pass.</li>
 <li>Passed the complete branch gate with 58 files and 401 tests, strict TypeScript, full ESLint, generated-service-worker parity, 25-pair documentation parity, and Drizzle metadata validation. The local production server returned a private <code>no-store</code> streamed sign-in redirect for the unauthenticated workout page, <code>401</code> plus <code>no-store</code> for unauthenticated resume, and <code>403</code> plus <code>no-store</code> for a hostile-origin start; no private workout data rendered.</li>
 <li>Created local implementation commits <code>af5deee</code>, <code>8e4ae39</code>, and <code>bada22b</code> after the written plan commit <code>20b466b</code>. No push, deployment, provider configuration, database mutation, or production browser claim was made in this checkpoint; live signed-in replay awaits Firebase configuration.</li>
+<li>Merged the clean feature branch into local <code>main</code> as <code>cefecdc</code>, reran the complete 58-file and 401-test gate, Drizzle metadata validation, and the Next.js webpack production build successfully, then removed the merged local branch. No Git remote exists yet, so push closeout is not applicable at this checkpoint.</li>
 </ul>
 <h2>2026-08-25: Owner-safe workout persistence integration</h2>
 <ul>
