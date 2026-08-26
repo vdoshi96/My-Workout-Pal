@@ -20,6 +20,7 @@
     "test:e2e": "playwright test",
     "pwa:build": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/render-service-worker.mjs",
     "pwa:check": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/render-service-worker.mjs --check",
+    "account:reconcile": "node --env-file-if-exists=.env.local --import tsx scripts/account-deletion-reconcile.ts",
     "db:migrate": "node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts",
     "db:seed": "node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts",
     "db:verify": "node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts",

@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
 import type { Database } from "@/db/client";
 import {
@@ -76,6 +76,18 @@ export type BeginAccountDeletionResult = Readonly<{
 
 type RepositoryDatabase = Database;
 type JobRow = typeof accountDeletionJobs.$inferSelect;
+
+export type AccountDeletionReconciliationCandidate = Readonly<{
+  ownerUid: string;
+  status: "blocked" | "failed" | "running";
+  updatedAt: Date;
+}>;
+
+function isReconciliationStatus(
+  status: JobRow["status"],
+): status is AccountDeletionReconciliationCandidate["status"] {
+  return status === "running" || status === "failed" || status === "blocked";
+}
 
 function requireDeletionViewer(
   viewer: ViewerContext | null | undefined,
@@ -420,6 +432,119 @@ export async function recordAccountDeletionFailure(
       now,
     );
     return jobView(await saveJobState(tx, viewer.uid, failed, now));
+  });
+}
+
+function requireReconciliationSelection(
+  selection: Readonly<{ limit: number; ownerUid?: string }>,
+): void {
+  if (!Number.isSafeInteger(selection.limit) || selection.limit < 1 || selection.limit > 100) {
+    throw new RangeError("The reconciliation limit must be between 1 and 100.");
+  }
+  if (
+    selection.ownerUid !== undefined &&
+    (
+      selection.ownerUid.trim() !== selection.ownerUid ||
+      selection.ownerUid.length < 1 ||
+      selection.ownerUid.length > 128 ||
+      /[\u0000-\u001f\u007f]/u.test(selection.ownerUid)
+    )
+  ) {
+    throw new RangeError("The reconciliation owner UID is invalid.");
+  }
+}
+
+/**
+ * Internal operator boundary. This deliberately has no viewer overload and is
+ * not exported by an application route. Callers must obtain operator-level
+ * database and Firebase Admin capability before selecting these rows.
+ */
+export async function listAccountDeletionReconciliationCandidates(
+  database: Database,
+  selection: Readonly<{ limit: number; ownerUid?: string }>,
+): Promise<readonly AccountDeletionReconciliationCandidate[]> {
+  requireReconciliationSelection(selection);
+  const firebasePhase = and(
+    eq(accountDeletionJobs.phase, "firebase"),
+    inArray(accountDeletionJobs.status, ["running", "failed", "blocked"]),
+  );
+  const predicate = selection.ownerUid === undefined
+    ? firebasePhase
+    : and(
+        firebasePhase,
+        eq(accountDeletionJobs.ownerFirebaseUid, selection.ownerUid),
+      );
+  const rows = await database
+    .select({
+      ownerUid: accountDeletionJobs.ownerFirebaseUid,
+      status: accountDeletionJobs.status,
+      updatedAt: accountDeletionJobs.updatedAt,
+    })
+    .from(accountDeletionJobs)
+    .where(predicate)
+    .orderBy(
+      asc(accountDeletionJobs.requestedAt),
+      asc(accountDeletionJobs.ownerFirebaseUid),
+    )
+    .limit(selection.limit);
+  return rows.map((row) => {
+    if (!isReconciliationStatus(row.status)) {
+      throw new AccountDeletionRepositoryError(
+        "conflict",
+        "The account deletion request cannot be reconciled.",
+        409,
+      );
+    }
+    return { ...row, status: row.status };
+  });
+}
+
+export async function completeAccountDeletionReconciliation(
+  database: Database,
+  candidate: AccountDeletionReconciliationCandidate,
+  now = new Date(),
+): Promise<AccountDeletionJobView> {
+  requireReconciliationSelection({ limit: 1, ownerUid: candidate.ownerUid });
+  if (!isReconciliationStatus(candidate.status)) {
+    throw new RangeError("The reconciliation job status is invalid.");
+  }
+  return database.transaction(async (transaction) => {
+    const tx = transaction as unknown as Database;
+    await lockJob(tx, candidate.ownerUid);
+    const row = await loadJob(tx, candidate.ownerUid);
+    if (!row) {
+      throw new AccountDeletionRepositoryError(
+        "not_found",
+        "The account deletion request is unavailable.",
+        404,
+      );
+    }
+    if (row.status === "completed") return jobView(row);
+    if (
+      row.phase !== "firebase" ||
+      row.status !== candidate.status ||
+      row.updatedAt.getTime() !== candidate.updatedAt.getTime()
+    ) {
+      throw new AccountDeletionRepositoryError(
+        "conflict",
+        "The account deletion request changed before reconciliation.",
+        409,
+      );
+    }
+
+    let state = jobState(row);
+    if (state.status === "failed" || state.status === "blocked") {
+      state = transitionAccountDeletionJob(state, { type: "begin_firebase" }, now);
+    }
+    if (state.status !== "running") {
+      throw new AccountDeletionRepositoryError(
+        "conflict",
+        "The account deletion request cannot be reconciled.",
+        409,
+      );
+    }
+    state = transitionAccountDeletionJob(state, { type: "firebase_completed" }, now);
+    return jobView(await saveJobState(tx, candidate.ownerUid, state, now));
   });
 }
 

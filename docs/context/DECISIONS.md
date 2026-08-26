@@ -22,6 +22,8 @@ The account-deletion service resolves Firebase Admin configuration before it ask
 
 Client cleanup follows confirmation, never optimism. Settings reauthenticates the currently active Firebase user, rejects a changed or mismatched UID, exchanges a forced-fresh ID token for the secure session, and waits for the server's completed response before clearing the matching IndexedDB namespace or signing out the Firebase client. A partial server result retains both for retry. If local cleanup fails after confirmed deletion, Firebase client sign-out is still attempted and the UI reports the residual site-data action without claiming cleanup succeeded.
 
+The completion reconciler is an operator command rather than an authenticated application route. It receives only Firebase Admin `getUser` capability, defaults to dry run, fingerprints ownership in output, and may write only after `auth/user-not-found`. Apply locks the candidate and rejects an optimistic timestamp/status mismatch; failed or blocked jobs enter a new Firebase attempt before terminal completion. An existing identity is reported but never deleted. This separates crash recovery authority from end-user traffic and keeps production apply behind explicit approval.
+
 ## 2026-08-25: Store canonical metric values
 
 Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="523b5e76926e33801469a1aa4b4eafa84363ebd94378b5614038426df6bc5b87">
+  <meta name="source-sha256" content="272f8fdb8070238d85eb61facecf94bf96a520eb0ab1ef7ac8d9059bfebef94e">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -103,6 +103,16 @@ node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 <p>For starter-data drift, run <code>db:verify</code> first. Catalog drift requires an explicit reviewed migration. Published template drift requires a new revision or a recovery from a verified point; do not disable immutability triggers or rewrite a published child. Rerunning <code>db:seed</code> is safe only when verification agrees with the deterministic graph.</p>
 <h3>Authentication recovery</h3>
 <p>If session verification fails broadly, keep public content available, block permanent mutations, clear invalid cookies, and guide sign-in. Rotate a compromised Admin credential in Firebase and Vercel, revoke affected refresh tokens, and verify that logs contain no secret values.</p>
+<p>For an account-deletion job left in the Firebase phase, inspect with the dry-run default:</p>
+<pre><code class="language-sh">pnpm account:reconcile
+pnpm account:reconcile -- --owner FIREBASE_UID --limit 1
+</code></pre>
+<p>Output uses an opaque fingerprint rather than the raw UID. <code>identity_exists</code> means reconciliation leaves the job unchanged and never deletes that identity. <code>would_complete</code> means Firebase Admin returned <code>auth/user-not-found</code>; review the environment and fingerprint before any apply. Provider uncertainty or completion-write failure exits nonzero with a safe code.</p>
+<p>After verifying the exact environment and receiving explicit approval for the target, apply one candidate:</p>
+<pre><code class="language-sh">pnpm account:reconcile -- --apply --owner FIREBASE_UID --limit 1
+</code></pre>
+<p>The apply path locks and optimistic-checks the Firebase-phase job before its monotonic completion transition. It is replay-safe and does not restore or recreate fitness data. Never run an unscoped production apply, paste output containing credentials into documentation, or use this command to delete an existing Firebase identity.</p>
+<p>Bounded multi-job apply exists only behind the additional <code>--batch</code> flag and still requires a limit no greater than 100. Prefer the one-owner command. A production batch requires separate explicit scope approval and a reviewed dry-run report.</p>
 <h3>Video recovery</h3>
 <p>If one demonstration fails, show the remaining approved option and direct YouTube link. If both fail, show the unavailable state and open a reviewed replacement workflow. Do not hot-swap an unapproved video.</p>
 <h3>Service-worker recovery</h3>

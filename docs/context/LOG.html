@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="7afeec4132a54002598f05f06418e0367e86a6d0c5393d20be6a59d1b7cd2809">
+  <meta name="source-sha256" content="fc400dc346e465432ede8a16c7f834afc58a6be95f7be5c4d5941e83e04318d4">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -45,6 +45,8 @@
 <li>Replaced the disabled Settings placeholder with a phone-safe scrolling review dialog, sticky actions, keyboard focus, explicit impact list, password/Google-specific UI, live progress, partial retry, exact <code>DELETE</code> gate, active-request unload protection, and post-completion cleanup warnings.</li>
 <li>Direct review caught and closed an adapter race that could have reused the earlier Firebase user object if the live client user disappeared or changed before reauthentication. Twenty-two focused client/API/storage assertions cover popup cancellation and post-deletion sign-out failure in addition to the owner cleanup gates; strict TypeScript, scoped lint, and the production build pass. Live provider and browser evidence remain blocked by absent Firebase configuration, and no external state changed.</li>
 <li>Planned the trusted completion reconciler as a server-only, dry-run-default operator command. It may mark a locked Firebase-phase job complete only after Firebase Admin reports that exact job UID absent; it never deletes an existing identity, exposes a public route, prints raw ownership/provider detail, or applies to production without separate approval.</li>
+<li>Retained the missing operation and missing repository-method failures, then added strict dry-run/apply argument parsing, bounded Firebase-phase selection, opaque owner fingerprints, safe terminal output, and per-owner failure isolation. The Firebase dependency exposes <code>getUser</code> only.</li>
+<li>Added the locked internal repository transition with optimistic timestamp/status checks, monotonic retry accounting for failed/blocked jobs, completed replay, and stale-candidate refusal. Seventeen focused reconciliation/saga/domain assertions, TypeScript, scoped lint, and an invalid-argument CLI smoke pass. No credential-backed Firebase query, external database write, production apply, push, merge, or deployment occurred.</li>
 </ul>
 <h2>2026-08-25: Immutable program publication repository</h2>
 <ul>

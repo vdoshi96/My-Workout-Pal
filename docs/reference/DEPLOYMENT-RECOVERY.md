@@ -94,6 +94,25 @@ For starter-data drift, run `db:verify` first. Catalog drift requires an explici
 
 If session verification fails broadly, keep public content available, block permanent mutations, clear invalid cookies, and guide sign-in. Rotate a compromised Admin credential in Firebase and Vercel, revoke affected refresh tokens, and verify that logs contain no secret values.
 
+For an account-deletion job left in the Firebase phase, inspect with the dry-run default:
+
+```sh
+pnpm account:reconcile
+pnpm account:reconcile -- --owner FIREBASE_UID --limit 1
+```
+
+Output uses an opaque fingerprint rather than the raw UID. `identity_exists` means reconciliation leaves the job unchanged and never deletes that identity. `would_complete` means Firebase Admin returned `auth/user-not-found`; review the environment and fingerprint before any apply. Provider uncertainty or completion-write failure exits nonzero with a safe code.
+
+After verifying the exact environment and receiving explicit approval for the target, apply one candidate:
+
+```sh
+pnpm account:reconcile -- --apply --owner FIREBASE_UID --limit 1
+```
+
+The apply path locks and optimistic-checks the Firebase-phase job before its monotonic completion transition. It is replay-safe and does not restore or recreate fitness data. Never run an unscoped production apply, paste output containing credentials into documentation, or use this command to delete an existing Firebase identity.
+
+Bounded multi-job apply exists only behind the additional `--batch` flag and still requires a limit no greater than 100. Prefer the one-owner command. A production batch requires separate explicit scope approval and a reviewed dry-run report.
+
 ### Video recovery
 
 If one demonstration fails, show the remaining approved option and direct YouTube link. If both fail, show the unavailable state and open a reviewed replacement workflow. Do not hot-swap an unapproved video.

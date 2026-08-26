@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="8022d04e0abb53902739440c789c1600cd12f07dde3ab8e86ef75271696ed5b9">
+  <meta name="source-sha256" content="d6af921cc20341bfd41dc8c41c66530fedb814b5744cf46381cbdcadf450b15c">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,6 +39,7 @@
 <p>Published program revisions and accepted workout history remain immutable during ordinary operation. Account deletion is the narrow exception: the repository sets a transaction-local Firebase UID, and replacement trigger functions permit <code>DELETE</code> only when each row&#39;s owner exactly matches that UID. The setting cannot authorize another owner&#39;s row and does not permit inserts or updates. This keeps historical mutation guards intact while allowing a member&#39;s complete owned graph to be erased atomically.</p>
 <p>The account-deletion service resolves Firebase Admin configuration before it asks the repository to reserve or delete database data. After the database transaction commits, a provider failure records only a classified safe code, reports the Firebase identity state as unknown, and preserves the secure session for retry. Cookies are expired only after provider success or <code>auth/user-not-found</code> and a successful durable completion write. A completion-write failure is not mislabeled as a Firebase error; its still-running job requires the planned trusted reconciler, because a deleted Firebase identity may no longer pass revocation-aware viewer verification.</p>
 <p>Client cleanup follows confirmation, never optimism. Settings reauthenticates the currently active Firebase user, rejects a changed or mismatched UID, exchanges a forced-fresh ID token for the secure session, and waits for the server&#39;s completed response before clearing the matching IndexedDB namespace or signing out the Firebase client. A partial server result retains both for retry. If local cleanup fails after confirmed deletion, Firebase client sign-out is still attempted and the UI reports the residual site-data action without claiming cleanup succeeded.</p>
+<p>The completion reconciler is an operator command rather than an authenticated application route. It receives only Firebase Admin <code>getUser</code> capability, defaults to dry run, fingerprints ownership in output, and may write only after <code>auth/user-not-found</code>. Apply locks the candidate and rejects an optimistic timestamp/status mismatch; failed or blocked jobs enter a new Firebase attempt before terminal completion. An existing identity is reported but never deleted. This separates crash recovery authority from end-user traffic and keeps production apply behind explicit approval.</p>
 <h2>2026-08-25: Store canonical metric values</h2>
 <p>Weight is stored in kilograms, distance in meters, and duration in seconds. Validated boundaries convert user input and presentation according to preferences.</p>
 <h2>2026-08-25: Verify identity only on the server</h2>
