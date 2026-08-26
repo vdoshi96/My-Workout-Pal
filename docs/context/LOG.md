@@ -1,5 +1,14 @@
 # Project log
 
+## 2026-08-25: Persisted workout resume recovery
+
+- Retained a missing-module failure before hydrating immutable server snapshots, set and cardio logs, notes, outcomes, and compatible substitutions into runner state.
+- Retained a completed-without-set failure before rejecting persisted outcome contradictions.
+- Reconstructed confirmed operations from server idempotency keys, derived canonical drafts for all four measurement kinds, and selected the first unfinished runner position.
+- Retained five missing-function failures before reconciling an owner-matched offline draft with the server baseline.
+- Preserved unrelated cross-tab progress, recognized interrupted responses that the server confirmed, overlaid only unresolved local targets, and converted unconfirmed local success to a nonretryable conflict.
+- Passed 16 resume tests, the 30-test resume and PGlite repository slice, 31 test files and 263 branch tests, strict TypeScript, full ESLint, Drizzle validation, generated-service-worker parity, documentation parity, and the Next.js Webpack production build. Kept hydration commit `835894a` and reconciliation commit `7f941a7` local.
+
 ## 2026-08-25: Strict runner API client adapter
 
 - Retained a fail-first missing-module result before implementing the browser runner API adapter.
