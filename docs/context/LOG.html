@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="54d0650fc558b4077070e5fc2e62bda843d34d4f5bb5863d167f4594152b68eb">
+  <meta name="source-sha256" content="3320a0ccbc62180f7a77d9b4f2c146011f25790feda9058e6342ef5f943a48a2">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -42,6 +42,7 @@
 <li>Adversarial shortlist inspection found mechanically eligible but visibly wrong adjacent variants: decline instead of flat bench, floor-seated shoulder press, curl-to-press and incline curl, incline press without a bench, reverse lunge with rotation, commentary framing, unsupported fat-loss copy, and non-English title cues. Retained eligibility and resume failures now apply catalog-scoped movement exclusions and reevaluate old checkpoint entries with current target rules. The zero-request regenerated report reduces the mechanically eligible set from 269 to 245 while preserving all discovery and hydration state. Reverse lunge remains ineligible for approval because only four of its six searches completed; no video was approved or seeded.</li>
 <li>Retained a focused failure in which a two-video reverse-lunge shortlist appeared <code>ready-for-review</code> after only four of six searches. Target completeness now derives every relevance and view-count query key before pair status. The regenerated private report marks 15 complete-target pairs <code>ready-for-review</code> and all 12 incomplete targets <code>discovery-incomplete</code>; the provisional reverse-lunge IDs remain visible without claiming review readiness.</li>
 <li>Rechecked Firebase after action-time authorization. The signed-in Google account can read the project, but the live console explicitly requires a project owner for app and user management. Web-app registration, Google provider setup, authorized-domain setup, and Admin-key creation remain paused until the browser uses an owner account.</li>
+<li>Retained a missing-module failure before adding the private <code>youtube:review</code> workflow. The typed recorder validates the scoped checkpoint candidate, complete approval evidence, stable rejection and blocker reasons, timestamps, atomic mode-<code>0600</code> persistence, and explicit replacement of a prior approval. Four focused tests pass. Candidate <code>O7ECGhZj_Hc</code> is recorded as pending because playback reached the end but the in-app browser couldn&#39;t expose visual frames; the record keeps full-watch and visual-review confirmation false.</li>
 <li>Reached the Vercel dashboard&#39;s two-factor challenge through the existing account. Spend Management remains read-only-unverified until the user completes 2FA; no billing, budget, notification, pause, plan, or overage control changed.</li>
 <li>Created the <code>release/firebase-youtube-completion</code> branch from clean released SHA <code>08ba5773d700683d646b14f2df3cd6d942dee214</code> for reversible setup, curation, authenticated QA, and release checkpoints.</li>
 </ul>

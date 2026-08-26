@@ -26,6 +26,7 @@
     "db:seed": "node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts",
     "db:verify": "node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts",
     "youtube:curate": "node --env-file-if-exists=.env.local --import tsx scripts/youtube-curate.ts",
+    "youtube:review": "node --import tsx scripts/youtube-review.ts",
     "seed:check": "node --import tsx scripts/seed-check.ts",
     "docs:build": "node scripts/render-docs.mjs",
     "docs:check": "node scripts/render-docs.mjs --check",

@@ -18,7 +18,21 @@ Edit Markdown as the canonical source. Generate matching HTML with `pnpm docs:bu
 
 ## Video curation
 
-Run the resumable curation command only with an official YouTube Data API v3 key. Review the generated report, watch every proposed seed in full, record approval, and validate complete two-video mappings before a seed or deployment.
+Run the resumable curation command only with an official YouTube Data API v3 key. Review only targets marked `ready-for-review`. Watch every proposed seed from start to finish, record the visual and audio decision, and validate complete two-video mappings before a seed or deployment.
+
+Record an interrupted or evidence-blocked review without approval:
+
+```bash
+pnpm youtube:review -- --target EXERCISE_SLUG --variation canonical --video VIDEO_ID --decision pending --reviewer REVIEWER_NAME --playback-completed-at REVIEW_TIMESTAMP --blocker-reason visual-evidence-unavailable
+```
+
+Record an approval only after the reviewer observed the complete visual and audio instruction:
+
+```bash
+pnpm youtube:review -- --target EXERCISE_SLUG --variation canonical --video VIDEO_ID --decision approved --reviewer REVIEWER_NAME --playback-completed-at REVIEW_TIMESTAMP --full-watch-confirmed --visual-review-confirmed --audio-review-confirmed --exact-variation --concise-instruction --safe-instruction --adds-material-value
+```
+
+The command writes only `.local/youtube-curation/manual-reviews.json`, validates that the scoped candidate exists, and refuses to weaken an approval without `--replace-approved`. Don't commit the ignored review file, API key, raw media, screenshots, or transcripts.
 
 ## Release closeout
 

@@ -85,6 +85,49 @@ export type YouTubeHumanReview = Readonly<{
   addsMaterialValue?: boolean | undefined;
 }>;
 
+export type ManualYouTubeReviewDecision = "pending" | "approved" | "rejected";
+
+export type ManualYouTubeRejectionReason =
+  | "wrong-movement"
+  | "wrong-equipment"
+  | "unsafe-instruction"
+  | "not-concise"
+  | "no-material-value"
+  | "unavailable"
+  | "non-english"
+  | "other-policy-rejection";
+
+export type ManualYouTubeReviewBlocker =
+  | "review-in-progress"
+  | "playback-interrupted"
+  | "visual-evidence-unavailable"
+  | "audio-evidence-unavailable";
+
+export type ManualYouTubeReviewRecord = Readonly<{
+  canonicalExerciseSlug: string;
+  variationId: string;
+  videoId: string;
+  decision: ManualYouTubeReviewDecision;
+  reviewer: string;
+  reviewedAt?: string | undefined;
+  playbackCompletedAt?: string | undefined;
+  fullWatchConfirmed: boolean;
+  visualReviewConfirmed: boolean;
+  audioReviewConfirmed: boolean;
+  exactVariation: boolean;
+  conciseInstruction: boolean;
+  safeInstruction: boolean;
+  addsMaterialValue: boolean;
+  rejectionReason?: ManualYouTubeRejectionReason | undefined;
+  blockerReason?: ManualYouTubeReviewBlocker | undefined;
+}>;
+
+export type ManualYouTubeReviewFile = Readonly<{
+  schemaVersion: 1;
+  updatedAt: string;
+  reviews: Readonly<Record<string, ManualYouTubeReviewRecord>>;
+}>;
+
 export type YouTubeRejectionCode =
   | "invalid-video-id"
   | "video-unavailable"
