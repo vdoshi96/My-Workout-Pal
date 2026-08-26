@@ -278,6 +278,46 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .equipment-review-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
 .equipment-review-actions > button:not(.primary-action) { background: transparent; border: 1px solid var(--rule); color: var(--ink); cursor: pointer; min-height: 3.4rem; padding: .7rem 1rem; }
 .member-save-status { color: var(--ink-soft); min-height: 1.5rem; }
+.program-collection-layout { display: grid; gap: clamp(2rem, 6vw, 4rem); margin-top: clamp(2rem, 6vw, 4rem); }
+.program-collection-layout h2, .program-create-panel h2 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.8rem); line-height: .9; margin: .55rem 0 1rem; text-transform: uppercase; }
+.program-collection-list { display: grid; gap: 1rem; list-style: none; margin: 0; padding: 0; }
+.program-collection-list > li { background: var(--white); border: 1px solid var(--rule); padding: clamp(1rem, 4vw, 1.5rem); }
+.program-collection-list > li[aria-current="true"] { border-color: var(--lichen); box-shadow: inset .35rem 0 var(--lichen); }
+.program-collection-list header { align-items: start; display: flex; gap: 1rem; justify-content: space-between; }
+.program-collection-list header svg { flex: 0 0 auto; height: 1.6rem; width: 1.6rem; }
+.program-collection-state { color: var(--coral-strong); font-family: var(--font-display); font-size: .8rem; letter-spacing: .07em; text-transform: uppercase; }
+.program-collection-list h3 { font-family: var(--font-display); font-size: clamp(1.55rem, 4vw, 2.2rem); line-height: .95; margin: .35rem 0; text-transform: uppercase; }
+.program-collection-list dl { border-block: 1px solid var(--rule); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 1rem 0; }
+.program-collection-list dl > div { min-width: 0; padding: .75rem .5rem .75rem 0; }
+.program-collection-list dt { color: var(--ink-soft); font-size: .72rem; text-transform: uppercase; }
+.program-collection-list dd { font-weight: 650; margin: .2rem 0 0; overflow-wrap: anywhere; }
+.program-collection-card-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .65rem; }
+.program-collection-card-actions button:not(.primary-action), .program-clone-sheet button:not(.primary-action) { background: transparent; border: 1px solid var(--rule); color: var(--ink); cursor: pointer; min-height: 2.75rem; padding: .65rem .9rem; }
+.program-collection-card-actions .primary-action, .program-collection-card-actions .secondary-action { min-height: 2.75rem; width: fit-content; }
+.program-create-panel { align-self: start; background: var(--ink); color: var(--paper); padding: clamp(1.25rem, 5vw, 2.25rem); }
+.program-create-panel > p { color: color-mix(in srgb, var(--paper) 75%, transparent); }
+.program-create-panel form { display: grid; gap: .75rem; margin-top: 1.5rem; }
+.program-create-panel form > label, .program-create-panel legend, .program-clone-sheet > label { font-family: var(--font-display); font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; }
+.program-create-panel form > input, .program-clone-sheet > input { background: var(--paper); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); min-height: 3.25rem; padding: .7rem; width: 100%; }
+.program-create-panel fieldset { border: 0; display: grid; gap: .5rem; margin: .5rem 0; padding: 0; }
+.program-create-panel legend { margin-bottom: .25rem; }
+.program-create-panel fieldset label { cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr); }
+.program-create-panel fieldset input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+.program-create-panel fieldset label > span { border: 1px solid color-mix(in srgb, var(--paper) 40%, transparent); display: block; min-height: 4.5rem; padding: .75rem; }
+.program-create-panel fieldset label > input:checked + span { border-color: var(--lichen-light); box-shadow: inset .3rem 0 var(--lichen-light); }
+.program-create-panel fieldset label > input:focus-visible + span { outline: 3px solid var(--coral); outline-offset: 3px; }
+.program-create-panel fieldset strong, .program-create-panel fieldset small { display: block; }
+.program-create-panel fieldset small { color: color-mix(in srgb, var(--paper) 70%, transparent); margin-top: .2rem; }
+.program-create-panel .primary-action { margin-top: .5rem; width: fit-content; }
+.program-limit-note { color: var(--coral-on-ink); }
+.program-collection-error { background: color-mix(in srgb, var(--danger) 12%, var(--white)); border-inline-start: .3rem solid var(--danger); color: var(--danger); padding: 1rem; }
+.program-clone-dialog { background: transparent; border: 0; color: var(--ink); margin: auto; max-height: calc(100dvh - 2rem); max-width: 42rem; padding: 0; width: calc(100% - 2rem); }
+.program-clone-dialog::backdrop { backdrop-filter: blur(.18rem); background: color-mix(in srgb, var(--ink) 62%, transparent); }
+.program-clone-sheet { background: var(--white); border: 1px solid var(--rule); display: grid; gap: 1rem; max-height: calc(100dvh - 2rem); overflow-y: auto; padding: clamp(1rem, 5vw, 2rem); }
+.program-clone-sheet > header { align-items: start; display: flex; gap: 1rem; justify-content: space-between; }
+.program-clone-sheet h2 { font-family: var(--font-display); font-size: clamp(2rem, 8vw, 3.6rem); line-height: .9; margin: .4rem 0 0; text-transform: uppercase; }
+.program-clone-sheet > p { color: var(--ink-soft); margin: 0; }
+.program-clone-sheet > div:last-child { align-items: center; display: flex; flex-wrap: wrap; gap: .65rem; }
 .member-onboarding > .member-inline-notice { margin-bottom: 1.5rem; }
 .onboarding-form { display: grid; gap: clamp(1.5rem, 5vw, 3rem); margin-top: 2rem; }
 .onboarding-form fieldset { border: 0; margin: 0; padding: 0; }
@@ -504,6 +544,9 @@ svg { display: block; height: 1.4em; width: 1.4em; }
   .member-day-grid small { grid-column: 1 / span 2; }
   .member-day-grid svg { grid-column: 2; grid-row: 1; }
   .member-equipment-options, .onboarding-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .program-collection-layout { grid-template-columns: minmax(0, 1fr) minmax(20rem, .55fr); }
+  .program-collection-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .program-create-panel { position: sticky; top: 1rem; }
   .onboarding-form { grid-template-columns: minmax(0, 1fr) minmax(20rem, .75fr); }
   .onboarding-form fieldset, .onboarding-preferences { grid-column: 1; }
   .onboarding-preview { grid-column: 2; grid-row: 1 / span 2; padding: 0 0 0 2rem; }
