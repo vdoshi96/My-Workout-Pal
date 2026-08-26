@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b08f481bc4a6a7f62cc8cfbfa64e47aab0b059d5164c91cf1ce700f2a6ff66a7">
+  <meta name="source-sha256" content="94c044bbdb756a65e578984c60a01fd8611e78440757ea8bcaa1f5e1d1865f01">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -45,7 +45,8 @@ node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts
 node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 </code></pre>
 <p>The seeder constructs new template revisions as drafts, writes and verifies all children, then publishes. A published revision or child mismatch aborts; it is never repaired in place. The 54 video rows pass the exact-two manual approval gate, are part of the checked-in deterministic starter seed, and are verified in Neon. Replaying both public/runtime pairs in protected preview and production browsers remains a separate release action.</p>
-<p>Exact protected preview <code>dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF</code> from source <code>b470f51</code> has server-render evidence for the two adversarially corrected mappings. Authenticated <code>vercel curl</code> returned <code>200</code> with security headers for both public exercise routes; the HTML contains only the corrected pairs and omits the two terminally rejected IDs. A 24-hour error-log query returned no entries. This evidence confirms the Vercel runtime reads the seeded Neon rows, but it does not replace real iframe playback or Firebase-authenticated browser replay.</p>
+<p>Exact protected preview <code>dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF</code> from source <code>b470f51</code> has catalog-complete SSR and representative Firefox playback evidence. A manifest-driven authenticated <code>vercel curl</code> verifier passed all 27 public exercise routes with HTTP/2 <code>200</code>, exactly the mapping&#39;s two unique approved IDs, no pending/incomplete-review copy, and exactly one display-order-1 <code>youtube-nocookie</code> iframe plus direct fallback per response. The user&#39;s protected Firefox session then showed the two approved tabs, title/channel/direct fallback, one privacy-enhanced iframe at a time, and live English captions plus the browser playing indicator after switching to Demo 2 on both corrected representative routes. A 24-hour error-log query returned no entries. This evidence confirms Neon-backed catalog rendering and playback in one real preview browser; it does not replace the remaining responsive/accessibility matrix or Firebase-authenticated replay.</p>
+<p>Vercel Firebase configuration was explicitly authorized on August 26, 2026. Six non-private browser/identity values are attached to Production, Preview, and Development. <code>FIREBASE_PRIVATE_KEY</code> is Hidden/Sensitive in Production and Preview. Vercel does not accept sensitive Development values, so the private key remains absent from that scope and continues to live only in ignored local development storage. Do not work around that safety boundary by uploading it as non-sensitive. No value was printed or copied into documentation.</p>
 <p>Primary references:</p>
 <ul>
 <li><a href="https://vercel.com/marketplace/neon">Neon on Vercel Marketplace</a></li>

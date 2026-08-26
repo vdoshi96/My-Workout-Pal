@@ -63,10 +63,12 @@ Exact preview deployment `dpl_6XaYkKMfTTUt7DLM51Rxs9dJRmgF` at source `b470f51` 
 - `/library/chest-supported-dumbbell-row`, whose HTML contains `vmX58YYK3-8` and `mHBOUz9KY9A` and omits rejected `sQ6jUJhKwhw`;
 - `/library/dumbbell-romanian-deadlift`, whose HTML contains `KrRtk8KbJik` and `MprE4ppd27U` and omits rejected `tH0stBpF7ko`.
 
-`vercel logs --level error --since 24h` returned no entries. This is exact-pair server-render evidence from the seeded Neon database. It does not claim that a browser started the privacy-enhanced iframes, exercised their controls/fallback, or completed Firebase-authenticated flows.
+A strengthened manifest-driven replay covered all 27 `/library/<slug>` routes and required HTTP/2 `200`, exactly the two unique approved IDs for that mapping, Approved pair copy, no manual-review-pending or incomplete-human-review copy, exactly one iframe, exactly one `youtube-nocookie` embed using display order 1, and the corresponding direct fallback. Result: 27 routes, 27 passing, zero failures. `vercel logs --level error --since 24h` returned no entries.
+
+The user's existing Firefox session then opened the exact protected preview directly, without changing deployment protection. Each corrected representative route rendered two approved tabs, visible title/channel attribution, a direct fallback, and one `youtube-nocookie` iframe at a time. Switching to Demo 2 produced the interaction-rendered second fallback, live English captions, and Firefox's playing indicator for both `mHBOUz9KY9A` and `MprE4ppd27U`, proving real playback of the corrected selections. This is catalog-complete SSR plus representative browser playback; it does not claim the remaining phone/tablet/desktop, keyboard, reduced-motion, dark-mode, reflow, Axe, unavailable-fallback, authenticated-runner, or production matrix.
 
 ## Remaining release evidence
 
-- Replay the representative server-rendered pairs as real iframes on the protected Vercel preview in phone, tablet, and desktop layouts.
+- Extend the representative Firefox playback to the protected preview's phone, tablet, desktop, keyboard, reduced-motion, dark-mode, reflow, Axe, direct-fallback, and authenticated-runner matrix.
 - Replay keyboard tab selection, one active non-autoplay iframe, direct fallback, dark mode, reduced motion, 200 percent reflow, Axe, and real playback.
 - Repeat the representative pair and fallback checks on production after promotion, then inspect runtime logs.

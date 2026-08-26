@@ -6,6 +6,8 @@ This checkpoint verifies a disposable password account through the configured Fi
 
 The application ran on localhost. This is live Firebase and Neon evidence, not a claim about the protected Vercel preview or production. No Firebase value was transmitted to Vercel.
 
+That sentence describes the localhost replay boundary. A later explicitly authorized provider checkpoint attached six non-private Firebase config/identity values to Vercel Production, Preview, and Development, and attached `FIREBASE_PRIVATE_KEY` as Hidden/Sensitive to Production and Preview. Vercel rejects sensitive Development values, so the private key remains only in ignored local development storage. No value was printed, committed, or copied into this report.
+
 ## Provider state
 
 - Firebase project `my-workout-pal-92819` remains on Spark.
@@ -49,12 +51,12 @@ The application ran on localhost. This is live Firebase and Neon evidence, not a
 
 This run proves one real password-account path with the dumbbell starter. It does not yet prove Google sign-in, email verification/recovery, expired or revoked sessions, cross-user denial, the barbell starter, clone/activate/editor/equipment-change flows, offline interruption, WebKit, Vercel preview, or production authentication.
 
-YouTube remains a separate evidence lane. At the time of this authenticated replay, the private checkpoint had no approved video. The later curation checkpoint supersedes only that media status: all 27 pairs now have full-watch and scoped embed evidence, and a validated 54-row manifest is checked in. Neon still has zero approved-video rows until the new seed is applied and verified, so this localhost account replay does not prove a persisted catalog embed.
+YouTube remains a separate evidence lane. At the time of this authenticated replay, the private checkpoint had no approved video. Later curation and production checkpoints supersede only that media status: all 27 pairs have full-watch and scoped embed evidence, the validated 54-row manifest is checked in and idempotency-verified in Neon, and two corrected pairs have real Firefox playback on the protected preview. This localhost account replay still does not prove a persisted embed inside an authenticated runner.
 
 ## Remaining verification
 
-- Explicitly authorize transmitting the seven Firebase client/Admin values to the linked Vercel project, then rebuild and test the protected preview.
+- Build and test a fresh protected preview with the authorized Firebase environment configuration.
 - Replay Google, verification, recovery, expiry, revocation, and cross-user paths with disposable identities.
 - Replay both equipment profiles, program collection/editor changes, offline interruption, and immutable-history preservation in Chromium and WebKit.
-- Apply and verify the checked-in 54-row YouTube seed, then replay representative dual embeds and unavailable fallback on preview and production.
+- Extend the proven representative preview playback to the authenticated runner and unavailable fallback, then repeat it on production.
 - Repeat authenticated accessibility, responsive, preview, production, logs, and deletion cleanup checks before release.
