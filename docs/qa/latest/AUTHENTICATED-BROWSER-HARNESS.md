@@ -32,7 +32,7 @@ Both images carry the visible `Local authenticated QA harness · synthetic data 
 
 ## Personally observed local flow
 
-Environment: the active `qa/hosted-auth-production` working tree based on released commit `5f7f00167d5a418357b8a36f3413222d03723364`. The fixture was built with Next.js 16.3.2 Webpack and started in production mode; no development watcher or HMR process supplied evidence.
+Environment: the exact reviewed feature source later committed as `a3adc6051aca0d4035efe1c2a40e679eb54f6926` and merged to `main` as `b599616f5e2879e1663cc176b5617e40aab37483`. The fixture was built with Next.js 16.3.2 Webpack and started in production mode; no development watcher or HMR process supplied evidence.
 
 1. Opened expired and revoked Alice contexts. Each stopped at **Sign in required** without loading a private program or producing a failed response.
 2. Opened unverified Alice. The production onboarding UI visibly reported **Read-only account**, kept **Create my program** disabled, and had no serious or critical Axe violation.
@@ -64,6 +64,7 @@ Environment: the active `qa/hosted-auth-production` working tree based on releas
 - `pnpm verify`: pass on the final source. Strict TypeScript and full lint pass; Vitest passes 78 files and 521 tests; `db:check` passes Drizzle metadata plus 4 files and 33 migration/bootstrap assertions; the default production `seed:check` validates all 27 exact-two variations; PWA parity and 33-document parity pass; the Next.js 16.3.2 Webpack production build passes; and the production route-manifest boundary verifies 41 App Router entries without a harness route.
 - `pnpm test:e2e:release`: the primary replay passes 43 public production-mode cases with the one documented WebKit service-worker-control skip across Chromium phone, tablet, and desktop plus WebKit phone.
 - Independent review inspected the full diff, fixture boundary, runner environment, production manifest checker, plans, generated documentation, and screenshots; reproduced the 8 focused assertions, 4 authenticated browser cases, complete `pnpm verify`, and a clean 43-case public rerun; and returned explicit approval with no actionable finding. Its first public run observed one nondeterministic cross-origin YouTube `compute-pressure` Permissions-Policy warning in the tablet exercise case; the exact case then passed alone and the clean full rerun passed, so no warning is suppressed in source or retained as a product success state.
+- Git and production closeout: feature `a3adc6051aca0d4035efe1c2a40e679eb54f6926` and merge `b599616f5e2879e1663cc176b5617e40aab37483` are pushed. Vercel deployment `dpl_4AqbXLwy4B2TsvEJ3HejbLfw7dYQ` is Ready on `https://my-workout-pal-chi.vercel.app`; GitHub reports Vercel success for the exact merge SHA, public welcome and five-day program smoke checks pass, and the bounded one-hour production error scan returned no entries. This deployment proves the production build and unchanged public application still serve; the synthetic authenticated fixture itself is intentionally absent from production and does not become hosted-auth evidence.
 
 ## Evidence boundary and next slice
 

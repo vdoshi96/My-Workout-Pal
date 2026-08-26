@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="3ad9e398286ab142a521c9e8a7668e9fea1f832a4063c90a91ce332d9c914a09">
+  <meta name="source-sha256" content="ec6700d16bb3d5401b1aea911c3b7503e49e98e2f3dc1ba386c9ec1b664a298d">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -36,6 +36,7 @@
 <li>The newest synthetic-data replay passes 4 of 4 cases across Chromium desktop and WebKit phone. It verifies expired/revoked/unverified states, both five-day starter profiles, engine-correct keyboard skip navigation, no horizontal overflow, serious/critical Axe, one-shot failed-save retry with the same idempotency key, and owner-indistinguishable clone denial without a database side effect.</li>
 <li>The first full <code>pnpm verify</code> attempt passed 78 files and 521 tests plus 4 database files and 33 assertions, then failed truthfully because the newly wired <code>seed:check</code> stage lacked its production manifest argument. The checker now defaults to the checked-in 54-row manifest when neither the explicit CLI nor environment override is supplied. The exact-source rerun passes the complete gate: strict types, lint, 78 files and 521 tests, database metadata and 33 migration/bootstrap assertions, all 27 exact-two video variations, PWA parity, 33 documentation pairs, the production Webpack build, and 41-entry route-manifest isolation.</li>
 <li>The primary public production-mode browser replay passes 43 cases with the one documented WebKit PWA skip across Chromium phone/tablet/desktop and WebKit phone. Independent read-only review reproduced the focused, authenticated, full non-browser, and public gates, inspected the complete source/documentation/screenshot diff, and returned explicit approval with no actionable finding. One transient cross-origin YouTube Permissions-Policy warning in the reviewer&#39;s first tablet run passed on exact-case and clean full reruns; no source filter was added for it.</li>
+<li>Committed the reviewed source as <code>a3adc6051aca0d4035efe1c2a40e679eb54f6926</code>, pushed the feature branch, merged it to <code>main</code> as <code>b599616f5e2879e1663cc176b5617e40aab37483</code>, and pushed <code>main</code>. Production deployment <code>dpl_4AqbXLwy4B2TsvEJ3HejbLfw7dYQ</code> reached Ready on the public alias; GitHub reports Vercel success for the exact merge SHA, public welcome and five-day program smoke checks pass, and the bounded one-hour production error scan is empty.</li>
 <li>This is credential-free downstream authorization and UI evidence only. Program collection/editor/runner/insights/settings/deletion harness slices plus hosted Firebase/provider, secure-cookie, production-authenticated, authenticated-media, and Spend Management evidence remain open.</li>
 </ul>
 <h2>2026-08-26: Authenticated verification planning and command truth</h2>
