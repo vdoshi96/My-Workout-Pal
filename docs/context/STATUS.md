@@ -134,7 +134,7 @@ The guest-first landing, origin-aware public navigation, and first credential-fr
 
 ## Worktrees
 
-- The primary checkout is on `main` and synchronized with `origin/main`; authenticated-harness merge `b599616f5e2879e1663cc176b5617e40aab37483` is the reviewed source checkpoint beneath this documentation closeout. The completed feature branch remains on `origin` as a recoverable Git checkpoint, and no auxiliary worktree is active.
+- The primary checkout is on `main` and synchronized with `origin/main`; authenticated-harness merge `b599616f5e2879e1663cc176b5617e40aab37483` is the reviewed source checkpoint beneath this documentation closeout. The completed feature branch remains on `origin` as a recoverable Git checkpoint. Active worktree `/private/tmp/mwp-authenticated-runner` is on `qa/authenticated-runner-recovery` from `b599616` for the next credential-free workout interruption, resume, history, and progress browser-evidence lane; it is intentionally isolated from the release checkout.
 - The completed analytics worktree was integrated as `fedfba4` and removed after patch-equivalence verification.
 - The completed YouTube worktree was integrated through `6b633b0`; its selected files matched the reviewed worktree before cleanup.
 - The completed database worktree was integrated through `ff3d69c`, compared for selected-file equality, and removed.
