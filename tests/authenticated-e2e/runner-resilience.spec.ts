@@ -483,6 +483,45 @@ async function preparePushCompletion(page: Page): Promise<void> {
   await submitRunnerAction(page, "Save cardio");
 }
 
+test("the active runner keeps one-axis geometry at the 200-percent CSS viewport", async ({
+  browser,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium-desktop");
+  const harness = await openResiliencePage(
+    browser,
+    `${testInfo.project.name}-runner-200-percent-reflow`,
+    testInfo,
+  );
+  try {
+    await onboardAndOpenPush(harness.page);
+    await harness.page.setViewportSize({ height: 500, width: 720 });
+    const geometry = await harness.page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      outliers: [...document.querySelectorAll<HTMLElement>("body *")]
+        .flatMap((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.width > 0 &&
+              (rect.left < -1 || rect.right > document.documentElement.clientWidth + 1)
+            ? [{
+                className: element.className,
+                left: Math.round(rect.left),
+                right: Math.round(rect.right),
+                tagName: element.tagName,
+              }]
+            : [];
+        })
+        .slice(0, 20),
+      scrollWidth: document.documentElement.scrollWidth,
+    }));
+
+    expect(geometry.outliers).toEqual([]);
+    expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  } finally {
+    await cleanup(harness.page);
+    await harness.close();
+  }
+});
+
 test("a real aborted operation retries explicitly with the same key and no online event", async ({
   browser,
 }, testInfo) => {

@@ -94,13 +94,29 @@ export type HostedAuthenticatedMediaQaStage =
 
 export class HostedAuthenticatedMediaQaExecutionError extends Error {
   readonly cleanupConfirmed: boolean;
+  readonly safeDetail: string | undefined;
   readonly stage: HostedAuthenticatedMediaQaStage;
 
-  constructor(cleanupConfirmed: boolean, stage: HostedAuthenticatedMediaQaStage) {
+  constructor(
+    cleanupConfirmed: boolean,
+    stage: HostedAuthenticatedMediaQaStage,
+    safeDetail?: string,
+  ) {
     super("Hosted authenticated media QA failed.");
     this.name = "HostedAuthenticatedMediaQaExecutionError";
     this.cleanupConfirmed = cleanupConfirmed;
+    this.safeDetail = safeDetail;
     this.stage = stage;
+  }
+}
+
+class HostedAuthenticatedMediaQaSafeAssertionError extends Error {
+  readonly safeDetail: string;
+
+  constructor(safeDetail: string) {
+    super("Hosted authenticated media QA assertion failed.");
+    this.name = "HostedAuthenticatedMediaQaSafeAssertionError";
+    this.safeDetail = safeDetail;
   }
 }
 
@@ -602,10 +618,28 @@ async function assertOneAxis(page: Page, path: string, heading: RegExp): Promise
   await expect(page.getByRole("heading", { name: heading }).first()).toBeVisible();
   const geometry = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
+    outliers: [...document.querySelectorAll<HTMLElement>("body *")]
+      .flatMap((element) => {
+        const rect = element.getBoundingClientRect();
+        if (
+          rect.width <= 0 ||
+          (rect.left >= -1 && rect.right <= document.documentElement.clientWidth + 1)
+        ) return [];
+        const classes = [...element.classList]
+          .filter((value) => /^[A-Za-z0-9_-]+$/u.test(value))
+          .slice(0, 3)
+          .join(".");
+        return [`${element.tagName.toLowerCase()}${classes ? `.${classes}` : ""}`];
+      })
+      .slice(0, 12),
     scrollWidth: document.documentElement.scrollWidth,
   }));
   assert.ok(geometry.clientWidth > 0);
-  assert.ok(geometry.scrollWidth <= geometry.clientWidth + 1);
+  if (geometry.scrollWidth > geometry.clientWidth + 1) {
+    throw new HostedAuthenticatedMediaQaSafeAssertionError(
+      `viewport-${geometry.clientWidth}-scroll-${geometry.scrollWidth}-outliers-${geometry.outliers.join(",") || "none"}`,
+    );
+  }
   await expect(page.locator("main")).toBeVisible();
 }
 
@@ -696,6 +730,7 @@ export async function executeHostedAuthenticatedMediaQa(
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
   let context: BrowserContext | undefined;
   let firstPartyMutationCount = 0;
+  let safeFailureDetail: string | undefined;
 
   try {
     stage = "identity_creation";
@@ -758,8 +793,11 @@ export async function executeHostedAuthenticatedMediaQa(
     ]);
     firstPartyMutationCount = collectors.mutations.length;
     runPassed = true;
-  } catch {
+  } catch (error) {
     failureStage = stage;
+    if (error instanceof HostedAuthenticatedMediaQaSafeAssertionError) {
+      safeFailureDetail = error.safeDetail;
+    }
   } finally {
     await context?.close().catch(() => undefined);
     await browser?.close().catch(() => undefined);
@@ -791,6 +829,7 @@ export async function executeHostedAuthenticatedMediaQa(
     throw new HostedAuthenticatedMediaQaExecutionError(
       cleanupConfirmed,
       failureStage,
+      safeFailureDetail,
     );
   }
   assert.equal(firstPartyMutationCount, 3);

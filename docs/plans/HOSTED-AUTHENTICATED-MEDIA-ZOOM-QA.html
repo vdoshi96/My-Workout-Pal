@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="1687a9abf4d753e8d540b8ab984f1482be7ddb4db0e27377b4a12716e8a4f255">
+  <meta name="source-sha256" content="8997cfb8d05a9945708f886348956d4fe19d38bfe529ffd0951aa4414eca838c">
   <title>Hosted authenticated media and zoom QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -38,6 +38,7 @@
 <li>Registration, Admin verification, verified sign-in, secure session exchange, onboarding, and runner loading each have an exact terminal success or fail-closed stage.</li>
 <li>Media states cover approved pair, Demo 1 selected, Demo 2 selected, one active iframe, direct fallback, first iframe request failure, alternate selection, and runner logging remaining available.</li>
 <li>Zoom states cover default, browser-reported 200 percent, restored default, horizontal overflow, clipped action, unreachable disclosure/dialog control, and lost focus.</li>
+<li>The released authenticated Push runner exposed a retained red result at the exact <code>zoom_runner_geometry</code> stage while the collection, editor, and settings passed. The equivalent 720 CSS-pixel fixture viewport already passes, proving that narrow layout alone does not reproduce the native-zoom condition. A privacy-safe hosted diagnostic must therefore identify the exact viewport widths and overflowing tag/class names before any production CSS correction.</li>
 <li>Cleanup states distinguish visible account deletion, exact-UID Admin fallback cleanup, absent identity, zero owned rows, and uncertain cleanup. An uncertain result fails the command and reports that manual cleanup may be required without printing the identity.</li>
 </ul>
 <h2>Domain values and invariants</h2>
@@ -78,13 +79,14 @@
 <li>The owned Push runner exposes the approved exact pair and one iframe; Demo 1 and Demo 2 each visibly enter a playing state after a user gesture.</li>
 <li>With the first embed request deliberately blocked, the runner still exposes Demo 2, its direct fallback, and set logging; Demo 2 reaches playing state.</li>
 <li>Collection, program editor, settings, and runner each pass actual browser-reported 200-percent one-axis geometry and keyboard reachability; zoom is restored.</li>
+<li>A production-component fixture regression at 720 CSS pixels reports no element outside the document viewport and no horizontal document overflow before the hosted replay is accepted.</li>
 <li>No unexpected first-party console/page/request/HTTP failure occurs. Any accepted third-party warning is exact and documented.</li>
 <li>The disposable Firebase UID is absent, owned Neon row counts return to zero, global counts are unchanged, and the aggregate Firebase count equals baseline.</li>
 <li>No identity, credential, cookie, opaque ID, profile, trace, video, or build/report artifact remains; free space does not materially decrease.</li>
 </ul>
 <h2>Automated tests and retained red evidence</h2>
 <p>Add a pure configuration parser and command policy test before the browser runner. Fail first on the missing command/config contract, then cover opt-in denial, origin/project mismatch, sanitized errors, cleanup postconditions, exact-pair validation, player-state classification, first-embed blocking allowlist, browser-zoom proof classification, and generated-artifact exclusions. Reuse the established hosted-auth/deletion helpers only when their ownership and sanitization contracts remain intact.</p>
-<p>The final focused matrix includes the new domain/command/helper tests, strict TypeScript, scoped lint, documentation parity, and diff checks. A complete application build is unnecessary unless production source changes. Any product defect exposed by the run receives one minimal fail-first automated regression before correction and a proportionate aggregate/build replay whose output is deleted immediately.</p>
+<p>The final focused matrix includes the new domain/command/helper tests, strict TypeScript, scoped lint, documentation parity, and diff checks. The released runner&#39;s actual-zoom overflow is the retained fail-first browser result; the credential-free 720 CSS-pixel fixture remains a complementary one-axis regression rather than being misrepresented as the reproducer. Any production CSS correction requires the complete aggregate/build and production boundary, with all generated output deleted immediately afterward.</p>
 <h2>Browser evidence required</h2>
 <p>Record exact released SHA/deployment, Chromium version, default and 200-percent browser-reported zoom, route classes, zero-overflow measurements, player tab/iframe/fallback state, visible playing indicator for each demonstration, first-embed failure recovery, keyboard/Axe result, first-party collector sets, cleanup postconditions, temporary disk peak, and final free space. Do not name the account or opaque resources. Google provider behavior and Vercel Spend Management remain separate manual gates.</p>
 

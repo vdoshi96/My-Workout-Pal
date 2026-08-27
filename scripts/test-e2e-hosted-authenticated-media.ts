@@ -62,8 +62,12 @@ async function main(): Promise<number> {
     const stage = error instanceof HostedAuthenticatedMediaQaExecutionError
       ? error.stage
       : "unclassified";
+    const detail = error instanceof HostedAuthenticatedMediaQaExecutionError &&
+        error.safeDetail
+      ? ` (${error.safeDetail})`
+      : "";
     process.stderr.write(
-      `Hosted authenticated media QA failed safely at the ${stage} stage; ${cleanup}.\n`,
+      `Hosted authenticated media QA failed safely at the ${stage} stage${detail}; ${cleanup}.\n`,
     );
     return 1;
   }
