@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f8dde3cec36238f0b01618355a92e149ff5151932c9e31c57d67892b9421fa22">
+  <meta name="source-sha256" content="e1a20037830069d8001d839a6316c9688b61f7808e56348255d9f88c3b9cb015">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,12 +28,17 @@
 <body>
   <main>
 <h1>Project log</h1>
-<h2>2026-08-27: Hosted deletion and ownership QA plan</h2>
+<h2>2026-08-27: Hosted deletion and ownership QA</h2>
 <ul>
 <li>Started the single in-place branch <code>vishal/hosted-deletion-idor-qa</code> from synchronized production/documentation closeout <code>aefc2ba886ee1ccff9a93784c982bc07dd63bb14</code>; no auxiliary worktree, delegated agent, simulator, or background browser is active.</li>
 <li>Planned one bounded destructive production lane using exactly two generated verified password identities. Alice owns a dumbbell starter, one custom exercise, and one active workout; Bob owns a barbell starter and must receive foreign/missing-equivalent responses for Alice&#39;s opaque resources with zero database effect.</li>
 <li>Both identities must delete themselves through the real Settings reauthentication flow. Exact-UID server-side <code>finally</code> cleanup is mandatory if visible deletion is interrupted; completion requires both Firebase identities absent, all owned rows removed except terminal minimal saga jobs, global rows unchanged, and aggregate Firebase count restored. No identity, secret, cookie, CSRF token, opaque resource ID, trace, video, or browser profile may be retained.</li>
 <li>The lane runs one Chromium desktop lifecycle only, retains at most two identity-free screenshots, and deletes every generated build/browser artifact after evidence extraction. Google consent, inbox delivery, and Vercel Spend Management remain separate gates.</li>
+<li>Retained the missing-runner failure before implementing a strict explicit-approval gate, two reserved-domain identities, exact-project/origin configuration, production browser orchestration, privacy-safe owner/global persistence digests, four foreign/missing probe classes, and exact-UID saga cleanup. The focused matrix passes 3 files/11 assertions with strict TypeScript and scoped lint.</li>
+<li>Ten bounded production diagnostics failed closed while preserving exact-account cleanup. They established the nested not-found presentation, Next 16 streamed <code>200</code> plus <code>noindex</code> behavior, raw-stream/hydrated metadata boundary, generic console ownership for one deliberate provider <code>400</code> and six deliberate API <code>404</code>s, and a streamed-UI timing race. No failed-run screenshot, identity, opaque resource, provider payload, trace, video, storage state, or browser profile was retained.</li>
+<li>Exact harness checkpoint <code>f9f1bae477c62c6fdc0db3f51b7e4db86d6817b2</code> passed against production runtime <code>aefc2ba886ee1ccff9a93784c982bc07dd63bb14</code>, Ready deployment <code>dpl_RrMuKj17bZSGVsZTun32F7YmCLTq</code>. The safe result reported Chromium <code>1440×1000</code>, 12 exact first-party mutations, four foreign/missing classes, unchanged global counts, Firebase users <code>0 → 0</code>, and <code>cleanupConfirmed: true</code>.</li>
+<li>Alice onboarded dumbbells, created one private exercise, and started one workout; Bob onboarded barbell. Bob&#39;s foreign and random-missing custom, workout, activation, and rendered-route outcomes matched with private cache denial and no owner effect. Cancel restored focus, wrong password did not delete, both correct password plus <code>DELETE</code> flows removed only their current owner, and Alice remained byte-stable after Bob&#39;s deletion.</li>
+<li>Visually inspected the identity-free deletion-review and decoded public-return screenshots, then replaced the older hosted-auth QA bundle so only the newest completed run remains. Root/fixture build, Playwright result/report, trace, video, and saved-profile directories are absent. Four stale temporary HTML/header probes from the prior release closeout were removed; free volume is about 192 GiB.</li>
 </ul>
 <h2>2026-08-27: Hosted password-auth production evidence</h2>
 <ul>

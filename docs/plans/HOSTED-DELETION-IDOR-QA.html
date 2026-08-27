@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="cdfde1f626aff9d262df90167c7569182dd8c323340534e82e3f9ca9a2083e80">
+  <meta name="source-sha256" content="8f443e1fdf6679201c6deb2767a475d7af1ab41e838eb45118bdd77b569132dd">
   <title>Hosted deletion and two-user ownership QA plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -50,7 +50,7 @@
 </ul>
 <h2>Domain types and invariants</h2>
 <p><code>HostedDeletionQaIdentity</code> contains one in-memory reserved-domain email, a generated high-entropy password, and an exact Admin-captured UID. <code>HostedOwnedResources</code> contains only opaque program, revision, custom-exercise, and workout IDs captured from structurally parsed application responses. None may enter a shell argument, log line, screenshot, documentation file, trace, or saved browser profile.</p>
-<p>The browser never supplies a UID to an application route. Authorization comes only from each context&#39;s secure server cookie. Foreign and missing identifiers must have the same status, <code>Cache-Control</code>, safe error code/message, and normalized rendered outcome. Any owner hint, resource name, workout value, note, program label, or differing existence signal is a failure.</p>
+<p>The browser never supplies a UID to an application route. Authorization comes only from each context&#39;s secure server cookie. Foreign and missing identifiers must have the same status, <code>Cache-Control</code>, safe error code/message, and normalized rendered outcome. Private APIs must return a real <code>404</code>. A rendered App Router not-found response may be <code>200</code> after streaming begins, as documented by the checked-in Next 16 guide; in that case both routes must still be equal, private <code>no-store</code>, visibly not found, and carry <code>robots=noindex</code> in the stream or hydrated head. Any owner hint, resource name, workout value, note, program label, or differing existence signal is a failure.</p>
 <p>The deletion request remains exactly <code>{ confirmation: &quot;DELETE&quot;, idempotencyKey }</code>. The existing client reauthenticates the matching current Firebase user, refreshes the secure server session with a fresh same-UID token, and submits no ownership field. The server requires verified/recent session identity again, deletes owned rows transactionally, deletes the exact Firebase UID afterward, and clears cookies only on confirmed completion.</p>
 <h2>Persistence contracts</h2>
 <p>The lane may create, for each disposable owner, one Firebase identity, profile, preferences row, equipment row, starter program root/revision graph, and one idempotency receipt. Alice additionally owns one custom exercise and one active workout snapshot. Bob additionally owns no foreign resource and receives no reference to Alice through an application response.</p>
@@ -81,7 +81,7 @@
 <li>Correct password plus exact phrase deletes only the current owner, clears the cookie/local namespace, returns public, and denies the former protected route.</li>
 <li>Alice remains intact after Bob deletion; both owners and Firebase identities are absent only after their respective deletion flows.</li>
 <li>Aggregate Firebase count returns to baseline, global catalog/template/video counts remain identical, and only terminal minimal deletion jobs may remain.</li>
-<li>Unexpected console warning/error, page error, first-party HTTP failure, or request failure remains fatal except exact, documented provider 400 and superseded navigation-metadata boundaries.</li>
+<li>Unexpected console warning/error, page error, first-party HTTP failure, or request failure remains fatal except the exact wrong-password provider <code>400</code>, the six deliberately exercised private-API <code>404</code> responses already owned by the HTTP collector, and superseded navigation-metadata boundaries.</li>
 <li>No secret, identity, opaque ID, trace, video, storage state, or browser profile is retained.</li>
 </ul>
 <h2>Automated tests</h2>
@@ -92,7 +92,11 @@
 <p>It must load ignored secrets internally and must not accept an email, password, UID, or resource ID as a command-line argument.</p>
 <h2>Browser evidence required for completion</h2>
 <p>Retain exact production SHA/deployment, engine/viewport, safe Firebase before/after counts, fixed foreign/missing probe outcomes, zero-effect persistence summary, secure-cookie assertions, cancellation/focus/wrong-password evidence, both confirmed deletion outcomes, protected-route denial, Axe results, unexpected console/HTTP/request-failure result, and a bounded Vercel error-log query.</p>
-<p>Retain at most two screenshots: Bob&#39;s foreign-denial plus deletion-review state, and the post-deletion public confirmation. They must contain no identity or opaque ID. Document that Google consent, real inbox delivery, and paid/spend settings remain unproved.</p>
+<p>Retain at most two screenshots: Bob&#39;s deletion-review state and the post-deletion public return after the cartoon hero has decoded. The foreign-denial proof is structural and must not retain an opaque URL. Screenshots must contain no identity or opaque ID. Document that Google consent, real inbox delivery, and paid/spend settings remain unproved.</p>
+<h2>Completion record</h2>
+<p>Exact harness checkpoint <code>f9f1bae477c62c6fdc0db3f51b7e4db86d6817b2</code> passed against production runtime <code>aefc2ba886ee1ccff9a93784c982bc07dd63bb14</code> at Ready deployment <code>dpl_RrMuKj17bZSGVsZTun32F7YmCLTq</code>. Chromium <code>1440×1000</code> established two independent secure sessions, created dumbbell and barbell starter graphs, retained Alice&#39;s private exercise and active workout, and proved four foreign/missing comparison classes with no persistence change. The private API pairs returned equal <code>404</code>/<code>no-store</code> results. The two rendered paths returned the equal Next streamed not-found boundary with private <code>no-store</code> and <code>noindex</code> rather than exposing existence.</p>
+<p>Cancellation restored focus, the exact wrong password performed no deletion, and each correct password plus <code>DELETE</code> removed only its current owner through the visible Settings flow. Alice remained byte-stable in the in-process owner digest after Bob&#39;s deletion. Both Firebase identities and every owned row were absent at completion, both deletion jobs were terminal, global counts were unchanged, and aggregate Firebase users returned from <code>0</code> to <code>0</code>. The safe result reported 12 exact first-party mutations, four probe classes, <code>cleanupConfirmed: true</code>, and no retained identity or opaque resource value.</p>
+<p>Ten bounded diagnostic replays failed closed before the exact passing run. Every failed replay reported only a stable stage and confirmed exact-account cleanup. Those failures established the nested Next not-found copy, documented streamed <code>200</code> behavior, raw-stream/hydrated <code>noindex</code> boundary, deliberate <code>404</code> console ownership, and the need to await streamed UI before inspection. No failed-run screenshot was retained.</p>
 
   </main>
 </body>
