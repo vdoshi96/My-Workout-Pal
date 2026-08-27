@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="38b0c047aaa5c84f6f6d3cd12acf1eadeb878830c3d80b7317b8e5680a380580">
+  <title>Actual 200-percent public zoom QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Actual 200-percent public zoom QA</h1>
+<h2>Scope</h2>
+<ul>
+<li>Public production runtime: <code>8365e47e8436a59bbccbd1a887176a5924d2ce27</code></li>
+<li>Production origin: <code>https://my-workout-pal-chi.vercel.app</code></li>
+<li>Focus-correction source: <code>33e3de4</code></li>
+<li>Browsers: installed Google Chrome and Safari on macOS</li>
+<li>Persistence/provider effect: none</li>
+</ul>
+<h2>Browser evidence</h2>
+<p>Chrome&#39;s site-specific settings and toolbar both reported <code>200%</code>. The same page reported DPR 4 at zoom and DPR 2 after the verified reset to <code>100%</code>. At 200 percent, landing, program, Barbell + rack selection, Push, contextual exercise return, filtered library search, exercise detail, and sign-in each had <code>scrollWidth === clientWidth</code> with an 892-pixel document width.</p>
+<p>The exercise detail exposed exactly two tabs. ArrowRight changed selection from Demo 1 to Demo 2, replaced the original embed with <code>youtube-nocookie.com/embed/YwrzZaNqJWU</code>, retained exactly one iframe, and updated the direct fallback to <code>youtube.com/watch?v=YwrzZaNqJWU</code>. The iframe occupied CSS pixels 45 through 847.5 inside the 892-pixel document. Chrome&#39;s warning/error log set was empty.</p>
+<p>Safari&#39;s Page Menu displayed the exact zoom list and reported <code>200%</code> after selection. Landing, program, Barbell + rack, Push, exercise detail, Demo 2, exact Push return, and sign-in remained available in the accessibility tree. Each surface exposed the page&#39;s single scroll axis and no separate horizontal scroll control. The Demo 2 subtree exposed Play video, attribution, Watch on YouTube, and the direct application fallback. Safari was visibly restored to <code>100%</code> before it quit.</p>
+<p>No screenshot was retained because exact browser state plus numeric geometry provides stronger proof and avoids redundant disk use. No credential, account, UID, cookie, opaque member path, profile, trace, recording, report, or download entered the run.</p>
+<h2>Retained fail-first correction</h2>
+<p>The production landing skip link received focus and changed the URL fragment, but its unfocusable destination left Chrome focus on <code>BODY</code>. The new component assertion failed on the missing <code>tabindex=&quot;-1&quot;</code>. Source checkpoint <code>33e3de4</code> makes the public main, authenticated main, and selected-day destination programmatically focusable.</p>
+<p>Passing checks on that exact source:</p>
+<ul>
+<li><code>pnpm vitest run tests/unit/accessible-labels.test.tsx tests/unit/public-navigation-prefetch.test.tsx</code> — 2 files, 4 tests.</li>
+<li><code>pnpm typecheck</code>.</li>
+<li>Scoped ESLint for the changed shells, explorer, component test, and two browser specs.</li>
+<li>Production-mode Chromium public skip-link case — 1 pass.</li>
+<li>Production-mode Chromium authenticated onboarding/focus case — 1 pass.</li>
+<li>Root production build and authenticated fixture build both passed before their generated output was deleted.</li>
+</ul>
+<h2>Disk closeout</h2>
+<ul>
+<li>Deleted root <code>.next</code> (about 203 MB), fixture <code>.next-authenticated</code> (about 174 MB), <code>test-results</code>, and <code>playwright-report</code> immediately after the focused runs.</li>
+<li>Chrome and Safari were restored to default zoom and quit.</li>
+<li>No QA raster was added. The superseded hosted-deletion screenshots and note are removed after this Markdown/HTML pair verifies.</li>
+</ul>
+<h2>Remaining boundary</h2>
+<p>Authenticated actual-200-percent collection/editor/settings/runner behavior remains coupled to the authenticated production-media gate because this public run reused no member session and transmitted no credential. Google consent/reauthentication and Vercel Spend Management also remain separate.</p>
+
+  </main>
+</body>
+</html>

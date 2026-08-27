@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="1ac39e1a0a62e17a33f4d5f58dc91a0493431679d999265e3369b49757e016ac">
+  <meta name="source-sha256" content="634586d8c253982de3376c06fc8b3129e939ad554981ed7d0fa29883faeb187a">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-27: Actual 200-percent public zoom QA</h2>
+<ul>
+<li>Planned a no-build public production inspection that distinguishes real browser zoom from viewport, DPR-only, CSS-transform, or operating-system scaling. Chrome&#39;s own site zoom settings and toolbar reported exactly <code>200%</code>, with DPR changing from 2 to 4; Safari&#39;s Page Menu exposed and selected its exact <code>200%</code> option.</li>
+<li>Chrome measured zero document-level horizontal overflow on landing, program, Barbell + rack selection, Push, contextual return, filtered library search, exercise detail, and sign-in. The zoomed exercise page retained keyboard Demo 1 to Demo 2 selection, one iframe within the 892-pixel document, attribution, and direct fallback. Its captured console warning/error set was empty.</li>
+<li>Safari repeated landing, program equipment selection, Push, exercise detail, Demo 2, direct fallback, contextual return, and sign-in through a single page scroll axis with no separate horizontal scroll control. Both browsers were restored to <code>100%</code> and quit. No account, provider, database, build, screenshot, profile, trace, video, report, or download was created by the headed evidence.</li>
+<li>The inspection caught one real keyboard issue: shared fragment skip links left focus on the document body. A focused component test failed first. Source checkpoint <code>33e3de4</code> adds programmatic focus targets to public, authenticated, and selected-day destinations; four component assertions, TypeScript, scoped lint, and focused public plus authenticated production-mode browser cases pass.</li>
+<li>Deleted the focused run&#39;s roughly 203 MB public build, 174 MB authenticated fixture build, and all Playwright results/reports immediately after verification. Authenticated actual zoom remains paired with the later authenticated production-media gate so this lane does not invent a member session.</li>
+</ul>
 <h2>2026-08-27: Hosted deletion and ownership QA</h2>
 <ul>
 <li>Started the single in-place branch <code>vishal/hosted-deletion-idor-qa</code> from synchronized production/documentation closeout <code>aefc2ba886ee1ccff9a93784c982bc07dd63bb14</code>; no auxiliary worktree, delegated agent, simulator, or background browser is active.</li>

@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-27: Actual 200-percent public zoom QA
+
+- Planned a no-build public production inspection that distinguishes real browser zoom from viewport, DPR-only, CSS-transform, or operating-system scaling. Chrome's own site zoom settings and toolbar reported exactly `200%`, with DPR changing from 2 to 4; Safari's Page Menu exposed and selected its exact `200%` option.
+- Chrome measured zero document-level horizontal overflow on landing, program, Barbell + rack selection, Push, contextual return, filtered library search, exercise detail, and sign-in. The zoomed exercise page retained keyboard Demo 1 to Demo 2 selection, one iframe within the 892-pixel document, attribution, and direct fallback. Its captured console warning/error set was empty.
+- Safari repeated landing, program equipment selection, Push, exercise detail, Demo 2, direct fallback, contextual return, and sign-in through a single page scroll axis with no separate horizontal scroll control. Both browsers were restored to `100%` and quit. No account, provider, database, build, screenshot, profile, trace, video, report, or download was created by the headed evidence.
+- The inspection caught one real keyboard issue: shared fragment skip links left focus on the document body. A focused component test failed first. Source checkpoint `33e3de4` adds programmatic focus targets to public, authenticated, and selected-day destinations; four component assertions, TypeScript, scoped lint, and focused public plus authenticated production-mode browser cases pass.
+- Deleted the focused run's roughly 203 MB public build, 174 MB authenticated fixture build, and all Playwright results/reports immediately after verification. Authenticated actual zoom remains paired with the later authenticated production-media gate so this lane does not invent a member session.
+
 ## 2026-08-27: Hosted deletion and ownership QA
 
 - Started the single in-place branch `vishal/hosted-deletion-idor-qa` from synchronized production/documentation closeout `aefc2ba886ee1ccff9a93784c982bc07dd63bb14`; no auxiliary worktree, delegated agent, simulator, or background browser is active.
