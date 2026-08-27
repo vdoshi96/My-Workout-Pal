@@ -236,6 +236,7 @@ export type WorkoutRunnerProps = RunnerInput &
       protection: RunnerNavigationProtection,
     ) => void;
     protectBeforeUnload?: boolean;
+    reauthenticationHref?: string;
     getConnectivity?: () => RunnerConnectivity;
     unitSystem?: RunnerUnitSystem;
     getCompatibleSubstitutions?: (
@@ -440,6 +441,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const previousTimerView = useRef<RestTimerView | undefined>(undefined);
   const previousRunnerStatus = useRef(state.status);
   const previousSyncStatus = useRef(state.sync.status);
+  const previousAuthBlocked = useRef(false);
+  const authBlockedHeading = useRef<HTMLHeadingElement>(null);
   const runnerIdentity = runnerSnapshotIdentity(sourceSnapshot);
   const snapshotKey = runnerSnapshotRestoreKey(sourceSnapshot);
   const stateIdentity = runnerSnapshotIdentity(state.snapshot);
@@ -676,6 +679,30 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       );
     }
   }, [state.sync.status]);
+
+  useEffect(() => {
+    const blocked = state.auth === "expired";
+    if (blocked && !previousAuthBlocked.current) {
+      authBlockedHeading.current?.focus();
+      setAnnouncement(
+        "Your sign-in expired. Reauthenticate as the same account to continue syncing.",
+      );
+    }
+    previousAuthBlocked.current = blocked;
+  }, [state.auth]);
+
+  function retryConnection() {
+    setState((current) =>
+      runnerReducer(current, {
+        type: "set_connectivity",
+        connectivity: "online",
+        now: Date.now(),
+      }),
+    );
+    setAnnouncement(
+      "Retrying the connection with the same queued workout operation.",
+    );
+  }
 
   const timerView = useMemo(
     () => getRestTimerView(state, clockNow),
@@ -1205,16 +1232,51 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         </p>
       ) : null}
       {state.auth === "expired" ? (
-        <p className="runner-banner runner-banner--auth" role="alert">
-          Your sign-in expired. Reauthenticate as the same account to sync this
-          workout.
-        </p>
+        <section
+          aria-labelledby="runner-auth-blocked-title"
+          className="runner-banner runner-banner--auth runner-banner--action"
+          role="alert"
+        >
+          <h2
+            id="runner-auth-blocked-title"
+            ref={authBlockedHeading}
+            tabIndex={-1}
+          >
+            Your sign-in expired
+          </h2>
+          <p>
+            Reauthenticate as the same account to sync this workout. Queued
+            activity remains on this device.
+          </p>
+          {props.reauthenticationHref ? (
+            <a
+              className="runner-button runner-button--primary"
+              href={props.reauthenticationHref}
+            >
+              Reauthenticate and return
+            </a>
+          ) : null}
+        </section>
       ) : null}
       {state.connectivity === "offline" ? (
-        <p className="runner-banner runner-banner--offline" role="status">
-          Offline queued. Changes remain on this device until the connection
-          returns.
-        </p>
+        <section
+          aria-labelledby="runner-offline-title"
+          className="runner-banner runner-banner--offline runner-banner--action"
+          role="status"
+        >
+          <h2 id="runner-offline-title">Offline queued</h2>
+          <p>
+            Changes remain on this device until a connection attempt is
+            confirmed.
+          </p>
+          <button
+            className="runner-button"
+            onClick={retryConnection}
+            type="button"
+          >
+            Retry connection
+          </button>
+        </section>
       ) : null}
       <p aria-atomic="true" aria-live="polite" className="sr-only">
         {announcement}

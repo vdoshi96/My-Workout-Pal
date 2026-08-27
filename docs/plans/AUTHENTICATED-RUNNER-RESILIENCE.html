@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="bc093b3efef5659a6c54d7f9b271abbfd98183a11e6eed000ee608d6c464423e">
+  <meta name="source-sha256" content="5c02390f5914b1c995d2aaec375e0af5701024ad701a219700ba5d7e3af68753">
   <title>Authenticated runner offline, reauthentication, and multi-tab resilience plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -90,7 +90,7 @@
 <li>BroadcastChannel absence, message loss, duplicated notification, or tab suspension cannot lose data; reload, focus, visibility, and the next write re-read the durable record.</li>
 <li>Storage quota/blocking remains a separate local adapter failure. Network retry never suggests that unavailable local persistence succeeded.</li>
 </ul>
-<h2>Phone, tablet, and desktop behavior</h2>
+<h2>Mobile, tablet, and desktop behavior</h2>
 <p>The complete resilience journey runs in Chromium desktop and WebKit phone. Focused geometry assertions reuse the released authenticated phone/tablet/desktop matrix for banners, retry/reauth controls, conflict review, terminal disclosure, fixed navigation clearance, 44-pixel material targets, and zero horizontal overflow. The phone layout keeps the recovery action and affected-target summary above the fixed account navigation. Desktop may place conflict choices side-by-side; phone stacks them without changing reading or tab order.</p>
 <p>Reduced motion removes nonessential transitions without delaying state or focus. Dark and forced-color checks remain scoped to engines that support the emulation. This checkpoint does not relabel viewport emulation as actual 200-percent browser zoom; that remains a separate headed/manual release gate.</p>
 <h2>Accessibility</h2>

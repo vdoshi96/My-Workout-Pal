@@ -71,7 +71,7 @@ Expired and revoked requests return the production `AuthPolicyError` status/code
 - BroadcastChannel absence, message loss, duplicated notification, or tab suspension cannot lose data; reload, focus, visibility, and the next write re-read the durable record.
 - Storage quota/blocking remains a separate local adapter failure. Network retry never suggests that unavailable local persistence succeeded.
 
-## Phone, tablet, and desktop behavior
+## Mobile, tablet, and desktop behavior
 
 The complete resilience journey runs in Chromium desktop and WebKit phone. Focused geometry assertions reuse the released authenticated phone/tablet/desktop matrix for banners, retry/reauth controls, conflict review, terminal disclosure, fixed navigation clearance, 44-pixel material targets, and zero horizontal overflow. The phone layout keeps the recovery action and affected-target summary above the fixed account navigation. Desktop may place conflict choices side-by-side; phone stacks them without changing reading or tab order.
 

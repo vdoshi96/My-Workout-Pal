@@ -214,4 +214,40 @@ describe("WorkoutRunner injected boundary harness", () => {
       runnerSnapshotRestoreKey(structurallyIdenticalSnapshot),
     );
   });
+
+  it("renders bounded recovery actions for offline and authentication blockers", () => {
+    const storage = createInMemoryRunnerStorage();
+    const snapshot = createWorkoutSnapshot(snapshotInput);
+    let blocked = createRunnerState(snapshot, { now: 3_000 });
+    blocked = runnerReducer(blocked, {
+      type: "set_connectivity",
+      connectivity: "offline",
+      now: 3_001,
+    });
+    blocked = runnerReducer(blocked, {
+      type: "set_auth",
+      auth: "expired",
+      now: 3_002,
+    });
+
+    const markup = renderToStaticMarkup(
+      <WorkoutRunner
+        initialState={blocked}
+        reauthenticationHref="/sign-in?returnTo=%2Fworkout%2Fsession-harness"
+        storage={storage}
+        submitter={async () => ({
+          status: "saved",
+          persistedId: "saved-after-recovery",
+        })}
+      />,
+    );
+
+    expect(markup).toContain("Retry connection");
+    expect(markup).toContain("Reauthenticate and return");
+    expect(markup).toContain(
+      'href="/sign-in?returnTo=%2Fworkout%2Fsession-harness"',
+    );
+    expect(markup).toContain('aria-labelledby="runner-auth-blocked-title"');
+    expect(markup).toContain('tabindex="-1"');
+  });
 });

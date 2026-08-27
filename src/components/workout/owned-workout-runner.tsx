@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   compatibleWorkoutSubstitutions,
   recoverOwnedWorkoutState,
+  workoutReauthenticationHref,
 } from "@/client/owned-workout";
 import { privateApiMutation } from "@/client/private-api";
 import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
@@ -166,6 +167,7 @@ export function OwnedWorkoutRunner({
       onComplete={openTerminalHistory}
       onNavigateAway={() => router.push("/app")}
       protectBeforeUnload
+      reauthenticationHref={workoutReauthenticationHref(sessionId)}
       storage={storage}
       submitter={submitter}
       title={initialState.snapshot.dayName}

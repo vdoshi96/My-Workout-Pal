@@ -5,6 +5,7 @@ import {
   createWorkoutStartController,
   parseWorkoutStartResponse,
   recoverOwnedWorkoutState,
+  workoutReauthenticationHref,
   workoutRoutePath,
   workoutStartRequest,
 } from "@/client/owned-workout";
@@ -61,11 +62,17 @@ describe("owned workout route contract", () => {
       },
     });
     expect(workoutRoutePath(sessionId)).toBe(`/workout/${sessionId}`);
+    expect(workoutReauthenticationHref(sessionId)).toBe(
+      `/sign-in?returnTo=%2Fworkout%2F${sessionId}`,
+    );
     expect(() => workoutStartRequest({
       programId: "not-a-uuid",
       dayId,
       idempotencyKey: "start-push-1",
     })).toThrow(/program/i);
+    expect(() => workoutReauthenticationHref("not-a-session")).toThrow(
+      /session/i,
+    );
   });
 
   it("accepts only a strict created or resumed session response", () => {

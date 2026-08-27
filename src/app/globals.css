@@ -874,6 +874,10 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .runner-banner--saved { color: var(--lichen); }
 .runner-banner--offline { color: var(--danger); }
 .runner-banner--auth, .runner-banner--failed { color: var(--danger); }
+.runner-banner--action { align-items: flex-start; display: flex; flex-wrap: wrap; gap: .55rem .8rem; }
+.runner-banner--action h2 { flex-basis: 100%; font-family: var(--font-display); font-size: 1.35rem; letter-spacing: -.01em; line-height: 1; margin: 0; text-transform: uppercase; }
+.runner-banner--action p { flex: 1 1 24rem; margin: 0; }
+.runner-banner--action .runner-button { min-height: 2.75rem; }
 .runner-layout { display: grid; gap: 1rem; margin-top: 1rem; }
 .runner-outline, .runner-card, .runner-footer { background: var(--white); border: 1px solid var(--rule); }
 .runner-outline { align-self: start; padding: 1rem; }

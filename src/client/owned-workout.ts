@@ -118,6 +118,12 @@ export function workoutRoutePath(sessionId: string): `/workout/${string}` {
   return `/workout/${resourceUuid(sessionId, "workout session")}`;
 }
 
+export function workoutReauthenticationHref(
+  sessionId: string,
+): `/sign-in?returnTo=${string}` {
+  return `/sign-in?returnTo=${encodeURIComponent(workoutRoutePath(sessionId))}`;
+}
+
 export function createWorkoutStartController(
   dependencies: Readonly<{
     createId: () => string;
