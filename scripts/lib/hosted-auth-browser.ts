@@ -39,6 +39,8 @@ export type HostedAuthQaStage =
   | "verification"
   | "verified_sign_in_navigation"
   | "verified_navigation_missing_cookie"
+  | "verified_navigation_app_variant"
+  | "verified_navigation_public_root"
   | "verified_navigation_returned_sign_in"
   | "verified_navigation_unexpected_path"
   | "verified_sign_in_submit"
@@ -325,11 +327,14 @@ async function runBrowserLifecycle(
     try {
       await page.waitForURL(`${config.origin}/app`, { timeout: 10_000 });
     } catch (error) {
-      setStage(
-        new URL(page.url()).pathname === "/sign-in"
+      const currentPath = new URL(page.url()).pathname;
+      setStage(currentPath === "/app"
+        ? "verified_navigation_app_variant"
+        : currentPath === "/sign-in"
           ? "verified_navigation_returned_sign_in"
-          : "verified_navigation_unexpected_path",
-      );
+          : currentPath === "/"
+            ? "verified_navigation_public_root"
+            : "verified_navigation_unexpected_path");
       throw error;
     }
     setStage("verified_session_ui");
