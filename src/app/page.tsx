@@ -114,7 +114,9 @@ export default function HomePage() {
               <li>Track workouts and resume interrupted sessions</li>
               <li>Keep history, records, preferences, and personal analytics</li>
             </ul>
-            <Link href="/sign-in">Create or access an account <Icon name="arrow-right" /></Link>
+            <Link href="/app" prefetch={false}>
+              Open my workouts <Icon name="arrow-right" />
+            </Link>
           </section>
         </div>
       </section>

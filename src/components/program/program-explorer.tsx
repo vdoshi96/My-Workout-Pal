@@ -35,7 +35,7 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
     if (nextProfile === profile) return;
     setProfile(nextProfile);
     const label = EQUIPMENT_PROFILES[nextProfile].label;
-    setAnnouncement(`${label} preview selected. ${substitutionCount} route changes are shown. Guest preview is not saved.`);
+    setAnnouncement(`${label} preview selected. ${substitutionCount} route changes are shown. The starter preview is not saved.`);
   }
 
   return (
@@ -54,11 +54,11 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
           <Link aria-current="page" href="/program" prefetch={false}><Icon name="map" /><span>Program</span></Link>
           <Link href="/library" prefetch={false}><Icon name="library" /><span>Library</span></Link>
           <Link href="/sample-progress" prefetch={false}><Icon name="sample" /><span>Sample</span></Link>
-          <Link href="/sign-in" prefetch={false}><Icon name="sign-in" /><span>Sign in</span></Link>
+          <Link href="/app" prefetch={false}><Icon name="sign-in" /><span>My workouts</span></Link>
         </nav>
-        <Link className="account-link" href="/sign-in" prefetch={false}>
+        <Link className="account-link" href="/app" prefetch={false}>
           <Icon name="sign-in" />
-          <span>Sign in</span>
+          <span>My workouts</span>
         </Link>
       </header>
 
@@ -91,7 +91,7 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
               <span><i className="alternate-swatch" /> Equipment change</span>
             </div>
             <div className="route-heading">
-              <h2 id="route-heading">Five-day starter route</h2>
+              <h2 id="route-heading">Five-day starter example</h2>
               <p>Strength, core, and walker or runner cardio every day.</p>
             </div>
             <svg className="route-lines" viewBox="0 0 600 700" aria-hidden="true" preserveAspectRatio="none">
@@ -112,7 +112,7 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
                 </li>
               ))}
             </ol>
-            <div className="guest-map-stamp">Guest route · not saved</div>
+            <div className="guest-map-stamp">Starter preview · not saved</div>
           </div>
 
           <section

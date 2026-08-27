@@ -44,6 +44,7 @@ export type HostedAuthQaStage =
   | "password_reset_code_verified"
   | "password_reset_link_parse"
   | "password_reset_link_request"
+  | "public_account_entry"
   | "recovery_known"
   | "recovery_unknown"
   | "registration"
@@ -297,7 +298,15 @@ async function runBrowserLifecycle(
   const identity = identities.application;
 
   try {
-    await page.goto(`${config.origin}/sign-in?returnTo=%2Fapp`);
+    setStage("public_account_entry");
+    await page.goto(`${config.origin}/`);
+    const accountEntry = page.getByRole("link", {
+      exact: true,
+      name: "My workouts",
+    });
+    await expect(accountEntry).toHaveAttribute("href", "/app");
+    await accountEntry.click();
+    await page.waitForURL(`${config.origin}/sign-in?returnTo=%2Fapp`);
     await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
     await assertAccessible(page);
 

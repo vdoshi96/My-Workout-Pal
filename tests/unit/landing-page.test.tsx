@@ -11,7 +11,8 @@ describe("guest-first landing page", () => {
     expect(markup).toContain("Every exercise instruction and both approved videos");
     expect(markup).toContain("Change sets, targets, weights, notes, and rest periods");
     expect(markup).toContain('href="/program"');
-    expect(markup).toContain('href="/sign-in"');
+    expect(markup).toContain('href="/app"');
+    expect(markup).toContain("Open my workouts");
     for (const day of ["push", "pull", "legs", "upper", "lower"]) {
       expect(markup).toContain(`/program/${day}?equipment=dumbbells`);
     }

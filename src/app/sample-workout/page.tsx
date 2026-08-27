@@ -100,7 +100,9 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
             <p><strong>Walker</strong> · 20:00 · 1.2 mi · 2% incline</p>
             <small>Sample note: conversational pace.</small>
           </section>
-          <Link className="primary-action" href="/sign-in"><span>Save future workouts</span><Icon name="arrow-right" /></Link>
+          <Link className="primary-action" href="/app" prefetch={false}>
+            <span>Open my workouts</span><Icon name="arrow-right" />
+          </Link>
           <p className="temporary-note">Sign in only when you want this work saved to your own history and analytics.</p>
         </aside>
       </div>

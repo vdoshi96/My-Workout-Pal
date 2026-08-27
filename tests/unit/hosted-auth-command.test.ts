@@ -47,6 +47,9 @@ describe("hosted authentication QA command", () => {
     expect(browserSource).toContain('["GET", "HEAD"].includes(request.method())');
     expect(browserSource).toContain('errorText.startsWith("net::ERR_ABORTED")');
     expect(browserSource).toContain('errorText === "cancelled"');
+    expect(browserSource).toContain('page.goto(`${config.origin}/`)');
+    expect(browserSource).toContain('exact: true,\n      name: "My workouts"');
+    expect(browserSource).toContain('page.waitForURL(`${config.origin}/sign-in?returnTo=%2Fapp`)');
     expect(browserSource).toContain('"action_identity_create"');
     expect(browserSource).toContain("createHostedAuthQaIdentityPair");
     expect(browserSource).toContain("beforeCount + 2");

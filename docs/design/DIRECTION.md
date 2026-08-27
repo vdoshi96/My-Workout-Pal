@@ -1,5 +1,7 @@
 # Visual direction
 
+> **First-release direction:** Preserve the established colors, typography, and original animal world, but use `docs/plans/WORKOUT-COMPANION-REPOSITIONING.md` for the next visual phase. The route atlas becomes an example and workout-state motif rather than the product's universal frame. No animal background treatment ships before the three-direction concept gate.
+
 ## Training route atlas
 
 My Workout Pal treats a program as a route that adapts to available equipment without redrawing completed ground. The cultural source is a field atlas: contour notation, waypoints, route alternatives, elevation summaries, and compact trip sheets. The interface uses that grammar to explain program structure and state, not to decorate an ordinary fitness dashboard.

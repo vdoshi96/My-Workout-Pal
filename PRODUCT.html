@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="03173cf347656207a7ddc535376266bd813ccdf8e0121b1aaba0fd1671977651">
+  <meta name="source-sha256" content="dd30500c8006aa4eccf010e95040778a81e06a1d8e67f2e92878ae5d78545bc7">
   <title>Product · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -33,23 +33,25 @@
 <h2>Stack</h2>
 <p>The user specified a mobile-first installable Next.js App Router PWA with strict TypeScript, Server Components by default, Tailwind CSS, Firebase Auth, Firebase Admin session verification, Neon Postgres, Drizzle ORM, Playwright, and Vercel Pro deployment.</p>
 <h2>Users</h2>
-<p>The primary user is an adult who wants a structured five-day strength and core routine that works with common home equipment and remains usable during an active workout. This audience statement is inferred from the confirmed equipment and workflow requirements.</p>
-<p>Guests evaluate the routine, equipment substitutions, exercise guidance, and sample tracking without creating an account. Authenticated users adapt programs, log real workouts, and review their own progress.</p>
+<p>The primary user is an adult who wants one place to plan a personal routine, use it during training, review form guidance, log work, and understand progress. Their routine can contain as many or as few named training days and movements as the bounded editor supports; it is not defined by the five-day starter.</p>
+<p>Guests evaluate the companion through the movement library, one editable five-day example, and a clearly disclosed progress preview. Authenticated users create or adapt routines, log real workouts, attach private guidance when needed, and review their own progress.</p>
 <h2>Product purpose</h2>
-<p>My Workout Pal turns an equipment-aware program into an interruption-safe workout record. Success means a user can understand the plan, complete a workout with honest save feedback, resume after disruption, and trust that historical results retain their original meaning.</p>
+<p>My Workout Pal helps a person plan ahead, get through a workout with useful guidance and honest save feedback, resume after disruption, and review progress without changing the meaning of their history.</p>
 <h2>Positioning</h2>
-<p>The product combines explicit dumbbell and barbell program variants with confirmed substitutions, immutable workout snapshots, and two approved concise demonstrations for every seeded movement. It does not auto-prescribe weight, rewrite history, or present sample activity as personal progress.</p>
+<p>The product combines personal routine building, an expandable movement library, equipment-aware substitutions, private guidance links, immutable workout snapshots, and approved demonstrations where available. The five-day route is an example template, not the product&#39;s prescription. The app does not auto-prescribe weight, rewrite history, or present sample activity as personal progress.</p>
 <h2>Operating context</h2>
 <p>Users browse on phones, tablets, and desktop browsers. Workout logging primarily occurs on a phone with possible disconnection, refresh, tab close, authentication expiry, or device interruption. Guests might install the PWA, but guest interaction remains temporary and is never described as saved.</p>
 <h2>Capabilities and constraints</h2>
 <ul>
-<li>The starter program has Push, Pull, Legs, Upper, and Lower days. Every day includes core work and configurable walker or runner cardio.</li>
+<li>The starter example has Push, Pull, Legs, Upper, and Lower days. Its core work and walker or runner cardio demonstrate available features but are not mandatory in a personal routine.</li>
+<li>Authenticated routines use bounded flexible day, section, movement, and optional-cardio structures with arbitrary display names and immutable published revisions.</li>
 <li>The guest default supports dumbbells, bodyweight, and an ordinary bench. The barbell profile adds a barbell, plates, a rack, and a bench while retaining dumbbells and bodyweight.</li>
 <li>Equipment changes affect only the active program after a clear preview and confirmation. Compatible prescriptions survive; incompatible movement-specific targets are explained and cleared.</li>
 <li>Authenticated users can create and edit programs and custom exercises, resume workouts, log strength and cardio, review history and analytics, set preferences, and delete their account and data.</li>
 <li>Firebase Auth supports Google and email/password accounts. Password accounts must verify email before permanent mutations. Server code verifies secure HTTP-only sessions and ownership.</li>
 <li>Neon Postgres is the durable store. Firebase UID is the external ownership key. Historical workout meaning is immutable.</li>
-<li>Production requires exactly two manually approved and fully watched YouTube demonstrations for each seeded canonical exercise and equipment variation.</li>
+<li>A canonical movement can be useful with reviewed names, metadata, and instructions before video approval. When the app publishes a catalog demonstration pair, it requires exactly two manually approved and fully watched YouTube demonstrations for that movement variation.</li>
+<li>Members can attach owner-only guidance links without changing the public catalog or labeling those links as approved.</li>
 <li>The product provides training organization and tracking. It does not provide medical advice, diagnose conditions, or guarantee outcomes.</li>
 <li>No paid service, plan upgrade, Marketplace product, or material limit increase can be enabled without explicit user approval.</li>
 </ul>
@@ -60,6 +62,8 @@
 <h2>Product principles</h2>
 <ul>
 <li>Make save state and data ownership unambiguous.</li>
+<li>Make account state unmistakable after sign-in.</li>
+<li>Treat the five-day starter as an editable example, never as the product boundary.</li>
 <li>Adapt the active plan without altering completed history.</li>
 <li>Keep the runner operable under interruption and constrained attention.</li>
 <li>Explain progression without prescribing unverified loads or making health claims.</li>

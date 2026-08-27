@@ -2,19 +2,21 @@
 
 ## Product intent
 
-My Workout Pal is a trustworthy bridge between a prescribed routine and the record that a user creates while training. It must work for a guest evaluating the routine and for an authenticated user whose program, logs, and analytics persist.
+My Workout Pal is a customizable workout companion that connects planning, in-workout guidance, logging, and progress review. It must work for a guest evaluating the companion through an example and for an authenticated user whose personal routine, guidance, logs, and analytics persist.
 
 ## Confirmed workflows
 
-- Enter through a distinct public welcome page and continue to the five-day program overview.
-- Browse the starter catalog and all five days without an account.
+- Enter through a distinct public welcome page that explains the workout-companion promise.
+- Explore the five-day starter example without an account.
 - Preview dumbbell-only and barbell-enabled equipment profiles.
-- Inspect two approved demonstrations for each seeded movement.
-- Review clearly labeled sample workout and analytics data.
+- Inspect reviewed instructions for every published movement and approved demonstrations where available.
+- Review progress-preview data with one clear sample-data disclosure.
 - Return from an exercise guide to the exact public day, filtered library, or sample workout that opened it.
 - Register or sign in with Google or email and password.
+- Land in an unmistakably private account after sign-in and see identity, account state, and sign-out controls.
 - Verify a password account before permanent mutations.
-- Clone or create a program, edit prescriptions, and create custom exercises.
+- Start from the example or a blank routine; add, rename, reorder, or remove days; edit movements, optional sections, and optional cardio; and create private exercises.
+- Attach owner-only guidance links without modifying the public catalog.
 - Confirm equipment substitutions on the active program.
 - Start, complete, interrupt, and resume strength and cardio workouts.
 - Review history, personal records, and progress analytics.
@@ -27,7 +29,7 @@ My Workout Pal is a trustworthy bridge between a prescribed routine and the reco
 - Firebase Auth for identity and Firebase Admin for server-side session and revocation checks.
 - Neon Postgres through Vercel Marketplace, accessed through Drizzle ORM and versioned migrations.
 - Zod validation at every untrusted input boundary.
-- Authentication return targets are server-normalized to bounded local paths before client navigation.
+- Authentication return targets are server-normalized to bounded local paths before client navigation. Missing or invalid destinations use `/app` as the safe member default.
 - Public exercise return targets use a separate allowlist for the program, five days, filtered library, and sample workout; direct or hostile origins fall back to the library.
 - Vitest for domain and integration tests. Playwright covers Chromium and WebKit browser flows.
 - Vercel Pro hosts preview and production deployments from GitHub.
@@ -37,7 +39,7 @@ My Workout Pal is a trustworthy bridge between a prescribed routine and the reco
 - Medical diagnosis, rehabilitation advice, or outcome guarantees.
 - Automatic load prescriptions.
 - Guest cloud persistence or claims that guest activity is saved.
-- Requiring sign-in to read the starter program, day prescriptions, exercise instructions, approved demonstrations, or clearly labeled sample resources.
+- Requiring sign-in to read the starter example, movement instructions, available approved demonstrations, or clearly disclosed progress-preview resources.
 - Social feeds, public profiles, coaching marketplaces, or wearable integrations in the initial release.
 - Silent production data mutation by a curation or refresh script.
 - Paid service changes without explicit approval.

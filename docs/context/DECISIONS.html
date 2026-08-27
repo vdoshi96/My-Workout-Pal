@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="8adafd573deba0497bdcac70d5a15031b12a917c72b6dff1a6c675e8a45450be">
+  <meta name="source-sha256" content="0d66815580640bd76111c93f62895c260aa90e70c41e957c2268b43de82d3266">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -84,6 +84,12 @@
 <h2>2026-08-27: Bound local build and browser artifacts</h2>
 <p>Keep one durable ignored pnpm store and one dependency installation for active goal work. Don&#39;t bind a persistent checkout to a pnpm store under <code>/private/tmp</code>; a restart can remove that store and force repeated dependency reconstruction.</p>
 <p>Run only one production build or browser matrix at a time. Measure free space and the exact task-owned artifact directories before and after each large gate. After reviewed evidence is retained, delete <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, and <code>playwright-report</code>. Keep only the newest tracked QA report and screenshots. Don&#39;t delete unrelated browser caches, simulator data, user files, or system data as part of this cleanup policy.</p>
+<h2>2026-08-27: Position the product as a customizable workout companion</h2>
+<p>My Workout Pal helps a member plan a personal routine, use guidance while training, log work, and review progress. The existing Push, Pull, Legs, Upper, and Lower route is one editable starter example. It no longer defines the product, the authenticated program shape, or the number and names of a member&#39;s days.</p>
+<p>This decision supersedes the fixed five-day, mandatory-Core, and paired Walker/Runner requirements recorded for the first release. It preserves the first release as intentional history. New routine publication uses explicit safety bounds, arbitrary day and section names, optional sections and cardio, stable opaque identities, owner-scoped authorization, and complete immutable revisions. Earlier program revisions and workout snapshots remain unchanged.</p>
+<p>The canonical movement library can publish reviewed names, metadata, and instructions before approved video coverage exists. A published app video pair still requires the complete existing eligibility and human full-watch approval boundary. Owner-provided guidance stays private, is never described as app-approved, and never changes the public catalog.</p>
+<p>Successful bare sign-in defaults to the protected <code>/app</code> route. Public cached pages remain identity-neutral and use an account action that enters the protected boundary, so cached HTML never guesses or leaks member state.</p>
+<p>Visual warmth extends beyond the landing hero only after a three-direction concept review. Shipping animal patterns or vignettes must be purpose-built, decorative, static, contrast-safe, pointer-inert, hidden in forced colors, and separate from private data and critical workout controls.</p>
 
   </main>
 </body>

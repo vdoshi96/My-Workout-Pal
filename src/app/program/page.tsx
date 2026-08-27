@@ -5,9 +5,9 @@ import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import { createStarterProgram } from "@/domain/programs/starter";
 
 export const metadata: Metadata = {
-  title: "Free five-day program",
+  title: "Five-day starter example",
   description:
-    "Browse every Push, Pull, Legs, Upper, and Lower workout with dumbbells or a barbell setup—no account required.",
+    "Browse every Push, Pull, Legs, Upper, and Lower starter workout with dumbbells or a barbell setup—no account required.",
 };
 
 type PageProps = {

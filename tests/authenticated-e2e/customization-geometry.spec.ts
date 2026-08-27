@@ -157,6 +157,10 @@ test("customization surfaces preserve geometry and media preferences", async ({
     expect(deviceSemantics.maxTouchPoints).toBe(0);
     expect(deviceSemantics.coarsePointer).toBe(false);
   }
+  await expect(page.locator(".member-identity")).toBeVisible();
+  await expect(page.getByText("Alice QA", { exact: true })).toBeVisible();
+  await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Build your starter route" })).toBeVisible();
   await page.getByLabel("Time zone").fill("America/Chicago");
   const onboardingResponse = page.waitForResponse(
