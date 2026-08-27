@@ -1,5 +1,7 @@
 # Guest landing and contextual navigation plan
 
+> **First-release landing record:** `docs/plans/WORKOUT-COMPANION-REPOSITIONING.md` supersedes five-day product positioning and the bare sign-in return behavior. The five-day route remains a public example, and the contextual exercise-return safeguards remain required.
+
 ## User outcome
 
 A visitor can understand My Workout Pal before entering the application, browse every starter day and exercise resource without an account, and return from exercise details to the exact public context that opened them. Sign-in copy distinguishes optional account benefits from public access.

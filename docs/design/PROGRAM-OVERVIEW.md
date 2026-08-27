@@ -1,5 +1,7 @@
 # Program overview surface brief
 
+> **Five-day example design:** This document remains the design record for the public starter example. It does not define the signed-in routine shape or landing-page positioning after `docs/plans/WORKOUT-COMPANION-REPOSITIONING.md`.
+
 ## Scope and mode
 
 The primary target is the public program overview at `src/app/program/page.tsx`. The distinct welcome route at `src/app/page.tsx` persuades through a cohesive cartoon-gym scene and directs visitors here; the authenticated active-program surface remains at `src/app/app/page.tsx`. Visitor mode is **Operate** on the program route and **Persuade through proof** on the welcome route.

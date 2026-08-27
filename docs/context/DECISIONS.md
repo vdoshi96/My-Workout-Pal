@@ -111,3 +111,25 @@ BroadcastChannel messages contain only an opaque namespace digest and revision h
 Keep one durable ignored pnpm store and one dependency installation for active goal work. Don't bind a persistent checkout to a pnpm store under `/private/tmp`; a restart can remove that store and force repeated dependency reconstruction.
 
 Run only one production build or browser matrix at a time. Measure free space and the exact task-owned artifact directories before and after each large gate. After reviewed evidence is retained, delete `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report`. Keep only the newest tracked QA report and screenshots. Don't delete unrelated browser caches, simulator data, user files, or system data as part of this cleanup policy.
+
+## 2026-08-27: Position the product as a customizable workout companion
+
+My Workout Pal helps a member plan a personal routine, use guidance while training, log work, and review progress. The existing Push, Pull, Legs, Upper, and Lower route is one editable starter example. It no longer defines the product, the authenticated program shape, or the number and names of a member's days.
+
+This decision supersedes the fixed five-day, mandatory-Core, and paired Walker/Runner requirements recorded for the first release. It preserves the first release as intentional history. New routine publication uses explicit safety bounds, arbitrary day and section names, optional sections and cardio, stable opaque identities, owner-scoped authorization, and complete immutable revisions. Earlier program revisions and workout snapshots remain unchanged.
+
+The canonical movement library can publish reviewed names, metadata, and instructions before approved video coverage exists. A published app video pair still requires the complete existing eligibility and human full-watch approval boundary. Owner-provided guidance stays private, is never described as app-approved, and never changes the public catalog.
+
+Successful bare sign-in defaults to the protected `/app` route. Public cached pages remain identity-neutral and use an account action that enters the protected boundary, so cached HTML never guesses or leaks member state.
+
+Visual warmth extends beyond the landing hero only through the selected animal-surface direction. Shipping vignettes must be purpose-built, decorative, static, contrast-safe, pointer-inert, hidden in forced colors, and separate from private data and critical workout controls.
+
+## 2026-08-27: Select Corner Companions for the animal surface system
+
+The completed three-direction review selected Corner Companions as the sole production direction for the Wave 3 pilot and any later approved rollout. Each approved surface receives one contextual character vignette in reserved whitespace. The vignette supports the nearby task without becoming navigation, coaching, status, or data.
+
+The guest landing page uses a planning companion, the signed-in home uses a preparation companion, and the guest Progress preview uses a calm review companion outside the chart and sample disclosure. Phone layouts place the art in a collapsible dedicated slot. Desktop layouts keep it out of the member account rail and data plane.
+
+Every production vignette is purpose-built, text-free, decorative, static, pointer-inert, ignored by assistive technology, and absent in forced-colors mode. Image failure cannot remove product meaning, account state, sample disclosure, navigation, or an action. The pilot must verify phone and desktop layouts, 200% zoom, contrast, reduced motion, forced colors, failure states, and offline asset behavior before rollout.
+
+Two alternatives were reviewed and discarded. Their images, prompts, and direction-specific provenance are not retained on the concept branch. The selection does not authorize a public branch push, merge, deployment, or production implementation.

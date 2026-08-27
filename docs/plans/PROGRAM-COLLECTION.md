@@ -1,5 +1,7 @@
 # Program collection implementation plan
 
+> **First-release collection record:** `docs/plans/WORKOUT-COMPANION-REPOSITIONING.md` supersedes the requirement that every owned program start from or retain the five-day starter graph. One-active-program, owner-scoping, idempotency, immutable revision, and collection-limit rules remain required.
+
 ## User outcome and navigation
 
 A verified member can keep more than one owned five-day program, create a fresh program from either published starter equipment profile, clone any existing owned program, and choose which program is active. The existing `/app` overview, day details, editor, library compatibility, equipment confirmation, and workout start routes continue to operate on exactly one active program. A new `/app/programs` collection is reachable from the active-program header and account navigation. Creating, cloning, or activating a program returns to its active overview; editing remains a separate explicit action.

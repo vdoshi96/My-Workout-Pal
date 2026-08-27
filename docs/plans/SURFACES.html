@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="ddec4e76e344d5bda56c1a5114109da5674bfc2199cda71c41ec364ed1f12b2c">
+  <meta name="source-sha256" content="353cd125dab12fbee20ee414b8248f11dc0d6efa076ae367ecadc5324c673b26">
   <title>Surface implementation plans · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,9 @@
 <body>
   <main>
 <h1>Surface implementation plans</h1>
+<blockquote>
+<p><strong>First-release surface record:</strong> <code>docs/plans/WORKOUT-COMPANION-REPOSITIONING.md</code> supersedes fixed five-day positioning, the public <strong>Sample</strong> navigation label, and repeated sample wording. The existing route, privacy, accessibility, and immutable-history requirements remain in force unless the new plan changes them explicitly.</p>
+</blockquote>
 <h2>Shared shell and navigation</h2>
 <p><strong>Outcome and navigation:</strong> A visitor always understands whether they are in guest preview, sample data, an authenticated account, or an active workout. Public and authenticated destinations retain stable URLs. An active runner replaces ordinary navigation with workout progress and an explicit exit path.</p>
 <p><strong>States and types:</strong> The shell handles public, loading-session, authenticated-verified, authenticated-unverified, expired, offline, and deletion-pending identity states. <code>ViewerContext</code> is server-derived and never accepts a client UID.</p>

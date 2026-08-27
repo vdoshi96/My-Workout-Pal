@@ -1,5 +1,7 @@
 # Visual direction
 
+> **Next visual phase:** Preserve the established colors, typography, and original animal world while applying the selected Corner Companions direction from `docs/design/COMPANION-VISUAL-CONCEPTS.md`. The route atlas remains an example and workout-state motif rather than the product's universal frame. Production porting begins only in the bounded Wave 3 pilot.
+
 ## Training route atlas
 
 My Workout Pal treats a program as a route that adapts to available equipment without redrawing completed ground. The cultural source is a field atlas: contour notation, waypoints, route alternatives, elevation summaries, and compact trip sheets. The interface uses that grammar to explain program structure and state, not to decorate an ordinary fitness dashboard.
