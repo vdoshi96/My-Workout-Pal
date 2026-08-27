@@ -28,6 +28,12 @@ export type HostedAuthQaStage =
   | "assertions_mutations"
   | "assertions_page_errors"
   | "assertions_request_failures"
+  | "assertions_request_failures_api"
+  | "assertions_request_failures_app"
+  | "assertions_request_failures_asset"
+  | "assertions_request_failures_mixed"
+  | "assertions_request_failures_other"
+  | "assertions_request_failures_sign_in"
   | "assertions_response_failures"
   | "browser_launch"
   | "cleanup"
@@ -177,6 +183,25 @@ function attachFailureCollectors(page: Page, origin: string) {
     assertRequestFailuresClean: () => assert.deepEqual(requestFailures, []),
     assertResponseFailuresClean: () => assert.deepEqual(responseFailures, []),
     firstPartyMutations,
+    requestFailureStage: (): HostedAuthQaStage | undefined => {
+      if (requestFailures.length === 0) return undefined;
+      const categories = new Set(requestFailures.map((failure) => {
+        const pathname = failure.split(" ")[1] ?? "";
+        if (pathname.startsWith("/api/")) return "api";
+        if (pathname.startsWith("/_next/")) return "asset";
+        if (pathname === "/app") return "app";
+        if (pathname === "/sign-in") return "sign_in";
+        return "other";
+      }));
+      if (categories.size > 1) return "assertions_request_failures_mixed";
+      switch ([...categories][0]) {
+        case "api": return "assertions_request_failures_api";
+        case "app": return "assertions_request_failures_app";
+        case "asset": return "assertions_request_failures_asset";
+        case "sign_in": return "assertions_request_failures_sign_in";
+        default: return "assertions_request_failures_other";
+      }
+    },
   };
 }
 
@@ -405,6 +430,8 @@ async function runBrowserLifecycle(
     setStage("assertions_response_failures");
     failures.assertResponseFailuresClean();
     setStage("assertions_request_failures");
+    const requestFailureStage = failures.requestFailureStage();
+    if (requestFailureStage) setStage(requestFailureStage);
     failures.assertRequestFailuresClean();
     setStage("assertions_mutations");
     assert.deepEqual(failures.firstPartyMutations, [
