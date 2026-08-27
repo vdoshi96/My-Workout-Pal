@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="38b0c047aaa5c84f6f6d3cd12acf1eadeb878830c3d80b7317b8e5680a380580">
+  <meta name="source-sha256" content="1ea826fa98143e15d68dea28ed3e6b9ca4242ebd2476b1b9799f91882c8863d6">
   <title>Actual 200-percent public zoom QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -51,10 +51,12 @@
 <li>Production-mode Chromium public skip-link case — 1 pass.</li>
 <li>Production-mode Chromium authenticated onboarding/focus case — 1 pass.</li>
 <li>Root production build and authenticated fixture build both passed before their generated output was deleted.</li>
+<li>Complete <code>pnpm verify</code> — 100 test files/672 tests, database 4 files/34 tests, 27 exact-two video mappings, PWA and 37-document parity, production build, and 41-route boundary.</li>
 </ul>
 <h2>Disk closeout</h2>
 <ul>
 <li>Deleted root <code>.next</code> (about 203 MB), fixture <code>.next-authenticated</code> (about 174 MB), <code>test-results</code>, and <code>playwright-report</code> immediately after the focused runs.</li>
+<li>Deleted the aggregate replay&#39;s second root <code>.next</code> (about 203 MB) immediately after the complete gate.</li>
 <li>Chrome and Safari were restored to default zoom and quit.</li>
 <li>No QA raster was added. The superseded hosted-deletion screenshots and note are removed after this Markdown/HTML pair verifies.</li>
 </ul>

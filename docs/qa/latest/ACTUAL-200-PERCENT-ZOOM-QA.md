@@ -30,10 +30,12 @@ Passing checks on that exact source:
 - Production-mode Chromium public skip-link case — 1 pass.
 - Production-mode Chromium authenticated onboarding/focus case — 1 pass.
 - Root production build and authenticated fixture build both passed before their generated output was deleted.
+- Complete `pnpm verify` — 100 test files/672 tests, database 4 files/34 tests, 27 exact-two video mappings, PWA and 37-document parity, production build, and 41-route boundary.
 
 ## Disk closeout
 
 - Deleted root `.next` (about 203 MB), fixture `.next-authenticated` (about 174 MB), `test-results`, and `playwright-report` immediately after the focused runs.
+- Deleted the aggregate replay's second root `.next` (about 203 MB) immediately after the complete gate.
 - Chrome and Safari were restored to default zoom and quit.
 - No QA raster was added. The superseded hosted-deletion screenshots and note are removed after this Markdown/HTML pair verifies.
 
