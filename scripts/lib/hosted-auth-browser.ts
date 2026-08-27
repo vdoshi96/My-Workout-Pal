@@ -35,7 +35,10 @@ export type HostedAuthQaStage =
   | "assertions_request_failures_other"
   | "assertions_request_failures_public_root"
   | "assertions_request_failures_service_worker"
-  | "assertions_request_failures_static_public"
+  | "assertions_request_failures_static_png"
+  | "assertions_request_failures_static_svg"
+  | "assertions_request_failures_static_webmanifest"
+  | "assertions_request_failures_static_webp"
   | "assertions_request_failures_sign_in"
   | "assertions_response_failures"
   | "browser_launch"
@@ -196,7 +199,10 @@ function attachFailureCollectors(page: Page, origin: string) {
         if (pathname === "/sign-in") return "sign_in";
         if (pathname === "/") return "public_root";
         if (pathname === "/service-worker.js") return "service_worker";
-        if (/\.(?:png|svg|webmanifest|webp)$/u.test(pathname)) return "static_public";
+        if (pathname.endsWith(".png")) return "static_png";
+        if (pathname.endsWith(".svg")) return "static_svg";
+        if (pathname.endsWith(".webmanifest")) return "static_webmanifest";
+        if (pathname.endsWith(".webp")) return "static_webp";
         return "other";
       }));
       if (categories.size > 1) return "assertions_request_failures_mixed";
@@ -207,7 +213,10 @@ function attachFailureCollectors(page: Page, origin: string) {
         case "sign_in": return "assertions_request_failures_sign_in";
         case "public_root": return "assertions_request_failures_public_root";
         case "service_worker": return "assertions_request_failures_service_worker";
-        case "static_public": return "assertions_request_failures_static_public";
+        case "static_png": return "assertions_request_failures_static_png";
+        case "static_svg": return "assertions_request_failures_static_svg";
+        case "static_webmanifest": return "assertions_request_failures_static_webmanifest";
+        case "static_webp": return "assertions_request_failures_static_webp";
         default: return "assertions_request_failures_other";
       }
     },
