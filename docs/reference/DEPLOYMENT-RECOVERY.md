@@ -100,6 +100,25 @@ Use forward-compatible migrations. Before a destructive migration, create and ve
 
 For starter-data drift, run `db:verify` first. Catalog drift requires an explicit reviewed migration. Published template drift requires a new revision or a recovery from a verified point; do not disable immutability triggers or rewrite a published child. Rerunning `db:seed` is safe only when verification agrees with the deterministic graph.
 
+Migration `0004_personal_record_projection_checkpoint` and its rebuild operator exist only on the unreleased customization branch as of August 27, 2026. They have passed fresh-chain and populated-upgrade PGlite verification but have not been applied to Neon. Apply that forward migration only after the reviewed application version is ready for the same environment; do not run the operator against a schema that lacks the checkpoint table.
+
+After migration, inspect historical personal-record projection changes with the dry-run default:
+
+```sh
+pnpm db:rebuild-personal-records
+pnpm db:rebuild-personal-records -- --batch-size 50
+```
+
+Dry run uses short per-batch read transactions and reports scanned sessions, candidates, and proposed insert/update/delete counts without changing records or the durable checkpoint. Output never includes a Firebase UID, source UUID, SQL text, connection detail, or raw database error. Repeating `--dry-run`, `--apply`, or `--batch-size`, or mixing dry-run and apply modes, fails closed.
+
+Only after the environment, migration, counts, and current calculation version are reviewed may the same bounded operator apply:
+
+```sh
+pnpm db:rebuild-personal-records -- --apply --batch-size 50
+```
+
+Apply commits each deterministic session batch, stores only the last globally ordered workout-session UUID, and resumes after interruption. Completion clears that cursor. A rerun must report an idempotent no-op. Recognized lower-version rows that the current algorithm no longer emits are removed; unknown future-version rows are preserved but excluded from this build's read model. Account deletion cannot strand a Firebase UID in the checkpoint because the table never stores one. Never run an unbounded production apply or retain unsanitized provider/database output.
+
 ### Authentication recovery
 
 If session verification fails broadly, keep public content available, block permanent mutations, clear invalid cookies, and guide sign-in. Rotate a compromised Admin credential in Firebase and Vercel, revoke affected refresh tokens, and verify that logs contain no secret values.

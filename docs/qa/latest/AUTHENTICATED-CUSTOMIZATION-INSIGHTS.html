@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="7944816d664f2aa72ee3219f743f702e8f2e51b5a6fd0c1dd9316e68bc968d5d">
+  <title>Authenticated customization and insights QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Authenticated customization and insights QA</h1>
+<h2>Evidence boundary</h2>
+<ul>
+<li>Date: 2026-08-27</li>
+<li>Exact source: <code>036c31779e179cba6c8e582848998493069aefb4</code></li>
+<li>Released base: <code>cd512006a647ca815f5180cc4dcebb99e1c14bd1</code></li>
+<li>Branch: <code>qa/authenticated-program-customization-insights</code></li>
+<li>Runtime: separate production-mode Next.js fixture on a runner-selected loopback port, with deterministic synthetic Alice and Bob identities and an in-memory PGlite database</li>
+<li>Provider effect: none; Firebase, Neon writes, Vercel, GitHub, billing, deployment, and production were untouched</li>
+</ul>
+<p>This run proves the credential-free customization, immutable-history, personal-record, and progress vertical. It is not hosted Firebase or production-auth evidence.</p>
+<h2>Observed journeys</h2>
+<ul>
+<li>Alice created a complete barbell program, cloned it, and keyboard-reactivated the original dumbbell program without an idempotent replay reactivating older state.</li>
+<li>Alice created a compatible private movement, removed and restored a non-core section after destructive review, retained mandatory Core, entered <code>44.1 lb</code> and <code>0.1 mi</code> sequentially, reordered the movement, and reconciled an accepted-then-<code>500</code> publication with the same nonblank idempotency key.</li>
+<li>The editor&#39;s Equipment Profile control previewed exactly six dumbbell-to-barbell substitutions: Pull once, Upper twice, and Lower three times, with Push and Legs unchanged. Compatible custom work retained its target/rest/note; a replaced movement cleared only movement-specific targets.</li>
+<li>A separate barbell-to-dumbbells case named a barbell-and-rack-only custom movement, disabled confirmation, restored focus on cancel, and left the profile plus all scoped row counts unchanged.</li>
+<li>A completed Pull workout retained its original dumbbell exercise identity, prescription ranges, rest, equipment, notes, work sets, bodyweight added load, cardio pace, and canonical values after the active program changed to barbell.</li>
+<li>Settings persisted an actual <code>UTC</code> to <code>America/Chicago</code> change, metric/imperial presentation, and reduced-motion preference without rewriting canonical workout meaning.</li>
+<li>Personal records showed weight, estimated one-repetition maximum, repetition, and truthful <code>kg·reps</code> volume ties with bounded source links. Progress derived only from completed owned work sets plus cardio and labelled combined distance honestly.</li>
+<li>Bob&#39;s foreign API and rendered routes matched missing resources in status, normalized body, and no-store policy, while Bob&#39;s valid empty insights exposed none of Alice&#39;s names, values, notes, or identifiers.</li>
+</ul>
+<p>The fixture-only no-store scope summary proves write multiplicity and absence of extra rows. Canonical-value equality comes from the production read models and repository assertions, not from row counts.</p>
+<h2>Verification</h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Focused plan/policy</td>
+<td>4 files, 20 tests passed</td>
+</tr>
+<tr>
+<td>Focused mutation responses</td>
+<td>2 files, 16 tests passed</td>
+</tr>
+<tr>
+<td>TypeScript and ESLint</td>
+<td>Passed</td>
+</tr>
+<tr>
+<td>Documentation parity</td>
+<td>31 pairs before this report; regenerated after closeout</td>
+</tr>
+<tr>
+<td>Authenticated production fixture</td>
+<td>17 passed, 1 intentional Chromium-only incompatible-equipment scenario skip, 6 projects</td>
+</tr>
+<tr>
+<td>Full Vitest</td>
+<td>86 files, 593 tests passed</td>
+</tr>
+<tr>
+<td>Database gate</td>
+<td>Drizzle metadata passed; 4 files, 34 assertions passed</td>
+</tr>
+<tr>
+<td>Approved-video seed</td>
+<td>27 mappings, exactly two approved videos each</td>
+</tr>
+<tr>
+<td>PWA parity</td>
+<td>Passed</td>
+</tr>
+<tr>
+<td>Production build and boundary</td>
+<td>Passed; 41 App Router entries and no fixture route</td>
+</tr>
+<tr>
+<td>Public production-mode matrix</td>
+<td>43 passed; the documented WebKit service-worker case skipped</td>
+</tr>
+</tbody></table>
+<p>The first aggregate attempt retained one expected sandbox red: the loopback-only YouTube probe received <code>listen EPERM</code>; the permission-correct rerun passed all 593 assertions. The first public-matrix attempt stopped before browser assertions when the fresh build reached <code>ENOSPC</code>. Only obsolete Playwright cache revisions were removed; the exact rerun then passed 43 cases with one documented skip.</p>
+<p>Browser checks failed on, and implementation corrected, several material boundaries before the final green run: unordered but equivalent equipment and alias response rows; a collection-card tap obscured by fixed mobile navigation; mobile WebKit not focusing a tapped dialog invoker; generic first-party request abort masking; accepted <code>204</code> fixture cleanup classified as an aborted request; stale lower-version record rows from warm-ups and skipped exercises; and a blocked incompatible custom movement absent from visible evidence.</p>
+<h2>Responsive and accessibility evidence</h2>
+<p>The complete journey ran in Chromium desktop and WebKit phone. Bounded geometry ran in Chromium phone/tablet and WebKit tablet/desktop as well, using real mobile/touch device descriptors. Tests verified no horizontal overflow, 44-pixel material controls, reachable dialog title and terminal controls, dark mode, reduced motion, supported forced colors, keyboard activation, focus restoration, and no serious or critical Axe findings in ready and material error states.</p>
+<p>First-party console warnings/errors, page errors, HTTP responses at or above <code>400</code>, and request failures were fail-closed. Only a narrowly identified superseded Next App Router RSC request with <code>net::ERR_ABORTED</code> was classified as an intentional navigation cancellation; assets, APIs, documents, and other request failures remained fatal.</p>
+<p>Automated viewport geometry is not browser zoom. A headed actual-200-percent zoom inspection remains a manual pre-merge acceptance gate and must not be inferred from device scale or a narrow viewport.</p>
+<h2>Retained images</h2>
+<h3>Customized desktop editor</h3>
+<p><img src="authenticated-customization-editor-desktop.png" alt="Synthetic Alice&#39;s published revision in the desktop program editor"></p>
+<h3>Phone equipment review</h3>
+<p><img src="authenticated-equipment-review-phone.png" alt="Synthetic Alice&#39;s phone editor showing the Equipment Profile review control"></p>
+<h3>Persisted personal records</h3>
+<p><img src="authenticated-personal-records-desktop.png" alt="Synthetic Alice&#39;s persisted personal-record cards with exact tie accounting"></p>
+<h2>Explicitly unproved here</h2>
+<ul>
+<li>literal browser offline recovery, post-load expired or revoked authentication recovery, and multi-tab conflict reconciliation;</li>
+<li>full-page Firebase client-auth hydration before account deletion;</li>
+<li>hosted password registration/verification/recovery and Google consent/session flows;</li>
+<li>two real hosted users replaying IDOR and authenticated production surfaces;</li>
+<li>authenticated production video playback/unavailable fallback;</li>
+<li>actual 200-percent headed zoom closeout;</li>
+<li>Vercel Spend Management and notification inspection.</li>
+</ul>
+<p>Those remain completion gates; this report does not convert them into synthetic success.</p>
+
+  </main>
+</body>
+</html>
