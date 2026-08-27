@@ -42,6 +42,8 @@ export type HostedAuthQaStage =
   | "assertions_request_failures_static_webmanifest_failed"
   | "assertions_request_failures_static_webmanifest_nested"
   | "assertions_request_failures_static_webmanifest_non_get"
+  | "assertions_request_failures_static_webmanifest_head"
+  | "assertions_request_failures_static_webmanifest_options"
   | "assertions_request_failures_static_webmanifest_unknown"
   | "assertions_request_failures_static_webp"
   | "assertions_request_failures_sign_in"
@@ -223,8 +225,12 @@ function attachFailureCollectors(page: Page, origin: string) {
         if (pathname.endsWith(".webmanifest")) {
           return pathname !== "/manifest.webmanifest"
             ? "static_webmanifest_nested"
-            : method !== "GET"
-              ? "static_webmanifest_non_get"
+            : method === "HEAD"
+              ? "static_webmanifest_head"
+              : method === "OPTIONS"
+                ? "static_webmanifest_options"
+                : method !== "GET"
+                  ? "static_webmanifest_non_get"
               : errorText.startsWith("net::ERR_ABORTED")
             ? "static_webmanifest_aborted_variant"
             : errorText === "net::ERR_FAILED"
@@ -251,6 +257,8 @@ function attachFailureCollectors(page: Page, origin: string) {
         case "static_webmanifest_failed": return "assertions_request_failures_static_webmanifest_failed";
         case "static_webmanifest_nested": return "assertions_request_failures_static_webmanifest_nested";
         case "static_webmanifest_non_get": return "assertions_request_failures_static_webmanifest_non_get";
+        case "static_webmanifest_head": return "assertions_request_failures_static_webmanifest_head";
+        case "static_webmanifest_options": return "assertions_request_failures_static_webmanifest_options";
         case "static_webmanifest_unknown": return "assertions_request_failures_static_webmanifest_unknown";
         case "static_webp": return "assertions_request_failures_static_webp";
         default: return "assertions_request_failures_other";
