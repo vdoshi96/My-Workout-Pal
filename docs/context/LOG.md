@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-08-27: Hosted deletion and ownership QA plan
+
+- Started the single in-place branch `vishal/hosted-deletion-idor-qa` from synchronized production/documentation closeout `aefc2ba886ee1ccff9a93784c982bc07dd63bb14`; no auxiliary worktree, delegated agent, simulator, or background browser is active.
+- Planned one bounded destructive production lane using exactly two generated verified password identities. Alice owns a dumbbell starter, one custom exercise, and one active workout; Bob owns a barbell starter and must receive foreign/missing-equivalent responses for Alice's opaque resources with zero database effect.
+- Both identities must delete themselves through the real Settings reauthentication flow. Exact-UID server-side `finally` cleanup is mandatory if visible deletion is interrupted; completion requires both Firebase identities absent, all owned rows removed except terminal minimal saga jobs, global rows unchanged, and aggregate Firebase count restored. No identity, secret, cookie, CSRF token, opaque resource ID, trace, video, or browser profile may be retained.
+- The lane runs one Chromium desktop lifecycle only, retains at most two identity-free screenshots, and deletes every generated build/browser artifact after evidence extraction. Google consent, inbox delivery, and Vercel Spend Management remain separate gates.
+
 ## 2026-08-27: Hosted password-auth production evidence
 
 - Released the pre-onboarding sign-out/session-boundary source on `main` at exact runtime `c60814e530c0d367e90661217859671379b31bad`. GitHub reports Vercel success; production `dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D` is Ready on the public aliases.

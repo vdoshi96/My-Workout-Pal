@@ -138,7 +138,7 @@ The guest-first application, authenticated customization and insights, resilient
 
 ## Worktrees
 
-- The only checkout is the primary workspace on `main` from released hosted-auth evidence checkpoint `a6ee66c68d95bb678a9c0ad80f8e9bb956cdf653`; no auxiliary worktree, delegated worker, or completed hosted-auth branch remains. Generated `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report` directories are deleted after every bounded gate. The reusable 840 MB dependency tree and 781 MB repository-local pnpm store remain while the persistent goal has unfinished gates to avoid repeated downloads and unpacking.
+- The only checkout is the primary workspace on active branch `vishal/hosted-deletion-idor-qa` from synchronized documentation closeout `aefc2ba886ee1ccff9a93784c982bc07dd63bb14`; no auxiliary worktree or delegated worker remains. This branch is plan-only until its destructive two-identity approval/configuration tests pass. Generated `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report` directories are deleted after every bounded gate. The reusable 840 MB dependency tree and 781 MB repository-local pnpm store remain while the persistent goal has unfinished gates to avoid repeated downloads and unpacking.
 - The completed analytics worktree was integrated as `fedfba4` and removed after patch-equivalence verification.
 - The completed YouTube worktree was integrated through `6b633b0`; its selected files matched the reviewed worktree before cleanup.
 - The completed database worktree was integrated through `ff3d69c`, compared for selected-file equality, and removed.

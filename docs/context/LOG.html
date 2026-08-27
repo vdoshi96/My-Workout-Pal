@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="2e16dc23f86207b464cfb8c36f6954d7f097f5ff9572cadb362f7643787a68f2">
+  <meta name="source-sha256" content="f8dde3cec36238f0b01618355a92e149ff5151932c9e31c57d67892b9421fa22">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,13 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-27: Hosted deletion and ownership QA plan</h2>
+<ul>
+<li>Started the single in-place branch <code>vishal/hosted-deletion-idor-qa</code> from synchronized production/documentation closeout <code>aefc2ba886ee1ccff9a93784c982bc07dd63bb14</code>; no auxiliary worktree, delegated agent, simulator, or background browser is active.</li>
+<li>Planned one bounded destructive production lane using exactly two generated verified password identities. Alice owns a dumbbell starter, one custom exercise, and one active workout; Bob owns a barbell starter and must receive foreign/missing-equivalent responses for Alice&#39;s opaque resources with zero database effect.</li>
+<li>Both identities must delete themselves through the real Settings reauthentication flow. Exact-UID server-side <code>finally</code> cleanup is mandatory if visible deletion is interrupted; completion requires both Firebase identities absent, all owned rows removed except terminal minimal saga jobs, global rows unchanged, and aggregate Firebase count restored. No identity, secret, cookie, CSRF token, opaque resource ID, trace, video, or browser profile may be retained.</li>
+<li>The lane runs one Chromium desktop lifecycle only, retains at most two identity-free screenshots, and deletes every generated build/browser artifact after evidence extraction. Google consent, inbox delivery, and Vercel Spend Management remain separate gates.</li>
+</ul>
 <h2>2026-08-27: Hosted password-auth production evidence</h2>
 <ul>
 <li>Released the pre-onboarding sign-out/session-boundary source on <code>main</code> at exact runtime <code>c60814e530c0d367e90661217859671379b31bad</code>. GitHub reports Vercel success; production <code>dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D</code> is Ready on the public aliases.</li>
