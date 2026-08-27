@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="fefc1418d4305342ffaa9e2018200d5497cdb2a9fde399e7d666da45b9763701">
+  <meta name="source-sha256" content="62b0aba2bf03313cf9a6a75bf93c31f7a7893e565acfa92c7c22e71c4f556f0c">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -35,7 +35,8 @@
 <li>Runtime checkpoint <code>73a3541a459997debddb2fa6e60cee5b989b7d48</code> is pushed on <code>qa/authenticated-program-customization-insights</code>. The focused two-test compatibility matrix, strict TypeScript, full lint, 33-document parity, Webpack production build, 41-route production boundary, and diff checks pass.</li>
 <li>Exact Vercel preview <code>dpl_XcumcD1qmTqbUMHcP52Y7jfuJVYZ</code> is Ready and GitHub reports success for that exact commit. Protected requests to <code>/</code>, <code>/program</code>, <code>/sign-in</code>, and <code>/app</code> return <code>200</code> with private no-store and the declared security headers; <code>/app</code> contains the exact bounded Next redirect to <code>/sign-in?returnTo=%2Fapp</code> instead of an application error. The post-replay error-log query returned no entries.</li>
 <li>The complete corrected aggregate passes 87 files/595 tests, Drizzle metadata and 4 migration/bootstrap files/34 assertions, all 27 exact-two video mappings, generated PWA and 33-document parity, the Webpack production build, and the 41-route fixture-exclusion boundary. The production-mode authenticated fixture repeats 17 passes/1 intentional engine-scoped skip across six Chromium/WebKit phone/tablet/desktop projects. The public production-mode matrix, given only the existing ignored local database URL through a one-process environment allowlist, repeats 43 passes/1 documented WebKit PWA skip; no Firebase, YouTube, Vercel, OIDC, or other provider credential entered either browser run.</li>
-<li>Production remains on pre-fix <code>main</code> and its private routes remain broken until the complete corrected branch passes the aggregate release gate and is deliberately merged. No Neon migration, projection rebuild, production deployment, alias, spend, billing, Firebase configuration, or paid setting changed in this checkpoint.</li>
+<li>Read-only Neon preflight resolved exactly four applied migrations, no projection-checkpoint table, 0 completed sessions, and 0 personal-record rows. Applied additive <code>0004_personal_record_projection_checkpoint</code>; post-migration inspection resolved five migrations, the new table, and no operator-created row. The dry-run-default v2 rebuild then proposed 0 changes, apply completed with 0 changes, and an immediate apply replay returned the identical zero-change result. Final readback found one completed v2 checkpoint, a cleared session cursor, zero counters, unchanged session/record counts, and a passing deterministic starter verifier.</li>
+<li>Production remains on pre-fix <code>main</code> and its private routes remain broken until the corrected branch is deliberately merged and replayed. No workout/history/personal-record row, production deployment, alias, spend, billing, Firebase configuration, or paid setting changed in this checkpoint.</li>
 </ul>
 <h2>2026-08-27: Credential-free authenticated customization and insights checkpoint</h2>
 <ul>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="e07bf615a1c33d051d9a45e09f5ab4e51844afdd55d2f05d7fcedab8a54ccef0">
+  <meta name="source-sha256" content="1c15fdebb36e63a6e50dda93e9d69acd14b24e1c9fa6412ea7edeab40e429c84">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -115,7 +115,7 @@ pnpm production:check
 <h3>Database recovery</h3>
 <p>Use forward-compatible migrations. Before a destructive migration, create and verify a recovery point or branch through supported Neon features. Recovery requires an explicit target, impact statement, and verification query. Never run an unscoped restore against production.</p>
 <p>For starter-data drift, run <code>db:verify</code> first. Catalog drift requires an explicit reviewed migration. Published template drift requires a new revision or a recovery from a verified point; do not disable immutability triggers or rewrite a published child. Rerunning <code>db:seed</code> is safe only when verification agrees with the deterministic graph.</p>
-<p>Migration <code>0004_personal_record_projection_checkpoint</code> and its rebuild operator exist only on the unreleased customization branch as of August 27, 2026. They have passed fresh-chain and populated-upgrade PGlite verification but have not been applied to Neon. Apply that forward migration only after the reviewed application version is ready for the same environment; do not run the operator against a schema that lacks the checkpoint table.</p>
+<p>Migration <code>0004_personal_record_projection_checkpoint</code> and its rebuild operator remain on the unreleased customization branch as of August 27, 2026, but the additive table migration is applied to Neon after fresh-chain and populated-upgrade PGlite verification. Preflight found 0 completed sessions and 0 personal-record rows. Dry run, apply, and immediate apply replay all reported zero candidates and zero changes; the durable v2 checkpoint is completed with a cleared cursor and zero counters. Do not run a future calculation version&#39;s operator until its matching forward migration and application source are reviewed together.</p>
 <p>After migration, inspect historical personal-record projection changes with the dry-run default:</p>
 <pre><code class="language-sh">pnpm db:rebuild-personal-records
 pnpm db:rebuild-personal-records -- --batch-size 50

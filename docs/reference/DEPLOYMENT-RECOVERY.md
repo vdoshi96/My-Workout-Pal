@@ -115,7 +115,7 @@ Use forward-compatible migrations. Before a destructive migration, create and ve
 
 For starter-data drift, run `db:verify` first. Catalog drift requires an explicit reviewed migration. Published template drift requires a new revision or a recovery from a verified point; do not disable immutability triggers or rewrite a published child. Rerunning `db:seed` is safe only when verification agrees with the deterministic graph.
 
-Migration `0004_personal_record_projection_checkpoint` and its rebuild operator exist only on the unreleased customization branch as of August 27, 2026. They have passed fresh-chain and populated-upgrade PGlite verification but have not been applied to Neon. Apply that forward migration only after the reviewed application version is ready for the same environment; do not run the operator against a schema that lacks the checkpoint table.
+Migration `0004_personal_record_projection_checkpoint` and its rebuild operator remain on the unreleased customization branch as of August 27, 2026, but the additive table migration is applied to Neon after fresh-chain and populated-upgrade PGlite verification. Preflight found 0 completed sessions and 0 personal-record rows. Dry run, apply, and immediate apply replay all reported zero candidates and zero changes; the durable v2 checkpoint is completed with a cleared cursor and zero counters. Do not run a future calculation version's operator until its matching forward migration and application source are reviewed together.
 
 After migration, inspect historical personal-record projection changes with the dry-run default:
 
