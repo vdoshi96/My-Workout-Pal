@@ -3,6 +3,7 @@
 import {
   EmailAuthProvider,
   GoogleAuthProvider,
+  onAuthStateChanged,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
   signOut,
@@ -16,10 +17,16 @@ import {
   performAccountDeletion,
 } from "@/client/account-deletion";
 import { mapFirebaseAuthError } from "@/client/auth-errors";
+import {
+  classifyFirebaseClientIdentity,
+  resolveFirebaseClientIdentity,
+  type FirebaseClientIdentityState,
+} from "@/client/firebase-client-auth-readiness";
 import type { FirebasePublicConfig } from "@/client/firebase";
 import { getFirebaseClientAuth } from "@/client/firebase";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
+import { FirebaseClientIdentityStatus } from "@/components/settings/firebase-client-identity-status";
 import { Icon } from "@/components/ui/icon";
 import { parsePreferencesMutationResponse } from "@/components/settings/preferences-response";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
@@ -63,12 +70,55 @@ export function SettingsForm({
   const [deleteMessage, setDeleteMessage] = useState("");
   const [deletePassword, setDeletePassword] = useState("");
   const [deletionFinished, setDeletionFinished] = useState(false);
+  const [firebaseIdentityAttempt, setFirebaseIdentityAttempt] = useState(0);
+  const [firebaseIdentityState, setFirebaseIdentityState] =
+    useState<FirebaseClientIdentityState>({ status: "loading" });
   const deleteDialog = useRef<HTMLDialogElement>(null);
   const deleteHeading = useRef<HTMLHeadingElement>(null);
   const deleteKey = useRef<string | undefined>(undefined);
   const saveKey = useRef<string | undefined>(undefined);
   const providerSupported = viewerProvider === "google" || viewerProvider === "password";
-  const deletionAvailable = canMutate && firebaseConfig !== null && providerSupported;
+  const shouldResolveFirebaseIdentity = canMutate && firebaseConfig !== null && providerSupported;
+  const deletionAvailable = shouldResolveFirebaseIdentity && firebaseIdentityState.status === "ready";
+
+  useEffect(() => {
+    if (!shouldResolveFirebaseIdentity || !firebaseConfig) return;
+
+    const auth = getFirebaseClientAuth(firebaseConfig);
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
+
+    void resolveFirebaseClientIdentity(
+      {
+        getCurrentUser: () => auth.currentUser,
+        waitForInitialState: () => auth.authStateReady(),
+      },
+      ownerUid,
+    ).then((state) => {
+      if (!active) return;
+      setFirebaseIdentityState(state);
+      if (state.status === "unavailable") return;
+
+      unsubscribe = onAuthStateChanged(
+        auth,
+        (currentUser) => {
+          if (active) {
+            setFirebaseIdentityState(
+              classifyFirebaseClientIdentity(currentUser, ownerUid),
+            );
+          }
+        },
+        () => {
+          if (active) setFirebaseIdentityState({ status: "unavailable" });
+        },
+      );
+    });
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [firebaseConfig, firebaseIdentityAttempt, ownerUid, shouldResolveFirebaseIdentity]);
 
   useEffect(() => {
     if (!deleteBusy) return;
@@ -160,6 +210,11 @@ export function SettingsForm({
     if (error instanceof AccountDeletionClientError) return error.message;
     if (error instanceof PrivateApiClientError) return error.message;
     return mapFirebaseAuthError(error);
+  }
+
+  function retryFirebaseIdentity() {
+    setFirebaseIdentityState({ status: "loading" });
+    setFirebaseIdentityAttempt((attempt) => attempt + 1);
   }
 
   async function deleteAccount(event: FormEvent<HTMLFormElement>) {
@@ -337,6 +392,12 @@ export function SettingsForm({
           <p>This permanently removes the Firebase sign-in, program revisions, workout history, records, analytics, preferences, and custom exercises. It cannot be undone.</p>
           {!firebaseConfig ? <small>Deletion remains unavailable until Firebase is configured.</small> : null}
           {!providerSupported ? <small>This sign-in provider does not support deletion yet.</small> : null}
+          {shouldResolveFirebaseIdentity ? (
+            <FirebaseClientIdentityStatus
+              onRetry={retryFirebaseIdentity}
+              state={firebaseIdentityState}
+            />
+          ) : null}
           <button
             className="danger-action"
             disabled={!deletionAvailable || busy || deleteBusy}
@@ -399,6 +460,12 @@ export function SettingsForm({
           )}
 
           <p aria-live="polite" className="account-delete-status" role="status">{deleteMessage}</p>
+          {shouldResolveFirebaseIdentity && firebaseIdentityState.status !== "ready" ? (
+            <FirebaseClientIdentityStatus
+              onRetry={retryFirebaseIdentity}
+              state={firebaseIdentityState}
+            />
+          ) : null}
           <div className="account-delete-actions">
             {deletionFinished ? (
               <button onClick={() => router.replace("/")} type="button">Return to public site</button>
@@ -407,7 +474,8 @@ export function SettingsForm({
                 <button
                   className="danger-action"
                   disabled={
-                    deleteBusy ||
+                  deleteBusy ||
+                    !deletionAvailable ||
                     deleteConfirmation !== "DELETE" ||
                     (viewerProvider === "password" && deletePassword.length === 0)
                   }

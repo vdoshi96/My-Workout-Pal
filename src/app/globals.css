@@ -440,6 +440,11 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .settings-delete-preview p { color: var(--ink-soft); }
 .settings-delete-preview button { min-height: 3rem; }
 .settings-delete-preview small { color: var(--danger); display: block; margin-bottom: .8rem; }
+.settings-firebase-status { color: var(--ink-soft); margin: .8rem 0; }
+.settings-firebase-status[role="alert"] { color: var(--danger); }
+.settings-firebase-status p { margin: 0; }
+.settings-firebase-actions { align-items: stretch; display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .7rem; }
+.settings-firebase-actions a, .settings-firebase-actions button { align-items: center; background: transparent; border: 1px solid currentColor; color: inherit; cursor: pointer; display: inline-flex; font: inherit; justify-content: center; min-height: 2.75rem; padding: .55rem .8rem; text-decoration: none; }
 .account-delete-dialog { background: var(--paper); border: 1px solid var(--danger); color: var(--ink); inline-size: min(42rem, calc(100vw - 2rem)); max-block-size: min(46rem, calc(100dvh - 2rem)); overflow: auto; padding: 0; }
 .account-delete-dialog::backdrop { background: color-mix(in srgb, #061a1e 78%, transparent); }
 .account-delete-form { display: grid; gap: .85rem; padding: clamp(1rem, 4vw, 2rem); }
