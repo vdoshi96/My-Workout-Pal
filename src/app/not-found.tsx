@@ -5,7 +5,7 @@ export default function NotFound() {
     <main className="status-page contour-surface">
       <p className="status-stamp">Waypoint not found</p>
       <h1>This route is not on the map.</h1>
-      <p>Return to the five-day program and choose a listed day.</p>
+      <p>Return to your program and choose a listed day.</p>
       <Link className="primary-action" href="/">
         Open program
       </Link>

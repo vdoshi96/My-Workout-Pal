@@ -1,5 +1,7 @@
 # Authenticated program customization and insights plan
 
+> **Historical first-release plan:** This document records the verified five-day customization checkpoint. `docs/plans/WORKOUT-COMPANION-REPOSITIONING.md` supersedes its fixed day count, mandatory Core section, and paired Walker/Runner requirements for subsequent product work. Preserve the immutable-history, owner-scoping, canonical-unit, and evidence rules.
+
 ## User outcome
 
 A verified member can turn either five-day starter into a genuinely personal program without weakening the immutable-history model. The member can create, clone, activate, and rename owned programs; create a compatible private movement; add, replace, remove, and reorder exercises; add, rename, reorder, or remove non-core day sections while retaining a populated core section; edit sets, ranges, targets, notes, rest, day labels, and cardio templates; preview and confirm an equipment change; change presentation preferences; and then see personal records and progress derived from completed owned workout data.

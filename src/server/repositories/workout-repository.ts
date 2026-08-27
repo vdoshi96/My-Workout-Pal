@@ -24,7 +24,7 @@ import {
   workoutExerciseStates,
   workoutSessions,
 } from "@/db/schema";
-import { EQUIPMENT_PROFILES, type EquipmentId, type EquipmentProfileKind } from "@/domain/equipment";
+import { EQUIPMENT_IDS, EQUIPMENT_PROFILES, type EquipmentId, type EquipmentProfileKind } from "@/domain/equipment";
 import { deterministicSeedUuid } from "@/domain/seed/identity";
 import {
   buildPersonalRecordProjectionCandidates,
@@ -48,6 +48,7 @@ import {
   type RunnerSubmitResult,
   type WorkoutExerciseSnapshot,
   type WorkoutExerciseInput,
+  type WorkoutSectionKind,
 } from "@/domain/workout-runner";
 import type { ViewerContext } from "@/server/auth/viewer";
 
@@ -145,6 +146,7 @@ export type WorkoutSetLogView = Readonly<{
 }>;
 
 export type WorkoutCardioLogView = Readonly<{
+  cardioKey?: string | undefined;
   id: string;
   mode: CardioMode;
   cardio: CardioLog;
@@ -161,6 +163,7 @@ export type WorkoutSessionView = Readonly<{
   state: WorkoutSessionState;
   dayId: string;
   dayName: string;
+  dayKey?: string | undefined;
   startedAt: Date | undefined;
   completedAt: Date | undefined;
   abandonedAt: Date | undefined;
@@ -234,10 +237,12 @@ type DayRow = Readonly<{
   programId: string;
   revisionId: string;
   displayName: string;
+  dayKey: string;
 }>;
 
 type SectionRow = Readonly<{
   id: string;
+  sectionKey: string;
   kind: "strength" | "accessory" | "core" | "cardio";
   displayOrder: number;
   title: string;
@@ -246,6 +251,7 @@ type SectionRow = Readonly<{
 type PrescriptionRow = Readonly<{
   id: string;
   sectionId: string;
+  prescriptionKey: string;
   catalogExerciseId: string | null;
   customExerciseId: string | null;
   displayName: string | null;
@@ -271,6 +277,7 @@ type PrescriptionRow = Readonly<{
 
 type CardioPrescriptionRow = Readonly<{
   id: string;
+  cardioKey: string;
   mode: CardioMode;
   durationSeconds: number;
   distanceM: number | null;
@@ -788,18 +795,21 @@ async function projectPersonalRecords(
   };
 }
 
-function parseCardioLog(row: Readonly<{
-  id: string;
-  mode: CardioMode;
-  durationSeconds: number;
-  distanceM: number | null;
-  paceSecondsPerKm: number | null;
-  paceSource: "entered" | "derived" | null;
-  inclinePercent: number | null;
-  noteSnapshot: string | null;
-  recordedAt: Date;
-  clientIdempotencyKey: string;
-}>): WorkoutCardioLogView {
+function parseCardioLog(
+  row: Readonly<{
+    id: string;
+    mode: CardioMode;
+    durationSeconds: number;
+    distanceM: number | null;
+    paceSecondsPerKm: number | null;
+    paceSource: "entered" | "derived" | null;
+    inclinePercent: number | null;
+    noteSnapshot: string | null;
+    recordedAt: Date;
+    clientIdempotencyKey: string;
+  }>,
+  cardioKey?: string,
+): WorkoutCardioLogView {
   const distanceMeters = row.distanceM ?? undefined;
   const paceSecondsPerKilometer = row.paceSecondsPerKm ?? undefined;
   const cardio: CardioLog = {
@@ -812,6 +822,7 @@ function parseCardioLog(row: Readonly<{
     notes: row.noteSnapshot ?? "",
   };
   return {
+    ...(cardioKey === undefined ? {} : { cardioKey }),
     id: row.id,
     mode: row.mode,
     cardio,
@@ -832,6 +843,7 @@ function cardioSnapshotFromJson(value: unknown): readonly ActiveWorkoutSnapshot[
     ) return [];
     return [{
       id: item["id"],
+      ...(typeof item["cardioKey"] === "string" ? { cardioKey: item["cardioKey"] } : {}),
       mode: item["mode"],
       targetDurationSeconds: item["targetDurationSeconds"],
       ...(typeof item["targetDistanceMeters"] === "number" ? { targetDistanceMeters: item["targetDistanceMeters"] } : {}),
@@ -847,6 +859,9 @@ function sessionView(session: SessionRow, snapshots: readonly SnapshotRow[]): Wo
   const snapshotMeaning = firstSnapshot?.prescriptionSnapshot;
   const dayId = typeof snapshotMeaning?.["dayId"] === "string" ? snapshotMeaning["dayId"] : "";
   const dayName = typeof snapshotMeaning?.["dayName"] === "string" ? snapshotMeaning["dayName"] : "";
+  const dayKey = typeof snapshotMeaning?.["dayKey"] === "string" && snapshotMeaning["dayKey"].trim().length > 0
+    ? snapshotMeaning["dayKey"]
+    : undefined;
   if (!dayId || !dayName) {
     throw new WorkoutRepositoryError("conflict", "The saved workout snapshot is incomplete.");
   }
@@ -858,6 +873,7 @@ function sessionView(session: SessionRow, snapshots: readonly SnapshotRow[]): Wo
     state: session.state,
     dayId,
     dayName,
+    ...(dayKey === undefined ? {} : { dayKey }),
     startedAt: session.startedAt ?? undefined,
     completedAt: session.completedAt ?? undefined,
     abandonedAt: session.abandonedAt ?? undefined,
@@ -902,10 +918,27 @@ function snapshotInputForRow(row: SnapshotRow): WorkoutExerciseInput {
       ...(previous === undefined ? {} : { previous }),
     };
   });
+  const sectionKey = typeof row.prescriptionSnapshot["sectionKey"] === "string" && row.prescriptionSnapshot["sectionKey"].trim().length > 0
+    ? row.prescriptionSnapshot["sectionKey"]
+    : undefined;
+  const sectionKindValue = row.prescriptionSnapshot["sectionKind"] ?? row.sectionKind;
+  const sectionKind: WorkoutSectionKind | undefined = sectionKindValue === "accessory" || sectionKindValue === "cardio" || sectionKindValue === "core" || sectionKindValue === "strength"
+    ? sectionKindValue
+    : undefined;
+  const sectionTitle = typeof row.prescriptionSnapshot["sectionTitle"] === "string" && row.prescriptionSnapshot["sectionTitle"].trim().length > 0
+    ? row.prescriptionSnapshot["sectionTitle"]
+    : undefined;
+  const prescriptionKey = typeof row.prescriptionSnapshot["prescriptionKey"] === "string" && row.prescriptionSnapshot["prescriptionKey"].trim().length > 0
+    ? row.prescriptionSnapshot["prescriptionKey"]
+    : undefined;
   return {
     id: row.id,
     name: row.displayName,
     loggingKind: row.loggingKind,
+    ...(sectionKind === undefined ? {} : { sectionKind }),
+    ...(sectionKey === undefined ? {} : { sectionKey }),
+    ...(sectionTitle === undefined ? {} : { sectionTitle }),
+    ...(prescriptionKey === undefined ? {} : { prescriptionKey }),
     sets,
   };
 }
@@ -1109,7 +1142,12 @@ async function selectSetLogs(tx: TxDatabase, ownerUid: string, sessionId: string
   }));
 }
 
-async function selectCardioLog(tx: TxDatabase, ownerUid: string, sessionId: string): Promise<WorkoutCardioLogView | undefined> {
+async function selectCardioLog(
+  tx: TxDatabase,
+  ownerUid: string,
+  sessionId: string,
+  cardioOptions: ActiveWorkoutSnapshot["cardioOptions"] = [],
+): Promise<WorkoutCardioLogView | undefined> {
   const rows = await tx
     .select({
       id: cardioLogs.id,
@@ -1127,7 +1165,10 @@ async function selectCardioLog(tx: TxDatabase, ownerUid: string, sessionId: stri
     .where(and(eq(cardioLogs.ownerFirebaseUid, ownerUid), eq(cardioLogs.sessionId, sessionId)))
     .limit(1);
   const row = rows[0];
-  return row ? parseCardioLog(row) : undefined;
+  const cardioKey = row === undefined
+    ? undefined
+    : cardioOptions.find(({ mode }) => mode === row.mode)?.cardioKey;
+  return row ? parseCardioLog(row, cardioKey) : undefined;
 }
 
 function snapshotJsonForRow(
@@ -1142,15 +1183,18 @@ function snapshotJsonForRow(
   previousValues: ReadonlyMap<number, WorkoutMeasurement>,
 ): Record<string, unknown> {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     programId,
     revisionId,
     dayId: day.id,
     dayName: day.displayName,
+    dayKey: day.dayKey,
     sectionId: section.id,
     sectionKind: section.kind,
     sectionTitle: section.title,
+    sectionKey: section.sectionKey,
     prescriptionId: row.id,
+    prescriptionKey: row.prescriptionKey,
     catalogExerciseId: row.catalogExerciseId,
     customExerciseId: row.customExerciseId,
     displayName: row.displayName,
@@ -1178,6 +1222,7 @@ function snapshotJsonForRow(
 
 function cardioOptionForRow(row: CardioPrescriptionRow): {
   id: string;
+  cardioKey: string;
   mode: CardioMode;
   targetDurationSeconds: number;
   targetDistanceMeters?: number;
@@ -1187,6 +1232,7 @@ function cardioOptionForRow(row: CardioPrescriptionRow): {
 } {
   return {
     id: row.id,
+    cardioKey: row.cardioKey,
     mode: row.mode,
     targetDurationSeconds: row.durationSeconds,
     ...(row.distanceM === null ? {} : { targetDistanceMeters: row.distanceM }),
@@ -1372,6 +1418,7 @@ async function selectDay(tx: TxDatabase, ownerUid: string, program: ProgramRow, 
       ownerFirebaseUid: programDays.ownerFirebaseUid,
       programId: programDays.programId,
       revisionId: programDays.revisionId,
+      dayKey: programDays.dayKey,
       displayName: programDays.displayName,
     })
     .from(programDays)
@@ -1397,6 +1444,7 @@ async function selectDayMeaning(
   const sections = await tx
     .select({
       id: programSections.id,
+      sectionKey: programSections.sectionKey,
       kind: programSections.kind,
       displayOrder: programSections.displayOrder,
       title: programSections.title,
@@ -1416,6 +1464,7 @@ async function selectDayMeaning(
       .select({
         id: programPrescriptions.id,
         sectionId: programPrescriptions.sectionId,
+        prescriptionKey: programPrescriptions.prescriptionKey,
         catalogExerciseId: programPrescriptions.catalogExerciseId,
         customExerciseId: programPrescriptions.customExerciseId,
         displayName: programPrescriptions.displayName,
@@ -1453,6 +1502,7 @@ async function selectDayMeaning(
   const cardio = await tx
     .select({
       id: programCardioPrescriptions.id,
+      cardioKey: programCardioPrescriptions.cardioKey,
       mode: programCardioPrescriptions.mode,
       durationSeconds: programCardioPrescriptions.durationSeconds,
       distanceM: programCardioPrescriptions.distanceM,
@@ -1617,6 +1667,26 @@ function modelSnapshot(
   if (!first) throw new WorkoutRepositoryError("conflict", "The workout snapshot is incomplete.");
   const dayId = first.prescriptionSnapshot["dayId"];
   const dayName = first.prescriptionSnapshot["dayName"];
+  const dayKey = typeof first.prescriptionSnapshot["dayKey"] === "string" && first.prescriptionSnapshot["dayKey"].trim().length > 0
+    ? first.prescriptionSnapshot["dayKey"]
+    : undefined;
+  const equipmentProfileValue = first.prescriptionSnapshot["equipmentProfileKind"];
+  const equipmentProfileKind = equipmentProfileValue === "dumbbells" || equipmentProfileValue === "barbell"
+    ? equipmentProfileValue
+    : undefined;
+  const availableEquipmentValue = first.prescriptionSnapshot["availableEquipment"];
+  let availableEquipment: readonly EquipmentId[] | undefined;
+  if (availableEquipmentValue !== undefined) {
+    const knownEquipment = new Set<string>(EQUIPMENT_IDS);
+    if (
+      !Array.isArray(availableEquipmentValue) ||
+      availableEquipmentValue.length === 0 ||
+      availableEquipmentValue.some((equipment) => typeof equipment !== "string" || !knownEquipment.has(equipment))
+    ) {
+      throw new WorkoutRepositoryError("conflict", "The workout equipment snapshot is invalid.");
+    }
+    availableEquipment = availableEquipmentValue as EquipmentId[];
+  }
   if (typeof dayId !== "string" || typeof dayName !== "string") {
     throw new WorkoutRepositoryError("conflict", "The workout day snapshot is incomplete.");
   }
@@ -1637,6 +1707,9 @@ function modelSnapshot(
     programRevisionId: typeof first.prescriptionSnapshot["revisionId"] === "string" ? first.prescriptionSnapshot["revisionId"] : "",
     dayId,
     dayName,
+    ...(dayKey === undefined ? {} : { dayKey }),
+    ...(equipmentProfileKind === undefined ? {} : { equipmentProfileKind }),
+    ...(availableEquipment === undefined ? {} : { availableEquipment }),
     exercises,
     cardioOptions: cardioSnapshotFromJson(first.prescriptionSnapshot["cardioOptions"]),
   });
@@ -1650,7 +1723,7 @@ async function buildModel(tx: TxDatabase, session: SessionRow): Promise<WorkoutR
     throw new WorkoutRepositoryError("conflict", "The workout outcome snapshot is incomplete.");
   }
   const setLogRows = await selectSetLogs(tx, session.ownerFirebaseUid, session.id);
-  const cardioLog = await selectCardioLog(tx, session.ownerFirebaseUid, session.id);
+  const cardioLog = await selectCardioLog(tx, session.ownerFirebaseUid, session.id, snapshot.cardioOptions);
   return {
     session: sessionView(session, snapshots),
     snapshot,
@@ -1658,6 +1731,23 @@ async function buildModel(tx: TxDatabase, session: SessionRow): Promise<WorkoutR
     setLogs: setLogRows,
     cardioLog,
   };
+}
+
+async function resumeExistingWorkoutForRequestedDay(
+  tx: TxDatabase,
+  ownerUid: string,
+  sessionId: string,
+  requestedDayId: string,
+): Promise<StartWorkoutResult> {
+  const session = await selectSession(tx, ownerUid, sessionId);
+  const model = await buildModel(tx, session);
+  if (model.session.dayId !== requestedDayId) {
+    throw new WorkoutRepositoryError(
+      "conflict",
+      `A workout for ${model.session.dayName} is already in progress. Resume it before starting another day.`,
+    );
+  }
+  return { resumed: true, model };
 }
 
 async function existingIdempotency(
@@ -2189,8 +2279,14 @@ export async function startOrResumeWorkout(database: Database, viewer: ViewerCon
     if (existingByKey[0]) {
       const session = await selectSession(tx, current.uid, existingByKey[0].id);
       const replayModel = await buildModel(tx, session);
-      if (session.programId !== program.id || replayModel.session.dayId !== dayId) {
+      if (session.programId !== program.id) {
         throw new WorkoutRepositoryError("conflict", "The start idempotency key was already used for another workout.");
+      }
+      if (replayModel.session.dayId !== dayId) {
+        throw new WorkoutRepositoryError(
+          "conflict",
+          `A workout for ${replayModel.session.dayName} is already in progress. Resume it before starting another day.`,
+        );
       }
       return { resumed: true, model: replayModel };
     }
@@ -2198,8 +2294,7 @@ export async function startOrResumeWorkout(database: Database, viewer: ViewerCon
     const equipment = await selectWorkoutEquipment(tx, current.uid, revision);
     const existing = await tx.select({ id: workoutSessions.id }).from(workoutSessions).where(and(eq(workoutSessions.ownerFirebaseUid, current.uid), eq(workoutSessions.programRevisionId, revision.id), inArray(workoutSessions.state, RESUMABLE_STATES))).orderBy(desc(workoutSessions.createdAt)).limit(1);
     if (existing[0]) {
-      const session = await selectSession(tx, current.uid, existing[0].id);
-      return { resumed: true, model: await buildModel(tx, session) };
+      return resumeExistingWorkoutForRequestedDay(tx, current.uid, existing[0].id, dayId);
     }
     const day = await selectDay(tx, current.uid, program, revision, dayId);
     const meaning = await selectDayMeaning(tx, current.uid, program, revision, day);
@@ -2234,8 +2329,7 @@ export async function startOrResumeWorkout(database: Database, viewer: ViewerCon
         sessionId = duplicate[0]?.id;
       }
       if (!sessionId) throw new WorkoutRepositoryError("conflict", "The workout could not be started safely.", { retryable: true });
-      const session = await selectSession(tx, current.uid, sessionId);
-      return { resumed: true, model: await buildModel(tx, session) };
+      return resumeExistingWorkoutForRequestedDay(tx, current.uid, sessionId, dayId);
     }
     const rows: SnapshotInsertRow[] = snapshotRows.map((row) => ({ ...row, sessionId }));
     const snapshots = await tx.insert(workoutExerciseSnapshots).values(rows).returning({ id: workoutExerciseSnapshots.id, position: workoutExerciseSnapshots.position });
@@ -2808,18 +2902,18 @@ export async function loadWorkoutHistory(
       const snapshots = await selectSnapshots(tx, current.uid, row.id);
       const states = await selectStates(tx, current.uid, row.id);
       const logs = await selectSetLogs(tx, current.uid, row.id);
-      const cardioLog = await selectCardioLog(tx, current.uid, row.id);
       const stateBySnapshot = new Map(states.map((state) => [state.snapshotId, parseStateView(state)] as const));
       const logsBySnapshot = new Map<string, WorkoutSetLogView[]>();
       for (const log of logs) logsBySnapshot.set(log.snapshotId, [...(logsBySnapshot.get(log.snapshotId) ?? []), log]);
-      const snapshotModels = modelSnapshot(snapshots, states).exercises;
+      const snapshotModel = modelSnapshot(snapshots, states);
+      const cardioLog = await selectCardioLog(tx, current.uid, row.id, snapshotModel.cardioOptions);
       result.push({
         session: sessionView(row, snapshots),
         exercises: snapshots.map((snapshot, index) => {
           const state = stateBySnapshot.get(snapshot.id);
           if (!state) throw new WorkoutRepositoryError("conflict", "Workout history is incomplete.");
           return {
-            snapshot: snapshotModels[index]!,
+            snapshot: snapshotModel.exercises[index]!,
             state,
             setLogs: logsBySnapshot.get(snapshot.id) ?? [],
           };

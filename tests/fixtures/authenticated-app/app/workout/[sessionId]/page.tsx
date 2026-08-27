@@ -92,8 +92,9 @@ export default async function HarnessOwnedWorkoutPage({
             effectiveExerciseIdBySnapshot={effectiveIds}
             initialState={initialState}
             substitutionCandidates={buildWorkoutRouteCandidates(
-              profileProgram.equipment.profileKind,
+              resume.snapshot.equipmentProfileKind ?? profileProgram.equipment.profileKind,
               customExercises,
+              resume.snapshot.availableEquipment,
             )}
             unitSystem={profileProgram.preferences.unitSystem}
           />

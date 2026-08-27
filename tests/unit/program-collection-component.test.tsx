@@ -10,6 +10,7 @@ import type { ProgramSummaryReadModel } from "@/server/repositories/profile-prog
 
 const programs: readonly ProgramSummaryReadModel[] = [
   {
+    dayCount: 5,
     equipmentProfileKind: "dumbbells",
     id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     isActive: true,
@@ -20,6 +21,7 @@ const programs: readonly ProgramSummaryReadModel[] = [
     updatedAt: "2026-08-24T15:00:00.000Z",
   },
   {
+    dayCount: 3,
     equipmentProfileKind: "barbell",
     id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
     isActive: false,
@@ -41,7 +43,10 @@ describe("ProgramCollection", () => {
     expect(markup.match(/Active program/g)).toHaveLength(1);
     expect(markup).toContain("Dumbbells");
     expect(markup).toContain("Barbell + rack");
-    expect(markup).toContain("Create and activate");
+    expect(markup).toContain("Create from example");
+    expect(markup).toContain("Custom starting point");
+    expect(markup).toContain("5 days");
+    expect(markup).toContain("3 days");
     expect(markup).toContain("Make active");
     expect(markup).toContain("Clone");
   });

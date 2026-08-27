@@ -408,7 +408,7 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   const aliceProgram = activeProgramIds(aliceOnboarding.body);
   await expect(alice.page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
   await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(5);
-  await expect(alice.page.getByText("Revision 1 · Dumbbells · five days")).toBeVisible();
+  await expect(alice.page.getByText("Revision 1 · Dumbbells · 5 days")).toBeVisible();
   await assertAccessible(alice.page);
   expect(await alice.page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   expect(alice.failedResponses).toEqual([]);
@@ -417,7 +417,7 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   await bob.page.goto("/app");
   const bobOnboarding = await submitOnboarding(bob.page, "barbell");
   expect(bobOnboarding.response.status()).toBe(201);
-  await expect(bob.page.getByText("Revision 1 · Barbell + rack · five days")).toBeVisible();
+  await expect(bob.page.getByText("Revision 1 · Barbell + rack · 5 days")).toBeVisible();
   await expect(bob.page.locator(".member-day-grid > li")).toHaveCount(5);
   const bobProgramsBefore = await programCount(bob.page);
 
@@ -609,9 +609,9 @@ test("owned customization publishes once, preserves history, and derives private
       new URL(response.url()).pathname === "/api/app/programs" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Create and activate" }).click();
+  await alice.page.getByRole("button", { name: "Create from example" }).click();
   expect((await createProgramResponse).status()).toBe(201);
-  await expect(alice.page.getByText("Revision 1 · Barbell + rack · five days")).toBeVisible();
+  await expect(alice.page.getByText("Revision 1 · Barbell + rack · 5 days")).toBeVisible();
   await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(5);
 
   await alice.page.getByRole("link", { name: /Manage programs/ }).click();
@@ -650,7 +650,7 @@ test("owned customization publishes once, preserves history, and derives private
   await expect(activateOriginal).toBeFocused();
   await alice.page.keyboard.press("Enter");
   expect((await activateOriginalResponse).status()).toBe(200);
-  await expect(alice.page.getByText("Revision 1 · Dumbbells · five days")).toBeVisible();
+  await expect(alice.page.getByText("Revision 1 · Dumbbells · 5 days")).toBeVisible();
 
   await alice.page.getByRole("link", { name: /Private exercises/ }).click();
   await alice.page.getByRole("link", { name: "Create exercise" }).click();
@@ -677,9 +677,7 @@ test("owned customization publishes once, preserves history, and derives private
 
   await alice.page.getByRole("link", { name: "Program", exact: true }).click();
   await alice.page.getByRole("link", { name: /Edit program/ }).click();
-  await expect(
-    alice.page.getByRole("button", { name: "Core section is required on every day" }),
-  ).toBeDisabled();
+  await expect(alice.page.getByRole("button", { name: "Add core section" })).toBeEnabled();
   const accessorySection = alice.page
     .locator("fieldset.program-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for accessory") });

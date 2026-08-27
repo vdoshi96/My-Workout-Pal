@@ -121,7 +121,7 @@ export function TrainingHistoryDetail({
               <div>
                 <strong>{exercise.displayName}</strong>
                 <small>
-                  {exercise.sectionKind} · {exercise.status}
+                  {exercise.sectionTitle ?? exercise.sectionKind} · {exercise.status}
                 </small>
               </div>
             </header>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="ab5346e7a3213e2444f970409fecb4900cf6868aed9c30f1eb016fe60dc8bb56">
+  <meta name="source-sha256" content="ecd9325406a234186ab0ae088c41e667652be0a21de2eaf04839031d675fefa1">
   <title>Program collection implementation plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,9 @@
 <body>
   <main>
 <h1>Program collection implementation plan</h1>
+<blockquote>
+<p><strong>First-release collection record:</strong> <code>docs/plans/WORKOUT-COMPANION-REPOSITIONING.md</code> supersedes the requirement that every owned program start from or retain the five-day starter graph. One-active-program, owner-scoping, idempotency, immutable revision, and collection-limit rules remain required.</p>
+</blockquote>
 <h2>User outcome and navigation</h2>
 <p>A verified member can keep more than one owned five-day program, create a fresh program from either published starter equipment profile, clone any existing owned program, and choose which program is active. The existing <code>/app</code> overview, day details, editor, library compatibility, equipment confirmation, and workout start routes continue to operate on exactly one active program. A new <code>/app/programs</code> collection is reachable from the active-program header and account navigation. Creating, cloning, or activating a program returns to its active overview; editing remains a separate explicit action.</p>
 <p>Guests continue to preview the one public starter route without persistence. Onboarding still creates the first owned starter program. Program collection controls are never shown as saved or available to an unverified password identity.</p>

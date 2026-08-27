@@ -65,6 +65,7 @@ export type TrainingHistoryInput = Readonly<{
 }>;
 
 export type TrainingCardioView = Readonly<{
+  cardioKey?: string | undefined;
   distanceMeters: number | undefined;
   durationSeconds: number;
   inclinePercent: number | undefined;
@@ -76,6 +77,7 @@ export type TrainingCardioView = Readonly<{
 export type TrainingHistorySession = Readonly<{
   cardio: TrainingCardioView | undefined;
   completedExerciseCount: number;
+  dayKey?: string | undefined;
   dayName: string;
   durationSeconds: number | undefined;
   exerciseCount: number;
@@ -116,10 +118,13 @@ export type TrainingSessionExercise = Readonly<{
   minimumReps: number | undefined;
   minimumSeconds: number | undefined;
   note: string | undefined;
+  prescriptionKey?: string | undefined;
   position: number;
   prescriptionNote: string | undefined;
   restSeconds: number;
+  sectionKey?: string | undefined;
   sectionKind: "accessory" | "cardio" | "core" | "strength";
+  sectionTitle?: string | undefined;
   setCount: number;
   setKind: "warmup" | "work" | undefined;
   sets: readonly TrainingSetView[];
@@ -259,6 +264,14 @@ function dayNameFromSnapshots(
     : "Saved workout";
 }
 
+function dayKeyFromSnapshots(
+  snapshots: readonly Readonly<{ prescriptionSnapshot: Record<string, unknown> }>[],
+): string | undefined {
+  return snapshots[0] === undefined
+    ? undefined
+    : snapshotText(snapshots[0].prescriptionSnapshot, "dayKey");
+}
+
 function snapshotEquipmentProfileKind(
   snapshot: Record<string, unknown>,
 ): EquipmentProfileKind | undefined {
@@ -276,6 +289,15 @@ function snapshotText(
   return normalized.length > 0 ? normalized : undefined;
 }
 
+function optionalSnapshotField(
+  snapshot: Record<string, unknown>,
+  key: string,
+  outputKey: string = key,
+): Readonly<Record<string, string>> {
+  const value = snapshotText(snapshot, key);
+  return value === undefined ? {} : { [outputKey]: value };
+}
+
 function snapshotSetKind(
   snapshot: Record<string, unknown>,
 ): "warmup" | "work" | undefined {
@@ -283,9 +305,28 @@ function snapshotSetKind(
   return value === "warmup" || value === "work" ? value : undefined;
 }
 
-function cardioView(row: typeof cardioLogs.$inferSelect | undefined): TrainingCardioView | undefined {
+function cardioKeyFromSnapshots(
+  snapshots: readonly Readonly<{ prescriptionSnapshot: Record<string, unknown> }>[],
+  mode: "runner" | "walker",
+): string | undefined {
+  const value = snapshots[0]?.prescriptionSnapshot["cardioOptions"];
+  if (!Array.isArray(value)) return undefined;
+  for (const option of value) {
+    if (typeof option !== "object" || option === null || Array.isArray(option)) continue;
+    const record = option as Record<string, unknown>;
+    if (record["mode"] === mode) return snapshotText(record, "cardioKey");
+  }
+  return undefined;
+}
+
+function cardioView(
+  row: typeof cardioLogs.$inferSelect | undefined,
+  snapshots: readonly Readonly<{ prescriptionSnapshot: Record<string, unknown> }>[] = [],
+): TrainingCardioView | undefined {
   if (!row) return undefined;
+  const cardioKey = cardioKeyFromSnapshots(snapshots, row.mode);
   return {
+    ...(cardioKey === undefined ? {} : { cardioKey }),
     distanceMeters: row.distanceM ?? undefined,
     durationSeconds: row.durationSeconds,
     inclinePercent: row.inclinePercent ?? undefined,
@@ -326,9 +367,11 @@ async function buildHistorySummary(
     .limit(1);
   const occurredAt = occurredAtFor(row);
   const startedAt = row.startedAt ?? row.createdAt;
+  const dayKey = dayKeyFromSnapshots(snapshots);
   return {
-    cardio: cardioView(cardioRows[0]),
+    cardio: cardioView(cardioRows[0], snapshots),
     completedExerciseCount: states.filter(({ status }) => status === "completed").length,
+    ...(dayKey === undefined ? {} : { dayKey }),
     dayName: dayNameFromSnapshots(snapshots),
     durationSeconds: occurredAt >= startedAt
       ? Math.floor((occurredAt.getTime() - startedAt.getTime()) / 1_000)
@@ -448,10 +491,13 @@ export async function loadTrainingSession(
       minimumReps: snapshot.minimumReps ?? undefined,
       minimumSeconds: snapshot.minimumSeconds ?? undefined,
       note: state.note ?? undefined,
+      ...optionalSnapshotField(snapshot.prescriptionSnapshot, "prescriptionKey", "prescriptionKey"),
       position: snapshot.position,
       prescriptionNote: snapshotText(snapshot.prescriptionSnapshot, "notes"),
       restSeconds: snapshot.restSeconds,
+      ...optionalSnapshotField(snapshot.prescriptionSnapshot, "sectionKey", "sectionKey"),
       sectionKind: snapshot.sectionKind,
+      ...optionalSnapshotField(snapshot.prescriptionSnapshot, "sectionTitle", "sectionTitle"),
       setCount: snapshot.setCount,
       setKind: snapshotSetKind(snapshot.prescriptionSnapshot),
       sets: (logsBySnapshot.get(snapshot.id) ?? []).map((log) => ({

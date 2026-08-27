@@ -124,6 +124,15 @@ export type CreateStarterProgramInput = Readonly<{
   name: string;
 }>;
 
+export type CreateCustomProgramInput = Readonly<{
+  equipmentProfileKind: EquipmentProfileKind;
+  idempotencyKey: string;
+  name: string;
+  dayName: string;
+  sectionName: string;
+  firstCatalogExerciseId: string;
+}>;
+
 export type CloneProgramInput = Readonly<{
   idempotencyKey: string;
   name: string;
@@ -162,6 +171,7 @@ type NormalizedPreferencesUpdateInput = Readonly<{
 }>;
 
 type NormalizedCreateStarterProgramInput = CreateStarterProgramInput;
+type NormalizedCreateCustomProgramInput = CreateCustomProgramInput;
 type NormalizedCloneProgramInput = CloneProgramInput;
 type NormalizedActivateProgramInput = ActivateProgramInput;
 
@@ -197,6 +207,7 @@ export type EquipmentReadModel = Readonly<{
 
 export type ActiveProgramPrescriptionReadModel = Readonly<{
   id: string;
+  prescriptionKey: string;
   catalogExerciseId: string | null;
   customExerciseId: string | null;
   exercise: Readonly<{
@@ -236,6 +247,7 @@ export type ActiveProgramPrescriptionReadModel = Readonly<{
 
 export type ActiveProgramSectionReadModel = Readonly<{
   id: string;
+  sectionKey: string;
   kind: ProgramSectionRow["kind"];
   displayOrder: number;
   title: string;
@@ -244,6 +256,7 @@ export type ActiveProgramSectionReadModel = Readonly<{
 
 export type ActiveProgramCardioReadModel = Readonly<{
   id: string;
+  cardioKey: string;
   mode: ProgramCardioRow["mode"];
   durationSeconds: number;
   distanceM: number | null;
@@ -276,6 +289,7 @@ export type ActiveProgramReadModel = Readonly<{
 }>;
 
 export type ProgramSummaryReadModel = Readonly<{
+  dayCount: number;
   equipmentProfileKind: EquipmentProfileKind;
   id: string;
   isActive: boolean;
@@ -352,6 +366,10 @@ export type ProfileProgramRepository = Readonly<{
     viewer: ViewerContext | null,
     input: CreateStarterProgramInput,
   ): Promise<ProgramCollectionMutationResult>;
+  createCustomProgram(
+    viewer: ViewerContext | null,
+    input: CreateCustomProgramInput,
+  ): Promise<ProgramCollectionMutationResult>;
   cloneProgram(
     viewer: ViewerContext | null,
     input: CloneProgramInput,
@@ -391,13 +409,23 @@ const preferencesUpdateSchema = z
     unitSystem: z.enum(["metric", "imperial"]),
   })
   .strict();
-const programNameSchema = z.string().trim().min(1).max(180);
+const programNameSchema = z.string().trim().min(1).max(80);
 const requiredIdempotencyKeySchema = z.string().trim().min(1).max(180);
 const createStarterProgramSchema = z
   .object({
     equipmentProfileKind: profileKindSchema,
     idempotencyKey: requiredIdempotencyKeySchema,
     name: programNameSchema,
+  })
+  .strict();
+const createCustomProgramSchema = z
+  .object({
+    equipmentProfileKind: profileKindSchema,
+    idempotencyKey: requiredIdempotencyKeySchema,
+    name: programNameSchema,
+    dayName: z.string().trim().min(1).max(120),
+    sectionName: z.string().trim().min(1).max(120),
+    firstCatalogExerciseId: z.string().uuid(),
   })
   .strict();
 const cloneProgramSchema = z
@@ -525,6 +553,21 @@ function parseCreateStarterProgramInput(
   return result.data;
 }
 
+function parseCreateCustomProgramInput(
+  input: CreateCustomProgramInput,
+): NormalizedCreateCustomProgramInput {
+  const result = createCustomProgramSchema.safeParse(input);
+  if (!result.success) {
+    if (
+      result.error.issues.some((issue) => issue.path[0] === "firstCatalogExerciseId")
+    ) {
+      throw new RepositoryNotFoundError();
+    }
+    throw new RepositoryValidationError("The custom program data is invalid.");
+  }
+  return result.data;
+}
+
 function parseCloneProgramInput(
   input: CloneProgramInput,
 ): NormalizedCloneProgramInput {
@@ -594,6 +637,14 @@ function scopedUuid(kind: string, ownerFirebaseUid: string, key: string): string
   return deterministicSeedUuid(kind, `${ownerFirebaseUid}:${key}`);
 }
 
+function topologyKey(
+  kind: "section" | "prescription" | "cardio",
+  ownerFirebaseUid: string,
+  key: string,
+): string {
+  return scopedUuid(`program-${kind}-key`, ownerFirebaseUid, key);
+}
+
 function iso(value: Date): string {
   return value.toISOString();
 }
@@ -605,6 +656,93 @@ function cloneJson<T>(value: T): T {
 function equipmentId(value: string): EquipmentId {
   if ((EQUIPMENT_IDS as readonly string[]).includes(value)) return value as EquipmentId;
   throw new RepositoryNotFoundError();
+}
+
+async function loadCompatibleCatalogExercise(
+  database: RepositoryDatabase,
+  exerciseId: string,
+  profileKind: EquipmentProfileKind,
+): Promise<CatalogExerciseRow> {
+  const exercise = (
+    await database
+      .select()
+      .from(catalogExercises)
+      .where(eq(catalogExercises.id, exerciseId))
+      .limit(1)
+  )[0];
+  if (!exercise) throw new RepositoryNotFoundError();
+  const requiredEquipment = await database
+    .select({ equipmentId: exerciseEquipment.equipmentId })
+    .from(exerciseEquipment)
+    .where(eq(exerciseEquipment.exerciseId, exercise.id));
+  const availableEquipment = new Set<EquipmentId>(
+    EQUIPMENT_PROFILES[profileKind].equipment,
+  );
+  if (
+    requiredEquipment.some(({ equipmentId: required }) =>
+      !availableEquipment.has(equipmentId(required)),
+    )
+  ) {
+    throw new RepositoryValidationError(
+      "The first movement is incompatible with the selected equipment profile.",
+    );
+  }
+  return exercise;
+}
+
+function customPrescriptionDefaults(
+  loggingKind: CatalogExerciseRow["loggingKind"],
+): Readonly<{
+  measurementKind: ProgramPrescriptionRow["measurementKind"];
+  minimumReps: number | null;
+  maximumReps: number | null;
+  minimumSeconds: number | null;
+  maximumSeconds: number | null;
+  targetWeightKg: number | null;
+  targetDistanceM: number | null;
+}> {
+  switch (loggingKind) {
+    case "weight_reps":
+      return {
+        measurementKind: "weight_reps",
+        minimumReps: 8,
+        maximumReps: 12,
+        minimumSeconds: null,
+        maximumSeconds: null,
+        targetWeightKg: null,
+        targetDistanceM: null,
+      };
+    case "bodyweight_reps":
+      return {
+        measurementKind: "bodyweight_reps",
+        minimumReps: 8,
+        maximumReps: 12,
+        minimumSeconds: null,
+        maximumSeconds: null,
+        targetWeightKg: null,
+        targetDistanceM: null,
+      };
+    case "duration":
+      return {
+        measurementKind: "duration",
+        minimumReps: null,
+        maximumReps: null,
+        minimumSeconds: 30,
+        maximumSeconds: 60,
+        targetWeightKg: null,
+        targetDistanceM: null,
+      };
+    case "distance_duration":
+      return {
+        measurementKind: "distance_duration",
+        minimumReps: null,
+        maximumReps: null,
+        minimumSeconds: 60,
+        maximumSeconds: 120,
+        targetWeightKg: null,
+        targetDistanceM: 1_000,
+      };
+  }
 }
 
 type RepositoryDatabase = Database;
@@ -965,6 +1103,7 @@ async function readProgramModel(
         };
     return {
       id: row.id,
+      prescriptionKey: row.prescriptionKey,
       catalogExerciseId: row.catalogExerciseId,
       customExerciseId: row.customExerciseId,
       exercise: {
@@ -1002,6 +1141,7 @@ async function readProgramModel(
     const sections: ActiveProgramSectionReadModel[] = (sectionByDay.get(day.id) ?? []).map(
       (section) => ({
         id: section.id,
+        sectionKey: section.sectionKey,
         kind: section.kind,
         displayOrder: section.displayOrder,
         title: section.title,
@@ -1017,6 +1157,7 @@ async function readProgramModel(
       prescriptions: sections.flatMap((section) => section.prescriptions),
       cardio: (cardioByDay.get(day.id) ?? []).map((row) => ({
         id: row.id,
+        cardioKey: row.cardioKey,
         mode: row.mode,
         durationSeconds: row.durationSeconds,
         distanceM: row.distanceM,
@@ -1107,6 +1248,27 @@ async function readProgramSummaries(
       desc(userPrograms.updatedAt),
       asc(userPrograms.id),
     );
+  const revisionIds = rows.flatMap(({ revision }) =>
+    revision?.id ? [revision.id] : [],
+  );
+  const dayCountRows = revisionIds.length
+    ? await database
+        .select({
+          dayCount: sql<number>`count(*)`,
+          revisionId: programDays.revisionId,
+        })
+        .from(programDays)
+        .where(
+          and(
+            eq(programDays.ownerFirebaseUid, ownerFirebaseUid),
+            inArray(programDays.revisionId, revisionIds),
+          ),
+        )
+        .groupBy(programDays.revisionId)
+    : [];
+  const dayCountByRevision = new Map(
+    dayCountRows.map((row) => [row.revisionId, Number(row.dayCount)] as const),
+  );
   return rows.map(({ revision, root }) => {
     if (
       !revision ||
@@ -1121,6 +1283,7 @@ async function readProgramSummaries(
     return {
       root,
       summary: {
+        dayCount: dayCountByRevision.get(revision.id) ?? 0,
         equipmentProfileKind: revision.equipmentProfileKind,
         id: root.id,
         isActive: root.isActive,
@@ -1391,6 +1554,11 @@ async function cloneTemplateRevision(
         programId,
         revisionId,
         dayId: programDayIds.get(section.dayId)!,
+        sectionKey: topologyKey(
+          "section",
+          ownerFirebaseUid,
+          `template:${template.revision.id}:${section.id}`,
+        ),
         kind: section.kind,
         displayOrder: section.displayOrder,
         title: section.title,
@@ -1416,6 +1584,11 @@ async function cloneTemplateRevision(
         programId,
         revisionId,
         sectionId: programSectionIds.get(prescription.sectionId)!,
+        prescriptionKey: topologyKey(
+          "prescription",
+          ownerFirebaseUid,
+          `template:${template.revision.id}:${prescription.id}`,
+        ),
         catalogExerciseId: prescription.exerciseId,
         customExerciseId: null,
         displayName: prescription.displayName,
@@ -1435,24 +1608,31 @@ async function cloneTemplateRevision(
       })),
     )
     .onConflictDoNothing();
-  await database
-    .insert(programCardioPrescriptions)
-    .values(
-      template.cardio.map((cardio) => ({
-        id: scopedUuid("program-cardio", ownerFirebaseUid, `${programId}:${revisionId}:${cardio.id}`),
-        ownerFirebaseUid,
-        programId,
-        revisionId,
-        dayId: programDayIds.get(cardio.dayId)!,
-        mode: cardio.mode,
-        durationSeconds: cardio.durationSeconds,
-        distanceM: cardio.distanceM,
-        paceSecondsPerKm: cardio.paceSecondsPerKm,
-        inclinePercent: cardio.inclinePercent,
-        notes: cardio.notes,
-      })),
-    )
-    .onConflictDoNothing();
+  if (template.cardio.length > 0) {
+    await database
+      .insert(programCardioPrescriptions)
+      .values(
+        template.cardio.map((cardio) => ({
+          id: scopedUuid("program-cardio", ownerFirebaseUid, `${programId}:${revisionId}:${cardio.id}`),
+          ownerFirebaseUid,
+          programId,
+          revisionId,
+          dayId: programDayIds.get(cardio.dayId)!,
+          cardioKey: topologyKey(
+            "cardio",
+            ownerFirebaseUid,
+            `template:${template.revision.id}:${cardio.id}`,
+          ),
+          mode: cardio.mode,
+          durationSeconds: cardio.durationSeconds,
+          distanceM: cardio.distanceM,
+          paceSecondsPerKm: cardio.paceSecondsPerKm,
+          inclinePercent: cardio.inclinePercent,
+          notes: cardio.notes,
+        })),
+      )
+      .onConflictDoNothing();
+  }
 
   await database
     .update(programRevisions)
@@ -1535,6 +1715,7 @@ async function cloneProgramGraphRevision(
       ownerFirebaseUid,
       programId: targetProgramId,
       revisionId,
+      sectionKey: section.sectionKey,
       title: section.title,
     })),
   );
@@ -1560,6 +1741,7 @@ async function cloneProgramGraphRevision(
       restSeconds: prescription.restSeconds,
       revisionId,
       sectionId: programSectionId(prescription.sectionId),
+      prescriptionKey: prescription.prescriptionKey,
       setCount: prescription.setCount,
       setKind: prescription.setKind,
       targetDistanceM: prescription.targetDistanceM,
@@ -1567,25 +1749,28 @@ async function cloneProgramGraphRevision(
       targetWeightKg: prescription.targetWeightKg,
     })),
   );
-  await database.insert(programCardioPrescriptions).values(
-    source.cardio.map((cardio) => ({
-      dayId: programDayId(cardio.dayId),
-      distanceM: cardio.distanceM,
-      durationSeconds: cardio.durationSeconds,
-      id: scopedUuid(
-        "program-cardio",
+  if (source.cardio.length > 0) {
+    await database.insert(programCardioPrescriptions).values(
+      source.cardio.map((cardio) => ({
+        dayId: programDayId(cardio.dayId),
+        distanceM: cardio.distanceM,
+        durationSeconds: cardio.durationSeconds,
+        id: scopedUuid(
+          "program-cardio",
+          ownerFirebaseUid,
+          `${targetProgramId}:${revisionId}:${cardio.id}`,
+        ),
+        inclinePercent: cardio.inclinePercent,
+        mode: cardio.mode,
+        notes: cardio.notes,
         ownerFirebaseUid,
-        `${targetProgramId}:${revisionId}:${cardio.id}`,
-      ),
-      inclinePercent: cardio.inclinePercent,
-      mode: cardio.mode,
-      notes: cardio.notes,
-      ownerFirebaseUid,
-      paceSecondsPerKm: cardio.paceSecondsPerKm,
-      programId: targetProgramId,
-      revisionId,
-    })),
-  );
+        paceSecondsPerKm: cardio.paceSecondsPerKm,
+        programId: targetProgramId,
+        revisionId,
+        cardioKey: cardio.cardioKey,
+      })),
+    );
+  }
   const published = await database
     .update(programRevisions)
     .set({ publishedAt: now, status: "published" })
@@ -1628,7 +1813,7 @@ async function cloneEquipmentRevision(
       revisionNumber,
       status: "draft",
       equipmentProfileKind: targetProfile,
-      sourceTemplateRevisionId: targetTemplate.revision.id,
+      sourceTemplateRevisionId: source.revision.sourceTemplateRevisionId,
       publishedAt: null,
     })
     .onConflictDoNothing();
@@ -1743,6 +1928,7 @@ async function cloneEquipmentRevision(
         programId: root.id,
         revisionId,
         dayId: programDayId(section.dayId),
+        sectionKey: section.sectionKey,
         kind: section.kind,
         displayOrder: section.displayOrder,
         title: section.title,
@@ -1780,6 +1966,7 @@ async function cloneEquipmentRevision(
             programId: root.id,
             revisionId,
             sectionId: programSectionId(section.id),
+            prescriptionKey: prescription.prescriptionKey,
             catalogExerciseId: null,
             customExerciseId: customExercise.id,
             displayName: prescription.displayName,
@@ -1854,6 +2041,7 @@ async function cloneEquipmentRevision(
           programId: root.id,
           revisionId,
           sectionId: programSectionId(section.id),
+          prescriptionKey: prescription.prescriptionKey,
           catalogExerciseId: targetExercise.id,
           customExerciseId: null,
           displayName,
@@ -1874,24 +2062,27 @@ async function cloneEquipmentRevision(
       }),
     )
     .onConflictDoNothing();
-  await database
-    .insert(programCardioPrescriptions)
-    .values(
-      source.cardio.map((cardio) => ({
-        id: scopedUuid("program-cardio", ownerFirebaseUid, `${root.id}:${revisionId}:${cardio.id}`),
-        ownerFirebaseUid,
-        programId: root.id,
-        revisionId,
-        dayId: programDayId(cardio.dayId),
-        mode: cardio.mode,
-        durationSeconds: cardio.durationSeconds,
-        distanceM: cardio.distanceM,
-        paceSecondsPerKm: cardio.paceSecondsPerKm,
-        inclinePercent: cardio.inclinePercent,
-        notes: cardio.notes,
-      })),
-    )
-    .onConflictDoNothing();
+  if (source.cardio.length > 0) {
+    await database
+      .insert(programCardioPrescriptions)
+      .values(
+        source.cardio.map((cardio) => ({
+          id: scopedUuid("program-cardio", ownerFirebaseUid, `${root.id}:${revisionId}:${cardio.id}`),
+          ownerFirebaseUid,
+          programId: root.id,
+          revisionId,
+          dayId: programDayId(cardio.dayId),
+          cardioKey: cardio.cardioKey,
+          mode: cardio.mode,
+          durationSeconds: cardio.durationSeconds,
+          distanceM: cardio.distanceM,
+          paceSecondsPerKm: cardio.paceSecondsPerKm,
+          inclinePercent: cardio.inclinePercent,
+          notes: cardio.notes,
+        })),
+      )
+      .onConflictDoNothing();
+  }
   await database
     .update(programRevisions)
     .set({ status: "published", publishedAt: now })
@@ -2018,6 +2209,14 @@ async function publishEditedProgramRevision(
   const sourcePrescriptionById = new Map(
     source.prescriptions.map((prescription) => [prescription.id, prescription] as const),
   );
+  const sourceDayKeys = new Set(source.days.map(({ dayKey }) => dayKey));
+  for (const day of input.days) {
+    if (!z.string().uuid().safeParse(day.dayKey).success && !sourceDayKeys.has(day.dayKey)) {
+      throw new RepositoryValidationError(
+        "Legacy day keys must already exist in the active revision.",
+      );
+    }
+  }
 
   for (const prescription of requestedPrescriptions) {
     const catalog = prescription.catalogExerciseId
@@ -2064,8 +2263,12 @@ async function publishEditedProgramRevision(
 
   const dayId = (dayKey: string): string =>
     scopedUuid("program-day", ownerFirebaseUid, `${revisionId}:${dayKey}`);
-  const sectionId = (dayKey: string, kind: string): string =>
-    scopedUuid("program-section", ownerFirebaseUid, `${revisionId}:${dayKey}:${kind}`);
+  const sectionId = (sectionKey: string): string =>
+    scopedUuid("program-section", ownerFirebaseUid, `${revisionId}:${sectionKey}`);
+  const prescriptionId = (prescriptionKey: string): string =>
+    scopedUuid("program-prescription", ownerFirebaseUid, `${revisionId}:${prescriptionKey}`);
+  const cardioId = (cardioKey: string): string =>
+    scopedUuid("program-cardio", ownerFirebaseUid, `${revisionId}:${cardioKey}`);
   await database.insert(programDays).values(
     input.days.map((day) => ({
       id: dayId(day.dayKey),
@@ -2080,11 +2283,12 @@ async function publishEditedProgramRevision(
   await database.insert(programSections).values(
     input.days.flatMap((day) =>
       day.sections.map((section, sectionIndex) => ({
-        id: sectionId(day.dayKey, section.kind),
+        id: sectionId(section.sectionKey),
         ownerFirebaseUid,
         programId: root.id,
         revisionId,
         dayId: dayId(day.dayKey),
+        sectionKey: section.sectionKey,
         kind: section.kind,
         displayOrder: sectionIndex + 1,
         title: section.title,
@@ -2110,17 +2314,13 @@ async function publishEditedProgramRevision(
             sourcePrescription !== undefined &&
             sourcePrescription.catalogExerciseId === prescription.catalogExerciseId &&
             sourcePrescription.customExerciseId === prescription.customExerciseId;
-          const identity = prescription.catalogExerciseId ?? prescription.customExerciseId!;
           return {
-            id: scopedUuid(
-              "program-prescription",
-              ownerFirebaseUid,
-              `${revisionId}:${day.dayKey}:${section.kind}:${prescriptionIndex + 1}:${identity}`,
-            ),
+            id: prescriptionId(prescription.prescriptionKey),
             ownerFirebaseUid,
             programId: root.id,
             revisionId,
-            sectionId: sectionId(day.dayKey, section.kind),
+            sectionId: sectionId(section.sectionKey),
+            prescriptionKey: prescription.prescriptionKey,
             catalogExerciseId: prescription.catalogExerciseId,
             customExerciseId: prescription.customExerciseId,
             displayName: prescription.displayName,
@@ -2144,27 +2344,25 @@ async function publishEditedProgramRevision(
       ),
     ),
   );
-  await database.insert(programCardioPrescriptions).values(
-    input.days.flatMap((day) =>
-      day.cardio.map((cardio) => ({
-        id: scopedUuid(
-          "program-cardio",
-          ownerFirebaseUid,
-          `${revisionId}:${day.dayKey}:${cardio.mode}`,
-        ),
-        ownerFirebaseUid,
-        programId: root.id,
-        revisionId,
-        dayId: dayId(day.dayKey),
-        mode: cardio.mode,
-        durationSeconds: cardio.durationSeconds,
-        distanceM: cardio.distanceM,
-        paceSecondsPerKm: cardio.paceSecondsPerKm,
-        inclinePercent: cardio.inclinePercent,
-        notes: cardio.notes,
-      })),
-    ),
+  const requestedCardio = input.days.flatMap((day) =>
+    day.cardio.map((cardio) => ({
+      id: cardioId(cardio.cardioKey),
+      ownerFirebaseUid,
+      programId: root.id,
+      revisionId,
+      dayId: dayId(day.dayKey),
+      cardioKey: cardio.cardioKey,
+      mode: cardio.mode,
+      durationSeconds: cardio.durationSeconds,
+      distanceM: cardio.distanceM,
+      paceSecondsPerKm: cardio.paceSecondsPerKm,
+      inclinePercent: cardio.inclinePercent,
+      notes: cardio.notes,
+    })),
   );
+  if (requestedCardio.length > 0) {
+    await database.insert(programCardioPrescriptions).values(requestedCardio);
+  }
   const published = await database
     .update(programRevisions)
     .set({ status: "published", publishedAt: now })
@@ -2388,6 +2586,229 @@ export function createProfileProgramRepository(
       if (linked.length !== 1) {
         throw new RepositoryConflictError(
           "The new program revision could not be linked.",
+        );
+      }
+      const target = await findProgramRoot(tx, viewer.uid, programId);
+      const targetRevision = (
+        await tx
+          .select()
+          .from(programRevisions)
+          .where(
+            and(
+              eq(programRevisions.ownerFirebaseUid, viewer.uid),
+              eq(programRevisions.programId, programId),
+              eq(programRevisions.id, revisionId),
+            ),
+          )
+          .limit(1)
+      )[0];
+      if (!targetRevision) throw new RepositoryNotFoundError();
+      await activateProgramRoot(
+        tx,
+        viewer.uid,
+        activeRoots[0]!,
+        target,
+        targetRevision,
+        now,
+      );
+      await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        programId,
+        revisionId,
+      });
+      return {
+        ...(await readViewerData(tx, viewer.uid)),
+        affectedProgramId: programId,
+        affectedRevisionId: revisionId,
+        replayed: false,
+      };
+    });
+  }
+
+  async function createCustomProgram(
+    viewerInput: ViewerContext | null,
+    input: CreateCustomProgramInput,
+  ): Promise<ProgramCollectionMutationResult> {
+    const viewer = requirePermanentMutationViewer(viewerInput);
+    const normalized = parseCreateCustomProgramInput(input);
+    const requestHash = stableRequestHash("program-create-custom", {
+      dayName: normalized.dayName,
+      equipmentProfileKind: normalized.equipmentProfileKind,
+      firstCatalogExerciseId: normalized.firstCatalogExerciseId,
+      name: normalized.name,
+      sectionName: normalized.sectionName,
+    });
+    return database.transaction(async (transaction) => {
+      const tx = transaction as unknown as Database;
+      const roots = await lockProgramCollection(tx, viewer.uid);
+      const reservation = await reserveIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+        "program-create-custom",
+        requestHash,
+      );
+      if (reservation?.replay) {
+        const affected = replayAffectedProgram(reservation.replay);
+        await findProgramRoot(tx, viewer.uid, affected.programId);
+        return {
+          ...(await readViewerData(tx, viewer.uid)),
+          affectedProgramId: affected.programId,
+          affectedRevisionId: affected.revisionId,
+          replayed: true,
+        };
+      }
+      if (roots.length >= 24) {
+        throw new RepositoryValidationError(
+          "An account can keep at most 24 programs.",
+        );
+      }
+      const activeRoots = roots.filter(({ isActive }) => isActive);
+      if (activeRoots.length !== 1) {
+        throw new RepositoryConflictError(
+          "The active program selection needs recovery before creating another program.",
+        );
+      }
+
+      const exercise = await loadCompatibleCatalogExercise(
+        tx,
+        normalized.firstCatalogExerciseId,
+        normalized.equipmentProfileKind,
+      );
+      const defaults = customPrescriptionDefaults(exercise.loggingKind);
+      const programId = scopedUuid(
+        "user-program",
+        viewer.uid,
+        `collection:custom:${normalized.idempotencyKey}`,
+      );
+      const revisionId = scopedUuid(
+        "program-revision",
+        viewer.uid,
+        `${programId}:custom:${normalized.idempotencyKey}`,
+      );
+      const dayKey = scopedUuid(
+        "program-day-key",
+        viewer.uid,
+        `${programId}:custom:day`,
+      );
+      const sectionKey = topologyKey(
+        "section",
+        viewer.uid,
+        `${programId}:custom:section`,
+      );
+      const prescriptionKey = topologyKey(
+        "prescription",
+        viewer.uid,
+        `${programId}:custom:prescription`,
+      );
+      const dayId = scopedUuid(
+        "program-day",
+        viewer.uid,
+        `${programId}:${revisionId}:day`,
+      );
+      const sectionId = scopedUuid(
+        "program-section",
+        viewer.uid,
+        `${programId}:${revisionId}:section`,
+      );
+      const prescriptionId = scopedUuid(
+        "program-prescription",
+        viewer.uid,
+        `${programId}:${revisionId}:prescription`,
+      );
+      const now = new Date();
+
+      await tx.insert(userPrograms).values({
+        activeRevisionId: null,
+        id: programId,
+        isActive: false,
+        name: normalized.name,
+        ownerFirebaseUid: viewer.uid,
+        programKey: `program-${programId}`,
+        updatedAt: now,
+      });
+      await tx.insert(programRevisions).values({
+        id: revisionId,
+        ownerFirebaseUid: viewer.uid,
+        programId,
+        revisionNumber: 1,
+        status: "draft",
+        equipmentProfileKind: normalized.equipmentProfileKind,
+        sourceTemplateRevisionId: null,
+        publishedAt: null,
+      });
+      await tx.insert(programDays).values({
+        id: dayId,
+        ownerFirebaseUid: viewer.uid,
+        programId,
+        revisionId,
+        dayNumber: 1,
+        dayKey,
+        displayName: normalized.dayName,
+      });
+      await tx.insert(programSections).values({
+        id: sectionId,
+        ownerFirebaseUid: viewer.uid,
+        programId,
+        revisionId,
+        dayId,
+        sectionKey,
+        kind: "strength",
+        displayOrder: 1,
+        title: normalized.sectionName,
+      });
+      await tx.insert(programPrescriptions).values({
+        id: prescriptionId,
+        ownerFirebaseUid: viewer.uid,
+        programId,
+        revisionId,
+        sectionId,
+        prescriptionKey,
+        catalogExerciseId: exercise.id,
+        customExerciseId: null,
+        displayName: null,
+        displayOrder: 1,
+        setKind: "work",
+        setCount: 3,
+        measurementKind: defaults.measurementKind,
+        minimumReps: defaults.minimumReps,
+        maximumReps: defaults.maximumReps,
+        minimumSeconds: defaults.minimumSeconds,
+        maximumSeconds: defaults.maximumSeconds,
+        restSeconds: 90,
+        targetWeightKg: defaults.targetWeightKg,
+        targetDistanceM: defaults.targetDistanceM,
+        notes: null,
+        targetMetadata: {},
+      });
+      const published = await tx
+        .update(programRevisions)
+        .set({ status: "published", publishedAt: now })
+        .where(
+          and(
+            eq(programRevisions.ownerFirebaseUid, viewer.uid),
+            eq(programRevisions.programId, programId),
+            eq(programRevisions.id, revisionId),
+            eq(programRevisions.status, "draft"),
+          ),
+        )
+        .returning({ id: programRevisions.id });
+      if (published.length !== 1) {
+        throw new RepositoryConflictError("The custom program could not be published safely.");
+      }
+      const linked = await tx
+        .update(userPrograms)
+        .set({ activeRevisionId: revisionId, updatedAt: now })
+        .where(
+          and(
+            eq(userPrograms.ownerFirebaseUid, viewer.uid),
+            eq(userPrograms.id, programId),
+            isNull(userPrograms.activeRevisionId),
+          ),
+        )
+        .returning({ id: userPrograms.id });
+      if (linked.length !== 1) {
+        throw new RepositoryConflictError(
+          "The custom program revision could not be linked.",
         );
       }
       const target = await findProgramRoot(tx, viewer.uid, programId);
@@ -2979,6 +3400,7 @@ export function createProfileProgramRepository(
     getViewerData,
     getActiveProgram,
     createProgramFromStarter,
+    createCustomProgram,
     cloneProgram,
     activateProgram,
     confirmEquipmentChange,
@@ -3020,6 +3442,14 @@ export async function createViewerProgramFromStarter(
     viewer,
     input,
   );
+}
+
+export async function createViewerProgramFromCustom(
+  database: Database,
+  viewer: ViewerContext | null,
+  input: CreateCustomProgramInput,
+): Promise<ProgramCollectionMutationResult> {
+  return createProfileProgramRepository(database).createCustomProgram(viewer, input);
 }
 
 export async function cloneViewerProgram(

@@ -10,27 +10,38 @@ import { parseProgramPublishResponse } from "@/components/program/program-mutati
 import { reconcileProgramRevisionMutation } from "@/components/program/program-revision-reconciliation";
 import {
   addProgramPrescription,
+  addProgramCardio,
+  addProgramDay,
   addProgramSection,
+  duplicateProgramDay,
   filterProgramExerciseCandidates,
   programEditorCanonicalValue,
   programEditorDisplayValue,
   programEditorDraftFromReadModel,
   programEditorExerciseCandidateKey,
   programEditorUnitLabels,
+  removeProgramCardio,
+  removeProgramDay,
   removeProgramPrescription,
   removeProgramSection,
   replaceProgramPrescription,
+  renameProgramDay,
   renameProgramSection,
+  reorderProgramDay,
   reorderProgramSection,
   reorderProgramPrescription,
+  reviewProgramDayRemoval,
   reviewProgramSectionRemoval,
   stripLocalProgramPrescriptionIds,
   validateProgramExerciseSelections,
   PROGRAM_SECTION_KINDS,
   type ProgramEditorDraft,
+  type ProgramDayRemovalReview,
   type ProgramEditorMeasurement,
   type ProgramExerciseCandidate,
+  type ProgramCardioMode,
   type ProgramEditorUnitSystem,
+  type ProgramSectionKind,
   type ProgramSectionRemovalReview,
 } from "@/components/program/program-editor-model";
 import { Icon } from "@/components/ui/icon";
@@ -144,6 +155,10 @@ type ExerciseChooser = Readonly<
       sectionIndex: number;
     }
   | {
+      mode: "add-day";
+      sectionKind: ProgramSectionKind;
+    }
+  | {
       currentLoggingKind: ProgramExerciseCandidate["loggingKind"];
       dayIndex: number;
       mode: "replace";
@@ -156,6 +171,10 @@ type SectionRemoval = Readonly<{
   dayIndex: number;
   review: ProgramSectionRemovalReview;
   sectionIndex: number;
+}>;
+
+type DayRemoval = Readonly<{
+  review: ProgramDayRemovalReview;
 }>;
 
 export function ProgramEditor({
@@ -175,22 +194,30 @@ export function ProgramEditor({
     programEditorDraftFromReadModel(initialProgram, operationKey()),
   );
   const [baseline, setBaseline] = useState(() => JSON.stringify(draft));
-  const [selectedDay, setSelectedDay] = useState(0);
+  const [selectedDayKey, setSelectedDayKey] = useState(initialProgram.days[0]?.dayKey ?? "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [chooser, setChooser] = useState<ExerciseChooser | null>(null);
   const [candidateQuery, setCandidateQuery] = useState("");
+  const [newDayName, setNewDayName] = useState("");
+  const [newDaySectionName, setNewDaySectionName] = useState("");
+  const [newDaySectionKind, setNewDaySectionKind] = useState<ProgramSectionKind>("strength");
   const [sectionRemoval, setSectionRemoval] = useState<SectionRemoval | null>(null);
+  const [dayRemoval, setDayRemoval] = useState<DayRemoval | null>(null);
   const [pendingMeasurementKeys, setPendingMeasurementKeys] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
   const dialogRef = useRef<HTMLDialogElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const dayNameRef = useRef<HTMLInputElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const sectionRemovalDialogRef = useRef<HTMLDialogElement>(null);
   const sectionRemovalConfirmRef = useRef<HTMLButtonElement>(null);
   const sectionRemovalReturnFocusRef = useRef<HTMLElement | null>(null);
+  const dayRemovalDialogRef = useRef<HTMLDialogElement>(null);
+  const dayRemovalConfirmRef = useRef<HTMLButtonElement>(null);
+  const dayRemovalReturnFocusRef = useRef<HTMLElement | null>(null);
   const draftHistoryGuardActiveRef = useRef(false);
   const draftHistoryGuardLeavingRef = useRef(false);
   const draftHistoryGuardRestoringRef = useRef(false);
@@ -202,6 +229,10 @@ export function ProgramEditor({
   const dirty = useMemo(
     () => JSON.stringify(draft) !== baseline || pendingMeasurementKeys.size > 0,
     [baseline, draft, pendingMeasurementKeys],
+  );
+  const selectedDay = Math.max(
+    0,
+    draft.days.findIndex((day) => day.dayKey === selectedDayKey),
   );
   const selected = draft.days[selectedDay] ?? draft.days[0]!;
   const meaningBySourceId = useMemo(
@@ -223,9 +254,6 @@ export function ProgramEditor({
   const filteredCandidates = useMemo(
     () => filterProgramExerciseCandidates(candidates, candidateQuery),
     [candidateQuery, candidates],
-  );
-  const missingSectionKinds = PROGRAM_SECTION_KINDS.filter(
-    (kind) => !selected.sections.some((section) => section.kind === kind),
   );
   const unitLabels = programEditorUnitLabels(unitSystem);
 
@@ -269,6 +297,11 @@ export function ProgramEditor({
     queueMicrotask(() => returnFocusRef.current?.focus());
   }
 
+  function dismissDayRemoval() {
+    setDayRemoval(null);
+    window.setTimeout(() => dayRemovalReturnFocusRef.current?.focus(), 0);
+  }
+
   function dismissSectionRemoval() {
     setSectionRemoval(null);
     // Native dialog close focus restoration runs after the close event in WebKit.
@@ -289,7 +322,10 @@ export function ProgramEditor({
     const dialog = dialogRef.current;
     if (!chooser || !dialog || dialog.open) return;
     dialog.showModal();
-    queueMicrotask(() => searchRef.current?.focus());
+    queueMicrotask(() => {
+      if (chooser.mode === "add-day") dayNameRef.current?.focus();
+      else searchRef.current?.focus();
+    });
   }, [chooser]);
 
   useEffect(() => {
@@ -362,6 +398,13 @@ export function ProgramEditor({
   }, [sectionRemoval]);
 
   useEffect(() => {
+    const dialog = dayRemovalDialogRef.current;
+    if (!dayRemoval || !dialog || dialog.open) return;
+    dialog.showModal();
+    queueMicrotask(() => dayRemovalConfirmRef.current?.focus());
+  }, [dayRemoval]);
+
+  useEffect(() => {
     if (!dirty || busy) return;
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault();
@@ -422,7 +465,11 @@ export function ProgramEditor({
     setBaseline(JSON.stringify(nextDraft));
     setPendingMeasurementKeys(new Set());
     localPrescriptionIdsRef.current.clear();
-    setSelectedDay((current) => Math.min(current, nextDraft.days.length - 1));
+    setSelectedDayKey((current) =>
+      nextDraft.days.some((day) => day.dayKey === current)
+        ? current
+        : nextDraft.days[0]?.dayKey ?? "",
+    );
     setErrors([]);
     setMessage(
       `Equipment revision ${nextProgram.revisionNumber} is now the clean editor baseline. No unpublished editor changes were included.`,
@@ -452,13 +499,129 @@ export function ProgramEditor({
     }));
   }
 
-  function updateCardio(dayIndex: number, cardioIndex: number, update: Partial<Cardio>) {
+  function updateCardio(dayIndex: number, cardioKey: string, update: Partial<Cardio>) {
     updateDay(dayIndex, (day) => ({
       ...day,
-      cardio: day.cardio.map((cardio, index) =>
-        index === cardioIndex ? { ...cardio, ...update } : cardio,
+      cardio: day.cardio.map((cardio) =>
+        cardio.cardioKey === cardioKey ? { ...cardio, ...update } : cardio,
       ) as ProgramPublishInput["days"][number]["cardio"],
     }));
+  }
+
+  function openDayCreator() {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    setNewDayName(`Day ${draft.days.length + 1}`);
+    setNewDaySectionName("Strength");
+    setNewDaySectionKind("strength");
+    setCandidateQuery("");
+    setChooser({ mode: "add-day", sectionKind: "strength" });
+  }
+
+  function addDayFromCandidate(candidate: ProgramExerciseCandidate) {
+    const displayName = newDayName.trim();
+    const sectionTitle = newDaySectionName.trim();
+    if (displayName.length === 0 || sectionTitle.length === 0) {
+      setMessage("Give the new day and first section a name before choosing a movement.");
+      return;
+    }
+    const dayKey = operationKey();
+    try {
+      setDraft((current) => addProgramDay(current, {
+        candidate,
+        dayKey,
+        displayName,
+        sectionKind: newDaySectionKind,
+        sectionTitle,
+      }));
+      setSelectedDayKey(dayKey);
+      setMessage(`${displayName} added with ${candidate.name}. This day is still unpublished.`);
+      setErrors([]);
+      dialogRef.current?.close();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The day could not be added.");
+    }
+  }
+
+  function moveDay(dayKey: string, direction: -1 | 1) {
+    try {
+      setDraft((current) => reorderProgramDay(current, dayKey, direction));
+      setSelectedDayKey(dayKey);
+      setMessage(`Day moved ${direction < 0 ? "up" : "down"}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The day could not be moved.");
+    }
+  }
+
+  function duplicateDay(dayKey: string) {
+    const duplicateKey = operationKey();
+    try {
+      setDraft((current) => duplicateProgramDay(current, dayKey, { dayKey: duplicateKey }));
+      setSelectedDayKey(duplicateKey);
+      setMessage("Day duplicated with independent topology keys. The duplicate is still unpublished.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The day could not be duplicated.");
+    }
+  }
+
+  function openDayRemoval(dayKey: string, returnFocusTarget: HTMLElement) {
+    try {
+      const day = draft.days.find((candidate) => candidate.dayKey === dayKey);
+      if (!day) throw new RangeError("The requested program day is unavailable.");
+      const review = reviewProgramDayRemoval(
+        draft,
+        dayKey,
+        day.sections.flatMap(({ prescriptions }) => prescriptions.map((prescription) =>
+          meaningForPrescription(prescription)?.label ?? prescription.displayName ?? "Exercise",
+        )),
+      );
+      dayRemovalReturnFocusRef.current = returnFocusTarget;
+      setDayRemoval({ review });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The day could not be reviewed.");
+    }
+  }
+
+  function confirmDayRemoval() {
+    if (!dayRemoval) return;
+    const dayIndex = draft.days.findIndex((day) => day.dayKey === dayRemoval.review.dayKey);
+    try {
+      const next = removeProgramDay(draft, dayRemoval.review.dayKey, {
+        ...dayRemoval.review,
+        confirmed: true,
+      });
+      const focusDay = next.days[Math.min(Math.max(dayIndex, 0), next.days.length - 1)];
+      setDraft(next);
+      setSelectedDayKey(focusDay?.dayKey ?? "");
+      setMessage(
+        `${dayRemoval.review.exerciseNames.join(", ") || "The empty day"} removed from this unpublished draft.`,
+      );
+      dayRemovalReturnFocusRef.current = focusDay
+        ? document.getElementById(`program-day-${focusDay.dayKey}`)
+        : null;
+      dayRemovalDialogRef.current?.close();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The day could not be removed.");
+    }
+  }
+
+  function addCardio(mode: ProgramCardioMode) {
+    try {
+      setDraft((current) => addProgramCardio(current, selected.dayKey, mode, operationKey()));
+      setMessage(`${mode} cardio added to ${selected.displayName}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The cardio choice could not be added.");
+    }
+  }
+
+  function removeCardio(cardioKey: string, mode: ProgramCardioMode) {
+    try {
+      setDraft((current) => removeProgramCardio(current, selected.dayKey, cardioKey));
+      setMessage(`${mode} cardio removed from this unpublished draft.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The cardio choice could not be removed.");
+    }
   }
 
   function move(dayIndex: number, sectionIndex: number, prescriptionIndex: number, direction: -1 | 1) {
@@ -539,7 +702,10 @@ export function ProgramEditor({
 
   function chooseCandidate(candidate: ProgramExerciseCandidate) {
     if (!chooser) return;
-    if (chooser.mode === "add") {
+    if (chooser.mode === "add-day") {
+      addDayFromCandidate(candidate);
+      return;
+    } else if (chooser.mode === "add") {
       const localId = operationKey();
       localPrescriptionIdsRef.current.add(localId);
       setDraft((current) => {
@@ -706,17 +872,50 @@ export function ProgramEditor({
             {draft.days.map((day, dayIndex) => (
               <li key={day.dayKey}>
                 <button
+                  id={`program-day-${day.dayKey}`}
                   aria-current={selectedDay === dayIndex ? "step" : undefined}
-                  onClick={() => setSelectedDay(dayIndex)}
+                  onClick={() => setSelectedDayKey(day.dayKey)}
                   type="button"
                 >
                   <span>{String(day.dayNumber).padStart(2, "0")}</span>
                   <strong>{day.displayName}</strong>
                   <small>{day.sections.flatMap(({ prescriptions }) => prescriptions).length} movements</small>
                 </button>
+                <div className="program-editor-day-actions" aria-label={`Actions for ${day.displayName}`}>
+                  <button
+                    aria-label={`Move ${day.displayName} up`}
+                    disabled={busy || dayIndex === 0}
+                    onClick={() => moveDay(day.dayKey, -1)}
+                    type="button"
+                  >Up</button>
+                  <button
+                    aria-label={`Move ${day.displayName} down`}
+                    disabled={busy || dayIndex === draft.days.length - 1}
+                    onClick={() => moveDay(day.dayKey, 1)}
+                    type="button"
+                  >Down</button>
+                  <button
+                    aria-label={`Duplicate ${day.displayName}`}
+                    disabled={busy || draft.days.length >= 14}
+                    onClick={() => duplicateDay(day.dayKey)}
+                    type="button"
+                  >Duplicate</button>
+                  <button
+                    aria-label={`Remove ${day.displayName}`}
+                    disabled={busy || draft.days.length <= 1}
+                    onClick={(event) => openDayRemoval(day.dayKey, event.currentTarget)}
+                    type="button"
+                  >Remove</button>
+                </div>
               </li>
             ))}
           </ol>
+          <button
+            className="program-editor-add"
+            disabled={busy || draft.days.length >= 14}
+            onClick={openDayCreator}
+            type="button"
+          >Add day</button>
         </aside>
 
         <div className="program-editor-main">
@@ -729,7 +928,9 @@ export function ProgramEditor({
                 <input
                   disabled={busy}
                   maxLength={120}
-                  onChange={(event) => updateDay(selectedDay, (day) => ({ ...day, displayName: event.target.value }))}
+                  onChange={(event) => setDraft((current) =>
+                    renameProgramDay(current, selected.dayKey, event.target.value),
+                  )}
                   value={selected.displayName}
                 />
               </label>
@@ -768,10 +969,8 @@ export function ProgramEditor({
                     >Down</button>
                   </div>
                   <button
-                    aria-label={section.kind === "core"
-                      ? "Core section is required on every day"
-                      : `Remove ${sectionLabel} section`}
-                    disabled={section.kind === "core" || selected.sections.length <= 1}
+                    aria-label={`Remove ${sectionLabel} section`}
+                    disabled={selected.sections.length <= 1}
                     onClick={(event) => openSectionRemoval(
                       selectedDay,
                       sectionIndex,
@@ -779,9 +978,6 @@ export function ProgramEditor({
                     )}
                     type="button"
                   >Remove section</button>
-                  {section.kind === "core" ? (
-                    <span className="program-editor-section-required">Core is required</span>
-                  ) : null}
                 </div>
                 {section.prescriptions.length === 0 ? (
                   <p className="program-editor-empty-section">
@@ -793,8 +989,7 @@ export function ProgramEditor({
                     const meaning = meaningForPrescription(prescription);
                     const movementLabel = meaning?.label ?? prescription.displayName ?? "Exercise";
                     const duration = meaning?.measurementKind === "duration" || meaning?.measurementKind === "distance_duration";
-                    const prescriptionDraftIdentity = prescription.sourcePrescriptionId
-                      ?? `${section.draftKey}:prescription:${prescriptionIndex}`;
+                    const prescriptionDraftIdentity = prescription.prescriptionKey;
                     return (
                       <li className="program-editor-prescription" key={prescriptionDraftIdentity}>
                         <header>
@@ -884,37 +1079,52 @@ export function ProgramEditor({
               );
             })}
 
-            {missingSectionKinds.length > 0 ? (
-              <section className="program-editor-add-section" aria-labelledby="program-editor-add-section-title">
-                <h3 id="program-editor-add-section-title">Add a section</h3>
-                <p>New sections start empty and remain unpublished until you add a movement and publish.</p>
-                <div>
-                  {missingSectionKinds.map((kind) => (
-                    <button
-                      disabled={busy}
-                      key={kind}
-                      onClick={() => addSection(kind)}
-                      type="button"
-                    >Add {kind} section</button>
-                  ))}
-                </div>
-              </section>
-            ) : null}
+            <section className="program-editor-add-section" aria-labelledby="program-editor-add-section-title">
+              <h3 id="program-editor-add-section-title">Add a section</h3>
+              <p>Sections can share a classification and start empty. Add a movement before publishing, or remove an empty section after review.</p>
+              <div>
+                {PROGRAM_SECTION_KINDS.map((kind) => (
+                  <button
+                    disabled={busy || selected.sections.length >= 12}
+                    key={kind}
+                    onClick={() => addSection(kind)}
+                    type="button"
+                  >Add {kind} section</button>
+                ))}
+              </div>
+            </section>
 
             <fieldset className="program-editor-section program-editor-cardio" disabled={busy}>
-              <legend>Walker / runner cardio</legend>
+              <legend>Optional cardio</legend>
+              {selected.cardio.length === 0 ? (
+                <p className="program-editor-empty-section">No cardio choices are attached to this day.</p>
+              ) : null}
               <div className="program-editor-cardio-grid">
-                {selected.cardio.map((cardio, cardioIndex) => (
-                  <section key={cardio.mode} aria-labelledby={`cardio-${selected.dayKey}-${cardio.mode}`}>
-                    <h3 id={`cardio-${selected.dayKey}-${cardio.mode}`}>{cardio.mode}</h3>
+                {selected.cardio.map((cardio) => (
+                  <section key={cardio.cardioKey} aria-labelledby={`cardio-${selected.dayKey}-${cardio.cardioKey}`}>
+                    <h3 id={`cardio-${selected.dayKey}-${cardio.cardioKey}`}>{cardio.mode}</h3>
+                    <button
+                      aria-label={`Remove ${cardio.mode} cardio`}
+                      onClick={() => removeCardio(cardio.cardioKey, cardio.mode)}
+                      type="button"
+                    >Remove cardio</button>
                     <div className="program-editor-grid">
-                      <label><span>Duration seconds</span><input min={1} onChange={(event) => updateCardio(selectedDay, cardioIndex, { durationSeconds: Number(event.target.value) })} type="number" value={cardio.durationSeconds} /></label>
-                      <label><span>Distance {unitLabels.distance}</span><CanonicalMeasurementInput canonicalValue={cardio.distanceM} measurement="distance" min={0} onCommit={(distanceM) => updateCardio(selectedDay, cardioIndex, { distanceM })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:cardio:${cardio.mode}:distance`} step={unitSystem === "imperial" ? "0.0001" : "0.001"} unitSystem={unitSystem} /></label>
-                      <label><span>Pace {unitLabels.pace}</span><CanonicalMeasurementInput canonicalValue={cardio.paceSecondsPerKm} measurement="pace" min={1} onCommit={(paceSecondsPerKm) => updateCardio(selectedDay, cardioIndex, { paceSecondsPerKm })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:cardio:${cardio.mode}:pace`} step="1" unitSystem={unitSystem} /></label>
-                      <label><span>Incline %</span><input min={0} max={100} onChange={(event) => updateCardio(selectedDay, cardioIndex, { inclinePercent: optionalNumber(event.target.value) })} step="0.1" type="number" value={cardio.inclinePercent ?? ""} /></label>
-                      <label className="program-editor-wide"><span>Notes</span><textarea maxLength={2000} onChange={(event) => updateCardio(selectedDay, cardioIndex, { notes: event.target.value })} value={cardio.notes ?? ""} /></label>
+                      <label><span>Duration seconds</span><input min={1} onChange={(event) => updateCardio(selectedDay, cardio.cardioKey, { durationSeconds: Number(event.target.value) })} type="number" value={cardio.durationSeconds} /></label>
+                      <label><span>Distance {unitLabels.distance}</span><CanonicalMeasurementInput canonicalValue={cardio.distanceM} measurement="distance" min={0} onCommit={(distanceM) => updateCardio(selectedDay, cardio.cardioKey, { distanceM })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:${cardio.cardioKey}:distance`} step={unitSystem === "imperial" ? "0.0001" : "0.001"} unitSystem={unitSystem} /></label>
+                      <label><span>Pace {unitLabels.pace}</span><CanonicalMeasurementInput canonicalValue={cardio.paceSecondsPerKm} measurement="pace" min={1} onCommit={(paceSecondsPerKm) => updateCardio(selectedDay, cardio.cardioKey, { paceSecondsPerKm })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:${cardio.cardioKey}:pace`} step="1" unitSystem={unitSystem} /></label>
+                      <label><span>Incline %</span><input min={0} max={100} onChange={(event) => updateCardio(selectedDay, cardio.cardioKey, { inclinePercent: optionalNumber(event.target.value) })} step="0.1" type="number" value={cardio.inclinePercent ?? ""} /></label>
+                      <label className="program-editor-wide"><span>Notes</span><textarea maxLength={2000} onChange={(event) => updateCardio(selectedDay, cardio.cardioKey, { notes: event.target.value })} value={cardio.notes ?? ""} /></label>
                     </div>
                   </section>
+                ))}
+              </div>
+              <div className="program-editor-add-section">
+                {(["walker", "runner"] as const).filter((mode) =>
+                  !selected.cardio.some((cardio) => cardio.mode === mode),
+                ).map((mode) => (
+                  <button key={mode} onClick={() => addCardio(mode)} type="button">
+                    Add {mode} cardio
+                  </button>
                 ))}
               </div>
             </fieldset>
@@ -954,7 +1164,9 @@ export function ProgramEditor({
               <div>
                 <span className="eyebrow">Compatible with this program</span>
                 <h2 id="exercise-chooser-title">
-                  {chooser.mode === "add" ? "Add movement" : "Replace movement"}
+                  {chooser.mode === "add-day"
+                    ? "Add day"
+                    : chooser.mode === "add" ? "Add movement" : "Replace movement"}
                 </h2>
               </div>
               <button
@@ -963,6 +1175,39 @@ export function ProgramEditor({
                 type="button"
               >Close</button>
             </header>
+            {chooser.mode === "add-day" ? (
+              <div className="program-editor-day-creation-fields">
+                <label className="program-editor-field">
+                  <span>Day name</span>
+                  <input
+                    aria-required="true"
+                    maxLength={120}
+                    onChange={(event) => setNewDayName(event.target.value)}
+                    ref={dayNameRef}
+                    value={newDayName}
+                  />
+                </label>
+                <label className="program-editor-field">
+                  <span>First section name</span>
+                  <input
+                    aria-required="true"
+                    maxLength={120}
+                    onChange={(event) => setNewDaySectionName(event.target.value)}
+                    value={newDaySectionName}
+                  />
+                </label>
+                <label className="program-editor-field">
+                  <span>Section classification</span>
+                  <select
+                    onChange={(event) => setNewDaySectionKind(event.target.value as ProgramSectionKind)}
+                    value={newDaySectionKind}
+                  >
+                    {PROGRAM_SECTION_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
+                  </select>
+                </label>
+                <p>Choose one compatible movement to make this new day publishable. Cardio is optional.</p>
+              </div>
+            ) : null}
             <label className="program-exercise-search">
               <span>Search compatible movements</span>
               <input
@@ -1002,8 +1247,63 @@ export function ProgramEditor({
               </div>
             )}
             <footer>
-              <p>Choosing a movement changes only this unpublished draft.</p>
+              <p>{chooser.mode === "add-day"
+                ? "Choosing a movement creates one new unpublished day with fresh topology keys."
+                : "Choosing a movement changes only this unpublished draft."}</p>
               <button onClick={() => dialogRef.current?.close()} type="button">Cancel</button>
+            </footer>
+          </div>
+        </dialog>
+      ) : null}
+
+      {dayRemoval ? (
+        <dialog
+          aria-labelledby="day-removal-title"
+          className="program-section-removal"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) event.currentTarget.close();
+          }}
+          onClose={dismissDayRemoval}
+          ref={dayRemovalDialogRef}
+        >
+          <div className="program-section-removal-sheet">
+            <header>
+              <div>
+                <span className="eyebrow">Review unpublished changes</span>
+                <h2 id="day-removal-title">Remove this day?</h2>
+              </div>
+              <button
+                aria-label="Close day removal review"
+                onClick={() => dayRemovalDialogRef.current?.close()}
+                type="button"
+              >Close</button>
+            </header>
+            <div className="program-section-removal-content">
+              <p>
+                Removing this day removes its sections, movements, and optional cardio from the next publication. Earlier revisions and completed workouts remain unchanged.
+              </p>
+              {dayRemoval.review.exerciseNames.length > 0 ? (
+                <ul>
+                  {dayRemoval.review.exerciseNames.map((name, index) => (
+                    <li key={`${dayRemoval.review.prescriptionKeys[index] ?? name}-${index}`}>{name}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>This day has no draft movements yet.</p>
+              )}
+            </div>
+            <footer>
+              <button onClick={() => dayRemovalDialogRef.current?.close()} type="button">
+                Keep day
+              </button>
+              <button
+                className="primary-action"
+                onClick={confirmDayRemoval}
+                ref={dayRemovalConfirmRef}
+                type="button"
+              >
+                Remove day
+              </button>
             </footer>
           </div>
         </dialog>

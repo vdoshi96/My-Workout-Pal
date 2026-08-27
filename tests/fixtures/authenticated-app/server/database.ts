@@ -19,6 +19,7 @@ const migrationNames = [
   "0002_workout_canonical_measurements.sql",
   "0003_program_collection.sql",
   "0004_personal_record_projection_checkpoint.sql",
+  "0005_flexible_routine_topology.sql",
 ] as const;
 
 const databasePromises = new Map<string, Promise<HarnessDatabase>>();

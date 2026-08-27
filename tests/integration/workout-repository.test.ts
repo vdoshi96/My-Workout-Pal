@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { and, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Database } from "@/db/client";
@@ -44,6 +44,7 @@ const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion
 const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const projectionCheckpointMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
+const flexibleRoutineMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -54,6 +55,7 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(upgradeMigrationUrl, "utf8"));
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
+  await raw.exec(await readFile(flexibleRoutineMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   return { raw, database };
@@ -81,6 +83,7 @@ type Fixture = Readonly<{
   otherUid: string;
   programId: string;
   dayId: string;
+  alternateDayId: string;
   compatibleCustomId: string;
   barbellExerciseId: string;
 }>;
@@ -103,6 +106,7 @@ async function createFixture(database: Database): Promise<Fixture> {
   const revisionId = randomUUID();
   const dayIds = new Map(sourceDays.map(({ id }) => [id, randomUUID()] as const));
   const sectionIds = new Map(sourceSections.map(({ id }) => [id, randomUUID()] as const));
+  const sectionKeys = new Map(sourceSections.map(({ id }) => [id, randomUUID()] as const));
   const customId = randomUUID();
   const compatibleCustomId = randomUUID();
   const barbellExerciseId = rows.catalogExercises.find(({ slug }) => slug === "barbell-bench-press")!.id;
@@ -166,18 +170,20 @@ async function createFixture(database: Database): Promise<Fixture> {
       programId,
       revisionId,
       dayId: dayIds.get(section.dayId)!,
+      sectionKey: sectionKeys.get(section.id)!,
       kind: section.kind,
       displayOrder: section.displayOrder,
       title: section.title,
     })),
   );
   await database.insert(programPrescriptions).values([
-    ...sourcePrescriptions.map((prescription) => ({
+      ...sourcePrescriptions.map((prescription) => ({
       id: randomUUID(),
       ownerFirebaseUid: ownerUid,
       programId,
       revisionId,
       sectionId: sectionIds.get(prescription.sectionId)!,
+      prescriptionKey: randomUUID(),
       catalogExerciseId: prescription.exerciseId,
       customExerciseId: null,
       displayName: prescription.displayName,
@@ -201,6 +207,7 @@ async function createFixture(database: Database): Promise<Fixture> {
       programId,
       revisionId,
       sectionId: sectionIds.get(sourceSections.find(({ kind }) => kind === "core")!.id)!,
+      prescriptionKey: randomUUID(),
       catalogExerciseId: null,
       customExerciseId: customId,
       displayName: null,
@@ -226,6 +233,7 @@ async function createFixture(database: Database): Promise<Fixture> {
       programId,
       revisionId,
       dayId: dayIds.get(cardio.dayId)!,
+      cardioKey: randomUUID(),
       mode: cardio.mode,
       durationSeconds: cardio.durationSeconds,
       distanceM: cardio.distanceM,
@@ -248,7 +256,17 @@ async function createFixture(database: Database): Promise<Fixture> {
   expect(new Set(exerciseKinds.map(({ loggingKind }) => loggingKind))).toEqual(
     new Set(["weight_reps", "bodyweight_reps", "duration"]),
   );
-  return { database, ownerUid, otherUid, programId, dayId: dayIds.get(pushDay.id)!, compatibleCustomId, barbellExerciseId };
+  const pullDay = sourceDays.find(({ dayKey }) => dayKey === "pull")!;
+  return {
+    database,
+    ownerUid,
+    otherUid,
+    programId,
+    dayId: dayIds.get(pushDay.id)!,
+    alternateDayId: dayIds.get(pullDay.id)!,
+    compatibleCustomId,
+    barbellExerciseId,
+  };
 }
 
 async function insertCompletedHistoricalOutcome(
@@ -400,6 +418,7 @@ async function insertCustomProgramForHistory(database: Database, fixture: Fixtur
     programId,
     revisionId,
     dayId,
+    sectionKey: randomUUID(),
     kind: "strength",
     displayOrder: 1,
     title: "Replacement",
@@ -410,6 +429,7 @@ async function insertCustomProgramForHistory(database: Database, fixture: Fixtur
     programId,
     revisionId,
     sectionId,
+    prescriptionKey: randomUUID(),
     catalogExerciseId: null,
     customExerciseId: fixture.compatibleCustomId,
     displayName: null,
@@ -433,6 +453,143 @@ async function insertCustomProgramForHistory(database: Database, fixture: Fixtur
     .where(eq(programRevisions.id, revisionId));
   await database.update(userPrograms).set({ activeRevisionId: revisionId }).where(eq(userPrograms.id, programId));
   return { programId, dayId };
+}
+
+type FlexibleWorkoutRevision = Readonly<{
+  programId: string;
+  revisionId: string;
+  dayId: string;
+  dayKey: string;
+  sectionKey: string;
+  prescriptionKey: string;
+}>;
+
+type FlexibleWorkoutRevisionInput = Readonly<{
+  programId: string;
+  revisionNumber: number;
+  dayKey: string;
+  sectionKey: string;
+  prescriptionKey: string;
+  displayName: string;
+  sectionTitle: string;
+  exerciseDisplayName: string;
+}>;
+
+async function publishFlexibleWorkoutRevision(
+  database: Database,
+  fixture: Fixture,
+  input: FlexibleWorkoutRevisionInput,
+): Promise<FlexibleWorkoutRevision> {
+  const revisionId = randomUUID();
+  const dayId = randomUUID();
+  const sectionId = randomUUID();
+  const prescriptionId = randomUUID();
+  await database.insert(programRevisions).values({
+    id: revisionId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programId: input.programId,
+    revisionNumber: input.revisionNumber,
+    status: "draft",
+    equipmentProfileKind: "dumbbells",
+  });
+  await database.insert(programDays).values({
+    id: dayId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programId: input.programId,
+    revisionId,
+    dayNumber: 11,
+    dayKey: input.dayKey,
+    displayName: input.displayName,
+  });
+  await database.insert(programSections).values({
+    id: sectionId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programId: input.programId,
+    revisionId,
+    dayId,
+    sectionKey: input.sectionKey,
+    kind: "strength",
+    displayOrder: 1,
+    title: input.sectionTitle,
+  });
+  await database.insert(programPrescriptions).values({
+    id: prescriptionId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programId: input.programId,
+    revisionId,
+    sectionId,
+    prescriptionKey: input.prescriptionKey,
+    catalogExerciseId: null,
+    customExerciseId: fixture.compatibleCustomId,
+    displayName: input.exerciseDisplayName,
+    displayOrder: 1,
+    setKind: "work",
+    setCount: 1,
+    measurementKind: "weight_reps",
+    minimumReps: 8,
+    maximumReps: 12,
+    minimumSeconds: null,
+    maximumSeconds: null,
+    restSeconds: 60,
+    targetWeightKg: null,
+    targetDistanceM: null,
+    notes: "Keep the movement controlled.",
+    targetMetadata: {},
+  });
+  await database
+    .update(programRevisions)
+    .set({ status: "published", publishedAt: new Date("2026-08-26T00:00:00.000Z") })
+    .where(eq(programRevisions.id, revisionId));
+  await database
+    .update(userPrograms)
+    .set({ activeRevisionId: revisionId })
+    .where(
+      and(
+        eq(userPrograms.ownerFirebaseUid, fixture.ownerUid),
+        eq(userPrograms.id, input.programId),
+      ),
+    );
+  return {
+    programId: input.programId,
+    revisionId,
+    dayId,
+    dayKey: input.dayKey,
+    sectionKey: input.sectionKey,
+    prescriptionKey: input.prescriptionKey,
+  };
+}
+
+async function createFlexibleWorkoutProgram(
+  database: Database,
+  fixture: Fixture,
+): Promise<FlexibleWorkoutRevision> {
+  const programId = randomUUID();
+  await database
+    .update(userPrograms)
+    .set({ isActive: false })
+    .where(
+      and(
+        eq(userPrograms.ownerFirebaseUid, fixture.ownerUid),
+        eq(userPrograms.id, fixture.programId),
+      ),
+    );
+  await database.insert(userPrograms).values({
+    id: programId,
+    ownerFirebaseUid: fixture.ownerUid,
+    programKey: `flexible-workout-${programId}`,
+    name: "Flexible workout program",
+    isActive: true,
+  });
+  return publishFlexibleWorkoutRevision(database, fixture, {
+    programId,
+    revisionNumber: 1,
+    dayKey: randomUUID(),
+    sectionKey: randomUUID(),
+    prescriptionKey: randomUUID(),
+    displayName: "Trail Day",
+    sectionTitle: "Trail Strength",
+    exerciseDisplayName: "Trail press",
+  });
 }
 
 describe("owner-scoped workout repository", () => {
@@ -593,6 +750,144 @@ describe("owner-scoped workout repository", () => {
       }),
     ]);
     expect(new Set(concurrent.map(({ model }) => model.session.id))).toEqual(new Set([first.model.session.id]));
+  });
+
+  it("does not resume a different requested day into the existing active session", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "start-cross-day-source",
+    });
+
+    await expect(
+      repository.startOrResume(viewer(fixture.ownerUid), {
+        programId: fixture.programId,
+        dayId: fixture.alternateDayId,
+        idempotencyKey: "start-cross-day-request",
+      }),
+    ).rejects.toMatchObject({
+      code: "conflict",
+      message: expect.stringContaining(started.model.session.dayName),
+    });
+  });
+
+  it("starts a UUID-keyed noncanonical day without cardio and preserves its history across publication", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    const initial = await createFlexibleWorkoutProgram(database, fixture);
+
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: initial.programId,
+      dayId: initial.dayId,
+      idempotencyKey: "start-flexible-day",
+    });
+    expect(started.resumed).toBe(false);
+    expect(started.model.session.dayId).toBe(initial.dayId);
+    expect(started.model.session.dayKey).toBe(initial.dayKey);
+    expect(started.model.session.dayName).toBe("Trail Day");
+    expect(started.model.snapshot.dayKey).toBe(initial.dayKey);
+    expect(started.model.snapshot.cardioOptions).toEqual([]);
+    expect(started.model.snapshot.exercises[0]).toMatchObject({
+      name: "Trail press",
+      sectionKey: initial.sectionKey,
+      sectionTitle: "Trail Strength",
+      prescriptionKey: initial.prescriptionKey,
+    });
+
+    const storedBeforePublication = await database
+      .select({ meaning: workoutExerciseSnapshots.prescriptionSnapshot })
+      .from(workoutExerciseSnapshots)
+      .where(eq(workoutExerciseSnapshots.sessionId, started.model.session.id))
+      .orderBy(asc(workoutExerciseSnapshots.position));
+    expect(storedBeforePublication[0]?.meaning).toMatchObject({
+      dayId: initial.dayId,
+      dayKey: initial.dayKey,
+      dayName: "Trail Day",
+      sectionKey: initial.sectionKey,
+      sectionTitle: "Trail Strength",
+      prescriptionKey: initial.prescriptionKey,
+      cardioOptions: [],
+    });
+
+    const exercise = started.model.snapshot.exercises[0]!;
+    const initialVersion = started.model.exerciseStates[0]?.version ?? 1;
+    const saved = await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "save-flexible-day-set",
+      kind: "save_set",
+      payload: {
+        kind: "save_set",
+        setId: exercise.sets[0]!.id,
+        exerciseId: exercise.id,
+        phase: exercise.sets[0]!.phase,
+        measurement: { kind: "weight_reps", weightKg: 20, repetitions: 10 },
+      },
+      expectedVersion: initialVersion,
+    });
+    expect(saved.status).toBe("saved");
+    const completedExercise = await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "complete-flexible-day-exercise",
+      kind: "complete_exercise",
+      payload: { kind: "complete_exercise", exerciseId: exercise.id },
+      expectedVersion: saved.exerciseVersion!,
+    });
+    expect(completedExercise.status).toBe("saved");
+    const completedSession = await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "complete-flexible-day",
+      kind: "complete_session",
+      payload: { kind: "complete_session", sessionId: started.model.session.id },
+    });
+    expect(completedSession.sessionState).toBe("completed");
+    expect((await repository.history(viewer(fixture.ownerUid))).sessions.find(({ session }) => session.id === started.model.session.id)?.cardioLog).toBeUndefined();
+    const next = await publishFlexibleWorkoutRevision(database, fixture, {
+      programId: initial.programId,
+      revisionNumber: 2,
+      dayKey: initial.dayKey,
+      sectionKey: initial.sectionKey,
+      prescriptionKey: initial.prescriptionKey,
+      displayName: "Trail Day Revised",
+      sectionTitle: "Trail Strength Revised",
+      exerciseDisplayName: "Trail press revised",
+    });
+
+    const nextStarted = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: next.programId,
+      dayId: next.dayId,
+      idempotencyKey: "start-flexible-day-revision",
+    });
+    expect(nextStarted.model.session.programRevisionId).toBe(next.revisionId);
+    expect(nextStarted.model.session.dayId).toBe(next.dayId);
+    expect(nextStarted.model.session.dayKey).toBe(initial.dayKey);
+    expect(nextStarted.model.session.dayName).toBe("Trail Day Revised");
+    expect(nextStarted.model.snapshot.exercises[0]?.name).toBe("Trail press revised");
+
+    const history = await repository.history(viewer(fixture.ownerUid));
+    const historical = history.sessions.find(({ session }) => session.id === started.model.session.id);
+    expect(historical?.session).toMatchObject({
+      dayId: initial.dayId,
+      dayKey: initial.dayKey,
+      dayName: "Trail Day",
+      programRevisionId: initial.revisionId,
+    });
+    expect(historical?.exercises[0]?.snapshot).toMatchObject({
+      name: "Trail press",
+      sectionKey: initial.sectionKey,
+      sectionTitle: "Trail Strength",
+      prescriptionKey: initial.prescriptionKey,
+    });
+
+    const storedAfterPublication = await database
+      .select({ meaning: workoutExerciseSnapshots.prescriptionSnapshot })
+      .from(workoutExerciseSnapshots)
+      .where(eq(workoutExerciseSnapshots.sessionId, started.model.session.id))
+      .orderBy(asc(workoutExerciseSnapshots.position));
+    expect(storedAfterPublication).toEqual(storedBeforePublication);
   });
 
   it("validates every measurement shape, bounds, hash replay, versions, terminal freeze, and history isolation", async () => {

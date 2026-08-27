@@ -5,6 +5,11 @@ import {
   type MeasurementKind,
   type WorkoutMeasurement,
 } from "@/domain/analytics";
+import {
+  EQUIPMENT_IDS,
+  type EquipmentId,
+  type EquipmentProfileKind,
+} from "@/domain/equipment";
 
 export type RunnerConnectivity = "online" | "offline";
 export type RunnerAuth = "valid" | "expired" | "revoked";
@@ -19,6 +24,7 @@ export type RunnerSyncStatus =
   | "failed"
   | "conflict";
 export type RunnerSetPhase = "warmup" | "work";
+export type WorkoutSectionKind = "accessory" | "cardio" | "core" | "strength";
 
 const SUPPORTED_KINDS = new Set<MeasurementKind>(MEASUREMENT_KINDS);
 
@@ -69,12 +75,17 @@ export type WorkoutExerciseInput = {
   id: string;
   name: string;
   loggingKind: MeasurementKind;
+  sectionKind?: WorkoutSectionKind | undefined;
+  sectionKey?: string | undefined;
+  sectionTitle?: string | undefined;
+  prescriptionKey?: string | undefined;
   sets: readonly WorkoutSetInput[];
 };
 
 export type CardioMode = "walker" | "runner";
 export type CardioSnapshotInput = {
   id: string;
+  cardioKey?: string | undefined;
   mode: CardioMode;
   targetDurationSeconds: number;
   targetDistanceMeters?: number | undefined;
@@ -91,6 +102,9 @@ export type RunnerSnapshotInput = {
   programRevisionId: string;
   dayId: string;
   dayName: string;
+  dayKey?: string | undefined;
+  equipmentProfileKind?: EquipmentProfileKind | undefined;
+  availableEquipment?: readonly EquipmentId[] | undefined;
   exercises: readonly WorkoutExerciseInput[];
   cardioOptions?: readonly CardioSnapshotInput[];
 };
@@ -107,6 +121,10 @@ export type WorkoutExerciseSnapshot = Readonly<{
   id: string;
   name: string;
   loggingKind: MeasurementKind;
+  sectionKind?: WorkoutSectionKind | undefined;
+  sectionKey?: string | undefined;
+  sectionTitle?: string | undefined;
+  prescriptionKey?: string | undefined;
   sets: readonly WorkoutSetSnapshot[];
 }>;
 export type WorkoutSnapshot = Readonly<{
@@ -115,6 +133,9 @@ export type WorkoutSnapshot = Readonly<{
   programRevisionId: string;
   dayId: string;
   dayName: string;
+  dayKey?: string | undefined;
+  equipmentProfileKind?: EquipmentProfileKind | undefined;
+  availableEquipment?: readonly EquipmentId[] | undefined;
   exercises: readonly WorkoutExerciseSnapshot[];
   cardioOptions: readonly CardioSnapshot[];
 }>;
@@ -721,6 +742,9 @@ function normalizeCardioOptions(
   const modes = new Set<CardioMode>();
   return (options ?? []).map((option) => {
     assertString(option.id, "cardio.id");
+    if (option.cardioKey !== undefined) {
+      assertString(option.cardioKey, "cardio.cardioKey");
+    }
     if (ids.has(option.id))
       throw new RangeError(`Duplicate cardio id: ${option.id}`);
     ids.add(option.id);
@@ -771,6 +795,25 @@ export function createWorkoutSnapshot(
   assertString(input.programRevisionId, "programRevisionId");
   assertString(input.dayId, "dayId");
   assertString(input.dayName, "dayName");
+  if (input.dayKey !== undefined) assertString(input.dayKey, "dayKey");
+  if (
+    input.equipmentProfileKind !== undefined &&
+    input.equipmentProfileKind !== "dumbbells" &&
+    input.equipmentProfileKind !== "barbell"
+  ) {
+    throw new RangeError("equipmentProfileKind must be dumbbells or barbell");
+  }
+  if (input.availableEquipment !== undefined) {
+    const equipmentIds = new Set<string>(EQUIPMENT_IDS);
+    if (
+      input.availableEquipment.length === 0 ||
+      input.availableEquipment.some(
+        (equipment) => !equipmentIds.has(equipment),
+      )
+    ) {
+      throw new RangeError("availableEquipment contains an unknown item");
+    }
+  }
   if (input.exercises.length === 0)
     throw new RangeError("A workout snapshot needs an exercise");
 
@@ -780,6 +823,24 @@ export function createWorkoutSnapshot(
     assertString(exercise.id, "exercise.id");
     assertString(exercise.name, "exercise.name");
     assertKind(exercise.loggingKind, "exercise.loggingKind");
+    if (
+      exercise.sectionKind !== undefined &&
+      exercise.sectionKind !== "accessory" &&
+      exercise.sectionKind !== "cardio" &&
+      exercise.sectionKind !== "core" &&
+      exercise.sectionKind !== "strength"
+    ) {
+      throw new RangeError("exercise.sectionKind is invalid");
+    }
+    if (exercise.sectionKey !== undefined) {
+      assertString(exercise.sectionKey, "exercise.sectionKey");
+    }
+    if (exercise.sectionTitle !== undefined) {
+      assertString(exercise.sectionTitle, "exercise.sectionTitle");
+    }
+    if (exercise.prescriptionKey !== undefined) {
+      assertString(exercise.prescriptionKey, "exercise.prescriptionKey");
+    }
     if (exerciseIds.has(exercise.id))
       throw new RangeError(`Duplicate exercise id: ${exercise.id}`);
     exerciseIds.add(exercise.id);
@@ -826,6 +887,10 @@ export function createWorkoutSnapshot(
       id: exercise.id,
       name: exercise.name,
       loggingKind: exercise.loggingKind,
+      ...(exercise.sectionKind === undefined ? {} : { sectionKind: exercise.sectionKind }),
+      ...(exercise.sectionKey === undefined ? {} : { sectionKey: exercise.sectionKey }),
+      ...(exercise.sectionTitle === undefined ? {} : { sectionTitle: exercise.sectionTitle }),
+      ...(exercise.prescriptionKey === undefined ? {} : { prescriptionKey: exercise.prescriptionKey }),
       sets,
     };
   });
@@ -837,6 +902,9 @@ export function createWorkoutSnapshot(
     programRevisionId: input.programRevisionId,
     dayId: input.dayId,
     dayName: input.dayName,
+    ...(input.dayKey === undefined ? {} : { dayKey: input.dayKey }),
+    ...(input.equipmentProfileKind === undefined ? {} : { equipmentProfileKind: input.equipmentProfileKind }),
+    ...(input.availableEquipment === undefined ? {} : { availableEquipment: [...input.availableEquipment] }),
     exercises,
     cardioOptions,
   });

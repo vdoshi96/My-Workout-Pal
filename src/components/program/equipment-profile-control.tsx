@@ -125,7 +125,7 @@ export function EquipmentProfileControl({
       setReviewOpen(false);
       setMessage(
         response.changeCount === 0
-          ? "That equipment profile was already active."
+          ? `Saved revision ${nextProgram.revisionNumber}. No movement substitutions were required; existing workout history was not changed.`
           : `Saved revision ${nextProgram.revisionNumber}. Existing workout history was not changed.`,
       );
       router.refresh();

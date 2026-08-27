@@ -32,10 +32,26 @@ export default async function HarnessProgramsPage() {
   const { database } = await getHarnessDatabase(context.scope);
   const model = await readCollectionOrUndefined(database, context.viewer);
   if (!model?.activeProgram || model.programs.length === 0) redirect("/app");
+  const catalogMovements = [
+    ...new Map(
+      model.activeProgram.days
+        .flatMap((day) => day.prescriptions)
+        .filter((prescription) => prescription.catalogExerciseId !== null)
+        .map((prescription) => [
+          prescription.catalogExerciseId!,
+          {
+            id: prescription.catalogExerciseId!,
+            name: prescription.exercise.name,
+            requiredEquipment: prescription.exercise.requiredEquipment,
+          },
+        ]),
+    ).values(),
+  ].sort((left, right) => left.name.localeCompare(right.name, "en-US"));
 
   return (
     <ProgramCollection
       canMutate={context.viewer.eligibleForPermanentMutations}
+      initialCatalogMovements={catalogMovements}
       initialPrograms={model.programs}
     />
   );

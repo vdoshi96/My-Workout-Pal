@@ -3,8 +3,12 @@ import { copyFileSync, mkdirSync, statSync, unlinkSync } from "node:fs";
 import { createServer } from "node:net";
 import { dirname, resolve } from "node:path";
 
-const packageManager = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const repositoryRoot = resolve(process.cwd());
+const nextCli = resolve(repositoryRoot, "node_modules/next/dist/bin/next");
+const playwrightCli = resolve(
+  repositoryRoot,
+  "node_modules/@playwright/test/cli.js",
+);
 const requestedPlaywrightArguments = process.argv.slice(2);
 if (requestedPlaywrightArguments[0] === "--") requestedPlaywrightArguments.shift();
 const inheritedEnvironmentNames = [
@@ -68,8 +72,8 @@ Object.assign(environment, {
 
 try {
   const build = spawnSync(
-    packageManager,
-    ["exec", "next", "build", "tests/fixtures/authenticated-app", "--webpack"],
+    process.execPath,
+    [nextCli, "build", "tests/fixtures/authenticated-app", "--webpack"],
     { env: environment, stdio: "inherit" },
   );
 
@@ -78,10 +82,9 @@ try {
 
   if (!process.exitCode) {
     const result = spawnSync(
-      packageManager,
+      process.execPath,
       [
-        "exec",
-        "playwright",
+        playwrightCli,
         "test",
         "--config",
         "playwright.authenticated.config.ts",

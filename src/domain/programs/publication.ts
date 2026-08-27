@@ -1,6 +1,18 @@
 import { z } from "zod";
 
 const idempotencyKeySchema = z.string().trim().min(1).max(180);
+const opaqueTopologyKeySchema = z.string().uuid();
+const legacyStarterDayKeySchema = z.enum(["push", "pull", "legs", "upper", "lower"]);
+const programDayKeySchema = z.union([
+  opaqueTopologyKeySchema,
+  legacyStarterDayKeySchema,
+]);
+
+export const PROGRAM_DAY_MINIMUM = 1;
+export const PROGRAM_DAY_MAXIMUM = 14;
+export const PROGRAM_DAY_MOVEMENT_MINIMUM = 1;
+export const PROGRAM_DAY_MOVEMENT_MAXIMUM = 40;
+export const PROGRAM_MOVEMENT_MAXIMUM = 200;
 const nullableBoundedText = (maximum: number) =>
   z.string().trim().min(1).max(maximum).nullable();
 const hasCanonicalThreeDecimalScale = (value: number): boolean =>
@@ -33,6 +45,7 @@ const programPrescriptionPublishSchema = z
     minimumReps: z.number().int().positive().max(1_000).nullable(),
     minimumSeconds: z.number().int().positive().max(86_400).nullable(),
     notes: z.string().trim().max(2_000).nullable(),
+    prescriptionKey: opaqueTopologyKeySchema,
     restSeconds: z.number().int().min(0).max(900),
     setCount: z.number().int().min(1).max(20),
     setKind: z.enum(["warmup", "work"]),
@@ -88,6 +101,7 @@ const programSectionPublishSchema = z
   .object({
     kind: z.enum(["strength", "accessory", "core"]),
     prescriptions: z.array(programPrescriptionPublishSchema).min(1).max(40),
+    sectionKey: opaqueTopologyKeySchema,
     title: z.string().trim().min(1).max(120),
   })
   .strict();
@@ -97,6 +111,7 @@ const programCardioPublishSchema = z
     distanceM: canonicalMeters(0).nullable(),
     durationSeconds: z.number().int().positive().max(604_800),
     inclinePercent: z.number().finite().min(0).max(100).nullable(),
+    cardioKey: opaqueTopologyKeySchema,
     mode: z.enum(["walker", "runner"]),
     notes: z.string().trim().max(2_000).nullable(),
     paceSecondsPerKm: z.number().int().positive().max(86_400).nullable(),
@@ -105,56 +120,99 @@ const programCardioPublishSchema = z
 
 const programDayPublishSchema = z
   .object({
-    cardio: z.array(programCardioPublishSchema).length(2),
-    dayKey: z.enum(["push", "pull", "legs", "upper", "lower"]),
-    dayNumber: z.number().int().min(1).max(5),
+    cardio: z.array(programCardioPublishSchema).max(2),
+    dayKey: programDayKeySchema,
+    dayNumber: z.number().int().min(PROGRAM_DAY_MINIMUM).max(PROGRAM_DAY_MAXIMUM),
     displayName: z.string().trim().min(1).max(120),
     sections: z.array(programSectionPublishSchema).min(1).max(12),
   })
   .strict()
   .superRefine((value, context) => {
-    if (new Set(value.sections.map(({ kind }) => kind)).size !== value.sections.length) {
-      context.addIssue({ code: "custom", message: "Section kinds must be unique." });
+    if (new Set(value.sections.map(({ sectionKey }) => sectionKey)).size !== value.sections.length) {
+      context.addIssue({ code: "custom", message: "Section keys must be unique within a day." });
     }
-    if (value.sections.filter(({ kind }) => kind === "core").length !== 1) {
-      context.addIssue({ code: "custom", message: "Include exactly one core section." });
+    const prescriptions = value.sections.flatMap(({ prescriptions }) => prescriptions);
+    if (
+      new Set(prescriptions.map(({ prescriptionKey }) => prescriptionKey)).size !==
+      prescriptions.length
+    ) {
+      context.addIssue({ code: "custom", message: "Movement keys must be unique within a day." });
     }
-    if (new Set(value.cardio.map(({ mode }) => mode)).size !== 2) {
-      context.addIssue({ code: "custom", message: "Include one walker and one runner template." });
+    if (prescriptions.length < PROGRAM_DAY_MOVEMENT_MINIMUM) {
+      context.addIssue({ code: "custom", message: "Include at least one movement on each day." });
+    }
+    if (prescriptions.length > PROGRAM_DAY_MOVEMENT_MAXIMUM) {
+      context.addIssue({ code: "custom", message: "Use at most 40 movements on each day." });
+    }
+    if (new Set(value.cardio.map(({ mode }) => mode)).size !== value.cardio.length) {
+      context.addIssue({ code: "custom", message: "Cardio modes must be unique within a day." });
+    }
+    if (new Set(value.cardio.map(({ cardioKey }) => cardioKey)).size !== value.cardio.length) {
+      context.addIssue({ code: "custom", message: "Cardio keys must be unique within a day." });
     }
   });
-
-const expectedProgramDays = ["push", "pull", "legs", "upper", "lower"] as const;
 
 export const programPublishRequestSchema = z
   .object({
     baseRevisionId: z.string().uuid(),
-    days: z.array(programDayPublishSchema).length(5),
+    days: z.array(programDayPublishSchema).min(PROGRAM_DAY_MINIMUM).max(PROGRAM_DAY_MAXIMUM),
     idempotencyKey: idempotencyKeySchema,
     name: z.string().trim().min(1).max(80),
     programId: z.string().uuid(),
   })
   .strict()
   .superRefine((value, context) => {
-    const sourcePrescriptionIds = value.days.flatMap((day) =>
-      day.sections.flatMap((section) =>
-        section.prescriptions.flatMap(({ sourcePrescriptionId }) =>
-          sourcePrescriptionId === null ? [] : [sourcePrescriptionId],
-        ),
-      ),
-    );
-    if (new Set(sourcePrescriptionIds).size !== sourcePrescriptionIds.length) {
+    if (new Set(value.days.map(({ dayKey }) => dayKey)).size !== value.days.length) {
       context.addIssue({
         code: "custom",
-        message: "A source prescription can be published only once.",
+        message: "Day keys must be unique within a routine.",
+        path: ["days"],
+      });
+    }
+    const sectionKeys = value.days.flatMap((day) =>
+      day.sections.map(({ sectionKey }) => sectionKey),
+    );
+    if (new Set(sectionKeys).size !== sectionKeys.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Section keys must be unique within a routine.",
+        path: ["days"],
+      });
+    }
+    const prescriptionKeys = value.days.flatMap((day) =>
+      day.sections.flatMap((section) =>
+        section.prescriptions.map(({ prescriptionKey }) => prescriptionKey),
+      ),
+    );
+    if (new Set(prescriptionKeys).size !== prescriptionKeys.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Movement keys must be unique within a routine.",
+        path: ["days"],
+      });
+    }
+    const cardioKeys = value.days.flatMap((day) =>
+      day.cardio.map(({ cardioKey }) => cardioKey),
+    );
+    if (new Set(cardioKeys).size !== cardioKeys.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Cardio keys must be unique within a routine.",
+        path: ["days"],
+      });
+    }
+    if (prescriptionKeys.length > PROGRAM_MOVEMENT_MAXIMUM) {
+      context.addIssue({
+        code: "custom",
+        message: "Use at most 200 movements in a routine.",
         path: ["days"],
       });
     }
     value.days.forEach((day, index) => {
-      if (day.dayNumber !== index + 1 || day.dayKey !== expectedProgramDays[index]) {
+      if (day.dayNumber !== index + 1) {
         context.addIssue({
           code: "custom",
-          message: "Program days must keep the canonical five-day order.",
+          message: "Program day numbers must match their published order.",
           path: ["days", index],
         });
       }

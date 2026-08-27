@@ -8,6 +8,7 @@ const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion
 const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const projectionCheckpointMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
+const flexibleTopologyMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
 
 const ids = {
   aliceProgram: "00000000-0000-4000-8000-000000000001",
@@ -69,6 +70,7 @@ async function openDatabase() {
   await database.exec(await readFile(upgradeMigrationUrl, "utf8"));
   await database.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   await database.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
+  await database.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
   openDatabases.push(database);
   return database;
 }
@@ -201,6 +203,9 @@ describe("initial database migration", () => {
          OR (table_name = 'user_programs' AND column_name = 'is_active')
          OR (table_name = 'personal_record_projection_checkpoints' AND column_name = 'calculation_version')
          OR (table_name = 'personal_record_projection_checkpoints' AND column_name = 'changed_count')
+         OR (table_name = 'program_sections' AND column_name = 'section_key')
+         OR (table_name = 'program_prescriptions' AND column_name = 'prescription_key')
+         OR (table_name = 'program_cardio_prescriptions' AND column_name = 'cardio_key')
       ORDER BY table_name, column_name;
     `);
 
@@ -209,6 +214,9 @@ describe("initial database migration", () => {
       { table_name: "cardio_logs", column_name: "pace_source" },
       { table_name: "personal_record_projection_checkpoints", column_name: "calculation_version" },
       { table_name: "personal_record_projection_checkpoints", column_name: "changed_count" },
+      { table_name: "program_cardio_prescriptions", column_name: "cardio_key" },
+      { table_name: "program_prescriptions", column_name: "prescription_key" },
+      { table_name: "program_sections", column_name: "section_key" },
       { table_name: "user_programs", column_name: "is_active" },
     ]);
   });
@@ -552,10 +560,10 @@ describe("initial database migration", () => {
       );
       INSERT INTO program_sections (
         id, owner_firebase_uid, program_id, revision_id, day_id,
-        kind, display_order, title
+        section_key, kind, display_order, title
       ) VALUES (
         '${ids.aliceProgramSection}', 'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
-        '${ids.aliceProgramDay}', 'strength', 1, 'Shape section'
+        '${ids.aliceProgramDay}', '${ids.aliceProgramSection}', 'strength', 1, 'Shape section'
       );
 
       INSERT INTO program_templates (id, template_key, name)
@@ -579,12 +587,12 @@ describe("initial database migration", () => {
     await expect(
       database.exec(`
         INSERT INTO program_prescriptions (
-          owner_firebase_uid, program_id, revision_id, section_id, catalog_exercise_id,
+          owner_firebase_uid, program_id, revision_id, section_id, prescription_key, catalog_exercise_id,
           display_order, set_count, measurement_kind, minimum_seconds, maximum_seconds,
           target_weight_kg
         ) VALUES (
           'alice', '${ids.aliceProgram}', '${ids.aliceRevision}', '${ids.aliceProgramSection}',
-          '${ids.catalogExercise}', 1, 1, 'duration', 20, 40, 10
+          '00000000-0000-4000-8000-000000000125', '${ids.catalogExercise}', 1, 1, 'duration', 20, 40, 10
         );
       `),
     ).rejects.toThrow(/program_prescriptions_measurement_shape|check|violates/i);
@@ -1113,10 +1121,10 @@ describe("initial database migration", () => {
       database.exec(`
         INSERT INTO program_sections (
           id, owner_firebase_uid, program_id, revision_id, day_id,
-          kind, display_order, title
+          section_key, kind, display_order, title
         ) VALUES (
           '${ids.aliceProgramSection}', 'alice', '${ids.aliceSecondProgram}', '${ids.aliceRevision}',
-          '${ids.aliceProgramDay}', 'strength', 1, 'Mismatched program'
+          '${ids.aliceProgramDay}', '${ids.aliceProgramSection}', 'strength', 1, 'Mismatched program'
         );
       `),
     ).rejects.toThrow(/program_sections_day_scope_fk|foreign key|violates/i);
@@ -1556,11 +1564,11 @@ describe("initial database migration", () => {
     await expect(
       database.exec(`
         INSERT INTO program_prescriptions (
-          owner_firebase_uid, program_id, revision_id, section_id, catalog_exercise_id,
+          owner_firebase_uid, program_id, revision_id, section_id, prescription_key, catalog_exercise_id,
           display_name, display_order, set_count, measurement_kind, minimum_reps, maximum_reps
         ) VALUES (
           'alice', '${ids.aliceProgram}', '${ids.aliceRevision}',
-          '00000000-0000-4000-8000-000000000126', '${ids.catalogExercise}',
+          '00000000-0000-4000-8000-000000000126', '00000000-0000-4000-8000-000000000127', '${ids.catalogExercise}',
           'Heavy goblet squat', 1, 3, 'weight_reps', 8, 12
         );
       `),

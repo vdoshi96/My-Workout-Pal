@@ -5,6 +5,7 @@ import type { ProgramSummaryReadModel } from "@/server/repositories/profile-prog
 const programSummarySchema = z
   .object({
     equipmentProfileKind: z.enum(["dumbbells", "barbell"]),
+    dayCount: z.number().int().min(1).max(14),
     id: z.string().uuid(),
     isActive: z.boolean(),
     name: z.string().min(1).max(80),

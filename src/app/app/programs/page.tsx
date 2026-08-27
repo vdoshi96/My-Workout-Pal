@@ -27,9 +27,25 @@ export default async function ProgramsPage() {
   if (!viewer) return null;
   const model = await readCollectionOrUndefined(viewer);
   if (!model?.activeProgram || model.programs.length === 0) redirect("/app");
+  const catalogMovements = [
+    ...new Map(
+      model.activeProgram.days
+        .flatMap((day) => day.prescriptions)
+        .filter((prescription) => prescription.catalogExerciseId !== null)
+        .map((prescription) => [
+          prescription.catalogExerciseId!,
+          {
+            id: prescription.catalogExerciseId!,
+            name: prescription.exercise.name,
+            requiredEquipment: prescription.exercise.requiredEquipment,
+          },
+        ]),
+    ).values(),
+  ].sort((left, right) => left.name.localeCompare(right.name, "en-US"));
   return (
     <ProgramCollection
       canMutate={viewer.eligibleForPermanentMutations}
+      initialCatalogMovements={catalogMovements}
       initialPrograms={model.programs}
     />
   );

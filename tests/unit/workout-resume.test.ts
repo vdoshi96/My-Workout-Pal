@@ -36,6 +36,7 @@ function source(): WorkoutResumeSource {
       state: "active",
       dayId,
       dayName: "Push",
+      dayKey: "push-day-key",
       startedAt: createdAt,
       completedAt: undefined,
       abandonedAt: undefined,
@@ -48,11 +49,18 @@ function source(): WorkoutResumeSource {
       programRevisionId: revisionId,
       dayId,
       dayName: "Push",
+      dayKey: "push-day-key",
+      equipmentProfileKind: "dumbbells",
+      availableEquipment: ["dumbbells", "bodyweight", "bench"],
       exercises: [
         {
           id: pressId,
           name: "Dumbbell bench press",
           loggingKind: "weight_reps",
+          sectionKind: "strength",
+          sectionKey: "strength-section-key",
+          sectionTitle: "Strength route",
+          prescriptionKey: "press-prescription-key",
           sets: [
             {
               id: `${pressId}:1`,
@@ -72,6 +80,10 @@ function source(): WorkoutResumeSource {
           id: plankId,
           name: "Front plank",
           loggingKind: "duration",
+          sectionKind: "core",
+          sectionKey: "core-section-key",
+          sectionTitle: "Core route",
+          prescriptionKey: "plank-prescription-key",
           sets: [
             {
               id: `${plankId}:1`,
@@ -90,6 +102,10 @@ function source(): WorkoutResumeSource {
           id: rowId,
           name: "One-arm dumbbell row",
           loggingKind: "weight_reps",
+          sectionKind: "strength",
+          sectionKey: "strength-section-key",
+          sectionTitle: "Strength route",
+          prescriptionKey: "row-prescription-key",
           sets: [
             {
               id: `${rowId}:1`,
@@ -108,11 +124,13 @@ function source(): WorkoutResumeSource {
       cardioOptions: [
         {
           id: "walker-cardio",
+          cardioKey: "walker-cardio-key",
           mode: "walker",
           targetDurationSeconds: 1_200,
         },
         {
           id: "runner-cardio",
+          cardioKey: "runner-cardio-key",
           mode: "runner",
           targetDurationSeconds: 900,
         },
@@ -234,6 +252,7 @@ function measurementSource(measurement: WorkoutMeasurement): WorkoutResumeSource
       programRevisionId: revisionId,
       dayId,
       dayName: "Push",
+      dayKey: "push-day-key",
       exercises: [
         {
           id: pressId,
@@ -328,6 +347,19 @@ describe("workout resume hydration", () => {
   it("reconstructs confirmed sets, cardio, drafts, notes, and exercise outcomes", () => {
     const state = hydrateWorkoutResumeState(source());
 
+    expect(state.snapshot.dayKey).toBe("push-day-key");
+    expect(state.snapshot.equipmentProfileKind).toBe("dumbbells");
+    expect(state.snapshot.availableEquipment).toEqual([
+      "dumbbells",
+      "bodyweight",
+      "bench",
+    ]);
+    expect(state.snapshot.exercises[0]).toMatchObject({
+      sectionKey: "strength-section-key",
+      sectionTitle: "Strength route",
+      prescriptionKey: "press-prescription-key",
+    });
+    expect(state.snapshot.cardioOptions[0]?.cardioKey).toBe("walker-cardio-key");
     expect(state.loggedSets[`${pressId}:1`]).toMatchObject({
       exerciseId: pressId,
       operationKey: "set-press-1",
@@ -371,6 +403,52 @@ describe("workout resume hydration", () => {
     expect(state.currentSetIndex).toBe(0);
     expect(state.nextOperationSequence).toBe(6);
     expect(state.lastUpdatedAt).toBe(new Date("2026-08-25T12:20:00.000Z").getTime());
+  });
+
+  it("accepts legacy snapshots that do not contain topology keys", () => {
+    const current = source();
+    const snapshot = createWorkoutSnapshot({
+      ...current.snapshot,
+      dayKey: undefined,
+      equipmentProfileKind: undefined,
+      availableEquipment: undefined,
+      exercises: current.snapshot.exercises.map((exercise) => ({
+        id: exercise.id,
+        name: exercise.name,
+        loggingKind: exercise.loggingKind,
+        ...(exercise.sectionKind === undefined ? {} : { sectionKind: exercise.sectionKind }),
+        sets: exercise.sets.map(({ id, position, phase, target }) => ({
+          id,
+          position,
+          phase,
+          target,
+        })),
+      })),
+      cardioOptions: current.snapshot.cardioOptions.map((option) => ({
+        id: option.id,
+        mode: option.mode,
+        targetDurationSeconds: option.targetDurationSeconds,
+        ...(option.targetDistanceMeters === undefined
+          ? {}
+          : { targetDistanceMeters: option.targetDistanceMeters }),
+        ...(option.targetPaceSecondsPerKilometer === undefined
+          ? {}
+          : { targetPaceSecondsPerKilometer: option.targetPaceSecondsPerKilometer }),
+        ...(option.targetInclinePercent === undefined
+          ? {}
+          : { targetInclinePercent: option.targetInclinePercent }),
+        ...(option.notes === undefined ? {} : { notes: option.notes }),
+      })),
+    });
+    const state = hydrateWorkoutResumeState({
+      ...current,
+      session: { ...current.session, dayKey: undefined },
+      snapshot,
+    });
+
+    expect(state.snapshot.dayKey).toBeUndefined();
+    expect(state.snapshot.exercises[0]?.sectionKey).toBeUndefined();
+    expect(state.snapshot.cardioOptions[0]?.cardioKey).toBeUndefined();
   });
 
   it("accepts serialized dates and preserves a completing session state", () => {

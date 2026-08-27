@@ -6,6 +6,7 @@ import type { ViewerContext } from "@/server/auth/viewer";
 const state = vi.hoisted(() => ({
   activate: vi.fn(),
   clone: vi.fn(),
+  custom: vi.fn(),
   create: vi.fn(),
   viewer: null as ViewerContext | null,
 }));
@@ -26,6 +27,7 @@ vi.mock("@/server/repositories/profile-program", async (importOriginal) => {
     ...actual,
     activateViewerProgram: state.activate,
     cloneViewerProgram: state.clone,
+    createViewerProgramFromCustom: state.custom,
     createViewerProgramFromStarter: state.create,
   };
 });
@@ -79,12 +81,24 @@ beforeEach(() => {
   state.viewer = null;
   state.activate.mockReset();
   state.clone.mockReset();
+  state.custom.mockReset();
   state.create.mockReset();
   vi.mocked(getDatabase).mockClear();
 });
 
 describe("program collection API", () => {
   it("accepts only strict owner-free create, clone, and activation envelopes", () => {
+    expect(
+      programCollectionMutationRequestSchema.parse({
+        dayName: "Saturday outside",
+        equipmentProfileKind: "dumbbells",
+        firstCatalogExerciseId: "00000000-0000-4000-8000-000000000111",
+        idempotencyKey: "custom-program",
+        mode: "custom",
+        name: "My custom route",
+        sectionName: "Main work",
+      }),
+    ).toMatchObject({ mode: "custom" });
     expect(
       programCollectionMutationRequestSchema.parse({
         equipmentProfileKind: "dumbbells",
@@ -143,10 +157,11 @@ describe("program collection API", () => {
     });
     expect(state.create).not.toHaveBeenCalled();
     expect(state.clone).not.toHaveBeenCalled();
+    expect(state.custom).not.toHaveBeenCalled();
     expect(state.activate).not.toHaveBeenCalled();
   });
 
-  it("routes starter and clone creation through verified private mutations", async () => {
+  it("routes starter, custom, and clone creation through verified private mutations", async () => {
     state.viewer = fixtureViewer;
     state.create.mockResolvedValue({
       affectedProgramId: "00000000-0000-4000-8000-000000000201",
@@ -154,6 +169,10 @@ describe("program collection API", () => {
     });
     state.clone.mockResolvedValue({
       affectedProgramId: "00000000-0000-4000-8000-000000000202",
+      programs: [],
+    });
+    state.custom.mockResolvedValue({
+      affectedProgramId: "00000000-0000-4000-8000-000000000203",
       programs: [],
     });
 
@@ -176,6 +195,31 @@ describe("program collection API", () => {
         equipmentProfileKind: "barbell",
         idempotencyKey: "create-route",
         name: "Barbell route",
+      },
+    );
+
+    const custom = await mutateProgramCollection(
+      request("/api/app/programs", {
+        dayName: "Saturday outside",
+        equipmentProfileKind: "dumbbells",
+        firstCatalogExerciseId: "00000000-0000-4000-8000-000000000111",
+        idempotencyKey: "custom-route",
+        mode: "custom",
+        name: "Weekend route",
+        sectionName: "Main work",
+      }),
+    );
+    expect(custom.status).toBe(201);
+    expect(state.custom).toHaveBeenCalledWith(
+      expect.anything(),
+      fixtureViewer,
+      {
+        dayName: "Saturday outside",
+        equipmentProfileKind: "dumbbells",
+        firstCatalogExerciseId: "00000000-0000-4000-8000-000000000111",
+        idempotencyKey: "custom-route",
+        name: "Weekend route",
+        sectionName: "Main work",
       },
     );
 
@@ -233,6 +277,7 @@ describe("program collection API", () => {
     expect(getDatabase).not.toHaveBeenCalled();
     expect(state.create).not.toHaveBeenCalled();
     expect(state.clone).not.toHaveBeenCalled();
+    expect(state.custom).not.toHaveBeenCalled();
   });
 
   it("activates a current owned revision and rejects oversized or forged bodies", async () => {

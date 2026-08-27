@@ -11,6 +11,7 @@ import {
 } from "@/server/http/profile-program-api";
 import {
   cloneViewerProgram,
+  createViewerProgramFromCustom,
   createViewerProgramFromStarter,
 } from "@/server/repositories/profile-program";
 import { assertHarnessMutationRequest } from "../../../../server/csrf";
@@ -31,7 +32,16 @@ export async function POST(request: NextRequest): Promise<Response> {
             idempotencyKey: input.idempotencyKey,
             name: input.name,
           })
-        : await cloneViewerProgram(database, viewer, {
+        : input.mode === "custom"
+          ? await createViewerProgramFromCustom(database, viewer, {
+              dayName: input.dayName,
+              equipmentProfileKind: input.equipmentProfileKind,
+              firstCatalogExerciseId: input.firstCatalogExerciseId,
+              idempotencyKey: input.idempotencyKey,
+              name: input.name,
+              sectionName: input.sectionName,
+            })
+          : await cloneViewerProgram(database, viewer, {
             idempotencyKey: input.idempotencyKey,
             name: input.name,
             sourceProgramId: input.sourceProgramId,

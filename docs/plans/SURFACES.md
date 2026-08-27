@@ -1,5 +1,7 @@
 # Surface implementation plans
 
+> **First-release surface record:** `docs/plans/WORKOUT-COMPANION-REPOSITIONING.md` supersedes fixed five-day positioning, the public **Sample** navigation label, and repeated sample wording. The existing route, privacy, accessibility, and immutable-history requirements remain in force unless the new plan changes them explicitly.
+
 ## Shared shell and navigation
 
 **Outcome and navigation:** A visitor always understands whether they are in guest preview, sample data, an authenticated account, or an active workout. Public and authenticated destinations retain stable URLs. An active runner replaces ordinary navigation with workout progress and an explicit exit path.
