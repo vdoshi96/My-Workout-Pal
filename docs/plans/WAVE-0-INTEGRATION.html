@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="f0b98cf014984a0985302d582fa4e44ec902c80a1e1456a2890635d224109e41">
+  <title>Wave 0 integration · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 0 integration</h1>
+<h2>Outcome</h2>
+<p>Produce one local release candidate that combines the authentication entry handoff, flexible routine publication, and the selected Corner Companions decision packet. Preserve each source branch&#39;s functional and safety contracts, reconcile their shared planning seed into one authoritative record, and stop before public publication or production release.</p>
+<p>The integration contains the Corner Companions decision and review assets only. It doesn&#39;t add production companion components, visual CSS, or runtime behavior.</p>
+<h2>Inputs and provenance</h2>
+<p>Integrate the following completed inputs in order:</p>
+<ol>
+<li>Authentication entry handoff at <code>871fb4ace20bd5b780c5dc4fd8014ede9a352bb6</code>, including implementation commit <code>8dc093a7e419cce57e6b164d42f2c17aaad8e686</code>.</li>
+<li>Flexible routine publication at <code>452c8a41f5d375862e67999f2cbfa39a5fee41da</code>, including migration <code>0005_flexible_routine_topology</code>.</li>
+<li>Corner Companions selection at <code>acfc4e60013c46da294fe62bb1cfe0a85cb5839f</code>.</li>
+</ol>
+<p>Preserve merge provenance. Resolve overlapping copies of the approved repositioning, library-expansion, product, context, design, and wiki text by retaining one coherent version that reflects all integrated outcomes. Replace branch-specific files in <code>docs/qa/latest/</code> only after the integrated QA report and evidence are verified.</p>
+<h2>Navigation and states</h2>
+<ul>
+<li>Public visitors can enter through the ordinary account path from the welcome, program, day, sample-workout, and public navigation surfaces.</li>
+<li>Authentication return targets stay bounded to safe same-origin application routes. Auth routes, protocol-relative destinations, external URLs, encoded controls, and malformed values fail closed.</li>
+<li>Signed-in members see a visible identity and sign-out path.</li>
+<li>Members can create, edit, publish, reload, and activate arbitrary custom routine topologies.</li>
+<li>Stable day identifiers remain routable after titles and order change.</li>
+<li>A day can contain zero or one cardio prescription. Publication rejects more than one cardio prescription.</li>
+<li>Workout entry distinguishes starting a session, resuming the active session, and resolving a conflicting active session.</li>
+<li>History and runner surfaces render immutable session snapshots and labels rather than mutable active-program names.</li>
+<li>Equipment changes create a confirmed program revision and preserve historical topology.</li>
+<li>Missing, malformed, unauthenticated, unverified, foreign-owner, offline, and persistence-failure states remain truthful and recoverable.</li>
+</ul>
+<h2>Types and persistence</h2>
+<ul>
+<li>Keep stable day and prescription identifiers distinct from mutable titles, order, and labels.</li>
+<li>Store routine topology, publication state, revisions, snapshots, and session linkage in the schema introduced by migration <code>0005_flexible_routine_topology</code>.</li>
+<li>Keep weight in kilograms and distance in meters at storage boundaries.</li>
+<li>Preserve immutable program-revision and workout snapshots.</li>
+<li>Treat the server-confirmed active revision as the source for workout creation and equipment changes.</li>
+<li>Confirm that no other migration claims sequence <code>0005</code> in the clean base or integrated result.</li>
+</ul>
+<h2>Authorization and privacy</h2>
+<ul>
+<li>Derive Firebase UID ownership from the verified server session for every owned query and mutation.</li>
+<li>Reject or ignore client-supplied ownership and lifecycle fields.</li>
+<li>Return foreign-owned programs, revisions, workouts, and sessions as indistinguishable from missing resources.</li>
+<li>Preserve recent-authentication, same-origin CSRF, secure-cookie, verification, and no-store contracts.</li>
+<li>Keep the raw recording, derived media, private curation material, and unselected design concepts outside the integration.</li>
+<li>Keep Corner Companions assets local. Don&#39;t push them to the public repository without separate authorization.</li>
+</ul>
+<h2>Failure recovery</h2>
+<ul>
+<li>Keep authentication entry usable when Firebase client configuration is unavailable, and describe unavailable provider behavior truthfully.</li>
+<li>Normalize a safe return target before sign-in and reauthentication. Fall back to the bounded default when validation fails.</li>
+<li>Make publication retries reconcile an accepted server write even if the first response is interrupted or reports an error.</li>
+<li>Preserve unsaved editor input after validation or persistence failure.</li>
+<li>Prevent a second active workout from silently replacing or mutating an existing session.</li>
+<li>Reconcile resumable local workout operations against the owner-matched immutable server snapshot.</li>
+<li>Keep offline and failed writes visibly unsaved until the server confirms them.</li>
+</ul>
+<h2>Responsive behavior and accessibility</h2>
+<ul>
+<li>Verify account entry, routine editing, publication, workout entry, and history on Chromium desktop and WebKit phone production-mode paths.</li>
+<li>Keep labels, names, status messages, focus order, keyboard operation, landmarks, and error associations accessible.</li>
+<li>Prevent horizontal overflow and obscured controls at the required phone and desktop viewports.</li>
+<li>Preserve reduced-motion behavior and don&#39;t rely on color alone for state.</li>
+<li>Treat Corner Companions boards as decision evidence with descriptive documentation, not as production UI.</li>
+</ul>
+<h2>Migration and deployment order</h2>
+<p>The local candidate proves the complete PGlite chain from <code>0000</code> through <code>0005</code>, schema metadata, seed compatibility, and application behavior. Production release remains a separate authorization gate.</p>
+<p>If production release is authorized, use this order:</p>
+<ol>
+<li>Confirm the exact release commit and a clean schema-owner environment.</li>
+<li>Back up or otherwise establish the approved Neon recovery point.</li>
+<li>Run the migration preflight against production without application writes.</li>
+<li>Apply <code>0005_flexible_routine_topology</code> through the designated schema owner.</li>
+<li>Verify migration metadata, constraints, existing rows, starter seed invariants, and replay idempotency.</li>
+<li>Deploy the application commit that expects migration <code>0005</code>.</li>
+<li>Replay public, authenticated, ownership, and error-log checks on the exact deployment.</li>
+<li>Promote or alias only after every release check passes.</li>
+</ol>
+<p>Never deploy the application before the schema-owner migration succeeds and its post-migration verification passes.</p>
+<h2>Public-repository and provider gates</h2>
+<ul>
+<li>Don&#39;t push <code>vishal/wave-0-integration</code>, the Corner Companions assets, or the decision packet.</li>
+<li>Don&#39;t merge the integration into <code>main</code>.</li>
+<li>Don&#39;t alter Firebase, Vercel, Neon, GitHub, DNS, or production aliases.</li>
+<li>Don&#39;t apply migration <code>0005</code> to production or run production writes.</li>
+<li>Record real Google authentication as a hosted-provider replay gate when local or preview verification can&#39;t exercise the configured provider. Don&#39;t simulate Google authentication.</li>
+<li>Require separate user authorization before publishing Corner Companions assets or documentation to the public repository.</li>
+</ul>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>The integration branch contains the exact three source commits with preserved ancestry or explicit cherry-pick provenance.</li>
+<li>Authentication entry, safe return handling, identity, and sign-out contracts pass.</li>
+<li>Arbitrary routine topology creation, editing, publication, reload, and activation pass.</li>
+<li>Stable day routing and zero-or-one-cardio semantics pass.</li>
+<li>Start, resume, and active-session conflict behavior pass.</li>
+<li>Immutable history labels, workout snapshots, and equipment-revision topology pass.</li>
+<li>Foreign-owner access remains indistinguishable from missing data.</li>
+<li>The integrated documentation selects only Corner Companions and includes no production companion implementation.</li>
+<li>Markdown and generated HTML remain in parity.</li>
+<li><code>docs/qa/latest/</code> contains only the newest integrated QA report and its verified evidence.</li>
+<li>The final branch is clean and ends in a local integration commit.</li>
+</ul>
+<h2>Test ladder and retained evidence</h2>
+<p>Run the following checks on the combined result and record exact totals:</p>
+<ol>
+<li>Inspect the final Git diff, merge ancestry, migration SQL, Drizzle snapshot, and journal.</li>
+<li>Run <code>git diff --check</code> against the clean base.</li>
+<li>Run the complete in-memory PGlite migration chain from <code>0000</code> through <code>0005</code>.</li>
+<li>Run all database schema, migration, repository, and exact-two seed checks.</li>
+<li>Run TypeScript, ESLint, and the complete Vitest suite.</li>
+<li>Verify generated service-worker and documentation parity.</li>
+<li>Create the production Webpack build and verify route boundaries.</li>
+<li>Run the full public production-mode browser matrix.</li>
+<li>Run the authenticated production-mode fixture across the required Chromium desktop and WebKit phone paths.</li>
+<li>Exercise account entry, safe/private returns, visible identity, sign-out, flexible publication, stable routes, cardio bounds, workout conflicts, immutable snapshots, equipment revisions, and foreign-owner safety.</li>
+<li>Inspect the selected Corner Companions packet and confirm that no runtime visual implementation entered the diff.</li>
+</ol>
+<p>If integration exposes a defect, retain a concise failed-before test or reproduction and its passed-after result. After all checks pass, generate paired <code>WAVE-0-INTEGRATION-QA.md</code> and <code>WAVE-0-INTEGRATION-QA.html</code> files, retain only their newest supporting screenshots or reports in <code>docs/qa/latest/</code>, and preserve historical planning records elsewhere.</p>
+
+  </main>
+</body>
+</html>
