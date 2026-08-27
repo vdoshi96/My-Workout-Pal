@@ -8,7 +8,7 @@ Google sign-in and Google reauthentication remain a separate interactive provide
 
 ## Navigation
 
-The browser starts at `/sign-in?returnTo=%2Fapp`, exercises Sign in, Register, and Recovery without leaving the same-origin application shell, then follows the secure session into `/app`. An unverified identity sees the read-only account banner and disabled onboarding mutation. After server-side verification and a fresh sign-in, the same route shows a verified account and enabled onboarding action. Settings sign-out returns to `/sign-in`. Revoking the server session and reloading `/app` returns to `/sign-in?returnTo=%2Fapp`.
+The browser starts at `/sign-in?returnTo=%2Fapp`, exercises Sign in, Register, and Recovery without leaving the same-origin application shell, then follows the secure session into `/app`. An unverified identity sees the read-only account banner and disabled onboarding mutation. Because a new member has no program or Settings model yet, an account-shell **Sign out** action remains available before onboarding; it clears only the server viewer's local runner namespace, removes the secure session, signs out the configured Firebase client, and returns to `/sign-in`. After server-side verification and a fresh sign-in, `/app` shows a verified account and enabled onboarding action. Revoking the server session and reloading `/app` returns to `/sign-in?returnTo=%2Fapp`.
 
 ## UI states
 
@@ -19,7 +19,7 @@ The browser starts at `/sign-in?returnTo=%2Fapp`, exercises Sign in, Register, a
 - Recovery uses the same generic success text for known and unknown addresses.
 - Unverified sign-in creates a legitimate read-only server session and keeps permanent controls disabled.
 - Verified sign-in opens onboarding with permanent controls enabled.
-- Sign-out clears the secure session and returns to public authentication.
+- Sign-out is available before onboarding, reports its pending/failure state, clears the secure session only after owner-scoped local cleanup, signs out the Firebase client when configured, and returns to public authentication.
 - Revoked sessions fail closed on the next server-rendered private request.
 - Provider, network, cleanup, or assertion failure is recorded as a failed run. The test never converts it into success.
 
@@ -30,6 +30,8 @@ The browser starts at `/sign-in?returnTo=%2Fapp`, exercises Sign in, Register, a
 The disposable identity uses a random suffix, the reserved `example.com` domain, a generated high-entropy password, no personal name, and a recognizable QA display marker. Its UID is learned from Firebase Admin after registration and is never accepted from the application. At most one identity belongs to one test invocation. Cleanup may delete only that exact captured UID and runs in `finally`; it never searches for or sweeps unrelated users.
 
 The browser test does not create a Neon profile or program. The only permanent-mutation control is inspected for disabled/enabled state, not submitted. Therefore an interrupted run can leave at most one disposable Firebase identity, never workout or program data. The report must state cleanup success or the exact manual credential gate without printing the email, password, UID, token, cookie, or Firebase configuration.
+
+Account-shell sign-out uses the server-derived UID only to select the local IndexedDB namespace. The session DELETE request contains no UID and remains protected by the same-origin double-submit CSRF boundary. A structural parser must confirm the exact `{ authenticated: false }` response before the UI claims completion; malformed success retains the signed-in page and exposes a safe retry message.
 
 ## Persistence contracts
 
@@ -68,6 +70,7 @@ The reserved example-domain address cannot receive a verification or recovery me
 - The runner fails before browser launch without an explicit external-account approval flag.
 - Only the public My Workout Pal Vercel origin and Firebase project `my-workout-pal-92819` are accepted.
 - Invalid credentials, successful registration, duplicate registration, recovery request, unverified read-only sign-in, verified sign-in, secure-cookie attributes, sign-out, and revocation denial are observed in a real hosted browser.
+- A member with no profile/program can sign out through the account shell; no onboarding or database mutation is required to reach that action.
 - Verification is changed only through Firebase Admin for the captured disposable UID, followed by a fresh client sign-in.
 - No onboarding, program, workout, preference, or custom-exercise mutation is submitted.
 - The disposable Firebase identity is confirmed absent after cleanup, and aggregate user count returns to its pre-run value.
@@ -76,7 +79,7 @@ The reserved example-domain address cannot receive a verification or recovery me
 
 ## Automated tests
 
-Fail-first unit tests cover configuration acceptance and rejection, exact host and project matching, explicit approval, credential-free URLs, project mismatch, and safe generated-identity shape. The hosted Playwright test is opt-in and excluded from the ordinary public release matrix. Existing unit and integration suites continue to prove CSRF ordering, malformed identity rejection, duplicate/invalid error mapping, unverified mutation denial, expired/revoked session classification, recent-auth deletion gates, and owner isolation.
+Fail-first unit tests cover configuration acceptance and rejection, exact host and project matching, explicit approval, credential-free URLs, project mismatch, safe generated-identity shape, account-shell sign-out ordering, and malformed-success refusal. The hosted Playwright test is opt-in and excluded from the ordinary public release matrix. Existing unit and integration suites continue to prove CSRF ordering, malformed identity rejection, duplicate/invalid error mapping, unverified mutation denial, expired/revoked session classification, recent-auth deletion gates, and owner isolation.
 
 The reproducible commands are:
 

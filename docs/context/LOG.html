@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="957ff191215887e190784662e51a38b466e26debfc6e094819c32ab85b114fe6">
+  <meta name="source-sha256" content="cc7b898fabb6fdacaf9dca2ce09bd1295f047c93d99966ae94aa74e4f0171621">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,12 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-27: Hosted password-auth lifecycle plan continuation</h2>
+<ul>
+<li>Started one in-place feature branch, <code>vishal/hosted-auth-qa</code>, from synchronized production closeout <code>5ab3319869a03a2f436d230f2677901ca9cb1ce5</code>; no auxiliary worktree, simulator, delegated worker, or parallel browser is active.</li>
+<li>Revalidated the existing hosted-auth plan against the released application before provider work. A new member without a profile cannot open Settings, so the plan now requires an account-shell sign-out action before onboarding with owner-scoped local cleanup, structural session-response validation, secure-cookie removal, Firebase client sign-out, and a safe retry state.</li>
+<li>The opt-in hosted runner will create at most one generated <code>example.com</code> password identity, mutate verification/revocation only for its exact captured UID, submit no onboarding or Neon mutation, retain no credential/profile/trace, and confirm deletion plus aggregate Firebase-count restoration in <code>finally</code>. Missing explicit approval, project mismatch, unsafe origin, or cleanup uncertainty must remain a failed run.</li>
+</ul>
 <h2>2026-08-27: Firebase client-auth hydration checkpoint</h2>
 <ul>
 <li>Planned the full-page Firebase browser-auth readiness correction before implementation on branch <code>vishal-firebase-auth-hydration</code> from released <code>main</code> <code>4b50bbbd71b1378083d072156333cea94fa43907</code>. The plan keeps the HTTP-only server session as the ownership boundary and makes client identity readiness only a fail-closed prerequisite for provider reauthentication UI.</li>

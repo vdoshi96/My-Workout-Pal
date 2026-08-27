@@ -1,5 +1,11 @@
 # Project log
 
+## 2026-08-27: Hosted password-auth lifecycle plan continuation
+
+- Started one in-place feature branch, `vishal/hosted-auth-qa`, from synchronized production closeout `5ab3319869a03a2f436d230f2677901ca9cb1ce5`; no auxiliary worktree, simulator, delegated worker, or parallel browser is active.
+- Revalidated the existing hosted-auth plan against the released application before provider work. A new member without a profile cannot open Settings, so the plan now requires an account-shell sign-out action before onboarding with owner-scoped local cleanup, structural session-response validation, secure-cookie removal, Firebase client sign-out, and a safe retry state.
+- The opt-in hosted runner will create at most one generated `example.com` password identity, mutate verification/revocation only for its exact captured UID, submit no onboarding or Neon mutation, retain no credential/profile/trace, and confirm deletion plus aggregate Firebase-count restoration in `finally`. Missing explicit approval, project mismatch, unsafe origin, or cleanup uncertainty must remain a failed run.
+
 ## 2026-08-27: Firebase client-auth hydration checkpoint
 
 - Planned the full-page Firebase browser-auth readiness correction before implementation on branch `vishal-firebase-auth-hydration` from released `main` `4b50bbbd71b1378083d072156333cea94fa43907`. The plan keeps the HTTP-only server session as the ownership boundary and makes client identity readiness only a fail-closed prerequisite for provider reauthentication UI.

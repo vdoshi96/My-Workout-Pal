@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="3b38d61610326dcf4c8f7090922202e0fdd55d251999e7879c33b51897e32705">
+  <meta name="source-sha256" content="9ed29ce6e7e1d420f60b58efe2a6b14c33a52d758b980b3607545def1dfc97ab">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -164,7 +164,7 @@
 </ul>
 <h2>Worktrees</h2>
 <ul>
-<li>The only checkout is the primary workspace on <code>main</code>; no auxiliary worktree or delegated worker remains. The completed <code>vishal-firebase-auth-hydration</code> branch was removed locally and from GitHub after production verification. The restart removed transient build/browser outputs, and generated <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, and <code>playwright-report</code> directories are deleted after every bounded gate. The reusable 840 MB dependency tree and 781 MB repository-local pnpm store remain while the persistent goal is active to avoid repeated downloads.</li>
+<li>The only checkout is the primary workspace on active branch <code>vishal/hosted-auth-qa</code> from synchronized release <code>main</code> <code>5ab3319869a03a2f436d230f2677901ca9cb1ce5</code>; no auxiliary worktree or delegated worker remains. The completed Firebase-hydration feature branch was removed locally and from GitHub after production verification. The restart removed transient build/browser outputs, and generated <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, and <code>playwright-report</code> directories are deleted after every bounded gate. The reusable 840 MB dependency tree and 781 MB repository-local pnpm store remain while the persistent goal is active to avoid repeated downloads.</li>
 <li>The completed analytics worktree was integrated as <code>fedfba4</code> and removed after patch-equivalence verification.</li>
 <li>The completed YouTube worktree was integrated through <code>6b633b0</code>; its selected files matched the reviewed worktree before cleanup.</li>
 <li>The completed database worktree was integrated through <code>ff3d69c</code>, compared for selected-file equality, and removed.</li>

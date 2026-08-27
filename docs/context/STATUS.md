@@ -138,7 +138,7 @@ The guest-first landing, origin-aware public navigation, authenticated onboardin
 
 ## Worktrees
 
-- The only checkout is the primary workspace on `main`; no auxiliary worktree or delegated worker remains. The completed `vishal-firebase-auth-hydration` branch was removed locally and from GitHub after production verification. The restart removed transient build/browser outputs, and generated `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report` directories are deleted after every bounded gate. The reusable 840 MB dependency tree and 781 MB repository-local pnpm store remain while the persistent goal is active to avoid repeated downloads.
+- The only checkout is the primary workspace on active branch `vishal/hosted-auth-qa` from synchronized release `main` `5ab3319869a03a2f436d230f2677901ca9cb1ce5`; no auxiliary worktree or delegated worker remains. The completed Firebase-hydration feature branch was removed locally and from GitHub after production verification. The restart removed transient build/browser outputs, and generated `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report` directories are deleted after every bounded gate. The reusable 840 MB dependency tree and 781 MB repository-local pnpm store remain while the persistent goal is active to avoid repeated downloads.
 - The completed analytics worktree was integrated as `fedfba4` and removed after patch-equivalence verification.
 - The completed YouTube worktree was integrated through `6b633b0`; its selected files matched the reviewed worktree before cleanup.
 - The completed database worktree was integrated through `ff3d69c`, compared for selected-file equality, and removed.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="9c4297155b1c5e20e9143794b2cc77f496c338047b0a27ae8f0b4a0aecb51fa5">
+  <meta name="source-sha256" content="efa3f3dca5fd4cf3257866cf23169d937c3987b67fc61af8bd2ee3f057d67e27">
   <title>Hosted authentication QA plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -32,7 +32,7 @@
 <p>A person can create a password account, receive truthful verification guidance, sign in with invalid and valid credentials, recover access without account enumeration, use a verified secure server session, sign out, and be rejected after server-side revocation on the public Vercel deployment. This verification uses a generated disposable identity; it never uses a production member, a personal mailbox, or a saved credential.</p>
 <p>Google sign-in and Google reauthentication remain a separate interactive provider lane because they require a real Google consent session. The password harness must not claim that those flows passed.</p>
 <h2>Navigation</h2>
-<p>The browser starts at <code>/sign-in?returnTo=%2Fapp</code>, exercises Sign in, Register, and Recovery without leaving the same-origin application shell, then follows the secure session into <code>/app</code>. An unverified identity sees the read-only account banner and disabled onboarding mutation. After server-side verification and a fresh sign-in, the same route shows a verified account and enabled onboarding action. Settings sign-out returns to <code>/sign-in</code>. Revoking the server session and reloading <code>/app</code> returns to <code>/sign-in?returnTo=%2Fapp</code>.</p>
+<p>The browser starts at <code>/sign-in?returnTo=%2Fapp</code>, exercises Sign in, Register, and Recovery without leaving the same-origin application shell, then follows the secure session into <code>/app</code>. An unverified identity sees the read-only account banner and disabled onboarding mutation. Because a new member has no program or Settings model yet, an account-shell <strong>Sign out</strong> action remains available before onboarding; it clears only the server viewer&#39;s local runner namespace, removes the secure session, signs out the configured Firebase client, and returns to <code>/sign-in</code>. After server-side verification and a fresh sign-in, <code>/app</code> shows a verified account and enabled onboarding action. Revoking the server session and reloading <code>/app</code> returns to <code>/sign-in?returnTo=%2Fapp</code>.</p>
 <h2>UI states</h2>
 <ul>
 <li>Loading and busy controls expose <code>Working…</code> and disable duplicate submission.</li>
@@ -42,7 +42,7 @@
 <li>Recovery uses the same generic success text for known and unknown addresses.</li>
 <li>Unverified sign-in creates a legitimate read-only server session and keeps permanent controls disabled.</li>
 <li>Verified sign-in opens onboarding with permanent controls enabled.</li>
-<li>Sign-out clears the secure session and returns to public authentication.</li>
+<li>Sign-out is available before onboarding, reports its pending/failure state, clears the secure session only after owner-scoped local cleanup, signs out the Firebase client when configured, and returns to public authentication.</li>
 <li>Revoked sessions fail closed on the next server-rendered private request.</li>
 <li>Provider, network, cleanup, or assertion failure is recorded as a failed run. The test never converts it into success.</li>
 </ul>
@@ -50,6 +50,7 @@
 <p><code>HostedAuthQaConfig</code> contains a normalized HTTPS origin, the one permitted Firebase project ID, and an explicit external-account approval flag. Configuration parsing rejects credentials in URLs, paths, query strings, fragments, HTTP, unknown hosts, missing Admin values, mismatched public/Admin project IDs, and an absent approval value.</p>
 <p>The disposable identity uses a random suffix, the reserved <code>example.com</code> domain, a generated high-entropy password, no personal name, and a recognizable QA display marker. Its UID is learned from Firebase Admin after registration and is never accepted from the application. At most one identity belongs to one test invocation. Cleanup may delete only that exact captured UID and runs in <code>finally</code>; it never searches for or sweeps unrelated users.</p>
 <p>The browser test does not create a Neon profile or program. The only permanent-mutation control is inspected for disabled/enabled state, not submitted. Therefore an interrupted run can leave at most one disposable Firebase identity, never workout or program data. The report must state cleanup success or the exact manual credential gate without printing the email, password, UID, token, cookie, or Firebase configuration.</p>
+<p>Account-shell sign-out uses the server-derived UID only to select the local IndexedDB namespace. The session DELETE request contains no UID and remains protected by the same-origin double-submit CSRF boundary. A structural parser must confirm the exact <code>{ authenticated: false }</code> response before the UI claims completion; malformed success retains the signed-in page and exposes a safe retry message.</p>
 <h2>Persistence contracts</h2>
 <p>Firebase Authentication is the only external persistence touched by this lane. Successful browser registration creates the disposable password identity. Firebase Admin reads its verification state, changes only <code>emailVerified</code> for that exact UID, revokes only that UID&#39;s refresh tokens, and finally deletes only that UID. The application session endpoint may create and delete its ordinary secure HTTP-only cookie. No database mutation endpoint is called.</p>
 <p>The Playwright evidence directory may retain screenshots of the read-only and verified private shells only when they contain no credential, token, cookie, email, or UID. Traces, videos, storage state, environment dumps, provider payloads, and browser profiles are not retained.</p>
@@ -71,6 +72,7 @@
 <li>The runner fails before browser launch without an explicit external-account approval flag.</li>
 <li>Only the public My Workout Pal Vercel origin and Firebase project <code>my-workout-pal-92819</code> are accepted.</li>
 <li>Invalid credentials, successful registration, duplicate registration, recovery request, unverified read-only sign-in, verified sign-in, secure-cookie attributes, sign-out, and revocation denial are observed in a real hosted browser.</li>
+<li>A member with no profile/program can sign out through the account shell; no onboarding or database mutation is required to reach that action.</li>
 <li>Verification is changed only through Firebase Admin for the captured disposable UID, followed by a fresh client sign-in.</li>
 <li>No onboarding, program, workout, preference, or custom-exercise mutation is submitted.</li>
 <li>The disposable Firebase identity is confirmed absent after cleanup, and aggregate user count returns to its pre-run value.</li>
@@ -78,7 +80,7 @@
 <li>Failures remain failures and identify whether cleanup was confirmed without exposing sensitive details.</li>
 </ul>
 <h2>Automated tests</h2>
-<p>Fail-first unit tests cover configuration acceptance and rejection, exact host and project matching, explicit approval, credential-free URLs, project mismatch, and safe generated-identity shape. The hosted Playwright test is opt-in and excluded from the ordinary public release matrix. Existing unit and integration suites continue to prove CSRF ordering, malformed identity rejection, duplicate/invalid error mapping, unverified mutation denial, expired/revoked session classification, recent-auth deletion gates, and owner isolation.</p>
+<p>Fail-first unit tests cover configuration acceptance and rejection, exact host and project matching, explicit approval, credential-free URLs, project mismatch, safe generated-identity shape, account-shell sign-out ordering, and malformed-success refusal. The hosted Playwright test is opt-in and excluded from the ordinary public release matrix. Existing unit and integration suites continue to prove CSRF ordering, malformed identity rejection, duplicate/invalid error mapping, unverified mutation denial, expired/revoked session classification, recent-auth deletion gates, and owner isolation.</p>
 <p>The reproducible commands are:</p>
 <pre><code class="language-bash">pnpm test:unit -- tests/unit/hosted-auth-qa.test.ts
 MWP_HOSTED_AUTH_EXTERNAL_ACCOUNT_APPROVED=1 pnpm test:e2e:hosted-auth
