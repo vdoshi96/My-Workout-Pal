@@ -146,6 +146,80 @@ describe("owned workout route contract", () => {
     });
   });
 
+  it("clears stale runtime blockers from a same-owner baseline while preserving a queued key", () => {
+    const server = runnerState();
+    let local = runnerReducer(server, {
+      type: "update_set_draft",
+      setId: "10000000-0000-4000-8000-000000000006",
+      draft: { kind: "weight_reps", weightKg: 22.5, repetitions: 10 },
+    });
+    local = runnerReducer(local, {
+      type: "save_set",
+      setId: "10000000-0000-4000-8000-000000000006",
+      now: 1_001,
+    });
+    local = runnerReducer(local, {
+      type: "set_auth",
+      auth: "expired",
+      now: 1_002,
+    });
+    local = runnerReducer(local, {
+      type: "set_connectivity",
+      connectivity: "offline",
+      now: 1_003,
+    });
+    const queued = local.operations.find(({ status }) => status === "pending");
+    if (!queued) throw new Error("expected a queued operation");
+
+    const recovered = recoverOwnedWorkoutState(server, local);
+
+    expect(recovered.auth).toBe("valid");
+    expect(recovered.connectivity).toBe("online");
+    expect(recovered.operations).toContainEqual(
+      expect.objectContaining({
+        idempotencyKey: queued.idempotencyKey,
+        status: "pending",
+      }),
+    );
+    expect(recovered.loggedSets["10000000-0000-4000-8000-000000000006"]?.operationKey).toBe(
+      queued.idempotencyKey,
+    );
+  });
+
+  it("does not clear a local blocker when the server baseline is missing or foreign", () => {
+    const local = runnerReducer(
+      runnerReducer(runnerState(), {
+        type: "set_auth",
+        auth: "expired",
+        now: 1_001,
+      }),
+      {
+        type: "set_connectivity",
+        connectivity: "offline",
+        now: 1_002,
+      },
+    );
+    expect(() => recoverOwnedWorkoutState(undefined, local)).toThrowError(
+      expect.objectContaining({
+        name: "RunnerResumeError",
+        code: "invalid_snapshot",
+      }),
+    );
+    expect(local.auth).toBe("expired");
+    expect(local.connectivity).toBe("offline");
+
+    const foreignServer = {
+      ...runnerState(),
+      snapshot: { ...runnerState().snapshot, ownerUid: "foreign-owner" },
+    };
+
+    expect(() => recoverOwnedWorkoutState(foreignServer, local)).toThrow(
+      /another session or account/i,
+    );
+    expect(local.auth).toBe("expired");
+    expect(local.connectivity).toBe("offline");
+  });
+
   it("filters compatible substitutions by logging kind and effective identity", () => {
     const exercise = runnerState().snapshot.exercises[0]!;
     const candidates: readonly ExerciseSubstitution[] = [

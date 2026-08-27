@@ -934,8 +934,12 @@ export function reconcileWorkoutResumeState(
     currentExerciseIndex: local.currentExerciseIndex,
     currentSetIndex: local.currentSetIndex,
     status,
-    connectivity: local.connectivity,
-    auth: local.auth,
+    // Authentication and connectivity describe the freshly loaded server
+    // baseline, not durable device history. Once the owner/session/snapshot
+    // checks above pass, the server facts may clear stale local blockers;
+    // drafts and operations remain merged below as device-owned work.
+    connectivity: server.connectivity,
+    auth: server.auth,
     drafts,
     dirtySetIds,
     cardioMode,

@@ -502,6 +502,40 @@ describe("workout resume hydration", () => {
 });
 
 describe("workout resume reconciliation", () => {
+  it("lets a fresh same-owner baseline clear stale runtime blockers without changing queued operation identity", () => {
+    const staleSource = { ...source(), cardioLog: undefined };
+    const queued = pendingRowSet(hydrateWorkoutResumeState(staleSource));
+    const localExpiredOffline = runnerReducer(
+      runnerReducer(queued, {
+        type: "set_auth",
+        auth: "expired",
+        now: queued.lastUpdatedAt + 1,
+      }),
+      {
+        type: "set_connectivity",
+        connectivity: "offline",
+        now: queued.lastUpdatedAt + 2,
+      },
+    );
+    const queuedOperation = pendingOperation(localExpiredOffline);
+    const server = hydrateWorkoutResumeState(source());
+
+    const reconciled = reconcileWorkoutResumeState(server, localExpiredOffline);
+
+    expect(reconciled.auth).toBe("valid");
+    expect(reconciled.connectivity).toBe("online");
+    expect(reconciled.operations).toContainEqual(
+      expect.objectContaining({
+        idempotencyKey: queuedOperation.idempotencyKey,
+        status: "pending",
+      }),
+    );
+    expect(reconciled.loggedSets[`${rowId}:1`]?.operationKey).toBe(
+      queuedOperation.idempotencyKey,
+    );
+    expect(reconciled.sync.status).toBe("pending");
+  });
+
   it("preserves unrelated server progress while overlaying a pending local set", () => {
     const staleSource = { ...source(), cardioLog: undefined };
     const local = pendingRowSet(hydrateWorkoutResumeState(staleSource));

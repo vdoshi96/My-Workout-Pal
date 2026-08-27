@@ -1,4 +1,7 @@
-import { reconcileWorkoutResumeState } from "@/domain/workout-resume";
+import {
+  reconcileWorkoutResumeState,
+  RunnerResumeError,
+} from "@/domain/workout-resume";
 import type {
   ActiveWorkoutState,
   ExerciseSubstitution,
@@ -152,9 +155,15 @@ export function createWorkoutStartController(
 }
 
 export function recoverOwnedWorkoutState(
-  server: ActiveWorkoutState,
+  server: ActiveWorkoutState | undefined,
   local: ActiveWorkoutState | undefined,
 ): ActiveWorkoutState {
+  if (server === undefined) {
+    throw new RunnerResumeError(
+      "invalid_snapshot",
+      "A server workout baseline is required before recovering this workout.",
+    );
+  }
   return local === undefined
     ? server
     : reconcileWorkoutResumeState(server, local);
