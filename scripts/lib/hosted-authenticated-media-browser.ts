@@ -677,7 +677,7 @@ export async function executeHostedAuthenticatedMediaQa(
     const runnerPath = `/workout/${sessionId}`;
     stage = "runner_load";
     await page.goto(`${config.origin}${runnerPath}`);
-    await expect(page.getByRole("heading", { name: /Push workout/u })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Push", exact: true })).toBeVisible();
 
     stage = "media_pair";
     const media = await inspectMedia(page);
