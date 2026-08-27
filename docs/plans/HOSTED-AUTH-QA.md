@@ -92,6 +92,10 @@ MWP_HOSTED_AUTH_EXTERNAL_ACCOUNT_APPROVED=1 pnpm test:e2e:hosted-auth
 
 The second command loads ignored local Firebase configuration internally. It must not be pasted with a generated email or password.
 
+## Completed password-lifecycle evidence
+
+Exact production runtime `c60814e530c0d367e90661217859671379b31bad` is Ready as `dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D`. The final evidence-source checkpoint `d6d8d34b00e33c903219e0fbc05ce56f50651ca8` passed the opt-in Chromium `1440×1000` lifecycle with three first-party session mutations, secure-cookie confirmation, empty serious/critical Axe results, and Firebase aggregate user count `0` before and `0` after cleanup. Recovery and verification requests were accepted but inbox delivery was intentionally not claimed. Google consent, hosted deletion, and hosted two-user authorization remain separate lanes.
+
 ## Browser evidence required for completion
 
 Retain the command result, public origin, browser engine/viewport, exact deployed Git SHA, pre/post aggregate Firebase counts, secure-cookie attribute assertions, read-only and verified screenshots without identity data, Axe result, console warning/error result, and bounded Vercel error-log query. Record that verification and recovery email delivery were not observed because the address is intentionally non-deliverable. Run production only after the exact release SHA is Ready and never use a real member for account-deletion QA.

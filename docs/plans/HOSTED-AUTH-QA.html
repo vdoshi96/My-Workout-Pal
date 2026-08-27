@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4fea6c2f2f85ffb7a1c68cb2291bd6e2e9d12e014b8e5e5fabfa7f896d78cf2e">
+  <meta name="source-sha256" content="e92f518fdcba2e7aa9b14f426f5bc6083c602a41588f3813909d224cd3fabf50">
   <title>Hosted authentication QA plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -87,6 +87,8 @@
 MWP_HOSTED_AUTH_EXTERNAL_ACCOUNT_APPROVED=1 pnpm test:e2e:hosted-auth
 </code></pre>
 <p>The second command loads ignored local Firebase configuration internally. It must not be pasted with a generated email or password.</p>
+<h2>Completed password-lifecycle evidence</h2>
+<p>Exact production runtime <code>c60814e530c0d367e90661217859671379b31bad</code> is Ready as <code>dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D</code>. The final evidence-source checkpoint <code>d6d8d34b00e33c903219e0fbc05ce56f50651ca8</code> passed the opt-in Chromium <code>1440×1000</code> lifecycle with three first-party session mutations, secure-cookie confirmation, empty serious/critical Axe results, and Firebase aggregate user count <code>0</code> before and <code>0</code> after cleanup. Recovery and verification requests were accepted but inbox delivery was intentionally not claimed. Google consent, hosted deletion, and hosted two-user authorization remain separate lanes.</p>
 <h2>Browser evidence required for completion</h2>
 <p>Retain the command result, public origin, browser engine/viewport, exact deployed Git SHA, pre/post aggregate Firebase counts, secure-cookie attribute assertions, read-only and verified screenshots without identity data, Axe result, console warning/error result, and bounded Vercel error-log query. Record that verification and recovery email delivery were not observed because the address is intentionally non-deliverable. Run production only after the exact release SHA is Ready and never use a real member for account-deletion QA.</p>
 

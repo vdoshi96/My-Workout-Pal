@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="e95f28086611b6bbe3c763d05a0bf8e0e48ee8ccc2ea6e853f7de10ab4e70ec1">
+  <title>Hosted password-authentication QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Hosted password-authentication QA</h1>
+<h2>Scope</h2>
+<p>This is the newest completed QA run. It covers the public production application at exact runtime commit <code>c60814e530c0d367e90661217859671379b31bad</code>, Ready deployment <code>dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D</code>, and the privacy-safe hosted runner at exact evidence-source checkpoint <code>d6d8d34b00e33c903219e0fbc05ce56f50651ca8</code>.</p>
+<p>The run used one generated high-entropy password identity in the reserved <code>example.com</code> domain. It did not use a personal mailbox or member account, submit onboarding, create Neon-owned data, or retain any email, password, UID, token, cookie value, provider payload, trace, video, or browser profile.</p>
+<h2>Production behavior observed</h2>
+<ul>
+<li>Invalid credentials returned the bounded application error.</li>
+<li>Registration succeeded and the application explained that verification is required before permanent changes.</li>
+<li>Duplicate registration returned the bounded sign-in/recovery guidance.</li>
+<li>Known and unknown recovery requests displayed the identical non-enumerating message. The intentionally non-deliverable address means provider acceptance was observed, not inbox delivery.</li>
+<li>An unverified password identity received a legitimate secure server session, the visible read-only banner, a disabled <strong>Create my program</strong> action, and an account-shell <strong>Sign out</strong> action before onboarding.</li>
+<li>The session cookie was present with <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite=Strict</code>, and path <code>/</code>. Its value was checked only for nonempty high entropy and was never printed or retained.</li>
+<li>Account-shell sign-out cleared the session cookie and returned to public authentication without a profile or database mutation.</li>
+<li>Firebase Admin changed <code>emailVerified</code> only for the exact captured disposable UID. A fresh bounded sign-in to <code>/sign-in?returnTo=%2Fapp</code> rendered <strong>Verified account</strong> and enabled <strong>Create my program</strong>.</li>
+<li>Firebase Admin revoked only that UID&#39;s refresh tokens. Reloading <code>/app</code> then failed closed at <code>/sign-in?returnTo=%2Fapp</code>.</li>
+<li>The exact first-party mutation sequence was three session operations: create, delete, create. No <code>/api/app</code> mutation was sent.</li>
+<li>Cleanup deleted the exact captured Firebase UID in <code>finally</code>; the aggregate Firebase user count was <code>0</code> before and <code>0</code> after the completed run.</li>
+</ul>
+<h2>Retained fail-first evidence</h2>
+<ul>
+<li>The first run failed with only a generic sanitized boundary, so a tested fixed lifecycle-stage code was added without exposing arbitrary provider or browser error detail.</li>
+<li>A later run reached verified session creation but expected <code>/app</code> after signing in from plain <code>/sign-in</code>; the browser truthfully opened the default public <code>/</code>. The corrected journey explicitly reopens <code>/sign-in?returnTo=%2Fapp</code> before verified sign-in. This was a harness route-expectation defect, not a claimed production navigation outage.</li>
+<li>Chrome reported the two deliberately exercised Firebase Identity Toolkit <code>400</code> responses as generic console resource errors. The final harness awaits the exact <code>signInWithPassword</code> and <code>signUp</code> operations, asserts both statuses, and permits only the matching two generic messages. Every other console error remains fatal.</li>
+<li>Full-document authentication transitions superseded one exact <code>HEAD /manifest.webmanifest</code> metadata probe with an extended <code>net::ERR_ABORTED</code> code. The final collector permits only GET or HEAD on that exact manifest path with <code>cancelled</code> or an <code>ERR_ABORTED</code> prefix; API, RSC, script, style, image, mutation, and every other request failure remain fatal.</li>
+<li>The session-boundary source now uses full-document replacement after server-session creation or deletion. A fail-first source-policy test proves the prior App Router replace-and-refresh pattern is absent from those boundaries.</li>
+</ul>
+<h2>Automated and deployment evidence</h2>
+<ul>
+<li>The focused hosted command and navigation-boundary tests pass: 2 files and 3 assertions.</li>
+<li>Strict TypeScript and scoped lint pass for the runner and session-boundary changes.</li>
+<li><code>pnpm verify</code> on the released navigation fix passes 97 files and 660 tests, four database files and 34 migration/bootstrap assertions, all 27 exact-two approved-video mappings, generated PWA and 35-document parity, the Next.js 16.3.2 Webpack build, and the 41-route production boundary.</li>
+<li>The opt-in production command passed in Chromium at <code>1440×1000</code>, returned <code>status: passed</code>, confirmed secure-cookie attributes, recorded exactly three first-party mutations, and confirmed cleanup plus equal pre/post Firebase counts.</li>
+<li>Serious and critical Axe results were empty on sign-in, unverified <code>/app</code>, and verified <code>/app</code>. Keyboard activation was used for authentication tasks, submission, and pre-onboarding sign-out.</li>
+<li>GitHub reported Vercel success for exact runtime <code>c60814e530c0d367e90661217859671379b31bad</code>. Production deployment <code>dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D</code> is Ready and owns <code>https://my-workout-pal-chi.vercel.app</code>.</li>
+<li>Read-only post-run checks returned <code>200</code> for <code>/</code>, <code>/program</code>, <code>/library</code>, <code>/sign-in</code>, and the bounded unauthenticated <code>/app</code> response. The one-hour exact-deployment error query returned no entries.</li>
+</ul>
+<h2>Browser evidence</h2>
+<h3>Unverified account</h3>
+<p><img src="hosted-auth-unverified-desktop.png" alt="Desktop private shell for an unverified disposable password identity"></p>
+<p>The screenshot shows the read-only banner, email-verification status, account-shell sign-out, disabled permanent onboarding boundary, and public starter choices. No identity value is visible.</p>
+<h3>Verified account</h3>
+<p><img src="hosted-auth-verified-desktop.png" alt="Desktop private shell after server-side verification and a fresh sign-in"></p>
+<p>The screenshot shows the same pre-onboarding shell with <strong>Verified account</strong>, an enabled permanent onboarding boundary below the retained viewport, and no personal or disposable identity value.</p>
+<h2>Disk and artifact hygiene</h2>
+<p>The complete verification build created approximately 203 MB in root <code>.next</code>; it was deleted immediately after the gate. The hosted runner retained only the two reviewed PNGs above. Root <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, <code>playwright-report</code>, traces, videos, storage state, and browser profiles are absent. The one primary checkout is the only worktree; no simulator, detached worker, or auxiliary task is running.</p>
+<p>The reusable 840 MB <code>node_modules</code> tree and 781 MB repository-local pnpm store remain while the persistent goal has unfinished release gates because they prevent repeated dependency downloads and unpacking. Free workspace volume remained about 195 GiB after this run.</p>
+<h2>Remaining gates</h2>
+<ul>
+<li>Real Google sign-in, Google reauthentication, and popup-cancellation evidence require an interactive Google consent session.</li>
+<li>Verification-link and recovery-message delivery were intentionally not observed with the reserved non-deliverable address.</li>
+<li>Hosted account deletion and hosted two-user IDOR replay remain distinct destructive/multi-identity lanes.</li>
+<li>Authenticated production video playback/fallback, actual 200-percent browser zoom, and Vercel Spend Management/notification inspection remain open.</li>
+</ul>
+
+  </main>
+</body>
+</html>
