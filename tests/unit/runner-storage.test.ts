@@ -701,6 +701,72 @@ describe("schema-two atomic runner storage merge", () => {
     });
   });
 
+  it("projects the exact value chosen for a local-tab conflict", () => {
+    let first = stateFor("uid-a", "session-a");
+    first = runnerReducer(first, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    first = runnerReducer(first, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    const firstKey = first.operations[0]!.idempotencyKey;
+
+    let second = stateFor("uid-a", "session-a");
+    second = runnerReducer(second, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 27.5, repetitions: 6 },
+    });
+    second = runnerReducer(second, {
+      type: "save_set",
+      setId: "row-set",
+      now: 102,
+    });
+
+    const conflicted = mergeRunnerStorageRecords(
+      runnerStorageRecord(first, { committedAt: 101 }),
+      runnerStorageRecord(second, { committedAt: 102 }),
+    );
+    const resolved = runnerReducer(conflicted.state, {
+      type: "resolve_local_tab_conflict",
+      idempotencyKey: firstKey,
+      now: 103,
+    });
+
+    expect(
+      resolved.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === firstKey,
+      )?.status,
+    ).toBe("pending");
+    expect(
+      resolved.operations
+        .filter(({ idempotencyKey }) => idempotencyKey !== firstKey)
+        .every(({ status }) => status === "superseded"),
+    ).toBe(true);
+    expect(resolved.loggedSets["row-set"]?.measurement).toMatchObject({
+      weightKg: 20,
+      repetitions: 8,
+    });
+    expect(resolved.loggedSets["row-set"]?.operationKey).toBe(firstKey);
+    expect(resolved.drafts["row-set"]).toMatchObject({
+      weightKg: 20,
+      repetitions: 8,
+    });
+
+    const persisted = mergeRunnerStorageRecords(
+      conflicted,
+      runnerStorageRecord(resolved, { committedAt: 103 }),
+    );
+    expect(persisted.state.loggedSets["row-set"]?.measurement).toMatchObject({
+      weightKg: 20,
+      repetitions: 8,
+    });
+  });
+
   it("lets confirmed authority supersede a later-timestamp stale same-target write", () => {
     let confirmed = stateFor("uid-a", "session-a");
     confirmed = runnerReducer(confirmed, {

@@ -2414,6 +2414,169 @@ function replaceOperation(
   return { ...state, operations, sync: syncForState({ ...state, operations }) };
 }
 
+function draftFromMeasurement(measurement: WorkoutMeasurement): SetDraft {
+  switch (measurement.kind) {
+    case "weight_reps":
+      return {
+        kind: measurement.kind,
+        weightKg: measurement.weightKg,
+        repetitions: measurement.repetitions,
+      };
+    case "bodyweight_reps":
+      return {
+        kind: measurement.kind,
+        repetitions: measurement.repetitions,
+        addedWeightKg: measurement.addedWeightKg,
+      };
+    case "duration":
+      return {
+        kind: measurement.kind,
+        durationSeconds: measurement.durationSeconds,
+      };
+    case "distance_duration":
+      return {
+        kind: measurement.kind,
+        distanceMeters: measurement.distanceMeters,
+        durationSeconds: measurement.durationSeconds,
+      };
+  }
+}
+
+function hasSavedSubstitution(
+  state: ActiveWorkoutState,
+  exerciseId: string,
+): boolean {
+  return state.operations.some(
+    (operation) =>
+      operation.status === "saved" &&
+      operation.payload.kind === "substitute_exercise" &&
+      operation.payload.exerciseId === exerciseId,
+  );
+}
+
+function projectResolvedLocalConflict(
+  state: ActiveWorkoutState,
+  chosen: RunnerOperation,
+): ActiveWorkoutState {
+  const payload = chosen.payload;
+  switch (payload.kind) {
+    case "save_set":
+      return {
+        ...state,
+        drafts: {
+          ...state.drafts,
+          [payload.setId]: draftFromMeasurement(payload.measurement),
+        },
+        dirtySetIds: removeId(state.dirtySetIds, payload.setId),
+        loggedSets: {
+          ...state.loggedSets,
+          [payload.setId]: {
+            setId: payload.setId,
+            exerciseId: payload.exerciseId,
+            phase: payload.phase,
+            measurement: clone(payload.measurement),
+            operationKey: chosen.idempotencyKey,
+          },
+        },
+      };
+    case "save_cardio":
+      return {
+        ...state,
+        cardioMode: payload.mode,
+        cardioDraft: clone(payload.cardio),
+        dirtyCardio: false,
+        loggedCardio: {
+          mode: payload.mode,
+          cardio: clone(payload.cardio),
+          operationKey: chosen.idempotencyKey,
+        },
+      };
+    case "save_note":
+      return {
+        ...state,
+        notesByExercise: {
+          ...state.notesByExercise,
+          [payload.exerciseId]: payload.note,
+        },
+        dirtyNoteExerciseIds: removeId(
+          state.dirtyNoteExerciseIds,
+          payload.exerciseId,
+        ),
+      };
+    case "skip_exercise": {
+      const substitutions = { ...state.substitutions };
+      if (!hasSavedSubstitution(state, payload.exerciseId)) {
+        delete substitutions[payload.exerciseId];
+      }
+      return {
+        ...state,
+        skippedExerciseIds: addId(
+          state.skippedExerciseIds,
+          payload.exerciseId,
+        ),
+        completedExerciseIds: removeId(
+          state.completedExerciseIds,
+          payload.exerciseId,
+        ),
+        substitutions,
+      };
+    }
+    case "substitute_exercise": {
+      const exercise = state.snapshot.exercises.find(
+        ({ id }) => id === payload.exerciseId,
+      );
+      const drafts = { ...state.drafts };
+      const loggedSets = { ...state.loggedSets };
+      let dirtySetIds: readonly string[] = [...state.dirtySetIds];
+      for (const set of exercise?.sets ?? []) {
+        delete drafts[set.id];
+        delete loggedSets[set.id];
+        dirtySetIds = removeId(dirtySetIds, set.id);
+      }
+      return {
+        ...state,
+        drafts,
+        loggedSets,
+        dirtySetIds,
+        substitutions: {
+          ...state.substitutions,
+          [payload.exerciseId]: clone(payload.replacement),
+        },
+        skippedExerciseIds: removeId(
+          state.skippedExerciseIds,
+          payload.exerciseId,
+        ),
+        completedExerciseIds: removeId(
+          state.completedExerciseIds,
+          payload.exerciseId,
+        ),
+      };
+    }
+    case "complete_exercise": {
+      const substitutions = { ...state.substitutions };
+      if (!hasSavedSubstitution(state, payload.exerciseId)) {
+        delete substitutions[payload.exerciseId];
+      }
+      return {
+        ...state,
+        skippedExerciseIds: removeId(
+          state.skippedExerciseIds,
+          payload.exerciseId,
+        ),
+        completedExerciseIds: addId(
+          state.completedExerciseIds,
+          payload.exerciseId,
+        ),
+        substitutions,
+      };
+    }
+    case "complete_session":
+      return { ...state, status: "completing" };
+    case "abandon_session":
+      return { ...state, status: "abandoning" };
+  }
+}
+
 export function resolveRunnerLocalTabConflict(
   state: ActiveWorkoutState,
   idempotencyKey: string,
@@ -2462,7 +2625,8 @@ export function resolveRunnerLocalTabConflict(
     operations,
     lastUpdatedAt: at,
   };
-  return { ...next, sync: syncForState(next) };
+  const projected = projectResolvedLocalConflict(next, chosen);
+  return { ...projected, sync: syncForState(projected) };
 }
 
 function terminalStatusForState(
