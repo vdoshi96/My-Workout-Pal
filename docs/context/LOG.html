@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="bd3ebe73fb66cc6b1a00af865538ef2985d62c34f088c7e24681bc4181ac414c">
+  <meta name="source-sha256" content="4c76bcc41a9ff32bdfb290177b2c742495211e71398e7ebf550f30954915d6d8">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,15 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-27: Hosted authenticated media and actual-zoom release</h2>
+<ul>
+<li>Planned and implemented a fail-closed one-account production command for real Firebase sign-in/session exchange, dumbbell onboarding, owned Push start, both approved player demonstrations, first-embed failure recovery, native Chrome 200-percent reflow, restore, app-owned Axe, and exact Firebase/Neon cleanup. The command requires separate provider and native-zoom opt-ins and prints only stable stages or sanitized evidence.</li>
+<li>Retained failures exposed stale YouTube selectors, stale route headings, ineffective page-level browser-zoom shortcuts, masked failure stages, a missing standalone workout main landmark, and three serious rules inside YouTube&#39;s cross-origin player document. Each correction was bounded and tested; the final player boundary excludes only the exact privacy-enhanced iframe document from app-owned Axe while separately requiring its accessible title and real Play/Pause controls.</li>
+<li>The credential-free 720 CSS-pixel fixture failed first on the missing main landmark, then passed zero-overflow, one-landmark, and app-owned Axe checks after production/fixture parity. Complete permission-correct verification on released source passed 102 files/684 tests, database 4/34, exact-two seed, PWA/docs, the production build, and 41-route isolation. All root/fixture builds and Playwright output were deleted immediately afterward.</li>
+<li>Protected preview <code>dpl_3fC382LEs8C47Y2Qb4PKiAS81BVk</code> and production <code>dpl_5cJDcu23Nw2v289Diraz4vR1dwCm</code> reached Ready for exact application release <code>f84cb87867818e7eb6836c1dfcb1fe48d01b20ec</code>. The preview&#39;s four public routes returned <code>200</code> with private no-store/security headers and its error scan was empty.</li>
+<li>The final production result reported two videos played, blocked-first-embed fallback verified, exact native zoom verified and restored, three intended first-party mutations, unchanged global persistence, and cleanup confirmed. Firebase users returned <code>0 → 0</code>, the exact identity and all owner rows were absent, and no credential, opaque ID, screenshot, trace, recording, profile, build, or report was retained.</li>
+<li>Google consent/reauthentication and Vercel dashboard Spend Management remain the only manual provider gates for this release lane.</li>
+</ul>
 <h2>2026-08-27: Vercel Pro spend-control audit</h2>
 <ul>
 <li>Planned a fail-closed provider inspection that distinguishes metered usage, the user-selected spend amount, notification thresholds, and the optional all-production-project pause. The workflow forbids inferring a dollar amount from the Pro subscription, current usage, or included credit.</li>

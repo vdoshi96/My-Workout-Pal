@@ -1,5 +1,14 @@
 # Project log
 
+## 2026-08-27: Hosted authenticated media and actual-zoom release
+
+- Planned and implemented a fail-closed one-account production command for real Firebase sign-in/session exchange, dumbbell onboarding, owned Push start, both approved player demonstrations, first-embed failure recovery, native Chrome 200-percent reflow, restore, app-owned Axe, and exact Firebase/Neon cleanup. The command requires separate provider and native-zoom opt-ins and prints only stable stages or sanitized evidence.
+- Retained failures exposed stale YouTube selectors, stale route headings, ineffective page-level browser-zoom shortcuts, masked failure stages, a missing standalone workout main landmark, and three serious rules inside YouTube's cross-origin player document. Each correction was bounded and tested; the final player boundary excludes only the exact privacy-enhanced iframe document from app-owned Axe while separately requiring its accessible title and real Play/Pause controls.
+- The credential-free 720 CSS-pixel fixture failed first on the missing main landmark, then passed zero-overflow, one-landmark, and app-owned Axe checks after production/fixture parity. Complete permission-correct verification on released source passed 102 files/684 tests, database 4/34, exact-two seed, PWA/docs, the production build, and 41-route isolation. All root/fixture builds and Playwright output were deleted immediately afterward.
+- Protected preview `dpl_3fC382LEs8C47Y2Qb4PKiAS81BVk` and production `dpl_5cJDcu23Nw2v289Diraz4vR1dwCm` reached Ready for exact application release `f84cb87867818e7eb6836c1dfcb1fe48d01b20ec`. The preview's four public routes returned `200` with private no-store/security headers and its error scan was empty.
+- The final production result reported two videos played, blocked-first-embed fallback verified, exact native zoom verified and restored, three intended first-party mutations, unchanged global persistence, and cleanup confirmed. Firebase users returned `0 → 0`, the exact identity and all owner rows were absent, and no credential, opaque ID, screenshot, trace, recording, profile, build, or report was retained.
+- Google consent/reauthentication and Vercel dashboard Spend Management remain the only manual provider gates for this release lane.
+
 ## 2026-08-27: Vercel Pro spend-control audit
 
 - Planned a fail-closed provider inspection that distinguishes metered usage, the user-selected spend amount, notification thresholds, and the optional all-production-project pause. The workflow forbids inferring a dollar amount from the Pro subscription, current usage, or included credit.

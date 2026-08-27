@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="5a9ca5607fa3196dc9cfcdf1e8970d92d72f3b0512e0f97a1bf68cb869bdf96b">
+  <title>Hosted authenticated media and 200-percent zoom QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Hosted authenticated media and 200-percent zoom QA</h1>
+<h2>Scope</h2>
+<ul>
+<li>Released application source: <code>f84cb87867818e7eb6836c1dfcb1fe48d01b20ec</code></li>
+<li>Ready production deployment: <code>dpl_5cJDcu23Nw2v289Diraz4vR1dwCm</code></li>
+<li>Public production origin: <code>https://my-workout-pal-chi.vercel.app</code></li>
+<li>Final harness source: <code>994be7a</code></li>
+<li>Ready protected preview: <code>dpl_3fC382LEs8C47Y2Qb4PKiAS81BVk</code></li>
+<li>Browser: installed Google Chrome on macOS</li>
+<li>Provider effect: one generated verified password identity, its owner-scoped Neon graph, and exact cleanup</li>
+</ul>
+<h2>Production browser evidence</h2>
+<p>The fail-closed command created one generated reserved-domain Firebase identity, signed in through the real Firebase client and secure session-cookie endpoint, onboarded the dumbbell starter, and started Push through the owner-scoped production API. Exactly three intended first-party mutations occurred: session exchange, onboarding, and workout start.</p>
+<p>The first effective exercise exposed exactly two approved, distinct demonstrations. Demo 1 and Demo 2 each moved from the real accessible <code>Play video</code> control to <code>Pause video</code>; switching tabs retained exactly one privacy-enhanced iframe, the selected video ID matched its direct YouTube fallback, and no autoplay was used. A separate replay deliberately aborted the first embed, then proved Demo 2, its fallback, and Save set remained usable; Demo 2 again entered the playing state.</p>
+<p>At the two bounded prompts, native macOS Chrome controls changed the temporary browser window from 100 to 200 percent and back to 100 percent. The Playwright page independently required the device-pixel ratio to double and return to baseline. At 200 percent, <code>/app</code>, <code>/app/programs</code>, <code>/app/program/edit</code>, <code>/app/settings</code>, and the owned Push runner retained their exact headings, visible main landmarks, a single reading axis, and zero document-level horizontal overflow. App-owned editor and runner markup had no serious or critical Axe violation.</p>
+<p>The live YouTube document reported three player-owned Axe rules (<code>aria-allowed-attr</code>, <code>aria-prohibited-attr</code>, and <code>button-name</code>). The final boundary excludes only the exact <code>youtube-nocookie.com/embed/</code> document from app-owned Axe claims. It separately requires a nonblank iframe title and both real player control transitions, so third-party markup is neither hidden nor misrepresented as application code.</p>
+<h2>Retained fail-first corrections</h2>
+<ul>
+<li>The initial command and configuration modules were absent; focused tests failed before the explicit approval, production-origin, Firebase/Neon, media, zoom, cleanup, and sanitized-output contracts were implemented.</li>
+<li>YouTube&#39;s current player exposes accessible <code>Play video</code> and <code>Pause video</code> controls rather than the brittle CSS controls initially assumed. The production diagnostic reached <code>media_demo_one_control</code> before the harness adopted the accessible contract.</li>
+<li>Page-level Playwright key events do not modify Chrome browser chrome. A public no-account diagnostic proved the native handshake as DPR and CSS width <code>1 / 1440 → 2 / 720 → 1 / 1440</code>; the harness now pauses for native gestures and times out into cleanup.</li>
+<li>The hosted 200-percent replay found no runner overflow but did find that the standalone workout route lacked a semantic main landmark. The credential-free 720 CSS-pixel browser test failed on <code>getByRole(&quot;main&quot;)</code>, then passed after production and fixture routes received the landmark.</li>
+<li>The post-fix hosted replay identified the three serious player-owned Axe rules above. The identical fixture runner passed app-owned Axe. A fail-first command policy test then required the exact iframe exclusion plus nonblank title and real play/pause evidence.</li>
+</ul>
+<h2>Automated and deployment evidence</h2>
+<ul>
+<li>Focused hosted configuration/command matrix: 2 files, 12 tests.</li>
+<li>Focused runner 720 CSS-pixel production-fixture replay: 1 Chromium test, passing geometry, landmark, and app-owned Axe.</li>
+<li>Strict TypeScript, scoped ESLint, documentation parity, and diff validation passed after each bounded checkpoint.</li>
+<li>Complete permission-correct <code>pnpm verify</code> on released application source: 102 files and 684 tests, database 4 files and 34 tests, 27 exact-two approved video mappings, generated PWA and 39-document parity, Next.js 16.3.2 Webpack production build, and 41-route production boundary.</li>
+<li>Review deployment <code>dpl_3fC382LEs8C47Y2Qb4PKiAS81BVk</code> reached Ready. Vercel&#39;s authenticated protection bypass returned <code>200</code> with private no-store and declared security headers for <code>/</code>, <code>/program</code>, <code>/library</code>, and <code>/sign-in</code>; its error-level log query was empty.</li>
+<li>GitHub and local <code>main</code> aligned at <code>f84cb87867818e7eb6836c1dfcb1fe48d01b20ec</code> before production <code>dpl_5cJDcu23Nw2v289Diraz4vR1dwCm</code> reached Ready on the public aliases.</li>
+</ul>
+<h2>Cleanup and disk closeout</h2>
+<p>The final safe result reported <code>videosPlayed: 2</code>, <code>blockedFirstEmbedVerified: true</code>, <code>exactZoomVerified: true</code>, <code>firstPartyMutationCount: 3</code>, <code>globalStateVerified: true</code>, and <code>cleanupConfirmed: true</code>. Aggregate Firebase users were <code>0 → 0</code>; the generated identity was absent, its owned Neon row count was zero, the terminal deletion state was confirmed or absent, and the global catalog/video/template digest was unchanged.</p>
+<p>Every failed diagnostic also confirmed cleanup. No generated email, password, UID, cookie, CSRF token, session/program/workout ID, database row, browser profile, screenshot, trace, recording, or provider payload was retained.</p>
+<p>Root <code>.next</code> (about 203 MB), fixture <code>.next-authenticated</code> (about 174 MB per focused build), <code>test-results</code>, and <code>playwright-report</code> were removed immediately after each run. The reusable dependency tree and repository-local pnpm store remain to prevent repeated downloads and unpacking while manual gates remain. Free volume stayed about 190 GiB.</p>
+<h2>Remaining manual gates</h2>
+<ul>
+<li>Replay Google sign-in and Google reauthentication with an authorized interactive Google identity.</li>
+<li>Sign in to the Vercel web dashboard, choose the exact USD Spend Management amount, inspect notification subscriptions, and request action-time confirmation before enabling notifications or the team-wide production pause. Official Spend Management thresholds are 50, 75, and 100 percent; 90 percent is not offered.</li>
+</ul>
+
+  </main>
+</body>
+</html>
