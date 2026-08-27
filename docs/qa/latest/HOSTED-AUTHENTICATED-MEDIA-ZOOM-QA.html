@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="5a9ca5607fa3196dc9cfcdf1e8970d92d72f3b0512e0f97a1bf68cb869bdf96b">
+  <meta name="source-sha256" content="8ab3b23b20d79b308bc7ef275c9ed31ed5cdf3822908be1f798de138089d0485">
   <title>Hosted authenticated media and 200-percent zoom QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -59,6 +59,7 @@
 <li>Complete permission-correct <code>pnpm verify</code> on released application source: 102 files and 684 tests, database 4 files and 34 tests, 27 exact-two approved video mappings, generated PWA and 39-document parity, Next.js 16.3.2 Webpack production build, and 41-route production boundary.</li>
 <li>Review deployment <code>dpl_3fC382LEs8C47Y2Qb4PKiAS81BVk</code> reached Ready. Vercel&#39;s authenticated protection bypass returned <code>200</code> with private no-store and declared security headers for <code>/</code>, <code>/program</code>, <code>/library</code>, and <code>/sign-in</code>; its error-level log query was empty.</li>
 <li>GitHub and local <code>main</code> aligned at <code>f84cb87867818e7eb6836c1dfcb1fe48d01b20ec</code> before production <code>dpl_5cJDcu23Nw2v289Diraz4vR1dwCm</code> reached Ready on the public aliases.</li>
+<li>The final accessibility-boundary and QA closeout reached reviewed checkpoint <code>3f2644453ce8195c7f14765a8c94cf668df76793</code>, Ready preview <code>dpl_CdUJGWXMyCfo9tHK3KMe1rrLUub1</code>, and Ready production <code>dpl_97VKX7rdFtxioQ23h85KzFKN8omM</code>. GitHub reported success, the four public routes returned <code>200</code>, and the exact production error query returned no entries.</li>
 </ul>
 <h2>Cleanup and disk closeout</h2>
 <p>The final safe result reported <code>videosPlayed: 2</code>, <code>blockedFirstEmbedVerified: true</code>, <code>exactZoomVerified: true</code>, <code>firstPartyMutationCount: 3</code>, <code>globalStateVerified: true</code>, and <code>cleanupConfirmed: true</code>. Aggregate Firebase users were <code>0 → 0</code>; the generated identity was absent, its owned Neon row count was zero, the terminal deletion state was confirmed or absent, and the global catalog/video/template digest was unchanged.</p>
