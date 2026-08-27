@@ -457,6 +457,13 @@ describe("credential-free authenticated harness boundary", () => {
     expect(resilienceSpec).toContain(
       '["net::ERR_ABORTED", "cancelled"].includes',
     );
+    expect(resilienceSpec).toContain(
+      'failure === "WebKit encountered an internal error"',
+    );
+    expect(resilienceSpec).toContain(
+      'headers["next-router-prefetch"] === "1"',
+    );
+    expect(resilienceSpec).toContain('headers["sec-fetch-dest"] === "empty"');
     expect(resilienceSpec).toContain("isExpectedNavigationFontCancellation");
     expect(resilienceSpec).toContain(
       "expect(harness.failedRequests).toEqual([])",

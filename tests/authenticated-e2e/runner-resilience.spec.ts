@@ -81,13 +81,18 @@ function isOperationRequest(request: Request): boolean {
 
 function isSupersededNextFlightRequest(request: Request): boolean {
   const url = new URL(request.url());
+  const failure = request.failure()?.errorText ?? "";
+  const headers = request.headers();
   return (
     request.method() === "GET" &&
+    url.hostname === "127.0.0.1" &&
     url.searchParams.has("_rsc") &&
-    request.headers()["rsc"] === "1" &&
-    ["net::ERR_ABORTED", "cancelled"].includes(
-      request.failure()?.errorText ?? "",
-    )
+    headers["rsc"] === "1" &&
+    (["net::ERR_ABORTED", "cancelled"].includes(failure) ||
+      (failure === "WebKit encountered an internal error" &&
+        request.resourceType() === "fetch" &&
+        headers["next-router-prefetch"] === "1" &&
+        headers["sec-fetch-dest"] === "empty"))
   );
 }
 
