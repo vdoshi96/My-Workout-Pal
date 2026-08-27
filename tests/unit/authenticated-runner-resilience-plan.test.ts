@@ -56,8 +56,12 @@ describe("authenticated runner resilience plan", () => {
     }
 
     expect(plan).toContain(
-      "Raw field tokens that have not been activated with **Save activity** remain tab-local",
+      "Raw field tokens that have not been activated with **Save activity** remain unsent local editing projections",
     );
+    expect(plan).toContain(
+      "They may persist for same-device refresh recovery, but they are not operations and are never submitted",
+    );
+    expect(plan).not.toContain("remain tab-local editing state");
     expect(plan).not.toContain("Broadcast messages carry only an encoded owner-scoped key");
   });
 });
