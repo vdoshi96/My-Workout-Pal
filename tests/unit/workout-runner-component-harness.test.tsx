@@ -249,5 +249,23 @@ describe("WorkoutRunner injected boundary harness", () => {
     );
     expect(markup).toContain('aria-labelledby="runner-auth-blocked-title"');
     expect(markup).toContain('tabindex="-1"');
+
+    const revokedMarkup = renderToStaticMarkup(
+      <WorkoutRunner
+        initialState={runnerReducer(blocked, {
+          type: "set_auth",
+          auth: "revoked",
+          now: 3_003,
+        })}
+        reauthenticationHref="/sign-in?returnTo=%2Fworkout%2Fsession-harness"
+        storage={storage}
+        submitter={async () => ({
+          status: "saved",
+          persistedId: "saved-after-reauthentication",
+        })}
+      />,
+    );
+    expect(revokedMarkup).toContain("Your sign-in was revoked");
+    expect(revokedMarkup).toContain("Sign-in revoked");
   });
 });

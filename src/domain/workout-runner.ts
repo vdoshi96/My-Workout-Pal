@@ -7,11 +7,17 @@ import {
 } from "@/domain/analytics";
 
 export type RunnerConnectivity = "online" | "offline";
-export type RunnerAuth = "valid" | "expired";
+export type RunnerAuth = "valid" | "expired" | "revoked";
 export type RunnerStatus =
   "active" | "completing" | "completed" | "abandoning" | "abandoned";
 export type RunnerSyncStatus =
-  "idle" | "pending" | "offline" | "auth_expired" | "failed" | "conflict";
+  | "idle"
+  | "pending"
+  | "offline"
+  | "auth_expired"
+  | "auth_revoked"
+  | "failed"
+  | "conflict";
 export type RunnerSetPhase = "warmup" | "work";
 
 const SUPPORTED_KINDS = new Set<MeasurementKind>(MEASUREMENT_KINDS);
@@ -1089,6 +1095,12 @@ function syncForState(
       errorMessage: preferredError.message,
     };
   }
+  if (state.auth === "revoked")
+    return {
+      status: "auth_revoked",
+      errorCode: "session_revoked",
+      errorMessage: undefined,
+    };
   if (state.auth === "expired")
     return {
       status: "auth_expired",
@@ -2479,12 +2491,18 @@ function isOfflineCode(code: string): boolean {
   );
 }
 
-function isAuthExpiredCode(code: string): boolean {
-  return (
+function authBlockerForCode(
+  code: string,
+): Exclude<RunnerAuth, "valid"> | undefined {
+  if (code === "session_revoked") return "revoked";
+  if (
     code === "auth_expired" ||
     code === "session_expired" ||
     code === "session_invalid"
-  );
+  ) {
+    return "expired";
+  }
+  return undefined;
 }
 
 export async function syncRunnerOperations(
@@ -2504,7 +2522,7 @@ export async function syncRunnerOperations(
     await persistRunnerState(options.storage, next);
     return next;
   }
-  if (state.auth === "expired") {
+  if (state.auth !== "valid") {
     const next = withUpdated(state, { sync: syncForState(state) }, at);
     await persistRunnerState(options.storage, next);
     return next;
@@ -2541,10 +2559,11 @@ export async function syncRunnerOperations(
     } catch (error) {
       const code = errorCodeFromUnknown(error);
       const message = errorMessageFromUnknown(error);
-      if (isAuthExpiredCode(code)) {
+      const authBlocker = authBlockerForCode(code);
+      if (authBlocker !== undefined) {
         state = runnerReducer(state, {
           type: "set_auth",
-          auth: "expired",
+          auth: authBlocker,
           now: at,
         });
         await persistRunnerState(options.storage, state);
@@ -2589,10 +2608,11 @@ export async function syncRunnerOperations(
       continue;
     }
 
-    if (result.authExpired === true || isAuthExpiredCode(result.code)) {
+    const authBlocker = authBlockerForCode(result.code);
+    if (result.authExpired === true || authBlocker !== undefined) {
       state = runnerReducer(state, {
         type: "set_auth",
-        auth: "expired",
+        auth: authBlocker ?? "expired",
         now: at,
       });
       await persistRunnerState(options.storage, state);

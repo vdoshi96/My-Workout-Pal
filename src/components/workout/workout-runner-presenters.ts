@@ -174,6 +174,8 @@ export function formatSyncStatus(
       return { label: "Offline queued", tone: "offline" };
     case "auth_expired":
       return { label: "Sign-in expired", tone: "auth" };
+    case "auth_revoked":
+      return { label: "Sign-in revoked", tone: "auth" };
     case "failed":
       return { label: "Save failed", tone: "failed" };
     case "conflict":

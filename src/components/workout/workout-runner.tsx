@@ -177,7 +177,7 @@ export async function runRunnerPersistenceCycle(
   if (
     !hasPending ||
     state.connectivity === "offline" ||
-    state.auth === "expired"
+    state.auth !== "valid"
   ) {
     return state;
   }
@@ -681,11 +681,13 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   }, [state.sync.status]);
 
   useEffect(() => {
-    const blocked = state.auth === "expired";
+    const blocked = state.auth !== "valid";
     if (blocked && !previousAuthBlocked.current) {
       authBlockedHeading.current?.focus();
       setAnnouncement(
-        "Your sign-in expired. Reauthenticate as the same account to continue syncing.",
+        state.auth === "revoked"
+          ? "Your sign-in was revoked. Reauthenticate as the same account to continue syncing."
+          : "Your sign-in expired. Reauthenticate as the same account to continue syncing.",
       );
     }
     previousAuthBlocked.current = blocked;
@@ -1231,7 +1233,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           {state.sync.errorMessage}
         </p>
       ) : null}
-      {state.auth === "expired" ? (
+      {state.auth !== "valid" ? (
         <section
           aria-labelledby="runner-auth-blocked-title"
           className="runner-banner runner-banner--auth runner-banner--action"
@@ -1242,7 +1244,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             ref={authBlockedHeading}
             tabIndex={-1}
           >
-            Your sign-in expired
+            {state.auth === "revoked"
+              ? "Your sign-in was revoked"
+              : "Your sign-in expired"}
           </h2>
           <p>
             Reauthenticate as the same account to sync this workout. Queued

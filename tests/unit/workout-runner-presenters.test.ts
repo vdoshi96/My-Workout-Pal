@@ -96,6 +96,10 @@ describe("workout runner presentation helpers", () => {
       label: "Sign-in expired",
       tone: "auth",
     });
+    expect(formatSyncStatus("auth_revoked")).toMatchObject({
+      label: "Sign-in revoked",
+      tone: "auth",
+    });
     expect(formatSyncStatus("conflict")).toMatchObject({
       label: "Conflict",
       tone: "conflict",
