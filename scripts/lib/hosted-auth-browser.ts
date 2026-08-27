@@ -37,7 +37,11 @@ export type HostedAuthQaStage =
   | "unverified_sign_in"
   | "unverified_session"
   | "verification"
-  | "verified_sign_in";
+  | "verified_sign_in_navigation"
+  | "verified_sign_in_submit"
+  | "verified_session_accessibility"
+  | "verified_session_cookie"
+  | "verified_session_ui";
 
 export class HostedAuthQaExecutionError extends Error {
   readonly cleanupConfirmed: boolean;
@@ -292,16 +296,20 @@ async function runBrowserLifecycle(
 
     setStage("verification");
     await auth.updateUser(created.uid, { emailVerified: true });
-    setStage("verified_sign_in");
+    setStage("verified_sign_in_submit");
     await submitEmailForm(page, {
       email: identity.email,
       password: identity.password,
       submitName: "Sign in with email",
     });
+    setStage("verified_sign_in_navigation");
     await page.waitForURL(`${config.origin}/app`);
+    setStage("verified_session_ui");
     await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Create my program" })).toBeEnabled();
+    setStage("verified_session_cookie");
     await assertSecureSessionCookie(context, config.origin);
+    setStage("verified_session_accessibility");
     await assertAccessible(page);
     await captureEvidence(page, evidencePaths.verified);
 
