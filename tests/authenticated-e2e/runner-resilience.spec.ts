@@ -516,6 +516,7 @@ test("the active runner keeps one-axis geometry at the 200-percent CSS viewport"
 
     expect(geometry.outliers).toEqual([]);
     expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+    await expect(harness.page.getByRole("main")).toBeVisible();
   } finally {
     await cleanup(harness.page);
     await harness.close();

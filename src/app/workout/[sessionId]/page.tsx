@@ -85,33 +85,35 @@ export default async function OwnedWorkoutPage({
         <Link href="/app">Exit to program</Link>
         <span>{resume.session.dayName} · revision {resume.session.programRevisionId.slice(0, 8)}</span>
       </header>
-      {viewer.eligibleForPermanentMutations ? (
-        <OwnedWorkoutRunner
-          curatedVideosByExerciseId={curatedVideosByExerciseId}
-          effectiveExerciseIdBySnapshot={effectiveIds}
-          initialState={initialState}
-          substitutionCandidates={buildWorkoutRouteCandidates(
-            profileProgram.equipment.profileKind,
-            customExercises,
-          )}
-          unitSystem={profileProgram.preferences.unitSystem}
-        />
-      ) : (
-        <section
-          aria-labelledby="workout-verification-title"
-          className="owned-runner-recovery owned-runner-recovery--blocked"
-        >
-          <span className="eyebrow">Read-only account</span>
-          <h1 id="workout-verification-title">Verify before editing this workout</h1>
-          <p>The immutable snapshot remains saved. Verify your email, then sign in again as the same account to continue syncing the device draft.</p>
-          <Link
-            className="primary-action"
-            href={`/sign-in?returnTo=${encodeURIComponent(returnTo)}`}
+      <main>
+        {viewer.eligibleForPermanentMutations ? (
+          <OwnedWorkoutRunner
+            curatedVideosByExerciseId={curatedVideosByExerciseId}
+            effectiveExerciseIdBySnapshot={effectiveIds}
+            initialState={initialState}
+            substitutionCandidates={buildWorkoutRouteCandidates(
+              profileProgram.equipment.profileKind,
+              customExercises,
+            )}
+            unitSystem={profileProgram.preferences.unitSystem}
+          />
+        ) : (
+          <section
+            aria-labelledby="workout-verification-title"
+            className="owned-runner-recovery owned-runner-recovery--blocked"
           >
-            Return to sign in
-          </Link>
-        </section>
-      )}
+            <span className="eyebrow">Read-only account</span>
+            <h1 id="workout-verification-title">Verify before editing this workout</h1>
+            <p>The immutable snapshot remains saved. Verify your email, then sign in again as the same account to continue syncing the device draft.</p>
+            <Link
+              className="primary-action"
+              href={`/sign-in?returnTo=${encodeURIComponent(returnTo)}`}
+            >
+              Return to sign in
+            </Link>
+          </section>
+        )}
+      </main>
     </div>
   );
 }

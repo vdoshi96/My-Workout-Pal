@@ -85,27 +85,29 @@ export default async function HarnessOwnedWorkoutPage({
           {resume.session.dayName} · revision {resume.session.programRevisionId.slice(0, 8)}
         </span>
       </header>
-      {context.viewer.eligibleForPermanentMutations ? (
-        <OwnedWorkoutRunner
-          curatedVideosByExerciseId={curatedVideosByExerciseId}
-          effectiveExerciseIdBySnapshot={effectiveIds}
-          initialState={initialState}
-          substitutionCandidates={buildWorkoutRouteCandidates(
-            profileProgram.equipment.profileKind,
-            customExercises,
-          )}
-          unitSystem={profileProgram.preferences.unitSystem}
-        />
-      ) : (
-        <section
-          aria-labelledby="workout-verification-title"
-          className="owned-runner-recovery owned-runner-recovery--blocked"
-        >
-          <span className="eyebrow">Read-only account</span>
-          <h1 id="workout-verification-title">Verify before editing this workout</h1>
-          <p>The immutable snapshot remains saved. Verify your email before continuing.</p>
-        </section>
-      )}
+      <main>
+        {context.viewer.eligibleForPermanentMutations ? (
+          <OwnedWorkoutRunner
+            curatedVideosByExerciseId={curatedVideosByExerciseId}
+            effectiveExerciseIdBySnapshot={effectiveIds}
+            initialState={initialState}
+            substitutionCandidates={buildWorkoutRouteCandidates(
+              profileProgram.equipment.profileKind,
+              customExercises,
+            )}
+            unitSystem={profileProgram.preferences.unitSystem}
+          />
+        ) : (
+          <section
+            aria-labelledby="workout-verification-title"
+            className="owned-runner-recovery owned-runner-recovery--blocked"
+          >
+            <span className="eyebrow">Read-only account</span>
+            <h1 id="workout-verification-title">Verify before editing this workout</h1>
+            <p>The immutable snapshot remains saved. Verify your email before continuing.</p>
+          </section>
+        )}
+      </main>
     </div>
   );
 }
