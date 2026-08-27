@@ -1,5 +1,15 @@
 # Project log
 
+## 2026-08-27: Hosted Firebase email-action evidence
+
+- Continued the password lifecycle from synchronized production `f6b0ad6fa5397e51bcd0028fc11de9f619f09e21`, Ready as `dpl_3iYkkQSSzvYeYyFEvHX3WbAyJHhT`, on one in-place branch with no auxiliary worktree or delegated worker.
+- Retained 14 missing-contract failures before implementing strict Firebase action-link parsing, response-to-identity binding, independent registration/recovered credentials, bounded official Identity Toolkit requests, and stable non-sensitive stages. A later three-failure checkpoint moved every test identity to `example.invalid` and required two purpose-separated identities after Firebase returned `auth/internal-error` when Admin link generation immediately followed application email dispatch on the same account.
+- A safe capability check proved Firebase accepts the non-routable domain and generates verification/reset links in memory without email dispatch; the exact test identity was deleted and confirmed absent. A proposed cooldown test that would have sent a credential-bearing link to a routable address was blocked before execution and was not bypassed.
+- Exact checkpoint `fd9c051` passed 27 focused tests, strict TypeScript, scoped lint, 39-document parity, and the opt-in production Chromium `1440×1000` lifecycle. The sanitized result reported verification and reset action codes confirmed, old password rejected, recovered password accepted, secure cookie verified, revocation denial, exactly three first-party session mutations, and Firebase users `0 → 0` with cleanup confirmed.
+- The browser flow submitted no onboarding or application-data mutation. Both generated addresses were on `example.invalid`; no personal mailbox, routable test address, email, password, UID, action link, action code, API key, token, cookie value, provider payload, trace, video, browser profile, or network capture was retained. The two identity-free state screenshots were visually inspected.
+- This closes provider action-code completion, not message delivery. Firebase accepted the production application's verification and recovery requests, but actual inbox delivery/click remains unobserved. Google consent/reauthentication and Vercel Spend Management remain separate interactive gates.
+- Disk remained bounded after the restart: the run created only two screenshots totaling about 321 KB. Root and fixture build directories, Playwright reports/results, detached workers, and auxiliary worktrees remain absent; only the reusable 840 MB dependency tree and 781 MB pnpm store remain.
+
 ## 2026-08-27: Hosted authenticated media and actual-zoom release
 
 - Planned and implemented a fail-closed one-account production command for real Firebase sign-in/session exchange, dumbbell onboarding, owned Push start, both approved player demonstrations, first-embed failure recovery, native Chrome 200-percent reflow, restore, app-owned Axe, and exact Firebase/Neon cleanup. The command requires separate provider and native-zoom opt-ins and prints only stable stages or sanitized evidence.

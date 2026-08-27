@@ -46,6 +46,15 @@ The dedicated implementation brief dated August 25, 2026, is the authoritative s
 
 Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.
 
+## Firebase email action codes
+
+Accessed August 27, 2026:
+
+- [Firebase Admin email action links](https://firebase.google.com/docs/auth/admin/email-action-links): documents server-side generation of email-verification and password-reset links for exact Firebase users. The hosted QA extracts the bounded code only in process memory and never dispatches the Admin-generated link.
+- [Firebase Authentication REST API](https://firebase.google.com/docs/reference/rest/auth): documents the Identity Toolkit `accounts:update` verification-code operation and `accounts:resetPassword` inspection/confirmation operations used by the hosted QA.
+
+The project uses these endpoints only for exact generated `example.invalid` identities. The evidence proves provider action semantics and production sign-in after reset; it does not claim email delivery or an inbox click.
+
 ## Firebase Admin serverless dependency compatibility
 
 Accessed August 27, 2026:

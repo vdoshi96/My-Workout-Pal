@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="e9bfafe6fab4c0de50190cd8cb722478e6cbee50324436a2edc4e364cf4f4e2f">
+  <meta name="source-sha256" content="b62d09f58e54a8df2c70f026508e7151947962112f38d0e402c9688f35afcd47">
   <title>Sources · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -70,6 +70,13 @@
 <li>Publication: the optimized WebP and its prompt sidecar are project assets. Superseded generated candidates and private local source outputs are excluded.</li>
 </ul>
 <p>Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.</p>
+<h2>Firebase email action codes</h2>
+<p>Accessed August 27, 2026:</p>
+<ul>
+<li><a href="https://firebase.google.com/docs/auth/admin/email-action-links">Firebase Admin email action links</a>: documents server-side generation of email-verification and password-reset links for exact Firebase users. The hosted QA extracts the bounded code only in process memory and never dispatches the Admin-generated link.</li>
+<li><a href="https://firebase.google.com/docs/reference/rest/auth">Firebase Authentication REST API</a>: documents the Identity Toolkit <code>accounts:update</code> verification-code operation and <code>accounts:resetPassword</code> inspection/confirmation operations used by the hosted QA.</li>
+</ul>
+<p>The project uses these endpoints only for exact generated <code>example.invalid</code> identities. The evidence proves provider action semantics and production sign-in after reset; it does not claim email delivery or an inbox click.</p>
 <h2>Firebase Admin serverless dependency compatibility</h2>
 <p>Accessed August 27, 2026:</p>
 <ul>
