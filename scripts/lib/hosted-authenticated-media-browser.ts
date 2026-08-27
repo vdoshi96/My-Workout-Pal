@@ -82,6 +82,12 @@ export type HostedAuthenticatedMediaQaStage =
   | "session"
   | "workout_start"
   | "zoom"
+  | "zoom_app"
+  | "zoom_collection"
+  | "zoom_editor"
+  | "zoom_runner"
+  | "zoom_settings"
+  | "zoom_state"
   | "zoom_restore";
 
 export class HostedAuthenticatedMediaQaExecutionError extends Error {
@@ -601,7 +607,9 @@ async function verifyActualZoom(
   page: Page,
   origin: string,
   runnerPath: string,
+  setStage: (stage: HostedAuthenticatedMediaQaStage) => void,
 ): Promise<true> {
+  setStage("zoom_state");
   await page.goto(`${origin}/app`);
   await page.keyboard.press("Meta+0");
   await page.waitForTimeout(400);
@@ -623,12 +631,17 @@ async function verifyActualZoom(
       reportedPercent,
       restoredPercent: 100,
     }), true);
+    setStage("zoom_app");
     await assertOneAxis(page, `${origin}/app`, /Five-day starter route/u);
-    await assertOneAxis(page, `${origin}/app/programs`, /program collection/u);
-    await assertOneAxis(page, `${origin}/app/program/edit`, /program editor/u);
+    setStage("zoom_collection");
+    await assertOneAxis(page, `${origin}/app/programs`, /^Your routes$/u);
+    setStage("zoom_editor");
+    await assertOneAxis(page, `${origin}/app/program/edit`, /^Edit your route$/u);
     await assertAccessible(page);
+    setStage("zoom_settings");
     await assertOneAxis(page, `${origin}/app/settings`, /^Settings$/u);
-    await assertOneAxis(page, `${origin}${runnerPath}`, /workout/u);
+    setStage("zoom_runner");
+    await assertOneAxis(page, `${origin}${runnerPath}`, /^Push$/u);
     await assertAccessible(page);
   } finally {
     await page.keyboard.press("Meta+0");
@@ -711,7 +724,14 @@ export async function executeHostedAuthenticatedMediaQa(
     );
 
     stage = "zoom";
-    exactZoomVerified = await verifyActualZoom(page, config.origin, runnerPath);
+    exactZoomVerified = await verifyActualZoom(
+      page,
+      config.origin,
+      runnerPath,
+      (nextStage) => {
+        stage = nextStage;
+      },
+    );
     stage = "zoom_restore";
     await page.keyboard.press("Meta+0");
     stage = "accessibility";
