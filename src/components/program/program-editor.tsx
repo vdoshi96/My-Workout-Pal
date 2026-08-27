@@ -271,7 +271,10 @@ export function ProgramEditor({
 
   function dismissSectionRemoval() {
     setSectionRemoval(null);
-    queueMicrotask(() => sectionRemovalReturnFocusRef.current?.focus());
+    // Native dialog close focus restoration runs after the close event in WebKit.
+    // Defer our explicit destination until that browser work has settled so both
+    // cancel and confirmed removal land on the intended surviving control.
+    window.setTimeout(() => sectionRemovalReturnFocusRef.current?.focus(), 0);
   }
 
   function openChooser(next: ExerciseChooser) {
@@ -485,7 +488,11 @@ export function ProgramEditor({
     }
   }
 
-  function openSectionRemoval(dayIndex: number, sectionIndex: number) {
+  function openSectionRemoval(
+    dayIndex: number,
+    sectionIndex: number,
+    returnFocusTarget: HTMLElement,
+  ) {
     const section = draft.days[dayIndex]?.sections[sectionIndex];
     if (!section) return;
     try {
@@ -497,9 +504,9 @@ export function ProgramEditor({
           meaningForPrescription(prescription)?.label ?? prescription.displayName ?? "Exercise",
         ),
       );
-      sectionRemovalReturnFocusRef.current = document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+      // Mobile WebKit does not focus a button merely because it was tapped.
+      // Capture the actual disclosure control instead of relying on activeElement.
+      sectionRemovalReturnFocusRef.current = returnFocusTarget;
       setSectionRemoval({ dayIndex, review, sectionIndex });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "The section could not be reviewed.");
@@ -765,7 +772,11 @@ export function ProgramEditor({
                       ? "Core section is required on every day"
                       : `Remove ${sectionLabel} section`}
                     disabled={section.kind === "core" || selected.sections.length <= 1}
-                    onClick={() => openSectionRemoval(selectedDay, sectionIndex)}
+                    onClick={(event) => openSectionRemoval(
+                      selectedDay,
+                      sectionIndex,
+                      event.currentTarget,
+                    )}
                     type="button"
                   >Remove section</button>
                   {section.kind === "core" ? (

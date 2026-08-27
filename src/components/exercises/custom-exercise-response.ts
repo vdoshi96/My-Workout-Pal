@@ -38,6 +38,22 @@ function same(value: unknown, expected: unknown): boolean {
   return JSON.stringify(value) === JSON.stringify(expected);
 }
 
+function sameStringSet(value: readonly string[], expected: readonly string[]): boolean {
+  return same([...value].sort(), [...expected].sort());
+}
+
+function sameAliasSet(
+  value: readonly Readonly<{ alias: string; normalizedAlias: string }>[],
+  expected: readonly Readonly<{ alias: string; normalizedAlias: string }>[],
+): boolean {
+  const ordered = (aliases: readonly Readonly<{ alias: string; normalizedAlias: string }>[]) =>
+    [...aliases].sort((left, right) =>
+      left.normalizedAlias.localeCompare(right.normalizedAlias) ||
+      left.alias.localeCompare(right.alias),
+    );
+  return same(ordered(value), ordered(expected));
+}
+
 export function parseCustomExerciseMutationResponse(
   value: unknown,
   draft: CustomExerciseDraftInput,
@@ -56,8 +72,8 @@ export function parseCustomExerciseMutationResponse(
     exercise.name !== normalized.name ||
     exercise.loggingKind !== normalized.loggingKind ||
     exercise.instructions !== normalized.instructions ||
-    !same(exercise.equipmentIds, normalized.equipmentIds) ||
-    !same(exercise.aliases, normalized.aliases) ||
+    !sameStringSet(exercise.equipmentIds, normalized.equipmentIds) ||
+    !sameAliasSet(exercise.aliases, normalized.aliases) ||
     !same(exercise.youtubeVideoIds, normalized.youtubeVideoIds)
   ) {
     throw new Error("The server response does not match the saved custom exercise.");

@@ -377,12 +377,20 @@ export function parseEquipmentChangeResponse(
     fromSlug: change.fromSlug,
     prescriptionId: change.prescriptionId,
     toSlug: change.toSlug,
-  }));
+  })).sort((left, right) =>
+    left.prescriptionId.localeCompare(right.prescriptionId) ||
+    left.fromSlug.localeCompare(right.fromSlug) ||
+    left.toSlug.localeCompare(right.toSlug),
+  );
   const expectedChanges = expected.changes.map((change) => ({
     fromSlug: change.fromSlug,
     prescriptionId: change.prescriptionId,
     toSlug: change.toSlug,
-  }));
+  })).sort((left, right) =>
+    left.prescriptionId.localeCompare(right.prescriptionId) ||
+    left.fromSlug.localeCompare(right.fromSlug) ||
+    left.toSlug.localeCompare(right.toSlug),
+  );
   if (JSON.stringify(actualChanges) !== JSON.stringify(expectedChanges)) {
     throw new Error("The server response does not match the reviewed equipment substitutions.");
   }

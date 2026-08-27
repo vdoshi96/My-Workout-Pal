@@ -61,6 +61,21 @@ describe("private mutation success responses", () => {
       draft,
       exercise.id,
     )).toThrow("does not match the edited exercise");
+
+    const twoAliasDraft = {
+      ...draft,
+      aliases: ["Supported row", "Bench row"],
+    };
+    expect(parseCustomExerciseMutationResponse({
+      duplicate: false,
+      exercise: {
+        ...exercise,
+        aliases: [
+          { alias: "Bench row", normalizedAlias: "bench row" },
+          { alias: "Supported row", normalizedAlias: "supported row" },
+        ],
+      },
+    }, twoAliasDraft).exercise.aliases).toHaveLength(2);
   });
 
   it("does not navigate after a malformed or wrong-identity delete response", () => {

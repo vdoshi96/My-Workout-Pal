@@ -332,6 +332,49 @@ describe("program editor request model", () => {
     expect(programPublishRequestSchema.safeParse(publishableImperialDraft()).success).toBe(true);
   });
 
+  it("binds equipment success to the exact reviewed substitution set independent of database order", () => {
+    const activeProgram = programReadModel();
+    const firstId = activeProgram.days[0]!.sections[0]!.prescriptions[0]!.id;
+    const secondId = activeProgram.days[1]!.sections[0]!.prescriptions[0]!.id;
+    const expected = [
+      {
+        cleared: ["load target", "distance target", "movement metadata"] as const,
+        dayDisplayName: "Push",
+        fromName: "First movement",
+        fromSlug: "first-from",
+        prescriptionId: firstId,
+        preserved: ["sets", "rep range", "rest", "section", "order", "notes"] as const,
+        toName: "First replacement",
+        toSlug: "first-to",
+      },
+      {
+        cleared: ["load target", "distance target", "movement metadata"] as const,
+        dayDisplayName: "Pull",
+        fromName: "Second movement",
+        fromSlug: "second-from",
+        prescriptionId: secondId,
+        preserved: ["sets", "rep range", "rest", "section", "order", "notes"] as const,
+        toName: "Second replacement",
+        toSlug: "second-to",
+      },
+    ];
+    const envelope = {
+      profileProgram: {
+        activeProgram,
+        affectedProgramId: activeProgram.id,
+        affectedRevisionId: activeProgram.revisionId,
+        changes: expected.toReversed(),
+        replayed: false,
+      },
+    };
+
+    expect(parseEquipmentChangeResponse(envelope, {
+      changes: expected,
+      programId: activeProgram.id,
+      targetProfileKind: "dumbbells",
+    }).changeCount).toBe(2);
+  });
+
   it("edits sections immutably with stable keys and an explicit truthful removal review", () => {
     const input = programPublishInputFromReadModel(programReadModel(), "publish-key");
     const draft = programEditorDraftFromPublishInput(input);
