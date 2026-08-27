@@ -735,7 +735,9 @@ test("owned customization publishes once, preserves history, and derives private
   ]);
   await alice.page.getByRole("button", { name: "Move Custom assistance section up" }).click();
 
-  const walkerEditor = alice.page.locator('section[aria-labelledby="cardio-push-walker"]');
+  const walkerEditor = alice.page
+    .locator("fieldset.program-editor-cardio section")
+    .filter({ has: alice.page.getByRole("heading", { exact: true, level: 3, name: "walker" }) });
   await walkerEditor.getByLabel("Duration seconds").fill("900");
   const walkerDistance = walkerEditor.getByLabel("Distance miles");
   await walkerDistance.selectText();
@@ -743,7 +745,10 @@ test("owned customization publishes once, preserves history, and derives private
   await expect(walkerDistance).toHaveValue("0.1");
   await walkerEditor.getByLabel("Notes").fill("QA walker target");
   await alice.page.getByLabel("Day name").fill("Power Push");
-  await alice.page.locator(".program-editor-outline").getByRole("button", { name: /Pull/ }).click();
+  await alice.page
+    .locator(".program-editor-outline")
+    .getByRole("button", { name: /Pull \d+ movements$/u })
+    .click();
   const substitutedRow = alice.page
     .locator("li.program-editor-prescription")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "Chest-supported dumbbell row" }) });
@@ -788,7 +793,10 @@ test("owned customization publishes once, preserves history, and derives private
   await expect(alice.page.getByText(/Published revision 2/)).toBeVisible();
   await expect(alice.page.getByText("Draft matches the active revision")).toBeVisible();
   expect(await readScopeSummary(alice.page)).toEqual(acceptedPublishSummary);
-  await alice.page.locator(".program-editor-outline").getByRole("button", { name: /Power Push/ }).click();
+  await alice.page
+    .locator(".program-editor-outline")
+    .getByRole("button", { name: /Power Push \d+ movements$/u })
+    .click();
   if (testInfo.project.name === "chromium-desktop") {
     const editorEvidence = testInfo.outputPath("authenticated-custom-editor-desktop.png");
     await alice.page.screenshot({ fullPage: true, path: editorEvidence });
@@ -920,7 +928,10 @@ test("owned customization publishes once, preserves history, and derives private
 
   await alice.page.getByRole("link", { name: "Program", exact: true }).click();
   await alice.page.getByRole("link", { name: /Edit program/ }).click();
-  await alice.page.locator(".program-editor-outline").getByRole("button", { name: /Power Push/ }).click();
+  await alice.page
+    .locator(".program-editor-outline")
+    .getByRole("button", { name: /Power Push \d+ movements$/u })
+    .click();
   const metricCustomPrescription = alice.page
     .locator("li.program-editor-prescription")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "QA supported row" }) });
@@ -928,7 +939,9 @@ test("owned customization publishes once, preserves history, and derives private
   await expect(metricCustomPrescription.getByLabel("Notes")).toHaveValue(
     "QA immutable program note",
   );
-  const metricWalker = alice.page.locator('section[aria-labelledby="cardio-push-walker"]');
+  const metricWalker = alice.page
+    .locator("fieldset.program-editor-cardio section")
+    .filter({ has: alice.page.getByRole("heading", { exact: true, level: 3, name: "walker" }) });
   await expect(metricWalker.getByLabel("Distance metres")).toHaveValue("160.934");
   await expect(alice.page.getByText("Draft matches the active revision")).toBeVisible();
   await alice.page.getByRole("link", { name: "Back to program" }).click();
