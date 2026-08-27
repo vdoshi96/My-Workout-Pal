@@ -20,6 +20,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:authenticated": "node scripts/test-e2e-authenticated.mjs",
+    "test:e2e:hosted-auth": "node --env-file-if-exists=.env.local --import tsx scripts/test-e2e-hosted-auth.ts",
     "test:e2e:release": "node scripts/test-e2e-release.mjs",
     "pwa:build": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/render-service-worker.mjs",
     "pwa:check": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/render-service-worker.mjs --check",

@@ -48,10 +48,12 @@ function validatedOrigin(value: string | undefined): string {
   }
 }
 
-export function parseHostedAuthQaConfig(environment: HostedAuthEnvironment): Readonly<{
+export type HostedAuthQaConfig = Readonly<{
   origin: string;
   projectId: string;
-}> {
+}>;
+
+export function parseHostedAuthQaConfig(environment: HostedAuthEnvironment): HostedAuthQaConfig {
   if (environment["MWP_HOSTED_AUTH_EXTERNAL_ACCOUNT_APPROVED"] !== "1") {
     throw new HostedAuthQaConfigurationError("approval_required");
   }
