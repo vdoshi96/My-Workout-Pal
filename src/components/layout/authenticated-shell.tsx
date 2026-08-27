@@ -1,15 +1,19 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import type { FirebasePublicConfig } from "@/client/firebase";
 import { AuthenticatedNav } from "@/components/layout/authenticated-nav";
+import { AuthenticatedSessionSignOut } from "@/components/layout/authenticated-session-sign-out";
 import { Icon } from "@/components/ui/icon";
 import type { ViewerContext } from "@/server/auth/viewer";
 
 export function AuthenticatedShell({
   children,
+  firebaseConfig = null,
   viewer,
 }: Readonly<{
   children: ReactNode;
+  firebaseConfig?: FirebasePublicConfig | null;
   viewer: ViewerContext;
 }>) {
   return (
@@ -23,11 +27,17 @@ export function AuthenticatedShell({
             <small>Saved training route</small>
           </span>
         </Link>
-        <div className="member-identity">
-          <span>{viewer.displayName}</span>
-          <small className={viewer.eligibleForPermanentMutations ? "identity-ready" : "identity-limited"}>
-            {viewer.eligibleForPermanentMutations ? "Verified account" : "Email verification required"}
-          </small>
+        <div className="member-account-controls">
+          <div className="member-identity">
+            <span>{viewer.displayName}</span>
+            <small className={viewer.eligibleForPermanentMutations ? "identity-ready" : "identity-limited"}>
+              {viewer.eligibleForPermanentMutations ? "Verified account" : "Email verification required"}
+            </small>
+          </div>
+          <AuthenticatedSessionSignOut
+            firebaseConfig={firebaseConfig}
+            ownerUid={viewer.uid}
+          />
         </div>
         <AuthenticatedNav />
       </header>

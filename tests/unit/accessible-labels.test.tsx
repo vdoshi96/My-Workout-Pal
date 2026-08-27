@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/app",
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }),
 }));
 
 import { AuthenticatedShell } from "@/components/layout/authenticated-shell";
@@ -63,5 +64,6 @@ describe("visible labels remain in accessible names", () => {
     }
     expect(publicMarkup).toContain("Training route atlas");
     expect(authenticatedMarkup).toContain("Saved training route");
+    expect(authenticatedMarkup).toContain("Sign out");
   });
 });

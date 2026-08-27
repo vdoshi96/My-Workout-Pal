@@ -26,6 +26,7 @@ import type { FirebasePublicConfig } from "@/client/firebase";
 import { getFirebaseClientAuth } from "@/client/firebase";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
+import { performSessionSignOut } from "@/client/session-sign-out";
 import { FirebaseClientIdentityStatus } from "@/components/settings/firebase-client-identity-status";
 import { Icon } from "@/components/ui/icon";
 import { parsePreferencesMutationResponse } from "@/components/settings/preferences-response";
@@ -186,12 +187,25 @@ export function SettingsForm({
     setBusy(true);
     setMessage("Clearing this account’s local workout drafts…");
     try {
-      await createIndexedDBRunnerStorage({ ownerUid }).clearOwner?.(ownerUid);
-      await privateApiMutation<{ authenticated: false }>("/api/auth/session", {
-        body: {},
-        method: "DELETE",
-      });
-      if (firebaseConfig) await signOut(getFirebaseClientAuth(firebaseConfig));
+      const storage = createIndexedDBRunnerStorage({ ownerUid });
+      await performSessionSignOut(
+        {
+          clearOwner: async (uid) => {
+            if (!storage.clearOwner) {
+              throw new Error("Local account cleanup is unavailable.");
+            }
+            await storage.clearOwner(uid);
+          },
+          deleteServerSession: () => privateApiMutation<unknown>(
+            "/api/auth/session",
+            { body: {}, method: "DELETE" },
+          ),
+          signOutFirebase: async () => {
+            if (firebaseConfig) await signOut(getFirebaseClientAuth(firebaseConfig));
+          },
+        },
+        ownerUid,
+      );
       router.replace("/sign-in");
       router.refresh();
     } catch (error) {

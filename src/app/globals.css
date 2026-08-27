@@ -257,12 +257,17 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .member-frame { margin: 0 auto; max-width: 94rem; min-height: 100dvh; padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
 .member-header { align-items: center; background: var(--ink); color: var(--paper); display: grid; gap: 1rem; min-height: 5.75rem; padding: 1rem clamp(1rem, 4vw, 4rem); }
 .member-header .brand strong { display: block; font-family: var(--font-display); font-size: clamp(1.8rem, 6vw, 2.5rem); font-weight: 600; letter-spacing: -.02em; line-height: .9; text-transform: uppercase; }
+.member-account-controls { align-items: end; display: flex; gap: .7rem; justify-content: space-between; }
 .member-identity { display: none; text-align: right; }
 .member-identity > span, .member-identity > small { display: block; }
 .member-identity > span { font-weight: 650; }
 .member-identity > small { font-size: .78rem; margin-top: .15rem; }
 .identity-ready { color: var(--lichen-light); }
 .identity-limited { color: #ffc1b4; }
+.member-session-signout { align-items: end; display: grid; gap: .25rem; justify-items: end; }
+.member-session-signout button { align-items: center; background: transparent; border: 1px solid currentColor; color: var(--paper); cursor: pointer; display: inline-flex; font: inherit; gap: .45rem; min-height: 2.75rem; padding: .45rem .7rem; }
+.member-session-signout button:disabled { cursor: wait; opacity: .72; }
+.member-session-signout p { font-size: .72rem; line-height: 1.25; margin: 0; max-width: 20rem; text-align: end; }
 .member-nav { background: var(--ink); bottom: 0; color: var(--paper); display: grid; grid-template-columns: repeat(5, 1fr); left: 0; padding: .55rem max(.5rem, env(safe-area-inset-left)) calc(.55rem + env(safe-area-inset-bottom)) max(.5rem, env(safe-area-inset-right)); position: fixed; right: 0; z-index: 20; }
 .member-nav a { align-items: center; display: flex; flex-direction: column; font-family: var(--font-display); font-size: .68rem; gap: .2rem; letter-spacing: .04em; min-height: 3.5rem; padding: .35rem .1rem; text-decoration: none; text-transform: uppercase; }
 .member-nav a[aria-current="page"] { color: var(--coral-on-ink); }
@@ -587,7 +592,11 @@ svg { display: block; height: 1.4em; width: 1.4em; }
   .member-frame { display: grid; grid-template-columns: 15rem minmax(0, 1fr); padding-bottom: 0; }
   .member-header { align-content: start; grid-row: 1 / span 2; grid-template-columns: 1fr; min-height: 100dvh; padding: 1.5rem; position: sticky; top: 0; }
   .member-header .brand { align-self: start; }
-  .member-identity { align-self: end; display: block; grid-row: 2; }
+  .member-account-controls { align-self: end; display: grid; gap: .75rem; grid-row: 2; justify-items: stretch; }
+  .member-identity { display: block; }
+  .member-session-signout { justify-items: stretch; }
+  .member-session-signout button { justify-content: center; width: 100%; }
+  .member-session-signout p { text-align: start; }
   .member-nav { align-self: center; background: transparent; display: grid; gap: .35rem; grid-row: 3; grid-template-columns: 1fr; padding: 0; position: static; }
   .member-nav a { align-items: center; border: 1px solid transparent; flex-direction: row; font-size: .95rem; gap: .7rem; justify-content: flex-start; padding: .7rem; }
   .member-nav a[aria-current="page"] { border-color: currentColor; }
