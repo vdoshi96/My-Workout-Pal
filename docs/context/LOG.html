@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="ba7c2dcc906ba479c9ea53b5451867cd189efb2674df044df15ea11e1990f660">
+  <meta name="source-sha256" content="2e16dc23f86207b464cfb8c36f6954d7f097f5ff9572cadb362f7643787a68f2">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -36,6 +36,8 @@
 <li>The run submitted exactly three first-party session mutations and no application-data mutation. Its exact captured Firebase identity was deleted in <code>finally</code>; aggregate user count was <code>0</code> before and <code>0</code> after. No generated email, password, UID, token, cookie value, provider payload, trace, video, storage state, or browser profile was retained.</li>
 <li><code>pnpm verify</code> on the released navigation fix passes 97 files/660 tests, four database files/34 assertions, exact-two seed, PWA and 35-document parity, the production Webpack build, and the 41-route boundary. Production <code>/</code>, <code>/program</code>, <code>/library</code>, <code>/sign-in</code>, and unauthenticated <code>/app</code> return <code>200</code>; the one-hour exact-deployment error query has no entry.</li>
 <li>Visually inspected the newest unverified and verified desktop screenshots and removed the superseded Firebase-hydration QA run. Root <code>.next</code> created 203 MB during verification and was deleted immediately; fixture build/results/report directories are absent, one primary checkout remains, and free volume is about 195 GiB.</li>
+<li>Simplified the temporary diagnostic tree, reran the complete production lifecycle successfully at exact harness source <code>3734cafb135b9cd5d1a0da3e80b93190a1d318a5</code>, and repeated the full aggregate on the final evidence tree: 97 files/660 tests, four database files/34 assertions, exact-two seed, PWA/docs/build, and the 41-route boundary.</li>
+<li>Published source-and-evidence checkpoint <code>a6ee66c68d95bb678a9c0ad80f8e9bb956cdf653</code> to <code>main</code>. GitHub reports success and production <code>dpl_EB3S4VW25KwGasmAgsF6r61t3ExW</code> is Ready on the public aliases. The final five-route replay returned <code>200</code> and the one-hour error scan had no entry. Both completed hosted-auth branches were removed locally and from GitHub.</li>
 </ul>
 <h2>2026-08-27: Hosted password-auth lifecycle plan continuation</h2>
 <ul>

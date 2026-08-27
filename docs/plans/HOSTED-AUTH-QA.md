@@ -94,7 +94,7 @@ The second command loads ignored local Firebase configuration internally. It mus
 
 ## Completed password-lifecycle evidence
 
-Exact production runtime `c60814e530c0d367e90661217859671379b31bad` is Ready as `dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D`. The final simplified evidence-source checkpoint `3734cafb135b9cd5d1a0da3e80b93190a1d318a5` passed the opt-in Chromium `1440×1000` lifecycle with three first-party session mutations, secure-cookie confirmation, empty serious/critical Axe results, and Firebase aggregate user count `0` before and `0` after cleanup. Recovery and verification requests were accepted but inbox delivery was intentionally not claimed. Google consent, hosted deletion, and hosted two-user authorization remain separate lanes.
+Exact production runtime `c60814e530c0d367e90661217859671379b31bad` is Ready as `dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D`. The final simplified evidence-source checkpoint `3734cafb135b9cd5d1a0da3e80b93190a1d318a5` passed the opt-in Chromium `1440×1000` lifecycle with three first-party session mutations, secure-cookie confirmation, empty serious/critical Axe results, and Firebase aggregate user count `0` before and `0` after cleanup. The complete maintained runner and evidence are released on `main` at `a6ee66c68d95bb678a9c0ad80f8e9bb956cdf653`, Ready as `dpl_EB3S4VW25KwGasmAgsF6r61t3ExW`, without a later application-runtime change. Recovery and verification requests were accepted but inbox delivery was intentionally not claimed. Google consent, hosted deletion, and hosted two-user authorization remain separate lanes.
 
 ## Browser evidence required for completion
 

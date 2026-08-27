@@ -2,7 +2,7 @@
 
 ## Scope
 
-This is the newest completed QA run. It covers the public production application at exact runtime commit `c60814e530c0d367e90661217859671379b31bad`, Ready deployment `dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D`, and the simplified privacy-safe hosted runner at exact evidence-source checkpoint `3734cafb135b9cd5d1a0da3e80b93190a1d318a5`.
+This is the newest completed QA run. The credentialed lifecycle exercised the public production application at exact runtime commit `c60814e530c0d367e90661217859671379b31bad`, Ready deployment `dpl_8afudXf6iSeZVXSCAnhz8JgXYF1D`, with the simplified privacy-safe hosted runner at exact evidence-source checkpoint `3734cafb135b9cd5d1a0da3e80b93190a1d318a5`. The complete maintained runner and evidence are published on `main` at `a6ee66c68d95bb678a9c0ad80f8e9bb956cdf653`, Ready as production deployment `dpl_EB3S4VW25KwGasmAgsF6r61t3ExW`; that later release does not change application runtime behavior.
 
 The run used one generated high-entropy password identity in the reserved `example.com` domain. It did not use a personal mailbox or member account, submit onboarding, create Neon-owned data, or retain any email, password, UID, token, cookie value, provider payload, trace, video, or browser profile.
 
