@@ -767,6 +767,140 @@ describe("owner-scoped workout repository", () => {
     expect((await repository.history(viewer(fixture.otherUid))).sessions).toHaveLength(0);
   });
 
+  it("removes recognized older projections for warm-up and skipped sources without touching future versions", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(database);
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      dayId: fixture.dayId,
+      idempotencyKey: "start-stale-projection-sources",
+      programId: fixture.programId,
+    });
+    const weightExercises = started.model.snapshot.exercises.filter(
+      ({ loggingKind }) => loggingKind === "weight_reps",
+    );
+    const warmupExercise = weightExercises[0];
+    const skippedExercise = weightExercises[1];
+    if (!warmupExercise || !skippedExercise) {
+      throw new Error("fixture needs two weight exercises");
+    }
+    const warmupState = started.model.exerciseStates.find(
+      ({ snapshotId }) => snapshotId === warmupExercise.id,
+    );
+    const skippedState = started.model.exerciseStates.find(
+      ({ snapshotId }) => snapshotId === skippedExercise.id,
+    );
+    if (!warmupState?.effectiveCatalogExerciseId || !skippedState?.effectiveCatalogExerciseId) {
+      throw new Error("fixture needs catalog identities");
+    }
+    const [warmupLog, skippedLog] = await database
+      .insert(setLogs)
+      .values([
+        {
+          clientIdempotencyKey: "stale-warmup-source",
+          measurementKind: "weight_reps",
+          ownerFirebaseUid: fixture.ownerUid,
+          recordedAt: new Date("2026-08-25T14:00:00.000Z"),
+          repetitions: 8,
+          sessionId: started.model.session.id,
+          setKind: "warmup",
+          setPosition: 1,
+          snapshotId: warmupExercise.id,
+          weightKg: 10,
+        },
+        {
+          clientIdempotencyKey: "stale-skipped-source",
+          measurementKind: "weight_reps",
+          ownerFirebaseUid: fixture.ownerUid,
+          recordedAt: new Date("2026-08-25T14:01:00.000Z"),
+          repetitions: 8,
+          sessionId: started.model.session.id,
+          setKind: "work",
+          setPosition: 1,
+          snapshotId: skippedExercise.id,
+          weightKg: 20,
+        },
+      ])
+      .returning({ id: setLogs.id });
+    if (!warmupLog || !skippedLog) throw new Error("fixture logs were not stored");
+    await database
+      .update(workoutExerciseStates)
+      .set({
+        lastClientOperationId: "stale-warmup-state",
+        status: "completed",
+        version: warmupState.version + 1,
+      })
+      .where(eq(workoutExerciseStates.snapshotId, warmupExercise.id));
+    await database
+      .update(workoutExerciseStates)
+      .set({
+        lastClientOperationId: "stale-skipped-state",
+        status: "skipped",
+        version: skippedState.version + 1,
+      })
+      .where(eq(workoutExerciseStates.snapshotId, skippedExercise.id));
+    await database
+      .update(workoutSessions)
+      .set({
+        completedAt: new Date("2026-08-25T14:02:00.000Z"),
+        state: "completed",
+      })
+      .where(eq(workoutSessions.id, started.model.session.id));
+    await database.insert(personalRecords).values([
+      {
+        achievedAt: new Date("2026-08-25T14:00:00.000Z"),
+        calculationVersion: "v1",
+        catalogExerciseId: warmupState.effectiveCatalogExerciseId,
+        id: randomUUID(),
+        ownerFirebaseUid: fixture.ownerUid,
+        sourceSetLogId: warmupLog.id,
+        type: "max_weight",
+        value: 10,
+      },
+      {
+        achievedAt: new Date("2026-08-25T14:01:00.000Z"),
+        calculationVersion: "v1",
+        catalogExerciseId: skippedState.effectiveCatalogExerciseId,
+        id: randomUUID(),
+        ownerFirebaseUid: fixture.ownerUid,
+        sourceSetLogId: skippedLog.id,
+        type: "max_weight",
+        value: 20,
+      },
+      {
+        achievedAt: new Date("2026-08-25T14:01:00.000Z"),
+        calculationVersion: "v99",
+        catalogExerciseId: skippedState.effectiveCatalogExerciseId,
+        id: randomUUID(),
+        ownerFirebaseUid: fixture.ownerUid,
+        sourceSetLogId: skippedLog.id,
+        type: "volume",
+        value: 160,
+      },
+    ]);
+
+    await expect(rebuildPersonalRecordProjections(database)).resolves.toMatchObject({
+      candidateCount: 0,
+      changedCount: 2,
+      deletedCount: 2,
+      mode: "dry_run",
+    });
+    await expect(
+      rebuildPersonalRecordProjections(database, { apply: true }),
+    ).resolves.toMatchObject({
+      candidateCount: 0,
+      changedCount: 2,
+      deletedCount: 2,
+      mode: "applied",
+    });
+    expect(
+      await database
+        .select({ calculationVersion: personalRecords.calculationVersion })
+        .from(personalRecords)
+        .where(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid)),
+    ).toEqual([{ calculationVersion: "v99" }]);
+  });
+
   it("returns stable errors and freezes an abandoned session", async () => {
     const { database } = await openDatabase();
     const fixture = await createFixture(database);

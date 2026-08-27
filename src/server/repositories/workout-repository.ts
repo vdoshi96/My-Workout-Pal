@@ -32,7 +32,6 @@ import {
   parseMeasurement,
   personalRecordCalculationVersionRank,
   type MeasurementKind,
-  type PersistedPersonalRecordType,
   type WorkoutMeasurement,
 } from "@/domain/analytics";
 import {
@@ -535,12 +534,6 @@ type PersonalRecordProjectionSetRow = Readonly<{
   effectiveLoggingKind: MeasurementKind;
 }>;
 
-type PersonalRecordProjectionSource = Readonly<{
-  identity: Readonly<{ catalogExerciseId: string | null; customExerciseId: string | null }>;
-  setLogId: string;
-  emittedTypes: ReadonlySet<PersistedPersonalRecordType>;
-}>;
-
 function projectionMeasurement(row: PersonalRecordProjectionSetRow): WorkoutMeasurement | undefined {
   if (row.measurementKind !== row.effectiveLoggingKind) return undefined;
   try {
@@ -596,6 +589,14 @@ async function projectPersonalRecords(
   insertedCount: number;
   updatedCount: number;
 }>> {
+  const sessionSources = await tx
+    .select({ setLogId: setLogs.id })
+    .from(setLogs)
+    .where(and(
+      eq(setLogs.ownerFirebaseUid, ownerUid),
+      eq(setLogs.sessionId, sessionId),
+    ))
+    .orderBy(asc(setLogs.id));
   const rows = await tx
     .select({
       setLogId: setLogs.id,
@@ -627,7 +628,6 @@ async function projectPersonalRecords(
     ))
     .orderBy(asc(setLogs.id));
 
-  const sources = new Map<string, PersonalRecordProjectionSource>();
   const candidates = (rows as PersonalRecordProjectionSetRow[]).flatMap((row) => {
     const identity = projectionIdentity(row);
     if (!identity) return [];
@@ -639,11 +639,6 @@ async function projectPersonalRecords(
     if (!identityKey) return [];
     const measurement = projectionMeasurement(row);
     const generated = measurement === undefined ? [] : buildPersonalRecordProjectionCandidates(measurement);
-    sources.set(`${row.setLogId}:${identityKey}`, {
-      emittedTypes: new Set(generated.map(({ recordType }) => recordType)),
-      identity,
-      setLogId: row.setLogId,
-    });
     return generated.map((candidate) => ({
       id: deterministicSeedUuid(
         "personal-record",
@@ -665,7 +660,7 @@ async function projectPersonalRecords(
     throw new Error(`Unsupported personal-record calculation version: ${PERSONAL_RECORD_CALCULATION_VERSION}`);
   }
 
-  if (candidates.length === 0 && sources.size === 0) {
+  if (candidates.length === 0 && sessionSources.length === 0) {
     return { candidateCount: 0, changedCount: 0, deletedCount: 0, insertedCount: 0, updatedCount: 0 };
   }
 
@@ -740,47 +735,47 @@ async function projectPersonalRecords(
     if (updated[0]) updatedCount += 1;
   }
 
-  for (const source of sources.values()) {
-    const identityPredicate = source.identity.catalogExerciseId === null
-      ? and(
-          isNull(personalRecords.catalogExerciseId),
-          eq(personalRecords.customExerciseId, source.identity.customExerciseId!),
-        )
-      : and(
-          eq(personalRecords.catalogExerciseId, source.identity.catalogExerciseId),
-          isNull(personalRecords.customExerciseId),
-        );
-    const existing = await tx
-      .select({
-        calculationVersion: personalRecords.calculationVersion,
-        id: personalRecords.id,
-        type: personalRecords.type,
-      })
-      .from(personalRecords)
-      .where(and(
-        eq(personalRecords.ownerFirebaseUid, ownerUid),
-        eq(personalRecords.sourceSetLogId, source.setLogId),
-        identityPredicate,
-      ));
-    const staleIds = existing
-      .filter(({ calculationVersion, type }) => {
-        const rank = personalRecordCalculationVersionRank(calculationVersion);
-        return rank !== undefined && rank < currentVersionRank && !source.emittedTypes.has(type);
-      })
-      .map(({ id }) => id);
-    if (staleIds.length > 0) {
-      if (!persist) {
-        deletedCount += staleIds.length;
-      } else {
-        const deleted = await tx
-          .delete(personalRecords)
-          .where(and(
-            eq(personalRecords.ownerFirebaseUid, ownerUid),
-            inArray(personalRecords.id, staleIds),
-          ))
-          .returning({ id: personalRecords.id });
-        deletedCount += deleted.length;
-      }
+  const candidateKeys = new Set(candidates.map((candidate) =>
+    `${candidate.sourceSetLogId}:${candidate.catalogExerciseId === null ? `custom:${candidate.customExerciseId}` : `catalog:${candidate.catalogExerciseId}`}:${candidate.type}`,
+  ));
+  const existingSessionRecords = sessionSources.length === 0
+    ? []
+    : await tx
+        .select({
+          calculationVersion: personalRecords.calculationVersion,
+          catalogExerciseId: personalRecords.catalogExerciseId,
+          customExerciseId: personalRecords.customExerciseId,
+          id: personalRecords.id,
+          sourceSetLogId: personalRecords.sourceSetLogId,
+          type: personalRecords.type,
+        })
+        .from(personalRecords)
+        .where(and(
+          eq(personalRecords.ownerFirebaseUid, ownerUid),
+          inArray(personalRecords.sourceSetLogId, sessionSources.map(({ setLogId }) => setLogId)),
+        ));
+  const staleIds = existingSessionRecords
+    .filter((record) => {
+      const rank = personalRecordCalculationVersionRank(record.calculationVersion);
+      if (rank === undefined || rank >= currentVersionRank) return false;
+      const identityKey = record.catalogExerciseId === null
+        ? `custom:${record.customExerciseId}`
+        : `catalog:${record.catalogExerciseId}`;
+      return !candidateKeys.has(`${record.sourceSetLogId}:${identityKey}:${record.type}`);
+    })
+    .map(({ id }) => id);
+  if (staleIds.length > 0) {
+    if (!persist) {
+      deletedCount += staleIds.length;
+    } else {
+      const deleted = await tx
+        .delete(personalRecords)
+        .where(and(
+          eq(personalRecords.ownerFirebaseUid, ownerUid),
+          inArray(personalRecords.id, staleIds),
+        ))
+        .returning({ id: personalRecords.id });
+      deletedCount += deleted.length;
     }
   }
 
