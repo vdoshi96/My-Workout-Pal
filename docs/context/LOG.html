@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="90817e3686aa445a7528678724afafd275e7ab52479facccb24c707662a4b074">
+  <meta name="source-sha256" content="bf1e499959dac0e174595c4fae70e27f9d60ff7ee98966d0862cfbb22c9014ca">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,13 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-27: Runner resilience production release closeout</h2>
+<ul>
+<li>Fast-forwarded the reviewed runner lane into <code>main</code>. Code-and-test checkpoint <code>f0d888f09af143ecce2a0f7ef82f11f2e64adb5f</code> and QA checkpoint <code>fdfb01d97b6149f99b0c292930d06450bf910387</code> are in the public repository with no merge rewrite.</li>
+<li>GitHub records Preview and Production deployments for exact runtime checkpoint <code>fdfb01d</code>. Preview <code>dpl_FDtgFVBry5PBcmyHDEQRNjR7F1Zj</code> and production <code>dpl_7rEUfeHhrUA3ZwSFwPLuQbBTw59m</code> are Ready. The production deployment owns the public, project, and Git-main aliases.</li>
+<li>The production Chromium-phone guest journey passed from landing through both equipment profiles, all public resources, and contextual exercise return. <code>/</code>, <code>/program</code>, <code>/library</code>, <code>/sign-in</code>, and the bounded unauthenticated <code>/app</code> surface returned <code>200</code>; <code>/app</code> retained private no-store security headers and <code>returnTo=%2Fapp</code>. The one-hour production error scan returned no entries.</li>
+<li>This final documentation-only closeout changes no application source. After its Git integration deployment is Ready, local <code>main</code>, GitHub <code>main</code>, and the deployed commit must match before the feature branch is removed.</li>
+</ul>
 <h2>2026-08-27: Runner resilience source and post-restart evidence checkpoint</h2>
 <ul>
 <li>Exact runner checkpoint <code>f0d888f09af143ecce2a0f7ef82f11f2e64adb5f</code> is pushed on <code>qa/runner-resilience</code> from released base <code>b8d4e9f327b67fdf755f338b1d335630159f3089</code>. Production and provider state remain unchanged.</li>

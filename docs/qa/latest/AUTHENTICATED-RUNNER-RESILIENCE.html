@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b44531ca6cfb0e880f229bdf3834b7dd2e4f4e86b58f20864533e0baaf8bb46b">
+  <meta name="source-sha256" content="006e549a48fd5aca7199ac4092de2d9186160701a8703a4f4453f369b7b21dc3">
   <title>Authenticated runner resilience QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -63,6 +63,7 @@
 <li><code>pnpm verify</code> passed on exact code-and-test checkpoint <code>f0d888f09af143ecce2a0f7ef82f11f2e64adb5f</code> with this canonical documentation working set: strict TypeScript, full lint, 90 test files and 633 assertions, four database files and 34 migration/bootstrap assertions, all 27 exact-two approved-video mappings, PWA and 34-document parity, the Next.js 16.3.2 Webpack production build, and the 41-route production fixture-exclusion boundary.</li>
 <li><code>pnpm test:e2e:authenticated</code> passed 29 cases with one intentional engine-scoped skip on exact checkpoint <code>f7cbe85d377c777e51520feec4e9348b508f5bfe</code> across the complete authenticated project matrix.</li>
 <li><code>pnpm test:e2e:release</code> passed 43 cases with one documented WebKit service-worker skip on exact code-and-test checkpoint <code>f0d888f09af143ecce2a0f7ef82f11f2e64adb5f</code>.</li>
+<li>GitHub records production deployment <code>dpl_7rEUfeHhrUA3ZwSFwPLuQbBTw59m</code> for exact runtime checkpoint <code>fdfb01d97b6149f99b0c292930d06450bf910387</code>. The deployment is Ready with the public, project, and Git-main aliases. A production Chromium-phone replay passed the complete guest discovery journey; the five public/private-gate probes returned <code>200</code>, <code>/app</code> retained its bounded sign-in return and private no-store policy, and the one-hour error scan returned no entries.</li>
 <li>After the computer restart, <code>pnpm test:e2e:authenticated -- tests/authenticated-e2e/runner-resilience.spec.ts</code> passed 12 of 12 cases on screenshot checkpoint <code>089df2f0790973a63e1800d878d551db6a57ff35</code> across Chromium desktop and WebKit phone. Test-only checkpoints <code>295d155</code> and <code>089df2f</code> changed discovery timing and retained screenshots. Primary-review source checkpoint <code>27d85a9</code> passed 30 storage tests, scoped lint, and strict TypeScript after its three-test fail-first correction. Checkpoint <code>f7cbe85</code> then passed the formerly failing terminal case 2 of 2 and the complete authenticated matrix 29 passed with one intentional WebKit-only incompatible-equipment skip.</li>
 </ul>
 <p>Local or synthetic evidence doesn&#39;t replace hosted Firebase or production-authenticated proof.</p>

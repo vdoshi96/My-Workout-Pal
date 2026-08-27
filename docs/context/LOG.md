@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-08-27: Runner resilience production release closeout
+
+- Fast-forwarded the reviewed runner lane into `main`. Code-and-test checkpoint `f0d888f09af143ecce2a0f7ef82f11f2e64adb5f` and QA checkpoint `fdfb01d97b6149f99b0c292930d06450bf910387` are in the public repository with no merge rewrite.
+- GitHub records Preview and Production deployments for exact runtime checkpoint `fdfb01d`. Preview `dpl_FDtgFVBry5PBcmyHDEQRNjR7F1Zj` and production `dpl_7rEUfeHhrUA3ZwSFwPLuQbBTw59m` are Ready. The production deployment owns the public, project, and Git-main aliases.
+- The production Chromium-phone guest journey passed from landing through both equipment profiles, all public resources, and contextual exercise return. `/`, `/program`, `/library`, `/sign-in`, and the bounded unauthenticated `/app` surface returned `200`; `/app` retained private no-store security headers and `returnTo=%2Fapp`. The one-hour production error scan returned no entries.
+- This final documentation-only closeout changes no application source. After its Git integration deployment is Ready, local `main`, GitHub `main`, and the deployed commit must match before the feature branch is removed.
+
 ## 2026-08-27: Runner resilience source and post-restart evidence checkpoint
 
 - Exact runner checkpoint `f0d888f09af143ecce2a0f7ef82f11f2e64adb5f` is pushed on `qa/runner-resilience` from released base `b8d4e9f327b67fdf755f338b1d335630159f3089`. Production and provider state remain unchanged.
