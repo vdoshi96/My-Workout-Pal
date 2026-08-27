@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d9c42dbf5f332b916e7bd1b5227ecac5392169bd2389d49e49c945b782aa8754">
+  <meta name="source-sha256" content="4fea6c2f2f85ffb7a1c68cb2291bd6e2e9d12e014b8e5e5fabfa7f896d78cf2e">
   <title>Hosted authentication QA plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -59,7 +59,7 @@
 <p>CSRF and cross-user behavior remain covered by the existing integration and repository matrices. This lane does not weaken the same-origin boundary or add a test-only production route. A later two-identity hosted lane must use opaque owned resource IDs and verify missing/foreign response equivalence without accepting a client UID.</p>
 <h2>Loading, empty, error, interrupted, and worst-case behavior</h2>
 <p>The runner validates all configuration before launching a browser. Missing secrets, a non-HTTPS or unknown origin, project mismatch, or absent explicit approval stops before registration. The test records the created UID immediately after Firebase confirms registration. Every later operation is inside <code>try/finally</code>; cleanup is attempted even after a browser assertion, session, verification, recovery, sign-out, or revocation failure.</p>
-<p>First-party console, HTTP, page-error, and request-failure collectors fail closed. The only navigation-metadata exception is a browser-reported <code>ERR_ABORTED</code> or <code>cancelled</code> GET for the exact <code>/manifest.webmanifest</code> path while a full-document authentication transition supersedes the page; API, RSC, script, style, image, and every other failed request remain fatal. The two deliberate Firebase Identity Toolkit 400 responses are awaited by exact operation and must match the browser&#39;s two generic failed-resource console messages.</p>
+<p>First-party console, HTTP, page-error, and request-failure collectors fail closed. The only navigation-metadata exception is a browser-reported <code>ERR_ABORTED</code> or <code>cancelled</code> GET or HEAD request for the exact <code>/manifest.webmanifest</code> path while a full-document authentication transition supersedes the page; API, RSC, script, style, image, mutation, and every other failed request remain fatal. The two deliberate Firebase Identity Toolkit 400 responses are awaited by exact operation and must match the browser&#39;s two generic failed-resource console messages.</p>
 <p>If cleanup fails, the command exits nonzero and prints only a safe instruction that one disposable identity requires operator cleanup. It must not print the identity or raw provider error. A killed process between registration and <code>finally</code> is the worst path; the run report must inspect aggregate Firebase user count before and after execution and must not claim cleanup without a confirmed <code>auth/user-not-found</code> result.</p>
 <h2>Mobile, tablet, and desktop behavior</h2>
 <p>The first hosted password lifecycle runs in desktop Chromium to prove the provider and server boundary with minimal repeated external activity. After that passes, the same already-provisioned verified identity may be exercised read-only on phone, tablet, and WebKit for layout, keyboard, and accessibility evidence. Registration, recovery email dispatch, verification mutation, revocation, and deletion are not repeated merely to obtain viewport screenshots.</p>

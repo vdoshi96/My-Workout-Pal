@@ -44,6 +44,7 @@ describe("hosted authentication QA command", () => {
       "utf8",
     );
     expect(browserSource).toContain('url.pathname === "/manifest.webmanifest"');
+    expect(browserSource).toContain('["GET", "HEAD"].includes(request.method())');
     expect(browserSource).toContain('errorText.startsWith("net::ERR_ABORTED")');
     expect(browserSource).toContain('errorText === "cancelled"');
   });
