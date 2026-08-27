@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-27: Authenticated Vercel Spend Management inspection
+
+- Completed Vercel two-factor authentication through the user-controlled handoff and inspected the Pro team's billing controls read-only. The existing on-demand budget is $200; Spend Management is enabled in alerts-only mode; pause-all-production-projects is off; and no webhook is configured.
+- Personal Vercel web and email notifications are enabled. The Spend Management preferences show checked thresholds at 50%, 75%, and 100%. The dashboard and official documentation expose no 90% Spend Management threshold; SMS is not enabled.
+- No amount, subscription, webhook, pause, project, plan, add-on, payment, billing, or deployment setting changed. The available hard-cap control is team-wide rather than project-scoped and would make every production deployment unavailable at the threshold, so it remains off pending an explicit high-impact decision.
+- The user completed the production Google popup. Although the popup briefly appeared blank and closed, the exact production tab then reached `/app` with the private pre-onboarding surface, account navigation, and sign-out action; this proves Google consent, identity exchange, secure server session, and bounded return. No onboarding or application-data mutation was submitted under the user's Google identity, and Google deletion reauthentication remains separate.
+- The inspection created no local build, screenshot, trace, video, report, browser profile, or provider export. The checkout remained clean before documentation reconciliation; only the primary worktree and reusable dependency/store caches remain, with about 188 GiB free.
+
 ## 2026-08-27: Hosted Firebase email-action evidence
 
 - Continued the password lifecycle from synchronized production `f6b0ad6fa5397e51bcd0028fc11de9f619f09e21`, Ready as `dpl_3iYkkQSSzvYeYyFEvHX3WbAyJHhT`, on one in-place branch with no auxiliary worktree or delegated worker.

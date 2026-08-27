@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="bc3bfe3e95c12618dab8830f848b46c310f0ba65c86b7db9547dc50c0d446447">
+  <meta name="source-sha256" content="3bba798a90abab74e01bc1b2badd21c4c9b5fab9d7a6dbd8a370d137bbe87a7d">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,14 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-27: Authenticated Vercel Spend Management inspection</h2>
+<ul>
+<li>Completed Vercel two-factor authentication through the user-controlled handoff and inspected the Pro team&#39;s billing controls read-only. The existing on-demand budget is $200; Spend Management is enabled in alerts-only mode; pause-all-production-projects is off; and no webhook is configured.</li>
+<li>Personal Vercel web and email notifications are enabled. The Spend Management preferences show checked thresholds at 50%, 75%, and 100%. The dashboard and official documentation expose no 90% Spend Management threshold; SMS is not enabled.</li>
+<li>No amount, subscription, webhook, pause, project, plan, add-on, payment, billing, or deployment setting changed. The available hard-cap control is team-wide rather than project-scoped and would make every production deployment unavailable at the threshold, so it remains off pending an explicit high-impact decision.</li>
+<li>The user completed the production Google popup. Although the popup briefly appeared blank and closed, the exact production tab then reached <code>/app</code> with the private pre-onboarding surface, account navigation, and sign-out action; this proves Google consent, identity exchange, secure server session, and bounded return. No onboarding or application-data mutation was submitted under the user&#39;s Google identity, and Google deletion reauthentication remains separate.</li>
+<li>The inspection created no local build, screenshot, trace, video, report, browser profile, or provider export. The checkout remained clean before documentation reconciliation; only the primary worktree and reusable dependency/store caches remain, with about 188 GiB free.</li>
+</ul>
 <h2>2026-08-27: Hosted Firebase email-action evidence</h2>
 <ul>
 <li>Continued the password lifecycle from synchronized production <code>f6b0ad6fa5397e51bcd0028fc11de9f619f09e21</code>, Ready as <code>dpl_3iYkkQSSzvYeYyFEvHX3WbAyJHhT</code>, on one in-place branch with no auxiliary worktree or delegated worker.</li>

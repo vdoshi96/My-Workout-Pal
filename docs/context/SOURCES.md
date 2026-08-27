@@ -21,6 +21,8 @@
 - [Connect Vercel and Neon manually](https://neon.com/docs/guides/vercel-manual) — accessed August 25, 2026; confirms the canonical `DATABASE_URL` connection boundary and supported separation between Neon and Vercel configuration.
 - [Drizzle ORM Neon guide](https://orm.drizzle.team/docs/connect-neon) — accessed August 25, 2026; confirms the supported Neon serverless driver and Drizzle connection boundary used by migration, seed, and verification commands.
 - [Firebase CLI reference](https://firebase.google.com/docs/cli) — accessed August 25, 2026; confirms the official project, web-app, authentication configuration, and authenticated CLI workflow. The local Firebase CLI is not installed; the signed-in Firebase Console verified project `my-workout-pal-92819` and initialized Authentication on August 26, 2026.
+- [Vercel Spend Management](https://vercel.com/docs/spend-management) — accessed August 27, 2026; confirms Pro availability, automatic 50%, 75%, and 100% thresholds, alerts-only behavior unless a pause action is enabled, and the team-wide production-pause boundary.
+- [Vercel notifications](https://vercel.com/docs/notifications) — accessed August 27, 2026; confirms per-user web, email, push, and SMS notification controls. The authenticated dashboard inspection verified web/email Spend Management subscriptions and all three supported thresholds without changing them.
 
 ## Private reference recording
 

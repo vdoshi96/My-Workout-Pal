@@ -43,15 +43,17 @@ Primary references:
 
 The Vercel Pro plan includes a $20 monthly credit after included allocations. Credit does not make overage impossible. Spend Management can notify, call a webhook, or pause production projects at the configured spend amount. Setting a spend amount does not pause usage unless the pause action is enabled.
 
-Configure the following controls only within the existing Pro plan and without increasing paid limits:
+The authenticated dashboard was inspected on August 27, 2026. It currently has a $200 on-demand budget in alerts-only mode. Web and email Spend Management subscriptions are on, their 50%, 75%, and 100% thresholds are checked, SMS is off, the webhook field is empty, and pause-all-production-projects is off. No setting changed during inspection.
 
-- Confirm the automatic 50%, 75%, and 100% spend-amount web and email notifications.
-- Configure a 90% usage notification where the Vercel dashboard exposes that threshold for the relevant usage category. The Spend Management budget itself documents only 50%, 75%, and 100%; record any unavailable 90% control rather than claiming it exists.
-- Enable the supported pause-all-production-projects action at 100% of the chosen spend amount as the hard-cap behavior.
+Maintain the following controls only within the existing Pro plan and without increasing paid limits:
+
+- Reconfirm the automatic 50%, 75%, and 100% spend-amount web and email notifications after any budget or billing-role change.
+- Record 90% as unavailable unless Vercel adds that threshold; the current Spend Management control exposes only 50%, 75%, and 100%.
+- Enable pause-all-production-projects only after the user explicitly accepts that the action affects every production project on the team, not just My Workout Pal.
 - Record that checks can lag the threshold and that some overage can occur before pause takes effect.
 - Do not set or change the spend amount until the user approves the dollar value because it controls potential billing and can pause unrelated team projects.
 
-The production deployment confirms the team and deployment are on Pro. The in-app browser is not signed in to Vercel, so current Spend Management state and personal notification channels have not been changed or claimed. Official current documentation exposes automatic spend-budget thresholds at 50%, 75%, and 100%; a separate 90% usage notification may exist per usage category, but 90% is not a Spend Management budget threshold. No positive overage amount is authorized.
+The production deployment and authenticated dashboard confirm that the team is on Pro. The existing $200 amount is observed configuration, not new spending authority. Official documentation and the live control agree on 50%, 75%, and 100%; 90% is unavailable. The current alerts-only configuration permits usage to continue after the threshold. A team-wide pause is the supported hard-cap behavior but remains intentionally disabled until explicitly approved.
 
 Track the following usage separately:
 
@@ -168,7 +170,7 @@ Publish a new cache version, retain pending IndexedDB operations, and remove onl
 ## Credential and approval gates
 
 - GitHub source and Vercel Git integration are configured. Local, GitHub, and deployment commit metadata must still be checked after every release.
-- Firebase project `my-workout-pal-92819` exists on Spark with its web app, Email/Password and Google providers, reviewed public settings, and required authorized domains configured. Ignored local storage contains the validated client/Admin values. After explicit authorization, the six non-private values are attached to Vercel Production, Preview, and Development; the Admin private key is Hidden/Sensitive in Production and Preview and intentionally absent from Development because Vercel rejects sensitive Development variables. Hosted Google, recovery, expiry, revocation, and adversarial account-flow replay remain verification work; terms or 2FA remain user actions if a provider prompts for them.
+- Firebase project `my-workout-pal-92819` exists on Spark with its web app, Email/Password and Google providers, reviewed public settings, and required authorized domains configured. Ignored local storage contains the validated client/Admin values. After explicit authorization, the six non-private values are attached to Vercel Production, Preview, and Development; the Admin private key is Hidden/Sensitive in Production and Preview and intentionally absent from Development because Vercel rejects sensitive Development variables. Hosted password registration/recovery/action codes, expiry, revocation, cross-owner denial, deletion, and production Google sign-in are verified. Actual email delivery/inbox interaction and Google reauthentication remain user-interactive evidence; terms or 2FA remain user actions if a provider prompts for them.
 - Neon is already connected on `free_v3`; any plan change, billing method, trial acceptance, or billable add-on requires the user.
 - Spend amount and hard-cap configuration can affect every project on the Vercel team and requires the user to approve the dollar amount before mutation.
 - Ignored `.env.local` contains the YouTube Data API key. The published exact-two manifest and Neon seed are complete. Any future refresh or replacement run still requires successful bounded discovery with sufficient quota, mechanical eligibility, full-watch and scoped playback approval, exact-two validation, and an explicitly reviewed publication change.
