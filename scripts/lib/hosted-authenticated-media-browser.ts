@@ -625,6 +625,7 @@ async function verifyActualZoom(
   const reportedPercent = Math.round(
     devicePixelRatioAfter / devicePixelRatioBefore * 100,
   );
+  let reflowAssertionsPassed = false;
 
   try {
     assert.equal(reportedPercent, 200);
@@ -641,8 +642,9 @@ async function verifyActualZoom(
     setStage("zoom_runner");
     await assertOneAxis(page, `${origin}${runnerPath}`, /^Push$/u);
     await assertAccessible(page);
+    reflowAssertionsPassed = true;
   } finally {
-    setStage("zoom_restore");
+    if (reflowAssertionsPassed) setStage("zoom_restore");
     await requestNativeZoom("restore_100_percent");
     await page.waitForTimeout(400);
   }

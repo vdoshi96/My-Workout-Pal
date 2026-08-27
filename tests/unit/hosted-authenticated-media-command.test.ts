@@ -62,6 +62,7 @@ describe("hosted authenticated media QA command", () => {
     expect(browserSource).toContain('`${origin}${runnerPath}`, /^Push$/u');
     expect(browserSource).toContain('requestNativeZoom("set_200_percent")');
     expect(browserSource).toContain('requestNativeZoom("restore_100_percent")');
+    expect(browserSource).toContain("if (reflowAssertionsPassed) setStage");
     expect(browserSource).not.toContain('page.keyboard.press("Meta+=")');
     expect(browserSource).toContain('setStage("media_demo_one")');
     expect(browserSource).toContain('setStage("media_demo_two")');
