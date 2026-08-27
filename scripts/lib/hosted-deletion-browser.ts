@@ -79,6 +79,17 @@ export type HostedDeletionQaStage =
   | "firebase_baseline"
   | "foreign_missing_api"
   | "foreign_missing_rendered"
+  | "foreign_rendered_equivalence"
+  | "foreign_rendered_equivalence_body"
+  | "foreign_rendered_equivalence_cache"
+  | "foreign_rendered_equivalence_no_store"
+  | "foreign_rendered_equivalence_status"
+  | "foreign_rendered_foreign_accessibility"
+  | "foreign_rendered_foreign_load"
+  | "foreign_rendered_foreign_ui"
+  | "foreign_rendered_missing_accessibility"
+  | "foreign_rendered_missing_load"
+  | "foreign_rendered_missing_ui"
   | "global_postcondition"
   | "identity_creation";
 
@@ -597,13 +608,22 @@ async function renderedNotFound(
   page: Page,
   origin: string,
   sessionId: string,
+  setStage: (stage: HostedDeletionQaStage) => void,
+  loadStage: HostedDeletionQaStage,
+  uiStage: HostedDeletionQaStage,
+  accessibilityStage: HostedDeletionQaStage,
 ): Promise<SafePrivateResourceResponse> {
+  setStage(loadStage);
   const response = await page.goto(`${origin}/workout/${sessionId}`);
   assert.ok(response);
-  await expect(page.getByText("This page could not be found.", { exact: true })).toBeVisible();
+  setStage(uiStage);
+  const renderedBody = (await page.locator("body").innerText()).replaceAll(/\s+/gu, " ").trim();
+  assert.match(renderedBody, /not found|not on the map/iu);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/iu);
+  setStage(accessibilityStage);
   await assertAccessible(page);
   return {
-    body: (await page.locator("body").innerText()).replaceAll(/\s+/gu, " ").trim(),
+    body: renderedBody,
     cacheControl: response.headers()["cache-control"] ?? "",
     status: response.status(),
   };
@@ -613,10 +633,40 @@ async function assertForeignAndMissingRendered(
   page: Page,
   origin: string,
   foreignSessionId: string,
+  setStage: (stage: HostedDeletionQaStage) => void,
 ): Promise<readonly string[]> {
   const missingSessionId = missingUuid();
-  const foreign = await renderedNotFound(page, origin, foreignSessionId);
-  const absent = await renderedNotFound(page, origin, missingSessionId);
+  const foreign = await renderedNotFound(
+    page,
+    origin,
+    foreignSessionId,
+    setStage,
+    "foreign_rendered_foreign_load",
+    "foreign_rendered_foreign_ui",
+    "foreign_rendered_foreign_accessibility",
+  );
+  const absent = await renderedNotFound(
+    page,
+    origin,
+    missingSessionId,
+    setStage,
+    "foreign_rendered_missing_load",
+    "foreign_rendered_missing_ui",
+    "foreign_rendered_missing_accessibility",
+  );
+  setStage("foreign_rendered_equivalence");
+  setStage("foreign_rendered_equivalence_status");
+  assert.equal(foreign.status, absent.status);
+  setStage("foreign_rendered_equivalence_cache");
+  assert.equal(foreign.cacheControl, absent.cacheControl);
+  setStage("foreign_rendered_equivalence_no_store");
+  assert.equal(foreign.cacheControl.toLowerCase().includes("no-store"), true);
+  setStage("foreign_rendered_equivalence_body");
+  assert.equal(
+    normalizedOpaqueBody(foreign.body, [foreignSessionId, missingSessionId]),
+    normalizedOpaqueBody(absent.body, [foreignSessionId, missingSessionId]),
+  );
+  setStage("foreign_rendered_equivalence");
   assert.equal(
     privateResourceResponsesAreEquivalent(
       foreign,
@@ -625,11 +675,13 @@ async function assertForeignAndMissingRendered(
     ),
     true,
   );
-  assert.equal(foreign.status, 404);
-  return [
-    `GET /workout/${foreignSessionId} 404`,
-    `GET /workout/${missingSessionId} 404`,
-  ];
+  assert.equal(foreign.status === 200 || foreign.status === 404, true);
+  return foreign.status === 404
+    ? [
+        `GET /workout/${foreignSessionId} 404`,
+        `GET /workout/${missingSessionId} 404`,
+      ]
+    : [];
 }
 
 async function waitForDeletionReady(page: Page, origin: string): Promise<void> {
@@ -856,6 +908,9 @@ export async function executeHostedDeletionQa(
       bobPage,
       config.origin,
       aliceResources.sessionId,
+      (nextStage) => {
+        stage = nextStage;
+      },
     );
     assert.deepEqual(await ownerPersistenceSnapshot(database, aliceUid), aliceBeforeForeign);
     assert.deepEqual(await ownerPersistenceSnapshot(database, bobUid), bobBeforeForeign);

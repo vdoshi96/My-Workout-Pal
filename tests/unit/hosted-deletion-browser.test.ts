@@ -24,6 +24,11 @@ describe("hosted deletion browser evidence", () => {
       { ...foreign, status: 403 },
       [],
     )).toBe(false);
+    expect(privateResourceResponsesAreEquivalent(
+      { ...foreign, status: 200 },
+      { ...foreign, status: 200 },
+      [],
+    )).toBe(true);
   });
 
   it("normalizes only caller-supplied opaque identifiers before comparison", () => {
