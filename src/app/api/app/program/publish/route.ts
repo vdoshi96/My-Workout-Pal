@@ -6,7 +6,7 @@ import { getCurrentViewer } from "@/server/auth/viewer";
 import {
   privateJson,
   readBoundedJson,
-  requirePrivateViewer,
+  requirePrivateMutationViewer,
 } from "@/server/http/custom-exercise-api";
 import {
   profileProgramApiError,
@@ -20,7 +20,7 @@ export const revalidate = 0;
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     assertValidMutationRequest(request);
-    const viewer = requirePrivateViewer(await getCurrentViewer());
+    const viewer = requirePrivateMutationViewer(await getCurrentViewer());
     const input = programPublishRequestSchema.parse(await readBoundedJson(request));
     const profileProgram = await publishViewerProgram(getDatabase(), viewer, input);
     return privateJson({ profileProgram });

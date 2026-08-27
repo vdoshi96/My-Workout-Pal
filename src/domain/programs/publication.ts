@@ -3,6 +3,25 @@ import { z } from "zod";
 const idempotencyKeySchema = z.string().trim().min(1).max(180);
 const nullableBoundedText = (maximum: number) =>
   z.string().trim().min(1).max(maximum).nullable();
+const hasCanonicalThreeDecimalScale = (value: number): boolean =>
+  Number(value.toFixed(3)) === value;
+const canonicalMeters = (minimum: number) =>
+  z
+    .number()
+    .finite()
+    .refine(hasCanonicalThreeDecimalScale, {
+      message: "Use no more than three decimal places for meters.",
+    })
+    .min(minimum)
+    .max(10_000_000);
+const canonicalKilograms = z
+  .number()
+  .finite()
+  .refine(hasCanonicalThreeDecimalScale, {
+    message: "Use no more than three decimal places for kilograms.",
+  })
+  .min(0)
+  .max(100_000);
 
 const programPrescriptionPublishSchema = z
   .object({
@@ -18,8 +37,8 @@ const programPrescriptionPublishSchema = z
     setCount: z.number().int().min(1).max(20),
     setKind: z.enum(["warmup", "work"]),
     sourcePrescriptionId: z.string().uuid().nullable(),
-    targetDistanceM: z.number().int().positive().max(10_000_000).nullable(),
-    targetWeightKg: z.number().finite().min(0).max(100_000).nullable(),
+    targetDistanceM: canonicalMeters(0).positive().nullable(),
+    targetWeightKg: canonicalKilograms.nullable(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -75,7 +94,7 @@ const programSectionPublishSchema = z
 
 const programCardioPublishSchema = z
   .object({
-    distanceM: z.number().int().min(0).max(10_000_000).nullable(),
+    distanceM: canonicalMeters(0).nullable(),
     durationSeconds: z.number().int().positive().max(604_800),
     inclinePercent: z.number().finite().min(0).max(100).nullable(),
     mode: z.enum(["walker", "runner"]),
@@ -96,6 +115,9 @@ const programDayPublishSchema = z
   .superRefine((value, context) => {
     if (new Set(value.sections.map(({ kind }) => kind)).size !== value.sections.length) {
       context.addIssue({ code: "custom", message: "Section kinds must be unique." });
+    }
+    if (value.sections.filter(({ kind }) => kind === "core").length !== 1) {
+      context.addIssue({ code: "custom", message: "Include exactly one core section." });
     }
     if (new Set(value.cardio.map(({ mode }) => mode)).size !== 2) {
       context.addIssue({ code: "custom", message: "Include one walker and one runner template." });

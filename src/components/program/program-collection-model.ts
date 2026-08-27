@@ -7,7 +7,7 @@ const programSummarySchema = z
     equipmentProfileKind: z.enum(["dumbbells", "barbell"]),
     id: z.string().uuid(),
     isActive: z.boolean(),
-    name: z.string().min(1).max(180),
+    name: z.string().min(1).max(80),
     programKey: z.string().min(1).max(180),
     revisionId: z.string().uuid(),
     revisionNumber: z.number().int().positive(),
@@ -26,7 +26,9 @@ const programCollectionResponseSchema = z
           })
           .passthrough(),
         affectedProgramId: z.string().uuid(),
+        affectedRevisionId: z.string().uuid(),
         programs: z.array(programSummarySchema).min(1).max(24),
+        replayed: z.boolean(),
       })
       .passthrough(),
   })
@@ -34,12 +36,36 @@ const programCollectionResponseSchema = z
 
 export type ProgramCollectionClientModel = Readonly<{
   activeProgramId: string;
+  activeProgramName: string;
   affectedProgramId: string;
+  affectedProgramName: string;
+  affectedRevisionId: string;
   programs: readonly ProgramSummaryReadModel[];
+  replayed: boolean;
 }>;
+
+export type ProgramCollectionMutationExpectation = Readonly<
+  | {
+      equipmentProfileKind: "dumbbells" | "barbell";
+      kind: "create";
+      name: string;
+    }
+  | {
+      kind: "clone";
+      name: string;
+      sourceEquipmentProfileKind: "dumbbells" | "barbell";
+      sourceProgramId: string;
+    }
+  | {
+      kind: "activate";
+      programId: string;
+      revisionId: string;
+    }
+>;
 
 export function parseProgramCollectionResponse(
   value: unknown,
+  expected: ProgramCollectionMutationExpectation,
 ): ProgramCollectionClientModel {
   const parsed = programCollectionResponseSchema.safeParse(value);
   if (!parsed.success) {
@@ -66,35 +92,72 @@ export function parseProgramCollectionResponse(
     );
   }
 
-  if (
-    !parsed.data.profileProgram.programs.some(
-      (program) => program.id === parsed.data.profileProgram.affectedProgramId,
-    )
-  ) {
+  const affectedProgram = parsed.data.profileProgram.programs.find(
+    (program) => program.id === parsed.data.profileProgram.affectedProgramId,
+  );
+  if (!affectedProgram) {
     throw new Error(
       "The affected program is missing from the collection response.",
     );
   }
+  if (affectedProgram.revisionId !== parsed.data.profileProgram.affectedRevisionId) {
+    throw new Error(
+      "The affected revision does not match the collection response.",
+    );
+  }
+  if (
+    (expected.kind === "activate" &&
+      (affectedProgram.id !== expected.programId ||
+        affectedProgram.revisionId !== expected.revisionId)) ||
+    (expected.kind === "create" &&
+      (affectedProgram.name !== expected.name ||
+        affectedProgram.equipmentProfileKind !== expected.equipmentProfileKind)) ||
+    (expected.kind === "clone" &&
+      (affectedProgram.id === expected.sourceProgramId ||
+        affectedProgram.name !== expected.name ||
+        affectedProgram.equipmentProfileKind !== expected.sourceEquipmentProfileKind))
+  ) {
+    throw new Error("The server response does not match the requested program operation.");
+  }
 
   return {
     activeProgramId: activeProgram.id,
+    activeProgramName: activeProgram.name,
     affectedProgramId: parsed.data.profileProgram.affectedProgramId,
+    affectedProgramName: affectedProgram.name,
+    affectedRevisionId: parsed.data.profileProgram.affectedRevisionId,
     programs: parsed.data.profileProgram.programs,
+    replayed: parsed.data.profileProgram.replayed,
+  };
+}
+
+export function programCollectionSuccess(
+  model: ProgramCollectionClientModel,
+): Readonly<{ message: string; openActiveOverview: boolean }> {
+  if (model.activeProgramId === model.affectedProgramId) {
+    return {
+      message: `${model.affectedProgramName} is active. Opening its overview…`,
+      openActiveOverview: true,
+    };
+  }
+  return {
+    message: `${model.affectedProgramName} is already stored, but ${model.activeProgramName} remains active. Review your collection before opening an overview.`,
+    openActiveOverview: false,
   };
 }
 
 export function validatedProgramName(value: string): string {
   const normalized = value.trim();
   if (normalized.length === 0) throw new Error("Enter a program name.");
-  if (normalized.length > 180) {
-    throw new Error("Use 180 characters or fewer for the program name.");
+  if (normalized.length > 80) {
+    throw new Error("Use 80 characters or fewer for the program name.");
   }
   return normalized;
 }
 
 export function suggestedCloneName(sourceName: string): string {
   const suffix = " copy";
-  return `${sourceName.slice(0, 180 - suffix.length).trimEnd()}${suffix}`;
+  return `${sourceName.slice(0, 80 - suffix.length).trimEnd()}${suffix}`;
 }
 
 export function retryableOperationKey(

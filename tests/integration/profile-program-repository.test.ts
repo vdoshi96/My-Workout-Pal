@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Database } from "@/db/client";
 import { schema } from "@/db/schema";
 import { seedStarterDatabase } from "@/db/starter-seed";
+import { programEditorCanonicalValue } from "@/components/program/program-editor-model";
 import type { ProgramPublishInput } from "@/domain/programs/publication";
 import {
   createProfileProgramRepository,
@@ -140,6 +141,8 @@ describe("profile and active-program repository", () => {
       idempotencyKey: "publish-editor-1",
       name: "My durable route",
     });
+    const imperialDistanceM = programEditorCanonicalValue("0.1", "distance", "imperial");
+    if (imperialDistanceM === null) throw new Error("imperial distance conversion failed");
     const firstSection = input.days[0]!.sections[0]!;
     const edited: ProgramPublishInput = {
       ...input,
@@ -147,6 +150,9 @@ describe("profile and active-program repository", () => {
         dayIndex === 0
           ? {
               ...day,
+              cardio: day.cardio.map((cardio, cardioIndex) =>
+                cardioIndex === 0 ? { ...cardio, distanceM: imperialDistanceM } : cardio,
+              ) as ProgramPublishInput["days"][number]["cardio"],
               sections: day.sections.map((section, sectionIndex) =>
                 sectionIndex === 0
                   ? {
@@ -168,7 +174,8 @@ describe("profile and active-program repository", () => {
 
     const published = await repository.publishProgram(viewer("member-editor"), edited);
     const replay = await repository.publishProgram(viewer("member-editor"), edited);
-    expect(replay).toEqual(published);
+    expect(published.replayed).toBe(false);
+    expect(replay).toEqual({ ...published, replayed: true });
     await expect(
       repository.publishProgram(viewer("member-editor"), {
         ...edited,
@@ -180,6 +187,7 @@ describe("profile and active-program repository", () => {
       revisionNumber: 2,
       equipmentProfileKind: "dumbbells",
     });
+    expect(published.activeProgram?.days[0]?.cardio[0]?.distanceM).toBe(160.934);
     expect(
       published.activeProgram?.days[0]?.sections[0]?.prescriptions.map(({ id, notes, restSeconds }) => ({ id, notes, restSeconds })),
     ).toEqual(
@@ -218,6 +226,22 @@ describe("profile and active-program repository", () => {
         idempotencyKey: "publish-editor-unverified",
       }),
     ).rejects.toMatchObject({ code: "email_unverified" });
+    await expect(
+      repository.publishProgram(viewer("member-editor"), {
+        ...edited,
+        idempotencyKey: "publish-editor-excess-distance-precision",
+        days: edited.days.map((day, dayIndex) =>
+          dayIndex === 0
+            ? {
+                ...day,
+                cardio: day.cardio.map((cardio, cardioIndex) =>
+                  cardioIndex === 0 ? { ...cardio, distanceM: 160.9345 } : cardio,
+                ) as ProgramPublishInput["days"][number]["cardio"],
+              }
+            : day,
+        ) as ProgramPublishInput["days"],
+      }),
+    ).rejects.toBeInstanceOf(RepositoryValidationError);
 
     const barbellExerciseId = (
       await raw.query<{ id: string }>("SELECT id FROM catalog_exercises WHERE slug = 'barbell-back-squat';")
@@ -267,6 +291,19 @@ describe("profile and active-program repository", () => {
         "SELECT count(*)::text AS count FROM program_revisions WHERE owner_firebase_uid = 'member-editor';",
       ),
     ).resolves.toMatchObject({ rows: [{ count: "2" }] });
+
+    const other = await repository.createProgramFromStarter(viewer("member-editor"), {
+      equipmentProfileKind: "barbell",
+      idempotencyKey: "activate-other-after-publish",
+      name: "Other active route",
+    });
+    const replayAfterSwitch = await repository.publishProgram(viewer("member-editor"), edited);
+    expect(replayAfterSwitch).toMatchObject({
+      activeProgram: { id: other.affectedProgramId },
+      affectedProgramId: source.id,
+      affectedRevisionId: published.affectedRevisionId,
+      replayed: true,
+    });
   });
   it("onboards one complete dumbbell profile and replays stably", async () => {
     const { database, raw } = await openDatabase();
@@ -487,7 +524,8 @@ describe("profile and active-program repository", () => {
       idempotencyKey: "equipment-a",
     });
 
-    expect(changed).toEqual(replay);
+    expect(changed.replayed).toBe(false);
+    expect(replay).toEqual({ ...changed, replayed: true });
     expect(changed.equipment.profileKind).toBe("barbell");
     const changedProgram = changed.activeProgram;
     if (!changedProgram) throw new Error("equipment change removed the active program");
@@ -518,6 +556,24 @@ describe("profile and active-program repository", () => {
         { status: "published", revision_number: 1 },
         { status: "published", revision_number: 2 },
       ],
+    });
+
+    const other = await repository.createProgramFromStarter(viewer("member-a"), {
+      equipmentProfileKind: "dumbbells",
+      idempotencyKey: "activate-other-after-equipment",
+      name: "Other active route",
+    });
+    const replayAfterSwitch = await repository.confirmEquipmentChange(viewer("member-a"), {
+      programId: ownProgram.id,
+      baseRevisionId: ownProgram.revisionId,
+      equipmentProfileKind: "barbell",
+      idempotencyKey: "equipment-a",
+    });
+    expect(replayAfterSwitch).toMatchObject({
+      activeProgram: { id: other.affectedProgramId },
+      affectedProgramId: ownProgram.id,
+      affectedRevisionId: changedProgram.revisionId,
+      replayed: true,
     });
   });
 

@@ -1,30 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
+import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
+import { parseProgramPublishResponse } from "@/components/program/program-mutation-response";
+import { reconcileProgramRevisionMutation } from "@/components/program/program-revision-reconciliation";
 import {
   addProgramPrescription,
+  addProgramSection,
   filterProgramExerciseCandidates,
-  programPublishInputFromReadModel,
+  programEditorCanonicalValue,
+  programEditorDisplayValue,
+  programEditorDraftFromReadModel,
+  programEditorExerciseCandidateKey,
+  programEditorUnitLabels,
   removeProgramPrescription,
+  removeProgramSection,
   replaceProgramPrescription,
+  renameProgramSection,
+  reorderProgramSection,
   reorderProgramPrescription,
+  reviewProgramSectionRemoval,
   stripLocalProgramPrescriptionIds,
   validateProgramExerciseSelections,
+  PROGRAM_SECTION_KINDS,
+  type ProgramEditorDraft,
+  type ProgramEditorMeasurement,
   type ProgramExerciseCandidate,
+  type ProgramEditorUnitSystem,
+  type ProgramSectionRemovalReview,
 } from "@/components/program/program-editor-model";
 import { Icon } from "@/components/ui/icon";
-import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import {
   programPublishRequestSchema,
   type ProgramPublishInput,
 } from "@/domain/programs/publication";
 import type {
   ActiveProgramReadModel,
-  ProfileProgramReadModel,
 } from "@/server/repositories/profile-program";
 
 function operationKey(): string {
@@ -46,6 +61,80 @@ function publishFailure(error: unknown): string {
   return "The draft was not published. Check the connection and try again.";
 }
 
+function CanonicalMeasurementInput({
+  canonicalValue,
+  max,
+  measurement,
+  min,
+  onCommit,
+  onPendingChange,
+  pendingKey,
+  step,
+  unitSystem,
+}: Readonly<{
+  canonicalValue: number | null | undefined;
+  max?: number | string;
+  measurement: ProgramEditorMeasurement;
+  min: number | string;
+  onCommit: (value: number | null) => void;
+  onPendingChange: (key: string, pending: boolean) => void;
+  pendingKey: string;
+  step: number | string;
+  unitSystem: ProgramEditorUnitSystem;
+}>) {
+  const canonicalDisplayValue = programEditorDisplayValue(
+    canonicalValue,
+    measurement,
+    unitSystem,
+  );
+  const [displayValue, setDisplayValue] = useState(canonicalDisplayValue);
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (!focused.current) setDisplayValue(canonicalDisplayValue);
+  }, [canonicalDisplayValue]);
+
+  useEffect(
+    () => () => {
+      onPendingChange(pendingKey, false);
+    },
+    [onPendingChange, pendingKey],
+  );
+
+  function commit() {
+    focused.current = false;
+    const nextCanonicalValue = programEditorCanonicalValue(
+      displayValue,
+      measurement,
+      unitSystem,
+    );
+    onCommit(nextCanonicalValue);
+    onPendingChange(pendingKey, false);
+    setDisplayValue(
+      programEditorDisplayValue(nextCanonicalValue, measurement, unitSystem),
+    );
+  }
+
+  return (
+    <input
+      max={max}
+      min={min}
+      onBlur={commit}
+      onChange={(event) => {
+        const nextDisplayValue = event.currentTarget.value;
+        setDisplayValue(nextDisplayValue);
+        onPendingChange(pendingKey, nextDisplayValue !== canonicalDisplayValue);
+      }}
+      onFocus={() => {
+        focused.current = true;
+      }}
+      step={step}
+      type="number"
+      value={displayValue}
+    />
+  );
+}
+
 type Prescription = ProgramPublishInput["days"][number]["sections"][number]["prescriptions"][number];
 type Cardio = ProgramPublishInput["days"][number]["cardio"][number];
 type ExerciseChooser = Readonly<
@@ -60,22 +149,30 @@ type ExerciseChooser = Readonly<
       mode: "replace";
       prescriptionIndex: number;
       sectionIndex: number;
-    }
+  }
 >;
+
+type SectionRemoval = Readonly<{
+  dayIndex: number;
+  review: ProgramSectionRemovalReview;
+  sectionIndex: number;
+}>;
 
 export function ProgramEditor({
   canMutate,
   candidates,
   initialProgram,
+  unitSystem = "metric",
 }: Readonly<{
   canMutate: boolean;
   candidates: readonly ProgramExerciseCandidate[];
   initialProgram: ActiveProgramReadModel;
+  unitSystem?: ProgramEditorUnitSystem;
 }>) {
   const router = useRouter();
   const [program, setProgram] = useState(initialProgram);
-  const [draft, setDraft] = useState<ProgramPublishInput>(() =>
-    programPublishInputFromReadModel(initialProgram, operationKey()),
+  const [draft, setDraft] = useState<ProgramEditorDraft>(() =>
+    programEditorDraftFromReadModel(initialProgram, operationKey()),
   );
   const [baseline, setBaseline] = useState(() => JSON.stringify(draft));
   const [selectedDay, setSelectedDay] = useState(0);
@@ -84,13 +181,28 @@ export function ProgramEditor({
   const [errors, setErrors] = useState<string[]>([]);
   const [chooser, setChooser] = useState<ExerciseChooser | null>(null);
   const [candidateQuery, setCandidateQuery] = useState("");
+  const [sectionRemoval, setSectionRemoval] = useState<SectionRemoval | null>(null);
+  const [pendingMeasurementKeys, setPendingMeasurementKeys] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
   const dialogRef = useRef<HTMLDialogElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const sectionRemovalDialogRef = useRef<HTMLDialogElement>(null);
+  const sectionRemovalConfirmRef = useRef<HTMLButtonElement>(null);
+  const sectionRemovalReturnFocusRef = useRef<HTMLElement | null>(null);
+  const draftHistoryGuardActiveRef = useRef(false);
+  const draftHistoryGuardLeavingRef = useRef(false);
+  const draftHistoryGuardRestoringRef = useRef(false);
+  const draftHistoryGuardRemovingRef = useRef(false);
+  const dirtyRef = useRef(false);
   const localPrescriptionIdsRef = useRef(new Set<string>());
   const errorRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
-  const dirty = useMemo(() => JSON.stringify(draft) !== baseline, [baseline, draft]);
+  const dirty = useMemo(
+    () => JSON.stringify(draft) !== baseline || pendingMeasurementKeys.size > 0,
+    [baseline, draft, pendingMeasurementKeys],
+  );
   const selected = draft.days[selectedDay] ?? draft.days[0]!;
   const meaningBySourceId = useMemo(
     () =>
@@ -101,25 +213,51 @@ export function ProgramEditor({
       ),
     [program],
   );
-  const candidateById = useMemo(
-    () => new Map(candidates.map((candidate) => [candidate.id, candidate] as const)),
+  const candidateByKey = useMemo(
+    () => new Map(candidates.map((candidate) => [
+      programEditorExerciseCandidateKey(candidate.kind, candidate.id),
+      candidate,
+    ] as const)),
     [candidates],
   );
   const filteredCandidates = useMemo(
     () => filterProgramExerciseCandidates(candidates, candidateQuery),
     [candidateQuery, candidates],
   );
+  const missingSectionKinds = PROGRAM_SECTION_KINDS.filter(
+    (kind) => !selected.sections.some((section) => section.kind === kind),
+  );
+  const unitLabels = programEditorUnitLabels(unitSystem);
+
+  const markMeasurementPending = useCallback((key: string, pending: boolean) => {
+    setPendingMeasurementKeys((current) => {
+      const hasKey = current.has(key);
+      if (hasKey === pending) return current;
+      const next = new Set(current);
+      if (pending) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }, []);
 
   function meaningForPrescription(prescription: Prescription) {
-    const id = prescription.catalogExerciseId ?? prescription.customExerciseId;
+    const candidateKey = prescription.catalogExerciseId !== null
+      ? programEditorExerciseCandidateKey("catalog", prescription.catalogExerciseId)
+      : prescription.customExerciseId !== null
+        ? programEditorExerciseCandidateKey("custom", prescription.customExerciseId)
+        : undefined;
     const source = prescription.sourcePrescriptionId
       ? meaningBySourceId.get(prescription.sourcePrescriptionId)
       : undefined;
-    const sourceId = source?.catalogExerciseId ?? source?.customExerciseId;
-    if (source && id === sourceId) {
+    const sourceKey = source?.catalogExerciseId !== null && source?.catalogExerciseId !== undefined
+      ? programEditorExerciseCandidateKey("catalog", source.catalogExerciseId)
+      : source?.customExerciseId !== null && source?.customExerciseId !== undefined
+        ? programEditorExerciseCandidateKey("custom", source.customExerciseId)
+        : undefined;
+    if (source && candidateKey === sourceKey) {
       return { label: source.label, measurementKind: source.measurementKind };
     }
-    const candidate = id ? candidateById.get(id) : undefined;
+    const candidate = candidateKey ? candidateByKey.get(candidateKey) : undefined;
     return candidate
       ? { label: candidate.name, measurementKind: candidate.loggingKind }
       : undefined;
@@ -129,6 +267,11 @@ export function ProgramEditor({
     setChooser(null);
     setCandidateQuery("");
     queueMicrotask(() => returnFocusRef.current?.focus());
+  }
+
+  function dismissSectionRemoval() {
+    setSectionRemoval(null);
+    queueMicrotask(() => sectionRemovalReturnFocusRef.current?.focus());
   }
 
   function openChooser(next: ExerciseChooser) {
@@ -145,6 +288,75 @@ export function ProgramEditor({
     dialog.showModal();
     queueMicrotask(() => searchRef.current?.focus());
   }, [chooser]);
+
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+
+  useEffect(() => {
+    const protectHistoryTraversal = (event: PopStateEvent) => {
+      if (draftHistoryGuardRemovingRef.current) {
+        draftHistoryGuardRemovingRef.current = false;
+        draftHistoryGuardActiveRef.current = false;
+        event.stopImmediatePropagation();
+        return;
+      }
+      if (draftHistoryGuardRestoringRef.current) {
+        draftHistoryGuardRestoringRef.current = false;
+        event.stopImmediatePropagation();
+        return;
+      }
+      if (draftHistoryGuardLeavingRef.current) {
+        draftHistoryGuardLeavingRef.current = false;
+        return;
+      }
+      if (!dirtyRef.current || !draftHistoryGuardActiveRef.current) return;
+
+      event.stopImmediatePropagation();
+      if (window.confirm("Discard this unpublished program draft?")) {
+        draftHistoryGuardActiveRef.current = false;
+        draftHistoryGuardLeavingRef.current = true;
+        window.history.back();
+      } else {
+        draftHistoryGuardRestoringRef.current = true;
+        window.history.forward();
+      }
+    };
+
+    window.addEventListener("popstate", protectHistoryTraversal, true);
+    return () => {
+      window.removeEventListener("popstate", protectHistoryTraversal, true);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (dirty && !draftHistoryGuardActiveRef.current) {
+      window.history.pushState(
+        { ...window.history.state, mwpProgramDraftGuard: true },
+        "",
+        window.location.href,
+      );
+      draftHistoryGuardActiveRef.current = true;
+      return;
+    }
+    if (
+      !dirty &&
+      draftHistoryGuardActiveRef.current &&
+      !draftHistoryGuardLeavingRef.current &&
+      !draftHistoryGuardRestoringRef.current &&
+      !draftHistoryGuardRemovingRef.current
+    ) {
+      draftHistoryGuardRemovingRef.current = true;
+      window.history.back();
+    }
+  }, [dirty]);
+
+  useEffect(() => {
+    const dialog = sectionRemovalDialogRef.current;
+    if (!sectionRemoval || !dialog || dialog.open) return;
+    dialog.showModal();
+    queueMicrotask(() => sectionRemovalConfirmRef.current?.focus());
+  }, [sectionRemoval]);
 
   useEffect(() => {
     if (!dirty || busy) return;
@@ -191,13 +403,27 @@ export function ProgramEditor({
 
   function updateDay(
     dayIndex: number,
-    update: (day: ProgramPublishInput["days"][number]) => ProgramPublishInput["days"][number],
+    update: (day: ProgramEditorDraft["days"][number]) => ProgramEditorDraft["days"][number],
   ) {
     setDraft((current) => ({
       ...current,
-      days: current.days.map((day, index) => (index === dayIndex ? update(day) : day)) as ProgramPublishInput["days"],
+      days: current.days.map((day, index) => (index === dayIndex ? update(day) : day)),
     }));
     setMessage("");
+  }
+
+  function acceptEquipmentRevision(nextProgram: ActiveProgramReadModel) {
+    const nextDraft = programEditorDraftFromReadModel(nextProgram, operationKey());
+    setProgram(nextProgram);
+    setDraft(nextDraft);
+    setBaseline(JSON.stringify(nextDraft));
+    setPendingMeasurementKeys(new Set());
+    localPrescriptionIdsRef.current.clear();
+    setSelectedDay((current) => Math.min(current, nextDraft.days.length - 1));
+    setErrors([]);
+    setMessage(
+      `Equipment revision ${nextProgram.revisionNumber} is now the clean editor baseline. No unpublished editor changes were included.`,
+    );
   }
 
   function updatePrescription(
@@ -239,6 +465,69 @@ export function ProgramEditor({
     const prescription = draft.days[dayIndex]?.sections[sectionIndex]?.prescriptions[prescriptionIndex];
     const name = prescription ? meaningForPrescription(prescription)?.label : "Exercise";
     setMessage(`${name ?? "Exercise"} moved ${direction < 0 ? "up" : "down"}.`);
+  }
+
+  function moveSection(dayIndex: number, sectionIndex: number, direction: -1 | 1) {
+    const section = draft.days[dayIndex]?.sections[sectionIndex];
+    if (!section) return;
+    setDraft((current) => reorderProgramSection(current, dayIndex, sectionIndex, direction));
+    setMessage(`${section.title || section.kind} section moved ${direction < 0 ? "up" : "down"}.`);
+  }
+
+  function addSection(kind: (typeof PROGRAM_SECTION_KINDS)[number]) {
+    try {
+      setDraft((current) => addProgramSection(current, selectedDay, kind, operationKey()));
+      setMessage(
+        `${kind[0]!.toUpperCase() + kind.slice(1)} section added as an empty unpublished draft. Add a movement before publishing, or remove the section after review.`,
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The section could not be added.");
+    }
+  }
+
+  function openSectionRemoval(dayIndex: number, sectionIndex: number) {
+    const section = draft.days[dayIndex]?.sections[sectionIndex];
+    if (!section) return;
+    try {
+      const review = reviewProgramSectionRemoval(
+        draft,
+        dayIndex,
+        sectionIndex,
+        section.prescriptions.map((prescription) =>
+          meaningForPrescription(prescription)?.label ?? prescription.displayName ?? "Exercise",
+        ),
+      );
+      sectionRemovalReturnFocusRef.current = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+      setSectionRemoval({ dayIndex, review, sectionIndex });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The section could not be reviewed.");
+    }
+  }
+
+  function confirmSectionRemoval() {
+    if (!sectionRemoval) return;
+    try {
+      const next = removeProgramSection(draft, sectionRemoval.dayIndex, sectionRemoval.sectionIndex, {
+        ...sectionRemoval.review,
+        confirmed: true,
+      });
+      const remainingSections = next.days[sectionRemoval.dayIndex]?.sections;
+      const focusSection = remainingSections?.[
+        Math.min(sectionRemoval.sectionIndex, (remainingSections.length ?? 1) - 1)
+      ];
+      sectionRemovalReturnFocusRef.current = focusSection
+        ? document.getElementById(`program-section-name-${focusSection.draftKey}`)
+        : null;
+      setDraft(next);
+      setMessage(
+        `${sectionRemoval.review.exerciseNames.join(", ") || "The empty section"} removed from this unpublished draft.`,
+      );
+      sectionRemovalDialogRef.current?.close();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The section could not be removed.");
+    }
   }
 
   function chooseCandidate(candidate: ProgramExerciseCandidate) {
@@ -326,13 +615,22 @@ export function ProgramEditor({
     setBusy(true);
     setMessage("Publishing one new immutable revision…");
     try {
-      const response = await privateApiMutation<{ profileProgram: ProfileProgramReadModel }>(
+      const raw = await privateApiMutation<unknown>(
         "/api/app/program/publish",
         { body: checked.data, method: "POST" },
       );
-      const nextProgram = response.profileProgram.activeProgram;
-      if (!nextProgram) throw new Error("The published program is unavailable.");
-      const nextDraft = programPublishInputFromReadModel(nextProgram, operationKey());
+      const response = parseProgramPublishResponse(raw, checked.data);
+      const reconciliation = reconcileProgramRevisionMutation(program, response);
+      if (reconciliation.kind === "stored-inactive") {
+        setErrors([
+          `${reconciliation.affectedProgramName}'s published revision is stored, but ${reconciliation.activeProgramName} remains active. Return to Your routes before editing again.`,
+        ]);
+        setMessage("The stored publication was reconciled without replacing this editor with another program.");
+        queueMicrotask(() => errorRef.current?.focus());
+        return;
+      }
+      const nextProgram = reconciliation.program;
+      const nextDraft = programEditorDraftFromReadModel(nextProgram, operationKey());
       setProgram(nextProgram);
       setDraft(nextDraft);
       localPrescriptionIdsRef.current.clear();
@@ -348,6 +646,11 @@ export function ProgramEditor({
       setBusy(false);
     }
   }
+
+  const removingSection = sectionRemoval
+    ? draft.days[sectionRemoval.dayIndex]?.sections[sectionRemoval.sectionIndex]
+    : undefined;
+  const removingSectionLabel = removingSection?.title.trim() || "program section";
 
   return (
     <section className="program-editor-page" aria-labelledby="program-editor-title">
@@ -368,6 +671,16 @@ export function ProgramEditor({
         </div>
       ) : null}
 
+      <EquipmentProfileControl
+        canMutate={canMutate}
+        disabled={busy}
+        draftDirty={dirty}
+        onBusyChange={setBusy}
+        onSaved={acceptEquipmentRevision}
+        placement="editor"
+        program={program}
+      />
+
       <div className="program-editor-layout">
         <aside className="program-editor-outline" aria-label="Program days">
           <label className="program-editor-field">
@@ -382,12 +695,6 @@ export function ProgramEditor({
               value={draft.name}
             />
           </label>
-          <div className="program-editor-equipment">
-            <span>Equipment profile</span>
-            <strong>{EQUIPMENT_PROFILES[program.equipmentProfileKind].label}</strong>
-            <p>Equipment substitutions need their own exact preview and confirmation.</p>
-            <Link href="/app#equipment-profile">Review equipment</Link>
-          </div>
           <ol>
             {draft.days.map((day, dayIndex) => (
               <li key={day.dayKey}>
@@ -421,34 +728,86 @@ export function ProgramEditor({
               </label>
             </header>
 
-            {selected.sections.map((section, sectionIndex) => (
-              <fieldset className="program-editor-section" disabled={busy} key={section.kind}>
-                <legend>{section.title}</legend>
+            {selected.sections.map((section, sectionIndex) => {
+              const sectionLabel = section.title.trim() || `${section.kind} section`;
+              return (
+              <fieldset className="program-editor-section" disabled={busy} key={section.draftKey}>
+                <legend>
+                  <span>{section.kind}</span>
+                  <input
+                    aria-label={`Section name for ${section.kind}`}
+                    disabled={busy}
+                    id={`program-section-name-${section.draftKey}`}
+                    maxLength={120}
+                    onChange={(event) => setDraft((current) =>
+                      renameProgramSection(current, selectedDay, sectionIndex, event.target.value),
+                    )}
+                    value={section.title}
+                  />
+                </legend>
+                <div className="program-editor-section-actions">
+                  <div aria-label={`Reorder ${sectionLabel} section`} className="program-editor-reorder">
+                    <button
+                      aria-label={`Move ${sectionLabel} section up`}
+                      disabled={sectionIndex === 0}
+                      onClick={() => moveSection(selectedDay, sectionIndex, -1)}
+                      type="button"
+                    >Up</button>
+                    <button
+                      aria-label={`Move ${sectionLabel} section down`}
+                      disabled={sectionIndex === selected.sections.length - 1}
+                      onClick={() => moveSection(selectedDay, sectionIndex, 1)}
+                      type="button"
+                    >Down</button>
+                  </div>
+                  <button
+                    aria-label={section.kind === "core"
+                      ? "Core section is required on every day"
+                      : `Remove ${sectionLabel} section`}
+                    disabled={section.kind === "core" || selected.sections.length <= 1}
+                    onClick={() => openSectionRemoval(selectedDay, sectionIndex)}
+                    type="button"
+                  >Remove section</button>
+                  {section.kind === "core" ? (
+                    <span className="program-editor-section-required">Core is required</span>
+                  ) : null}
+                </div>
+                {section.prescriptions.length === 0 ? (
+                  <p className="program-editor-empty-section">
+                    This section is empty. Add a movement before publishing, or remove it after reviewing the draft movements.
+                  </p>
+                ) : null}
                 <ol>
                   {section.prescriptions.map((prescription, prescriptionIndex) => {
                     const meaning = meaningForPrescription(prescription);
+                    const movementLabel = meaning?.label ?? prescription.displayName ?? "Exercise";
                     const duration = meaning?.measurementKind === "duration" || meaning?.measurementKind === "distance_duration";
+                    const prescriptionDraftIdentity = prescription.sourcePrescriptionId
+                      ?? `${section.draftKey}:prescription:${prescriptionIndex}`;
                     return (
-                      <li className="program-editor-prescription" key={prescription.sourcePrescriptionId ?? `${section.kind}-${prescriptionIndex}`}>
+                      <li className="program-editor-prescription" key={prescriptionDraftIdentity}>
                         <header>
                           <div>
                             <span>{section.kind} · {meaning?.measurementKind.replaceAll("_", " ") ?? "exercise"}</span>
-                            <h3>{meaning?.label ?? prescription.displayName ?? "Exercise"}</h3>
+                            <h3>{movementLabel}</h3>
                           </div>
                           <div className="program-editor-prescription-actions">
                             <div className="program-editor-reorder" aria-label={`Reorder ${meaning?.label ?? "exercise"}`}>
                               <button
+                                aria-label={`Move ${movementLabel} up`}
                                 disabled={prescriptionIndex === 0}
                                 onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, -1)}
                                 type="button"
                               >Up</button>
                               <button
+                                aria-label={`Move ${movementLabel} down`}
                                 disabled={prescriptionIndex === section.prescriptions.length - 1}
                                 onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, 1)}
                                 type="button"
                               >Down</button>
                             </div>
                             <button
+                              aria-label={`Replace ${movementLabel}`}
                               disabled={!meaning}
                               onClick={() => {
                                 if (!meaning) return;
@@ -463,12 +822,13 @@ export function ProgramEditor({
                               type="button"
                             >Replace</button>
                             <button
+                              aria-label={`Remove ${movementLabel}`}
                               disabled={section.prescriptions.length <= 1}
                               onClick={() => removePrescription(
                                 selectedDay,
                                 sectionIndex,
                                 prescriptionIndex,
-                                meaning?.label ?? "Exercise",
+                                movementLabel,
                               )}
                               type="button"
                             >Remove</button>
@@ -489,10 +849,10 @@ export function ProgramEditor({
                             </>
                           )}
                           {meaning?.measurementKind === "weight_reps" ? (
-                            <label><span>Target kg (optional)</span><input min={0} onChange={(event) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { targetWeightKg: optionalNumber(event.target.value) })} step="0.25" type="number" value={prescription.targetWeightKg ?? ""} /></label>
+                            <label><span>Target {unitLabels.weight} (optional)</span><CanonicalMeasurementInput canonicalValue={prescription.targetWeightKg} measurement="weight" min={0} onCommit={(targetWeightKg) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { targetWeightKg })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:${prescriptionDraftIdentity}:weight`} step={unitSystem === "imperial" ? "0.1" : "0.25"} unitSystem={unitSystem} /></label>
                           ) : null}
                           {meaning?.measurementKind === "distance_duration" ? (
-                            <label><span>Target metres</span><input min={1} onChange={(event) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { targetDistanceM: optionalNumber(event.target.value) })} type="number" value={prescription.targetDistanceM ?? ""} /></label>
+                            <label><span>Target {unitLabels.distance}</span><CanonicalMeasurementInput canonicalValue={prescription.targetDistanceM} measurement="distance" min={unitSystem === "imperial" ? "0.0001" : "0.001"} onCommit={(targetDistanceM) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { targetDistanceM })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:${prescriptionDraftIdentity}:distance`} step={unitSystem === "imperial" ? "0.0001" : "0.001"} unitSystem={unitSystem} /></label>
                           ) : null}
                           <label className="program-editor-wide"><span>Notes</span><textarea maxLength={2000} onChange={(event) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { notes: event.target.value })} value={prescription.notes ?? ""} /></label>
                         </div>
@@ -510,7 +870,25 @@ export function ProgramEditor({
                   type="button"
                 >Add movement</button>
               </fieldset>
-            ))}
+              );
+            })}
+
+            {missingSectionKinds.length > 0 ? (
+              <section className="program-editor-add-section" aria-labelledby="program-editor-add-section-title">
+                <h3 id="program-editor-add-section-title">Add a section</h3>
+                <p>New sections start empty and remain unpublished until you add a movement and publish.</p>
+                <div>
+                  {missingSectionKinds.map((kind) => (
+                    <button
+                      disabled={busy}
+                      key={kind}
+                      onClick={() => addSection(kind)}
+                      type="button"
+                    >Add {kind} section</button>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <fieldset className="program-editor-section program-editor-cardio" disabled={busy}>
               <legend>Walker / runner cardio</legend>
@@ -520,8 +898,8 @@ export function ProgramEditor({
                     <h3 id={`cardio-${selected.dayKey}-${cardio.mode}`}>{cardio.mode}</h3>
                     <div className="program-editor-grid">
                       <label><span>Duration seconds</span><input min={1} onChange={(event) => updateCardio(selectedDay, cardioIndex, { durationSeconds: Number(event.target.value) })} type="number" value={cardio.durationSeconds} /></label>
-                      <label><span>Distance metres</span><input min={0} onChange={(event) => updateCardio(selectedDay, cardioIndex, { distanceM: optionalNumber(event.target.value) })} type="number" value={cardio.distanceM ?? ""} /></label>
-                      <label><span>Pace seconds / km</span><input min={1} onChange={(event) => updateCardio(selectedDay, cardioIndex, { paceSecondsPerKm: optionalNumber(event.target.value) })} type="number" value={cardio.paceSecondsPerKm ?? ""} /></label>
+                      <label><span>Distance {unitLabels.distance}</span><CanonicalMeasurementInput canonicalValue={cardio.distanceM} measurement="distance" min={0} onCommit={(distanceM) => updateCardio(selectedDay, cardioIndex, { distanceM })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:cardio:${cardio.mode}:distance`} step={unitSystem === "imperial" ? "0.0001" : "0.001"} unitSystem={unitSystem} /></label>
+                      <label><span>Pace {unitLabels.pace}</span><CanonicalMeasurementInput canonicalValue={cardio.paceSecondsPerKm} measurement="pace" min={1} onCommit={(paceSecondsPerKm) => updateCardio(selectedDay, cardioIndex, { paceSecondsPerKm })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:cardio:${cardio.mode}:pace`} step="1" unitSystem={unitSystem} /></label>
                       <label><span>Incline %</span><input min={0} max={100} onChange={(event) => updateCardio(selectedDay, cardioIndex, { inclinePercent: optionalNumber(event.target.value) })} step="0.1" type="number" value={cardio.inclinePercent ?? ""} /></label>
                       <label className="program-editor-wide"><span>Notes</span><textarea maxLength={2000} onChange={(event) => updateCardio(selectedDay, cardioIndex, { notes: event.target.value })} value={cardio.notes ?? ""} /></label>
                     </div>
@@ -540,7 +918,7 @@ export function ProgramEditor({
           <footer className="program-editor-footer">
             <div>
               <strong>{dirty ? "Unpublished changes" : "Draft matches the active revision"}</strong>
-              <p>Loads stay in canonical kilograms; unit conversion happens only when values are presented.</p>
+              <p>Targets stay canonical in kilograms, metres, and seconds per kilometre; your preference changes labels and display values only.</p>
             </div>
             <button className="primary-action" disabled={!canMutate || busy || !dirty} onClick={() => void publish()} type="button">
               {busy ? "Publishing…" : "Publish new revision"}<Icon name="arrow-right" />
@@ -615,6 +993,59 @@ export function ProgramEditor({
             <footer>
               <p>Choosing a movement changes only this unpublished draft.</p>
               <button onClick={() => dialogRef.current?.close()} type="button">Cancel</button>
+            </footer>
+          </div>
+        </dialog>
+      ) : null}
+
+      {sectionRemoval ? (
+        <dialog
+          aria-labelledby="section-removal-title"
+          className="program-section-removal"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) event.currentTarget.close();
+          }}
+          onClose={dismissSectionRemoval}
+          ref={sectionRemovalDialogRef}
+        >
+          <div className="program-section-removal-sheet">
+            <header>
+              <div>
+                <span className="eyebrow">Review unpublished changes</span>
+                <h2 id="section-removal-title">Remove {removingSectionLabel}?</h2>
+              </div>
+              <button
+                aria-label="Close section removal review"
+                onClick={() => sectionRemovalDialogRef.current?.close()}
+                type="button"
+              >Close</button>
+            </header>
+            <div className="program-section-removal-content">
+              <p>
+                Removing this section will also remove these draft movements from the next publication. Earlier revisions and completed workouts remain unchanged.
+              </p>
+              {sectionRemoval.review.exerciseNames.length > 0 ? (
+                <ul>
+                  {sectionRemoval.review.exerciseNames.map((name, index) => (
+                    <li key={`${sectionRemoval.review.prescriptionKeys[index] ?? name}-${index}`}>{name}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>This section has no draft movements yet.</p>
+              )}
+            </div>
+            <footer>
+              <button onClick={() => sectionRemovalDialogRef.current?.close()} type="button">
+                Keep section
+              </button>
+              <button
+                className="primary-action"
+                onClick={confirmSectionRemoval}
+                ref={sectionRemovalConfirmRef}
+                type="button"
+              >
+                Remove section and movements
+              </button>
             </footer>
           </div>
         </dialog>

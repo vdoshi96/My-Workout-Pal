@@ -6,7 +6,7 @@ import { assertValidMutationRequest } from "@/server/auth/request";
 import {
   privateJson,
   readBoundedJson,
-  requirePrivateViewer,
+  requirePrivateMutationViewer,
 } from "@/server/http/custom-exercise-api";
 import {
   equipmentChangeRequestSchema,
@@ -20,7 +20,7 @@ export const revalidate = 0;
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     assertValidMutationRequest(request);
-    const viewer = requirePrivateViewer(await getCurrentViewer());
+    const viewer = requirePrivateMutationViewer(await getCurrentViewer());
     const input = equipmentChangeRequestSchema.parse(await readBoundedJson(request));
     const profileProgram = await confirmEquipmentChange(getDatabase(), viewer, input);
     return privateJson({ profileProgram });

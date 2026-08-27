@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseProgramCollectionResponse,
+  programCollectionSuccess,
   retryableOperationKey,
   suggestedCloneName,
   validatedProgramName,
@@ -20,6 +21,7 @@ function responseFixture() {
         revisionId: affectedRevisionId,
       },
       affectedProgramId,
+      affectedRevisionId,
       equipment: { profileKind: "barbell" },
       preferences: {},
       profile: {},
@@ -45,42 +47,99 @@ function responseFixture() {
           updatedAt: "2026-08-24T15:00:00.000Z",
         },
       ],
+      replayed: false,
     },
   };
 }
 
+const createExpectation = {
+  equipmentProfileKind: "barbell" as const,
+  kind: "create" as const,
+  name: "Barbell build",
+};
+
 describe("program collection client model", () => {
   it("accepts one coherent active program and preserves the server order", () => {
-    expect(parseProgramCollectionResponse(responseFixture())).toEqual({
+    expect(parseProgramCollectionResponse(responseFixture(), createExpectation)).toEqual({
       activeProgramId: affectedProgramId,
+      activeProgramName: "Barbell build",
       affectedProgramId,
+      affectedProgramName: "Barbell build",
+      affectedRevisionId,
       programs: responseFixture().profileProgram.programs,
+      replayed: false,
+    });
+  });
+
+  it("keeps collection context and truthful copy when replay no longer affects the active root", () => {
+    const response = responseFixture();
+    response.profileProgram.activeProgram = {
+      id: activeProgramId,
+      revisionId: activeRevisionId,
+    };
+    response.profileProgram.affectedProgramId = affectedProgramId;
+    response.profileProgram.affectedRevisionId = affectedRevisionId;
+    response.profileProgram.replayed = true;
+    response.profileProgram.programs[0]!.isActive = false;
+    response.profileProgram.programs[1]!.isActive = true;
+
+    const parsed = parseProgramCollectionResponse(response, createExpectation);
+    expect(programCollectionSuccess(parsed)).toEqual({
+      message: "Barbell build is already stored, but Apartment strength remains active. Review your collection before opening an overview.",
+      openActiveOverview: false,
+    });
+  });
+
+  it("opens only when the affected program is the current active program", () => {
+    expect(programCollectionSuccess(parseProgramCollectionResponse(responseFixture(), createExpectation))).toEqual({
+      message: "Barbell build is active. Opening its overview…",
+      openActiveOverview: true,
     });
   });
 
   it("rejects malformed or contradictory success bodies", () => {
     const twoActive = responseFixture();
     twoActive.profileProgram.programs[1]!.isActive = true;
-    expect(() => parseProgramCollectionResponse(twoActive)).toThrow(
+    expect(() => parseProgramCollectionResponse(twoActive, createExpectation)).toThrow(
       "exactly one active program",
     );
 
     const wrongActive = responseFixture();
     wrongActive.profileProgram.activeProgram.id = activeProgramId;
-    expect(() => parseProgramCollectionResponse(wrongActive)).toThrow(
+    expect(() => parseProgramCollectionResponse(wrongActive, createExpectation)).toThrow(
       "active program does not match",
     );
 
     expect(() =>
-      parseProgramCollectionResponse({ profileProgram: {} }),
+      parseProgramCollectionResponse({ profileProgram: {} }, createExpectation),
     ).toThrow("invalid program collection response");
+  });
+
+  it("rejects an internally coherent response for a different requested operation", () => {
+    expect(() => parseProgramCollectionResponse(responseFixture(), {
+      equipmentProfileKind: "dumbbells",
+      kind: "create",
+      name: "Different route",
+    })).toThrow("does not match the requested program operation");
+    expect(() => parseProgramCollectionResponse(responseFixture(), {
+      kind: "activate",
+      programId: activeProgramId,
+      revisionId: activeRevisionId,
+    })).toThrow("does not match the requested program operation");
+    expect(() => parseProgramCollectionResponse(responseFixture(), {
+      kind: "clone",
+      name: "Barbell build",
+      sourceEquipmentProfileKind: "barbell",
+      sourceProgramId: affectedProgramId,
+    })).toThrow("does not match the requested program operation");
   });
 
   it("normalizes bounded names without inventing an empty value", () => {
     expect(validatedProgramName("  Trail strength  ")).toBe("Trail strength");
     expect(() => validatedProgramName("   ")).toThrow("Enter a program name");
-    expect(() => validatedProgramName("x".repeat(181))).toThrow(
-      "180 characters or fewer",
+    expect(validatedProgramName("x".repeat(80))).toHaveLength(80);
+    expect(() => validatedProgramName("x".repeat(81))).toThrow(
+      "80 characters or fewer",
     );
   });
 
@@ -88,7 +147,7 @@ describe("program collection client model", () => {
     expect(suggestedCloneName("Apartment strength")).toBe(
       "Apartment strength copy",
     );
-    expect(suggestedCloneName("x".repeat(180))).toHaveLength(180);
+    expect(suggestedCloneName("x".repeat(80))).toHaveLength(80);
   });
 
   it("reuses one key after an interrupted attempt until success clears it", () => {

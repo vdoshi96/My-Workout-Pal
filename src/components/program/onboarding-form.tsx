@@ -4,12 +4,12 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
+import { parseOnboardingResponse } from "@/components/program/program-mutation-response";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { getCatalogExercise } from "@/domain/exercises/catalog";
 import { createStarterProgram } from "@/domain/programs/starter";
 import { previewEquipmentChange } from "@/domain/programs/substitutions";
-import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
 
 function operationKey(): string {
   return globalThis.crypto.randomUUID();
@@ -47,7 +47,7 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
     setBusy(true);
     setMessage("Creating your private starter program…");
     try {
-      const response = await privateApiMutation<{ profileProgram: ProfileProgramReadModel }>(
+      const response = await privateApiMutation<unknown>(
         "/api/app/profile-program/onboard",
         {
           body: {
@@ -60,9 +60,12 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
           method: "POST",
         },
       );
-      if (!response.profileProgram.activeProgram) {
-        throw new Error("The active program is unavailable.");
-      }
+      parseOnboardingResponse(response, {
+        equipmentProfileKind,
+        reducedMotion,
+        timezone,
+        unitSystem,
+      });
       saveKey.current = undefined;
       setMessage("Starter program created.");
       router.refresh();

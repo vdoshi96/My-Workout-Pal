@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
+import {
+  parseCustomExerciseDeleteResponse,
+  parseCustomExerciseMutationResponse,
+} from "@/components/exercises/custom-exercise-response";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_IDS, type EquipmentId } from "@/domain/equipment";
 import type { CustomExerciseView } from "@/server/repositories/custom-exercises";
@@ -120,11 +124,16 @@ export function CustomExerciseEditor({
       ...(mode === "edit" && expectedUpdatedAt ? { expectedUpdatedAt } : {}),
     };
     try {
-      const result = await privateApiMutation<{ exercise: CustomExerciseView; duplicate: boolean }>(
+      const raw = await privateApiMutation<unknown>(
         mode === "edit" && exercise
           ? `/api/app/custom-exercises/${encodeURIComponent(exercise.id)}`
           : "/api/app/custom-exercises",
         { body, method: mode === "edit" ? "PATCH" : "POST" },
+      );
+      const result = parseCustomExerciseMutationResponse(
+        raw,
+        body.draft,
+        mode === "edit" ? exercise?.id : undefined,
       );
       saveKey.current = undefined;
       setValue(editorValue(result.exercise));
@@ -148,10 +157,11 @@ export function CustomExerciseEditor({
     const idempotencyKey = deleteKey.current ?? newOperationKey();
     deleteKey.current = idempotencyKey;
     try {
-      await privateApiMutation(`/api/app/custom-exercises/${encodeURIComponent(exercise.id)}`, {
+      const raw = await privateApiMutation<unknown>(`/api/app/custom-exercises/${encodeURIComponent(exercise.id)}`, {
         body: { idempotencyKey },
         method: "DELETE",
       });
+      parseCustomExerciseDeleteResponse(raw, exercise.id);
       deleteKey.current = undefined;
       router.replace("/app/library/custom");
       router.refresh();

@@ -294,11 +294,15 @@ export type ProfileProgramReadModel = Readonly<{
   activeProgram: ActiveProgramReadModel | null;
 }>;
 
-export type ProgramCollectionMutationResult = Readonly<
+export type ProgramRevisionMutationResult = Readonly<
   ProfileProgramReadModel & {
     affectedProgramId: string;
+    affectedRevisionId: string;
+    replayed: boolean;
   }
 >;
+
+export type ProgramCollectionMutationResult = ProgramRevisionMutationResult;
 
 export type EquipmentChange = Readonly<{
   dayNumber: number;
@@ -317,7 +321,7 @@ export type EquipmentChange = Readonly<{
 }>;
 
 export type EquipmentChangeResult = Readonly<
-  ProfileProgramReadModel & {
+  ProgramRevisionMutationResult & {
     changes: readonly EquipmentChange[];
   }
 >;
@@ -343,7 +347,7 @@ export type ProfileProgramRepository = Readonly<{
   publishProgram(
     viewer: ViewerContext | null,
     input: PublishProgramInput,
-  ): Promise<ProfileProgramReadModel>;
+  ): Promise<ProgramRevisionMutationResult>;
   createProgramFromStarter(
     viewer: ViewerContext | null,
     input: CreateStarterProgramInput,
@@ -1235,12 +1239,15 @@ async function activateProgramRoot(
     .where(eq(userEquipmentProfiles.ownerFirebaseUid, ownerFirebaseUid));
 }
 
-function replayAffectedProgramId(payload: Record<string, unknown>): string {
-  const result = z.string().uuid().safeParse(payload["programId"]);
-  if (!result.success) {
+function replayAffectedProgram(
+  payload: Record<string, unknown>,
+): Readonly<{ programId: string; revisionId: string }> {
+  const programId = z.string().uuid().safeParse(payload["programId"]);
+  const revisionId = z.string().uuid().safeParse(payload["revisionId"]);
+  if (!programId.success || !revisionId.success) {
     throw new RepositoryConflictError("The stored idempotency result is invalid.");
   }
-  return result.data;
+  return { programId: programId.data, revisionId: revisionId.data };
 }
 
 async function reserveIdempotency(
@@ -2320,11 +2327,13 @@ export function createProfileProgramRepository(
         requestHash,
       );
       if (reservation?.replay) {
-        const affectedProgramId = replayAffectedProgramId(reservation.replay);
-        await findProgramRoot(tx, viewer.uid, affectedProgramId);
+        const affected = replayAffectedProgram(reservation.replay);
+        await findProgramRoot(tx, viewer.uid, affected.programId);
         return {
           ...(await readViewerData(tx, viewer.uid)),
-          affectedProgramId,
+          affectedProgramId: affected.programId,
+          affectedRevisionId: affected.revisionId,
+          replayed: true,
         };
       }
       if (roots.length >= 24) {
@@ -2411,6 +2420,8 @@ export function createProfileProgramRepository(
       return {
         ...(await readViewerData(tx, viewer.uid)),
         affectedProgramId: programId,
+        affectedRevisionId: revisionId,
+        replayed: false,
       };
     });
   }
@@ -2437,11 +2448,13 @@ export function createProfileProgramRepository(
         requestHash,
       );
       if (reservation?.replay) {
-        const affectedProgramId = replayAffectedProgramId(reservation.replay);
-        await findProgramRoot(tx, viewer.uid, affectedProgramId);
+        const affected = replayAffectedProgram(reservation.replay);
+        await findProgramRoot(tx, viewer.uid, affected.programId);
         return {
           ...(await readViewerData(tx, viewer.uid)),
-          affectedProgramId,
+          affectedProgramId: affected.programId,
+          affectedRevisionId: affected.revisionId,
+          replayed: true,
         };
       }
       if (roots.length >= 24) {
@@ -2540,6 +2553,8 @@ export function createProfileProgramRepository(
       return {
         ...(await readViewerData(tx, viewer.uid)),
         affectedProgramId: programId,
+        affectedRevisionId: revisionId,
+        replayed: false,
       };
     });
   }
@@ -2566,11 +2581,13 @@ export function createProfileProgramRepository(
         requestHash,
       );
       if (reservation?.replay) {
-        const affectedProgramId = replayAffectedProgramId(reservation.replay);
-        await findProgramRoot(tx, viewer.uid, affectedProgramId);
+        const affected = replayAffectedProgram(reservation.replay);
+        await findProgramRoot(tx, viewer.uid, affected.programId);
         return {
           ...(await readViewerData(tx, viewer.uid)),
-          affectedProgramId,
+          affectedProgramId: affected.programId,
+          affectedRevisionId: affected.revisionId,
+          replayed: true,
         };
       }
       const activeRoots = roots.filter(({ isActive }) => isActive);
@@ -2620,6 +2637,8 @@ export function createProfileProgramRepository(
       return {
         ...(await readViewerData(tx, viewer.uid)),
         affectedProgramId: target.id,
+        affectedRevisionId: targetRevision.id,
+        replayed: false,
       };
     });
   }
@@ -2656,7 +2675,13 @@ export function createProfileProgramRepository(
         const stored = replayPayload(existingIdempotency.resultPayload);
         if (stored) {
           const current = await readViewerData(tx, viewer.uid);
-          return { ...current, changes: stored.changes };
+          return {
+            ...current,
+            affectedProgramId: normalized.programId,
+            affectedRevisionId: stored.revisionId,
+            changes: stored.changes,
+            replayed: true,
+          };
         }
       }
       if (!root.isActive) {
@@ -2681,17 +2706,30 @@ export function createProfileProgramRepository(
         const stored = replayPayload(reservation.replay);
         if (!stored) throw new RepositoryConflictError("The stored idempotency result is invalid.");
         const current = await readViewerData(tx, viewer.uid);
-        return { ...current, changes: stored.changes };
+        return {
+          ...current,
+          affectedProgramId: normalized.programId,
+          affectedRevisionId: stored.revisionId,
+          changes: stored.changes,
+          replayed: true,
+        };
       }
       const source = await loadProgramGraph(tx, viewer.uid, root.id, root.activeRevisionId);
       const currentProfile = source.revision.equipmentProfileKind;
       if (currentProfile === normalized.equipmentProfileKind) {
         const current = await readViewerData(tx, viewer.uid);
         await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+          programId: root.id,
           revisionId: source.revision.id,
           changes: [],
         });
-        return { ...current, changes: [] };
+        return {
+          ...current,
+          affectedProgramId: root.id,
+          affectedRevisionId: source.revision.id,
+          changes: [],
+          replayed: false,
+        };
       }
       const targetTemplate = await loadTemplateGraph(tx, normalized.equipmentProfileKind);
       const cloned = await cloneEquipmentRevision(
@@ -2718,10 +2756,17 @@ export function createProfileProgramRepository(
         .where(eq(userEquipmentProfiles.ownerFirebaseUid, viewer.uid));
       const current = await readViewerData(tx, viewer.uid);
       await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        programId: root.id,
         revisionId: cloned.revisionId,
         changes: cloned.changes,
       });
-      return { ...current, changes: cloned.changes };
+      return {
+        ...current,
+        affectedProgramId: root.id,
+        affectedRevisionId: cloned.revisionId,
+        changes: cloned.changes,
+        replayed: false,
+      };
     });
   }
 
@@ -2814,7 +2859,7 @@ export function createProfileProgramRepository(
   async function publishProgram(
     viewerInput: ViewerContext | null,
     input: PublishProgramInput,
-  ): Promise<ProfileProgramReadModel> {
+  ): Promise<ProgramRevisionMutationResult> {
     const viewer = requirePermanentMutationViewer(viewerInput);
     const normalized = parseProgramPublishInput(input);
     const requestHash = stableRequestHash("program-publish", {
@@ -2844,7 +2889,13 @@ export function createProfileProgramRepository(
           if (!z.string().uuid().safeParse(existingIdempotency.resultPayload["revisionId"]).success) {
             throw new RepositoryConflictError("The stored idempotency result is invalid.");
           }
-          return readViewerData(tx, viewer.uid);
+          const current = await readViewerData(tx, viewer.uid);
+          return {
+            ...current,
+            affectedProgramId: normalized.programId,
+            affectedRevisionId: existingIdempotency.resultPayload["revisionId"] as string,
+            replayed: true,
+          };
         }
       }
       if (!root.isActive) {
@@ -2865,7 +2916,15 @@ export function createProfileProgramRepository(
         "program-publish",
         requestHash,
       );
-      if (reservation?.replay) return readViewerData(tx, viewer.uid);
+      if (reservation?.replay) {
+        const affected = replayAffectedProgram(reservation.replay);
+        return {
+          ...(await readViewerData(tx, viewer.uid)),
+          affectedProgramId: affected.programId,
+          affectedRevisionId: affected.revisionId,
+          replayed: true,
+        };
+      }
       const source = await loadProgramGraph(
         tx,
         viewer.uid,
@@ -2903,9 +2962,15 @@ export function createProfileProgramRepository(
         );
       }
       await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        programId: root.id,
         revisionId,
       });
-      return readViewerData(tx, viewer.uid);
+      return {
+        ...(await readViewerData(tx, viewer.uid)),
+        affectedProgramId: root.id,
+        affectedRevisionId: revisionId,
+        replayed: false,
+      };
     });
   }
 
@@ -2993,7 +3058,7 @@ export async function publishViewerProgram(
   database: Database,
   viewer: ViewerContext | null,
   input: PublishProgramInput,
-): Promise<ProfileProgramReadModel> {
+): Promise<ProgramRevisionMutationResult> {
   return createProfileProgramRepository(database).publishProgram(viewer, input);
 }
 
