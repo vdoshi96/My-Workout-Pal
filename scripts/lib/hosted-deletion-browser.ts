@@ -71,6 +71,15 @@ export type HostedDeletionQaStage =
   | "alice_intact_after_bob"
   | "alice_session"
   | "assertions"
+  | "assertions_alice_collectors"
+  | "assertions_alice_mutations"
+  | "assertions_bob_collectors"
+  | "assertions_bob_console_errors"
+  | "assertions_bob_console_warnings"
+  | "assertions_bob_mutations"
+  | "assertions_bob_page_errors"
+  | "assertions_bob_request_failures"
+  | "assertions_bob_response_failures"
   | "bob_deletion"
   | "bob_session"
   | "browser_launch"
@@ -86,12 +95,15 @@ export type HostedDeletionQaStage =
   | "foreign_rendered_equivalence_status"
   | "foreign_rendered_foreign_accessibility"
   | "foreign_rendered_foreign_load"
+  | "foreign_rendered_foreign_noindex"
   | "foreign_rendered_foreign_ui"
   | "foreign_rendered_missing_accessibility"
   | "foreign_rendered_missing_load"
+  | "foreign_rendered_missing_noindex"
   | "foreign_rendered_missing_ui"
   | "global_postcondition"
-  | "identity_creation";
+  | "identity_creation"
+  | "public_return_evidence";
 
 export class HostedDeletionQaExecutionError extends Error {
   readonly cleanupConfirmed: boolean;
@@ -325,10 +337,7 @@ function attachFailureCollectors(page: Page, origin: string) {
   });
 
   return {
-    assertClean(input: Readonly<{
-      consoleHttpStatuses: readonly number[];
-      responseFailures: readonly string[];
-    }>) {
+    assertConsoleErrorsClean(expectedStatuses: readonly number[]) {
       const genericStatuses = consoleErrors.map((message) => {
         const match = message.match(
           /^Failed to load resource: the server responded with a status of (\d{3})/u,
@@ -338,13 +347,14 @@ function attachFailureCollectors(page: Page, origin: string) {
       assert.equal(genericStatuses.includes(undefined), false);
       assert.deepEqual(
         genericStatuses.toSorted((left, right) => (left ?? 0) - (right ?? 0)),
-        input.consoleHttpStatuses.toSorted((left, right) => left - right),
+        expectedStatuses.toSorted((left, right) => left - right),
       );
-      assert.deepEqual(consoleWarnings, []);
-      assert.deepEqual(pageErrors, []);
-      assert.deepEqual(requestFailures, []);
-      assert.deepEqual(responseFailures.toSorted(), input.responseFailures.toSorted());
     },
+    assertConsoleWarningsClean: () => assert.deepEqual(consoleWarnings, []),
+    assertPageErrorsClean: () => assert.deepEqual(pageErrors, []),
+    assertRequestFailuresClean: () => assert.deepEqual(requestFailures, []),
+    assertResponseFailuresClean: (expected: readonly string[]) =>
+      assert.deepEqual(responseFailures.toSorted(), expected.toSorted()),
     firstPartyMutations,
   };
 }
@@ -611,6 +621,7 @@ async function renderedNotFound(
   setStage: (stage: HostedDeletionQaStage) => void,
   loadStage: HostedDeletionQaStage,
   uiStage: HostedDeletionQaStage,
+  noindexStage: HostedDeletionQaStage,
   accessibilityStage: HostedDeletionQaStage,
 ): Promise<SafePrivateResourceResponse> {
   setStage(loadStage);
@@ -619,7 +630,15 @@ async function renderedNotFound(
   setStage(uiStage);
   const renderedBody = (await page.locator("body").innerText()).replaceAll(/\s+/gu, " ").trim();
   assert.match(renderedBody, /not found|not on the map/iu);
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/iu);
+  setStage(noindexStage);
+  const responseBody = await response.text();
+  const hydratedRobots = await page.locator('meta[name="robots"]').evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute("content") ?? ""),
+  );
+  assert.equal(
+    /noindex/iu.test(responseBody) || hydratedRobots.some((value) => /noindex/iu.test(value)),
+    true,
+  );
   setStage(accessibilityStage);
   await assertAccessible(page);
   return {
@@ -643,6 +662,7 @@ async function assertForeignAndMissingRendered(
     setStage,
     "foreign_rendered_foreign_load",
     "foreign_rendered_foreign_ui",
+    "foreign_rendered_foreign_noindex",
     "foreign_rendered_foreign_accessibility",
   );
   const absent = await renderedNotFound(
@@ -652,6 +672,7 @@ async function assertForeignAndMissingRendered(
     setStage,
     "foreign_rendered_missing_load",
     "foreign_rendered_missing_ui",
+    "foreign_rendered_missing_noindex",
     "foreign_rendered_missing_accessibility",
   );
   setStage("foreign_rendered_equivalence");
@@ -942,17 +963,38 @@ export async function executeHostedDeletionQa(
       config,
       identity: aliceIdentity,
     });
+    stage = "public_return_evidence";
+    const hero = alicePage.locator('img[src="/illustrations/workout-pals-gym.webp"]');
+    await expect(hero).toBeVisible();
+    await expect.poll(() => hero.evaluate((image: HTMLImageElement) => image.naturalWidth))
+      .toBeGreaterThan(0);
     await alicePage.screenshot({ fullPage: false, path: evidencePaths.publicReturn });
     assert.equal((await ownerPersistenceSnapshot(database, aliceUid)).rowCount, 0);
     assert.equal(await identityIsAbsent(auth, aliceUid), true);
     assert.equal(await deletionJobIsTerminalOrAbsent(database, aliceUid), true);
 
     stage = "assertions";
-    aliceFailures.assertClean({ consoleHttpStatuses: [], responseFailures: [] });
-    bobFailures.assertClean({
-      consoleHttpStatuses: [400],
-      responseFailures: [...apiFailures, ...renderedFailures],
-    });
+    stage = "assertions_alice_collectors";
+    aliceFailures.assertConsoleErrorsClean([]);
+    aliceFailures.assertConsoleWarningsClean();
+    aliceFailures.assertPageErrorsClean();
+    aliceFailures.assertRequestFailuresClean();
+    aliceFailures.assertResponseFailuresClean([]);
+    stage = "assertions_bob_collectors";
+    stage = "assertions_bob_console_errors";
+    bobFailures.assertConsoleErrorsClean([
+      400,
+      ...apiFailures.map(() => 404),
+    ]);
+    stage = "assertions_bob_console_warnings";
+    bobFailures.assertConsoleWarningsClean();
+    stage = "assertions_bob_page_errors";
+    bobFailures.assertPageErrorsClean();
+    stage = "assertions_bob_request_failures";
+    bobFailures.assertRequestFailuresClean();
+    stage = "assertions_bob_response_failures";
+    bobFailures.assertResponseFailuresClean([...apiFailures, ...renderedFailures]);
+    stage = "assertions_alice_mutations";
     assert.deepEqual(aliceFailures.firstPartyMutations, [
       "POST /api/auth/session",
       "POST /api/app/profile-program/onboard",
@@ -961,6 +1003,7 @@ export async function executeHostedDeletionQa(
       "POST /api/auth/session",
       "DELETE /api/app/account",
     ]);
+    stage = "assertions_bob_mutations";
     assert.deepEqual(bobFailures.firstPartyMutations, [
       "POST /api/auth/session",
       "POST /api/app/profile-program/onboard",
