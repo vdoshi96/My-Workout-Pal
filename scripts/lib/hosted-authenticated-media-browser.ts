@@ -503,6 +503,7 @@ async function startSelectedVideo(page: Page): Promise<void> {
 
 async function inspectMedia(
   page: Page,
+  setStage: (stage: HostedAuthenticatedMediaQaStage) => void,
 ): Promise<Readonly<{ firstVideoId: string; playingVideoIds: readonly string[] }>> {
   await expect(page.getByRole("heading", { name: "Technique demonstrations" })).toBeVisible();
   await expect(page.getByText("Approved pair", { exact: true })).toBeVisible();
@@ -514,8 +515,10 @@ async function inspectMedia(
   const first = await selectedMediaState(page);
   assert.equal(first.iframeCount, 1);
   assert.equal(first.fallbackVideoId, first.videoId);
+  setStage("media_demo_one");
   await startSelectedVideo(page);
 
+  setStage("media_demo_two");
   await firstTab.focus();
   await page.keyboard.press("ArrowRight");
   await expect(secondTab).toHaveAttribute("aria-selected", "true");
@@ -680,7 +683,9 @@ export async function executeHostedAuthenticatedMediaQa(
     await expect(page.getByRole("heading", { name: "Push", exact: true })).toBeVisible();
 
     stage = "media_pair";
-    const media = await inspectMedia(page);
+    const media = await inspectMedia(page, (nextStage) => {
+      stage = nextStage;
+    });
     assert.equal(media.playingVideoIds.length, 2);
     stage = "embed_fallback";
     await assertFirstEmbedFallback(

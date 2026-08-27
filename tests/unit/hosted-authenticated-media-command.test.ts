@@ -54,6 +54,8 @@ describe("hosted authenticated media QA command", () => {
     expect(browserSource).toContain("cleanupPostconditionIsConfirmed");
     expect(browserSource).toContain("youtube-nocookie.com/embed/${firstVideoId}");
     expect(browserSource).toContain('{ name: "Push", exact: true }');
+    expect(browserSource).toContain('setStage("media_demo_one")');
+    expect(browserSource).toContain('setStage("media_demo_two")');
     expect(browserSource).not.toMatch(/screenshot\(|trace:\s*|recordVideo/u);
   });
 });
