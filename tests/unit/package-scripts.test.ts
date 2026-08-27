@@ -24,6 +24,9 @@ describe("package runtime scripts", () => {
     expect(packageJson.scripts?.["seed:check"]).toBe(
       "node --import tsx scripts/seed-check.ts",
     );
+    expect(packageJson.scripts?.["db:rebuild-personal-records"]).toBe(
+      "node --env-file-if-exists=.env.local --import tsx scripts/rebuild-personal-record-projections.ts",
+    );
     expect(packageJson.scripts?.["verify"]).toBe(
       "pnpm typecheck && pnpm lint && pnpm test && pnpm db:check && pnpm seed:check && pnpm pwa:check && pnpm docs:check && pnpm build && pnpm production:check",
     );

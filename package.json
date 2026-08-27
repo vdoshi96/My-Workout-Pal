@@ -25,6 +25,7 @@
     "pwa:check": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/render-service-worker.mjs --check",
     "account:reconcile": "node --env-file-if-exists=.env.local --import tsx scripts/account-deletion-reconcile.ts",
     "db:migrate": "node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts",
+    "db:rebuild-personal-records": "node --env-file-if-exists=.env.local --import tsx scripts/rebuild-personal-record-projections.ts",
     "db:seed": "node --env-file-if-exists=.env.local --import tsx scripts/db-seed.ts",
     "db:verify": "node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts",
     "youtube:curate": "node --env-file-if-exists=.env.local --import tsx scripts/youtube-curate.ts",

@@ -14,6 +14,7 @@ import {
   completeAccountDeletion,
   recordAccountDeletionFailure,
 } from "@/server/repositories/account-deletion";
+import { rebuildPersonalRecordProjections } from "@/server/repositories/workout-repository";
 import { createProfileProgramRepository } from "@/server/repositories/profile-program";
 import type { ViewerContext } from "@/server/auth/viewer";
 
@@ -28,6 +29,10 @@ const workoutMigrationUrl = new URL(
 );
 const programCollectionMigrationUrl = new URL(
   "../../drizzle/0003_program_collection.sql",
+  import.meta.url,
+);
+const projectionCheckpointMigrationUrl = new URL(
+  "../../drizzle/0004_personal_record_projection_checkpoint.sql",
   import.meta.url,
 );
 const openDatabases: PGlite[] = [];
@@ -54,6 +59,7 @@ async function openDatabase(): Promise<{ database: Database; raw: PGlite }> {
   await raw.exec(await readFile(deletionMigrationUrl, "utf8"));
   await raw.exec(await readFile(workoutMigrationUrl, "utf8"));
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
+  await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
@@ -200,6 +206,43 @@ afterEach(async () => {
 });
 
 describe("account deletion repository", () => {
+  it("keeps the resumable projection cursor free of deleted owner identifiers", async () => {
+    const { database, raw } = await openDatabase();
+    await seedOwnedGraph(database, raw, "alice");
+    await raw.query(`
+      INSERT INTO personal_record_projection_checkpoints (
+        calculation_version, status, last_session_id, sessions_scanned, candidate_count, changed_count
+      ) VALUES (
+        'v2', 'running', '10000000-0000-4000-8000-000000000001', 1, 4, 4
+      );
+    `);
+    await beginAccountDeletion(
+      database,
+      viewer("alice"),
+      { confirmation: "DELETE", idempotencyKey: "alice-projection-delete" },
+      now,
+    );
+    const checkpoint = await raw.query<Record<string, unknown>>(`
+      SELECT row_to_json(personal_record_projection_checkpoints) AS checkpoint
+      FROM personal_record_projection_checkpoints;
+    `);
+    expect(JSON.stringify(checkpoint.rows)).not.toContain("alice");
+    expect(checkpoint.rows).toHaveLength(1);
+
+    const resumed = await rebuildPersonalRecordProjections(database, { apply: true, batchSize: 1 });
+    expect(resumed).toMatchObject({
+      completed: true,
+      candidateCount: 0,
+      sessionsScanned: 0,
+      totalCandidateCount: 4,
+      totalSessionsScanned: 1,
+    });
+    await expect(raw.query<{ status: string; last_session_id: string | null }>(`
+      SELECT status, last_session_id
+      FROM personal_record_projection_checkpoints;
+    `)).resolves.toMatchObject({ rows: [{ status: "completed", last_session_id: null }] });
+  });
+
   it("serializes simultaneous first requests into one deletion and one replay", async () => {
     const { database, raw } = await openDatabase();
     await seedOwnedGraph(database, raw, "alice");

@@ -1121,6 +1121,29 @@ export const personalRecords = pgTable(
   ],
 );
 
+export const personalRecordProjectionCheckpoints = pgTable(
+  "personal_record_projection_checkpoints",
+  {
+    calculationVersion: varchar("calculation_version", { length: 40 }).primaryKey(),
+    status: varchar("status", { length: 16 }).default("running").notNull(),
+    lastSessionId: uuid("last_session_id"),
+    sessionsScanned: integer("sessions_scanned").default(0).notNull(),
+    candidateCount: integer("candidate_count").default(0).notNull(),
+    changedCount: integer("changed_count").default(0).notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    check(
+      "personal_record_projection_checkpoints_status_known",
+      sql`${table.status} in ('running', 'completed')`,
+    ),
+    check("personal_record_projection_checkpoints_sessions_nonnegative", sql`${table.sessionsScanned} >= 0`),
+    check("personal_record_projection_checkpoints_candidates_nonnegative", sql`${table.candidateCount} >= 0`),
+    check("personal_record_projection_checkpoints_changed_nonnegative", sql`${table.changedCount} >= 0`),
+  ],
+);
+
 export const progressSummaries = pgTable(
   "progress_summaries",
   {
@@ -1262,6 +1285,7 @@ export const schema = {
   cardioLogs,
   idempotencyKeys,
   personalRecords,
+  personalRecordProjectionCheckpoints,
   progressSummaries,
   progressSummarySources,
   accountDeletionJobs,

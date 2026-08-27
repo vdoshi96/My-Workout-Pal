@@ -68,6 +68,27 @@ export type PersonalRecordType =
   | "volume"
   | "estimated_1rm";
 
+export type PersistedPersonalRecordType =
+  | "max_weight"
+  | "max_repetitions"
+  | "volume"
+  | "estimated_1rm"
+  | "distance"
+  | "duration";
+
+export const PERSONAL_RECORD_CALCULATION_VERSIONS = ["v1", "v2"] as const;
+export const PERSONAL_RECORD_CALCULATION_VERSION = "v2";
+
+export function personalRecordCalculationVersionRank(version: string): number | undefined {
+  const rank = PERSONAL_RECORD_CALCULATION_VERSIONS.indexOf(version as (typeof PERSONAL_RECORD_CALCULATION_VERSIONS)[number]);
+  return rank < 0 ? undefined : rank;
+}
+
+export type PersonalRecordProjectionCandidate = Readonly<{
+  recordType: PersistedPersonalRecordType;
+  value: number;
+}>;
+
 export type PersonalRecordCandidate = Readonly<{
   id: string;
   exerciseVariationId: string;
@@ -432,6 +453,65 @@ export function calculateEpleyOneRepMax(
     return estimateEpleyOneRepMaxKg(measurement.addedWeightKg, measurement.repetitions);
   }
   return undefined;
+}
+
+function roundedProjectionValue(value: number): number | undefined {
+  if (!Number.isFinite(value) || value < 0) return undefined;
+  return roundForPresentation(value, 3);
+}
+
+function projectionProduct(left: number, right: number): number | undefined {
+  const value = left * right;
+  return Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+function projectionEpley(weightKg: number, repetitions: number): number | undefined {
+  try {
+    return estimateEpleyOneRepMaxKg(weightKg, repetitions);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Build the persisted record metrics for one logged work-set measurement.
+ * Invalid values are ignored because a malformed historical row must not make
+ * an otherwise valid workout appear to have a record.
+ */
+export function buildPersonalRecordProjectionCandidates(
+  input: unknown,
+): readonly PersonalRecordProjectionCandidate[] {
+  const parsed = validateMeasurement(input);
+  if (!parsed.ok || parsed.measurement.isWarmup === true) return [];
+
+  const candidates: Array<PersonalRecordProjectionCandidate | undefined> = [];
+  const add = (
+    recordType: PersistedPersonalRecordType,
+    value: number | undefined,
+    requirePositive = false,
+  ): void => {
+    const rounded = value === undefined ? undefined : roundedProjectionValue(value);
+    if (rounded !== undefined && (!requirePositive || rounded > 0)) {
+      candidates.push({ recordType, value: rounded });
+    }
+  };
+
+  const measurement = parsed.measurement;
+  if (measurement.kind === "weight_reps") {
+    add("max_weight", measurement.weightKg, true);
+    add("max_repetitions", measurement.repetitions);
+    add("volume", projectionProduct(measurement.weightKg, measurement.repetitions), true);
+    add("estimated_1rm", projectionEpley(measurement.weightKg, measurement.repetitions), true);
+  } else if (measurement.kind === "bodyweight_reps") {
+    add("max_repetitions", measurement.repetitions);
+  } else if (measurement.kind === "duration") {
+    add("duration", measurement.durationSeconds);
+  } else {
+    add("distance", measurement.distanceMeters);
+    add("duration", measurement.durationSeconds);
+  }
+
+  return candidates.filter((candidate): candidate is PersonalRecordProjectionCandidate => candidate !== undefined);
 }
 
 export type RecordValueComparison = "higher" | "tie" | "lower";
