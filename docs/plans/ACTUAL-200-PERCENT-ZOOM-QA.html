@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="6d88cd872f96fbe4e0512af653822614490d6fe591ec77b2d34710a42ec4b0a9">
+  <title>Actual 200-percent browser zoom QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Actual 200-percent browser zoom QA</h1>
+<h2>User outcome</h2>
+<p>People can enlarge the released application to an actual browser zoom level of 200 percent without losing content, controls, focus order, or the ability to complete the inspected guest and member tasks. This lane verifies browser zoom rather than a narrow viewport, device-scale factor, operating-system display scaling, or CSS transform. It changes no workout, provider, database, billing, or account state unless a separately planned defect correction becomes necessary.</p>
+<h2>Scope and navigation</h2>
+<p>The public journey covers the production landing page, program overview, one day, a filtered library, one exercise detail with its two demonstration choices, and sign-in. The authenticated customization journey already has phone, tablet, and desktop geometry evidence; this gate inspects its material collection/editor/equipment/settings surfaces at actual browser zoom using a disposable verified password member only if a reusable authenticated session is safely available. Otherwise, the authenticated part remains explicitly open rather than being simulated.</p>
+<p>Chromium evidence uses the Codex in-app Chromium browser at the public production origin. WebKit evidence uses installed Safari when its visible page-zoom control exposes an exact 200-percent value. Each browser starts at its verified default zoom, changes zoom through the browser UI or browser keyboard command, and returns to the default before closing. A browser whose automation surface cannot expose or verify exact zoom is recorded as a limitation; it is not replaced with viewport emulation.</p>
+<h2>States and invariants</h2>
+<ul>
+<li>Browser zoom is exactly 200 percent and is verified from browser state, not inferred from a screenshot.</li>
+<li>Content remains available in document order. Horizontal page overflow, clipped dialogs, overlapping fixed navigation, unreachable terminal actions, and focus trapped outside an open dialog are failures.</li>
+<li>The browser back button and the application&#39;s contextual exercise return remain usable at zoom.</li>
+<li>The exercise detail keeps exactly two selectable demonstrations, one mounted iframe, title/channel attribution, and a direct YouTube fallback. This lane does not claim live playback unless the player is actually started and visibly observed.</li>
+<li>Public pages remain guest-readable. Sign-in remains optional for browsing and required only for persistent customization and tracking.</li>
+<li>Browser zoom is presentation state only. No canonical kilogram, metre, duration, workout, program, preference, or ownership value changes.</li>
+</ul>
+<h2>Loading, empty, error, interrupted, and worst-case behavior</h2>
+<p>The inspection waits for the production document and hero/player assets before judging geometry. A loading player may not cover navigation or controls. A missing or unavailable player must retain attribution and the direct fallback where available, while a missing curated pair must show the existing useful unavailable state. Network, console, page, or first-party request failures are recorded and fail the gate unless they are an exact documented third-party player boundary. If browser zoom interrupts navigation, the current page and browser zoom state are re-read before any retry; repeated blind input is not evidence.</p>
+<p>The worst case is a 200-percent desktop viewport acting like a narrow layout while fixed navigation, a long exercise title, player controls, or an editor dialog is visible. Every material action must remain reachable by ordinary scrolling and keyboard traversal with no two-dimensional page scrolling.</p>
+<h2>Domain types and persistence contracts</h2>
+<p>This is an evidence-only boundary with no new application data type or persistence write. The evidence record stores only browser family, production origin, route class, verified zoom percentage, viewport/overflow measurements, visible control outcomes, console/error result, and a reviewed screenshot when it materially explains the result. It stores no UID, email, password, cookie, token, opaque member resource ID, browser profile, trace, HAR, or video.</p>
+<h2>Authentication and authorization</h2>
+<p>Public coverage is unsigned-in. If authenticated coverage is run, identity creation, verification, secure session exchange, onboarding, and deletion follow the existing explicit opt-in hosted QA boundaries, with Firebase UID ownership derived only on the server and exact-UID cleanup in <code>finally</code>. A foreign or missing resource is never probed in this lane. A missing reusable safe auth boundary leaves authenticated zoom open rather than weakening the server session policy or using a production bypass.</p>
+<h2>Responsive behavior and accessibility</h2>
+<p>At 200 percent, each inspected route must reflow to one readable axis, expose no document-level horizontal overflow, keep text readable without overlap, and keep representative controls at least operable by keyboard. The run checks skip-link focus, visible focus on navigation and demonstration tabs, arrow-key movement within the tablist, landmark/heading presence, and reachable terminal actions. Existing automated phone/tablet/desktop, reduced-motion, dark-mode, forced-color, and serious/critical Axe evidence remains complementary; browser zoom does not replace it.</p>
+<h2>Privacy, security, and disk hygiene</h2>
+<p>The browser remains on the allowlisted production origin except for the existing privacy-enhanced YouTube iframe and a direct fallback that is inspected but not opened unless required. No credential is typed through an uncontrolled browser surface. At most two identity-free screenshots are retained in <code>docs/qa/latest</code>; raw browser profiles, traces, recordings, downloads, and temporary captures are deleted immediately. No local application build is required. Reusable dependencies remain, while generated build/result/report directories remain absent.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Chromium exposes and verifies actual 200-percent zoom on the production origin.</li>
+<li>Safari/WebKit also verifies exact 200-percent zoom, or its precise automation limitation is documented without a substitute claim.</li>
+<li>Landing, program, day, library, exercise detail, and sign-in remain readable and operable with zero document-level horizontal overflow.</li>
+<li>Contextual return, keyboard navigation, two demonstration choices, one iframe, and the direct fallback remain reachable at zoom.</li>
+<li>Any authenticated surface claimed by this lane is actually opened through a server-derived production session; otherwise it remains open.</li>
+<li>No first-party console/page/request/HTTP failure is observed, and any third-party player warning is named exactly.</li>
+<li>Browser zoom is restored to default and temporary tabs/captures are closed or removed.</li>
+<li>Only newest reviewed QA evidence remains, Markdown/HTML parity passes, Git diff checks pass, and disk free space does not materially decrease.</li>
+</ul>
+<h2>Automated tests and retained red evidence</h2>
+<p>Existing public and authenticated geometry, navigation, video-pair, security-header, and accessibility tests remain the automated regression layer. Documentation parity and diff checks must pass on this evidence branch. If actual zoom reveals a product defect, retain one minimal fail-first automated geometry/accessibility regression before changing source, then pass the focused test, strict types, scoped lint, and the exact browser replay. Browser-only evidence is never described as an automated test.</p>
+<h2>Browser evidence required for completion</h2>
+<p>Record the production deployment and source SHA, browser family/version where exposed, the exact mechanism that proves 200 percent, route sequence, keyboard interactions, horizontal-overflow measurements, visible fixed-navigation/dialog/player behavior, console/error result, and zoom restoration. Retain no more than one reviewed Chromium image and one reviewed Safari/WebKit image, and only when they materially show reflow that numeric measurements cannot. A screenshot without verified browser zoom state is insufficient.</p>
+
+  </main>
+</body>
+</html>
