@@ -9,6 +9,13 @@ import { harnessRequestContext } from "../../../server/harness-context";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const fixtureFirebasePublicConfig = {
+  apiKey: "fixture-public-api-key-not-a-credential",
+  appId: "1:000000000000:web:fixture-auth-readiness",
+  authDomain: "fixture.invalid",
+  projectId: "fixture-project",
+} as const;
+
 export default async function HarnessSettingsPage() {
   const context = harnessRequestContext(await headers());
   if (!context.viewer) return null;
@@ -26,7 +33,7 @@ export default async function HarnessSettingsPage() {
     <SettingsForm
       canMutate={context.viewer.eligibleForPermanentMutations}
       equipmentProfileKind={model.equipment.profileKind}
-      firebaseConfig={null}
+      firebaseConfig={fixtureFirebasePublicConfig}
       initialPreferences={model.preferences}
       ownerUid={model.profile.firebaseUid}
       viewerProvider={context.viewer.provider}

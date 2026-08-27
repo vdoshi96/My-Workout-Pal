@@ -34,6 +34,7 @@ describe("Settings Firebase auth readiness", () => {
     );
 
     expect(markup).toContain("Checking the browser Firebase sign-in");
+    expect(markup.match(/Checking the browser Firebase sign-in/g)).toHaveLength(1);
     expect(markup).toMatch(/<button[^>]*disabled=""[^>]*>Review permanent deletion<\/button>/);
     expect(markup).not.toContain("server-derived-owner");
   });

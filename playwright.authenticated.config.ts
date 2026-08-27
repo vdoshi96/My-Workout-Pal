@@ -7,7 +7,7 @@ if (!portValue || !Number.isInteger(port) || port < 1024 || port > 65_535) {
 }
 const baseURL = `http://127.0.0.1:${port}`;
 const journeyAndGeometry =
-  /(?:onboarding|customization-geometry|runner-resilience)\.spec\.ts/u;
+  /(?:onboarding|customization-geometry|firebase-auth-hydration|runner-resilience)\.spec\.ts/u;
 const geometryOnly = /customization-geometry\.spec\.ts/u;
 
 export default defineConfig({

@@ -39,7 +39,13 @@ describe("authenticated customization fixture boundary", () => {
     expect(source("app/app/library/custom/new/page.tsx")).toContain("<CustomExerciseEditor");
     expect(source("app/app/library/custom/[id]/page.tsx")).toContain("<CustomExerciseEditor");
     expect(source("app/app/settings/page.tsx")).toContain("<SettingsForm");
-    expect(source("app/app/settings/page.tsx")).toContain("firebaseConfig={null}");
+    expect(source("app/app/settings/page.tsx")).toContain(
+      "firebaseConfig={fixtureFirebasePublicConfig}",
+    );
+    expect(source("app/app/settings/page.tsx")).toContain(
+      "fixture-public-api-key-not-a-credential",
+    );
+    expect(source("app/app/settings/page.tsx")).not.toContain("process.env");
     expect(source("app/app/prs/page.tsx")).toContain("<PersonalRecordsView");
     expect(source("app/app/progress/page.tsx")).toContain("<ProgressInsightsView");
     expect(source("app/app/history/[sessionId]/page.tsx")).toContain("<TrainingHistoryDetail");

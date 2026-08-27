@@ -296,6 +296,7 @@ describe("credential-free authenticated harness boundary", () => {
     expect(playwrightConfig).toContain('process.env["MWP_AUTH_HARNESS_PORT"]');
     expect(playwrightConfig).not.toContain("const port = 3110");
     expect(playwrightConfig).toContain("runner-resilience");
+    expect(playwrightConfig).toContain("firebase-auth-hydration");
     expect(runner).toContain(
       '["exec", "next", "build", "tests/fixtures/authenticated-app", "--webpack"]',
     );
@@ -471,6 +472,23 @@ describe("credential-free authenticated harness boundary", () => {
     expect(resilienceSpec).toContain(
       "expect(harness.failedResponses).toEqual([",
     );
+
+    const hydrationSpec = readFileSync(
+      resolve(
+        repositoryRoot,
+        "tests/authenticated-e2e/firebase-auth-hydration.spec.ts",
+      ),
+      "utf8",
+    );
+    expect(hydrationSpec).toContain(
+      "context().route(/^http:\\/\\/127\\.0\\.0\\.1:\\d+\\//",
+    );
+    expect(hydrationSpec).toContain(
+      "/^https:\\/\\/fixture\\.invalid\\/__\\/auth\\/iframe/u",
+    );
+    expect(hydrationSpec).toContain('page.on("requestfailed"');
+    expect(hydrationSpec).toContain('url.hostname === "127.0.0.1"');
+    expect(hydrationSpec).not.toContain("extraHTTPHeaders");
 
     const memberProgramHome = readFileSync(
       resolve(repositoryRoot, "src/components/program/member-program-home.tsx"),

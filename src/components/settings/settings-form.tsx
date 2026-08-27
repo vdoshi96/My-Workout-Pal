@@ -69,6 +69,7 @@ export function SettingsForm({
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleteMessage, setDeleteMessage] = useState("");
   const [deletePassword, setDeletePassword] = useState("");
+  const [deletionReviewOpen, setDeletionReviewOpen] = useState(false);
   const [deletionFinished, setDeletionFinished] = useState(false);
   const [firebaseIdentityAttempt, setFirebaseIdentityAttempt] = useState(0);
   const [firebaseIdentityState, setFirebaseIdentityState] =
@@ -206,6 +207,7 @@ export function SettingsForm({
     setDeletePassword("");
     setDeleteMessage("");
     setDeletionFinished(false);
+    setDeletionReviewOpen(true);
     deleteDialog.current?.showModal();
     globalThis.requestAnimationFrame(() => deleteHeading.current?.focus());
   }
@@ -419,6 +421,7 @@ export function SettingsForm({
         onCancel={(event) => {
           if (deleteBusy) event.preventDefault();
         }}
+        onClose={() => setDeletionReviewOpen(false)}
         ref={deleteDialog}
       >
         <form className="account-delete-form" onSubmit={(event) => void deleteAccount(event)}>
@@ -464,7 +467,9 @@ export function SettingsForm({
           )}
 
           <p aria-live="polite" className="account-delete-status" role="status">{deleteMessage}</p>
-          {shouldResolveFirebaseIdentity && firebaseIdentityState.status !== "ready" ? (
+          {deletionReviewOpen &&
+          shouldResolveFirebaseIdentity &&
+          firebaseIdentityState.status !== "ready" ? (
             <FirebaseClientIdentityStatus
               onRetry={retryFirebaseIdentity}
               state={firebaseIdentityState}
@@ -485,7 +490,11 @@ export function SettingsForm({
                   }
                   type="submit"
                 >{deleteBusy ? "Deletion in progress…" : "Reauthenticate and permanently delete"}</button>
-                <button disabled={deleteBusy} onClick={() => deleteDialog.current?.close()} type="button">Cancel</button>
+                <button
+                  disabled={deleteBusy}
+                  onClick={() => deleteDialog.current?.close()}
+                  type="button"
+                >Cancel</button>
               </>
             )}
           </div>
