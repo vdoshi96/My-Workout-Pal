@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="00f12fa3eb4a5e86386eace0307fbcafa1f7e8f7e9cd556bce95d338b0b3bb58">
+  <title>Authentication entry QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Authentication entry QA</h1>
+<h2>Outcome</h2>
+<p>Wave 0 account entry is ready for sequential integration from branch <code>vishal/auth-entry-handoff</code>. Implementation commit <code>8dc093a7e419cce57e6b164d42f2c17aaad8e686</code> is pushed and Vercel marked preview deployment <code>dpl_FXKyLe5odmXL1WT9PNbxeXuMc4Qc</code> Ready. This is not a production-deployment or production-release approval.</p>
+<p>Public account actions enter through <code>/app</code>, unauthenticated visitors reach <code>/sign-in?returnTo=%2Fapp</code>, safe private return targets remain exact, and invalid or unsafe targets fall back to <code>/app</code>. The authenticated shell visibly identifies the member and keeps Sign out available across phone, tablet, and desktop layouts. Public pages stay identity-neutral and label the public five-day content as a starter example that is not saved.</p>
+<h2>Failed-before evidence</h2>
+<ul>
+<li>The initial focused return-path, public-entry, and hosted-entry run failed 16 assertions across three files before implementation. The failures covered the old <code>/</code> fallback, unsafe non-member return paths, <code>/sign-in</code> public actions, missing starter-preview labels, and a hosted runner that skipped the public account entry.</li>
+<li>A separate responsive regression test failed while <code>.member-identity</code> was hidden below the desktop breakpoint.</li>
+<li>The first production-browser replay exposed an ambiguous <code>My workouts</code> test locator because the landing page also includes <code>Open my workouts</code>. The locator and the hosted runner now require the exact shared-chrome label.</li>
+</ul>
+<h2>Passed-after evidence</h2>
+<ul>
+<li>Full Vitest aggregate: 103 files and 712 tests passed.</li>
+<li>Final focused auth-entry aggregate: five files and 29 tests passed after the exact hosted-entry locator correction.</li>
+<li>Strict TypeScript, scoped ESLint, <code>git diff --check</code>, and the Webpack production build passed.</li>
+<li>Documentation build/check verified 42 Markdown/HTML pairs before this QA record replaced the prior evidence; the final parity check includes this record.</li>
+<li>Public production-mode Playwright matrix: 47 passed across Chromium phone/tablet/desktop and WebKit phone, with the maintained WebKit service-worker capability skip.</li>
+<li>Authenticated production-mode fixture: six passed across Chromium and WebKit phone, tablet, and desktop projects. Each project verified the visible display name, verification state, and Sign out control alongside geometry and accessibility checks.</li>
+</ul>
+<h2>Real authentication and data integrity</h2>
+<p>A verified disposable Firebase password identity exercised the branch build through three real sessions:</p>
+<ol>
+<li>Public <code>My workouts</code> → <code>/app</code> → <code>/sign-in?returnTo=%2Fapp</code> → authenticated <code>/app</code>.</li>
+<li>Supplied <code>/app/settings</code> return → authenticated <code>/app/settings</code>.</li>
+<li>External unsafe return target → authenticated <code>/app</code> fallback.</li>
+</ol>
+<p>The browser verified a visible signed-in identity, <code>Verified account</code>, working Sign out, no critical or serious Axe violations, and a host-only <code>__Host-mwp_session</code> cookie with HttpOnly, Secure, SameSite Strict, and <code>/</code> path metadata. The only first-party mutation requests were three <code>POST /api/auth/session</code> and three <code>DELETE /api/auth/session</code> operations.</p>
+<p>Database counts for the disposable UID were zero before and after the journey in <code>user_profiles</code>, <code>user_preferences</code>, <code>user_programs</code>, and <code>workout_sessions</code>. The Firebase QA identity was deleted after verification. No credential, token, cookie value, browser profile, trace, video, or screenshot was retained.</p>
+<h2>Hosted Google result</h2>
+<p>Google authentication was not simulated. The exact branch preview is protected by Vercel Authentication, and the live Firebase authorized-domain list contains only <code>localhost</code>, the two Firebase-hosted domains, and <code>my-workout-pal-chi.vercel.app</code>. Neither Vercel preview hostname is authorized. Real Google preview testing therefore requires an explicit provider/protection configuration decision; production was not changed or deployed for this iteration.</p>
+<h2>Retention</h2>
+<p>This Markdown file and its same-content generated HTML counterpart are the only retained evidence from the newest completed QA run. Superseded launch-readiness evidence and generated Playwright/build artifacts were removed after replacement verification.</p>
+
+  </main>
+</body>
+</html>
