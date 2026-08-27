@@ -38,6 +38,7 @@ export type HostedAuthQaStage =
   | "assertions_request_failures_static_png"
   | "assertions_request_failures_static_svg"
   | "assertions_request_failures_static_webmanifest"
+  | "assertions_request_failures_static_webmanifest_failed"
   | "assertions_request_failures_static_webp"
   | "assertions_request_failures_sign_in"
   | "assertions_response_failures"
@@ -177,7 +178,9 @@ function attachFailureCollectors(page: Page, origin: string) {
       !isSupersededNextFlightRequest(request) &&
       !isSupersededManifestRequest(request)
     ) {
-      requestFailures.push(`${request.method()} ${url.pathname}`);
+      requestFailures.push(
+        `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown"}`,
+      );
     }
   });
 
@@ -203,7 +206,7 @@ function attachFailureCollectors(page: Page, origin: string) {
     requestFailureStage: (): HostedAuthQaStage | undefined => {
       if (requestFailures.length === 0) return undefined;
       const categories = new Set(requestFailures.map((failure) => {
-        const pathname = failure.split(" ")[1] ?? "";
+        const [, pathname = "", errorText = "unknown"] = failure.split(" ");
         if (pathname.startsWith("/api/")) return "api";
         if (pathname.startsWith("/_next/")) return "asset";
         if (pathname === "/app") return "app";
@@ -212,7 +215,11 @@ function attachFailureCollectors(page: Page, origin: string) {
         if (pathname === "/service-worker.js") return "service_worker";
         if (pathname.endsWith(".png")) return "static_png";
         if (pathname.endsWith(".svg")) return "static_svg";
-        if (pathname.endsWith(".webmanifest")) return "static_webmanifest";
+        if (pathname.endsWith(".webmanifest")) {
+          return errorText === "net::ERR_FAILED"
+            ? "static_webmanifest_failed"
+            : "static_webmanifest";
+        }
         if (pathname.endsWith(".webp")) return "static_webp";
         return "other";
       }));
@@ -227,6 +234,7 @@ function attachFailureCollectors(page: Page, origin: string) {
         case "static_png": return "assertions_request_failures_static_png";
         case "static_svg": return "assertions_request_failures_static_svg";
         case "static_webmanifest": return "assertions_request_failures_static_webmanifest";
+        case "static_webmanifest_failed": return "assertions_request_failures_static_webmanifest_failed";
         case "static_webp": return "assertions_request_failures_static_webp";
         default: return "assertions_request_failures_other";
       }
