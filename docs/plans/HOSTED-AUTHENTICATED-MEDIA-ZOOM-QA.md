@@ -16,6 +16,7 @@ The same authenticated session visits `/app`, `/app/programs`, `/app/program/edi
 - Media states cover approved pair, Demo 1 selected, Demo 2 selected, one active iframe, direct fallback, first iframe request failure, alternate selection, and runner logging remaining available.
 - Zoom states cover default, browser-reported 200 percent, restored default, horizontal overflow, clipped action, unreachable disclosure/dialog control, and lost focus.
 - The released authenticated Push runner exposed a retained red result at the `zoom_runner_geometry` helper stage while the collection, editor, and settings passed. The equivalent 720 CSS-pixel fixture viewport and the hosted document-width check both pass; the failure occurs at that helper's final landmark assertion because the standalone workout route has no semantic `<main>`. The correction adds the missing landmark without changing runner state, persistence, or visual layout.
+- After the main-landmark correction passed in production, the same hosted replay retained a second red at `zoom_runner_accessibility`. The credential-free 720 CSS-pixel fixture must run the same serious/critical Axe boundary; if third-party composition prevents reproduction, hosted diagnostics may expose only stable Axe rule IDs and counts.
 - Cleanup states distinguish visible account deletion, exact-UID Admin fallback cleanup, absent identity, zero owned rows, and uncertain cleanup. An uncertain result fails the command and reports that manual cleanup may be required without printing the identity.
 
 ## Domain values and invariants
@@ -68,7 +69,7 @@ Before and after the run, record free disk space and confirm no simulator, Chrom
 - The owned Push runner exposes the approved exact pair and one iframe; Demo 1 and Demo 2 each visibly enter a playing state after a user gesture.
 - With the first embed request deliberately blocked, the runner still exposes Demo 2, its direct fallback, and set logging; Demo 2 reaches playing state.
 - Collection, program editor, settings, and runner each pass actual browser-reported 200-percent one-axis geometry and keyboard reachability; zoom is restored.
-- A production-component fixture regression at 720 CSS pixels reports no element outside the document viewport, no horizontal document overflow, and one visible semantic main landmark before the hosted replay is accepted.
+- A production-component fixture regression at 720 CSS pixels reports no element outside the document viewport, no horizontal document overflow, one visible semantic main landmark, and no serious or critical Axe violation before the hosted replay is accepted.
 - No unexpected first-party console/page/request/HTTP failure occurs. Any accepted third-party warning is exact and documented.
 - The disposable Firebase UID is absent, owned Neon row counts return to zero, global counts are unchanged, and the aggregate Firebase count equals baseline.
 - No identity, credential, cookie, opaque ID, profile, trace, video, or build/report artifact remains; free space does not materially decrease.

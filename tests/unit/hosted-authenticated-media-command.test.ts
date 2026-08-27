@@ -68,6 +68,7 @@ describe("hosted authenticated media QA command", () => {
     expect(browserSource).toContain("if (reflowAssertionsPassed) setStage");
     expect(browserSource).toContain("HostedAuthenticatedMediaQaSafeAssertionError");
     expect(browserSource).toContain("geometry.outliers.join");
+    expect(browserSource).toContain('`axe-${safeRules.join(",")}`');
     expect(browserSource).not.toContain('page.keyboard.press("Meta+=")');
     expect(browserSource).toContain('setStage("media_demo_one")');
     expect(browserSource).toContain('setStage("media_demo_two")');

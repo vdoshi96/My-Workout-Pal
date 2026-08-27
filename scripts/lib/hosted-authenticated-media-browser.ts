@@ -284,12 +284,20 @@ async function exactIdentityCleanup(
 
 async function assertAccessible(page: Page): Promise<void> {
   const result = await new AxeBuilder({ page }).analyze();
-  assert.deepEqual(
-    result.violations.filter((violation) =>
-      violation.impact === "critical" || violation.impact === "serious"
-    ),
-    [],
+  const violations = result.violations.filter((violation) =>
+    violation.impact === "critical" || violation.impact === "serious"
   );
+  if (violations.length > 0) {
+    const safeRules = violations.map((violation) => {
+      const rule = /^[a-z0-9-]+$/u.test(violation.id)
+        ? violation.id
+        : "unknown-rule";
+      return `${rule}-${violation.nodes.length}`;
+    });
+    throw new HostedAuthenticatedMediaQaSafeAssertionError(
+      `axe-${safeRules.join(",")}`,
+    );
+  }
 }
 
 function isSupersededNextFlightRequest(request: Request): boolean {
