@@ -38,6 +38,7 @@ export type HostedAuthQaStage =
   | "assertions_request_failures_static_png"
   | "assertions_request_failures_static_svg"
   | "assertions_request_failures_static_webmanifest"
+  | "assertions_request_failures_static_webmanifest_aborted_variant"
   | "assertions_request_failures_static_webmanifest_failed"
   | "assertions_request_failures_static_webmanifest_unknown"
   | "assertions_request_failures_static_webp"
@@ -217,7 +218,9 @@ function attachFailureCollectors(page: Page, origin: string) {
         if (pathname.endsWith(".png")) return "static_png";
         if (pathname.endsWith(".svg")) return "static_svg";
         if (pathname.endsWith(".webmanifest")) {
-          return errorText === "net::ERR_FAILED"
+          return errorText.startsWith("net::ERR_ABORTED")
+            ? "static_webmanifest_aborted_variant"
+            : errorText === "net::ERR_FAILED"
             ? "static_webmanifest_failed"
             : errorText === "unknown"
               ? "static_webmanifest_unknown"
@@ -237,6 +240,7 @@ function attachFailureCollectors(page: Page, origin: string) {
         case "static_png": return "assertions_request_failures_static_png";
         case "static_svg": return "assertions_request_failures_static_svg";
         case "static_webmanifest": return "assertions_request_failures_static_webmanifest";
+        case "static_webmanifest_aborted_variant": return "assertions_request_failures_static_webmanifest_aborted_variant";
         case "static_webmanifest_failed": return "assertions_request_failures_static_webmanifest_failed";
         case "static_webmanifest_unknown": return "assertions_request_failures_static_webmanifest_unknown";
         case "static_webp": return "assertions_request_failures_static_webp";
