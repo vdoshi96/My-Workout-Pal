@@ -206,8 +206,7 @@ export function SettingsForm({
         },
         ownerUid,
       );
-      router.replace("/sign-in");
-      router.refresh();
+      window.location.replace("/sign-in");
     } catch (error) {
       setMessage(errorMessage(error, "Sign out did not finish safely. Try again."));
       setBusy(false);

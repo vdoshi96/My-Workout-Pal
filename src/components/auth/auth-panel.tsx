@@ -10,7 +10,6 @@ import {
   signOut,
   type User,
 } from "firebase/auth";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { mapFirebaseAuthError } from "@/client/auth-errors";
@@ -43,7 +42,6 @@ export function AuthPanel({
   config,
   returnTo,
 }: Readonly<{ config: FirebasePublicConfig; returnTo: string }>) {
-  const router = useRouter();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -56,8 +54,7 @@ export function AuthPanel({
         ? "Signed in securely. Opening your route."
         : "Signed in. Verify your email before saving permanent changes.",
     );
-    router.replace(returnTo);
-    router.refresh();
+    window.location.replace(returnTo);
   }
 
   async function handleGoogle() {

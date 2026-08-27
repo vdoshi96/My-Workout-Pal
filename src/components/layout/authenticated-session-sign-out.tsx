@@ -1,7 +1,6 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
@@ -20,7 +19,6 @@ export function AuthenticatedSessionSignOut({
   firebaseConfig: FirebasePublicConfig | null;
   ownerUid: string;
 }>) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -50,8 +48,7 @@ export function AuthenticatedSessionSignOut({
         },
         ownerUid,
       );
-      router.replace("/sign-in");
-      router.refresh();
+      window.location.replace("/sign-in");
     } catch {
       setMessage("Sign out did not finish safely. Try again.");
       setBusy(false);

@@ -39,7 +39,6 @@ export type HostedAuthQaStage =
   | "verification"
   | "verified_sign_in_navigation"
   | "verified_sign_in_submit"
-  | "verified_session_client_confirmation"
   | "verified_session_create"
   | "verified_session_create_rejected"
   | "verified_session_accessibility"
@@ -317,10 +316,6 @@ async function runBrowserLifecycle(
       setStage("verified_session_create_rejected");
       assert.ok(sessionResponse.ok());
     }
-    setStage("verified_session_client_confirmation");
-    await expect(page.locator(".auth-message")).toHaveText(
-      "Signed in securely. Opening your route.",
-    );
     setStage("verified_sign_in_navigation");
     await page.waitForURL(`${config.origin}/app`);
     setStage("verified_session_ui");
