@@ -48,6 +48,8 @@ A slow persisted-auth restore shows `loading`, prevents review/deletion, and rem
 
 Reload, back/forward navigation, tab suspension, Strict Mode effect replay, and component unmount cannot duplicate a deletion or leak a timer/subscription. If the browser becomes offline during initialization, the user sees the safe unavailable state and can retry after reconnecting. If readiness changes after the dialog opens, submission still fails closed on the current-user equality check and performs no server deletion.
 
+Authenticated shell navigation does not issue speculative RSC prefetches while a full-page Settings recovery state is loading. The logo and account navigation still perform ordinary server-rendered navigation after activation. This boundary prevents an unused private `/app` request from becoming a WebKit page error or an undocumented authenticated request during identity recovery.
+
 ## Mobile, tablet, desktop, accessibility, and motion
 
 The readiness message sits with the existing account-deletion control and wraps without horizontal overflow at phone, tablet, and desktop widths. Status changes use a polite live region; unavailable/mismatch failures use an alert only when user action is required. The disabled review button remains natively disabled. Recovery and retry controls have visible focus, descriptive names, and at least the project's established touch-target size. Readiness introduces no animation, so reduced-motion behavior is unchanged; dark and forced-color modes retain non-color text meaning.
@@ -61,16 +63,17 @@ The readiness message sits with the existing account-deletion control and wraps 
 - A later Firebase sign-out or account switch disables deletion before a destructive request.
 - Password and Google reauthentication still require the same UID, a fresh ID token, and a server-confirmed secure session.
 - A malformed, duplicate, stale, cross-origin, unverified, expired, revoked, or wrong-owner deletion request remains rejected by the existing server boundaries.
+- The authenticated logo and account navigation issue no automatic RSC prefetch during a direct Settings load or reload.
 - No new provider/database writes occur merely by loading or retrying Settings.
 
 ## Automated tests
 
 Retain a fail-first unit test proving that a delayed readiness promise is awaited before reading the client user. Pure tests cover matching, missing, mismatched, rejected, timed-out, retry, timer cleanup, and a later auth-state change. Deletion orchestration tests continue to prove exact confirmation before client-state access, same-UID enforcement, popup cancellation, password failure, secure-session refresh ordering, stable idempotency, and confirmed-only cleanup.
 
-A component/source test proves the initial Settings render describes Firebase initialization and disables permanent deletion until `ready`; safe recovery copy and the exact bounded return link are present for non-ready terminal states. Existing route, service, repository, migration, ownership, CSRF, and account-deletion suites remain green. The normal verification commands are strict TypeScript, full lint, focused unit/integration tests, documentation parity, production build, and production-boundary inspection.
+A component/source test proves the initial Settings render describes Firebase initialization and disables permanent deletion until `ready`; safe recovery copy and the exact bounded return link are present for non-ready terminal states. A source-policy test requires `prefetch={false}` on the authenticated logo and account navigation. Existing route, service, repository, migration, ownership, CSRF, and account-deletion suites remain green. The normal verification commands are strict TypeScript, full lint, focused unit/integration tests, documentation parity, production build, and production-boundary inspection.
 
 ## Browser evidence required for completion
 
-Credential-free browser evidence covers the Settings layout and recovery states without a production test bypass under `src/app`. Credential-backed evidence uses a disposable identity and must prove a genuine full-page `/app/settings` load with delayed Firebase restoration, matching-UID readiness, dialog cancellation/focus return, wrong-password or popup-cancel failure, and no request on absent/mismatched identity. Password and Google identities are checked separately; a Google browser session may require explicit user interaction.
+Credential-free browser evidence covers the Settings layout and recovery states without a production test bypass under `src/app`. The WebKit replay collects page errors, console warnings and errors, failed first-party responses, and failed first-party requests; the expected terminal sets are empty after a direct Settings load and reload. Credential-backed evidence uses a disposable identity and must prove a genuine full-page `/app/settings` load with delayed Firebase restoration, matching-UID readiness, dialog cancellation/focus return, wrong-password or popup-cancel failure, and no request on absent/mismatched identity. Password and Google identities are checked separately; a Google browser session may require explicit user interaction.
 
 The destructive success replay uses only a disposable approved target, records pre/post aggregate Firebase and Neon ownership counts without identifiers, confirms public navigation and secure-cookie removal, and deletes the disposable identity in `finally` if the application path does not. Phone, tablet, and desktop Chromium/WebKit inspection covers overflow, keyboard, live-region, dark/reduced-motion behavior, and Axe. Hosted preview/production evidence is run only after the exact release SHA is Ready; no personal or production member account is deleted.

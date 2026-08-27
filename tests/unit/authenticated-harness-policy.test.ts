@@ -504,6 +504,14 @@ describe("credential-free authenticated harness boundary", () => {
     );
     expect(authenticatedNav.match(/prefetch=\{false\}/gu)).toHaveLength(1);
 
+    const authenticatedShell = readFileSync(
+      resolve(repositoryRoot, "src/components/layout/authenticated-shell.tsx"),
+      "utf8",
+    );
+    expect(authenticatedShell).toContain(
+      '<Link className="brand" href="/app" prefetch={false}>',
+    );
+
     const fixtureDay = readFileSync(
       resolve(
         repositoryRoot,
