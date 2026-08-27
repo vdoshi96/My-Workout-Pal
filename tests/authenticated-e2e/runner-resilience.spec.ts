@@ -161,10 +161,7 @@ async function openResiliencePage(
   };
 }
 
-function monitorResiliencePage(
-  page: Page,
-  signals: ResilienceSignals,
-): void {
+function monitorResiliencePage(page: Page, signals: ResilienceSignals): void {
   page.on("console", (message) => {
     if (
       (message.type() === "error" || message.type() === "warning") &&
@@ -291,8 +288,10 @@ type StoredRunnerOperation = Readonly<{
 }>;
 
 type StoredRunnerSummary = Readonly<{
+  draftWeightKg: number | undefined;
   revision: number;
   schemaVersion: number;
+  stateStatus: string;
   operations: readonly StoredRunnerOperation[];
 }>;
 
@@ -303,12 +302,14 @@ async function readStoredRunner(
   return page.evaluate(async (expectedSessionId) => {
     const records = await new Promise<unknown[]>((resolve, reject) => {
       const open = indexedDB.open("my-workout-pal-runner");
-      open.onerror = () => reject(open.error ?? new Error("IndexedDB open failed"));
+      open.onerror = () =>
+        reject(open.error ?? new Error("IndexedDB open failed"));
       open.onsuccess = () => {
         const database = open.result;
         const transaction = database.transaction("runnerStates", "readonly");
         const request = transaction.objectStore("runnerStates").getAll();
-        request.onerror = () => reject(request.error ?? new Error("IndexedDB read failed"));
+        request.onerror = () =>
+          reject(request.error ?? new Error("IndexedDB read failed"));
         request.onsuccess = () => resolve(request.result as unknown[]);
         transaction.oncomplete = () => database.close();
       };
@@ -322,19 +323,28 @@ async function readStoredRunner(
       | {
           revision?: unknown;
           schemaVersion?: unknown;
-          state?: { operations?: unknown[] };
+          state?: {
+            drafts?: Record<string, { weightKg?: unknown }>;
+            operations?: unknown[];
+            status?: unknown;
+          };
         }
       | undefined;
     if (
       record?.schemaVersion !== 2 ||
       typeof record.revision !== "number" ||
+      typeof record.state?.status !== "string" ||
       !Array.isArray(record.state?.operations)
     ) {
       throw new Error("The expected schema-two runner record is unavailable.");
     }
     return {
+      draftWeightKg: Object.values(record.state.drafts ?? {}).find(
+        ({ weightKg }) => typeof weightKg === "number",
+      )?.weightKg as number | undefined,
       revision: record.revision,
       schemaVersion: record.schemaVersion,
+      stateStatus: record.state.status,
       operations: record.state.operations.map((value) => {
         const operation = value as {
           errorCode?: unknown;
@@ -377,6 +387,59 @@ async function readStoredRunner(
 
 async function cleanup(page: Page): Promise<void> {
   await page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));
+}
+
+async function saveWeightSet(
+  page: Page,
+  weight: string,
+  repetitions = "12",
+): Promise<void> {
+  await page.getByLabel("Weight (lb)").fill(weight);
+  await page.getByLabel("Repetitions").fill(repetitions);
+  const response = page.waitForResponse((candidate) =>
+    isOperationRequest(candidate.request()),
+  );
+  await page.getByRole("button", { name: "Save set" }).click();
+  expect((await response).status()).toBe(200);
+}
+
+async function submitRunnerAction(
+  page: Page,
+  name: string | RegExp,
+): Promise<void> {
+  const response = page.waitForResponse((candidate) =>
+    isOperationRequest(candidate.request()),
+  );
+  await page.getByRole("button", { name }).click();
+  expect((await response).status()).toBe(200);
+}
+
+async function preparePushCompletion(page: Page): Promise<void> {
+  for (const index of [1, 2]) {
+    await page.locator(".runner-set-tab").nth(index).click();
+    await saveWeightSet(page, "25");
+  }
+  await submitRunnerAction(page, "Complete exercise");
+
+  for (const exerciseName of [
+    "Seated dumbbell shoulder press",
+    "Incline dumbbell press",
+    "Overhead dumbbell triceps extension",
+    "Dead bug",
+    "Front plank",
+  ]) {
+    await page
+      .getByRole("button", { name: new RegExp(exerciseName, "iu") })
+      .click();
+    await submitRunnerAction(page, "Skip exercise");
+  }
+
+  await page.getByRole("button", { name: /Walker/iu }).click();
+  await page.getByLabel("Duration (seconds)").last().fill("1200");
+  await page.getByLabel("Distance (mi)").last().fill("1");
+  await page.getByLabel("Incline (%)").fill("2");
+  await page.getByLabel("Cardio notes").fill("Terminal tab recovery walk");
+  await submitRunnerAction(page, "Save cardio");
 }
 
 test("a real aborted operation retries explicitly with the same key and no online event", async ({
@@ -572,13 +635,17 @@ test("two tabs retain distinct offline set operations through reload and retry",
   await first.bringToFront();
   await enterFirstSet(first, "25");
   await expect
-    .poll(async () => (await readStoredRunner(first, sessionId)).operations.length)
+    .poll(
+      async () => (await readStoredRunner(first, sessionId)).operations.length,
+    )
     .toBe(1);
   await second.bringToFront();
   await second.locator(".runner-set-tab").nth(1).click();
   await enterFirstSet(second, "30");
   await expect
-    .poll(async () => (await readStoredRunner(second, sessionId)).operations.length)
+    .poll(
+      async () => (await readStoredRunner(second, sessionId)).operations.length,
+    )
     .toBe(2);
   await first.bringToFront();
   await expect(
@@ -600,18 +667,22 @@ test("two tabs retain distinct offline set operations through reload and retry",
   await second.close();
   harness.control.abortNextOperation = true;
   await harness.context.setOffline(false);
-  await expect(first.getByRole("heading", { name: "Offline queued" })).toBeVisible();
+  await expect(
+    first.getByRole("heading", { name: "Offline queued" }),
+  ).toBeVisible();
   harness.control.abortNextOperation = true;
   await first.reload();
   await expect(
     first.getByRole("progressbar", { name: /2 of \d+ work sets logged/u }),
   ).toBeVisible();
-  await expect(first.getByRole("heading", { name: "Offline queued" })).toBeVisible();
+  await expect(
+    first.getByRole("heading", { name: "Offline queued" }),
+  ).toBeVisible();
   const restored = await readStoredRunner(first, sessionId);
   expect(restored.operations).toHaveLength(2);
-  expect(
-    restored.operations.every(({ status }) => status === "pending"),
-  ).toBe(true);
+  expect(restored.operations.every(({ status }) => status === "pending")).toBe(
+    true,
+  );
 
   harness.signals.failedRequests.length = 0;
   const retry = first.getByRole("button", { name: "Retry connection" });
@@ -683,7 +754,9 @@ test("two tabs block a divergent set until the member chooses one original key",
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   }
   expect(
-    await first.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    await first.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
   ).toBe(true);
   expect(harness.signals.operationRequests).toEqual([]);
 
@@ -699,7 +772,9 @@ test("two tabs block a divergent set until the member chooses one original key",
     (left, right) => (right.weightKg ?? 0) - (left.weightKg ?? 0),
   )[0]!.idempotencyKey;
 
-  await first.getByRole("button", { name: "Leave both values unresolved" }).click();
+  await first
+    .getByRole("button", { name: "Leave both values unresolved" })
+    .click();
   await expect(conflictHeading).toBeVisible();
   expect((await readStoredRunner(first, sessionId)).operations).toEqual(
     conflicted.operations,
@@ -719,7 +794,9 @@ test("two tabs block a divergent set until the member chooses one original key",
     "pending",
     "superseded",
   ]);
-  const pending = resolved.operations.find(({ status }) => status === "pending");
+  const pending = resolved.operations.find(
+    ({ status }) => status === "pending",
+  );
   expect(pending?.idempotencyKey).toBe(chosenKey);
 
   await second.close();
@@ -733,6 +810,249 @@ test("two tabs block a divergent set until the member chooses one original key",
   ).toBeVisible();
   expect(harness.signals.operationRequests).toHaveLength(1);
   expect(operationKey(harness.signals.operationRequests[0]!)).toBe(chosenKey);
+  expect(harness.signals.failedRequests).toEqual([]);
+  expect(harness.signals.failedResponses).toEqual([]);
+  await cleanup(first);
+  await harness.close();
+});
+
+test("a confirmed save outranks a stale tab and durable completion freezes a suspended tab", async ({
+  browser,
+}, testInfo) => {
+  const harness = await openSharedResiliencePages(
+    browser,
+    `${testInfo.project.name}-saved-and-terminal-tab-precedence`,
+    testInfo,
+  );
+  const [first, second] = harness.pages;
+  await second.addInitScript(() => {
+    const runtime = globalThis as typeof globalThis & {
+      __mwpSuspendRunnerRecovery?: boolean;
+    };
+    runtime.__mwpSuspendRunnerRecovery = true;
+    Object.defineProperty(globalThis, "BroadcastChannel", {
+      configurable: true,
+      value: undefined,
+    });
+    type AddListener = (
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ) => void;
+    const addWindowListener = window.addEventListener.bind(
+      window,
+    ) as AddListener;
+    window.addEventListener = ((
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ) => {
+      if (type !== "focus") {
+        addWindowListener(type, listener, options);
+        return;
+      }
+      addWindowListener(
+        type,
+        (event) => {
+          if (runtime.__mwpSuspendRunnerRecovery) return;
+          if (typeof listener === "function") listener.call(window, event);
+          else listener.handleEvent(event);
+        },
+        options,
+      );
+    }) as typeof window.addEventListener;
+    const addDocumentListener = document.addEventListener.bind(
+      document,
+    ) as AddListener;
+    document.addEventListener = ((
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ) => {
+      if (type !== "visibilitychange") {
+        addDocumentListener(type, listener, options);
+        return;
+      }
+      addDocumentListener(
+        type,
+        (event) => {
+          if (runtime.__mwpSuspendRunnerRecovery) return;
+          if (typeof listener === "function") listener.call(document, event);
+          else listener.handleEvent(event);
+        },
+        options,
+      );
+    }) as typeof document.addEventListener;
+  });
+  const sessionId = await onboardAndOpenPush(first);
+  const workoutPath = new URL(first.url()).pathname;
+  await second.goto(workoutPath);
+  await expect(
+    second.getByRole("heading", { name: "Dumbbell bench press" }),
+  ).toBeVisible();
+  await second.evaluate(() => {
+    Object.defineProperty(window.navigator, "onLine", {
+      configurable: true,
+      get: () => false,
+    });
+    window.dispatchEvent(new Event("offline"));
+  });
+  await second.getByLabel("Weight (lb)").fill("30");
+  await second.getByLabel("Repetitions").fill("12");
+  await expect
+    .poll(async () => (await readStoredRunner(second, sessionId)).draftWeightKg)
+    .toBeCloseTo(13.608, 3);
+  const staleSave = second.evaluate(async (expectedSessionId) => {
+    const deadline = Date.now() + 10_000;
+    while (Date.now() < deadline) {
+      const savedExists = await new Promise<boolean>((resolve, reject) => {
+        const open = indexedDB.open("my-workout-pal-runner");
+        open.onerror = () =>
+          reject(open.error ?? new Error("IndexedDB open failed"));
+        open.onsuccess = () => {
+          const database = open.result;
+          const transaction = database.transaction("runnerStates", "readonly");
+          const request = transaction.objectStore("runnerStates").getAll();
+          request.onerror = () =>
+            reject(request.error ?? new Error("IndexedDB read failed"));
+          request.onsuccess = () => {
+            const records = request.result as Array<{
+              sessionId?: unknown;
+              state?: { operations?: Array<{ status?: unknown }> };
+            }>;
+            resolve(
+              records.some(
+                (record) =>
+                  record.sessionId === expectedSessionId &&
+                  record.state?.operations?.some(
+                    ({ status }) => status === "saved",
+                  ),
+              ),
+            );
+          };
+          transaction.oncomplete = () => database.close();
+        };
+      });
+      if (savedExists) {
+        const save = [
+          ...document.querySelectorAll<HTMLButtonElement>("button"),
+        ].find((button) => button.textContent?.trim() === "Save set");
+        if (!save)
+          throw new Error("The stale tab save control is unavailable.");
+        const weight = document.querySelector<HTMLInputElement>(
+          "fieldset.runner-editor input",
+        );
+        const observed = {
+          broadcastType: typeof globalThis.BroadcastChannel,
+          disabled: save.disabled,
+          suspended: Boolean(
+            (
+              globalThis as typeof globalThis & {
+                __mwpSuspendRunnerRecovery?: boolean;
+              }
+            ).__mwpSuspendRunnerRecovery,
+          ),
+          weight: weight?.value,
+        };
+        save.click();
+        return observed;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    throw new Error("The confirmed set did not reach durable storage in time.");
+  }, sessionId);
+
+  await first.bringToFront();
+  await saveWeightSet(first, "25");
+  const requestsAfterConfirmedSet = harness.signals.operationRequests.length;
+  expect(requestsAfterConfirmedSet).toBe(1);
+
+  await expect(staleSave).resolves.toEqual({
+    broadcastType: "undefined",
+    disabled: false,
+    suspended: true,
+    weight: "30",
+  });
+  await expect
+    .poll(async () =>
+      (await readStoredRunner(second, sessionId)).operations
+        .map(({ status }) => status)
+        .sort(),
+    )
+    .toEqual(["saved", "superseded"].sort());
+  expect(harness.signals.operationRequests).toHaveLength(
+    requestsAfterConfirmedSet,
+  );
+
+  await second.bringToFront();
+  await expect(
+    second.getByRole("progressbar", { name: /1 of \d+ work sets logged/iu }),
+  ).toBeVisible();
+  await expect(second.getByLabel("Weight (lb)")).toHaveValue("25");
+  await expect(
+    second.getByRole("heading", { name: "Choose the workout value to keep" }),
+  ).toHaveCount(0);
+
+  await first.bringToFront();
+  await preparePushCompletion(first);
+  await second
+    .getByLabel(/Private note for Dumbbell bench press/iu)
+    .fill("This stale tab note must not reopen a completed workout.");
+  harness.control.scenario = "slow-next-runner-operation";
+  const requestsBeforeCompletion = harness.signals.operationRequests.length;
+  const completionRequest = first.waitForRequest((request) => {
+    if (!isOperationRequest(request)) return false;
+    const body = request.postDataJSON() as Record<string, unknown>;
+    return body["kind"] === "complete_session";
+  });
+  const completionResponse = first.waitForResponse((response) => {
+    if (!isOperationRequest(response.request())) return false;
+    const body = response.request().postDataJSON() as Record<string, unknown>;
+    return body["kind"] === "complete_session";
+  });
+  await first.getByRole("button", { name: "Complete workout" }).click();
+  await completionRequest;
+  await second
+    .getByRole("button", { name: "Save note" })
+    .evaluate((button: HTMLButtonElement) => button.click());
+  await expect
+    .poll(async () =>
+      (await readStoredRunner(second, sessionId)).operations.some(
+        ({ kind, status }) => kind === "save_note" && status === "pending",
+      ),
+    )
+    .toBe(true);
+
+  expect((await completionResponse).status()).toBe(200);
+  await expect(first).toHaveURL(`/app/history/${sessionId}`);
+  await expect
+    .poll(async () => readStoredRunner(first, sessionId))
+    .toMatchObject({
+      schemaVersion: 2,
+      stateStatus: "completed",
+      operations: expect.arrayContaining([
+        expect.objectContaining({ kind: "complete_session", status: "saved" }),
+        expect.objectContaining({ kind: "save_note", status: "superseded" }),
+      ]),
+    });
+  expect(harness.signals.operationRequests).toHaveLength(
+    requestsBeforeCompletion + 1,
+  );
+  await assertAccessible(first);
+
+  await second.evaluate(() => {
+    const runtime = globalThis as typeof globalThis & {
+      __mwpSuspendRunnerRecovery?: boolean;
+    };
+    runtime.__mwpSuspendRunnerRecovery = false;
+    window.dispatchEvent(new Event("focus"));
+  });
+  await second.bringToFront();
+  await expect(second).toHaveURL(`/app/history/${sessionId}`);
+  await expect(
+    second.getByRole("heading", { name: "Push", exact: true }),
+  ).toBeVisible();
+  await assertAccessible(second);
   expect(harness.signals.failedRequests).toEqual([]);
   expect(harness.signals.failedResponses).toEqual([]);
   await cleanup(first);
