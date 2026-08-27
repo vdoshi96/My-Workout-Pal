@@ -1107,6 +1107,9 @@ describe("offline operation queue", () => {
       load: async () => persistedRecord,
       save: async (_key: string, record: RunnerStorageRecord) => {
         persistedRecord = record;
+        return record.schemaVersion === 2
+          ? record
+          : runnerStorageRecord(record.state);
       },
       remove: async () => {
         persistedRecord = undefined;
@@ -1124,7 +1127,7 @@ describe("offline operation queue", () => {
 
     persistedRecord = {
       ...record,
-      schemaVersion: 2,
+      schemaVersion: 3,
     } as unknown as RunnerStorageRecord;
     await expect(load()).rejects.toMatchObject({ code: "corrupt_storage" });
 
@@ -1468,6 +1471,7 @@ describe("session completion", () => {
     });
     expect(completing.status).toBe("completed");
 
+    const abandonmentStorage = new InMemoryRunnerStorage();
     let abandoning = runnerReducer(makeState(), {
       type: "abandon_session",
       reason: "Stopped early",
@@ -1486,7 +1490,7 @@ describe("session completion", () => {
       idempotencyKey: abandonKey,
     });
     abandoning = await syncRunnerOperations(abandoning, {
-      storage,
+      storage: abandonmentStorage,
       submit: async () => ({
         status: "saved",
         persistedId: "abandoned-retried",
@@ -1594,7 +1598,10 @@ describe("session completion", () => {
     });
     expect(submitted).toEqual([]);
     expect(result.status).toBe("completed");
-    expect(result.operations.at(-1)?.status).toBe("pending");
+    expect(
+      result.operations.find(({ idempotencyKey }) => idempotencyKey === legacyPending.idempotencyKey)
+        ?.status,
+    ).toBe("superseded");
   });
 
   it("does not complete until required work operations are confirmed", async () => {

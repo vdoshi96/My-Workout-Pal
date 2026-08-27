@@ -273,6 +273,12 @@ export type RunnerOperation = Readonly<{
   idempotencyKey: string;
   kind: RunnerOperationKind;
   payload: RunnerOperationPayload;
+  /**
+   * A stable, local-only description of the mutation's semantic target. Older
+   * server-hydrated operations omit this field; storage derives it from the
+   * validated payload when needed.
+   */
+  semanticTarget?: string;
   ownerUid: string;
   sessionId: string;
   baseRevision: string;
@@ -369,6 +375,11 @@ export type RunnerAction =
       now?: number;
     }>
   | Readonly<{
+      type: "resolve_local_tab_conflict";
+      idempotencyKey: string;
+      now?: number;
+    }>
+  | Readonly<{
       type: "set_connectivity";
       connectivity: RunnerConnectivity;
       now?: number;
@@ -379,7 +390,7 @@ export type RunnerAction =
   | Readonly<{ type: "resume_rest"; now?: number }>
   | Readonly<{ type: "clear_rest"; now?: number }>;
 
-export type RunnerStorageRecord = Readonly<{
+export type RunnerStorageRecordV1 = Readonly<{
   schemaVersion: 1;
   key: string;
   ownerUid: string;
@@ -387,9 +398,37 @@ export type RunnerStorageRecord = Readonly<{
   state: ActiveWorkoutState;
 }>;
 
+export type RunnerStorageRecordV2 = Readonly<{
+  schemaVersion: 2;
+  key: string;
+  ownerUid: string;
+  sessionId: string;
+  /** Monotonic commit revision within the owner/session record. */
+  revision: number;
+  /** Stable identity of the browser tab or in-memory writer. */
+  writerId: string;
+  /** Timestamp captured by the committing writer. */
+  committedAt: number;
+  state: ActiveWorkoutState;
+}>;
+
+export type RunnerStorageRecord = RunnerStorageRecordV1 | RunnerStorageRecordV2;
+
+export type RunnerStorageRecordOptions = Readonly<{
+  revision?: number;
+  writerId?: string;
+  committedAt?: number;
+}>;
+
+export type RunnerStorageMergeOptions = Readonly<{
+  revision?: number;
+  writerId?: string;
+  committedAt?: number;
+}>;
+
 export interface RunnerStorage {
   load(key: string): Promise<RunnerStorageRecord | undefined>;
-  save(key: string, record: RunnerStorageRecord): Promise<void>;
+  save(key: string, record: RunnerStorageRecord): Promise<RunnerStorageRecordV2>;
   remove(key: string): Promise<void>;
   clearOwner?(ownerUid: string): Promise<void>;
 }
@@ -1246,6 +1285,950 @@ export function stableIdempotencyKey(value: unknown): string {
   return `mwp_sha256_${sha256Hex(stableStringify(value))}`;
 }
 
+export type RunnerOperationSemanticTarget = Readonly<{
+  kind:
+    | "set"
+    | "cardio"
+    | "note"
+    | "skip"
+    | "substitution"
+    | "exercise_completion"
+    | "session_terminal";
+  id: string;
+}>;
+
+/**
+ * Returns the durable mutation target used by the schema-two merge. The
+ * target deliberately excludes the payload value: two values for one target
+ * must remain a conflict until a user chooses one.
+ */
+export function runnerOperationSemanticTarget(
+  operation: Pick<RunnerOperation, "kind" | "payload">,
+): RunnerOperationSemanticTarget {
+  switch (operation.payload.kind) {
+    case "save_set":
+      return { kind: "set", id: operation.payload.setId };
+    case "save_cardio":
+      return { kind: "cardio", id: operation.payload.mode };
+    case "save_note":
+      return { kind: "note", id: operation.payload.exerciseId };
+    case "skip_exercise":
+      return { kind: "skip", id: operation.payload.exerciseId };
+    case "substitute_exercise":
+      return { kind: "substitution", id: operation.payload.exerciseId };
+    case "complete_exercise":
+      return { kind: "exercise_completion", id: operation.payload.exerciseId };
+    case "abandon_session":
+    case "complete_session":
+      return { kind: "session_terminal", id: operation.payload.sessionId };
+  }
+}
+
+function semanticTargetKey(target: RunnerOperationSemanticTarget): string {
+  return `${target.kind}:${target.id}`;
+}
+
+function semanticTargetText(target: RunnerOperationSemanticTarget): string {
+  return semanticTargetKey(target);
+}
+
+function defaultRunnerWriterId(): string {
+  const cryptoObject =
+    typeof globalThis === "undefined"
+      ? undefined
+      : (
+          globalThis as typeof globalThis & {
+            crypto?: { randomUUID?: () => string };
+          }
+        ).crypto;
+  if (typeof cryptoObject?.randomUUID === "function") {
+    return `runner-writer-${cryptoObject.randomUUID()}`;
+  }
+  return `runner-writer-${stableIdempotencyKey({
+    scope: "runner-storage",
+    createdAt: Date.now(),
+  })}`;
+}
+
+let moduleRunnerWriterId: string | undefined;
+
+function runnerWriterId(): string {
+  moduleRunnerWriterId ??= defaultRunnerWriterId();
+  return moduleRunnerWriterId;
+}
+
+export function createRunnerWriterIdentity(): string {
+  return defaultRunnerWriterId();
+}
+
+function isRunnerOperationKind(value: unknown): value is RunnerOperationKind {
+  return (
+    value === "save_set" ||
+    value === "save_cardio" ||
+    value === "save_note" ||
+    value === "skip_exercise" ||
+    value === "substitute_exercise" ||
+    value === "complete_exercise" ||
+    value === "abandon_session" ||
+    value === "complete_session"
+  );
+}
+
+function isRunnerOperationStatus(value: unknown): value is RunnerOperationStatus {
+  return (
+    value === "pending" ||
+    value === "saved" ||
+    value === "failed" ||
+    value === "superseded"
+  );
+}
+
+function isRunnerFailureKind(value: unknown): value is RunnerFailureKind {
+  return (
+    value === "transient" ||
+    value === "permanent" ||
+    value === "conflict" ||
+    value === "auth" ||
+    value === "offline"
+  );
+}
+
+function corruptStorage(message: string): never {
+  throw new RunnerTransitionError("corrupt_storage", message);
+}
+
+function assertFiniteTimestampValue(value: unknown, fieldName: string): void {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    corruptStorage(`${fieldName} is invalid.`);
+  }
+}
+
+function assertOptionalStringValue(
+  value: unknown,
+  fieldName: string,
+): void {
+  if (value !== undefined && typeof value !== "string") {
+    corruptStorage(`${fieldName} is invalid.`);
+  }
+}
+
+function assertOperationPayloadIntegrity(
+  operation: Record<string, unknown>,
+  ownerUid: string,
+  sessionId: string,
+): void {
+  const kind = operation["kind"];
+  const payload = operation["payload"];
+  if (!isRunnerOperationKind(kind) || !isObjectRecord(payload)) {
+    corruptStorage("The saved workout operation kind or payload is invalid.");
+  }
+  if (payload["kind"] !== kind) {
+    corruptStorage("The saved workout operation kind does not match payload.");
+  }
+
+  const stringField = (fieldName: string): void => {
+    if (
+      typeof payload[fieldName] !== "string" ||
+      payload[fieldName].trim().length === 0
+    ) {
+      corruptStorage(`The saved workout operation ${fieldName} is invalid.`);
+    }
+  };
+
+  switch (kind) {
+    case "save_set": {
+      stringField("setId");
+      stringField("exerciseId");
+      if (payload["phase"] !== "warmup" && payload["phase"] !== "work") {
+        corruptStorage("The saved workout set phase is invalid.");
+      }
+      if (!isObjectRecord(payload["measurement"])) {
+        corruptStorage("The saved workout measurement is invalid.");
+      }
+      try {
+        parseMeasurement(payload["measurement"]);
+      } catch {
+        corruptStorage("The saved workout measurement is invalid.");
+      }
+      break;
+    }
+    case "save_cardio": {
+      if (payload["mode"] !== "walker" && payload["mode"] !== "runner") {
+        corruptStorage("The saved workout cardio mode is invalid.");
+      }
+      const cardio = payload["cardio"];
+      if (!isObjectRecord(cardio)) {
+        corruptStorage("The saved workout cardio is invalid.");
+      }
+      if (cardio["mode"] !== payload["mode"]) {
+        corruptStorage("The saved workout cardio mode does not match payload.");
+      }
+      assertFiniteTimestampValue(cardio["durationSeconds"], "cardio duration");
+      if (
+        cardio["distanceMeters"] !== undefined &&
+        (typeof cardio["distanceMeters"] !== "number" ||
+          !Number.isFinite(cardio["distanceMeters"]) ||
+          cardio["distanceMeters"] <= 0)
+      ) {
+        corruptStorage("The saved workout cardio distance is invalid.");
+      }
+      if (
+        cardio["paceSecondsPerKilometer"] !== undefined &&
+        (typeof cardio["paceSecondsPerKilometer"] !== "number" ||
+          !Number.isFinite(cardio["paceSecondsPerKilometer"]) ||
+          cardio["paceSecondsPerKilometer"] <= 0)
+      ) {
+        corruptStorage("The saved workout cardio pace is invalid.");
+      }
+      if (
+        cardio["paceSource"] !== undefined &&
+        cardio["paceSource"] !== "entered" &&
+        cardio["paceSource"] !== "derived"
+      ) {
+        corruptStorage("The saved workout cardio pace source is invalid.");
+      }
+      if (
+        cardio["inclinePercent"] !== undefined &&
+        (typeof cardio["inclinePercent"] !== "number" ||
+          !Number.isFinite(cardio["inclinePercent"]) ||
+          cardio["inclinePercent"] < 0)
+      ) {
+        corruptStorage("The saved workout cardio incline is invalid.");
+      }
+      if (
+        typeof cardio["notes"] !== "string" ||
+        cardio["notes"].length > 2_000
+      ) {
+        corruptStorage("The saved workout cardio notes are invalid.");
+      }
+      break;
+    }
+    case "save_note":
+      stringField("exerciseId");
+      if (
+        typeof payload["note"] !== "string" ||
+        payload["note"].length > 2_000
+      ) {
+        corruptStorage("The saved workout note is invalid.");
+      }
+      break;
+    case "skip_exercise":
+      stringField("exerciseId");
+      assertOptionalStringValue(payload["reason"], "operation reason");
+      break;
+    case "substitute_exercise": {
+      stringField("exerciseId");
+      const replacement = payload["replacement"];
+      if (!isObjectRecord(replacement)) {
+        corruptStorage("The saved workout replacement is invalid.");
+      }
+      if (
+        typeof replacement["id"] !== "string" ||
+        replacement["id"].trim().length === 0 ||
+        typeof replacement["name"] !== "string" ||
+        replacement["name"].trim().length === 0 ||
+        !SUPPORTED_KINDS.has(replacement["loggingKind"] as MeasurementKind)
+      ) {
+        corruptStorage("The saved workout replacement is invalid.");
+      }
+      assertOptionalStringValue(payload["reason"], "operation reason");
+      break;
+    }
+    case "complete_exercise":
+      stringField("exerciseId");
+      break;
+    case "abandon_session":
+      if (payload["sessionId"] !== sessionId) {
+        corruptStorage("The saved abandonment session does not match record.");
+      }
+      assertOptionalStringValue(payload["reason"], "operation reason");
+      break;
+    case "complete_session":
+      if (payload["sessionId"] !== sessionId) {
+        corruptStorage("The saved completion session does not match record.");
+      }
+      break;
+  }
+
+  const semanticTarget = operation["semanticTarget"];
+  if (semanticTarget !== undefined && typeof semanticTarget !== "string") {
+    corruptStorage("The saved workout semantic target is invalid.");
+  }
+  void ownerUid;
+}
+
+function assertRunnerOperationIntegrity(
+  value: unknown,
+  ownerUid: string,
+  sessionId: string,
+  baseRevision: string,
+): RunnerOperation {
+  if (!isObjectRecord(value)) {
+    corruptStorage("The saved workout operation is not an object.");
+  }
+  const operation = value as Record<string, unknown>;
+  if (
+    typeof operation["idempotencyKey"] !== "string" ||
+    operation["idempotencyKey"].trim().length === 0 ||
+    operation["ownerUid"] !== ownerUid ||
+    operation["sessionId"] !== sessionId ||
+    operation["baseRevision"] !== baseRevision
+  ) {
+    if (operation["ownerUid"] !== ownerUid) throw new RunnerOwnershipError();
+    corruptStorage("The saved workout operation identity is invalid.");
+  }
+  if (
+    !isRunnerOperationKind(operation["kind"]) ||
+    !isRunnerOperationStatus(operation["status"])
+  ) {
+    corruptStorage("The saved workout operation state is invalid.");
+  }
+  if (
+    typeof operation["sequence"] !== "number" ||
+    !Number.isInteger(operation["sequence"]) ||
+    operation["sequence"] <= 0
+  ) {
+    corruptStorage("The saved workout operation sequence is invalid.");
+  }
+  assertFiniteTimestampValue(operation["createdAt"], "operation createdAt");
+  if (
+    typeof operation["attempts"] !== "number" ||
+    !Number.isInteger(operation["attempts"]) ||
+    operation["attempts"] < 0
+  ) {
+    corruptStorage("The saved workout operation attempts are invalid.");
+  }
+  assertOptionalStringValue(operation["persistedId"], "operation persistedId");
+  assertOptionalStringValue(operation["errorCode"], "operation errorCode");
+  assertOptionalStringValue(operation["errorMessage"], "operation errorMessage");
+  if (
+    operation["retryable"] !== undefined &&
+    typeof operation["retryable"] !== "boolean"
+  ) {
+    corruptStorage("The saved workout operation retry state is invalid.");
+  }
+  if (
+    operation["failureKind"] !== undefined &&
+    !isRunnerFailureKind(operation["failureKind"])
+  ) {
+    corruptStorage("The saved workout operation failure kind is invalid.");
+  }
+  assertOperationPayloadIntegrity(operation, ownerUid, sessionId);
+  const typed = operation as unknown as RunnerOperation;
+  if (
+    typed.semanticTarget !== undefined &&
+    typed.semanticTarget !== semanticTargetText(runnerOperationSemanticTarget(typed))
+  ) {
+    corruptStorage("The saved workout semantic target does not match payload.");
+  }
+  return typed;
+}
+
+function assertRunnerStateIntegrity(
+  value: unknown,
+  ownerUid: string,
+  sessionId: string,
+): ActiveWorkoutState {
+  if (!isObjectRecord(value)) {
+    corruptStorage("The saved workout state payload is not an object.");
+  }
+  const state = value as Record<string, unknown>;
+  const snapshot = state["snapshot"];
+  if (!isObjectRecord(snapshot)) {
+    corruptStorage("The saved workout snapshot is not an object.");
+  }
+  if (snapshot["ownerUid"] !== ownerUid) throw new RunnerOwnershipError();
+  if (snapshot["sessionId"] !== sessionId) {
+    throw new RunnerTransitionError(
+      "snapshot_conflict",
+      "The saved workout session identity does not match the requested session.",
+    );
+  }
+  if (
+    typeof snapshot["programRevisionId"] !== "string" ||
+    snapshot["programRevisionId"].trim().length === 0 ||
+    typeof snapshot["dayId"] !== "string" ||
+    snapshot["dayId"].trim().length === 0
+  ) {
+    corruptStorage("The saved workout snapshot identity is invalid.");
+  }
+  try {
+    createWorkoutSnapshot(
+      structuredClone(snapshot) as unknown as RunnerSnapshotInput,
+    );
+  } catch {
+    corruptStorage("The saved workout snapshot is invalid.");
+  }
+  if (!Array.isArray(state["operations"])) {
+    corruptStorage("The saved workout operations are not an array.");
+  }
+  const baseRevision = snapshot["programRevisionId"] as string;
+  const operations = state["operations"].map((operation) =>
+    assertRunnerOperationIntegrity(operation, ownerUid, sessionId, baseRevision),
+  );
+  if (
+    typeof state["currentExerciseIndex"] !== "number" ||
+    !Number.isInteger(state["currentExerciseIndex"]) ||
+    typeof state["currentSetIndex"] !== "number" ||
+    !Number.isInteger(state["currentSetIndex"]) ||
+    typeof state["nextOperationSequence"] !== "number" ||
+    !Number.isInteger(state["nextOperationSequence"]) ||
+    state["nextOperationSequence"] <= 0
+  ) {
+    corruptStorage("The saved workout position or sequence is invalid.");
+  }
+  assertFiniteTimestampValue(state["lastUpdatedAt"], "state lastUpdatedAt");
+  if (
+    state["status"] !== "active" &&
+    state["status"] !== "completing" &&
+    state["status"] !== "completed" &&
+    state["status"] !== "abandoning" &&
+    state["status"] !== "abandoned"
+  ) {
+    corruptStorage("The saved workout session status is invalid.");
+  }
+  if (state["connectivity"] !== "online" && state["connectivity"] !== "offline") {
+    corruptStorage("The saved workout connectivity state is invalid.");
+  }
+  if (state["auth"] !== "valid" && state["auth"] !== "expired") {
+    corruptStorage("The saved workout authentication state is invalid.");
+  }
+  if (!isObjectRecord(state["sync"])) {
+    corruptStorage("The saved workout sync state is invalid.");
+  }
+  const sync = state["sync"] as Record<string, unknown>;
+  if (
+    sync["status"] !== "idle" &&
+    sync["status"] !== "pending" &&
+    sync["status"] !== "offline" &&
+    sync["status"] !== "auth_expired" &&
+    sync["status"] !== "failed" &&
+    sync["status"] !== "conflict"
+  ) {
+    corruptStorage("The saved workout sync status is invalid.");
+  }
+  assertOptionalStringValue(sync["errorCode"], "sync errorCode");
+  assertOptionalStringValue(sync["errorMessage"], "sync errorMessage");
+  if (
+    !isObjectRecord(state["drafts"]) ||
+    !Array.isArray(state["dirtySetIds"]) ||
+    !Array.isArray(state["dirtyNoteExerciseIds"]) ||
+    !isObjectRecord(state["notesByExercise"]) ||
+    !isObjectRecord(state["loggedSets"]) ||
+    !Array.isArray(state["skippedExerciseIds"]) ||
+    !Array.isArray(state["completedExerciseIds"]) ||
+    !isObjectRecord(state["substitutions"])
+  ) {
+    corruptStorage("The saved workout projection is invalid.");
+  }
+  return {
+    ...(state as unknown as ActiveWorkoutState),
+    operations,
+  };
+}
+
+export function validateRunnerStorageRecord(
+  value: unknown,
+  options: Readonly<{
+    expectedKey?: string;
+    ownerUid?: string;
+    sessionId?: string;
+  }> = {},
+): RunnerStorageRecord {
+  if (!isObjectRecord(value)) {
+    corruptStorage("The saved workout record is not an object.");
+  }
+  const record = value as Record<string, unknown>;
+  if (record["schemaVersion"] !== 1 && record["schemaVersion"] !== 2) {
+    corruptStorage("The saved workout state has an unsupported schema version.");
+  }
+  if (
+    typeof record["key"] !== "string" ||
+    typeof record["ownerUid"] !== "string" ||
+    typeof record["sessionId"] !== "string"
+  ) {
+    corruptStorage("The saved workout record identity is invalid.");
+  }
+  if (options.expectedKey !== undefined && record["key"] !== options.expectedKey) {
+    corruptStorage("The saved workout state key does not match its owner and session.");
+  }
+  if (options.ownerUid !== undefined && record["ownerUid"] !== options.ownerUid) {
+    throw new RunnerOwnershipError();
+  }
+  if (
+    options.sessionId !== undefined &&
+    record["sessionId"] !== options.sessionId
+  ) {
+    corruptStorage("The saved workout record session does not match its key.");
+  }
+  const ownerUid = record["ownerUid"];
+  const sessionId = record["sessionId"];
+  const state = assertRunnerStateIntegrity(record["state"], ownerUid, sessionId);
+  if (record["schemaVersion"] === 2) {
+    if (
+      typeof record["revision"] !== "number" ||
+      !Number.isInteger(record["revision"]) ||
+      record["revision"] < 0 ||
+      typeof record["writerId"] !== "string" ||
+      record["writerId"].trim().length === 0
+    ) {
+      corruptStorage("The saved workout record metadata is invalid.");
+    }
+    assertFiniteTimestampValue(record["committedAt"], "record committedAt");
+    const key = record["key"];
+    const writerId = record["writerId"];
+    const committedAt = record["committedAt"];
+    const revision = record["revision"];
+    if (
+      typeof key !== "string" ||
+      typeof writerId !== "string" ||
+      typeof committedAt !== "number" ||
+      typeof revision !== "number"
+    ) {
+      corruptStorage("The saved workout record metadata is invalid.");
+    }
+    return {
+      schemaVersion: 2,
+      key,
+      ownerUid,
+      sessionId,
+      revision,
+      writerId,
+      committedAt,
+      state,
+    };
+  }
+  const key = record["key"];
+  if (typeof key !== "string") {
+    corruptStorage("The saved workout record identity is invalid.");
+  }
+  return {
+    schemaVersion: 1,
+    key,
+    ownerUid,
+    sessionId,
+    state,
+  };
+}
+
+function recordRevision(record: RunnerStorageRecord | undefined): number {
+  return record?.schemaVersion === 2 ? record.revision : 0;
+}
+
+function recordCommittedAt(record: RunnerStorageRecord | undefined): number {
+  return record?.schemaVersion === 2 ? record.committedAt : 0;
+}
+
+function operationStatusRank(status: RunnerOperationStatus): number {
+  switch (status) {
+    case "saved":
+      return 4;
+    case "failed":
+      return 3;
+    case "pending":
+      return 2;
+    case "superseded":
+      return 1;
+  }
+}
+
+type OperationCandidate = Readonly<{
+  operation: RunnerOperation;
+  state: ActiveWorkoutState;
+  fromIncoming: boolean;
+}>;
+
+type Mutable<T> = { -readonly [Key in keyof T]: T[Key] };
+
+function operationPayloadMatches(
+  left: RunnerOperation,
+  right: RunnerOperation,
+): boolean {
+  return (
+    left.kind === right.kind &&
+    left.ownerUid === right.ownerUid &&
+    left.sessionId === right.sessionId &&
+    left.baseRevision === right.baseRevision &&
+    stableStringify(left.payload) === stableStringify(right.payload)
+  );
+}
+
+function chooseOperationCandidate(
+  current: OperationCandidate,
+  next: OperationCandidate,
+): OperationCandidate {
+  if (
+    current.operation.status === "saved" ||
+    next.operation.status === "saved"
+  ) {
+    return current.operation.status === "saved" ? current : next;
+  }
+  if (next.state.lastUpdatedAt !== current.state.lastUpdatedAt) {
+    return next.state.lastUpdatedAt > current.state.lastUpdatedAt
+      ? next
+      : current;
+  }
+  const currentRank = operationStatusRank(current.operation.status);
+  const nextRank = operationStatusRank(next.operation.status);
+  if (nextRank !== currentRank) return nextRank > currentRank ? next : current;
+  if (next.operation.attempts !== current.operation.attempts) {
+    return next.operation.attempts > current.operation.attempts ? next : current;
+  }
+  if (next.operation.createdAt !== current.operation.createdAt) {
+    return next.operation.createdAt > current.operation.createdAt
+      ? next
+      : current;
+  }
+  return next.fromIncoming ? next : current;
+}
+
+function conflictOperation(operation: RunnerOperation): RunnerOperation {
+  return {
+    ...operation,
+    status: "failed",
+    errorCode: "local_tab_conflict",
+    errorMessage:
+      "Another tab saved a different value for this workout target. Choose which value to keep.",
+    retryable: false,
+    failureKind: "conflict",
+  };
+}
+
+function supersededOperation(
+  operation: RunnerOperation,
+  message: string,
+): RunnerOperation {
+  return {
+    ...operation,
+    status: "superseded",
+    errorCode: "superseded",
+    errorMessage: message,
+    retryable: false,
+    failureKind: undefined,
+  };
+}
+
+function mergeOperationCandidates(
+  existing: RunnerStorageRecord | undefined,
+  incoming: RunnerStorageRecord,
+): Readonly<{
+  operations: readonly RunnerOperation[];
+  candidates: ReadonlyMap<string, OperationCandidate>;
+}> {
+  const candidates = new Map<string, OperationCandidate>();
+  const add = (state: ActiveWorkoutState, fromIncoming: boolean): void => {
+    for (const operation of state.operations) {
+      const prior = candidates.get(operation.idempotencyKey);
+      const candidate = { operation, state, fromIncoming };
+      if (prior === undefined) {
+        candidates.set(operation.idempotencyKey, candidate);
+        continue;
+      }
+      if (!operationPayloadMatches(prior.operation, operation)) {
+        throw new RunnerTransitionError(
+          "duplicate_operation",
+          "A workout operation key was reused for a different payload.",
+        );
+      }
+      candidates.set(
+        operation.idempotencyKey,
+        chooseOperationCandidate(prior, candidate),
+      );
+    }
+  };
+  if (existing !== undefined) add(existing.state, false);
+  add(incoming.state, true);
+
+  const byTarget = new Map<string, OperationCandidate[]>();
+  for (const candidate of candidates.values()) {
+    const key = semanticTargetKey(
+      runnerOperationSemanticTarget(candidate.operation),
+    );
+    const group = byTarget.get(key) ?? [];
+    group.push(candidate);
+    byTarget.set(key, group);
+  }
+  for (const group of byTarget.values()) {
+    const saved = group.filter(({ operation }) => operation.status === "saved");
+    const active = group.filter(
+      ({ operation }) =>
+        operation.status === "pending" || operation.status === "failed",
+    );
+    if (saved.length > 0) {
+      const savedInIncoming = saved.some(({ fromIncoming }) => fromIncoming);
+      const incomingIsNewer =
+        incoming.state.lastUpdatedAt > (existing?.state.lastUpdatedAt ?? -1);
+      for (const candidate of active) {
+        if (
+          candidate.fromIncoming &&
+          (savedInIncoming || incomingIsNewer)
+        ) {
+          continue;
+        }
+        candidates.set(
+          candidate.operation.idempotencyKey,
+          {
+            ...candidate,
+            operation: supersededOperation(
+              candidate.operation,
+              "Superseded by a server-confirmed value for this target.",
+            ),
+          },
+        );
+      }
+      continue;
+    }
+    if (active.length <= 1) continue;
+    for (const candidate of active) {
+      candidates.set(
+        candidate.operation.idempotencyKey,
+        {
+          ...candidate,
+          operation: conflictOperation(candidate.operation),
+        },
+      );
+    }
+  }
+
+  const operations = [...candidates.values()]
+    .map(({ operation }) => operation)
+    .sort(
+      (left, right) =>
+        left.createdAt - right.createdAt ||
+        left.idempotencyKey.localeCompare(right.idempotencyKey),
+    )
+    .map((operation, index) => ({ ...operation, sequence: index + 1 }));
+  return { operations, candidates };
+}
+
+function latestState(
+  existing: RunnerStorageRecord | undefined,
+  incoming: RunnerStorageRecord,
+): ActiveWorkoutState {
+  if (existing === undefined) return incoming.state;
+  return incoming.state.lastUpdatedAt >= existing.state.lastUpdatedAt
+    ? incoming.state
+    : existing.state;
+}
+
+function mergeStateProjections(
+  existing: RunnerStorageRecord | undefined,
+  incoming: RunnerStorageRecord,
+  operations: readonly RunnerOperation[],
+  candidates: ReadonlyMap<string, OperationCandidate>,
+): ActiveWorkoutState {
+  const base = clone(latestState(existing, incoming)) as Mutable<ActiveWorkoutState>;
+  const drafts: Record<string, SetDraft> = { ...base.drafts };
+  const loggedSets: Record<string, LoggedSet> = { ...base.loggedSets };
+  const notesByExercise: Record<string, string> = { ...base.notesByExercise };
+  const skippedExerciseIds = [...base.skippedExerciseIds];
+  const completedExerciseIds = [...base.completedExerciseIds];
+  const substitutions: Record<string, ExerciseSubstitution> = {
+    ...base.substitutions,
+  };
+  let cardioMode = base.cardioMode;
+  let cardioDraft = base.cardioDraft;
+  let loggedCardio = base.loggedCardio;
+  let dirtyCardio = base.dirtyCardio;
+  const dirtySetIds = [...base.dirtySetIds];
+  const dirtyNoteExerciseIds = [...base.dirtyNoteExerciseIds];
+  let status = base.status;
+
+  const addUnique = (items: string[], value: string): void => {
+    if (!items.includes(value)) items.push(value);
+  };
+  const remove = (items: string[], value: string): void => {
+    const index = items.indexOf(value);
+    if (index >= 0) items.splice(index, 1);
+  };
+  const sourceStateFor = (operation: RunnerOperation): ActiveWorkoutState =>
+    candidates.get(operation.idempotencyKey)?.state ?? base;
+
+  for (const operation of operations) {
+    if (operation.status === "superseded") continue;
+    const source = sourceStateFor(operation);
+    switch (operation.payload.kind) {
+      case "save_set": {
+        const logged = source.loggedSets[operation.payload.setId];
+        if (logged?.operationKey === operation.idempotencyKey) {
+          loggedSets[operation.payload.setId] = clone(logged);
+        }
+        const draft = source.drafts[operation.payload.setId];
+        if (draft !== undefined) drafts[operation.payload.setId] = clone(draft);
+        remove(dirtySetIds, operation.payload.setId);
+        break;
+      }
+      case "save_cardio":
+        if (source.loggedCardio?.operationKey === operation.idempotencyKey) {
+          cardioMode = source.cardioMode;
+          cardioDraft = source.cardioDraft ? clone(source.cardioDraft) : undefined;
+          loggedCardio = clone(source.loggedCardio);
+          dirtyCardio = source.dirtyCardio;
+        }
+        break;
+      case "save_note":
+        if (Object.prototype.hasOwnProperty.call(source.notesByExercise, operation.payload.exerciseId)) {
+          notesByExercise[operation.payload.exerciseId] =
+            source.notesByExercise[operation.payload.exerciseId] ?? "";
+        }
+        remove(dirtyNoteExerciseIds, operation.payload.exerciseId);
+        break;
+      case "skip_exercise":
+        addUnique(skippedExerciseIds, operation.payload.exerciseId);
+        remove(completedExerciseIds, operation.payload.exerciseId);
+        break;
+      case "substitute_exercise": {
+        const payload = operation.payload;
+        substitutions[payload.exerciseId] = clone(payload.replacement);
+        const exercise = base.snapshot.exercises.find(
+          ({ id }) => id === payload.exerciseId,
+        );
+        for (const set of exercise?.sets ?? []) {
+          delete drafts[set.id];
+          delete loggedSets[set.id];
+          remove(dirtySetIds, set.id);
+        }
+        remove(completedExerciseIds, payload.exerciseId);
+        break;
+      }
+      case "complete_exercise":
+        addUnique(completedExerciseIds, operation.payload.exerciseId);
+        remove(skippedExerciseIds, operation.payload.exerciseId);
+        break;
+      case "complete_session":
+        if (operation.status === "saved") status = "completed";
+        else if (status !== "completed" && status !== "abandoned") status = "completing";
+        break;
+      case "abandon_session":
+        if (operation.status === "saved") status = "abandoned";
+        else if (status !== "completed" && status !== "abandoned") status = "abandoning";
+        break;
+    }
+  }
+
+  const merged: Mutable<ActiveWorkoutState> = {
+    ...base,
+    drafts,
+    dirtySetIds,
+    cardioMode,
+    cardioDraft,
+    dirtyCardio,
+    loggedCardio,
+    notesByExercise,
+    dirtyNoteExerciseIds,
+    loggedSets,
+    skippedExerciseIds,
+    completedExerciseIds,
+    substitutions,
+    status,
+    operations,
+    nextOperationSequence: operations.length + 1,
+    lastUpdatedAt: Math.max(existing?.state.lastUpdatedAt ?? 0, incoming.state.lastUpdatedAt),
+  };
+  return {
+    ...merged,
+    sync: syncForState(merged),
+  };
+}
+
+export function mergeRunnerStorageStates(
+  existing: ActiveWorkoutState | undefined,
+  incoming: ActiveWorkoutState,
+): ActiveWorkoutState {
+  const incomingRecord = runnerStorageRecord(incoming);
+  const existingRecord =
+    existing === undefined ? undefined : runnerStorageRecord(existing);
+  return mergeRunnerStorageRecords(existingRecord, incomingRecord).state;
+}
+
+export function mergeRunnerStorageRecords(
+  existing: RunnerStorageRecord | undefined,
+  incoming: RunnerStorageRecord,
+  options: RunnerStorageMergeOptions = {},
+): RunnerStorageRecordV2 {
+  const validatedIncoming = validateRunnerStorageRecord(incoming);
+  const validatedExisting =
+    existing === undefined ? undefined : validateRunnerStorageRecord(existing);
+  if (
+    validatedExisting !== undefined &&
+    (validatedExisting.key !== validatedIncoming.key ||
+      validatedExisting.ownerUid !== validatedIncoming.ownerUid ||
+      validatedExisting.sessionId !== validatedIncoming.sessionId)
+  ) {
+    throw new RunnerTransitionError(
+      "storage_identity_mismatch",
+      "Workout drafts from different owner or session namespaces cannot merge.",
+    );
+  }
+  if (
+    validatedExisting !== undefined &&
+    (validatedExisting.state.snapshot.programRevisionId !==
+      validatedIncoming.state.snapshot.programRevisionId ||
+      validatedExisting.state.snapshot.dayId !==
+        validatedIncoming.state.snapshot.dayId)
+  ) {
+    throw new RunnerTransitionError(
+      "snapshot_conflict",
+      "Workout drafts from different immutable snapshots cannot merge.",
+    );
+  }
+  const mergedOperations = mergeOperationCandidates(
+    validatedExisting,
+    validatedIncoming,
+  );
+  const state = mergeStateProjections(
+    validatedExisting,
+    validatedIncoming,
+    mergedOperations.operations,
+    mergedOperations.candidates,
+  );
+  const previousRevision = recordRevision(validatedExisting);
+  const requestedRevision = options.revision ?? previousRevision + 1;
+  if (
+    !Number.isInteger(requestedRevision) ||
+    requestedRevision < previousRevision + (validatedExisting === undefined ? 0 : 1)
+  ) {
+    throw new RunnerTransitionError(
+      "storage_revision_conflict",
+      "The workout draft storage revision is stale.",
+    );
+  }
+  const requestedCommittedAt =
+    options.committedAt ??
+    Math.max(
+      recordCommittedAt(validatedExisting),
+      recordCommittedAt(validatedIncoming),
+      state.lastUpdatedAt,
+    );
+  assertFiniteTimestampValue(requestedCommittedAt, "record committedAt");
+  const writerId =
+    options.writerId ??
+    (validatedIncoming.schemaVersion === 2
+      ? validatedIncoming.writerId
+      : validatedExisting?.schemaVersion === 2
+        ? validatedExisting.writerId
+        : runnerWriterId());
+  if (writerId.trim().length === 0) {
+    throw new RunnerTransitionError(
+      "corrupt_storage",
+      "The workout draft writer identity is invalid.",
+    );
+  }
+  return deepFreeze({
+    schemaVersion: 2,
+    key: validatedIncoming.key,
+    ownerUid: validatedIncoming.ownerUid,
+    sessionId: validatedIncoming.sessionId,
+    revision: requestedRevision,
+    writerId,
+    committedAt: Math.max(requestedCommittedAt, recordCommittedAt(validatedExisting)),
+    state: clone(state),
+  });
+}
+
+export const mergeRunnerStorage = mergeRunnerStorageRecords;
+export const mergeRunnerRecords = mergeRunnerStorageRecords;
+
 function queueOperation(
   state: ActiveWorkoutState,
   kind: RunnerOperationKind,
@@ -1324,6 +2307,7 @@ function queueOperation(
     idempotencyKey,
     kind,
     payload,
+    semanticTarget: semanticTargetText(runnerOperationSemanticTarget({ kind, payload })),
     ownerUid: state.snapshot.ownerUid,
     sessionId: state.snapshot.sessionId,
     baseRevision: state.snapshot.programRevisionId,
@@ -1354,6 +2338,57 @@ function replaceOperation(
     item.idempotencyKey === operation.idempotencyKey ? operation : item,
   );
   return { ...state, operations, sync: syncForState({ ...state, operations }) };
+}
+
+export function resolveRunnerLocalTabConflict(
+  state: ActiveWorkoutState,
+  idempotencyKey: string,
+  now?: number,
+): ActiveWorkoutState {
+  const chosen = state.operations.find(
+    ({ idempotencyKey: key }) => key === idempotencyKey,
+  );
+  if (
+    chosen === undefined ||
+    chosen.status !== "failed" ||
+    chosen.failureKind !== "conflict" ||
+    chosen.errorCode !== "local_tab_conflict"
+  ) {
+    throw new RunnerTransitionError(
+      "unknown_local_tab_conflict",
+      "The selected workout value is not an unresolved local-tab conflict.",
+    );
+  }
+  const target = semanticTargetKey(runnerOperationSemanticTarget(chosen));
+  const at = timestamp(state, now);
+  const operations = state.operations.map((operation) => {
+    if (operation.idempotencyKey === idempotencyKey) {
+      return {
+        ...operation,
+        status: "pending" as const,
+        errorCode: undefined,
+        errorMessage: undefined,
+        retryable: undefined,
+        failureKind: undefined,
+      };
+    }
+    if (
+      (operation.status === "failed" || operation.status === "pending") &&
+      semanticTargetKey(runnerOperationSemanticTarget(operation)) === target
+    ) {
+      return supersededOperation(
+        operation,
+        "Superseded by the value chosen for this local-tab conflict.",
+      );
+    }
+    return operation;
+  });
+  const next = {
+    ...state,
+    operations,
+    lastUpdatedAt: at,
+  };
+  return { ...next, sync: syncForState(next) };
 }
 
 function terminalStatusForState(
@@ -2213,6 +3248,14 @@ export function runnerReducer(
     };
   }
 
+  if (action.type === "resolve_local_tab_conflict") {
+    return resolveRunnerLocalTabConflict(
+      state,
+      action.idempotencyKey,
+      action.now,
+    );
+  }
+
   return state;
 }
 
@@ -2265,40 +3308,128 @@ export function runnerStorageKey(ownerUid: string, sessionId: string): string {
   return `runner:${encodeURIComponent(ownerUid)}:${encodeURIComponent(sessionId)}`;
 }
 
+function parseRunnerStorageKeyForDomain(
+  key: string,
+): Readonly<{ ownerUid: string; sessionId: string }> | undefined {
+  if (typeof key !== "string" || !key.startsWith("runner:")) return undefined;
+  const encoded = key.slice("runner:".length);
+  const separator = encoded.indexOf(":");
+  if (separator <= 0 || separator >= encoded.length - 1) return undefined;
+  try {
+    const ownerUid = decodeURIComponent(encoded.slice(0, separator));
+    const sessionId = decodeURIComponent(encoded.slice(separator + 1));
+    if (
+      ownerUid.length === 0 ||
+      sessionId.length === 0 ||
+      runnerStorageKey(ownerUid, sessionId) !== key
+    ) {
+      return undefined;
+    }
+    return { ownerUid, sessionId };
+  } catch {
+    return undefined;
+  }
+}
+
+function assertRunnerStorageKeyOwner(
+  key: string,
+  ownerUid: string | undefined,
+): Readonly<{ ownerUid: string; sessionId: string }> {
+  const parsed = parseRunnerStorageKeyForDomain(key);
+  if (parsed === undefined) {
+    throw new RunnerStorageError(
+      "storage_corrupt",
+      "The workout draft key is not valid.",
+    );
+  }
+  if (ownerUid !== undefined && parsed.ownerUid !== ownerUid) {
+    throw new RunnerOwnershipError();
+  }
+  return parsed;
+}
+
 function cloneStorageRecord(record: RunnerStorageRecord): RunnerStorageRecord {
   return clone(record);
 }
 
-export class InMemoryRunnerStorage implements RunnerStorage {
-  private readonly records = new Map<string, RunnerStorageRecord>();
+export type InMemoryRunnerStorageOptions = Readonly<{
+  ownerUid?: string;
+  writerId?: string;
+  clock?: () => number;
+  /** Supply a map when multiple in-memory tabs should share one namespace. */
+  records?: Map<string, RunnerStorageRecord>;
+}>;
 
-  async load(key: string): Promise<RunnerStorageRecord | undefined> {
-    const record = this.records.get(key);
-    return record === undefined ? undefined : cloneStorageRecord(record);
+export class InMemoryRunnerStorage implements RunnerStorage {
+  private readonly records: Map<string, RunnerStorageRecord>;
+  private readonly ownerUid: string | undefined;
+  private readonly writerId: string;
+  private readonly clock: () => number;
+
+  constructor(options: InMemoryRunnerStorageOptions = {}) {
+    if (options.ownerUid !== undefined) assertString(options.ownerUid, "ownerUid");
+    if (options.writerId !== undefined) assertString(options.writerId, "writerId");
+    this.records = options.records ?? new Map<string, RunnerStorageRecord>();
+    this.ownerUid = options.ownerUid;
+    this.writerId = options.writerId ?? runnerWriterId();
+    this.clock = options.clock ?? (() => Date.now());
   }
 
-  async save(key: string, record: RunnerStorageRecord): Promise<void> {
-    if (record.key !== key) throw new RangeError("Runner storage key mismatch");
-    this.records.set(key, cloneStorageRecord(record));
+  async load(key: string): Promise<RunnerStorageRecord | undefined> {
+    const expected = assertRunnerStorageKeyOwner(key, this.ownerUid);
+    const record = this.records.get(key);
+    if (record === undefined) return undefined;
+    return cloneStorageRecord(
+      validateRunnerStorageRecord(record, {
+        expectedKey: key,
+        ownerUid: expected.ownerUid,
+        sessionId: expected.sessionId,
+      }),
+    );
+  }
+
+  async save(
+    key: string,
+    record: RunnerStorageRecord,
+  ): Promise<RunnerStorageRecordV2> {
+    const expected = assertRunnerStorageKeyOwner(key, this.ownerUid);
+    const validated = validateRunnerStorageRecord(record, {
+      expectedKey: key,
+      ownerUid: expected.ownerUid,
+      sessionId: expected.sessionId,
+    });
+    const current = this.records.get(key);
+    const committed = mergeRunnerStorageRecords(current, validated, {
+      revision: recordRevision(current) + 1,
+      writerId: this.writerId,
+      committedAt: Math.max(validated.state.lastUpdatedAt, this.clock()),
+    });
+    this.records.set(key, cloneStorageRecord(committed));
+    return clone(committed);
   }
 
   async remove(key: string): Promise<void> {
+    assertRunnerStorageKeyOwner(key, this.ownerUid);
     this.records.delete(key);
   }
 
   async clearOwner(ownerUid: string): Promise<void> {
     assertString(ownerUid, "ownerUid");
-    const prefix = `runner:${encodeURIComponent(ownerUid)}:`;
+    if (this.ownerUid !== undefined && this.ownerUid !== ownerUid) {
+      throw new RunnerOwnershipError();
+    }
     for (const key of this.records.keys()) {
-      if (key.startsWith(prefix)) {
+      if (parseRunnerStorageKeyForDomain(key)?.ownerUid === ownerUid) {
         this.records.delete(key);
       }
     }
   }
 }
 
-export function createInMemoryRunnerStorage(): InMemoryRunnerStorage {
-  return new InMemoryRunnerStorage();
+export function createInMemoryRunnerStorage(
+  options: InMemoryRunnerStorageOptions = {},
+): InMemoryRunnerStorage {
+  return new InMemoryRunnerStorage(options);
 }
 
 export async function clearRunnerNamespace(
@@ -2314,16 +3445,28 @@ export async function clearRunnerNamespace(
 
 export function runnerStorageRecord(
   state: ActiveWorkoutState,
-): RunnerStorageRecord {
+  options: RunnerStorageRecordOptions = {},
+): RunnerStorageRecordV2 {
   const key = runnerStorageKey(
     state.snapshot.ownerUid,
     state.snapshot.sessionId,
   );
+  const revision = options.revision ?? 0;
+  const committedAt = options.committedAt ?? state.lastUpdatedAt;
+  if (!Number.isInteger(revision) || revision < 0) {
+    throw new RangeError("revision must be a nonnegative integer");
+  }
+  assertFiniteTimestampValue(committedAt, "record committedAt");
+  const writerId = options.writerId ?? runnerWriterId();
+  assertString(writerId, "writerId");
   return deepFreeze({
-    schemaVersion: 1,
+    schemaVersion: 2,
     key,
     ownerUid: state.snapshot.ownerUid,
     sessionId: state.snapshot.sessionId,
+    revision,
+    writerId,
+    committedAt,
     state: clone(state),
   });
 }
@@ -2331,11 +3474,12 @@ export function runnerStorageRecord(
 export async function persistRunnerState(
   storage: RunnerStorage,
   state: ActiveWorkoutState,
-): Promise<void> {
-  await storage.save(
+): Promise<ActiveWorkoutState> {
+  const committed = await storage.save(
     runnerStorageKey(state.snapshot.ownerUid, state.snapshot.sessionId),
     runnerStorageRecord(state),
   );
+  return clone(committed.state);
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
@@ -2347,34 +3491,6 @@ function assertRunnerStorageRecordIntegrity(
   expectedKey: string,
   options: LoadRunnerOptions,
 ): void {
-  if (!isObjectRecord(record)) {
-    throw new RunnerTransitionError(
-      "corrupt_storage",
-      "The saved workout record is not an object.",
-    );
-  }
-  const candidate = record as unknown as Record<string, unknown>;
-  if (candidate["schemaVersion"] !== 1) {
-    throw new RunnerTransitionError(
-      "corrupt_storage",
-      "The saved workout state has an unsupported schema version.",
-    );
-  }
-  if (candidate["ownerUid"] !== options.ownerUid) {
-    throw new RunnerOwnershipError();
-  }
-  if (candidate["sessionId"] !== options.sessionId) {
-    throw new RunnerTransitionError(
-      "corrupt_storage",
-      "The saved workout record session does not match its storage key.",
-    );
-  }
-  if (candidate["key"] !== expectedKey) {
-    throw new RunnerTransitionError(
-      "corrupt_storage",
-      "The saved workout state key does not match its owner and session.",
-    );
-  }
   if (options.snapshot.ownerUid !== options.ownerUid) {
     throw new RunnerOwnershipError();
   }
@@ -2384,26 +3500,12 @@ function assertRunnerStorageRecordIntegrity(
       "The requested workout snapshot does not match the active session.",
     );
   }
-  const storedState = candidate["state"];
-  if (!isObjectRecord(storedState)) {
-    throw new RunnerTransitionError(
-      "corrupt_storage",
-      "The saved workout state payload is not an object.",
-    );
-  }
-  if (!Array.isArray(storedState["operations"])) {
-    throw new RunnerTransitionError(
-      "corrupt_storage",
-      "The saved workout operations are not an array.",
-    );
-  }
-  const storedSnapshot = storedState["snapshot"];
-  if (!isObjectRecord(storedSnapshot)) {
-    throw new RunnerTransitionError(
-      "corrupt_storage",
-      "The saved workout snapshot is not an object.",
-    );
-  }
+  const validated = validateRunnerStorageRecord(record, {
+    expectedKey,
+    ownerUid: options.ownerUid,
+    sessionId: options.sessionId,
+  });
+  const storedSnapshot = validated.state.snapshot;
   if (storedSnapshot["ownerUid"] !== options.ownerUid) {
     throw new RunnerOwnershipError();
   }
@@ -2414,8 +3516,8 @@ function assertRunnerStorageRecordIntegrity(
     );
   }
   if (
-    storedSnapshot["ownerUid"] !== candidate["ownerUid"] ||
-    storedSnapshot["sessionId"] !== candidate["sessionId"]
+    storedSnapshot["ownerUid"] !== validated.ownerUid ||
+    storedSnapshot["sessionId"] !== validated.sessionId
   ) {
     throw new RunnerTransitionError(
       "corrupt_storage",
@@ -2511,24 +3613,21 @@ export async function syncRunnerOperations(
 ): Promise<ActiveWorkoutState> {
   let state = initialState;
   const at = options.now ?? state.lastUpdatedAt;
+  state = await persistRunnerState(options.storage, state);
   const terminalStatus = terminalStatusForState(state);
   if (terminalStatus !== undefined) {
     const next = withUpdated(state, { status: terminalStatus }, at);
-    await persistRunnerState(options.storage, next);
-    return next;
+    return persistRunnerState(options.storage, next);
   }
   if (state.connectivity === "offline") {
     const next = withUpdated(state, { sync: syncForState(state) }, at);
-    await persistRunnerState(options.storage, next);
-    return next;
+    return persistRunnerState(options.storage, next);
   }
   if (state.auth !== "valid") {
     const next = withUpdated(state, { sync: syncForState(state) }, at);
-    await persistRunnerState(options.storage, next);
-    return next;
+    return persistRunnerState(options.storage, next);
   }
 
-  await persistRunnerState(options.storage, state);
   const submit = submitterFunction(options.submit);
   const ordered = [...state.operations].sort(
     (left, right) => left.sequence - right.sequence,
@@ -2542,13 +3641,12 @@ export async function syncRunnerOperations(
       ({ idempotencyKey }) => idempotencyKey === operation.idempotencyKey,
     );
     if (!current || current.status !== "pending") continue;
-    await persistRunnerState(options.storage, state);
     state = runnerReducer(state, {
       type: "operation_attempted",
       idempotencyKey: current.idempotencyKey,
       now: at,
     });
-    await persistRunnerState(options.storage, state);
+    state = await persistRunnerState(options.storage, state);
     const attempted = state.operations.find(
       ({ idempotencyKey }) => idempotencyKey === current.idempotencyKey,
     );
@@ -2566,7 +3664,7 @@ export async function syncRunnerOperations(
           auth: authBlocker,
           now: at,
         });
-        await persistRunnerState(options.storage, state);
+        state = await persistRunnerState(options.storage, state);
         break;
       }
       if (isOfflineCode(code)) {
@@ -2575,7 +3673,7 @@ export async function syncRunnerOperations(
           connectivity: "offline",
           now: at,
         });
-        await persistRunnerState(options.storage, state);
+        state = await persistRunnerState(options.storage, state);
         break;
       }
       state = runnerReducer(state, {
@@ -2587,7 +3685,7 @@ export async function syncRunnerOperations(
         failureKind: "transient",
         now: at,
       });
-      await persistRunnerState(options.storage, state);
+      state = await persistRunnerState(options.storage, state);
       break;
     }
 
@@ -2598,7 +3696,7 @@ export async function syncRunnerOperations(
         persistedId: result.persistedId,
         now: at,
       });
-      await persistRunnerState(options.storage, state);
+      state = await persistRunnerState(options.storage, state);
       if (
         current.kind === "complete_session" ||
         current.kind === "abandon_session"
@@ -2615,7 +3713,7 @@ export async function syncRunnerOperations(
         auth: authBlocker ?? "expired",
         now: at,
       });
-      await persistRunnerState(options.storage, state);
+      state = await persistRunnerState(options.storage, state);
       break;
     }
     if (isOfflineCode(result.code)) {
@@ -2624,7 +3722,7 @@ export async function syncRunnerOperations(
         connectivity: "offline",
         now: at,
       });
-      await persistRunnerState(options.storage, state);
+      state = await persistRunnerState(options.storage, state);
       break;
     }
     state = runnerReducer(state, {
@@ -2642,7 +3740,7 @@ export async function syncRunnerOperations(
             : "transient",
       now: at,
     });
-    await persistRunnerState(options.storage, state);
+    state = await persistRunnerState(options.storage, state);
     break;
   }
 

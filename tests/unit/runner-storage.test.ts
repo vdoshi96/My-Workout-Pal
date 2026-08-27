@@ -7,6 +7,7 @@ import {
   createRunnerState,
   createWorkoutSnapshot,
   loadRunnerState,
+  mergeRunnerStorageRecords,
   persistRunnerState,
   runnerReducer,
   runnerStorageKey,
@@ -242,7 +243,11 @@ describe("IndexedDB runner storage", () => {
     expect(
       factory.database.objectStoreNames.contains(RUNNER_STORAGE_OBJECT_STORE),
     ).toBe(true);
-    expect(loaded).toEqual(runnerStorageRecord(state));
+    expect(loaded).toMatchObject({
+      schemaVersion: 2,
+      revision: 1,
+      state,
+    });
     expect(loaded).not.toBe(runnerStorageRecord(state));
     expect(factory.database.transactions).toEqual(["readwrite", "readonly"]);
   });
@@ -332,7 +337,11 @@ describe("IndexedDB runner storage", () => {
     ).resolves.toBeUndefined();
     await expect(
       second.load(runnerStorageKey("uid-b", "session-b")),
-    ).resolves.toEqual(runnerStorageRecord(secondState));
+    ).resolves.toMatchObject({
+      schemaVersion: 2,
+      revision: 1,
+      state: secondState,
+    });
     await expect(
       second.load(runnerStorageKey("uid-a", "session-a")),
     ).rejects.toMatchObject({ name: "RunnerOwnershipError" });
@@ -359,11 +368,16 @@ describe("IndexedDB runner storage", () => {
     await expect(first.load(firstKey)).resolves.toBeUndefined();
     await expect(
       second.load(runnerStorageKey("uid-b", "session-b")),
-    ).resolves.toEqual(runnerStorageRecord(secondState));
+    ).resolves.toMatchObject({
+      schemaVersion: 2,
+      revision: 1,
+      state: secondState,
+    });
   });
 
   it("clears a corrupt payload through the in-memory owner namespace", async () => {
-    const storage = new InMemoryRunnerStorage();
+    const records = new Map<string, RunnerStorageRecord>();
+    const storage = new InMemoryRunnerStorage({ records });
     const firstState = stateFor("uid-a", "session-a");
     const secondState = stateFor("uid-b", "session-b");
     const firstKey = runnerStorageKey("uid-a", "session-a");
@@ -371,14 +385,18 @@ describe("IndexedDB runner storage", () => {
     await persistRunnerState(storage, firstState);
     await persistRunnerState(storage, secondState);
     const corrupt = (await storage.load(firstKey))!;
-    await storage.save(firstKey, { ...corrupt, ownerUid: "uid-corrupt" });
+    records.set(firstKey, { ...corrupt, ownerUid: "uid-corrupt" });
 
     await clearRunnerNamespace(storage, "uid-a");
 
     await expect(storage.load(firstKey)).resolves.toBeUndefined();
     await expect(
       storage.load(runnerStorageKey("uid-b", "session-b")),
-    ).resolves.toEqual(runnerStorageRecord(secondState));
+    ).resolves.toMatchObject({
+      schemaVersion: 2,
+      revision: 1,
+      state: secondState,
+    });
   });
 
   it("rejects a key outside the configured owner namespace", async () => {
@@ -468,5 +486,64 @@ describe("IndexedDB runner storage", () => {
     expect(factory.database).not.toBe(leakedDatabase);
     expect(factory.database.closed).toBe(false);
     expect(factory.opens).toBe(2);
+  });
+});
+
+describe("schema-two atomic runner storage merge", () => {
+  it("writes schema two metadata and returns the committed record", async () => {
+    const storage = new InMemoryRunnerStorage({
+      writerId: "tab-a",
+      clock: () => 123,
+    });
+    const state = stateFor("uid-a", "session-a");
+
+    const committed = await storage.save(
+      runnerStorageKey("uid-a", "session-a"),
+      runnerStorageRecord(state, { committedAt: 123 }),
+    );
+
+    expect(committed).toMatchObject({
+      schemaVersion: 2,
+      revision: 1,
+      writerId: "tab-a",
+      committedAt: 123,
+      state,
+    });
+  });
+
+  it("merges distinct stale operations exactly once and marks same-target divergence", async () => {
+    const storage = new InMemoryRunnerStorage({ writerId: "tab-a" });
+    const key = runnerStorageKey("uid-a", "session-a");
+    let first = stateFor("uid-a", "session-a");
+    first = runnerReducer(first, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    first = runnerReducer(first, { type: "save_set", setId: "row-set" });
+    const firstRecord = runnerStorageRecord(first, { committedAt: 100 });
+    await storage.save(key, firstRecord);
+
+    let second = stateFor("uid-a", "session-a");
+    second = runnerReducer(second, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 22, repetitions: 8 },
+    });
+    second = runnerReducer(second, { type: "save_set", setId: "row-set" });
+    const secondRecord = runnerStorageRecord(second, { committedAt: 101 });
+    const merged = mergeRunnerStorageRecords(firstRecord, secondRecord, {
+      committedAt: 102,
+      writerId: "tab-b",
+    });
+
+    expect(merged.state.operations).toHaveLength(2);
+    expect(merged.state.operations.map(({ status }) => status)).toEqual([
+      "failed",
+      "failed",
+    ]);
+    expect(
+      merged.state.operations.map(({ errorCode }) => errorCode),
+    ).toEqual(["local_tab_conflict", "local_tab_conflict"]);
   });
 });

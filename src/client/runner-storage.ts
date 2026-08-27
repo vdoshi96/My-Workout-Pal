@@ -1,16 +1,21 @@
 import {
   classifyRunnerStorageError,
+  createRunnerWriterIdentity,
+  mergeRunnerStorageRecords,
   RunnerOwnershipError,
   RunnerStorageError,
   RunnerTransitionError,
   runnerStorageKey,
+  stableIdempotencyKey,
+  validateRunnerStorageRecord,
   type RunnerStorage,
   type RunnerStorageOperation,
   type RunnerStorageRecord,
+  type RunnerStorageRecordV2,
 } from "@/domain/workout-runner";
 
 export const RUNNER_STORAGE_DATABASE_NAME = "my-workout-pal-runner";
-export const RUNNER_STORAGE_DATABASE_VERSION = 1;
+export const RUNNER_STORAGE_DATABASE_VERSION = 2;
 export const RUNNER_STORAGE_OBJECT_STORE = "runnerStates";
 
 export type RunnerIndexedDbRequest<T> = {
@@ -45,6 +50,7 @@ export type RunnerIndexedDbTransaction = {
   onerror: ((event: unknown) => void) | null;
   onabort: ((event: unknown) => void) | null;
   error?: unknown;
+  abort?: () => void;
 };
 
 export type RunnerIndexedDbDatabase = {
@@ -69,6 +75,16 @@ export type IndexedDBRunnerStorageOptions = Readonly<{
   factory?: RunnerIndexedDbFactory;
   ownerUid?: string;
   databaseName?: string;
+  writerId?: string;
+  clock?: () => number;
+  /** A bounded, opaque post-commit hint. It is never used for correctness. */
+  notify?: (notification: RunnerStorageNotification) => void;
+}>;
+
+export type RunnerStorageNotification = Readonly<{
+  namespaceDigest: string;
+  revision: number;
+  writerId: string;
 }>;
 
 function assertOwnerUid(ownerUid: string): void {
@@ -228,14 +244,21 @@ export class IndexedDBRunnerStorage implements RunnerStorage {
   private readonly factory: RunnerIndexedDbFactory | undefined;
   private readonly ownerUid: string | undefined;
   private readonly databaseName: string;
+  private readonly writerId: string;
+  private readonly clock: () => number;
+  private readonly notify: ((notification: RunnerStorageNotification) => void) | undefined;
   private databasePromise: Promise<RunnerIndexedDbDatabase> | undefined;
   private databaseToken: symbol | undefined;
 
   constructor(options: IndexedDBRunnerStorageOptions = {}) {
     if (options.ownerUid !== undefined) assertOwnerUid(options.ownerUid);
+    if (options.writerId !== undefined) assertOwnerUid(options.writerId);
     this.factory = options.factory ?? defaultRunnerIndexedDbFactory();
     this.ownerUid = options.ownerUid;
     this.databaseName = options.databaseName ?? RUNNER_STORAGE_DATABASE_NAME;
+    this.writerId = options.writerId ?? createRunnerWriterIdentity();
+    this.clock = options.clock ?? (() => Date.now());
+    this.notify = options.notify;
   }
 
   private openDatabase(): Promise<RunnerIndexedDbDatabase> {
@@ -327,28 +350,15 @@ export class IndexedDBRunnerStorage implements RunnerStorage {
                 finish(undefined);
                 return;
               }
-              if (!isObjectRecord(value)) {
-                fail(
-                  new RunnerTransitionError(
-                    "corrupt_storage",
-                    "The saved workout record is not an object.",
-                  ),
-                );
-                return;
-              }
-              const candidate = value as Record<string, unknown>;
-              if (candidate["ownerUid"] !== expected.ownerUid)
-                throw new RunnerOwnershipError();
-              if (
-                candidate["key"] !== key ||
-                candidate["sessionId"] !== expected.sessionId
-              ) {
-                throw new RunnerTransitionError(
-                  "corrupt_storage",
-                  "The saved workout record identity does not match its key.",
-                );
-              }
-              finish(cloneStorageRecord(value as RunnerStorageRecord));
+              finish(
+                cloneStorageRecord(
+                  validateRunnerStorageRecord(value, {
+                    expectedKey: key,
+                    ownerUid: expected.ownerUid,
+                    sessionId: expected.sessionId,
+                  }),
+                ),
+              );
             },
             fail,
           );
@@ -357,29 +367,67 @@ export class IndexedDBRunnerStorage implements RunnerStorage {
     );
   }
 
-  async save(key: string, record: RunnerStorageRecord): Promise<void> {
+  async save(
+    key: string,
+    record: RunnerStorageRecord,
+  ): Promise<RunnerStorageRecordV2> {
     const expected = assertStorageKeyOwner(key, this.ownerUid);
-    if (record.key !== key) throw new RangeError("Runner storage key mismatch");
-    if (record.ownerUid !== expected.ownerUid) throw new RunnerOwnershipError();
-    if (record.sessionId !== expected.sessionId) {
-      throw new RunnerTransitionError(
-        "corrupt_storage",
-        "The saved workout record session does not match its key.",
-      );
-    }
-    if (record.schemaVersion !== 1) {
-      throw new RunnerTransitionError(
-        "corrupt_storage",
-        "The saved workout state has an unsupported schema version.",
-      );
-    }
-    const database = await this.openDatabase();
-    await runRunnerIndexedDbTransaction<void>(database, "readwrite", "write", {
-      run: (store, finish, fail) => {
-        const request = store.put(cloneStorageRecord(record));
-        watchRunnerIndexedDbRequest(request, () => finish(undefined), fail);
-      },
+    const incoming = validateRunnerStorageRecord(record, {
+      expectedKey: key,
+      ownerUid: expected.ownerUid,
+      sessionId: expected.sessionId,
     });
+    const database = await this.openDatabase();
+    const committed = await runRunnerIndexedDbTransaction<RunnerStorageRecordV2>(
+      database,
+      "readwrite",
+      "write",
+      {
+        run: (store, finish, fail) => {
+          const readRequest = store.get(key);
+          watchRunnerIndexedDbRequest(
+            readRequest,
+            (value) => {
+              try {
+                const existing =
+                  value === undefined
+                    ? undefined
+                    : validateRunnerStorageRecord(value, {
+                        expectedKey: key,
+                        ownerUid: expected.ownerUid,
+                        sessionId: expected.sessionId,
+                      });
+                const next = mergeRunnerStorageRecords(existing, incoming, {
+                  revision: (existing?.schemaVersion === 2
+                    ? existing.revision
+                    : 0) + 1,
+                  writerId: this.writerId,
+                  committedAt: this.clock(),
+                });
+                const writeRequest = store.put(cloneStorageRecord(next));
+                watchRunnerIndexedDbRequest(
+                  writeRequest,
+                  () => finish(next),
+                  fail,
+                );
+              } catch (error) {
+                fail(error);
+              }
+            },
+            fail,
+          );
+        },
+      },
+    );
+    this.notify?.({
+      namespaceDigest: stableIdempotencyKey({
+        ownerUid: expected.ownerUid,
+        sessionId: expected.sessionId,
+      }),
+      revision: committed.revision,
+      writerId: committed.writerId,
+    });
+    return cloneStorageRecord(committed) as RunnerStorageRecordV2;
   }
 
   async remove(key: string): Promise<void> {
