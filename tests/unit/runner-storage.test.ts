@@ -20,9 +20,12 @@ import {
   type RunnerStorageRecordV1,
 } from "@/domain/workout-runner";
 import {
+  createRunnerStorageBroadcast,
   IndexedDBRunnerStorage,
   RUNNER_STORAGE_DATABASE_VERSION,
   RUNNER_STORAGE_OBJECT_STORE,
+  runnerStorageNamespaceDigest,
+  type RunnerBroadcastChannel,
   type RunnerIndexedDbDatabase,
   type RunnerIndexedDbFactory,
   type RunnerIndexedDbObjectStore,
@@ -30,6 +33,40 @@ import {
   type RunnerIndexedDbRequest,
   type RunnerIndexedDbTransaction,
 } from "@/client/runner-storage";
+
+class FakeBroadcastChannel implements RunnerBroadcastChannel {
+  readonly posted: unknown[] = [];
+  readonly listeners = new Set<(event: MessageEvent<unknown>) => void>();
+  closed = false;
+
+  postMessage(value: unknown): void {
+    this.posted.push(structuredClone(value));
+  }
+
+  addEventListener(
+    type: "message",
+    listener: (event: MessageEvent<unknown>) => void,
+  ): void {
+    if (type === "message") this.listeners.add(listener);
+  }
+
+  removeEventListener(
+    type: "message",
+    listener: (event: MessageEvent<unknown>) => void,
+  ): void {
+    if (type === "message") this.listeners.delete(listener);
+  }
+
+  close(): void {
+    this.closed = true;
+  }
+
+  emit(data: unknown): void {
+    for (const listener of this.listeners) {
+      listener({ data } as MessageEvent<unknown>);
+    }
+  }
+}
 
 const snapshot = createWorkoutSnapshot({
   sessionId: "session-a",
@@ -499,6 +536,40 @@ describe("IndexedDB runner storage", () => {
 });
 
 describe("schema-two atomic runner storage merge", () => {
+  it("publishes only validated opaque cross-tab storage hints", () => {
+    const fake = new FakeBroadcastChannel();
+    const broadcast = createRunnerStorageBroadcast({
+      factory: () => fake,
+    });
+    expect(broadcast).toBeDefined();
+    const digest = runnerStorageNamespaceDigest("uid-a", "session-a");
+    expect(digest).not.toContain("uid-a");
+    expect(digest).not.toContain("session-a");
+
+    const received: unknown[] = [];
+    const unsubscribe = broadcast!.subscribe((notification) => {
+      received.push(notification);
+    });
+    const notification = {
+      namespaceDigest: digest,
+      revision: 7,
+      writerId: "runner-writer-tab-a",
+    };
+    broadcast!.publish(notification);
+    expect(fake.posted).toEqual([notification]);
+
+    fake.emit({ ...notification, revision: 8 });
+    fake.emit({ ...notification, ownerUid: "uid-a" });
+    fake.emit({ ...notification, namespaceDigest: "uid-a:session-a" });
+    expect(received).toEqual([{ ...notification, revision: 8 }]);
+
+    unsubscribe();
+    fake.emit({ ...notification, revision: 9 });
+    expect(received).toHaveLength(1);
+    broadcast!.close();
+    expect(fake.closed).toBe(true);
+  });
+
   it("writes schema two metadata and returns the committed record", async () => {
     const storage = new InMemoryRunnerStorage({
       writerId: "tab-a",

@@ -87,6 +87,121 @@ export type RunnerStorageNotification = Readonly<{
   writerId: string;
 }>;
 
+export const RUNNER_STORAGE_BROADCAST_CHANNEL =
+  "my-workout-pal-runner-storage-v2";
+
+export interface RunnerBroadcastChannel {
+  postMessage(value: unknown): void;
+  addEventListener(
+    type: "message",
+    listener: (event: MessageEvent<unknown>) => void,
+  ): void;
+  removeEventListener(
+    type: "message",
+    listener: (event: MessageEvent<unknown>) => void,
+  ): void;
+  close(): void;
+}
+
+export type RunnerStorageBroadcast = Readonly<{
+  publish(notification: RunnerStorageNotification): void;
+  subscribe(
+    listener: (notification: RunnerStorageNotification) => void,
+  ): () => void;
+  close(): void;
+}>;
+
+const RUNNER_NAMESPACE_DIGEST = /^mwp_sha256_[a-f0-9]{64}$/;
+
+export function runnerStorageNamespaceDigest(
+  ownerUid: string,
+  sessionId: string,
+): string {
+  assertOwnerUid(ownerUid);
+  assertOwnerUid(sessionId);
+  return stableIdempotencyKey({ ownerUid, sessionId });
+}
+
+function parseRunnerStorageNotification(
+  value: unknown,
+): RunnerStorageNotification | undefined {
+  if (!isObjectRecord(value)) return undefined;
+  const keys = Object.keys(value).sort();
+  if (
+    keys.length !== 3 ||
+    keys[0] !== "namespaceDigest" ||
+    keys[1] !== "revision" ||
+    keys[2] !== "writerId"
+  ) {
+    return undefined;
+  }
+  const namespaceDigest = value["namespaceDigest"];
+  const revision = value["revision"];
+  const writerId = value["writerId"];
+  if (
+    typeof namespaceDigest !== "string" ||
+    !RUNNER_NAMESPACE_DIGEST.test(namespaceDigest) ||
+    typeof revision !== "number" ||
+    !Number.isInteger(revision) ||
+    revision <= 0 ||
+    typeof writerId !== "string" ||
+    writerId.trim().length === 0
+  ) {
+    return undefined;
+  }
+  return { namespaceDigest, revision, writerId };
+}
+
+function defaultRunnerBroadcastFactory(
+  name: string,
+): RunnerBroadcastChannel | undefined {
+  if (typeof globalThis.BroadcastChannel !== "function") return undefined;
+  return new globalThis.BroadcastChannel(name);
+}
+
+export function createRunnerStorageBroadcast(
+  options: Readonly<{
+    factory?: (name: string) => RunnerBroadcastChannel | undefined;
+  }> = {},
+): RunnerStorageBroadcast | undefined {
+  let channel: RunnerBroadcastChannel | undefined;
+  try {
+    channel = (options.factory ?? defaultRunnerBroadcastFactory)(
+      RUNNER_STORAGE_BROADCAST_CHANNEL,
+    );
+  } catch {
+    return undefined;
+  }
+  if (channel === undefined) return undefined;
+  const listeners = new Set<
+    (notification: RunnerStorageNotification) => void
+  >();
+  const handleMessage = (event: MessageEvent<unknown>): void => {
+    const notification = parseRunnerStorageNotification(event.data);
+    if (notification === undefined) return;
+    for (const listener of listeners) listener(notification);
+  };
+  channel.addEventListener("message", handleMessage);
+  return {
+    publish(notification) {
+      const parsed = parseRunnerStorageNotification(notification);
+      if (parsed === undefined) {
+        throw new RangeError("Runner storage notification is invalid.");
+      }
+      channel.postMessage(parsed);
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    close() {
+      listeners.clear();
+      channel.removeEventListener("message", handleMessage);
+      channel.close();
+    },
+  };
+}
+
 function assertOwnerUid(ownerUid: string): void {
   if (typeof ownerUid !== "string" || ownerUid.trim().length === 0) {
     throw new RangeError("ownerUid must be a non-empty string");
@@ -421,10 +536,10 @@ export class IndexedDBRunnerStorage implements RunnerStorage {
     );
     try {
       this.notify?.({
-        namespaceDigest: stableIdempotencyKey({
-          ownerUid: expected.ownerUid,
-          sessionId: expected.sessionId,
-        }),
+        namespaceDigest: runnerStorageNamespaceDigest(
+          expected.ownerUid,
+          expected.sessionId,
+        ),
         revision: committed.revision,
         writerId: committed.writerId,
       });

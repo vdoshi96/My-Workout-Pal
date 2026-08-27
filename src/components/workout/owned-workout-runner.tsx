@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -9,12 +9,17 @@ import {
   workoutReauthenticationHref,
 } from "@/client/owned-workout";
 import { privateApiMutation } from "@/client/private-api";
-import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
+import {
+  createIndexedDBRunnerStorage,
+  createRunnerStorageBroadcast,
+  runnerStorageNamespaceDigest,
+} from "@/client/runner-storage";
 import { createWorkoutRunnerSubmitter } from "@/client/workout-api";
 import { WorkoutRunner } from "@/components/workout/workout-runner";
 import { RunnerResumeError } from "@/domain/workout-resume";
 import {
   clearRunnerState,
+  createRunnerWriterIdentity,
   loadRunnerState,
   RunnerOwnershipError,
   RunnerStorageError,
@@ -62,14 +67,53 @@ export function OwnedWorkoutRunner({
   });
   const ownerUid = initialState.snapshot.ownerUid;
   const sessionId = initialState.snapshot.sessionId;
+  const [writerId] = useState(() => createRunnerWriterIdentity());
+  const [storageBroadcast] = useState(() => createRunnerStorageBroadcast());
   const storage = useMemo(
-    () => createIndexedDBRunnerStorage({ ownerUid }),
-    [ownerUid],
+    () =>
+      createIndexedDBRunnerStorage({
+        ownerUid,
+        writerId,
+        ...(storageBroadcast === undefined
+          ? {}
+          : { notify: storageBroadcast.publish }),
+      }),
+    [ownerUid, storageBroadcast, writerId],
   );
+  const storageUpdates = useMemo(() => {
+    if (storageBroadcast === undefined) return undefined;
+    const namespaceDigest = runnerStorageNamespaceDigest(ownerUid, sessionId);
+    return {
+      subscribe(listener: () => void) {
+        return storageBroadcast.subscribe((notification) => {
+          if (
+            notification.namespaceDigest === namespaceDigest &&
+            notification.writerId !== writerId
+          ) {
+            listener();
+          }
+        });
+      },
+    };
+  }, [ownerUid, sessionId, storageBroadcast, writerId]);
+  const broadcastLifecycle = useRef(0);
   const submitter = useMemo(
     () => createWorkoutRunnerSubmitter(privateApiMutation),
     [],
   );
+
+  useEffect(() => {
+    broadcastLifecycle.current += 1;
+    return () => {
+      broadcastLifecycle.current += 1;
+      const closingGeneration = broadcastLifecycle.current;
+      queueMicrotask(() => {
+        if (broadcastLifecycle.current === closingGeneration) {
+          storageBroadcast?.close();
+        }
+      });
+    };
+  }, [storageBroadcast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -169,6 +213,7 @@ export function OwnedWorkoutRunner({
       protectBeforeUnload
       reauthenticationHref={workoutReauthenticationHref(sessionId)}
       storage={storage}
+      {...(storageUpdates === undefined ? {} : { storageUpdates })}
       submitter={submitter}
       title={initialState.snapshot.dayName}
       unitSystem={unitSystem}

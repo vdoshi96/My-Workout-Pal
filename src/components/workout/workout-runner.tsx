@@ -18,6 +18,7 @@ import {
   navigationProtectionReason,
   persistRunnerState,
   runnerReducer,
+  stableIdempotencyKey,
   syncRunnerOperations,
   type ActiveWorkoutState,
   type CardioDraft,
@@ -66,6 +67,10 @@ type NavigationProtectionOptions = Readonly<{
 }>;
 
 export type RunnerPersistenceGuard = () => boolean;
+
+export type RunnerStorageUpdateSource = Readonly<{
+  subscribe(listener: () => void): () => void;
+}>;
 
 export type RunnerPersistenceTaskContext = Readonly<{
   isLatest: RunnerPersistenceGuard;
@@ -158,6 +163,30 @@ export function browserRunnerConnectivity(): RunnerConnectivity {
     : "online";
 }
 
+export async function reloadRunnerStateFromStorage(
+  current: ActiveWorkoutState,
+  storage: RunnerStorage,
+  getConnectivity: () => RunnerConnectivity = browserRunnerConnectivity,
+): Promise<ActiveWorkoutState> {
+  const restored = await loadRunnerState(storage, {
+    ownerUid: current.snapshot.ownerUid,
+    sessionId: current.snapshot.sessionId,
+    snapshot: current.snapshot,
+  });
+  if (restored === undefined) return current;
+  const connectivity = getConnectivity();
+  const candidate =
+    restored.connectivity === connectivity
+      ? restored
+      : runnerReducer(restored, {
+          type: "set_connectivity",
+          connectivity,
+        });
+  return stableIdempotencyKey(candidate) === stableIdempotencyKey(current)
+    ? current
+    : candidate;
+}
+
 export type RunnerPersistenceCycleOptions = Readonly<{
   storage: RunnerStorage;
   submitter: RunnerSubmitter;
@@ -238,6 +267,7 @@ export type WorkoutRunnerProps = RunnerInput &
     protectBeforeUnload?: boolean;
     reauthenticationHref?: string;
     getConnectivity?: () => RunnerConnectivity;
+    storageUpdates?: RunnerStorageUpdateSource;
     unitSystem?: RunnerUnitSystem;
     getCompatibleSubstitutions?: (
       exercise: WorkoutExerciseSnapshot,
@@ -458,10 +488,15 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const persistenceQueue = useRef<RunnerPersistenceQueue>(
     createRunnerPersistenceQueue(),
   );
+  const stateRef = useRef(state);
 
   useEffect(() => {
     sourceSnapshotRef.current = sourceSnapshot;
   }, [sourceSnapshot]);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const protectionOptions: NavigationProtectionOptions =
     props.onNavigationProtectionChange === undefined
@@ -613,6 +648,68 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       window.removeEventListener("online", handleOnline);
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let inFlight = false;
+    let requestedAgain = false;
+
+    const reread = (): void => {
+      if (inFlight) {
+        requestedAgain = true;
+        return;
+      }
+      inFlight = true;
+      const before = stateRef.current;
+      void reloadRunnerStateFromStorage(
+        before,
+        props.storage,
+        props.getConnectivity ?? browserRunnerConnectivity,
+      )
+        .then((next) => {
+          if (cancelled) return;
+          if (stateRef.current !== before) {
+            requestedAgain = true;
+            return;
+          }
+          if (next !== before) {
+            stateRef.current = next;
+            setState(next);
+            setAdapterError(undefined);
+            setAnnouncement("Another tab updated this workout. Device state reconciled.");
+          }
+        })
+        .catch((error: unknown) => {
+          if (!cancelled) setAdapterError(errorMessage(error));
+        })
+        .finally(() => {
+          inFlight = false;
+          if (!cancelled && requestedAgain) {
+            requestedAgain = false;
+            reread();
+          }
+        });
+    };
+
+    const unsubscribe = props.storageUpdates?.subscribe(reread);
+    const handleFocus = (): void => reread();
+    const handleVisibility = (): void => {
+      if (document.visibilityState === "visible") reread();
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [
+    props.getConnectivity,
+    props.storage,
+    props.storageUpdates,
+    snapshotKey,
+  ]);
 
   useEffect(() => {
     if (

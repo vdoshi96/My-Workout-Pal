@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createRunnerPersistenceQueue,
+  reloadRunnerStateFromStorage,
   runRunnerPersistenceCycle,
   runnerSnapshotIdentity,
   runnerSnapshotRestoreKey,
@@ -232,6 +233,47 @@ describe("WorkoutRunner injected boundary harness", () => {
     });
     expect(result?.operations).toHaveLength(1);
     expect(result?.operations[0]?.status).toBe("saved");
+  });
+
+  it("re-reads a cross-tab commit without creating an identical render loop", async () => {
+    const snapshot = createWorkoutSnapshot(snapshotInput);
+    const storage = createInMemoryRunnerStorage();
+    const initial = createRunnerState(snapshot, { now: 2_000 });
+    const draft = runnerReducer(initial, {
+      type: "update_set_draft",
+      setId: "press-work-1",
+      draft: { kind: "weight_reps", weightKg: 30, repetitions: 7 },
+    });
+    let otherTab = runnerReducer(draft, {
+      type: "save_set",
+      setId: "press-work-1",
+      now: 2_001,
+    });
+    otherTab = runnerReducer(otherTab, {
+      type: "set_connectivity",
+      connectivity: "offline",
+      now: 2_002,
+    });
+    await persistRunnerState(storage, otherTab);
+
+    const adopted = await reloadRunnerStateFromStorage(
+      initial,
+      storage,
+      () => "online",
+    );
+    expect(adopted).not.toBe(initial);
+    expect(adopted.connectivity).toBe("online");
+    expect(adopted.loggedSets["press-work-1"]?.measurement).toMatchObject({
+      weightKg: 30,
+      repetitions: 7,
+    });
+
+    const identical = await reloadRunnerStateFromStorage(
+      adopted,
+      storage,
+      () => "online",
+    );
+    expect(identical).toBe(adopted);
   });
 
   it("keys restoration by owner and session, not session alone", () => {
