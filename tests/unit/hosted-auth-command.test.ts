@@ -38,5 +38,12 @@ describe("hosted authentication QA command", () => {
     expect(source).toContain("Hosted authentication QA failed safely");
     expect(source).toContain("error.stage");
     expect(source).toContain("at the ${stage} stage");
+
+    const browserSource = readFileSync(
+      new URL("../../scripts/lib/hosted-auth-browser.ts", import.meta.url),
+      "utf8",
+    );
+    expect(browserSource).toContain('url.pathname === "/manifest.webmanifest"');
+    expect(browserSource).toContain('["net::ERR_ABORTED", "cancelled"]');
   });
 });

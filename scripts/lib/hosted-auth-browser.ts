@@ -134,6 +134,13 @@ function isSupersededNextFlightRequest(request: Request): boolean {
   );
 }
 
+function isSupersededManifestRequest(request: Request): boolean {
+  const url = new URL(request.url());
+  return request.method() === "GET" &&
+    url.pathname === "/manifest.webmanifest" &&
+    ["net::ERR_ABORTED", "cancelled"].includes(request.failure()?.errorText ?? "");
+}
+
 function attachFailureCollectors(page: Page, origin: string) {
   const consoleErrors: string[] = [];
   const consoleWarnings: string[] = [];
@@ -165,7 +172,11 @@ function attachFailureCollectors(page: Page, origin: string) {
   });
   page.on("requestfailed", (request) => {
     const url = new URL(request.url());
-    if (url.origin === origin && !isSupersededNextFlightRequest(request)) {
+    if (
+      url.origin === origin &&
+      !isSupersededNextFlightRequest(request) &&
+      !isSupersededManifestRequest(request)
+    ) {
       requestFailures.push(`${request.method()} ${url.pathname}`);
     }
   });
