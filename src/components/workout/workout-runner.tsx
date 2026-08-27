@@ -18,6 +18,7 @@ import {
   navigationProtectionReason,
   persistRunnerState,
   runnerReducer,
+  runnerOperationSemanticTarget,
   stableIdempotencyKey,
   syncRunnerOperations,
   type ActiveWorkoutState,
@@ -26,6 +27,7 @@ import {
   type RestTimerView,
   type RunnerAction,
   type RunnerConnectivity,
+  type RunnerOperation,
   type RunnerStorage,
   type RunnerSubmitter,
   type SetDraft,
@@ -394,6 +396,105 @@ function readableOperationKind(kind: string): string {
     .join(" ");
 }
 
+type LocalTabConflictGroup = Readonly<{
+  targetKey: string;
+  operations: readonly RunnerOperation[];
+}>;
+
+function groupLocalTabConflicts(
+  operations: readonly RunnerOperation[],
+): readonly LocalTabConflictGroup[] {
+  const groups = new Map<string, RunnerOperation[]>();
+  for (const operation of operations) {
+    if (
+      operation.status !== "failed" ||
+      operation.failureKind !== "conflict" ||
+      operation.errorCode !== "local_tab_conflict"
+    ) {
+      continue;
+    }
+    const target = runnerOperationSemanticTarget(operation);
+    const targetKey = `${target.kind}:${target.id}`;
+    const group = groups.get(targetKey) ?? [];
+    group.push(operation);
+    groups.set(targetKey, group);
+  }
+  return [...groups.entries()].map(([targetKey, group]) => ({
+    targetKey,
+    operations: group,
+  }));
+}
+
+function conflictExerciseName(
+  state: ActiveWorkoutState,
+  exerciseId: string,
+): string {
+  return (
+    state.substitutions[exerciseId]?.name ??
+    state.snapshot.exercises.find(({ id }) => id === exerciseId)?.name ??
+    "Exercise"
+  );
+}
+
+function conflictTargetLabel(
+  state: ActiveWorkoutState,
+  operation: RunnerOperation,
+): string {
+  const payload = operation.payload;
+  switch (payload.kind) {
+    case "save_set": {
+      const exercise = state.snapshot.exercises.find(
+        ({ id }) => id === payload.exerciseId,
+      );
+      const position =
+        exercise?.sets.find(({ id }) => id === payload.setId)?.position ?? 1;
+      return `Set ${position} · ${conflictExerciseName(state, payload.exerciseId)}`;
+    }
+    case "save_cardio":
+      return "Cardio log";
+    case "save_note":
+      return `${conflictExerciseName(state, payload.exerciseId)} note`;
+    case "skip_exercise":
+    case "substitute_exercise":
+    case "complete_exercise":
+      return `${conflictExerciseName(state, payload.exerciseId)} decision`;
+    case "complete_session":
+    case "abandon_session":
+      return "Workout completion";
+  }
+}
+
+function conflictChoiceLabel(
+  operation: RunnerOperation,
+  unitSystem: RunnerUnitSystem,
+): string {
+  const payload = operation.payload;
+  switch (payload.kind) {
+    case "save_set":
+      return formatMeasurement(payload.measurement, { unitSystem });
+    case "save_cardio":
+      return `${payload.mode === "walker" ? "Walker" : "Runner"} · ${formatCardioSummary(payload.cardio, { unitSystem })}`;
+    case "save_note":
+      return payload.note.trim().length === 0
+        ? "Empty note"
+        : `Note: ${payload.note}`;
+    case "skip_exercise":
+      return payload.reason?.trim()
+        ? `Skip · ${payload.reason}`
+        : "Skip exercise";
+    case "substitute_exercise":
+      return `Use ${payload.replacement.name}`;
+    case "complete_exercise":
+      return "Complete exercise";
+    case "complete_session":
+      return "Complete workout";
+    case "abandon_session":
+      return payload.reason?.trim()
+        ? `Abandon · ${payload.reason}`
+        : "Abandon workout";
+  }
+}
+
 function classNames(
   ...classes: readonly (string | undefined | false)[]
 ): string {
@@ -472,7 +573,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const previousRunnerStatus = useRef(state.status);
   const previousSyncStatus = useRef(state.sync.status);
   const previousAuthBlocked = useRef(false);
+  const previousLocalConflictCount = useRef(0);
   const authBlockedHeading = useRef<HTMLHeadingElement>(null);
+  const localConflictHeading = useRef<HTMLHeadingElement>(null);
   const runnerIdentity = runnerSnapshotIdentity(sourceSnapshot);
   const snapshotKey = runnerSnapshotRestoreKey(sourceSnapshot);
   const stateIdentity = runnerSnapshotIdentity(state.snapshot);
@@ -508,6 +611,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const protection = useWorkoutRunnerNavigationProtection(
     state,
     protectionOptions,
+  );
+  const localTabConflictGroups = useMemo(
+    () => groupLocalTabConflicts(state.operations),
+    [state.operations],
   );
 
   useEffect(() => {
@@ -790,6 +897,17 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     previousAuthBlocked.current = blocked;
   }, [state.auth]);
 
+  useEffect(() => {
+    const conflictCount = localTabConflictGroups.length;
+    if (conflictCount > 0 && previousLocalConflictCount.current === 0) {
+      localConflictHeading.current?.focus();
+      setAnnouncement(
+        "Another tab queued a different value. Choose one value before syncing.",
+      );
+    }
+    previousLocalConflictCount.current = conflictCount;
+  }, [localTabConflictGroups.length]);
+
   function retryConnection() {
     setState((current) =>
       runnerReducer(current, {
@@ -869,7 +987,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           state.operations.some(({ status }) => status === "saved")
         ? { label: "Saved", tone: "saved" as const }
         : formatSyncStatus(state.sync.status);
-  const failedOperations = getFailedOperations(state);
+  const failedOperations = getFailedOperations(state).filter(
+    ({ errorCode }) => errorCode !== "local_tab_conflict",
+  );
   const closed = state.status === "completed" || state.status === "abandoned";
   const hasLoggedCurrentExercise = currentExercise.sets.some(
     ({ id }) => state.loggedSets[id] !== undefined,
@@ -1856,6 +1976,87 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           </section>
 
           {renderCardio()}
+
+          {localTabConflictGroups.length > 0 ? (
+            <section
+              aria-labelledby="runner-local-conflict-heading"
+              className="runner-card runner-recovery runner-local-conflicts"
+              role="alert"
+            >
+              <div className="runner-section-heading">
+                <div>
+                  <span className="runner-eyebrow">Another tab changed this workout</span>
+                  <h3
+                    id="runner-local-conflict-heading"
+                    ref={localConflictHeading}
+                    tabIndex={-1}
+                  >
+                    Choose the workout value to keep
+                  </h3>
+                </div>
+                <span className={statusClass({ label: "Conflict", tone: "conflict" })}>
+                  {localTabConflictGroups.length} target
+                  {localTabConflictGroups.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              <p className="runner-muted">
+                Both values remain on this device. Nothing is sent until you
+                choose one original operation.
+              </p>
+              {localTabConflictGroups.map((group) => {
+                const targetLabel = conflictTargetLabel(
+                  state,
+                  group.operations[0]!,
+                );
+                return (
+                  <fieldset className="runner-conflict-group" key={group.targetKey}>
+                    <legend>{targetLabel}</legend>
+                    <div className="runner-conflict-choices">
+                      {group.operations.map((operation) => {
+                        const choiceLabel = conflictChoiceLabel(
+                          operation,
+                          unitSystem,
+                        );
+                        return (
+                          <button
+                            aria-label={`Keep ${choiceLabel} for ${targetLabel}`}
+                            className="runner-button"
+                            disabled={closed}
+                            key={operation.idempotencyKey}
+                            onClick={() =>
+                              apply(
+                                {
+                                  type: "resolve_local_tab_conflict",
+                                  idempotencyKey: operation.idempotencyKey,
+                                },
+                                `${choiceLabel} selected for ${targetLabel} and queued with its original save identity.`,
+                              )
+                            }
+                            type="button"
+                          >
+                            <strong>{choiceLabel}</strong>
+                            <span>Keep this value</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+                );
+              })}
+              <button
+                className="runner-button runner-button--quiet"
+                onClick={() => {
+                  localConflictHeading.current?.focus();
+                  setAnnouncement(
+                    "Conflict left unresolved. Both values remain blocked on this device.",
+                  );
+                }}
+                type="button"
+              >
+                Leave both values unresolved
+              </button>
+            </section>
+          ) : null}
 
           {failedOperations.length > 0 ? (
             <section

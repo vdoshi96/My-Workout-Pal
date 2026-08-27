@@ -959,6 +959,14 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .runner-recovery li div { min-width: 0; }
 .runner-recovery li strong, .runner-recovery li small { display: block; }
 .runner-recovery li small { color: var(--ink-soft); overflow-wrap: anywhere; }
+.runner-local-conflicts { border-color: color-mix(in srgb, var(--danger) 55%, var(--rule)); }
+.runner-conflict-group { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: .9rem 0 0; }
+.runner-conflict-group legend { font-family: var(--font-display); font-size: 1rem; letter-spacing: .035em; padding: 0 .4rem 0 0; text-transform: uppercase; }
+.runner-conflict-choices { display: grid; gap: .65rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.runner-conflict-choices .runner-button { align-items: flex-start; flex-direction: column; justify-content: flex-start; min-width: 0; text-align: left; text-transform: none; }
+.runner-conflict-choices .runner-button strong, .runner-conflict-choices .runner-button span { overflow-wrap: anywhere; }
+.runner-conflict-choices .runner-button span { color: var(--ink-soft); font-family: var(--font-body); font-size: .76rem; letter-spacing: 0; }
+@media (max-width: 38rem) { .runner-conflict-choices { grid-template-columns: 1fr; } }
 .runner-footer { display: grid; gap: .5rem; margin-top: 1rem; padding: 1rem; }
 .runner-footer-actions { margin-top: 0; }
 .runner-footer-reason { order: 3; }

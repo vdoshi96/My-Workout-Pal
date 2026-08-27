@@ -14,6 +14,7 @@ import {
   createInMemoryRunnerStorage,
   createRunnerState,
   createWorkoutSnapshot,
+  mergeRunnerStorageStates,
   persistRunnerState,
   runnerReducer,
   syncRunnerOperations,
@@ -274,6 +275,50 @@ describe("WorkoutRunner injected boundary harness", () => {
       () => "online",
     );
     expect(identical).toBe(adopted);
+  });
+
+  it("renders target-specific choices for a durable local-tab conflict", () => {
+    const snapshot = createWorkoutSnapshot(snapshotInput);
+    const initial = createRunnerState(snapshot, { now: 2_000 });
+    let first = runnerReducer(initial, {
+      type: "update_set_draft",
+      setId: "press-work-1",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 10 },
+    });
+    first = runnerReducer(first, {
+      type: "save_set",
+      setId: "press-work-1",
+      now: 2_001,
+    });
+    let second = runnerReducer(initial, {
+      type: "update_set_draft",
+      setId: "press-work-1",
+      draft: { kind: "weight_reps", weightKg: 25, repetitions: 8 },
+    });
+    second = runnerReducer(second, {
+      type: "save_set",
+      setId: "press-work-1",
+      now: 2_002,
+    });
+    const conflicted = mergeRunnerStorageStates(first, second);
+
+    const markup = renderToStaticMarkup(
+      <WorkoutRunner
+        initialState={conflicted}
+        storage={createInMemoryRunnerStorage()}
+        submitter={async () => ({ status: "saved", persistedId: "unused" })}
+      />,
+    );
+
+    expect(markup).toContain("Choose the workout value to keep");
+    expect(markup).toContain("Set 1 · Floor press");
+    expect(markup).toContain(
+      'aria-label="Keep 20 kg · 10 reps for Set 1 · Floor press"',
+    );
+    expect(markup).toContain(
+      'aria-label="Keep 25 kg · 8 reps for Set 1 · Floor press"',
+    );
+    expect(markup).toContain("Leave both values unresolved");
   });
 
   it("keys restoration by owner and session, not session alone", () => {
