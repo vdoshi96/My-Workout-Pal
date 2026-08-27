@@ -5,6 +5,8 @@
 - Public production runtime: `8365e47e8436a59bbccbd1a887176a5924d2ce27`
 - Production origin: `https://my-workout-pal-chi.vercel.app`
 - Focus-correction source: `33e3de4`
+- Released main: `e21b6d819740a500e17cf4a58c88bd995c19ff59`
+- Ready production deployment: `dpl_Gadd7Yqe41EEhh5T3UHHNzFynnQP`
 - Browsers: installed Google Chrome and Safari on macOS
 - Persistence/provider effect: none
 
@@ -42,3 +44,7 @@ Passing checks on that exact source:
 ## Remaining boundary
 
 Authenticated actual-200-percent collection/editor/settings/runner behavior remains coupled to the authenticated production-media gate because this public run reused no member session and transmitted no credential. Google consent/reauthentication and Vercel Spend Management also remain separate.
+
+## Publication replay
+
+The reviewed tree was fast-forwarded to local and GitHub `main` at exact release `e21b6d819740a500e17cf4a58c88bd995c19ff59`. GitHub reports Vercel success, exact production `dpl_Gadd7Yqe41EEhh5T3UHHNzFynnQP` is Ready, the public alias returned `200` for `/`, `/program`, `/library`, and `/sign-in`, and the deployment's one-hour error query returned no entries. This replay verifies publication and public availability; it does not misrepresent the earlier headed Chrome/Safari interaction as having been repeated on a member session.

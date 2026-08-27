@@ -8,6 +8,8 @@
 - The inspection caught one real keyboard issue: shared fragment skip links left focus on the document body. A focused component test failed first. Source checkpoint `33e3de4` adds programmatic focus targets to public, authenticated, and selected-day destinations; four component assertions, TypeScript, scoped lint, and focused public plus authenticated production-mode browser cases pass.
 - Deleted the focused run's roughly 203 MB public build, 174 MB authenticated fixture build, and all Playwright results/reports immediately after verification. Authenticated actual zoom remains paired with the later authenticated production-media gate so this lane does not invent a member session.
 - The exact evidence tree passes the complete gate: 100 test files/672 tests, four database files/34 tests, 27 exact-two approved-video mappings, generated PWA and 37-document parity, the Next.js 16.3.2 Webpack production build, and the 41-route production boundary. The aggregate run's second 203 MB `.next` directory was deleted immediately; the branch is clean and retains no browser/build artifact.
+- Published exact release `e21b6d819740a500e17cf4a58c88bd995c19ff59` to local and GitHub `main` without rewriting the reviewed history. GitHub reports Vercel success, production `dpl_Gadd7Yqe41EEhh5T3UHHNzFynnQP` is Ready, `/`, `/program`, `/library`, and `/sign-in` each return `200`, and the exact deployment's one-hour error query returns no entries.
+- The documentation-only release closeout changes no application, Firebase, Neon, YouTube, or paid setting. After it is integrated, both completed zoom branches are removed locally and from GitHub; only the primary checkout and reusable dependency/store caches remain.
 
 ## 2026-08-27: Hosted deletion and ownership QA
 
