@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="97a9cd2c350dc5513512324c528053b1fa143a4c71a9844717e017f3ca445bb5">
+  <meta name="source-sha256" content="58859c9693aaf1808f2839c2de8272f868564ec79b633d6ac723a89518b18ccc">
   <title>Hosted Firebase email-action QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -84,6 +84,13 @@ production:check               41 App Router entries
 <li>Google sign-in and Google reauthentication still require an authorized interactive Google browser session.</li>
 <li>Vercel Spend Management still requires dashboard access, the user&#39;s exact USD amount, and action-time confirmation for notifications or a team-wide production pause.</li>
 </ul>
+<h2>Release evidence</h2>
+<p>Evidence closeout <code>b4fc5e722828b9517b5e8db6206556c19ed53f36</code> was fast-forwarded to local and GitHub <code>main</code>. GitHub reported Vercel success for both deployments:</p>
+<ul>
+<li>Preview <code>dpl_E1tgmMWka68ncLPSmRdZq7NstMR6</code> — Ready.</li>
+<li>Production <code>dpl_3iZ2FXGZ1CL7mMyW7ADaeEKKCaz7</code> — Ready on the public, project, and Git-main aliases.</li>
+</ul>
+<p>For both boundaries, <code>/</code>, <code>/program</code>, <code>/library</code>, and <code>/sign-in</code> returned <code>200</code> with private no-store, Content Security Policy, HSTS, and frame denial. The sign-in response contained the configured Firebase session UI and no configuration gate. The exact preview and production one-hour error scans returned no entry. The completed feature branch was removed locally and remotely; only the primary <code>main</code> checkout remains.</p>
 
   </main>
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="efba909b7f117c073c273d0c5e16b8f5bbe67bb4f9fa3cb7299d642552c8c963">
+  <meta name="source-sha256" content="6c3e25e256a807f46957e981f9afc3308e95d976a645ede10634f0c09f72bee4">
   <title>Hosted authentication QA plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -120,6 +120,7 @@ MWP_HOSTED_AUTH_EXTERNAL_ACCOUNT_APPROVED=1 pnpm test:e2e:hosted-auth
 <h2>Completed email-action evidence</h2>
 <p>Exact source checkpoint <code>fd9c051</code> ran the opt-in Chromium <code>1440×1000</code> lifecycle against synchronized production runtime <code>f6b0ad6fa5397e51bcd0028fc11de9f619f09e21</code>, Ready as <code>dpl_3iYkkQSSzvYeYyFEvHX3WbAyJHhT</code>. It created one application identity and one purpose-separated action-code identity on <code>example.invalid</code>. Firebase accepted the application&#39;s verification and recovery requests. The trusted runner then generated the second identity&#39;s verification/reset links without dispatching email, parsed and applied both codes through the official REST boundary, confirmed exact UID verification, rejected the old password, accepted the recovered password through the public sign-in surface, verified the secure cookie, and proved revocation denial.</p>
 <p>The sanitized result reported three intended first-party session mutations, serious/critical Axe success on the retained UI states, <code>emailActionCodesVerified: true</code>, <code>passwordRecoveryConfirmed: true</code>, and Firebase users <code>0 → 0</code> with cleanup confirmed. No application-data endpoint or Neon mutation ran. Both screenshots were visually inspected and contain no identity or credential. Actual email delivery and inbox interaction remain explicitly unobserved; this evidence does not replace Google consent/reauthentication.</p>
+<p>The complete evidence was released on <code>main</code> at <code>b4fc5e722828b9517b5e8db6206556c19ed53f36</code>. Ready preview <code>dpl_E1tgmMWka68ncLPSmRdZq7NstMR6</code> and Ready production <code>dpl_3iZ2FXGZ1CL7mMyW7ADaeEKKCaz7</code> passed the four-route server/security replay, configured Firebase sign-in check, GitHub status, and empty one-hour error-log boundary. The completed feature branch was removed locally and remotely.</p>
 <h2>Browser evidence required for completion</h2>
 <p>Retain the command result, public origin, browser engine/viewport, exact deployed Git SHA, pre/post aggregate Firebase counts, secure-cookie attribute assertions, read-only and verified screenshots without identity data, Axe result, console warning/error result, and bounded Vercel error-log query. Record that verification and recovery email delivery were not observed because the address is intentionally non-deliverable. Run production only after the exact release SHA is Ready and never use a real member for account-deletion QA.</p>
 

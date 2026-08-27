@@ -78,3 +78,12 @@ The production run created only the two retained screenshots, totaling about 321
 - Actual Firebase email delivery and inbox-click behavior remain unobserved.
 - Google sign-in and Google reauthentication still require an authorized interactive Google browser session.
 - Vercel Spend Management still requires dashboard access, the user's exact USD amount, and action-time confirmation for notifications or a team-wide production pause.
+
+## Release evidence
+
+Evidence closeout `b4fc5e722828b9517b5e8db6206556c19ed53f36` was fast-forwarded to local and GitHub `main`. GitHub reported Vercel success for both deployments:
+
+- Preview `dpl_E1tgmMWka68ncLPSmRdZq7NstMR6` — Ready.
+- Production `dpl_3iZ2FXGZ1CL7mMyW7ADaeEKKCaz7` — Ready on the public, project, and Git-main aliases.
+
+For both boundaries, `/`, `/program`, `/library`, and `/sign-in` returned `200` with private no-store, Content Security Policy, HSTS, and frame denial. The sign-in response contained the configured Firebase session UI and no configuration gate. The exact preview and production one-hour error scans returned no entry. The completed feature branch was removed locally and remotely; only the primary `main` checkout remains.

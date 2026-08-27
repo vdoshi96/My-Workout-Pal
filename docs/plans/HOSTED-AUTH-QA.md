@@ -140,6 +140,8 @@ Exact source checkpoint `fd9c051` ran the opt-in Chromium `1440×1000` lifecycle
 
 The sanitized result reported three intended first-party session mutations, serious/critical Axe success on the retained UI states, `emailActionCodesVerified: true`, `passwordRecoveryConfirmed: true`, and Firebase users `0 → 0` with cleanup confirmed. No application-data endpoint or Neon mutation ran. Both screenshots were visually inspected and contain no identity or credential. Actual email delivery and inbox interaction remain explicitly unobserved; this evidence does not replace Google consent/reauthentication.
 
+The complete evidence was released on `main` at `b4fc5e722828b9517b5e8db6206556c19ed53f36`. Ready preview `dpl_E1tgmMWka68ncLPSmRdZq7NstMR6` and Ready production `dpl_3iZ2FXGZ1CL7mMyW7ADaeEKKCaz7` passed the four-route server/security replay, configured Firebase sign-in check, GitHub status, and empty one-hour error-log boundary. The completed feature branch was removed locally and remotely.
+
 ## Browser evidence required for completion
 
 Retain the command result, public origin, browser engine/viewport, exact deployed Git SHA, pre/post aggregate Firebase counts, secure-cookie attribute assertions, read-only and verified screenshots without identity data, Axe result, console warning/error result, and bounded Vercel error-log query. Record that verification and recovery email delivery were not observed because the address is intentionally non-deliverable. Run production only after the exact release SHA is Ready and never use a real member for account-deletion QA.

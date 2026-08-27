@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="30dfdec097ddb7efbfa7d40f997a0baa883a3fbcf5638049806b018c154ee08c">
+  <meta name="source-sha256" content="bc3bfe3e95c12618dab8830f848b46c310f0ba65c86b7db9547dc50c0d446447">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -38,6 +38,8 @@
 <li>The browser flow submitted no onboarding or application-data mutation. Both generated addresses were on <code>example.invalid</code>; no personal mailbox, routable test address, email, password, UID, action link, action code, API key, token, cookie value, provider payload, trace, video, browser profile, or network capture was retained. The two identity-free state screenshots were visually inspected.</li>
 <li>This closes provider action-code completion, not message delivery. Firebase accepted the production application&#39;s verification and recovery requests, but actual inbox delivery/click remains unobserved. Google consent/reauthentication and Vercel Spend Management remain separate interactive gates.</li>
 <li>Disk remained bounded after the restart: the provider run created only two screenshots totaling about 321 KB. The aggregate created one 203 MB root build, which was measured and deleted immediately after success. Root and fixture build directories, Playwright reports/results, detached workers, and auxiliary worktrees are absent; only the reusable 840 MB dependency tree and 781 MB pnpm store remain, with about 189 GiB free.</li>
+<li>Pushed branch closeout <code>b4fc5e722828b9517b5e8db6206556c19ed53f36</code>. GitHub reported Vercel success and exact preview <code>dpl_E1tgmMWka68ncLPSmRdZq7NstMR6</code> reached Ready. Its landing, program, library, and sign-in routes returned <code>200</code> with private no-store, CSP, HSTS, and frame denial; sign-in contained the configured Firebase UI, and the one-hour error scan was empty.</li>
+<li>Fast-forwarded the reviewed branch into local and GitHub <code>main</code> at the identical commit. Production <code>dpl_3iZ2FXGZ1CL7mMyW7ADaeEKKCaz7</code> reached Ready on the public, project, and Git-main aliases with successful GitHub status. The same four exact-deployment and public-alias routes returned <code>200</code>, sign-in retained the configured Firebase surface and security headers, and the exact production error scan was empty. The clean completed branch was deleted locally and remotely.</li>
 </ul>
 <h2>2026-08-27: Hosted authenticated media and actual-zoom release</h2>
 <ul>
