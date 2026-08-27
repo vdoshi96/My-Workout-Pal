@@ -72,7 +72,7 @@ export function harnessRequestContext(headers: Headers): HarnessRequestContext {
   return {
     scenario,
     scope:
-      requestedScope && /^[a-z0-9-]{1,40}$/.test(requestedScope)
+      requestedScope && /^[a-z0-9-]{1,64}$/.test(requestedScope)
         ? requestedScope
         : "default",
     viewer:

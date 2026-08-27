@@ -89,6 +89,16 @@ function isSupersededNextFlightRequest(request: Request): boolean {
   );
 }
 
+function isExpectedNavigationFontCancellation(request: Request): boolean {
+  const url = new URL(request.url());
+  return (
+    request.method() === "GET" &&
+    request.resourceType() === "font" &&
+    /^\/_next\/static\/media\/[^/]+\.woff2$/u.test(url.pathname) &&
+    request.failure()?.errorText === "cancelled"
+  );
+}
+
 async function createResilienceContext(
   browser: Browser,
   scope: string,
@@ -185,7 +195,10 @@ function monitorResiliencePage(page: Page, signals: ResilienceSignals): void {
     const url = new URL(request.url());
     if (
       url.hostname === "127.0.0.1" &&
-      !isSupersededNextFlightRequest(request)
+      !isSupersededNextFlightRequest(request) &&
+      // WebKit can cancel an in-flight local font when the test intentionally
+      // replaces the document at the synthetic reauthentication boundary.
+      !isExpectedNavigationFontCancellation(request)
     ) {
       signals.failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,

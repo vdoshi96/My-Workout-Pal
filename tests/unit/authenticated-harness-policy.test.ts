@@ -177,6 +177,14 @@ describe("credential-free authenticated harness boundary", () => {
         new Headers({ [HARNESS_SCOPE_HEADER]: "../shared" }),
       ).scope,
     ).toBe("default");
+    expect(
+      harnessRequestContext(
+        new Headers({
+          [HARNESS_SCOPE_HEADER]:
+            "webkit-phone-saved-and-terminal-tab-precedence",
+        }),
+      ).scope,
+    ).toBe("webkit-phone-saved-and-terminal-tab-precedence");
   });
 
   it("consumes a scoped failure exactly once and can reset only that scope", () => {
@@ -455,6 +463,7 @@ describe("credential-free authenticated harness boundary", () => {
     expect(resilienceSpec).toContain('route.abort("internetdisconnected")');
     expect(resilienceSpec).toContain('page.on("requestfailed"');
     expect(resilienceSpec).toContain('url.hostname === "127.0.0.1"');
+    expect(resilienceSpec).toContain("isExpectedNavigationFontCancellation");
     expect(resilienceSpec).toContain(
       "expect(harness.failedRequests).toEqual([])",
     );
