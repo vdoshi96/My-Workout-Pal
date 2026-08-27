@@ -211,6 +211,38 @@ describe("private workout API contract", () => {
     });
   });
 
+  it.each([
+    ["session_expired", "Your session expired. Sign in again."],
+    ["session_revoked", "Your session is no longer active."],
+  ] as const)(
+    "maps a post-load %s viewer failure through the runner operation envelope",
+    async (code, message) => {
+      const getRepository = vi.fn(() => repository());
+      const getViewer = vi.fn(async () => {
+        throw new AuthPolicyError(code, message, 401);
+      });
+      const api = createWorkoutApi({ getRepository, getViewer });
+
+      const response = await api.operate(
+        workoutRequest(`/api/app/workouts/${sessionId}/operations`, {
+          body: {
+            idempotencyKey: `auth-${code}`,
+            baseRevision: "55555555-5555-4555-8555-555555555555",
+            kind: "save_note",
+            payload: { kind: "save_note", exerciseId, note: "Felt steady" },
+          },
+        }),
+        { sessionId },
+      );
+
+      expect(response.status).toBe(401);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      await expect(response.json()).resolves.toEqual({ error: code, message });
+      expect(getViewer).toHaveBeenCalledTimes(1);
+      expect(getRepository).not.toHaveBeenCalled();
+    },
+  );
+
   it("delegates a valid start with only the server-derived viewer and normalized fields", async () => {
     const startOrResume = vi.fn<WorkoutRepository["startOrResume"]>(async () => ({
       resumed: false,

@@ -13,6 +13,7 @@ import {
 } from "../../tests/fixtures/authenticated-app/server/harness-context";
 import {
   consumeHarnessFault,
+  consumeHarnessSessionAuthFailure,
   resetHarnessFaults,
 } from "../../tests/fixtures/authenticated-app/server/fault-injection";
 import { HARNESS_CSRF_COOKIE_NAME } from "../../tests/fixtures/authenticated-app/server/csrf";
@@ -93,22 +94,37 @@ describe("credential-free authenticated harness boundary", () => {
       scope: "program-publish-recovery",
       viewer: { uid: "qa-auth-harness-alice" },
     });
-    expect(
-      harnessRequestContext(
-        new Headers({
-          [HARNESS_SCENARIO_HEADER]: "expire-session",
-          [HARNESS_VIEWER_HEADER]: "alice",
-        }),
-      ),
-    ).toEqual({ scenario: "expire-session", scope: "default", viewer: null });
-    expect(
-      harnessRequestContext(
-        new Headers({
-          [HARNESS_SCENARIO_HEADER]: "revoke-session",
-          [HARNESS_VIEWER_HEADER]: "alice",
-        }),
-      ),
-    ).toEqual({ scenario: "revoke-session", scope: "default", viewer: null });
+    const expired = harnessRequestContext(
+      new Headers({
+        [HARNESS_SCENARIO_HEADER]: "expire-session",
+        [HARNESS_SCOPE_HEADER]: "post-load-expired",
+        [HARNESS_VIEWER_HEADER]: "alice",
+      }),
+    );
+    expect(expired.viewer).toMatchObject({ uid: "qa-auth-harness-alice" });
+    expect(consumeHarnessSessionAuthFailure(expired)).toMatchObject({
+      code: "session_expired",
+      message: "Your session expired. Sign in again.",
+      status: 401,
+    });
+    expect(consumeHarnessSessionAuthFailure(expired)).toBeUndefined();
+
+    const revoked = harnessRequestContext(
+      new Headers({
+        [HARNESS_SCENARIO_HEADER]: "revoke-session",
+        [HARNESS_SCOPE_HEADER]: "post-load-revoked",
+        [HARNESS_VIEWER_HEADER]: "alice",
+      }),
+    );
+    expect(revoked.viewer).toMatchObject({ uid: "qa-auth-harness-alice" });
+    expect(consumeHarnessSessionAuthFailure(revoked)).toMatchObject({
+      code: "session_revoked",
+      message: "Your session is no longer active.",
+      status: 401,
+    });
+    expect(consumeHarnessSessionAuthFailure(revoked)).toBeUndefined();
+    resetHarnessFaults("post-load-expired");
+    resetHarnessFaults("post-load-revoked");
     expect(
       harnessRequestContext(new Headers({ [HARNESS_VIEWER_HEADER]: "attacker-chosen-uid" })),
     ).toEqual({ scenario: "ready", scope: "default", viewer: null });

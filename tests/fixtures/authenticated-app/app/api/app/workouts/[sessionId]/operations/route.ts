@@ -3,7 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createWorkoutApi } from "@/server/http/workout-api";
 import { createWorkoutRepository } from "@/server/repositories/workout-repository";
 import { getHarnessDatabase } from "../../../../../../server/database";
-import { consumeHarnessFault } from "../../../../../../server/fault-injection";
+import {
+  consumeHarnessFault,
+  consumeHarnessSessionAuthFailure,
+} from "../../../../../../server/fault-injection";
 import { harnessRequestContext } from "../../../../../../server/harness-context";
 import { adaptHarnessWorkoutMutation } from "../../../../../../server/workout-request";
 
@@ -17,7 +20,11 @@ export async function POST(
   const { database } = await getHarnessDatabase(harness.scope);
   const api = createWorkoutApi({
     getRepository: () => createWorkoutRepository(database),
-    getViewer: async () => harness.viewer,
+    getViewer: async () => {
+      const authFailure = consumeHarnessSessionAuthFailure(harness);
+      if (authFailure) throw authFailure;
+      return harness.viewer;
+    },
   });
   const response = await api.operate(
     await adaptHarnessWorkoutMutation(request),

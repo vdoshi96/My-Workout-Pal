@@ -67,9 +67,6 @@ export function harnessRequestContext(headers: Headers): HarnessRequestContext {
       requestedScope && /^[a-z0-9-]{1,40}$/.test(requestedScope)
         ? requestedScope
         : "default",
-    viewer:
-      scenario === "invalid" || scenario === "expire-session" || scenario === "revoke-session"
-        ? null
-        : viewerFromHeader(headers.get(HARNESS_VIEWER_HEADER)),
+    viewer: scenario === "invalid" ? null : viewerFromHeader(headers.get(HARNESS_VIEWER_HEADER)),
   };
 }
