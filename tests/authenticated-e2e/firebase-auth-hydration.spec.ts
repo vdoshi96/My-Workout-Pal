@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Request } from "@playwright/test";
+import { resolve } from "node:path";
 
 import {
   HARNESS_SCENARIO_HEADER,
@@ -98,6 +99,15 @@ test("full-page Settings fails closed until the browser Firebase identity is res
   expect(consoleErrors).toEqual([]);
   expect(failedResponses).toEqual([]);
   expect(failedRequests).toEqual([]);
+  await page.locator(".settings-delete-preview").scrollIntoViewIfNeeded();
+  await page.screenshot({
+    fullPage: false,
+    path: resolve(
+      process.cwd(),
+      "docs/qa/latest",
+      `firebase-client-auth-missing-${testInfo.project.name}.png`,
+    ),
+  });
 
   const cleanup = await page.request.delete("/api/harness/scope", {
     headers: {
