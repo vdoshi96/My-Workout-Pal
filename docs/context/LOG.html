@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4c5fb37e2b2835600f0acc2d46aca643e08840a9295221b7b7848a702af4831b">
+  <meta name="source-sha256" content="90817e3686aa445a7528678724afafd275e7ab52479facccb24c707662a4b074">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,19 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-27: Runner resilience source and post-restart evidence checkpoint</h2>
+<ul>
+<li>Exact runner checkpoint <code>f0d888f09af143ecce2a0f7ef82f11f2e64adb5f</code> is pushed on <code>qa/runner-resilience</code> from released base <code>b8d4e9f327b67fdf755f338b1d335630159f3089</code>. Production and provider state remain unchanged.</li>
+<li>The runner treats authentication and connectivity as runtime facts, recognizes real <code>session_revoked</code>, provides exact-session reauthentication and connection retry, atomically merges owner-scoped schema-two IndexedDB records, and blocks same-target tab divergence until the member chooses one original operation. Server-confirmed exercise and terminal decisions supersede stale unsent tab mutations while preserving confirmed history.</li>
+<li>The complete product checkpoint passes 90 files and 632 assertions, four database files and 34 assertions, exact-two seed, PWA/docs/build, the 41-route production boundary, and 29 authenticated browser cases with one intentional skip. The public matrix passes 43 cases with one documented WebKit service-worker skip.</li>
+<li>After the computer restart, the exact runner spec passed 12 of 12 cases on <code>089df2f</code> across Chromium desktop and WebKit phone. The newest QA evidence retains only the synthetic offline, revoked, local-tab conflict, and terminal-reconciliation captures.</li>
+<li>Primary diff review retained three failures showing that superseded stale operations could leave raw draft or note projections in the schema-two record and that a later decision-aware note was incorrectly discarded. Source checkpoint <code>27d85a9</code> restores authoritative terminal and exercise projections, preserves later work that already contains the confirmed decision, and passes all 30 storage tests plus scoped lint and strict TypeScript.</li>
+<li>The first complete post-review matrix retained two failures because its stale-note assertion expected a superseded operation after reconciliation had already cleared the raw note and disabled Save. Checkpoint <code>f7cbe85</code> binds the browser evidence to that safer boundary: zero note operation, zero request, cleared input, and disabled Save. The exact terminal case passes 2 of 2, and the complete authenticated matrix passes 29 cases with one intentional WebKit-only incompatible-equipment skip.</li>
+<li>The first aggregate replay then retained one plan-policy failure because the test still required the contradicted claim that unsaved tokens were tab-local. Checkpoint <code>f0d888f</code> asserts the actual refresh-recovery contract: raw local projections may persist, aren&#39;t operations, and are never submitted. The focused plan-policy test passes 2 of 2.</li>
+<li>The exact <code>f0d888f</code> aggregate replay passes 90 files and 633 tests, four database files and 34 assertions, 27 exact-two video mappings, PWA and 34-document parity, the production build, and the 41-route fixture-exclusion boundary. The exact public matrix passes 43 cases with one documented WebKit service-worker skip.</li>
+<li>The restart exposed a stale dependency boundary: <code>node_modules</code> referenced a pnpm store under deleted <code>/private/tmp</code>. One controlled install reused all 633 packages without downloading them and re-established the repository&#39;s ignored <code>.pnpm-store</code>. The final browser matrix created 180 MB of fixture build data and 9.6 MB of Playwright output; both were deleted after the four exact-run images were retained and visually inspected. Free space remained about 197 GiB.</li>
+<li>Remaining gates run one build or browser matrix at a time. Each gate records task-owned disk use and deletes <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, and <code>playwright-report</code> after evidence extraction. The aggregate and public gates each created and then removed a 202 MB root build; the public report was 552 KB. The 840 MB dependency tree and 781 MB reusable store remain only because the persistent goal still requires additional verification.</li>
+</ul>
 <h2>2026-08-27: Runner resilience plan checkpoint</h2>
 <ul>
 <li>Closed the customization release on synchronized local/GitHub <code>main</code> <code>b8d4e9f327b67fdf755f338b1d335630159f3089</code>, whose public alias resolves to Ready production deployment <code>dpl_HJ1EjNPvp77RFD9VyLPHXoCjgwGm</code>. Created only <code>/private/tmp/mwp-runner-resilience</code> on <code>qa/runner-resilience</code> from that exact base.</li>

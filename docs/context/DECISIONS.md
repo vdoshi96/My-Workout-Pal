@@ -97,3 +97,17 @@ This explicit context is preferred to browser history because a direct visit, re
 ## 2026-08-26: Limit generated HTML parity to publication documentation
 
 `scripts/render-docs.mjs` treats the repository root documents and `docs/` tree as the maintained publication set, and generates a same-content HTML counterpart for every Markdown file in that set. The tracked `.impeccable/surfaces/` Markdown is an internal design-tool input, not a published project document, so it is intentionally outside the generator and does not receive an HTML twin. Changes to this boundary require updating the generator and this decision together rather than relying on an implicit exclusion.
+
+## 2026-08-27: Make operation storage the multi-tab correctness boundary
+
+Runner storage schema version two atomically reads, validates, merges, increments, and writes the complete owner-and-session record in one IndexedDB transaction. Immutable operations carry stable idempotency keys and semantic targets. Distinct targets commute, divergent values for one target remain an explicit member-resolved conflict, and server-confirmed values outrank stale unsent copies. A confirmed exercise decision supersedes stale mutations for that exercise, and a confirmed terminal state freezes every stale tab.
+
+Unsubmitted form values remain device-local recovery projections rather than server operations. They can survive an ordinary refresh, but an atomic merge may replace them with a newer server-confirmed exercise or terminal projection. In that case the UI clears the stale value and disables its Save action before any request is made. A later edit intentionally created from the reconciled confirmed state remains eligible to become a new operation.
+
+BroadcastChannel messages contain only an opaque namespace digest and revision hint. They can prompt another tab to reread IndexedDB, but message delivery, ordering, or availability can't determine correctness. Authentication and connectivity are runtime facts, not durable blockers: a fresh same-owner server baseline clears stale local flags without deleting queued operations or drafts.
+
+## 2026-08-27: Bound local build and browser artifacts
+
+Keep one durable ignored pnpm store and one dependency installation for active goal work. Don't bind a persistent checkout to a pnpm store under `/private/tmp`; a restart can remove that store and force repeated dependency reconstruction.
+
+Run only one production build or browser matrix at a time. Measure free space and the exact task-owned artifact directories before and after each large gate. After reviewed evidence is retained, delete `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report`. Keep only the newest tracked QA report and screenshots. Don't delete unrelated browser caches, simulator data, user files, or system data as part of this cleanup policy.

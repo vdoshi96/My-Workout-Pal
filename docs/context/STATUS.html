@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="2d9e18bfb85bb4352e7a70643f1e1d409f3d71b3db173ed036b86343e881c3e7">
+  <meta name="source-sha256" content="3c1913d4de30225b3811d2c41acc11219aa894439aa3006e46b6edff673b12b5">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,7 +29,7 @@
   <main>
 <h1>Project status</h1>
 <h2>Current phase</h2>
-<p>The guest-first landing, origin-aware public navigation, authenticated onboarding harness, credential-free runner recovery, authenticated program customization, persisted personal records, and source-derived progress are released on <code>main</code>. Documentation closeout <code>b8d4e9f327b67fdf755f338b1d335630159f3089</code> is synchronized across local and GitHub <code>main</code> and is Ready as production deployment <code>dpl_HJ1EjNPvp77RFD9VyLPHXoCjgwGm</code>; the public alias resolves to that deployment. Landing, program, library, and sign-in return <code>200</code>; unauthenticated <code>/app</code> contains the bounded <code>/sign-in?returnTo=%2Fapp</code> redirect, GitHub reports success, and the post-replay error scan is empty. Additive migration <code>0004</code> is applied to Neon, and the v2 personal-record rebuild is completed and idempotency-verified with zero eligible sessions/candidates/changes. The only active auxiliary worktree is <code>/private/tmp/mwp-runner-resilience</code> on <code>qa/runner-resilience</code>, based exactly on <code>b8d4e9f</code>; it is reserved for the planned credential-free literal offline, post-load expiry/revocation, and multi-tab runner lane. Hosted Firebase/provider replay, full-page Firebase client hydration for deletion, actual 200-percent zoom closeout, authenticated production media, and Vercel Spend Management remain separate evidence gates.</p>
+<p>The guest-first landing, origin-aware public navigation, authenticated onboarding harness, authenticated program customization, persisted personal records, and source-derived progress are released on <code>main</code> commit <code>b8d4e9f327b67fdf755f338b1d335630159f3089</code>. That exact commit is Ready as production deployment <code>dpl_HJ1EjNPvp77RFD9VyLPHXoCjgwGm</code>, and the public alias resolves to it. The active primary checkout carries pushed code-and-test checkpoint <code>f0d888f09af143ecce2a0f7ef82f11f2e64adb5f</code> on <code>qa/runner-resilience</code> plus this documentation closeout. Its credential-free browser evidence proves literal request interruption, explicit retry without an <code>online</code> event, post-load expired and revoked sessions, same-owner return, foreign-owner denial, atomic two-tab operation merge, explicit same-target conflict choice, stale-write protection, authoritative exercise projection, and terminal reconciliation. The complete authenticated production-mode fixture passes 29 cases with one intentional engine-scoped skip; <code>pnpm verify</code> passes 90 files and 633 tests plus all database, seed, PWA, documentation, build, and production-boundary gates; the public matrix passes 43 cases with one documented engine skip. This lane isn&#39;t merged or deployed. Hosted Firebase/provider replay, full-page Firebase client hydration for deletion, actual 200-percent zoom closeout, authenticated production media, and Vercel Spend Management remain separate evidence gates.</p>
 <h2>What exists</h2>
 <ul>
 <li>A public GitHub repository at <code>vdoshi96/My-Workout-Pal</code>. Local <code>main</code> tracks <code>origin/main</code>, and Vercel production is connected to that branch.</li>
@@ -163,7 +163,7 @@
 </ul>
 <h2>Worktrees</h2>
 <ul>
-<li>The primary checkout is on released <code>main</code>, synchronized with <code>origin/main</code>, and contains runtime merge <code>85edf7c7589e0f421e523a753ea1edf3143dd65a</code> plus this documentation-only closeout. The completed customization worktree and local feature branch are removed; no auxiliary worktree remains.</li>
+<li>The primary checkout is on <code>qa/runner-resilience</code> with code-and-test checkpoint <code>f0d888f09af143ecce2a0f7ef82f11f2e64adb5f</code> plus this documentation closeout. Local and GitHub <code>main</code> remain synchronized at released commit <code>b8d4e9f327b67fdf755f338b1d335630159f3089</code>. The restart removed the temporary runner worktree, and its stale Git pointer was pruned. No auxiliary worktree remains; using the primary checkout avoids a second dependency installation while the runner release review finishes.</li>
 <li>The completed analytics worktree was integrated as <code>fedfba4</code> and removed after patch-equivalence verification.</li>
 <li>The completed YouTube worktree was integrated through <code>6b633b0</code>; its selected files matched the reviewed worktree before cleanup.</li>
 <li>The completed database worktree was integrated through <code>ff3d69c</code>, compared for selected-file equality, and removed.</li>
