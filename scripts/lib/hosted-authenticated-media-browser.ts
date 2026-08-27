@@ -71,7 +71,11 @@ export type HostedAuthenticatedMediaQaStage =
   | "firebase_baseline"
   | "identity_creation"
   | "media_demo_one"
+  | "media_demo_one_control"
+  | "media_demo_one_playing"
   | "media_demo_two"
+  | "media_demo_two_control"
+  | "media_demo_two_playing"
   | "media_pair"
   | "onboarding"
   | "runner_load"
@@ -490,11 +494,19 @@ async function selectedMediaState(page: Page): Promise<Readonly<{
   };
 }
 
-async function startSelectedVideo(page: Page): Promise<void> {
+async function startSelectedVideo(
+  page: Page,
+  setStage: (part: "control" | "playing") => void,
+): Promise<void> {
+  const iframe = page.locator(".runner-technique iframe");
+  await iframe.scrollIntoViewIfNeeded();
+  await expect(iframe).toBeVisible();
   const frame = page.frameLocator(".runner-technique iframe");
   const largePlay = frame.locator("button.ytp-large-play-button");
+  setStage("control");
   await largePlay.waitFor({ state: "visible", timeout: 30_000 });
   await largePlay.click();
+  setStage("playing");
   await expect.poll(
     () => frame.locator("button.ytp-play-button").getAttribute("data-title-no-tooltip"),
     { timeout: 30_000 },
@@ -516,7 +528,9 @@ async function inspectMedia(
   assert.equal(first.iframeCount, 1);
   assert.equal(first.fallbackVideoId, first.videoId);
   setStage("media_demo_one");
-  await startSelectedVideo(page);
+  await startSelectedVideo(page, (part) => {
+    setStage(part === "control" ? "media_demo_one_control" : "media_demo_one_playing");
+  });
 
   setStage("media_demo_two");
   await firstTab.focus();
@@ -526,7 +540,9 @@ async function inspectMedia(
   assert.equal(second.iframeCount, 1);
   assert.notEqual(second.videoId, first.videoId);
   assert.equal(second.fallbackVideoId, second.videoId);
-  await startSelectedVideo(page);
+  await startSelectedVideo(page, (part) => {
+    setStage(part === "control" ? "media_demo_two_control" : "media_demo_two_playing");
+  });
 
   assert.equal(mediaEvidenceIsComplete({
     activeIframeCount: second.iframeCount,
@@ -563,7 +579,7 @@ async function assertFirstEmbedFallback(
     const second = await selectedMediaState(page);
     assert.notEqual(second.videoId, firstVideoId);
     assert.equal(second.fallbackVideoId, second.videoId);
-    await startSelectedVideo(page);
+    await startSelectedVideo(page, () => undefined);
     assert.ok(blocked >= 1);
   } finally {
     await page.unroute(`https://www.youtube-nocookie.com/embed/${firstVideoId}**`);

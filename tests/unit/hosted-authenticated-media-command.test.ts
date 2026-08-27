@@ -56,6 +56,9 @@ describe("hosted authenticated media QA command", () => {
     expect(browserSource).toContain('{ name: "Push", exact: true }');
     expect(browserSource).toContain('setStage("media_demo_one")');
     expect(browserSource).toContain('setStage("media_demo_two")');
+    expect(browserSource).toContain('"media_demo_one_control"');
+    expect(browserSource).toContain('"media_demo_one_playing"');
+    expect(browserSource).toContain("scrollIntoViewIfNeeded");
     expect(browserSource).not.toMatch(/screenshot\(|trace:\s*|recordVideo/u);
   });
 });
