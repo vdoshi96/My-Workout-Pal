@@ -14,6 +14,7 @@ export type HarnessScenario =
   | "ready"
   | "revoke-session"
   | "revoke-next-runner-operation"
+  | "slow-next-runner-operation"
   | "slow-onboard";
 
 export type HarnessRequestContext = Readonly<{
@@ -31,6 +32,7 @@ const scenarioValues = new Set<HarnessScenario>([
   "ready",
   "revoke-session",
   "revoke-next-runner-operation",
+  "slow-next-runner-operation",
   "slow-onboard",
 ]);
 
@@ -59,7 +61,9 @@ function viewerFromHeader(value: string | null): ViewerContext | null {
 
 function scenarioFromHeader(value: string | null): HarnessScenario {
   if (value === null) return "ready";
-  return scenarioValues.has(value as HarnessScenario) ? (value as HarnessScenario) : "invalid";
+  return scenarioValues.has(value as HarnessScenario)
+    ? (value as HarnessScenario)
+    : "invalid";
 }
 
 export function harnessRequestContext(headers: Headers): HarnessRequestContext {
@@ -72,7 +76,9 @@ export function harnessRequestContext(headers: Headers): HarnessRequestContext {
         ? requestedScope
         : "default",
     viewer:
-      scenario === "invalid" || scenario === "expire-session" || scenario === "revoke-session"
+      scenario === "invalid" ||
+      scenario === "expire-session" ||
+      scenario === "revoke-session"
         ? null
         : viewerFromHeader(headers.get(HARNESS_VIEWER_HEADER)),
   };

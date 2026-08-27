@@ -5,6 +5,7 @@ import {
   createRunnerPersistenceQueue,
   reloadRunnerStateFromStorage,
   runRunnerPersistenceCycle,
+  runnerStateNeedsAdoption,
   runnerSnapshotIdentity,
   runnerSnapshotRestoreKey,
   shouldResetRunnerSnapshot,
@@ -53,6 +54,21 @@ const snapshotInput: RunnerSnapshotInput = {
 };
 
 describe("WorkoutRunner injected boundary harness", () => {
+  it("does not re-adopt a semantically identical committed state", () => {
+    const initial = createRunnerState(createWorkoutSnapshot(snapshotInput), {
+      now: 900,
+    });
+    expect(runnerStateNeedsAdoption(initial, structuredClone(initial))).toBe(
+      false,
+    );
+    const changed = runnerReducer(initial, {
+      type: "update_set_draft",
+      setId: "press-work-1",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 10 },
+    });
+    expect(runnerStateNeedsAdoption(initial, changed)).toBe(true);
+  });
+
   it("dispatches a set, persists it, syncs it, and renders the saved state", async () => {
     const snapshot = createWorkoutSnapshot(snapshotInput);
     const storage = createInMemoryRunnerStorage();
@@ -152,13 +168,18 @@ describe("WorkoutRunner injected boundary harness", () => {
       firstSubmitStarted = resolve;
     });
     const submitted: string[] = [];
-    const submitter = async (operation: (typeof firstState.operations)[number]) => {
+    const submitter = async (
+      operation: (typeof firstState.operations)[number],
+    ) => {
       submitted.push(operation.idempotencyKey);
       if (submitted.length === 1) {
         firstSubmitStarted();
         await firstSubmit;
       }
-      return { status: "saved" as const, persistedId: operation.idempotencyKey };
+      return {
+        status: "saved" as const,
+        persistedId: operation.idempotencyKey,
+      };
     };
     const queue = createRunnerPersistenceQueue();
     let firstResult: ActiveWorkoutState | undefined;
@@ -187,13 +208,13 @@ describe("WorkoutRunner injected boundary harness", () => {
     expect(firstResult).toBeUndefined();
     expect(secondResult).toBeUndefined();
     expect(submitted).toHaveLength(1);
-    const stored = await storage.load(
-      "runner:owner-harness:session-harness",
+    const stored = await storage.load("runner:owner-harness:session-harness");
+    expect(stored?.state.loggedSets["press-work-1"]?.measurement).toMatchObject(
+      {
+        weightKg: 25,
+        repetitions: 8,
+      },
     );
-    expect(stored?.state.loggedSets["press-work-1"]?.measurement).toMatchObject({
-      weightKg: 25,
-      repetitions: 8,
-    });
     expect(stored?.state.operations.at(-1)?.status).toBe("pending");
   });
 
@@ -281,7 +302,10 @@ describe("WorkoutRunner injected boundary harness", () => {
     });
     expect(adopted.notesByExercise["press"]).toBe("Keep this local cue");
     expect(adopted.operations).toHaveLength(2);
-    expect((await storage.load("runner:owner-harness:session-harness"))?.state.operations).toHaveLength(2);
+    expect(
+      (await storage.load("runner:owner-harness:session-harness"))?.state
+        .operations,
+    ).toHaveLength(2);
 
     const identical = await reloadRunnerStateFromStorage(
       adopted,

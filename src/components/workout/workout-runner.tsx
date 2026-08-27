@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
   createRunnerState,
@@ -199,6 +193,16 @@ export type RunnerPersistenceCycleOptions = Readonly<{
   storage: RunnerStorage;
   submitter: RunnerSubmitter;
 }>;
+
+export function runnerStateNeedsAdoption(
+  current: ActiveWorkoutState,
+  committed: ActiveWorkoutState | undefined,
+): committed is ActiveWorkoutState {
+  return (
+    committed !== undefined &&
+    stableIdempotencyKey(committed) !== stableIdempotencyKey(current)
+  );
+}
 
 export async function runRunnerPersistenceCycle(
   state: ActiveWorkoutState,
@@ -560,8 +564,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const [isRestoring, setIsRestoring] = useState(
     props.restoreFromStorage === true && props.initialState === undefined,
   );
-  const [connectivityInitialized, setConnectivityInitialized] =
-    useState(false);
+  const [connectivityInitialized, setConnectivityInitialized] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
   const [skipReasons, setSkipReasons] = useState<
     Readonly<Record<string, string>>
@@ -647,13 +650,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       setConnectivityInitialized(false);
       setIsRestoring(restoreEnabled);
     });
-  }, [
-    props,
-    props.initialState,
-    props.snapshot,
-    restoreEnabled,
-    snapshotKey,
-  ]);
+  }, [props, props.initialState, props.snapshot, restoreEnabled, snapshotKey]);
 
   useEffect(() => {
     if (!restoreEnabled) {
@@ -711,9 +708,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   ]);
 
   useEffect(() => {
-    const connectivity = (
-      props.getConnectivity ?? browserRunnerConnectivity
-    )();
+    const connectivity = (props.getConnectivity ?? browserRunnerConnectivity)();
     return scheduleRunnerMicrotask(() => {
       setState((current) =>
         current.connectivity === connectivity
@@ -789,7 +784,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             stateRef.current = next;
             setState(next);
             setAdapterError(undefined);
-            setAnnouncement("Another tab updated this workout. Device state reconciled.");
+            setAnnouncement(
+              "Another tab updated this workout. Device state reconciled.",
+            );
           }
         })
         .catch((error: unknown) => {
@@ -817,12 +814,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [
-    props.getConnectivity,
-    props.storage,
-    props.storageUpdates,
-    snapshotKey,
-  ]);
+  }, [props.getConnectivity, props.storage, props.storageUpdates, snapshotKey]);
 
   useEffect(() => {
     if (
@@ -842,7 +834,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         );
         if (!isLatest() || isCancelled()) return;
         setAdapterError(undefined);
-        if (next !== undefined && next !== state) {
+        if (runnerStateNeedsAdoption(state, next)) {
           setState((current) => (current === state ? next : current));
         }
       },
@@ -881,11 +873,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     const previous = previousSyncStatus.current;
     previousSyncStatus.current = state.sync.status;
     if (previous !== state.sync.status) {
-      return scheduleRunnerMicrotask(
-        () =>
-          setAnnouncement(
-            `Workout save status: ${formatSyncStatus(state.sync.status).label}.`,
-          ),
+      return scheduleRunnerMicrotask(() =>
+        setAnnouncement(
+          `Workout save status: ${formatSyncStatus(state.sync.status).label}.`,
+        ),
       );
     }
   }, [state.sync.status]);
@@ -966,8 +957,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const currentExerciseName =
     state.substitutions[currentExercise.id]?.name ?? currentExercise.name;
   const currentEffectiveExerciseId =
-    state.substitutions[currentExercise.id]?.id
-    ?? props.effectiveExerciseIdBySnapshot?.[currentExercise.id];
+    state.substitutions[currentExercise.id]?.id ??
+    props.effectiveExerciseIdBySnapshot?.[currentExercise.id];
   const currentCuratedVideos = currentEffectiveExerciseId
     ? props.curatedVideosByExerciseId?.[currentEffectiveExerciseId]
     : undefined;
@@ -1597,15 +1588,24 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               >
                 <div className="runner-section-heading">
                   <div>
-                    <span className="runner-eyebrow">Two-source technique check</span>
-                    <h3 id="runner-technique-heading">Technique demonstrations</h3>
+                    <span className="runner-eyebrow">
+                      Two-source technique check
+                    </span>
+                    <h3 id="runner-technique-heading">
+                      Technique demonstrations
+                    </h3>
                   </div>
-                  <span>{currentCuratedVideos ? "Approved pair" : "Unavailable"}</span>
+                  <span>
+                    {currentCuratedVideos ? "Approved pair" : "Unavailable"}
+                  </span>
                 </div>
                 {currentCuratedVideos ? (
                   <CuratedVideoPlayer videos={currentCuratedVideos} />
                 ) : (
-                  <p className="runner-empty">No approved catalog pair is available for this movement. Workout logging remains available.</p>
+                  <p className="runner-empty">
+                    No approved catalog pair is available for this movement.
+                    Workout logging remains available.
+                  </p>
                 )}
               </section>
             ) : null}
@@ -1991,7 +1991,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             >
               <div className="runner-section-heading">
                 <div>
-                  <span className="runner-eyebrow">Another tab changed this workout</span>
+                  <span className="runner-eyebrow">
+                    Another tab changed this workout
+                  </span>
                   <h3
                     id="runner-local-conflict-heading"
                     ref={localConflictHeading}
@@ -2000,7 +2002,12 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                     Choose the workout value to keep
                   </h3>
                 </div>
-                <span className={statusClass({ label: "Conflict", tone: "conflict" })}>
+                <span
+                  className={statusClass({
+                    label: "Conflict",
+                    tone: "conflict",
+                  })}
+                >
                   {localTabConflictGroups.length} target
                   {localTabConflictGroups.length === 1 ? "" : "s"}
                 </span>
@@ -2015,7 +2022,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   group.operations[0]!,
                 );
                 return (
-                  <fieldset className="runner-conflict-group" key={group.targetKey}>
+                  <fieldset
+                    className="runner-conflict-group"
+                    key={group.targetKey}
+                  >
                     <legend>{targetLabel}</legend>
                     <div className="runner-conflict-choices">
                       {group.operations.map((operation) => {

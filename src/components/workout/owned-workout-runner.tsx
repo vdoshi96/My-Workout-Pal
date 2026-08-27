@@ -18,7 +18,6 @@ import { createWorkoutRunnerSubmitter } from "@/client/workout-api";
 import { WorkoutRunner } from "@/components/workout/workout-runner";
 import { RunnerResumeError } from "@/domain/workout-resume";
 import {
-  clearRunnerState,
   createRunnerWriterIdentity,
   loadRunnerState,
   RunnerOwnershipError,
@@ -140,9 +139,7 @@ export function OwnedWorkoutRunner({
   }, [attempt, initialState, ownerUid, sessionId, storage]);
 
   function openTerminalHistory() {
-    void clearRunnerState(storage, ownerUid, sessionId).finally(() => {
-      router.push(`/app/history/${encodeURIComponent(sessionId)}`);
-    });
+    router.push(`/app/history/${encodeURIComponent(sessionId)}`);
   }
 
   function retryRecovery() {
@@ -160,7 +157,10 @@ export function OwnedWorkoutRunner({
       >
         <span className="eyebrow">Private recovery</span>
         <h1 id="runner-recovery-title">Reconciling saved workout</h1>
-        <p>Checking the server snapshot and device draft for this account before editing begins.</p>
+        <p>
+          Checking the server snapshot and device draft for this account before
+          editing begins.
+        </p>
       </section>
     );
   }

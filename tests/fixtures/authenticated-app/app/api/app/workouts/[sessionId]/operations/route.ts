@@ -26,6 +26,9 @@ export async function POST(
       return harness.viewer;
     },
   });
+  if (consumeHarnessFault(harness, "slow-next-runner-operation")) {
+    await new Promise((resolve) => setTimeout(resolve, 1_250));
+  }
   const response = await api.operate(
     await adaptHarnessWorkoutMutation(request),
     await context.params,
@@ -37,7 +40,8 @@ export async function POST(
     const interrupted = NextResponse.json(
       {
         error: "accepted_then_response_error",
-        message: "The saved operation response was interrupted by the local QA harness.",
+        message:
+          "The saved operation response was interrupted by the local QA harness.",
       },
       { status: 500 },
     );
