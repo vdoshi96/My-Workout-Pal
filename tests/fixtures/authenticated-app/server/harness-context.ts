@@ -14,7 +14,6 @@ export type HarnessScenario =
   | "ready"
   | "revoke-session"
   | "revoke-next-runner-operation"
-  | "slow-next-runner-operation"
   | "slow-onboard";
 
 export type HarnessRequestContext = Readonly<{
@@ -32,7 +31,6 @@ const scenarioValues = new Set<HarnessScenario>([
   "ready",
   "revoke-session",
   "revoke-next-runner-operation",
-  "slow-next-runner-operation",
   "slow-onboard",
 ]);
 

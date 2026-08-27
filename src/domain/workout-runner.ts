@@ -1923,6 +1923,28 @@ function isTerminalOperation(operation: RunnerOperation): boolean {
   );
 }
 
+function exerciseIdForOperation(
+  candidate: OperationCandidate,
+): string | undefined {
+  switch (candidate.operation.payload.kind) {
+    case "save_set": {
+      const setId = candidate.operation.payload.setId;
+      return candidate.state.snapshot.exercises.find(({ sets }) =>
+        sets.some(({ id }) => id === setId),
+      )?.id;
+    }
+    case "save_note":
+    case "skip_exercise":
+    case "substitute_exercise":
+    case "complete_exercise":
+      return candidate.operation.payload.exerciseId;
+    case "save_cardio":
+    case "abandon_session":
+    case "complete_session":
+      return undefined;
+  }
+}
+
 function mergeOperationCandidates(
   existing: RunnerStorageRecord | undefined,
   incoming: RunnerStorageRecord,
@@ -2039,6 +2061,45 @@ function mergeOperationCandidates(
           operation: conflictOperation(candidate.operation),
         },
       );
+    }
+  }
+
+  const confirmedExerciseIds = new Set(
+    [...candidates.values()]
+      .filter(
+        ({ operation }) =>
+          operation.status === "saved" &&
+          (operation.kind === "complete_exercise" ||
+            operation.kind === "skip_exercise"),
+      )
+      .map(({ operation }) => operation.payload)
+      .filter(
+        (
+          payload,
+        ): payload is CompleteExerciseOperationPayload | SkipExerciseOperationPayload =>
+          payload.kind === "complete_exercise" || payload.kind === "skip_exercise",
+      )
+      .map(({ exerciseId }) => exerciseId),
+  );
+  if (confirmedExerciseIds.size > 0) {
+    for (const candidate of candidates.values()) {
+      if (
+        candidate.operation.status === "saved" ||
+        candidate.operation.status === "superseded"
+      ) {
+        continue;
+      }
+      const exerciseId = exerciseIdForOperation(candidate);
+      if (exerciseId === undefined || !confirmedExerciseIds.has(exerciseId)) {
+        continue;
+      }
+      candidates.set(candidate.operation.idempotencyKey, {
+        ...candidate,
+        operation: supersededOperation(
+          candidate.operation,
+          "Superseded by the server-confirmed exercise decision.",
+        ),
+      });
     }
   }
 

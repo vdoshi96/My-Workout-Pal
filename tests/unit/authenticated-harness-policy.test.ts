@@ -90,19 +90,6 @@ describe("credential-free authenticated harness boundary", () => {
     expect(
       harnessRequestContext(
         new Headers({
-          [HARNESS_SCENARIO_HEADER]: "slow-next-runner-operation",
-          [HARNESS_SCOPE_HEADER]: "terminal-tab-race",
-          [HARNESS_VIEWER_HEADER]: "alice",
-        }),
-      ),
-    ).toMatchObject({
-      scenario: "slow-next-runner-operation",
-      scope: "terminal-tab-race",
-      viewer: { uid: "qa-auth-harness-alice" },
-    });
-    expect(
-      harnessRequestContext(
-        new Headers({
           [HARNESS_SCENARIO_HEADER]: "accept-next-program-publish-then-error",
           [HARNESS_SCOPE_HEADER]: "program-publish-recovery",
           [HARNESS_VIEWER_HEADER]: "alice",

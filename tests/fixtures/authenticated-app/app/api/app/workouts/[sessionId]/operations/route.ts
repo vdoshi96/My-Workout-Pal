@@ -26,9 +26,6 @@ export async function POST(
       return harness.viewer;
     },
   });
-  if (consumeHarnessFault(harness, "slow-next-runner-operation")) {
-    await new Promise((resolve) => setTimeout(resolve, 1_250));
-  }
   const response = await api.operate(
     await adaptHarnessWorkoutMutation(request),
     await context.params,

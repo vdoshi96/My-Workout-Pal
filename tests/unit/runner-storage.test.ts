@@ -1068,6 +1068,75 @@ describe("schema-two atomic runner storage merge", () => {
     ).toBe(true);
   });
 
+  it("supersedes a stale tab note after the exercise decision is confirmed", async () => {
+    let completed = stateFor("uid-a", "session-a");
+    completed = runnerReducer(completed, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 25, repetitions: 10 },
+    });
+    completed = runnerReducer(completed, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    const setKey = completed.operations.at(-1)!.idempotencyKey;
+    completed = runnerReducer(completed, {
+      type: "operation_saved",
+      idempotencyKey: setKey,
+      now: 102,
+    });
+    completed = runnerReducer(completed, {
+      type: "complete_exercise",
+      exerciseId: "row",
+      now: 103,
+    });
+    const completionKey = completed.operations.at(-1)!.idempotencyKey;
+    completed = runnerReducer(completed, {
+      type: "operation_saved",
+      idempotencyKey: completionKey,
+      now: 104,
+    });
+
+    let stale = stateFor("uid-a", "session-a");
+    stale = runnerReducer(stale, {
+      type: "update_note",
+      exerciseId: "row",
+      note: "A stale tab note",
+    });
+    stale = runnerReducer(stale, {
+      type: "save_note",
+      exerciseId: "row",
+      now: 200,
+    });
+    const noteKey = stale.operations.at(-1)!.idempotencyKey;
+
+    const merged = mergeRunnerStorageRecords(
+      runnerStorageRecord(completed, { committedAt: 104 }),
+      runnerStorageRecord(stale, { committedAt: 200 }),
+    );
+
+    expect(
+      merged.state.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === noteKey,
+      ),
+    ).toMatchObject({
+      status: "superseded",
+      errorCode: "superseded",
+    });
+    expect(merged.state.sync.status).toBe("idle");
+
+    const submitted: string[] = [];
+    await syncRunnerOperations(merged.state, {
+      storage: new InMemoryRunnerStorage(),
+      submit: async ({ idempotencyKey }) => {
+        submitted.push(idempotencyKey);
+        return { status: "saved", persistedId: "unexpected" };
+      },
+    });
+    expect(submitted).toEqual([]);
+  });
+
   it("deduplicates identical canonical payloads with distinct keys", async () => {
     let first = stateFor("uid-a", "session-a");
     first = runnerReducer(first, {

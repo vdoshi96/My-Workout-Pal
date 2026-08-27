@@ -1022,7 +1022,17 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
   await second
     .getByLabel(/Private note for Dumbbell bench press/iu)
     .fill("This stale tab note must not reopen a completed workout.");
-  harness.control.scenario = "slow-next-runner-operation";
+  await second
+    .getByRole("button", { name: "Save note" })
+    .evaluate((button: HTMLButtonElement) => button.click());
+  await expect
+    .poll(async () =>
+      (await readStoredRunner(second, sessionId)).operations.some(
+        ({ kind, status }) => kind === "save_note" && status === "superseded",
+      ),
+    )
+    .toBe(true);
+
   const requestsBeforeCompletion = harness.signals.operationRequests.length;
   const completionRequest = first.waitForRequest((request) => {
     if (!isOperationRequest(request)) return false;
@@ -1036,16 +1046,6 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
   });
   await first.getByRole("button", { name: "Complete workout" }).click();
   await completionRequest;
-  await second
-    .getByRole("button", { name: "Save note" })
-    .evaluate((button: HTMLButtonElement) => button.click());
-  await expect
-    .poll(async () =>
-      (await readStoredRunner(second, sessionId)).operations.some(
-        ({ kind, status }) => kind === "save_note" && status === "pending",
-      ),
-    )
-    .toBe(true);
 
   expect((await completionResponse).status()).toBe(200);
   await expect(first).toHaveURL(`/app/history/${sessionId}`);
