@@ -52,7 +52,7 @@ function canonicalProgramContext(url: URL): PublicExerciseReturnContext | undefi
   const query = params.size > 0 ? `?${params.toString()}` : "";
 
   if (url.pathname === "/program") {
-    return { href: `/program${query}`, label: "Five-day program" };
+    return { href: `/program${query}`, label: "Five-day starter example" };
   }
 
   const dayMatch = /^\/program\/(push|pull|legs|upper|lower)$/.exec(url.pathname);

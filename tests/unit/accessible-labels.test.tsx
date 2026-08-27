@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -13,6 +14,15 @@ import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import { createStarterProgram } from "@/domain/programs/starter";
 
 describe("visible labels remain in accessible names", () => {
+  it("keeps the signed-in identity visible below the desktop breakpoint", () => {
+    const stylesheet = readFileSync(
+      new URL("../../src/app/globals.css", import.meta.url),
+      "utf8",
+    );
+
+    expect(stylesheet).not.toContain(".member-identity { display: none;");
+  });
+
   it("uses native brand and waypoint content instead of shorter aria-label overrides", () => {
     const explorerMarkup = renderToStaticMarkup(
       <ProgramExplorer

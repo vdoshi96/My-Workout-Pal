@@ -13,7 +13,7 @@ describe("public exercise return contexts", () => {
     ],
     [
       "/program?equipment=dumbbells",
-      { href: "/program?equipment=dumbbells", label: "Five-day program" },
+      { href: "/program?equipment=dumbbells", label: "Five-day starter example" },
     ],
     [
       "/library?equipment=dumbbells&q=bench%20press",

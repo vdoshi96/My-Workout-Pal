@@ -34,7 +34,7 @@ test("guest previews both profiles and completes the public discovery route", as
 
   await page.getByRole("link", { name: "Browse all five days" }).click();
   await expect(page).toHaveURL(/\/program$/);
-  await expect(page.getByText("Guest route · not saved")).toBeVisible();
+  await expect(page.getByText("Starter preview · not saved")).toBeVisible();
   for (const [index, name] of ["Push", "Pull", "Legs", "Upper", "Lower"].entries()) {
     await expect(
       page.getByRole("button", { name: `${index + 1} ${name}` }),
@@ -49,7 +49,7 @@ test("guest previews both profiles and completes the public discovery route", as
   ).toBeVisible();
   await page.getByRole("link", { name: "Push day" }).click();
   await expect(page).toHaveURL(/\/program\/push\?equipment=dumbbells$/);
-  await page.getByRole("link", { name: "Five-day program" }).click();
+  await page.getByRole("link", { name: "Five-day starter example" }).click();
   await expect(page).toHaveURL(/\/program\?equipment=dumbbells$/);
 
   const barbellPreview = page.getByRole("button", {
@@ -72,7 +72,7 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("link", { name: /Barbell bent-over row/ }),
   ).toBeVisible();
-  await expect(page.getByText("Guest preview · not saved")).toBeVisible();
+  await expect(page.getByText("Starter preview · not saved")).toBeVisible();
 
   await page.goto("/library?equipment=barbell");
   await page.getByLabel("Search movements").fill("bent over row");
@@ -123,6 +123,36 @@ test("guest previews both profiles and completes the public discovery route", as
     /^(Sign-in connection pending|Sign in)$/,
   );
   await expect(page.getByRole("link", { name: "Browse the free program" })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("public account entry uses the protected member boundary from every public chrome", async ({
+  page,
+}) => {
+  const errors = capturePageErrors(page);
+
+  await page.goto("/");
+  const landingAccountAction = page.getByRole("link", {
+    exact: true,
+    name: "My workouts",
+  });
+  await expect(landingAccountAction).toHaveAttribute("href", "/app");
+  await landingAccountAction.click();
+  await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp$/u);
+
+  await page.goto("/program");
+  await expect(page.getByText("Starter preview · not saved")).toBeVisible();
+  const programAccountActions = page.getByRole("link", { name: "My workouts" });
+  await expect(programAccountActions.first()).toHaveAttribute("href", "/app");
+
+  await page.goto("/program/push?equipment=dumbbells");
+  await expect(page.getByText("Starter preview · not saved")).toBeVisible();
+  await expect(page.getByText("Five-day starter example")).toBeVisible();
+  const dayAccountAction = page.getByRole("link", { name: "My workouts" });
+  await expect(dayAccountAction).toHaveAttribute("href", "/app");
+  await dayAccountAction.click();
+  await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp$/u);
+
   expect(errors).toEqual([]);
 });
 

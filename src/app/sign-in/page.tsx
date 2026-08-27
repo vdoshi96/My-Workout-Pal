@@ -25,7 +25,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
     : null;
 
   return (
-    <PublicShell current="sign-in">
+    <PublicShell current={null}>
       <div className="auth-layout contour-surface">
         <section className="auth-copy">
           <span className="eyebrow">Save only when you choose</span>

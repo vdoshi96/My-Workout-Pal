@@ -3,19 +3,19 @@ import type { ReactNode } from "react";
 
 import { Icon } from "@/components/ui/icon";
 
-type NavItem = "home" | "program" | "library" | "sample" | "sign-in";
-
 const items = [
   { id: "program", href: "/program", label: "Program", icon: "map" },
   { id: "library", href: "/library", label: "Library", icon: "library" },
   { id: "sample", href: "/sample-progress", label: "Sample", icon: "sample" },
-  { id: "sign-in", href: "/sign-in", label: "Sign in", icon: "sign-in" },
+  { id: "account", href: "/app", label: "My workouts", icon: "sign-in" },
 ] as const;
+
+type NavItem = "home" | (typeof items)[number]["id"];
 
 export function PublicShell({
   children,
   current,
-}: Readonly<{ children: ReactNode; current: NavItem }>) {
+}: Readonly<{ children: ReactNode; current: NavItem | null }>) {
   return (
     <div className="public-frame">
       <a className="skip-link" href="#main-content">Skip to content</a>

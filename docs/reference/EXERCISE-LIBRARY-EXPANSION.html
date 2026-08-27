@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="e7bacc50198eb2bdb72582e40204d013ce91a54a449ba73fc56b17486c2ec871">
+  <title>Exercise library expansion inventory · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Exercise library expansion inventory</h1>
+<h2>Purpose</h2>
+<p>This inventory defines the names-first expansion for My Workout Pal. It lets catalog and curation agents work from one bounded specification without inventing movement names, publishing unreviewed videos, or treating the five-day starter as the whole library.</p>
+<p>The existing 27 canonical movements remain the verified baseline. The following 108 candidates would bring the public canonical library to 135 movements before any later equipment-taxonomy expansion. A candidate is not ready for production merely because it appears in this document. Grok 4.6 candidate URL research is in <a href="EXERCISE-LIBRARY-EXPANSION_grok.html"><code>EXERCISE-LIBRARY-EXPANSION_grok.md</code></a>. Those links are not approved demonstrations.</p>
+<h2>Publication contract</h2>
+<p>Every production catalog record must contain:</p>
+<ul>
+<li>A unique stable slug and display name.</li>
+<li>One logging kind: <code>weight_reps</code>, <code>bodyweight_reps</code>, <code>duration</code>, or <code>distance_duration</code>.</li>
+<li>One or more existing equipment IDs: <code>bodyweight</code>, <code>dumbbells</code>, <code>barbell</code>, <code>plates</code>, <code>bench</code>, or <code>rack</code>.</li>
+<li>A movement family, primary muscles, search aliases, and three concise form instructions.</li>
+<li>A content-review status and reviewer evidence for name, equipment, logging meaning, instructions, and duplicate detection.</li>
+<li>A video status: <code>not_started</code>, <code>in_review</code>, <code>approved_pair</code>, or <code>unavailable</code>.</li>
+</ul>
+<p>An <code>approved_pair</code> requires exactly two unique, eligible, fully watched demonstrations under the existing YouTube curation policy. <code>not_started</code>, <code>in_review</code>, and <code>unavailable</code> records still provide useful names and instructions, but render no empty or unapproved catalog player.</p>
+<p>Do not add a new equipment category in this batch. Bands, cables, kettlebells, pull-up bars, suspension trainers, machines, medicine balls, and cardio machines require their own equipment-profile and compatibility plan.</p>
+<h2>Candidate status</h2>
+<p>Every entry in the following tables has this initial state:</p>
+<ul>
+<li>Content status: <code>candidate</code>.</li>
+<li>Video status: <code>not_started</code>.</li>
+<li>Approved video IDs: none.</li>
+<li>Production eligibility: false until metadata, instructions, duplicates, tests, and seed output pass review.</li>
+</ul>
+<h3>Chest and pushing</h3>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Display name</th>
+<th>Logging kind</th>
+<th>Required equipment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>push-up</code></td>
+<td>Push-up</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>incline-push-up</code></td>
+<td>Incline push-up</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight, bench</td>
+</tr>
+<tr>
+<td><code>decline-push-up</code></td>
+<td>Decline push-up</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight, bench</td>
+</tr>
+<tr>
+<td><code>close-grip-push-up</code></td>
+<td>Close-grip push-up</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>diamond-push-up</code></td>
+<td>Diamond push-up</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>dumbbell-floor-press</code></td>
+<td>Dumbbell floor press</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-squeeze-press</code></td>
+<td>Dumbbell squeeze press</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>dumbbell-chest-fly</code></td>
+<td>Dumbbell chest fly</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>incline-dumbbell-fly</code></td>
+<td>Incline dumbbell fly</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>incline-barbell-bench-press</code></td>
+<td>Incline barbell bench press</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, bench, rack</td>
+</tr>
+<tr>
+<td><code>close-grip-barbell-bench-press</code></td>
+<td>Close-grip barbell bench press</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, bench, rack</td>
+</tr>
+<tr>
+<td><code>barbell-floor-press</code></td>
+<td>Barbell floor press</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, rack</td>
+</tr>
+</tbody></table>
+<h3>Back and rear shoulder</h3>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Display name</th>
+<th>Logging kind</th>
+<th>Required equipment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pendlay-row</code></td>
+<td>Pendlay row</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates</td>
+</tr>
+<tr>
+<td><code>underhand-barbell-row</code></td>
+<td>Underhand barbell row</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates</td>
+</tr>
+<tr>
+<td><code>dumbbell-renegade-row</code></td>
+<td>Dumbbell renegade row</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-reverse-fly</code></td>
+<td>Dumbbell reverse fly</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-rear-delt-row</code></td>
+<td>Dumbbell rear-delt row</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>barbell-shrug</code></td>
+<td>Barbell shrug</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates</td>
+</tr>
+<tr>
+<td><code>dumbbell-shrug</code></td>
+<td>Dumbbell shrug</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>inverted-row</code></td>
+<td>Inverted row</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight, barbell, rack</td>
+</tr>
+<tr>
+<td><code>prone-dumbbell-row</code></td>
+<td>Prone dumbbell row</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>dumbbell-dead-row</code></td>
+<td>Dumbbell dead row</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>barbell-rack-pull</code></td>
+<td>Barbell rack pull</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, rack</td>
+</tr>
+<tr>
+<td><code>dumbbell-high-pull</code></td>
+<td>Dumbbell high pull</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+</tbody></table>
+<h3>Shoulders</h3>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Display name</th>
+<th>Logging kind</th>
+<th>Required equipment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>standing-dumbbell-shoulder-press</code></td>
+<td>Standing dumbbell shoulder press</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>arnold-press</code></td>
+<td>Arnold press</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>dumbbell-lateral-raise</code></td>
+<td>Dumbbell lateral raise</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>leaning-dumbbell-lateral-raise</code></td>
+<td>Leaning dumbbell lateral raise</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, rack</td>
+</tr>
+<tr>
+<td><code>dumbbell-front-raise</code></td>
+<td>Dumbbell front raise</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>barbell-overhead-press</code></td>
+<td>Barbell overhead press</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, rack</td>
+</tr>
+<tr>
+<td><code>barbell-push-press</code></td>
+<td>Barbell push press</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, rack</td>
+</tr>
+<tr>
+<td><code>dumbbell-z-press</code></td>
+<td>Dumbbell Z press</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-upright-row</code></td>
+<td>Dumbbell upright row</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>barbell-upright-row</code></td>
+<td>Barbell upright row</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates</td>
+</tr>
+</tbody></table>
+<h3>Arms</h3>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Display name</th>
+<th>Logging kind</th>
+<th>Required equipment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>hammer-curl</code></td>
+<td>Hammer curl</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>cross-body-hammer-curl</code></td>
+<td>Cross-body hammer curl</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>incline-dumbbell-curl</code></td>
+<td>Incline dumbbell curl</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>concentration-curl</code></td>
+<td>Concentration curl</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>barbell-curl</code></td>
+<td>Barbell curl</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates</td>
+</tr>
+<tr>
+<td><code>reverse-barbell-curl</code></td>
+<td>Reverse barbell curl</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates</td>
+</tr>
+<tr>
+<td><code>lying-dumbbell-triceps-extension</code></td>
+<td>Lying dumbbell triceps extension</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>barbell-skull-crusher</code></td>
+<td>Barbell skull crusher</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, bench</td>
+</tr>
+<tr>
+<td><code>dumbbell-triceps-kickback</code></td>
+<td>Dumbbell triceps kickback</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>bench-dip</code></td>
+<td>Bench dip</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight, bench</td>
+</tr>
+<tr>
+<td><code>close-grip-dumbbell-press</code></td>
+<td>Close-grip dumbbell press</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>barbell-jm-press</code></td>
+<td>Barbell JM press</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, bench, rack</td>
+</tr>
+</tbody></table>
+<h3>Lower body and glutes</h3>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Display name</th>
+<th>Logging kind</th>
+<th>Required equipment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>barbell-front-squat</code></td>
+<td>Barbell front squat</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, rack</td>
+</tr>
+<tr>
+<td><code>zercher-squat</code></td>
+<td>Zercher squat</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, rack</td>
+</tr>
+<tr>
+<td><code>sumo-goblet-squat</code></td>
+<td>Sumo goblet squat</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-split-squat</code></td>
+<td>Dumbbell split squat</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>forward-lunge</code></td>
+<td>Forward lunge</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>walking-lunge</code></td>
+<td>Walking lunge</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>lateral-lunge</code></td>
+<td>Lateral lunge</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-step-up</code></td>
+<td>Dumbbell step-up</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>lateral-step-up</code></td>
+<td>Lateral step-up</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>single-leg-dumbbell-romanian-deadlift</code></td>
+<td>Single-leg dumbbell Romanian deadlift</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-stiff-leg-deadlift</code></td>
+<td>Dumbbell stiff-leg deadlift</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>conventional-barbell-deadlift</code></td>
+<td>Conventional barbell deadlift</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates</td>
+</tr>
+<tr>
+<td><code>sumo-barbell-deadlift</code></td>
+<td>Sumo barbell deadlift</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates</td>
+</tr>
+<tr>
+<td><code>barbell-good-morning</code></td>
+<td>Barbell good morning</td>
+<td><code>weight_reps</code></td>
+<td>barbell, plates, rack</td>
+</tr>
+<tr>
+<td><code>bodyweight-glute-bridge</code></td>
+<td>Bodyweight glute bridge</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>single-leg-glute-bridge</code></td>
+<td>Single-leg glute bridge</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>frog-pump</code></td>
+<td>Frog pump</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>seated-dumbbell-calf-raise</code></td>
+<td>Seated dumbbell calf raise</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells, bench</td>
+</tr>
+<tr>
+<td><code>single-leg-calf-raise</code></td>
+<td>Single-leg calf raise</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>wall-sit</code></td>
+<td>Wall sit</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+</tbody></table>
+<h3>Core</h3>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Display name</th>
+<th>Logging kind</th>
+<th>Required equipment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>crunch</code></td>
+<td>Crunch</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>sit-up</code></td>
+<td>Sit-up</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>heel-tap</code></td>
+<td>Heel tap</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>toe-touch</code></td>
+<td>Toe touch</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>lying-leg-raise</code></td>
+<td>Lying leg raise</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>bent-knee-leg-raise</code></td>
+<td>Bent-knee leg raise</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>flutter-kick</code></td>
+<td>Flutter kick</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>scissor-kick</code></td>
+<td>Scissor kick</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>mountain-climber</code></td>
+<td>Mountain climber</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>cross-body-mountain-climber</code></td>
+<td>Cross-body mountain climber</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>russian-twist</code></td>
+<td>Russian twist</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>v-up</code></td>
+<td>V-up</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>tuck-up</code></td>
+<td>Tuck-up</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>superman-hold</code></td>
+<td>Superman hold</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>bear-plank</code></td>
+<td>Bear plank</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>plank-up-down</code></td>
+<td>Plank up-down</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>side-plank-reach-through</code></td>
+<td>Side plank reach-through</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>dead-bug-heel-tap</code></td>
+<td>Dead bug heel tap</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+</tbody></table>
+<h3>Conditioning and carries</h3>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Display name</th>
+<th>Logging kind</th>
+<th>Required equipment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>burpee</code></td>
+<td>Burpee</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>squat-thrust</code></td>
+<td>Squat thrust</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>jumping-jack</code></td>
+<td>Jumping jack</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>high-knees</code></td>
+<td>High knees</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>skater-hop</code></td>
+<td>Skater hop</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>dumbbell-thruster</code></td>
+<td>Dumbbell thruster</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-clean</code></td>
+<td>Dumbbell clean</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-clean-and-press</code></td>
+<td>Dumbbell clean and press</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-snatch</code></td>
+<td>Dumbbell snatch</td>
+<td><code>weight_reps</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-farmer-carry</code></td>
+<td>Dumbbell farmer carry</td>
+<td><code>distance_duration</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-suitcase-carry</code></td>
+<td>Dumbbell suitcase carry</td>
+<td><code>distance_duration</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>dumbbell-front-rack-carry</code></td>
+<td>Dumbbell front-rack carry</td>
+<td><code>distance_duration</code></td>
+<td>dumbbells</td>
+</tr>
+<tr>
+<td><code>bear-crawl</code></td>
+<td>Bear crawl</td>
+<td><code>distance_duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>reverse-bear-crawl</code></td>
+<td>Reverse bear crawl</td>
+<td><code>distance_duration</code></td>
+<td>bodyweight</td>
+</tr>
+</tbody></table>
+<h3>Mobility and recovery</h3>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Display name</th>
+<th>Logging kind</th>
+<th>Required equipment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>cat-cow</code></td>
+<td>Cat-cow</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>childs-pose</code></td>
+<td>Child&#39;s pose</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>half-kneeling-thoracic-rotation</code></td>
+<td>Half-kneeling thoracic rotation</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>kneeling-hip-flexor-stretch</code></td>
+<td>Kneeling hip flexor stretch</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>seated-hamstring-stretch</code></td>
+<td>Seated hamstring stretch</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>ninety-ninety-hip-switch</code></td>
+<td>90/90 hip switch</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>figure-four-stretch</code></td>
+<td>Figure-four stretch</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>standing-calf-stretch</code></td>
+<td>Standing calf stretch</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>shoulder-wall-slide</code></td>
+<td>Shoulder wall slide</td>
+<td><code>bodyweight_reps</code></td>
+<td>bodyweight</td>
+</tr>
+<tr>
+<td><code>prone-cobra</code></td>
+<td>Prone cobra</td>
+<td><code>duration</code></td>
+<td>bodyweight</td>
+</tr>
+</tbody></table>
+<h2>Agent workflow</h2>
+<p>The catalog-foundation agent first moves the canonical source into generator-backed category manifests. Each content agent then owns one isolated category file and its tests.</p>
+<p>For every candidate, the content agent must:</p>
+<ol>
+<li>Confirm that the movement is distinct from an existing canonical record and record intentional aliases instead of creating duplicates.</li>
+<li>Confirm that the required equipment fits the existing equipment model.</li>
+<li>Confirm that the logging kind matches what the runner can record without reinterpretation.</li>
+<li>Write concise instructions that describe setup, controlled execution, and a clear stopping condition without medical or outcome claims.</li>
+<li>Add movement family, primary muscles, aliases, and compatibility tests.</li>
+<li>Generate deterministic catalog and seed output.</li>
+<li>Verify public and member-library search, detail, and routine-chooser behavior.</li>
+<li>Leave video status truthful. Do not add an arbitrary video to satisfy a count.</li>
+</ol>
+<p>The video-research agent works later from the private curation checkpoint. It can propose exact movement-variation candidates and fill research evidence, but only a human full-watch review can approve a pair for the production seed.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>The generated catalog contains 135 unique stable slugs after all candidates pass review.</li>
+<li>Every record has complete searchable metadata and exactly three reviewed instructions.</li>
+<li>The library and routine chooser render entries without an approved pair and clearly distinguish app-approved demonstrations from owner-provided links.</li>
+<li>Existing 54 approved starter videos retain their exact validated mappings.</li>
+<li>Catalog generation, seed generation, documentation, and search output are deterministic.</li>
+<li>Representative entries from every category can be added to an owned routine, published, started, logged, and read from immutable history.</li>
+<li>No candidate adds an undeclared equipment category, public owner link, unreviewed catalog embed, or medical claim.</li>
+</ul>
+
+  </main>
+</body>
+</html>

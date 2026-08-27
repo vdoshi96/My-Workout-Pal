@@ -46,9 +46,15 @@ export default async function DayPage({ params, searchParams }: PageProps) {
       <header className="day-header">
         <Link className="back-link" href={`/program?equipment=${profile}`}>
           <Icon name="arrow-left" />
-          Five-day program
+          Five-day starter example
         </Link>
-        <div className="guest-stamp">Guest preview · not saved</div>
+        <div className="day-header-actions">
+          <div className="guest-stamp">Starter preview · not saved</div>
+          <Link className="day-account-link" href="/app" prefetch={false}>
+            <Icon name="sign-in" />
+            My workouts
+          </Link>
+        </div>
       </header>
 
       <section className="day-intro contour-surface">
@@ -67,9 +73,9 @@ export default async function DayPage({ params, searchParams }: PageProps) {
         </div>
       </section>
 
-      <div className="day-layout" id="day-plan">
+      <div className="day-layout" id="day-plan" tabIndex={-1}>
         <section className="route-sheet day-sheet" aria-labelledby="prescriptions-heading">
-          <h2 id="prescriptions-heading">Your route</h2>
+          <h2 id="prescriptions-heading">Example route</h2>
           {selectedDay.sections.map((section) => (
             <section className="prescription-section" key={section.kind}>
               <h3>{section.kind}</h3>

@@ -183,6 +183,8 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 
 .day-page { margin: 0 auto; max-width: 90rem; min-height: 100dvh; padding: 0 clamp(1rem, 4vw, 4rem) 4rem; }
 .day-header { align-items: center; display: flex; justify-content: space-between; min-height: 5rem; }
+.day-header-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; justify-content: flex-end; }
+.day-account-link { align-items: center; display: inline-flex; font-family: var(--font-display); gap: .35rem; letter-spacing: .04em; min-height: 2.75rem; padding: .35rem .55rem; text-decoration: none; text-transform: uppercase; }
 .back-link { align-items: center; display: inline-flex; gap: .4rem; }
 .guest-stamp, .status-stamp { border: 1px solid var(--lichen); color: var(--lichen); font-family: var(--font-display); letter-spacing: .06em; padding: .35rem .55rem; text-transform: uppercase; }
 .day-intro { align-items: center; border-block: 1px solid var(--rule); display: grid; gap: 1rem; grid-template-columns: auto 1fr; padding: clamp(1.5rem, 4vw, 3.5rem); }
@@ -258,7 +260,7 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .member-header { align-items: center; background: var(--ink); color: var(--paper); display: grid; gap: 1rem; min-height: 5.75rem; padding: 1rem clamp(1rem, 4vw, 4rem); }
 .member-header .brand strong { display: block; font-family: var(--font-display); font-size: clamp(1.8rem, 6vw, 2.5rem); font-weight: 600; letter-spacing: -.02em; line-height: .9; text-transform: uppercase; }
 .member-account-controls { align-items: end; display: flex; gap: .7rem; justify-content: space-between; }
-.member-identity { display: none; text-align: right; }
+.member-identity { display: block; flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; text-align: left; }
 .member-identity > span, .member-identity > small { display: block; }
 .member-identity > span { font-weight: 650; }
 .member-identity > small { font-size: .78rem; margin-top: .15rem; }
@@ -593,7 +595,7 @@ svg { display: block; height: 1.4em; width: 1.4em; }
   .member-header { align-content: start; grid-row: 1 / span 2; grid-template-columns: 1fr; min-height: 100dvh; padding: 1.5rem; position: sticky; top: 0; }
   .member-header .brand { align-self: start; }
   .member-account-controls { align-self: end; display: grid; gap: .75rem; grid-row: 2; justify-items: stretch; }
-  .member-identity { display: block; }
+  .member-identity { display: block; text-align: right; }
   .member-session-signout { justify-items: stretch; }
   .member-session-signout button { justify-content: center; width: 100%; }
   .member-session-signout p { text-align: start; }
