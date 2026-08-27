@@ -37,6 +37,7 @@ export type HostedAuthQaStage =
   | "unverified_sign_in"
   | "unverified_session"
   | "verification"
+  | "verified_return_route"
   | "verified_sign_in_navigation"
   | "verified_navigation_missing_cookie"
   | "verified_navigation_app_variant"
@@ -303,6 +304,9 @@ async function runBrowserLifecycle(
 
     setStage("verification");
     await auth.updateUser(created.uid, { emailVerified: true });
+    setStage("verified_return_route");
+    await page.goto(`${config.origin}/sign-in?returnTo=%2Fapp`);
+    await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
     setStage("verified_sign_in_submit");
     const verifiedSessionResponse = page.waitForResponse((response) => {
       const url = new URL(response.url());
