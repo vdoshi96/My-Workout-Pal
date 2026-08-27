@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="1308cec42f6fc6d3c613b7069d4795d2c7664c25526d7bcc69599655b65386d9">
+  <meta name="source-sha256" content="a1e2d541491e507a215cfac6cb55208095ec72bc20a02051a01034903561de9e">
   <title>Hosted authenticated media and zoom QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,7 +39,7 @@
 <li>Media states cover approved pair, Demo 1 selected, Demo 2 selected, one active iframe, direct fallback, first iframe request failure, alternate selection, and runner logging remaining available.</li>
 <li>Zoom states cover default, browser-reported 200 percent, restored default, horizontal overflow, clipped action, unreachable disclosure/dialog control, and lost focus.</li>
 <li>The released authenticated Push runner exposed a retained red result at the <code>zoom_runner_geometry</code> helper stage while the collection, editor, and settings passed. The equivalent 720 CSS-pixel fixture viewport and the hosted document-width check both pass; the failure occurs at that helper&#39;s final landmark assertion because the standalone workout route has no semantic <code>&lt;main&gt;</code>. The correction adds the missing landmark without changing runner state, persistence, or visual layout.</li>
-<li>After the main-landmark correction passed in production, the same hosted replay retained a second red at <code>zoom_runner_accessibility</code>. The credential-free 720 CSS-pixel fixture must run the same serious/critical Axe boundary; if third-party composition prevents reproduction, hosted diagnostics may expose only stable Axe rule IDs and counts.</li>
+<li>After the main-landmark correction passed in production, the same hosted replay retained a second red at <code>zoom_runner_accessibility</code>: <code>aria-allowed-attr</code>, <code>aria-prohibited-attr</code>, and <code>button-name</code> appear only inside the live cross-origin YouTube player document. The identical app-owned runner DOM passes the credential-free serious/critical Axe boundary. Hosted Axe therefore excludes only the exact privacy-enhanced YouTube iframe document; the iframe element itself must have a nonblank accessible title, and each player must separately prove its real accessible <code>Play video</code> to <code>Pause video</code> transition.</li>
 <li>Cleanup states distinguish visible account deletion, exact-UID Admin fallback cleanup, absent identity, zero owned rows, and uncertain cleanup. An uncertain result fails the command and reports that manual cleanup may be required without printing the identity.</li>
 </ul>
 <h2>Domain values and invariants</h2>
@@ -80,7 +80,7 @@
 <li>The owned Push runner exposes the approved exact pair and one iframe; Demo 1 and Demo 2 each visibly enter a playing state after a user gesture.</li>
 <li>With the first embed request deliberately blocked, the runner still exposes Demo 2, its direct fallback, and set logging; Demo 2 reaches playing state.</li>
 <li>Collection, program editor, settings, and runner each pass actual browser-reported 200-percent one-axis geometry and keyboard reachability; zoom is restored.</li>
-<li>A production-component fixture regression at 720 CSS pixels reports no element outside the document viewport, no horizontal document overflow, one visible semantic main landmark, and no serious or critical Axe violation before the hosted replay is accepted.</li>
+<li>A production-component fixture regression at 720 CSS pixels reports no element outside the document viewport, no horizontal document overflow, one visible semantic main landmark, and no serious or critical app-owned Axe violation before the hosted replay is accepted. The live YouTube document is not presented as app-owned accessibility evidence.</li>
 <li>No unexpected first-party console/page/request/HTTP failure occurs. Any accepted third-party warning is exact and documented.</li>
 <li>The disposable Firebase UID is absent, owned Neon row counts return to zero, global counts are unchanged, and the aggregate Firebase count equals baseline.</li>
 <li>No identity, credential, cookie, opaque ID, profile, trace, video, or build/report artifact remains; free space does not materially decrease.</li>

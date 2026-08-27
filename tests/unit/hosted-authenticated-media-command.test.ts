@@ -77,6 +77,10 @@ describe("hosted authenticated media QA command", () => {
     expect(browserSource).toContain("scrollIntoViewIfNeeded");
     expect(browserSource).toContain('{ name: "Play video", exact: true }');
     expect(browserSource).toContain('{ name: "Pause video", exact: true }');
+    expect(browserSource).toContain(
+      '.exclude(\'iframe[src^="https://www.youtube-nocookie.com/embed/"]\')',
+    );
+    expect(browserSource).toContain('toHaveAttribute("title"');
     expect(browserSource).not.toMatch(/screenshot\(|trace:\s*|recordVideo/u);
   });
 });

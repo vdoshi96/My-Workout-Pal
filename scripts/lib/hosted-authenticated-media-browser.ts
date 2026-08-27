@@ -283,7 +283,9 @@ async function exactIdentityCleanup(
 }
 
 async function assertAccessible(page: Page): Promise<void> {
-  const result = await new AxeBuilder({ page }).analyze();
+  const result = await new AxeBuilder({ page })
+    .exclude('iframe[src^="https://www.youtube-nocookie.com/embed/"]')
+    .analyze();
   const violations = result.violations.filter((violation) =>
     violation.impact === "critical" || violation.impact === "serious"
   );
@@ -537,6 +539,7 @@ async function startSelectedVideo(
   const iframe = page.locator(".runner-technique iframe");
   await iframe.scrollIntoViewIfNeeded();
   await expect(iframe).toBeVisible();
+  await expect(iframe).toHaveAttribute("title", /\S/u);
   const frame = page.frameLocator(".runner-technique iframe");
   const play = frame.getByRole("button", { name: "Play video", exact: true });
   setStage("control");
