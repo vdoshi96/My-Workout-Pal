@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="3f7d4e72a997e5b94058c4bfed646ba93f6bba5c38ba127873ff98ca90adbbe1">
+  <meta name="source-sha256" content="e9bfafe6fab4c0de50190cd8cb722478e6cbee50324436a2edc4e364cf4f4e2f">
   <title>Sources · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -70,6 +70,15 @@
 <li>Publication: the optimized WebP and its prompt sidecar are project assets. Superseded generated candidates and private local source outputs are excluded.</li>
 </ul>
 <p>Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.</p>
+<h2>Firebase Admin serverless dependency compatibility</h2>
+<p>Accessed August 27, 2026:</p>
+<ul>
+<li><a href="https://pnpm.io/settings#overrides">pnpm settings</a>: pnpm 11 reads project dependency-resolution settings such as <code>overrides</code> from <code>pnpm-workspace.yaml</code>.</li>
+<li><a href="https://github.com/firebase/firebase-admin-node/issues/3181">Firebase Admin issue 3181</a>: documents the same Firebase Admin, <code>jwks-rsa</code>, <code>jose</code> 6, pnpm, Next.js, and serverless <code>ERR_REQUIRE_ESM</code> failure plus the narrowly scoped <code>jwks-rsa&gt;jose</code> workaround.</li>
+<li><a href="https://github.com/auth0/node-jwks-rsa/issues/507">jwks-rsa issue 507</a>: records the CommonJS <code>require()</code> incompatibility after <code>jose</code> 6 became ESM-only.</li>
+<li><a href="https://nextjs.org/docs/app/api-reference/config/next-config-js/serverExternalPackages">Next.js server external packages</a>: explains that dependencies may use native Node.js <code>require</code>, and lists <code>firebase-admin</code> among automatically externalized packages.</li>
+</ul>
+<p>The project keeps Firebase Admin as the trusted server verifier, constrains only the incompatible transitive edge, and retains a fail-first CommonJS loading regression. Revisit and remove the override only after a newer upstream graph passes the same local and Vercel preview boundary.</p>
 
   </main>
 </body>

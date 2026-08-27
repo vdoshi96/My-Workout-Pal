@@ -94,6 +94,21 @@ Primary references:
 
 Promote the last verified Vercel deployment only when its database schema remains compatible. Confirm the promoted deployment commit and replay a safe smoke test. A deployment rollback does not reverse database migrations.
 
+### Firebase Admin runtime preflight
+
+Firebase Admin is externalized by Next.js and loads through Vercel's native Node.js serverless boundary. As of August 27, 2026, `firebase-admin@14.3.0` reaches `jwks-rsa@4.1.0`, whose CommonJS loader is incompatible with ESM-only `jose@6.2.10` in this deployed boundary. The repository therefore constrains only `jwks-rsa>jose` to reviewed `4.15.9` in `pnpm-workspace.yaml`.
+
+Before preview or production promotion, run:
+
+```sh
+pnpm exec vitest run tests/unit/firebase-admin-serverless-compatibility.test.ts
+pnpm why jose
+pnpm build
+pnpm production:check
+```
+
+The compatibility test must pass with native `require(esm)` interop disabled, and `pnpm why jose` must show the override only through `jwks-rsa` and Firebase Admin. Then replay an unauthenticated private route on the exact Vercel preview. `/app` must resolve to the bounded `/sign-in?returnTo=%2Fapp` path with private no-store headers and no runtime error; a successful build alone is insufficient. Remove the override only after a newer upstream dependency graph passes this same deployed proof.
+
 ### Database recovery
 
 Use forward-compatible migrations. Before a destructive migration, create and verify a recovery point or branch through supported Neon features. Recovery requires an explicit target, impact statement, and verification query. Never run an unscoped restore against production.
