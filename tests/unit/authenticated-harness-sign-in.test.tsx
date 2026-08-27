@@ -1,9 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import HarnessSignInPage, {
-  normalizeHarnessWorkoutReturn,
-} from "../../tests/fixtures/authenticated-app/app/sign-in/page";
+import HarnessSignInPage from "../../tests/fixtures/authenticated-app/app/sign-in/page";
+import { normalizeHarnessWorkoutReturn } from "../../tests/fixtures/authenticated-app/server/harness-workout-return";
 
 const sessionId = "10000000-0000-4000-8000-000000000031";
 

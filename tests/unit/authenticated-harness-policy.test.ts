@@ -235,6 +235,7 @@ describe("credential-free authenticated harness boundary", () => {
     expect(playwrightConfig).not.toContain("-H 0.0.0.0");
     expect(playwrightConfig).toContain('process.env["MWP_AUTH_HARNESS_PORT"]');
     expect(playwrightConfig).not.toContain("const port = 3110");
+    expect(playwrightConfig).toContain("runner-resilience");
     expect(runner).toContain('["exec", "next", "build", "tests/fixtures/authenticated-app", "--webpack"]');
     expect(runner).toContain("const repositoryRoot = resolve(process.cwd())");
     expect(runner).toContain("MWP_AUTH_HARNESS_REPOSITORY_ROOT: repositoryRoot");
@@ -350,6 +351,22 @@ describe("credential-free authenticated harness boundary", () => {
     expect(geometrySpec).toContain('page.on("requestfailed"');
     expect(geometrySpec).toContain("request.failure()?.errorText");
     expect(geometrySpec).toContain("isSupersededNextFlightRequest");
+
+    const resilienceSpec = readFileSync(
+      resolve(
+        repositoryRoot,
+        "tests/authenticated-e2e/runner-resilience.spec.ts",
+      ),
+      "utf8",
+    );
+    expect(resilienceSpec).toContain(
+      "context.route(/^http:\\/\\/127\\.0\\.0\\.1:\\d+\\//",
+    );
+    expect(resilienceSpec).toContain('route.abort("internetdisconnected")');
+    expect(resilienceSpec).toContain('page.on("requestfailed"');
+    expect(resilienceSpec).toContain('url.hostname === "127.0.0.1"');
+    expect(resilienceSpec).toContain("expect(harness.failedRequests).toEqual([])");
+    expect(resilienceSpec).toContain("expect(harness.failedResponses).toEqual([");
 
     const memberProgramHome = readFileSync(
       resolve(repositoryRoot, "src/components/program/member-program-home.tsx"),
