@@ -1,5 +1,16 @@
 # Project log
 
+## 2026-08-27: Launch readiness release
+
+- Resumed from the final completion audit without creating another worktree or delegated worker. The first complete authenticated replay passed 31 cases, skipped two intentional project-scoped cases, and failed only a WebKit phone Settings reload because the authenticated logo issued an unused private `/app` RSC prefetch. A focused policy test failed before the fix, then passed 13 of 13 after the logo adopted the account navigation's `prefetch={false}` boundary.
+- Exact feature checkpoint `c3bb463` passed the focused WebKit case with empty console, page-error, first-party response, and request-failure sets. The rebuilt authenticated matrix passed 32 cases with two intentional skips across six Chromium/WebKit phone, tablet, and desktop projects.
+- The first aggregate passed 697 of 698 assertions and failed only on sandbox-denied loopback binding. The permission-correct `pnpm verify` passed 102 files/698 tests, database 4/34, all 27 exact-two video mappings, PWA and 39-document parity, the production Webpack build, and the 41-route boundary. The fresh public matrix passed 43 cases with one documented WebKit service-worker capability skip.
+- Merged and pushed exact application runtime `a353067558323cc21361fa1919507ee890c0f983`. GitHub reported Vercel success, and production `dpl_BCxN2q8qk5G1kNKkxNF2MzDLTqeB` reached Ready on the public, project, and Git-main aliases. `/`, `/program`, `/library`, and `/sign-in` returned `200` with private no-store and the declared security headers, and the exact-deployment error scan returned no entry.
+- Direct production interaction verified the landing access explanation, both equipment profiles, five day controls, contextual exercise return, two approved demonstrations with one active player and direct fallbacks, read-only workout, sample analytics, filtered library search, and configured sign-in/register/recovery surfaces. The existing authorized Google session reached verified private onboarding. No profile, program, workout, preference, or custom exercise was created under the user's identity.
+- An in-app controller missed one waypoint click immediately after the animated equipment rerender. A clean deployed Chromium replay of Lower → Barbell + rack → Dumbbells → Push ended on `Push day` with `/program/push?equipment=dumbbells` and zero console errors, classifying the miss as controller coordinate timing rather than an application defect.
+- The user confirmed that inbox delivery, Google reauthentication, and the optional Vercel team-wide pause decision are covered and do not require more work. The release is launch-ready without repeating those user-owned checks.
+- Deleted every generated root and fixture build, Playwright result, and report after extracting evidence. Retained only two synthetic Settings screenshots from the newest QA run plus the reusable dependency tree and pnpm store; the data volume had about 187 GiB free during closeout.
+
 ## 2026-08-27: Authenticated Vercel Spend Management inspection
 
 - Completed Vercel two-factor authentication through the user-controlled handoff and inspected the Pro team's billing controls read-only. The existing on-demand budget is $200; Spend Management is enabled in alerts-only mode; pause-all-production-projects is off; and no webhook is configured.
