@@ -99,19 +99,23 @@ export function SettingsForm({
       setFirebaseIdentityState(state);
       if (state.status === "unavailable") return;
 
-      unsubscribe = onAuthStateChanged(
-        auth,
-        (currentUser) => {
-          if (active) {
-            setFirebaseIdentityState(
-              classifyFirebaseClientIdentity(currentUser, ownerUid),
-            );
-          }
-        },
-        () => {
-          if (active) setFirebaseIdentityState({ status: "unavailable" });
-        },
-      );
+      try {
+        unsubscribe = onAuthStateChanged(
+          auth,
+          (currentUser) => {
+            if (active) {
+              setFirebaseIdentityState(
+                classifyFirebaseClientIdentity(currentUser, ownerUid),
+              );
+            }
+          },
+          () => {
+            if (active) setFirebaseIdentityState({ status: "unavailable" });
+          },
+        );
+      } catch {
+        setFirebaseIdentityState({ status: "unavailable" });
+      }
     });
 
     return () => {
@@ -474,7 +478,7 @@ export function SettingsForm({
                 <button
                   className="danger-action"
                   disabled={
-                  deleteBusy ||
+                    deleteBusy ||
                     !deletionAvailable ||
                     deleteConfirmation !== "DELETE" ||
                     (viewerProvider === "password" && deletePassword.length === 0)
