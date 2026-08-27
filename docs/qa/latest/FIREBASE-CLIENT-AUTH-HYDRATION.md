@@ -32,11 +32,13 @@ The slice fixes one bounded account-deletion prerequisite: a fresh Settings page
 - `pnpm test:e2e:authenticated` passes 31 cases with one intentional engine-scoped skip across Chromium and WebKit phone, tablet, and desktop projects.
 - The focused full-page hydration replay passes 2 of 2 in Chromium desktop and WebKit phone. It asserts the visible safe state, disabled destructive action, exact bounded return route, no UID disclosure, serious/critical Axe results, no horizontal overflow, and empty unexpected console, page-error, first-party HTTP, and request-failure sets.
 
-## Preview evidence
+## Preview and production evidence
 
 Exact checkpoint `96c85277d604c1219c72dc788c711c838d6df4c0` is Ready as protected Vercel preview `dpl_7w5AQu2iwbrY7wVhD7SGtUQuAJSH`; GitHub reports the Vercel status successful. Read-only preview requests to `/` and `/sign-in` return `200` with private no-store, a fresh nonce CSP, HSTS, frame denial, strict referrer policy, and the declared permissions policy. An unauthenticated `/app/settings` response contains the exact bounded Next redirect to `/sign-in?returnTo=%2Fapp` and no application error. The one-hour preview error-log query returned no entries.
 
 The protected preview verifies the server-rendered and unauthenticated boundaries. It does not prove a matching persisted Firebase browser identity because no disposable provider session was introduced into that hosted replay.
+
+The identical checkpoint was fast-forwarded to `main` and released as Ready production deployment `dpl_5AHWLrSpYNF3dTrEyKJN5qbSMzcz`. GitHub reports success for exact SHA `5e64b0b885134ab20bf92a967ee656af470cf708`, and the public alias resolves to it. Read-only production replay returned `200` for `/`, `/program`, `/library`, `/sign-in`, and unauthenticated `/app/settings`; all retained private no-store, nonce CSP, HSTS, frame denial, strict referrer policy, and the declared permissions policy. Settings contained the bounded `/sign-in?returnTo=%2Fapp` redirect, and the one-hour production error scan returned no entries.
 
 ## Browser evidence
 

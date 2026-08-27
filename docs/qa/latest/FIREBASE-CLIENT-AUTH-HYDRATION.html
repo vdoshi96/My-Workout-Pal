@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="3327a2cd0cc50b2a5b3fbd9289d65a68da7602053d7e8862450b862299be8179">
+  <meta name="source-sha256" content="aacf3d471847741cf9c262d948007cf408c93fd11a48f6df5ecf00fb4f8dd85e">
   <title>Firebase client-auth hydration QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -57,9 +57,10 @@
 <li><code>pnpm test:e2e:authenticated</code> passes 31 cases with one intentional engine-scoped skip across Chromium and WebKit phone, tablet, and desktop projects.</li>
 <li>The focused full-page hydration replay passes 2 of 2 in Chromium desktop and WebKit phone. It asserts the visible safe state, disabled destructive action, exact bounded return route, no UID disclosure, serious/critical Axe results, no horizontal overflow, and empty unexpected console, page-error, first-party HTTP, and request-failure sets.</li>
 </ul>
-<h2>Preview evidence</h2>
+<h2>Preview and production evidence</h2>
 <p>Exact checkpoint <code>96c85277d604c1219c72dc788c711c838d6df4c0</code> is Ready as protected Vercel preview <code>dpl_7w5AQu2iwbrY7wVhD7SGtUQuAJSH</code>; GitHub reports the Vercel status successful. Read-only preview requests to <code>/</code> and <code>/sign-in</code> return <code>200</code> with private no-store, a fresh nonce CSP, HSTS, frame denial, strict referrer policy, and the declared permissions policy. An unauthenticated <code>/app/settings</code> response contains the exact bounded Next redirect to <code>/sign-in?returnTo=%2Fapp</code> and no application error. The one-hour preview error-log query returned no entries.</p>
 <p>The protected preview verifies the server-rendered and unauthenticated boundaries. It does not prove a matching persisted Firebase browser identity because no disposable provider session was introduced into that hosted replay.</p>
+<p>The identical checkpoint was fast-forwarded to <code>main</code> and released as Ready production deployment <code>dpl_5AHWLrSpYNF3dTrEyKJN5qbSMzcz</code>. GitHub reports success for exact SHA <code>5e64b0b885134ab20bf92a967ee656af470cf708</code>, and the public alias resolves to it. Read-only production replay returned <code>200</code> for <code>/</code>, <code>/program</code>, <code>/library</code>, <code>/sign-in</code>, and unauthenticated <code>/app/settings</code>; all retained private no-store, nonce CSP, HSTS, frame denial, strict referrer policy, and the declared permissions policy. Settings contained the bounded <code>/sign-in?returnTo=%2Fapp</code> redirect, and the one-hour production error scan returned no entries.</p>
 <h2>Browser evidence</h2>
 <h3>Chromium desktop: settled missing client identity</h3>
 <p><img src="firebase-client-auth-missing-chromium-desktop.png" alt="Desktop Settings state after Firebase settles without a browser identity"></p>
