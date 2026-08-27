@@ -30,6 +30,9 @@ describe("package runtime scripts", () => {
     expect(packageJson.scripts?.["test:e2e:hosted-auth"]).toBe(
       "node --env-file-if-exists=.env.local --import tsx scripts/test-e2e-hosted-auth.ts",
     );
+    expect(packageJson.scripts?.["test:e2e:hosted-deletion-idor"]).toBe(
+      "node --env-file-if-exists=.env.local --import tsx scripts/test-e2e-hosted-deletion-idor.ts",
+    );
     expect(packageJson.scripts?.["verify"]).toBe(
       "pnpm typecheck && pnpm lint && pnpm test && pnpm db:check && pnpm seed:check && pnpm pwa:check && pnpm docs:check && pnpm build && pnpm production:check",
     );
