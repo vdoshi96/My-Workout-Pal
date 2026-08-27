@@ -38,6 +38,9 @@ export type HostedAuthQaStage =
   | "unverified_session"
   | "verification"
   | "verified_sign_in_navigation"
+  | "verified_navigation_missing_cookie"
+  | "verified_navigation_returned_sign_in"
+  | "verified_navigation_unexpected_path"
   | "verified_sign_in_submit"
   | "verified_session_create"
   | "verified_session_create_rejected"
@@ -316,8 +319,19 @@ async function runBrowserLifecycle(
       setStage("verified_session_create_rejected");
       assert.ok(sessionResponse.ok());
     }
+    setStage("verified_navigation_missing_cookie");
+    await assertSecureSessionCookie(context, config.origin);
     setStage("verified_sign_in_navigation");
-    await page.waitForURL(`${config.origin}/app`);
+    try {
+      await page.waitForURL(`${config.origin}/app`, { timeout: 10_000 });
+    } catch (error) {
+      setStage(
+        new URL(page.url()).pathname === "/sign-in"
+          ? "verified_navigation_returned_sign_in"
+          : "verified_navigation_unexpected_path",
+      );
+      throw error;
+    }
     setStage("verified_session_ui");
     await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Create my program" })).toBeEnabled();
