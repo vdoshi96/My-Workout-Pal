@@ -23,6 +23,10 @@ const evidencePaths = {
 
 export type HostedAuthQaStage =
   | "assertions"
+  | "assertions_console"
+  | "assertions_mutations"
+  | "assertions_request_failures"
+  | "assertions_response_failures"
   | "browser_launch"
   | "cleanup"
   | "duplicate_registration"
@@ -152,11 +156,9 @@ function attachFailureCollectors(page: Page, origin: string) {
   });
 
   return {
-    assertClean: () => {
-      assert.deepEqual(consoleFailures, []);
-      assert.deepEqual(responseFailures, []);
-      assert.deepEqual(requestFailures, []);
-    },
+    assertConsoleClean: () => assert.deepEqual(consoleFailures, []),
+    assertRequestFailuresClean: () => assert.deepEqual(requestFailures, []),
+    assertResponseFailuresClean: () => assert.deepEqual(responseFailures, []),
     firstPartyMutations,
   };
 }
@@ -358,7 +360,13 @@ async function runBrowserLifecycle(
     await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
 
     setStage("assertions");
-    failures.assertClean();
+    setStage("assertions_console");
+    failures.assertConsoleClean();
+    setStage("assertions_response_failures");
+    failures.assertResponseFailuresClean();
+    setStage("assertions_request_failures");
+    failures.assertRequestFailuresClean();
+    setStage("assertions_mutations");
     assert.deepEqual(failures.firstPartyMutations, [
       "POST /api/auth/session",
       "DELETE /api/auth/session",
