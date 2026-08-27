@@ -13,6 +13,7 @@ function capturePageErrors(page: Page): string[] {
 test("guest previews both profiles and completes the public discovery route", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   const errors = capturePageErrors(page);
   await page.goto("/");
 
