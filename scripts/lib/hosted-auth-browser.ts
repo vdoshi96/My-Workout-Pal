@@ -39,6 +39,7 @@ export type HostedAuthQaStage =
   | "assertions_request_failures_static_svg"
   | "assertions_request_failures_static_webmanifest"
   | "assertions_request_failures_static_webmanifest_failed"
+  | "assertions_request_failures_static_webmanifest_unknown"
   | "assertions_request_failures_static_webp"
   | "assertions_request_failures_sign_in"
   | "assertions_response_failures"
@@ -218,7 +219,9 @@ function attachFailureCollectors(page: Page, origin: string) {
         if (pathname.endsWith(".webmanifest")) {
           return errorText === "net::ERR_FAILED"
             ? "static_webmanifest_failed"
-            : "static_webmanifest";
+            : errorText === "unknown"
+              ? "static_webmanifest_unknown"
+              : "static_webmanifest";
         }
         if (pathname.endsWith(".webp")) return "static_webp";
         return "other";
@@ -235,6 +238,7 @@ function attachFailureCollectors(page: Page, origin: string) {
         case "static_svg": return "assertions_request_failures_static_svg";
         case "static_webmanifest": return "assertions_request_failures_static_webmanifest";
         case "static_webmanifest_failed": return "assertions_request_failures_static_webmanifest_failed";
+        case "static_webmanifest_unknown": return "assertions_request_failures_static_webmanifest_unknown";
         case "static_webp": return "assertions_request_failures_static_webp";
         default: return "assertions_request_failures_other";
       }
