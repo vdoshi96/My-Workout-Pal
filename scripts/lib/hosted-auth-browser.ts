@@ -22,31 +22,11 @@ const evidencePaths = {
 } as const;
 
 export type HostedAuthQaStage =
-  | "assertions"
   | "assertions_console_errors"
   | "assertions_console_warnings"
   | "assertions_mutations"
   | "assertions_page_errors"
   | "assertions_request_failures"
-  | "assertions_request_failures_api"
-  | "assertions_request_failures_app"
-  | "assertions_request_failures_asset"
-  | "assertions_request_failures_mixed"
-  | "assertions_request_failures_other"
-  | "assertions_request_failures_public_root"
-  | "assertions_request_failures_service_worker"
-  | "assertions_request_failures_static_png"
-  | "assertions_request_failures_static_svg"
-  | "assertions_request_failures_static_webmanifest"
-  | "assertions_request_failures_static_webmanifest_aborted_variant"
-  | "assertions_request_failures_static_webmanifest_failed"
-  | "assertions_request_failures_static_webmanifest_nested"
-  | "assertions_request_failures_static_webmanifest_non_get"
-  | "assertions_request_failures_static_webmanifest_head"
-  | "assertions_request_failures_static_webmanifest_options"
-  | "assertions_request_failures_static_webmanifest_unknown"
-  | "assertions_request_failures_static_webp"
-  | "assertions_request_failures_sign_in"
   | "assertions_response_failures"
   | "browser_launch"
   | "cleanup"
@@ -64,11 +44,6 @@ export type HostedAuthQaStage =
   | "verification"
   | "verified_return_route"
   | "verified_sign_in_navigation"
-  | "verified_navigation_missing_cookie"
-  | "verified_navigation_app_variant"
-  | "verified_navigation_public_root"
-  | "verified_navigation_returned_sign_in"
-  | "verified_navigation_unexpected_path"
   | "verified_sign_in_submit"
   | "verified_session_create"
   | "verified_session_create_rejected"
@@ -210,60 +185,6 @@ function attachFailureCollectors(page: Page, origin: string) {
     assertRequestFailuresClean: () => assert.deepEqual(requestFailures, []),
     assertResponseFailuresClean: () => assert.deepEqual(responseFailures, []),
     firstPartyMutations,
-    requestFailureStage: (): HostedAuthQaStage | undefined => {
-      if (requestFailures.length === 0) return undefined;
-      const categories = new Set(requestFailures.map((failure) => {
-        const [method = "", pathname = "", errorText = "unknown"] = failure.split(" ");
-        if (pathname.startsWith("/api/")) return "api";
-        if (pathname.startsWith("/_next/")) return "asset";
-        if (pathname === "/app") return "app";
-        if (pathname === "/sign-in") return "sign_in";
-        if (pathname === "/") return "public_root";
-        if (pathname === "/service-worker.js") return "service_worker";
-        if (pathname.endsWith(".png")) return "static_png";
-        if (pathname.endsWith(".svg")) return "static_svg";
-        if (pathname.endsWith(".webmanifest")) {
-          return pathname !== "/manifest.webmanifest"
-            ? "static_webmanifest_nested"
-            : method === "HEAD"
-              ? "static_webmanifest_head"
-              : method === "OPTIONS"
-                ? "static_webmanifest_options"
-                : method !== "GET"
-                  ? "static_webmanifest_non_get"
-              : errorText.startsWith("net::ERR_ABORTED")
-            ? "static_webmanifest_aborted_variant"
-            : errorText === "net::ERR_FAILED"
-            ? "static_webmanifest_failed"
-            : errorText === "unknown"
-              ? "static_webmanifest_unknown"
-              : "static_webmanifest";
-        }
-        if (pathname.endsWith(".webp")) return "static_webp";
-        return "other";
-      }));
-      if (categories.size > 1) return "assertions_request_failures_mixed";
-      switch ([...categories][0]) {
-        case "api": return "assertions_request_failures_api";
-        case "app": return "assertions_request_failures_app";
-        case "asset": return "assertions_request_failures_asset";
-        case "sign_in": return "assertions_request_failures_sign_in";
-        case "public_root": return "assertions_request_failures_public_root";
-        case "service_worker": return "assertions_request_failures_service_worker";
-        case "static_png": return "assertions_request_failures_static_png";
-        case "static_svg": return "assertions_request_failures_static_svg";
-        case "static_webmanifest": return "assertions_request_failures_static_webmanifest";
-        case "static_webmanifest_aborted_variant": return "assertions_request_failures_static_webmanifest_aborted_variant";
-        case "static_webmanifest_failed": return "assertions_request_failures_static_webmanifest_failed";
-        case "static_webmanifest_nested": return "assertions_request_failures_static_webmanifest_nested";
-        case "static_webmanifest_non_get": return "assertions_request_failures_static_webmanifest_non_get";
-        case "static_webmanifest_head": return "assertions_request_failures_static_webmanifest_head";
-        case "static_webmanifest_options": return "assertions_request_failures_static_webmanifest_options";
-        case "static_webmanifest_unknown": return "assertions_request_failures_static_webmanifest_unknown";
-        case "static_webp": return "assertions_request_failures_static_webp";
-        default: return "assertions_request_failures_other";
-      }
-    },
   };
 }
 
@@ -450,22 +371,10 @@ async function runBrowserLifecycle(
       setStage("verified_session_create_rejected");
       assert.ok(sessionResponse.ok());
     }
-    setStage("verified_navigation_missing_cookie");
+    setStage("verified_session_cookie");
     await assertSecureSessionCookie(context, config.origin);
     setStage("verified_sign_in_navigation");
-    try {
-      await page.waitForURL(`${config.origin}/app`, { timeout: 10_000 });
-    } catch (error) {
-      const currentPath = new URL(page.url()).pathname;
-      setStage(currentPath === "/app"
-        ? "verified_navigation_app_variant"
-        : currentPath === "/sign-in"
-          ? "verified_navigation_returned_sign_in"
-          : currentPath === "/"
-            ? "verified_navigation_public_root"
-            : "verified_navigation_unexpected_path");
-      throw error;
-    }
+    await page.waitForURL(`${config.origin}/app`, { timeout: 10_000 });
     setStage("verified_session_ui");
     await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Create my program" })).toBeEnabled();
@@ -482,7 +391,6 @@ async function runBrowserLifecycle(
     await page.waitForURL(`${config.origin}/sign-in?returnTo=%2Fapp`);
     await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
 
-    setStage("assertions");
     setStage("assertions_console_errors");
     failures.assertConsoleErrorsClean(expectedConsoleHttpStatuses);
     setStage("assertions_console_warnings");
@@ -492,8 +400,6 @@ async function runBrowserLifecycle(
     setStage("assertions_response_failures");
     failures.assertResponseFailuresClean();
     setStage("assertions_request_failures");
-    const requestFailureStage = failures.requestFailureStage();
-    if (requestFailureStage) setStage(requestFailureStage);
     failures.assertRequestFailuresClean();
     setStage("assertions_mutations");
     assert.deepEqual(failures.firstPartyMutations, [
