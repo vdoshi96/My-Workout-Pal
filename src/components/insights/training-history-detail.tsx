@@ -6,7 +6,9 @@ import {
   formatInsightDuration,
   formatInsightWeight,
 } from "@/components/insights/training-insights-presenters";
+import { formatCardioPace } from "@/components/workout/workout-runner-presenters";
 import { Icon } from "@/components/ui/icon";
+import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import type {
   TrainingSessionDetail,
   TrainingSetView,
@@ -26,9 +28,12 @@ function setMeasurement(
     } · ${repetitions}`;
   }
   if (set.kind === "bodyweight_reps") {
-    return set.repetitions === undefined
+    const bodyweight = set.repetitions === undefined
       ? repetitions
       : `${set.repetitions} bodyweight reps`;
+    return set.addedWeightKg === undefined
+      ? bodyweight
+      : `${bodyweight} · ${formatInsightWeight(set.addedWeightKg, unitSystem)} added`;
   }
   if (set.kind === "duration") return formatInsightDuration(set.durationSeconds);
   const distance =
@@ -36,6 +41,41 @@ function setMeasurement(
       ? "Distance not recorded"
       : formatInsightDistance(set.distanceMeters, unitSystem);
   return `${distance} · ${formatInsightDuration(set.durationSeconds)}`;
+}
+
+function prescriptionRange(
+  exercise: TrainingSessionDetail["exercises"][number],
+): string | undefined {
+  if (
+    exercise.minimumReps !== undefined &&
+    exercise.maximumReps !== undefined
+  ) {
+    return exercise.minimumReps === exercise.maximumReps
+      ? `${exercise.minimumReps} reps`
+      : `${exercise.minimumReps}–${exercise.maximumReps} reps`;
+  }
+  if (
+    exercise.minimumSeconds !== undefined &&
+    exercise.maximumSeconds !== undefined
+  ) {
+    return exercise.minimumSeconds === exercise.maximumSeconds
+      ? `${exercise.minimumSeconds} seconds`
+      : `${exercise.minimumSeconds}–${exercise.maximumSeconds} seconds`;
+  }
+  return undefined;
+}
+
+function prescriptionTarget(
+  exercise: TrainingSessionDetail["exercises"][number],
+  unitSystem: "imperial" | "metric",
+): string | undefined {
+  if (exercise.targetWeightKg !== undefined) {
+    return formatInsightWeight(exercise.targetWeightKg, unitSystem);
+  }
+  if (exercise.targetDistanceMeters !== undefined) {
+    return formatInsightDistance(exercise.targetDistanceMeters, unitSystem);
+  }
+  return undefined;
 }
 
 export function TrainingHistoryDetail({
@@ -71,7 +111,10 @@ export function TrainingHistoryDetail({
       </aside>
 
       <ol className="history-exercises">
-        {session.exercises.map((exercise) => (
+        {session.exercises.map((exercise) => {
+          const target = prescriptionTarget(exercise, unitSystem);
+          const range = prescriptionRange(exercise);
+          return (
           <li key={exercise.id}>
             <header>
               <span>{String(exercise.position).padStart(2, "0")}</span>
@@ -86,6 +129,45 @@ export function TrainingHistoryDetail({
               <p className="history-substitution">
                 Substitution: {exercise.substitutionReason}
               </p>
+            ) : null}
+            {exercise.equipmentProfileKind || target || exercise.prescriptionNote ? (
+              <dl className="history-prescription-context">
+                {exercise.equipmentProfileKind ? (
+                  <div>
+                    <dt>Equipment profile</dt>
+                    <dd>{EQUIPMENT_PROFILES[exercise.equipmentProfileKind].label}</dd>
+                  </div>
+                ) : null}
+                {target ? (
+                  <div>
+                    <dt>Plan target</dt>
+                    <dd>{target}</dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt>Plan sets</dt>
+                  <dd>
+                    {exercise.setCount} {exercise.setKind ? `${exercise.setKind} ` : ""}
+                    set{exercise.setCount === 1 ? "" : "s"}
+                  </dd>
+                </div>
+                {range ? (
+                  <div>
+                    <dt>Target range</dt>
+                    <dd>{range}</dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt>Rest target</dt>
+                  <dd>{formatInsightDuration(exercise.restSeconds)}</dd>
+                </div>
+                {exercise.prescriptionNote ? (
+                  <div>
+                    <dt>Program note</dt>
+                    <dd>{exercise.prescriptionNote}</dd>
+                  </div>
+                ) : null}
+              </dl>
             ) : null}
             {exercise.note ? (
               <p className="history-note">
@@ -112,7 +194,8 @@ export function TrainingHistoryDetail({
               </ol>
             )}
           </li>
-        ))}
+          );
+        })}
       </ol>
 
       {session.cardio ? (
@@ -140,6 +223,16 @@ export function TrainingHistoryDetail({
                 {session.cardio.inclinePercent === undefined
                   ? "Not recorded"
                   : `${session.cardio.inclinePercent}%`}
+              </dd>
+            </div>
+            <div>
+              <dt>Pace</dt>
+              <dd>
+                {session.cardio.paceSecondsPerKilometer === undefined
+                  ? "Not recorded"
+                  : formatCardioPace(session.cardio.paceSecondsPerKilometer, {
+                      unitSystem,
+                    })}
               </dd>
             </div>
           </dl>

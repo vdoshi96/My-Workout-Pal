@@ -4,6 +4,7 @@ import {
   POUNDS_PER_KILOGRAM,
   buildProgressSummarySeries,
   calculateEpleyOneRepMax,
+  buildPersonalRecordProjectionCandidates,
   calculateWorkoutVolume,
   compareRecordValues,
   convertWeight,
@@ -174,6 +175,72 @@ describe("Epley estimated one-repetition maximum", () => {
         }),
       ),
     ).toBeCloseTo(23.3333333333, 10);
+  });
+});
+
+describe("personal-record projection candidates", () => {
+  it("projects every logging kind at the database scale and excludes warm-ups", () => {
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "weight_reps",
+      weightKg: 12.3456,
+      repetitions: 7,
+    })).toEqual([
+      { recordType: "max_weight", value: 12.346 },
+      { recordType: "max_repetitions", value: 7 },
+      { recordType: "volume", value: 86.419 },
+      { recordType: "estimated_1rm", value: 15.226 },
+    ]);
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "bodyweight_reps",
+      repetitions: 11,
+      addedWeightKg: 20,
+    })).toEqual([
+      { recordType: "max_repetitions", value: 11 },
+    ]);
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "duration",
+      durationSeconds: 45,
+    })).toEqual([
+      { recordType: "duration", value: 45 },
+    ]);
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "distance_duration",
+      distanceMeters: 123.4567,
+      durationSeconds: 91,
+    })).toEqual([
+      { recordType: "distance", value: 123.457 },
+      { recordType: "duration", value: 91 },
+    ]);
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "weight_reps",
+      weightKg: 12,
+      repetitions: 7,
+      isWarmup: true,
+    })).toEqual([]);
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "weight_reps",
+      weightKg: 0,
+      repetitions: 7,
+    })).toEqual([
+      { recordType: "max_repetitions", value: 7 },
+    ]);
+  });
+
+  it("fails closed for malformed or nonfinite measurements", () => {
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "weight_reps",
+      weightKg: Number.NaN,
+      repetitions: 7,
+    })).toEqual([]);
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "distance_duration",
+      distanceMeters: Number.POSITIVE_INFINITY,
+      durationSeconds: 91,
+    })).toEqual([]);
+    expect(buildPersonalRecordProjectionCandidates({
+      kind: "duration",
+      durationSeconds: 0,
+    })).toEqual([]);
   });
 });
 

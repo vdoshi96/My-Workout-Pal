@@ -8,6 +8,7 @@ import {
   listCatalogExercises,
   listOwnedCustomExercises,
 } from "@/domain/exercises/library";
+import { normalizedMemberLibraryQuery } from "@/domain/exercises/member-library-query";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import { listCustomExercises } from "@/server/repositories/custom-exercises";
 import {
@@ -18,7 +19,7 @@ import {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type PageProps = Readonly<{ searchParams: Promise<{ q?: string }> }>;
+type PageProps = Readonly<{ searchParams: Promise<{ q?: unknown }> }>;
 
 async function loadLibrary() {
   const viewer = await getCurrentViewer();
@@ -39,7 +40,7 @@ async function loadLibrary() {
 export default async function MemberLibraryPage({ searchParams }: PageProps) {
   const [{ q }, data] = await Promise.all([searchParams, loadLibrary()]);
   if (!data?.profileProgram.activeProgram) redirect("/app");
-  const query = q?.trim().slice(0, 120) ?? "";
+  const query = normalizedMemberLibraryQuery(q);
   const profileKind = data.profileProgram.equipment.profileKind;
   const profile = EQUIPMENT_PROFILES[profileKind];
   const catalogExercises = listCatalogExercises({ profile, query });
@@ -112,7 +113,7 @@ export default async function MemberLibraryPage({ searchParams }: PageProps) {
               <ul className="member-library-list">
                 {catalogExercises.map((exercise) => (
                   <li key={exercise.slug}>
-                    <Link href={`/library/${exercise.slug}?equipment=${profileKind}`}>
+                    <Link href={`/library/${exercise.slug}?equipment=${profileKind}`} prefetch={false}>
                       <span><strong>{exercise.name}</strong><small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.join(" + ")}</small></span>
                       <span>Canonical</span><Icon name="chevron-right" />
                     </Link>

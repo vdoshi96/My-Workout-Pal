@@ -83,6 +83,19 @@ describe("credential-free authenticated harness boundary", () => {
     expect(
       harnessRequestContext(
         new Headers({
+          [HARNESS_SCENARIO_HEADER]: "accept-next-program-publish-then-error",
+          [HARNESS_SCOPE_HEADER]: "program-publish-recovery",
+          [HARNESS_VIEWER_HEADER]: "alice",
+        }),
+      ),
+    ).toMatchObject({
+      scenario: "accept-next-program-publish-then-error",
+      scope: "program-publish-recovery",
+      viewer: { uid: "qa-auth-harness-alice" },
+    });
+    expect(
+      harnessRequestContext(
+        new Headers({
           [HARNESS_SCENARIO_HEADER]: "expire-session",
           [HARNESS_VIEWER_HEADER]: "alice",
         }),
@@ -198,6 +211,9 @@ describe("credential-free authenticated harness boundary", () => {
     expect(runner).not.toContain("...process.env");
     expect(runner).toContain("const inheritedEnvironmentNames");
     expect(runner).toContain('MWP_AUTH_HARNESS_PORT: String(await availableLoopbackPort())');
+    expect(runner).toContain('const requestedPlaywrightArguments = process.argv.slice(2)');
+    expect(runner).toContain('requestedPlaywrightArguments[0] === "--"');
+    expect(runner).toContain('...requestedPlaywrightArguments');
     expect(runner).not.toMatch(
       /DATABASE_URL|FIREBASE_|GCLOUD_PROJECT|GOOGLE_APPLICATION_CREDENTIALS|GOOGLE_CLOUD_PROJECT|NEON_|POSTGRES_|VERCEL_|YOUTUBE_API_KEY/,
     );
@@ -234,6 +250,46 @@ describe("credential-free authenticated harness boundary", () => {
     );
   });
 
+  it("keeps both browser engines accountable at phone, tablet, and desktop widths", () => {
+    const playwrightConfig = readFileSync(
+      resolve(repositoryRoot, "playwright.authenticated.config.ts"),
+      "utf8",
+    );
+    const geometrySpec = resolve(
+      repositoryRoot,
+      "tests/authenticated-e2e/customization-geometry.spec.ts",
+    );
+
+    for (const project of [
+      "chromium-phone",
+      "chromium-tablet",
+      "chromium-desktop",
+      "webkit-phone",
+      "webkit-tablet",
+      "webkit-desktop",
+    ]) {
+      expect(playwrightConfig).toContain(`name: "${project}"`);
+    }
+    for (const device of ["Pixel 7", "Galaxy Tab S4", "iPhone 14", "iPad Pro 11"]) {
+      expect(playwrightConfig).toContain(`devices["${device}"]`);
+    }
+    expect(existsSync(geometrySpec)).toBe(true);
+    if (!existsSync(geometrySpec)) return;
+
+    const geometry = readFileSync(geometrySpec, "utf8");
+    expect(geometry).toContain("emulateMedia");
+    expect(geometry).toContain('colorScheme: "dark"');
+    expect(geometry).toContain('reducedMotion: "reduce"');
+    expect(geometry).toContain('forcedColors: "active"');
+    expect(geometry).toContain("testInfo.project.use.hasTouch");
+    expect(geometry).toContain("testInfo.project.use.isMobile");
+    expect(geometry).toContain("navigator.maxTouchPoints");
+    expect(geometry).toContain('/app/library/custom/new');
+    expect(geometry).toContain("scrollWidth");
+    expect(geometry).not.toContain("deviceScaleFactor");
+    expect(geometry).not.toContain("style.zoom");
+  });
+
   it("keeps synthetic headers first-party and stubs only the external embed document", () => {
     const browserSpec = readFileSync(
       resolve(repositoryRoot, "tests/authenticated-e2e/onboarding.spec.ts"),
@@ -247,6 +303,19 @@ describe("credential-free authenticated harness boundary", () => {
     expect(browserSpec).not.toContain("youtubei/v1");
     expect(browserSpec).not.toContain("api/stats/atr");
     expect(browserSpec).not.toContain("extraHTTPHeaders");
+    expect(browserSpec).toContain('page.on("requestfailed"');
+    expect(browserSpec).toContain("request.failure()?.errorText");
+    expect(browserSpec).toContain("isSupersededNextFlightRequest");
+    expect(browserSpec).toContain('url.searchParams.has("_rsc")');
+    expect(browserSpec).toContain('request.headers()["rsc"] === "1"');
+
+    const geometrySpec = readFileSync(
+      resolve(repositoryRoot, "tests/authenticated-e2e/customization-geometry.spec.ts"),
+      "utf8",
+    );
+    expect(geometrySpec).toContain('page.on("requestfailed"');
+    expect(geometrySpec).toContain("request.failure()?.errorText");
+    expect(geometrySpec).toContain("isSupersededNextFlightRequest");
 
     const memberProgramHome = readFileSync(
       resolve(repositoryRoot, "src/components/program/member-program-home.tsx"),
@@ -255,6 +324,12 @@ describe("credential-free authenticated harness boundary", () => {
     expect(memberProgramHome).toContain(
       '<Link href={`/app/program/${day.dayKey}`} prefetch={false}>',
     );
+
+    const authenticatedNav = readFileSync(
+      resolve(repositoryRoot, "src/components/layout/authenticated-nav.tsx"),
+      "utf8",
+    );
+    expect(authenticatedNav.match(/prefetch=\{false\}/gu)).toHaveLength(1);
 
     const fixtureDay = readFileSync(
       resolve(
@@ -270,5 +345,16 @@ describe("credential-free authenticated harness boundary", () => {
       "utf8",
     );
     expect(productionDay.match(/prefetch=\{false\}/gu)).toHaveLength(2);
+
+    const productionLibrary = readFileSync(
+      resolve(repositoryRoot, "src/app/app/library/page.tsx"),
+      "utf8",
+    );
+    const fixtureLibrary = readFileSync(
+      resolve(repositoryRoot, "tests/fixtures/authenticated-app/app/app/library/page.tsx"),
+      "utf8",
+    );
+    expect(productionLibrary.match(/prefetch=\{false\}/gu)).toHaveLength(1);
+    expect(fixtureLibrary.match(/prefetch=\{false\}/gu)).toHaveLength(1);
   });
 });

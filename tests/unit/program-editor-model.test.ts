@@ -1,13 +1,30 @@
 import { describe, expect, it } from "vitest";
 
+import { programPublishRequestSchema } from "@/domain/programs/publication";
+import {
+  parseEquipmentChangeResponse,
+  parseOnboardingResponse,
+  parseProgramPublishResponse,
+  parseProgramRevisionMutationResponse,
+} from "@/components/program/program-mutation-response";
 import {
   addProgramPrescription,
+  addProgramSection,
   filterProgramExerciseCandidates,
+  programEditorCanonicalValue,
+  programEditorDisplayValue,
+  programEditorDraftFromPublishInput,
   programPublishInputFromReadModel,
+  programEditorUnitLabels,
+  removeProgramSection,
   removeProgramPrescription,
   replaceProgramPrescription,
+  renameProgramSection,
+  reorderProgramSection,
   reorderProgramPrescription,
+  reviewProgramSectionRemoval,
   stripLocalProgramPrescriptionIds,
+  validateProgramSectionStructure,
   validateProgramExerciseSelections,
   type ProgramExerciseCandidate,
 } from "@/components/program/program-editor-model";
@@ -57,6 +74,11 @@ function programReadModel(): ActiveProgramReadModel {
         notes: null,
         targetMetadata: {},
       }));
+      const corePrescription = {
+        ...prescriptions[1]!,
+        displayOrder: 1,
+        id: `99999999-9999-4999-8999-99999999999${dayIndex}`,
+      };
       return {
         id: `55555555-5555-4555-8555-55555555555${dayIndex}`,
         dayNumber: dayIndex + 1,
@@ -70,8 +92,15 @@ function programReadModel(): ActiveProgramReadModel {
             title: "Strength",
             prescriptions,
           },
+          {
+            id: `aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa${dayIndex}`,
+            kind: "core" as const,
+            displayOrder: 2,
+            title: "Core",
+            prescriptions: [corePrescription],
+          },
         ],
-        prescriptions,
+        prescriptions: [...prescriptions, corePrescription],
         cardio: [
           {
             id: `77777777-7777-4777-8777-77777777777${dayIndex}`,
@@ -113,6 +142,315 @@ function candidate(
 }
 
 describe("program editor request model", () => {
+  it("rejects successful mutation bodies whose active graph violates publication invariants", () => {
+    const activeProgram = programReadModel();
+    const envelope = {
+      profileProgram: {
+        activeProgram,
+        affectedProgramId: activeProgram.id,
+        affectedRevisionId: activeProgram.revisionId,
+        changes: [],
+        replayed: false,
+      },
+    };
+    expect(parseProgramRevisionMutationResponse(envelope).activeProgram).toEqual(activeProgram);
+    expect(parseEquipmentChangeResponse(envelope, {
+      changes: [],
+      programId: activeProgram.id,
+      targetProfileKind: "dumbbells",
+    }).activeProgram).toEqual(activeProgram);
+    expect(parseOnboardingResponse({
+      profileProgram: {
+        activeProgram,
+        equipment: { profileKind: "dumbbells" },
+        preferences: {
+          reducedMotion: false,
+          timezone: "UTC",
+          unitSystem: "metric",
+          updatedAt: "2026-08-26T18:00:00.000Z",
+        },
+      },
+    }, {
+      equipmentProfileKind: "dumbbells",
+      reducedMotion: false,
+      timezone: "UTC",
+      unitSystem: "metric",
+    })).toEqual(activeProgram);
+
+    const duplicateDay = {
+      profileProgram: {
+        ...envelope.profileProgram,
+        activeProgram: {
+          ...activeProgram,
+          days: activeProgram.days.map((day, index) =>
+            index === 1 ? { ...day, dayKey: "push" } : day,
+          ),
+        },
+      },
+    };
+    expect(() => parseProgramRevisionMutationResponse(duplicateDay)).toThrow(
+      "invalid program mutation response",
+    );
+
+    const firstDayWithoutCore = {
+      ...activeProgram.days[0]!,
+      sections: activeProgram.days[0]!.sections.filter(({ kind }) => kind !== "core"),
+    };
+    const missingCore = {
+      profileProgram: {
+        ...envelope.profileProgram,
+        activeProgram: {
+          ...activeProgram,
+          days: [
+            {
+              ...firstDayWithoutCore,
+              prescriptions: firstDayWithoutCore.sections.flatMap(
+                ({ prescriptions }) => prescriptions,
+              ),
+            },
+            ...activeProgram.days.slice(1),
+          ],
+        },
+      },
+    };
+    expect(() => parseEquipmentChangeResponse(missingCore, {
+      changes: [],
+      programId: activeProgram.id,
+      targetProfileKind: "dumbbells",
+    })).toThrow(
+      "invalid equipment mutation response",
+    );
+
+    const invalidFirstSection = {
+      ...activeProgram.days[0]!.sections[0]!,
+      prescriptions: activeProgram.days[0]!.sections[0]!.prescriptions.map(
+        (prescription, index) => index === 0
+          ? {
+              ...prescription,
+              customExerciseId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            }
+          : prescription,
+      ),
+    };
+    const invalidFirstDay = {
+      ...activeProgram.days[0]!,
+      sections: [invalidFirstSection, ...activeProgram.days[0]!.sections.slice(1)],
+    };
+    const invalidIdentity = {
+      profileProgram: {
+        ...envelope.profileProgram,
+        activeProgram: {
+          ...activeProgram,
+          days: [invalidFirstDay, ...activeProgram.days.slice(1)],
+        },
+      },
+    };
+    expect(() => parseProgramRevisionMutationResponse(invalidIdentity)).toThrow(
+      "invalid program mutation response",
+    );
+
+    expect(() => parseProgramPublishResponse(envelope, {
+      ...programPublishInputFromReadModel(activeProgram, "publish-binding"),
+      name: "A different valid route",
+    })).toThrow("does not match the published draft");
+    expect(() => parseEquipmentChangeResponse(envelope, {
+      changes: [],
+      programId: activeProgram.id,
+      targetProfileKind: "barbell",
+    })).toThrow("does not match the requested equipment profile");
+    expect(() => parseEquipmentChangeResponse(envelope, {
+      changes: [{
+        cleared: ["load target", "distance target", "movement metadata"],
+        dayDisplayName: "Push",
+        fromName: "Exercise 1",
+        fromSlug: "exercise-0",
+        prescriptionId: activeProgram.days[0]!.sections[0]!.prescriptions[0]!.id,
+        preserved: ["sets", "rep range", "rest", "section", "order", "notes"],
+        toName: "Exercise 2",
+        toSlug: "exercise-1",
+      }],
+      programId: activeProgram.id,
+      targetProfileKind: "dumbbells",
+    })).toThrow("does not match the reviewed equipment substitutions");
+  });
+
+  it("converts only at the unit boundary with finite, rounded display values", () => {
+    const canonical = {
+      targetWeightKg: 20,
+      targetDistanceM: 5_000,
+      paceSecondsPerKm: 360,
+    };
+    const snapshot = structuredClone(canonical);
+
+    expect(programEditorUnitLabels("metric")).toEqual({
+      distance: "metres",
+      pace: "seconds / km",
+      weight: "kg",
+    });
+    expect(programEditorUnitLabels("imperial")).toEqual({
+      distance: "miles",
+      pace: "seconds / mile",
+      weight: "lb",
+    });
+    expect(programEditorDisplayValue(canonical.targetWeightKg, "weight", "imperial")).toBe("44.09");
+    expect(programEditorDisplayValue(canonical.targetDistanceM, "distance", "imperial")).toBe("3.1069");
+    expect(programEditorDisplayValue(1.001, "distance", "imperial")).toBe("0.0006");
+    expect(programEditorDisplayValue(160.934, "distance", "imperial")).toBe("0.1");
+    expect(programEditorDisplayValue(canonical.paceSecondsPerKm, "pace", "imperial")).toBe("579");
+    expect(programEditorCanonicalValue("25", "weight", "imperial")).toBe(11.34);
+    expect(programEditorCanonicalValue("0.1", "distance", "imperial")).toBe(160.934);
+    expect(programEditorCanonicalValue("600", "pace", "imperial")).toBe(373);
+    expect(programEditorCanonicalValue("", "weight", "imperial")).toBeNull();
+    expect(programEditorCanonicalValue("Infinity", "distance", "imperial")).toBeNull();
+    expect(programEditorCanonicalValue("not-a-number", "pace", "imperial")).toBeNull();
+    expect(canonical).toEqual(snapshot);
+
+    const imperialDraft = programEditorDraftFromPublishInput(
+      programPublishInputFromReadModel(programReadModel(), "imperial-draft"),
+    );
+    imperialDraft.days[0]!.cardio[0]!.distanceM = programEditorCanonicalValue(
+      "0.1",
+      "distance",
+      "imperial",
+    );
+    expect(imperialDraft.days[0]!.cardio[0]!.distanceM).toBe(160.934);
+    const publishableImperialDraft = () =>
+      stripLocalProgramPrescriptionIds(imperialDraft, new Set());
+    expect(programPublishRequestSchema.safeParse(publishableImperialDraft()).success).toBe(true);
+    imperialDraft.days[0]!.cardio[0]!.distanceM = 1.001;
+    expect(programPublishRequestSchema.safeParse(publishableImperialDraft()).success).toBe(true);
+    imperialDraft.days[0]!.cardio[0]!.distanceM = 0.0001;
+    expect(programPublishRequestSchema.safeParse(publishableImperialDraft()).success).toBe(false);
+    imperialDraft.days[0]!.cardio[0]!.distanceM = 160.9345;
+    expect(programPublishRequestSchema.safeParse(publishableImperialDraft()).success).toBe(false);
+    imperialDraft.days[0]!.cardio[0]!.distanceM = programEditorCanonicalValue(
+      "160.9345",
+      "distance",
+      "metric",
+    );
+    expect(imperialDraft.days[0]!.cardio[0]!.distanceM).toBe(160.935);
+    expect(programPublishRequestSchema.safeParse(publishableImperialDraft()).success).toBe(true);
+  });
+
+  it("binds equipment success to the exact reviewed substitution set independent of database order", () => {
+    const activeProgram = programReadModel();
+    const firstId = activeProgram.days[0]!.sections[0]!.prescriptions[0]!.id;
+    const secondId = activeProgram.days[1]!.sections[0]!.prescriptions[0]!.id;
+    const expected = [
+      {
+        cleared: ["load target", "distance target", "movement metadata"] as const,
+        dayDisplayName: "Push",
+        fromName: "First movement",
+        fromSlug: "first-from",
+        prescriptionId: firstId,
+        preserved: ["sets", "rep range", "rest", "section", "order", "notes"] as const,
+        toName: "First replacement",
+        toSlug: "first-to",
+      },
+      {
+        cleared: ["load target", "distance target", "movement metadata"] as const,
+        dayDisplayName: "Pull",
+        fromName: "Second movement",
+        fromSlug: "second-from",
+        prescriptionId: secondId,
+        preserved: ["sets", "rep range", "rest", "section", "order", "notes"] as const,
+        toName: "Second replacement",
+        toSlug: "second-to",
+      },
+    ];
+    const envelope = {
+      profileProgram: {
+        activeProgram,
+        affectedProgramId: activeProgram.id,
+        affectedRevisionId: activeProgram.revisionId,
+        changes: expected.toReversed(),
+        replayed: false,
+      },
+    };
+
+    expect(parseEquipmentChangeResponse(envelope, {
+      changes: expected,
+      programId: activeProgram.id,
+      targetProfileKind: "dumbbells",
+    }).changeCount).toBe(2);
+  });
+
+  it("edits sections immutably with stable keys and an explicit truthful removal review", () => {
+    const input = programPublishInputFromReadModel(programReadModel(), "publish-key");
+    const draft = programEditorDraftFromPublishInput(input);
+    const withAccessory = addProgramSection(draft, 0, "accessory", "accessory-draft");
+    const renamed = renameProgramSection(withAccessory, 0, 2, "Accessory circuit");
+    const moved = reorderProgramSection(renamed, 0, 2, -1);
+
+    expect(moved).not.toBe(draft);
+    expect(moved.days[0]!.sections.map(({ kind, draftKey, title }) => ({ kind, draftKey, title }))).toEqual([
+      { kind: "strength", draftKey: "section:push:strength", title: "Strength" },
+      { kind: "accessory", draftKey: "accessory-draft", title: "Accessory circuit" },
+      { kind: "core", draftKey: "section:push:core", title: "Core" },
+    ]);
+    expect(validateProgramSectionStructure(moved)).toEqual([
+      "Push Accessory circuit needs at least one movement.",
+    ]);
+    const populated = addProgramPrescription(
+      moved,
+      0,
+      1,
+      candidate({
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Accessory row",
+        role: null,
+      }),
+    );
+    expect(validateProgramSectionStructure(populated)).toEqual([]);
+    expect(() => addProgramSection(populated, 0, "core", "duplicate-core")).toThrow(/already exists/i);
+    const missingCore = structuredClone(populated);
+    missingCore.days[0]!.sections = missingCore.days[0]!.sections.filter(
+      ({ kind }) => kind !== "core",
+    );
+    expect(() => addProgramSection(missingCore, 0, "core", "repair-core")).toThrow(
+      /cannot be added/i,
+    );
+    expect(() => removeProgramSection(moved, 0, 0, {
+      confirmed: true,
+      draftKey: "section:push:strength",
+      exerciseNames: ["Wrong movement"],
+      prescriptionKeys: ["not-the-source"],
+    })).toThrow(/review/i);
+
+    const review = reviewProgramSectionRemoval(populated, 0, 1, ["Accessory row"]);
+    expect(() => removeProgramSection(populated, 0, 1, { ...review, confirmed: false })).toThrow(/confirm/i);
+    const removed = removeProgramSection(populated, 0, 1, { ...review, confirmed: true });
+
+    expect(removed.days[0]!.sections.map(({ kind, draftKey }) => ({ kind, draftKey }))).toEqual([
+      { kind: "strength", draftKey: "section:push:strength" },
+      { kind: "core", draftKey: "section:push:core" },
+    ]);
+    expect(moved.days[0]!.sections).toHaveLength(3);
+    expect(stripLocalProgramPrescriptionIds(removed, new Set()).days[0]!.sections[0]).not.toHaveProperty("draftKey");
+    const readded = addProgramSection(removed, 0, "accessory", "accessory-again");
+    expect(readded.days[0]!.sections.map(({ kind, draftKey }) => ({ kind, draftKey }))).toEqual([
+      { kind: "strength", draftKey: "section:push:strength" },
+      { kind: "core", draftKey: "section:push:core" },
+      { kind: "accessory", draftKey: "accessory-again" },
+    ]);
+    const withoutStrength = removeProgramSection(
+      readded,
+      0,
+      0,
+      { ...reviewProgramSectionRemoval(readded, 0, 0, ["Exercise 1", "Exercise 2"]), confirmed: true },
+    );
+    const oneSection = removeProgramSection(
+      withoutStrength,
+      0,
+      1,
+      { ...reviewProgramSectionRemoval(withoutStrength, 0, 1, []), confirmed: true },
+    );
+    const coreReview = reviewProgramSectionRemoval(oneSection, 0, 0, ["Exercise 2"]);
+    expect(() => removeProgramSection(oneSection, 0, 0, { ...coreReview, confirmed: true })).toThrow(
+      /core section/i,
+    );
+  });
+
   it("maps the owner-free active revision and preserves stable source identities", () => {
     const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
 
@@ -178,10 +516,12 @@ describe("program editor request model", () => {
   it("uses section and logging meaning defaults for accessory, repetition core, and timed core", () => {
     const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
     const withSections = structuredClone(draft);
-    withSections.days[0]!.sections.push(
-      { kind: "accessory", prescriptions: [], title: "Accessory" },
-      { kind: "core", prescriptions: [], title: "Core" },
-    );
+    withSections.days[0]!.sections.splice(1, 0, {
+      kind: "accessory",
+      prescriptions: [],
+      title: "Accessory",
+    });
+    withSections.days[0]!.sections[2]!.prescriptions = [];
     const accessory = addProgramPrescription(withSections, 0, 1, candidate());
     const repetitionCore = addProgramPrescription(
       accessory,
@@ -309,6 +649,40 @@ describe("program editor request model", () => {
     ]);
     next.days[0]!.sections[0]!.prescriptions.at(-1)!.targetDistanceM = 500;
     expect(validateProgramExerciseSelections(next, candidates)).toEqual([]);
+  });
+
+  it("resolves catalog and custom selections by kind when their UUIDs collide", () => {
+    const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
+    const collidingId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const catalog = candidate({
+      id: collidingId,
+      kind: "catalog",
+      name: "Catalog press",
+    });
+    const custom = candidate({
+      id: collidingId,
+      kind: "custom",
+      loggingKind: "distance_duration",
+      name: "Private carry",
+      role: null,
+    });
+    const available = [
+      candidate({ id: "44444444-4444-4444-8444-444444444440" }),
+      candidate({ id: "44444444-4444-4444-8444-444444444441" }),
+      catalog,
+      custom,
+    ];
+
+    const customDraft = addProgramPrescription(draft, 0, 0, custom);
+    expect(validateProgramExerciseSelections(customDraft, available)).toEqual([
+      "Private carry needs a positive distance target before publication.",
+    ]);
+
+    const catalogDraft = addProgramPrescription(draft, 0, 0, catalog);
+    expect(validateProgramExerciseSelections(catalogDraft, available)).toEqual([]);
+    expect(validateProgramExerciseSelections(customDraft, available.filter((candidate) => candidate.kind === "catalog"))).toEqual([
+      "A selected movement is no longer available.",
+    ]);
   });
 
   it("strips only client-local prescription identifiers before publication", () => {

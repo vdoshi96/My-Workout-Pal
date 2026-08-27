@@ -117,6 +117,11 @@ describe("profile program API contract", () => {
           prescriptions: [prescription],
           title: "Strength",
         },
+        {
+          kind: "core",
+          prescriptions: [prescription],
+          title: "Core",
+        },
       ],
     });
     const valid = {
@@ -134,6 +139,93 @@ describe("profile program API contract", () => {
     };
 
     expect(programPublishRequestSchema.safeParse(valid).success).toBe(true);
+    const distancePrescription = {
+      ...prescription,
+      maximumReps: null,
+      maximumSeconds: 45,
+      minimumReps: null,
+      minimumSeconds: 20,
+      targetDistanceM: 160.934,
+      targetWeightKg: null,
+    };
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.map((entry, index) =>
+          index === 0
+            ? {
+                ...entry,
+                sections: entry.sections.map((section, sectionIndex) =>
+                  sectionIndex === 0
+                    ? { ...section, prescriptions: [distancePrescription] }
+                    : section,
+                ),
+              }
+            : entry,
+        ),
+      }).success,
+    ).toBe(true);
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.map((entry, index) =>
+          index === 0
+            ? {
+                ...entry,
+                sections: entry.sections.map((section, sectionIndex) =>
+                  sectionIndex === 0
+                    ? {
+                        ...section,
+                        prescriptions: [{ ...distancePrescription, targetDistanceM: 0.0001 }],
+                      }
+                    : section,
+                ),
+              }
+            : entry,
+        ),
+      }).success,
+    ).toBe(false);
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.map((entry, index) =>
+          index === 0
+            ? {
+                ...entry,
+                cardio: entry.cardio.map((cardio, cardioIndex) =>
+                  cardioIndex === 0 ? { ...cardio, distanceM: 160.9345 } : cardio,
+                ),
+              }
+            : entry,
+        ),
+      }).success,
+    ).toBe(false);
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.map((entry, index) =>
+          index === 0
+            ? {
+                ...entry,
+                sections: entry.sections.map((section, sectionIndex) =>
+                  sectionIndex === 0
+                    ? { ...section, prescriptions: [{ ...prescription, targetWeightKg: 20.0001 }] }
+                    : section,
+                ),
+              }
+            : entry,
+        ),
+      }).success,
+    ).toBe(false);
+    expect(
+      programPublishRequestSchema.safeParse({
+        ...valid,
+        days: valid.days.map((entry) => ({
+          ...entry,
+          sections: entry.sections.filter(({ kind }) => kind !== "core"),
+        })),
+      }).success,
+    ).toBe(false);
     expect(
       programPublishRequestSchema.safeParse({ ...valid, ownerUid: "other-user" }).success,
     ).toBe(false);

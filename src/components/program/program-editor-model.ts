@@ -5,6 +5,14 @@ import type {
   LoggingKind,
 } from "@/domain/exercises/catalog";
 import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
+import {
+  displayToKilograms,
+  displayToMeters,
+  displayToPace,
+  kilogramsToDisplay,
+  metersToDisplay,
+  paceToDisplay,
+} from "@/components/workout/workout-runner-presenters";
 
 export type ProgramExerciseCandidate = Readonly<{
   id: string;
@@ -16,8 +24,155 @@ export type ProgramExerciseCandidate = Readonly<{
   searchText: string;
 }>;
 
-type ProgramSectionKind = ProgramPublishInput["days"][number]["sections"][number]["kind"];
+export const PROGRAM_SECTION_KINDS = ["strength", "accessory", "core"] as const;
+export type ProgramSectionKind = (typeof PROGRAM_SECTION_KINDS)[number];
+export type ProgramEditorUnitSystem = "metric" | "imperial";
+export type ProgramEditorMeasurement = "weight" | "distance" | "pace";
 type ProgramPrescription = ProgramPublishInput["days"][number]["sections"][number]["prescriptions"][number];
+type ProgramSectionInput = ProgramPublishInput["days"][number]["sections"][number];
+
+export type ProgramEditorSection = ProgramSectionInput & Readonly<{ draftKey: string }>;
+export type ProgramEditorDay = Omit<ProgramPublishInput["days"][number], "sections"> & {
+  sections: ProgramEditorSection[];
+};
+export type ProgramEditorDraft = Omit<ProgramPublishInput, "days"> & {
+  days: ProgramEditorDay[];
+};
+
+export function programEditorExerciseCandidateKey(
+  kind: ProgramExerciseCandidate["kind"],
+  id: string,
+): string {
+  return `${kind}:${id}`;
+}
+
+export type ProgramSectionRemovalReview = Readonly<{
+  confirmed: boolean;
+  draftKey: string;
+  exerciseNames: readonly string[];
+  prescriptionKeys: readonly string[];
+}>;
+
+export function programEditorUnitLabels(
+  unitSystem: ProgramEditorUnitSystem,
+): Readonly<{ distance: "metres" | "miles"; pace: "seconds / km" | "seconds / mile"; weight: "kg" | "lb" }> {
+  return unitSystem === "imperial"
+    ? { distance: "miles", pace: "seconds / mile", weight: "lb" }
+    : { distance: "metres", pace: "seconds / km", weight: "kg" };
+}
+
+function roundProgramEditorDisplayValue(value: number, fractionDigits: number): string {
+  return String(Number(value.toFixed(fractionDigits)));
+}
+
+export function programEditorDisplayValue(
+  value: number | null | undefined,
+  measurement: ProgramEditorMeasurement,
+  unitSystem: ProgramEditorUnitSystem,
+): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "";
+  if (measurement === "weight") {
+    const displayValue = kilogramsToDisplay(value, unitSystem);
+    return unitSystem === "imperial"
+      ? roundProgramEditorDisplayValue(displayValue, 2)
+      : String(displayValue);
+  }
+  if (measurement === "distance") {
+    const displayValue = metersToDisplay(value, unitSystem);
+    return unitSystem === "imperial"
+      ? roundProgramEditorDisplayValue(displayValue, 4)
+      : String(displayValue);
+  }
+  const displayValue = paceToDisplay(value, unitSystem);
+  return unitSystem === "imperial"
+    ? roundProgramEditorDisplayValue(displayValue, 0)
+    : String(displayValue);
+}
+
+export function programEditorCanonicalValue(
+  value: string,
+  measurement: ProgramEditorMeasurement,
+  unitSystem: ProgramEditorUnitSystem,
+): number | null {
+  if (value.trim() === "") return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  if (measurement === "weight") return displayToKilograms(parsed, unitSystem);
+  if (measurement === "distance") return displayToMeters(parsed, unitSystem);
+  return displayToPace(parsed, unitSystem);
+}
+
+function sectionDraftKey(dayKey: string, kind: ProgramSectionKind): string {
+  return `section:${dayKey}:${kind}`;
+}
+
+function editorDraftFromValue(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  sectionDraftKeys?: readonly (readonly (string | undefined)[])[],
+): ProgramEditorDraft {
+  const next = structuredClone(input) as ProgramPublishInput & {
+    days: Array<ProgramPublishInput["days"][number] & {
+      sections: Array<ProgramSectionInput & { draftKey?: string }>;
+    }>;
+  };
+  return {
+    ...next,
+    days: next.days.map((day, dayIndex) => ({
+      ...day,
+      sections: day.sections.map((section, sectionIndex) => {
+        const sectionWithDraftKey = section as ProgramSectionInput & { draftKey?: string };
+        return {
+          ...section,
+          draftKey:
+            sectionDraftKeys?.[dayIndex]?.[sectionIndex] ??
+            (typeof sectionWithDraftKey.draftKey === "string" &&
+            sectionWithDraftKey.draftKey.trim().length > 0
+              ? sectionWithDraftKey.draftKey
+              : sectionDraftKey(day.dayKey, section.kind)),
+        };
+      }),
+    })),
+  } as ProgramEditorDraft;
+}
+
+export function programEditorDraftFromPublishInput(
+  input: ProgramPublishInput,
+  sectionDraftKeys?: readonly (readonly (string | undefined)[])[],
+): ProgramEditorDraft {
+  return editorDraftFromValue(input, sectionDraftKeys);
+}
+
+export function programEditorDraftFromReadModel(
+  program: ActiveProgramReadModel,
+  idempotencyKey: string,
+): ProgramEditorDraft {
+  return programEditorDraftFromPublishInput(
+    programPublishInputFromReadModel(program, idempotencyKey),
+    program.days.map((day) => day.sections.map((section) => section.id)),
+  );
+}
+
+function editorDraftClone(input: ProgramPublishInput | ProgramEditorDraft): ProgramEditorDraft {
+  return editorDraftFromValue(input);
+}
+
+function sectionAtEditor(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  dayIndex: number,
+  sectionIndex: number,
+): ProgramEditorSection {
+  const section = input.days[dayIndex]?.sections[sectionIndex];
+  if (!section) throw new RangeError("The requested program section is unavailable.");
+  return section as ProgramEditorSection;
+}
+
+function prescriptionDraftKey(
+  section: ProgramEditorSection,
+  prescription: ProgramPrescription,
+  prescriptionIndex: number,
+): string {
+  return prescription.sourcePrescriptionId ?? `${section.draftKey}:prescription:${prescriptionIndex}`;
+}
 
 export function programPublishInputFromReadModel(
   program: ActiveProgramReadModel,
@@ -64,14 +219,171 @@ export function programPublishInputFromReadModel(
   };
 }
 
-export function reorderProgramPrescription(
-  input: ProgramPublishInput,
+function defaultSectionTitle(kind: ProgramSectionKind): string {
+  return kind[0]!.toUpperCase() + kind.slice(1);
+}
+
+export function addProgramSection(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  dayIndex: number,
+  kind: ProgramSectionKind,
+  draftKey?: string,
+): ProgramEditorDraft {
+  const next = editorDraftClone(input);
+  const day = next.days[dayIndex];
+  if (!day) throw new RangeError("The requested program day is unavailable.");
+  if (!PROGRAM_SECTION_KINDS.includes(kind)) {
+    throw new RangeError("The requested program section kind is unavailable.");
+  }
+  if (day.sections.some((section) => section.kind === kind)) {
+    throw new RangeError(`A ${kind} section already exists on this day.`);
+  }
+  if (kind === "core") {
+    throw new RangeError("A required core section cannot be added as an ordinary draft section.");
+  }
+  const normalizedDraftKey = draftKey?.trim();
+  if (draftKey !== undefined && !normalizedDraftKey) {
+    throw new RangeError("A program section draft key is required.");
+  }
+  day.sections.push({
+    draftKey: normalizedDraftKey ?? sectionDraftKey(day.dayKey, kind),
+    kind,
+    prescriptions: [],
+    title: defaultSectionTitle(kind),
+  });
+  return next;
+}
+
+export function renameProgramSection(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  dayIndex: number,
+  sectionIndex: number,
+  title: string,
+): ProgramEditorDraft {
+  const next = editorDraftClone(input);
+  sectionAtEditor(next, dayIndex, sectionIndex).title = title;
+  return next;
+}
+
+export function reorderProgramSection(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  dayIndex: number,
+  sectionIndex: number,
+  direction: -1 | 1,
+): ProgramEditorDraft {
+  const next = editorDraftClone(input);
+  const day = next.days[dayIndex];
+  if (!day) throw new RangeError("The requested program day is unavailable.");
+  const targetIndex = sectionIndex + direction;
+  if (
+    sectionIndex < 0 ||
+    sectionIndex >= day.sections.length ||
+    targetIndex < 0 ||
+    targetIndex >= day.sections.length
+  ) {
+    throw new RangeError("The section move is outside this day.");
+  }
+  const [moved] = day.sections.splice(sectionIndex, 1);
+  if (!moved) throw new RangeError("The section move is outside this day.");
+  day.sections.splice(targetIndex, 0, moved);
+  return next;
+}
+
+export function reviewProgramSectionRemoval(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  dayIndex: number,
+  sectionIndex: number,
+  exerciseNames: readonly string[],
+): ProgramSectionRemovalReview {
+  const section = sectionAtEditor(editorDraftClone(input), dayIndex, sectionIndex);
+  if (exerciseNames.length !== section.prescriptions.length) {
+    throw new RangeError("The section removal review must name every movement.");
+  }
+  const names = exerciseNames.map((name) => name.trim());
+  if (names.some((name) => name.length === 0)) {
+    throw new RangeError("The section removal review must name every movement.");
+  }
+  return {
+    confirmed: false,
+    draftKey: section.draftKey,
+    exerciseNames: names,
+    prescriptionKeys: section.prescriptions.map((prescription, prescriptionIndex) =>
+      prescriptionDraftKey(section, prescription, prescriptionIndex),
+    ),
+  };
+}
+
+export function removeProgramSection(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  dayIndex: number,
+  sectionIndex: number,
+  review: ProgramSectionRemovalReview,
+): ProgramEditorDraft {
+  const next = editorDraftClone(input);
+  const day = next.days[dayIndex];
+  if (!day) throw new RangeError("The requested program day is unavailable.");
+  const section = sectionAtEditor(next, dayIndex, sectionIndex);
+  const coreSectionCount = day.sections.filter(({ kind }) => kind === "core").length;
+  if (section.kind === "core" || coreSectionCount !== 1) {
+    throw new RangeError("Every day must retain its core section.");
+  }
+  if (day.sections.length <= 1) {
+    throw new RangeError("A day must retain at least one section.");
+  }
+  const currentKeys = section.prescriptions.map((prescription, prescriptionIndex) =>
+    prescriptionDraftKey(section, prescription, prescriptionIndex),
+  );
+  if (
+    !review.confirmed ||
+    review.draftKey !== section.draftKey ||
+    review.exerciseNames.length !== section.prescriptions.length ||
+    review.exerciseNames.some((name) => name.trim().length === 0) ||
+    review.prescriptionKeys.length !== currentKeys.length ||
+    review.prescriptionKeys.some((key, index) => key !== currentKeys[index])
+  ) {
+    throw new RangeError(
+      "The section removal review is incomplete or stale; confirm the named movements before removing.",
+    );
+  }
+  day.sections.splice(sectionIndex, 1);
+  return next;
+}
+
+export function validateProgramSectionStructure(
+  input: ProgramPublishInput | ProgramEditorDraft,
+): readonly string[] {
+  const issues: string[] = [];
+  for (const day of input.days) {
+    if (day.sections.length === 0) {
+      issues.push(`${day.displayName} needs at least one section.`);
+      continue;
+    }
+    const coreSections = day.sections.filter((section) => section.kind === "core");
+    if (coreSections.length !== 1) {
+      issues.push(`${day.displayName} must contain exactly one core section.`);
+    }
+    const seenKinds = new Set<ProgramSectionKind>();
+    for (const section of day.sections) {
+      if (seenKinds.has(section.kind)) {
+        issues.push(`${day.displayName} cannot contain duplicate ${section.kind} sections.`);
+      }
+      seenKinds.add(section.kind);
+      if (section.prescriptions.length === 0) {
+        issues.push(`${day.displayName} ${section.title} needs at least one movement.`);
+      }
+    }
+  }
+  return issues;
+}
+
+export function reorderProgramPrescription<T extends ProgramPublishInput>(
+  input: T,
   dayIndex: number,
   sectionIndex: number,
   prescriptionIndex: number,
   direction: -1 | 1,
-): ProgramPublishInput {
-  const next = structuredClone(input);
+): T {
+  const next = structuredClone(input) as T;
   const section = next.days[dayIndex]?.sections[sectionIndex];
   const targetIndex = prescriptionIndex + direction;
   if (
@@ -135,27 +447,27 @@ function defaultPrescription(
   };
 }
 
-export function addProgramPrescription(
-  input: ProgramPublishInput,
+export function addProgramPrescription<T extends ProgramPublishInput>(
+  input: T,
   dayIndex: number,
   sectionIndex: number,
   candidate: ProgramExerciseCandidate,
-): ProgramPublishInput {
-  const next = structuredClone(input);
+): T {
+  const next = structuredClone(input) as T;
   const section = sectionAt(next, dayIndex, sectionIndex);
   section.prescriptions.push(defaultPrescription(section.kind, candidate));
   return next;
 }
 
-export function replaceProgramPrescription(
-  input: ProgramPublishInput,
+export function replaceProgramPrescription<T extends ProgramPublishInput>(
+  input: T,
   dayIndex: number,
   sectionIndex: number,
   prescriptionIndex: number,
   candidate: ProgramExerciseCandidate,
   currentLoggingKind: LoggingKind,
-): ProgramPublishInput {
-  const next = structuredClone(input);
+): T {
+  const next = structuredClone(input) as T;
   const section = sectionAt(next, dayIndex, sectionIndex);
   const current = section.prescriptions[prescriptionIndex];
   if (!current) throw new RangeError("The requested program movement is unavailable.");
@@ -180,13 +492,13 @@ export function replaceProgramPrescription(
   return next;
 }
 
-export function removeProgramPrescription(
-  input: ProgramPublishInput,
+export function removeProgramPrescription<T extends ProgramPublishInput>(
+  input: T,
   dayIndex: number,
   sectionIndex: number,
   prescriptionIndex: number,
-): ProgramPublishInput {
-  const next = structuredClone(input);
+): T {
+  const next = structuredClone(input) as T;
   const section = sectionAt(next, dayIndex, sectionIndex);
   if (section.prescriptions.length <= 1) {
     throw new RangeError("The last movement in a section cannot be removed.");
@@ -224,19 +536,25 @@ export function filterProgramExerciseCandidates(
 }
 
 export function validateProgramExerciseSelections(
-  input: ProgramPublishInput,
+  input: ProgramPublishInput | ProgramEditorDraft,
   candidates: readonly ProgramExerciseCandidate[],
 ): readonly string[] {
-  const candidateById = new Map(candidates.map((candidate) => [candidate.id, candidate] as const));
-  const issues: string[] = [];
+  const candidateByKey = new Map(
+    candidates.map((candidate) => [
+      programEditorExerciseCandidateKey(candidate.kind, candidate.id),
+      candidate,
+    ] as const),
+  );
+  const issues: string[] = [...validateProgramSectionStructure(input)];
   for (const day of input.days) {
     for (const section of day.sections) {
-      if (section.prescriptions.length === 0) {
-        issues.push(`${day.displayName} ${section.title} needs at least one movement.`);
-      }
       for (const prescription of section.prescriptions) {
-        const id = prescription.catalogExerciseId ?? prescription.customExerciseId;
-        const candidate = id ? candidateById.get(id) : undefined;
+        const candidateKey = prescription.catalogExerciseId !== null
+          ? programEditorExerciseCandidateKey("catalog", prescription.catalogExerciseId)
+          : prescription.customExerciseId !== null
+            ? programEditorExerciseCandidateKey("custom", prescription.customExerciseId)
+            : undefined;
+        const candidate = candidateKey ? candidateByKey.get(candidateKey) : undefined;
         if (!candidate) {
           issues.push(`${prescription.displayName ?? "A selected movement"} is no longer available.`);
           continue;
@@ -254,10 +572,10 @@ export function validateProgramExerciseSelections(
 }
 
 export function stripLocalProgramPrescriptionIds(
-  input: ProgramPublishInput,
+  input: ProgramPublishInput | ProgramEditorDraft,
   localIds: ReadonlySet<string>,
 ): ProgramPublishInput {
-  const next = structuredClone(input);
+  const next = editorDraftClone(input);
   for (const day of next.days) {
     for (const section of day.sections) {
       for (const prescription of section.prescriptions) {
@@ -270,5 +588,14 @@ export function stripLocalProgramPrescriptionIds(
       }
     }
   }
-  return next;
+  return {
+    ...next,
+    days: next.days.map((day) => ({
+      ...day,
+      sections: day.sections.map(({ draftKey, ...section }) => {
+        void draftKey;
+        return section;
+      }),
+    })) as ProgramPublishInput["days"],
+  };
 }

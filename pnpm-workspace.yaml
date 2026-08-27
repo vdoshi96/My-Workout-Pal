@@ -3,6 +3,9 @@ packages:
 
 storeDir: .pnpm-store
 
+overrides:
+  "jwks-rsa>jose": "4.15.9"
+
 allowBuilds:
   "@firebase/util": true
   esbuild: true

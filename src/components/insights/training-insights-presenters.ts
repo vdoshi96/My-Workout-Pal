@@ -30,7 +30,7 @@ export function formatInsightVolume(
   volumeKg: number,
   unitSystem: InsightUnitSystem,
 ): string {
-  return formatInsightWeight(volumeKg, unitSystem);
+  return `${formatInsightWeight(volumeKg, unitSystem)}·reps`;
 }
 
 export function formatInsightDistance(

@@ -94,11 +94,45 @@ Primary references:
 
 Promote the last verified Vercel deployment only when its database schema remains compatible. Confirm the promoted deployment commit and replay a safe smoke test. A deployment rollback does not reverse database migrations.
 
+### Firebase Admin runtime preflight
+
+Firebase Admin is externalized by Next.js and loads through Vercel's native Node.js serverless boundary. As of August 27, 2026, `firebase-admin@14.3.0` reaches `jwks-rsa@4.1.0`, whose CommonJS loader is incompatible with ESM-only `jose@6.2.10` in this deployed boundary. The repository therefore constrains only `jwks-rsa>jose` to reviewed `4.15.9` in `pnpm-workspace.yaml`.
+
+Before preview or production promotion, run:
+
+```sh
+pnpm exec vitest run tests/unit/firebase-admin-serverless-compatibility.test.ts
+pnpm why jose
+pnpm build
+pnpm production:check
+```
+
+The compatibility test must pass with native `require(esm)` interop disabled, and `pnpm why jose` must show the override only through `jwks-rsa` and Firebase Admin. Then replay an unauthenticated private route on the exact Vercel preview. `/app` must resolve to the bounded `/sign-in?returnTo=%2Fapp` path with private no-store headers and no runtime error; a successful build alone is insufficient. Remove the override only after a newer upstream dependency graph passes this same deployed proof.
+
 ### Database recovery
 
 Use forward-compatible migrations. Before a destructive migration, create and verify a recovery point or branch through supported Neon features. Recovery requires an explicit target, impact statement, and verification query. Never run an unscoped restore against production.
 
 For starter-data drift, run `db:verify` first. Catalog drift requires an explicit reviewed migration. Published template drift requires a new revision or a recovery from a verified point; do not disable immutability triggers or rewrite a published child. Rerunning `db:seed` is safe only when verification agrees with the deterministic graph.
+
+Migration `0004_personal_record_projection_checkpoint` and its rebuild operator remain on the unreleased customization branch as of August 27, 2026, but the additive table migration is applied to Neon after fresh-chain and populated-upgrade PGlite verification. Preflight found 0 completed sessions and 0 personal-record rows. Dry run, apply, and immediate apply replay all reported zero candidates and zero changes; the durable v2 checkpoint is completed with a cleared cursor and zero counters. Do not run a future calculation version's operator until its matching forward migration and application source are reviewed together.
+
+After migration, inspect historical personal-record projection changes with the dry-run default:
+
+```sh
+pnpm db:rebuild-personal-records
+pnpm db:rebuild-personal-records -- --batch-size 50
+```
+
+Dry run uses short per-batch read transactions and reports scanned sessions, candidates, and proposed insert/update/delete counts without changing records or the durable checkpoint. Output never includes a Firebase UID, source UUID, SQL text, connection detail, or raw database error. Repeating `--dry-run`, `--apply`, or `--batch-size`, or mixing dry-run and apply modes, fails closed.
+
+Only after the environment, migration, counts, and current calculation version are reviewed may the same bounded operator apply:
+
+```sh
+pnpm db:rebuild-personal-records -- --apply --batch-size 50
+```
+
+Apply commits each deterministic session batch, stores only the last globally ordered workout-session UUID, and resumes after interruption. Completion clears that cursor. A rerun must report an idempotent no-op. Recognized lower-version rows that the current algorithm no longer emits are removed; unknown future-version rows are preserved but excluded from this build's read model. Account deletion cannot strand a Firebase UID in the checkpoint because the table never stores one. Never run an unbounded production apply or retain unsanitized provider/database output.
 
 ### Authentication recovery
 

@@ -6,7 +6,7 @@ import { assertValidMutationRequest } from "@/server/auth/request";
 import {
   privateJson,
   readBoundedJson,
-  requirePrivateViewer,
+  requirePrivateMutationViewer,
 } from "@/server/http/custom-exercise-api";
 import {
   preferencesUpdateRequestSchema,
@@ -20,7 +20,7 @@ export const revalidate = 0;
 export async function PATCH(request: NextRequest): Promise<Response> {
   try {
     assertValidMutationRequest(request);
-    const viewer = requirePrivateViewer(await getCurrentViewer());
+    const viewer = requirePrivateMutationViewer(await getCurrentViewer());
     const input = preferencesUpdateRequestSchema.parse(await readBoundedJson(request));
     const profileProgram = await updateViewerPreferences(getDatabase(), viewer, input);
     return privateJson({ profileProgram });

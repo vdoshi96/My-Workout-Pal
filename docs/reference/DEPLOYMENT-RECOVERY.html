@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="59324a0e983dfcea0643fe28aed1dc46a90cca0e7b74e7962f7f0f77c2bae409">
+  <meta name="source-sha256" content="1c15fdebb36e63a6e50dda93e9d69acd14b24e1c9fa6412ea7edeab40e429c84">
   <title>Deployment, cost, and recovery · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -103,9 +103,28 @@ node --env-file-if-exists=.env.local --import tsx scripts/db-verify.ts
 <h2>Runtime recovery</h2>
 <h3>Application rollback</h3>
 <p>Promote the last verified Vercel deployment only when its database schema remains compatible. Confirm the promoted deployment commit and replay a safe smoke test. A deployment rollback does not reverse database migrations.</p>
+<h3>Firebase Admin runtime preflight</h3>
+<p>Firebase Admin is externalized by Next.js and loads through Vercel&#39;s native Node.js serverless boundary. As of August 27, 2026, <code>firebase-admin@14.3.0</code> reaches <code>jwks-rsa@4.1.0</code>, whose CommonJS loader is incompatible with ESM-only <code>jose@6.2.10</code> in this deployed boundary. The repository therefore constrains only <code>jwks-rsa&gt;jose</code> to reviewed <code>4.15.9</code> in <code>pnpm-workspace.yaml</code>.</p>
+<p>Before preview or production promotion, run:</p>
+<pre><code class="language-sh">pnpm exec vitest run tests/unit/firebase-admin-serverless-compatibility.test.ts
+pnpm why jose
+pnpm build
+pnpm production:check
+</code></pre>
+<p>The compatibility test must pass with native <code>require(esm)</code> interop disabled, and <code>pnpm why jose</code> must show the override only through <code>jwks-rsa</code> and Firebase Admin. Then replay an unauthenticated private route on the exact Vercel preview. <code>/app</code> must resolve to the bounded <code>/sign-in?returnTo=%2Fapp</code> path with private no-store headers and no runtime error; a successful build alone is insufficient. Remove the override only after a newer upstream dependency graph passes this same deployed proof.</p>
 <h3>Database recovery</h3>
 <p>Use forward-compatible migrations. Before a destructive migration, create and verify a recovery point or branch through supported Neon features. Recovery requires an explicit target, impact statement, and verification query. Never run an unscoped restore against production.</p>
 <p>For starter-data drift, run <code>db:verify</code> first. Catalog drift requires an explicit reviewed migration. Published template drift requires a new revision or a recovery from a verified point; do not disable immutability triggers or rewrite a published child. Rerunning <code>db:seed</code> is safe only when verification agrees with the deterministic graph.</p>
+<p>Migration <code>0004_personal_record_projection_checkpoint</code> and its rebuild operator remain on the unreleased customization branch as of August 27, 2026, but the additive table migration is applied to Neon after fresh-chain and populated-upgrade PGlite verification. Preflight found 0 completed sessions and 0 personal-record rows. Dry run, apply, and immediate apply replay all reported zero candidates and zero changes; the durable v2 checkpoint is completed with a cleared cursor and zero counters. Do not run a future calculation version&#39;s operator until its matching forward migration and application source are reviewed together.</p>
+<p>After migration, inspect historical personal-record projection changes with the dry-run default:</p>
+<pre><code class="language-sh">pnpm db:rebuild-personal-records
+pnpm db:rebuild-personal-records -- --batch-size 50
+</code></pre>
+<p>Dry run uses short per-batch read transactions and reports scanned sessions, candidates, and proposed insert/update/delete counts without changing records or the durable checkpoint. Output never includes a Firebase UID, source UUID, SQL text, connection detail, or raw database error. Repeating <code>--dry-run</code>, <code>--apply</code>, or <code>--batch-size</code>, or mixing dry-run and apply modes, fails closed.</p>
+<p>Only after the environment, migration, counts, and current calculation version are reviewed may the same bounded operator apply:</p>
+<pre><code class="language-sh">pnpm db:rebuild-personal-records -- --apply --batch-size 50
+</code></pre>
+<p>Apply commits each deterministic session batch, stores only the last globally ordered workout-session UUID, and resumes after interruption. Completion clears that cursor. A rerun must report an idempotent no-op. Recognized lower-version rows that the current algorithm no longer emits are removed; unknown future-version rows are preserved but excluded from this build&#39;s read model. Account deletion cannot strand a Firebase UID in the checkpoint because the table never stores one. Never run an unbounded production apply or retain unsanitized provider/database output.</p>
 <h3>Authentication recovery</h3>
 <p>If session verification fails broadly, keep public content available, block permanent mutations, clear invalid cookies, and guide sign-in. Rotate a compromised Admin credential in Firebase and Vercel, revoke affected refresh tokens, and verify that logs contain no secret values.</p>
 <p>For an account-deletion job left in the Firebase phase, inspect with the dry-run default:</p>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="8d7a6feaae6811e08993a4718c7d378ddc272e2f2a6cd8a268a30cc8dd195107">
+  <title>Firebase Admin serverless compatibility · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Firebase Admin serverless compatibility</h1>
+<h2>User outcome</h2>
+<p>A visitor who opens a private route without a session receives the existing bounded sign-in redirect instead of a server error. A signed-in member reaches the same owner-scoped private application without changing authentication, authorization, persistence, or session-cookie behavior.</p>
+<h2>Navigation</h2>
+<ul>
+<li>Public routes remain unchanged.</li>
+<li>An unauthenticated request to <code>/app</code> or another private page resolves the server viewer and redirects to <code>/sign-in</code> with the existing bounded return target.</li>
+<li>An authenticated request continues through Firebase Admin session verification before any owned database read.</li>
+</ul>
+<h2>Runtime states</h2>
+<ul>
+<li><strong>Loading:</strong> Vercel initializes the server function and loads Firebase Admin and its transitive JSON Web Key dependencies.</li>
+<li><strong>Unauthenticated:</strong> The route returns the existing private, no-store sign-in redirect.</li>
+<li><strong>Authenticated:</strong> Firebase Admin verifies the secure session cookie and the route loads only the server-derived owner.</li>
+<li><strong>Configuration unavailable:</strong> The existing stable credential/configuration error remains truthful and private.</li>
+<li><strong>Runtime incompatibility:</strong> A CommonJS loader that cannot load an ESM-only transitive dependency must fail a release test before deployment. It must never reach production as an unclassified <code>500</code>.</li>
+</ul>
+<h2>Types and invariants</h2>
+<ul>
+<li>Keep <code>firebase-admin</code> as the trusted server identity SDK.</li>
+<li>Keep the application source and server viewer contracts unchanged.</li>
+<li>Constrain only the incompatible <code>jwks-rsa</code> to <code>jose</code> transitive edge. The resolved dependency must expose the CommonJS entry point that <code>jwks-rsa</code> loads.</li>
+<li>Keep dependency resolution deterministic in <code>pnpm-workspace.yaml</code> and <code>pnpm-lock.yaml</code>.</li>
+<li>Do not add a client authentication fallback or accept a client-supplied Firebase UID.</li>
+</ul>
+<h2>Persistence and authorization</h2>
+<p>This correction makes no database, migration, seed, cookie, or owner-data change. Firebase Admin still verifies session cookies with revocation checks, and every private repository still receives the server-derived viewer.</p>
+<h2>Failure and recovery</h2>
+<ul>
+<li>A child-process compatibility test starts Node with native <code>require(esm)</code> support turned off. Loading <code>jwks-rsa</code> must succeed in that stricter CommonJS boundary.</li>
+<li>The test must fail with the dependency graph that produced the Vercel <code>ERR_REQUIRE_ESM</code> error and pass after the reviewed override.</li>
+<li>If dependency installation, type checking, the production build, or the Vercel preview fails, stop the release before Neon migration or production promotion.</li>
+<li>Keep the feature branch recoverable. Revert the bounded dependency override if upstream packages later provide a verified compatible release.</li>
+</ul>
+<h2>Responsive behavior and accessibility</h2>
+<p>The correction has no visual output. Existing phone, tablet, desktop, keyboard, screen-reader, reduced-motion, dark-mode, and forced-color behavior must remain unchanged. The private sign-in redirect must remain usable in every existing browser project.</p>
+<h2>Privacy and security</h2>
+<ul>
+<li>Do not print Firebase credentials, session cookies, owner identifiers, or provider responses.</li>
+<li>Do not weaken revocation verification, recent-auth requirements, CSRF checks, private cache headers, or cross-user denial.</li>
+<li>Use a narrow transitive dependency override rather than a browser-side token verifier or a custom JWT implementation.</li>
+<li>Retain the upstream issue and exact deployed error as dependency provenance without copying secrets into documentation.</li>
+</ul>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>The fail-first child-process test reproduces <code>ERR_REQUIRE_ESM</code> before the override.</li>
+<li>The resolved graph uses the reviewed CommonJS-compatible <code>jose</code> version only for the <code>jwks-rsa</code> edge.</li>
+<li>Strict TypeScript, lint, unit and integration tests, dependency installation, the Webpack production build, and production-route isolation pass.</li>
+<li>The exact Git preview reports <code>Ready</code> for the pushed commit.</li>
+<li>Authenticated <code>vercel curl</code> requests return <code>200</code> for public routes and a private no-store sign-in redirect for unauthenticated <code>/app</code>; no tested private route returns <code>500</code>.</li>
+<li>The preview error-log scan contains no <code>ERR_REQUIRE_ESM</code> or new application error after replay.</li>
+<li>Production remains untouched until the corrected preview and the complete release gate pass.</li>
+</ul>
+<h2>Automated tests</h2>
+<ul>
+<li>Add a focused Node child-process regression for CommonJS loading with <code>--no-experimental-require-module</code>.</li>
+<li>Assert the dependency override in the focused compatibility-policy test.</li>
+<li>Run the focused compatibility and package-policy tests.</li>
+<li>Run <code>pnpm verify</code> and the public browser matrix after the dependency graph changes.</li>
+</ul>
+<h2>Browser and deployment evidence</h2>
+<ul>
+<li>Inspect the exact Vercel preview deployment and GitHub status for the corrected commit.</li>
+<li>Replay <code>/</code>, <code>/program</code>, <code>/sign-in</code>, and unauthenticated <code>/app</code> through Vercel&#39;s protected-deployment request boundary.</li>
+<li>Confirm private cache headers and the bounded sign-in destination on <code>/app</code>.</li>
+<li>Scan preview runtime errors after the replay.</li>
+<li>After the complete feature release, repeat the private-route request and error scan on the exact production deployment.</li>
+</ul>
+<h2>Source basis</h2>
+<ul>
+<li>The Vercel preview and production functions returned <code>ERR_REQUIRE_ESM</code> while <code>jwks-rsa</code> loaded ESM-only <code>jose</code> through CommonJS.</li>
+<li>The upstream Firebase Admin issue documents the same Firebase Admin, <code>jwks-rsa</code>, <code>jose</code>, Next.js, pnpm, and serverless failure and recommends a scoped <code>jwks-rsa&gt;jose</code> override until the dependency publishes a compatible fix.</li>
+<li>Next.js 16 automatically externalizes <code>firebase-admin</code>, so Vercel loads its transitive dependencies through the native Node.js runtime boundary.</li>
+</ul>
+
+  </main>
+</body>
+</html>

@@ -9,6 +9,7 @@ import {
   deleteCustomExerciseRequestSchema,
   privateJson,
   readBoundedJson,
+  requirePrivateMutationViewer,
   requirePrivateViewer,
   updateCustomExerciseRequestSchema,
 } from "@/server/http/custom-exercise-api";
@@ -40,7 +41,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     assertValidMutationRequest(request);
-    const viewer = requirePrivateViewer(await getCurrentViewer());
+    const viewer = requirePrivateMutationViewer(await getCurrentViewer());
     const exerciseIdValue = await exerciseId(context);
     const input = updateCustomExerciseRequestSchema.parse(await readBoundedJson(request));
     const result = await updateCustomExercise(getDatabase(), viewer, {
@@ -56,7 +57,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     assertValidMutationRequest(request);
-    const viewer = requirePrivateViewer(await getCurrentViewer());
+    const viewer = requirePrivateMutationViewer(await getCurrentViewer());
     const exerciseIdValue = await exerciseId(context);
     const input = deleteCustomExerciseRequestSchema.parse(await readBoundedJson(request));
     const result = await deleteCustomExercise(getDatabase(), viewer, {

@@ -140,6 +140,11 @@ describe("owned program collection repository", () => {
         name: "Barbell build",
       },
     );
+    expect(created).toMatchObject({
+      affectedProgramId: created.activeProgram?.id,
+      affectedRevisionId: created.activeProgram?.revisionId,
+      replayed: false,
+    });
     expect(created.activeProgram).toMatchObject({
       equipmentProfileKind: "barbell",
       id: created.affectedProgramId,
@@ -309,7 +314,9 @@ describe("owned program collection repository", () => {
       input,
     );
     expect(replayAfterSwitch.affectedProgramId).toBe(created.affectedProgramId);
+    expect(replayAfterSwitch.affectedRevisionId).toBe(created.affectedRevisionId);
     expect(replayAfterSwitch.activeProgram?.id).toBe(aliceProgram.id);
+    expect(replayAfterSwitch.replayed).toBe(true);
 
     const concurrentCloneInput = {
       idempotencyKey: "concurrent-alice-clone",
@@ -335,6 +342,54 @@ describe("owned program collection repository", () => {
         programId: aliceProgram.id,
       }),
     ).rejects.toMatchObject({ code: "not_found" });
+
+    const cloneReactivatedOriginal = await repository.activateProgram(
+      viewer("collection-alice"),
+      {
+        expectedActiveProgramId: concurrentCloneA.affectedProgramId,
+        idempotencyKey: "reactivate-original-after-clone",
+        programId: aliceProgram.id,
+        revisionId: aliceProgram.revisionId,
+      },
+    );
+    const cloneReplayAfterSwitch = await repository.cloneProgram(
+      viewer("collection-alice"),
+      concurrentCloneInput,
+    );
+    expect(cloneReplayAfterSwitch).toMatchObject({
+      activeProgram: { id: cloneReactivatedOriginal.affectedProgramId },
+      affectedProgramId: concurrentCloneA.affectedProgramId,
+      affectedRevisionId: concurrentCloneA.affectedRevisionId,
+      replayed: true,
+    });
+
+    const activatedClone = await repository.activateProgram(viewer("collection-alice"), {
+      expectedActiveProgramId: aliceProgram.id,
+      idempotencyKey: "activate-clone-replay-target",
+      programId: concurrentCloneA.affectedProgramId,
+      revisionId: concurrentCloneA.affectedRevisionId,
+    });
+    await repository.activateProgram(viewer("collection-alice"), {
+      expectedActiveProgramId: concurrentCloneA.affectedProgramId,
+      idempotencyKey: "reactivate-original-after-activation",
+      programId: aliceProgram.id,
+      revisionId: aliceProgram.revisionId,
+    });
+    const activationReplayAfterSwitch = await repository.activateProgram(
+      viewer("collection-alice"),
+      {
+        expectedActiveProgramId: aliceProgram.id,
+        idempotencyKey: "activate-clone-replay-target",
+        programId: concurrentCloneA.affectedProgramId,
+        revisionId: concurrentCloneA.affectedRevisionId,
+      },
+    );
+    expect(activationReplayAfterSwitch).toMatchObject({
+      activeProgram: { id: aliceProgram.id },
+      affectedProgramId: activatedClone.affectedProgramId,
+      affectedRevisionId: activatedClone.affectedRevisionId,
+      replayed: true,
+    });
 
     await expect(
       repository.createProgramFromStarter(viewer("collection-alice"), {
@@ -367,7 +422,7 @@ describe("owned program collection repository", () => {
     ).rejects.toBeInstanceOf(RepositoryConflictError);
     await expect(
       repository.activateProgram(viewer("collection-alice"), {
-        expectedActiveProgramId: aliceProgram.id,
+        expectedActiveProgramId: concurrentCloneA.affectedProgramId,
         idempotencyKey: "stale-activation",
         programId: aliceProgram.id,
         revisionId: aliceProgram.revisionId,
@@ -375,10 +430,10 @@ describe("owned program collection repository", () => {
     ).rejects.toBeInstanceOf(RepositoryConflictError);
     await expect(
       repository.confirmEquipmentChange(viewer("collection-alice"), {
-        baseRevisionId: aliceProgram.revisionId,
+        baseRevisionId: concurrentCloneA.affectedRevisionId,
         equipmentProfileKind: "barbell",
         idempotencyKey: "inactive-equipment-change",
-        programId: aliceProgram.id,
+        programId: concurrentCloneA.affectedProgramId,
       }),
     ).rejects.toBeInstanceOf(RepositoryConflictError);
   });

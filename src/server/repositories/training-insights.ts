@@ -15,9 +15,6 @@ import {
 import type { Database } from "@/db/client";
 import {
   cardioLogs,
-  catalogExercises,
-  customExercises,
-  personalRecords,
   progressSummaries,
   setLogs,
   userPreferences,
@@ -28,12 +25,18 @@ import {
 import {
   buildProgressSummarySeries,
   estimateEpleyOneRepMaxKg,
+  PERSONAL_RECORD_CALCULATION_VERSIONS,
+  personalRecordCalculationVersionRank,
   type ProgressSummaryPoint,
 } from "@/domain/analytics";
+import type { EquipmentProfileKind } from "@/domain/equipment";
 import type { ViewerContext } from "@/server/auth/viewer";
 
 const DEFAULT_HISTORY_LIMIT = 20;
 const MAXIMUM_HISTORY_LIMIT = 50;
+const MAXIMUM_PERSONAL_RECORD_GROUPS = 500;
+const MAXIMUM_PERSONAL_RECORD_SOURCES = 20;
+const MAXIMUM_PROGRESS_TIMELINE_SESSIONS = 180;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const TERMINAL_STATES = ["completed", "abandoned"] as const;
 
@@ -89,6 +92,7 @@ export type TrainingHistoryReadModel = Readonly<{
 }>;
 
 export type TrainingSetView = Readonly<{
+  addedWeightKg: number | undefined;
   distanceMeters: number | undefined;
   durationSeconds: number | undefined;
   formRating: number | undefined;
@@ -104,14 +108,25 @@ export type TrainingSetView = Readonly<{
 
 export type TrainingSessionExercise = Readonly<{
   displayName: string;
+  equipmentProfileKind: EquipmentProfileKind | undefined;
   id: string;
   loggingKind: TrainingSetView["kind"];
+  maximumReps: number | undefined;
+  maximumSeconds: number | undefined;
+  minimumReps: number | undefined;
+  minimumSeconds: number | undefined;
   note: string | undefined;
   position: number;
+  prescriptionNote: string | undefined;
+  restSeconds: number;
   sectionKind: "accessory" | "cardio" | "core" | "strength";
+  setCount: number;
+  setKind: "warmup" | "work" | undefined;
   sets: readonly TrainingSetView[];
   status: "completed" | "skipped";
   substitutionReason: string | undefined;
+  targetDistanceMeters: number | undefined;
+  targetWeightKg: number | undefined;
 }>;
 
 export type TrainingSessionDetail = TrainingHistorySession & Readonly<{
@@ -122,9 +137,11 @@ export type PersonalRecordView = Readonly<{
   achievedAt: Date;
   calculationVersions: readonly string[];
   exerciseName: string;
+  hasMoreSources: boolean;
   isTie: boolean;
   sourceSessionIds: readonly string[];
   sourceSetLogIds: readonly string[];
+  totalTieCount: number;
   type: "distance" | "duration" | "estimated_1rm" | "max_repetitions" | "max_weight" | "volume";
   value: number;
 }>;
@@ -140,6 +157,11 @@ export type ProgressInsightsReadModel = Readonly<{
     state: "derived" | "persisted";
   }>;
   series: readonly ProgressSummaryPoint[];
+  scope: Readonly<{
+    maxSessions: number;
+    sessionCount: number;
+    truncated: boolean;
+  }>;
   totals: Readonly<{
     abandonedSessions: number;
     completedSessions: number;
@@ -235,6 +257,30 @@ function dayNameFromSnapshots(
   return typeof dayName === "string" && dayName.trim().length > 0
     ? dayName.trim()
     : "Saved workout";
+}
+
+function snapshotEquipmentProfileKind(
+  snapshot: Record<string, unknown>,
+): EquipmentProfileKind | undefined {
+  const value = snapshot["equipmentProfileKind"];
+  return value === "dumbbells" || value === "barbell" ? value : undefined;
+}
+
+function snapshotText(
+  snapshot: Record<string, unknown>,
+  key: string,
+): string | undefined {
+  const value = snapshot[key];
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function snapshotSetKind(
+  snapshot: Record<string, unknown>,
+): "warmup" | "work" | undefined {
+  const value = snapshot["setKind"];
+  return value === "warmup" || value === "work" ? value : undefined;
 }
 
 function cardioView(row: typeof cardioLogs.$inferSelect | undefined): TrainingCardioView | undefined {
@@ -394,12 +440,22 @@ export async function loadTrainingSession(
     }
     return {
       displayName: state.effectiveDisplayName || snapshot.displayName,
+      equipmentProfileKind: snapshotEquipmentProfileKind(snapshot.prescriptionSnapshot),
       id: snapshot.id,
       loggingKind: state.effectiveLoggingKind,
+      maximumReps: snapshot.maximumReps ?? undefined,
+      maximumSeconds: snapshot.maximumSeconds ?? undefined,
+      minimumReps: snapshot.minimumReps ?? undefined,
+      minimumSeconds: snapshot.minimumSeconds ?? undefined,
       note: state.note ?? undefined,
       position: snapshot.position,
+      prescriptionNote: snapshotText(snapshot.prescriptionSnapshot, "notes"),
+      restSeconds: snapshot.restSeconds,
       sectionKind: snapshot.sectionKind,
+      setCount: snapshot.setCount,
+      setKind: snapshotSetKind(snapshot.prescriptionSnapshot),
       sets: (logsBySnapshot.get(snapshot.id) ?? []).map((log) => ({
+        addedWeightKg: log.addedWeightKg ?? undefined,
         distanceMeters: log.distanceM ?? undefined,
         durationSeconds: log.durationSeconds ?? undefined,
         formRating: log.formRating ?? undefined,
@@ -414,6 +470,8 @@ export async function loadTrainingSession(
       })),
       status: state.status,
       substitutionReason: state.substitutionReason ?? undefined,
+      targetDistanceMeters: snapshot.targetDistanceM ?? undefined,
+      targetWeightKg: snapshot.targetWeightKg ?? undefined,
     };
   });
   const summary = await buildHistorySummary(database, viewer.uid, session);
@@ -425,41 +483,156 @@ export async function loadPersonalRecords(
   viewerInput: ViewerContext | null | undefined,
 ): Promise<readonly PersonalRecordView[]> {
   const viewer = requireViewer(viewerInput);
-  const rows = await database
-    .select({
-      achievedAt: personalRecords.achievedAt,
-      calculationVersion: personalRecords.calculationVersion,
-      catalogExerciseId: personalRecords.catalogExerciseId,
-      catalogName: catalogExercises.name,
-      customExerciseId: personalRecords.customExerciseId,
-      customName: customExercises.name,
-      sourceSessionId: setLogs.sessionId,
-      sourceSetLogId: personalRecords.sourceSetLogId,
-      type: personalRecords.type,
-      value: personalRecords.value,
-    })
-    .from(personalRecords)
-    .innerJoin(
-      setLogs,
-      and(
-        eq(setLogs.ownerFirebaseUid, personalRecords.ownerFirebaseUid),
-        eq(setLogs.id, personalRecords.sourceSetLogId),
-      ),
+  const recognizedVersions = sql.join(
+    PERSONAL_RECORD_CALCULATION_VERSIONS.map((version) => sql`${version}`),
+    sql`, `,
+  );
+  const result = await database.execute(sql`
+    WITH eligible AS (
+      SELECT
+        pr.id,
+        pr.achieved_at,
+        pr.calculation_version,
+        pr.catalog_exercise_id,
+        pr.custom_exercise_id,
+        pr.source_set_log_id,
+        pr.type,
+        pr.value,
+        sl.session_id AS source_session_id,
+        wes.effective_catalog_exercise_id,
+        wes.effective_custom_exercise_id,
+        wes.effective_display_name
+      FROM personal_records AS pr
+      INNER JOIN set_logs AS sl
+        ON sl.owner_firebase_uid = pr.owner_firebase_uid
+       AND sl.id = pr.source_set_log_id
+      INNER JOIN workout_sessions AS ws
+        ON ws.owner_firebase_uid = sl.owner_firebase_uid
+       AND ws.id = sl.session_id
+       AND ws.state = 'completed'
+      INNER JOIN workout_exercise_states AS wes
+        ON wes.owner_firebase_uid = pr.owner_firebase_uid
+       AND wes.session_id = sl.session_id
+       AND wes.snapshot_id = sl.snapshot_id
+      WHERE pr.owner_firebase_uid = ${viewer.uid}
+        AND sl.set_kind = 'work'
+        AND wes.status = 'completed'
+        AND pr.calculation_version IN (${recognizedVersions})
+        AND (
+          (pr.catalog_exercise_id IS NOT NULL
+            AND pr.catalog_exercise_id = wes.effective_catalog_exercise_id
+            AND wes.effective_custom_exercise_id IS NULL)
+          OR (pr.custom_exercise_id IS NOT NULL
+            AND pr.custom_exercise_id = wes.effective_custom_exercise_id
+            AND wes.effective_catalog_exercise_id IS NULL)
+        )
+    ),
+    winner_values AS (
+      SELECT
+        CASE WHEN eligible.catalog_exercise_id IS NOT NULL THEN 'catalog' ELSE 'custom' END AS identity_kind,
+        COALESCE(eligible.catalog_exercise_id, eligible.custom_exercise_id) AS identity_id,
+        eligible.type,
+        MAX(eligible.value) AS max_value
+      FROM eligible
+      GROUP BY
+        CASE WHEN eligible.catalog_exercise_id IS NOT NULL THEN 'catalog' ELSE 'custom' END,
+        COALESCE(eligible.catalog_exercise_id, eligible.custom_exercise_id),
+        eligible.type
+    ),
+    winner_groups AS (
+      SELECT
+        winners.identity_kind,
+        winners.identity_id,
+        winners.type,
+        winners.max_value,
+        MAX(eligible.achieved_at) AS winner_achieved_at,
+        COUNT(*)::int AS total_tie_count,
+        ARRAY_AGG(DISTINCT eligible.calculation_version ORDER BY eligible.calculation_version) AS calculation_versions
+      FROM winner_values AS winners
+      INNER JOIN eligible
+        ON eligible.type = winners.type
+       AND eligible.value = winners.max_value
+       AND (CASE WHEN eligible.catalog_exercise_id IS NOT NULL THEN 'catalog' ELSE 'custom' END) = winners.identity_kind
+       AND COALESCE(eligible.catalog_exercise_id, eligible.custom_exercise_id) = winners.identity_id
+      GROUP BY winners.identity_kind, winners.identity_id, winners.type, winners.max_value
+    ),
+    selected_groups AS (
+      SELECT
+        winner_groups.*,
+        ROW_NUMBER() OVER (
+          ORDER BY winner_achieved_at DESC, identity_kind, identity_id, type
+        ) AS group_rank
+      FROM winner_groups
+    ),
+    ranked_winners AS (
+      SELECT
+        eligible.*,
+        selected_groups.total_tie_count,
+        selected_groups.calculation_versions,
+        ROW_NUMBER() OVER (
+          PARTITION BY selected_groups.identity_kind, selected_groups.identity_id, selected_groups.type
+          ORDER BY eligible.achieved_at DESC, eligible.id DESC
+        ) AS source_rank
+      FROM eligible
+      INNER JOIN selected_groups
+        ON selected_groups.group_rank <= ${MAXIMUM_PERSONAL_RECORD_GROUPS}
+       AND selected_groups.type = eligible.type
+       AND selected_groups.max_value = eligible.value
+       AND selected_groups.identity_kind = CASE WHEN eligible.catalog_exercise_id IS NOT NULL THEN 'catalog' ELSE 'custom' END
+       AND selected_groups.identity_id = COALESCE(eligible.catalog_exercise_id, eligible.custom_exercise_id)
     )
-    .leftJoin(catalogExercises, eq(catalogExercises.id, personalRecords.catalogExerciseId))
-    .leftJoin(
-      customExercises,
-      and(
-        eq(customExercises.ownerFirebaseUid, personalRecords.ownerFirebaseUid),
-        eq(customExercises.id, personalRecords.customExerciseId),
-      ),
-    )
-    .where(eq(personalRecords.ownerFirebaseUid, viewer.uid))
-    .orderBy(asc(personalRecords.achievedAt), asc(personalRecords.id))
-    .limit(500);
+    SELECT
+      ranked_winners.achieved_at,
+      ranked_winners.calculation_version,
+      ranked_winners.calculation_versions,
+      ranked_winners.catalog_exercise_id,
+      ranked_winners.custom_exercise_id,
+      ranked_winners.effective_display_name,
+      ranked_winners.source_session_id,
+      ranked_winners.source_set_log_id,
+      ranked_winners.total_tie_count,
+      ranked_winners.type,
+      ranked_winners.value
+    FROM ranked_winners
+    WHERE ranked_winners.source_rank <= ${MAXIMUM_PERSONAL_RECORD_SOURCES}
+    ORDER BY ranked_winners.achieved_at ASC, ranked_winners.id ASC
+  `);
+  const rows = (result as unknown as { rows: Array<Record<string, unknown>> }).rows.flatMap((row) => {
+    const value = Number(row["value"]);
+    const achievedAt = row["achieved_at"] instanceof Date
+      ? row["achieved_at"]
+      : new Date(String(row["achieved_at"]));
+    const totalTieCount = Number(row["total_tie_count"]);
+    if (!Number.isFinite(value) || !Number.isFinite(achievedAt.getTime()) || !Number.isSafeInteger(totalTieCount)) return [];
+    const calculationVersions = Array.isArray(row["calculation_versions"])
+      ? row["calculation_versions"].map(String)
+      : typeof row["calculation_versions"] === "string"
+        ? row["calculation_versions"].replace(/^\{|\}$/gu, "").split(",").filter(Boolean)
+        : [String(row["calculation_version"])]
+    return [{
+      achievedAt,
+      calculationVersion: String(row["calculation_version"]),
+      calculationVersions,
+      catalogExerciseId: typeof row["catalog_exercise_id"] === "string" ? row["catalog_exercise_id"] : null,
+      customExerciseId: typeof row["custom_exercise_id"] === "string" ? row["custom_exercise_id"] : null,
+      effectiveCatalogExerciseId: null,
+      effectiveCustomExerciseId: null,
+      effectiveDisplayName: String(row["effective_display_name"]),
+      sourceSessionId: String(row["source_session_id"]),
+      sourceSetLogId: String(row["source_set_log_id"]),
+      totalTieCount,
+      type: String(row["type"]) as PersonalRecordView["type"],
+      value,
+    }];
+  });
   const groups = new Map<string, typeof rows>();
   for (const row of rows) {
-    const identity = row.catalogExerciseId ?? row.customExerciseId;
+    if (personalRecordCalculationVersionRank(row.calculationVersion) === undefined) continue;
+    const identity = row.catalogExerciseId !== null
+      ? `catalog:${row.catalogExerciseId}`
+      : row.customExerciseId !== null
+        ? `custom:${row.customExerciseId}`
+        : undefined;
     if (!identity) continue;
     const key = `${identity}:${row.type}`;
     groups.set(key, [...(groups.get(key) ?? []), row]);
@@ -469,18 +642,28 @@ export async function loadPersonalRecords(
       const value = Math.max(...group.map((row) => row.value));
       const winners = group.filter((row) => row.value === value);
       const latest = winners.reduce((right, row) => row.achievedAt > right.achievedAt ? row : right);
+      const totalTieCount = winners[0]?.totalTieCount ?? winners.length;
+      const sourceRows = [...winners].sort((left, right) => {
+        const achievedAtDifference = left.achievedAt.getTime() - right.achievedAt.getTime();
+        return achievedAtDifference === 0
+          ? left.sourceSetLogId.localeCompare(right.sourceSetLogId)
+          : achievedAtDifference;
+      });
       return {
         achievedAt: latest.achievedAt,
-        calculationVersions: [...new Set(winners.map(({ calculationVersion }) => calculationVersion))].sort(),
-        exerciseName: latest.catalogName ?? latest.customName ?? "Saved exercise",
-        isTie: winners.length > 1,
-        sourceSessionIds: winners.map(({ sourceSessionId }) => sourceSessionId),
-        sourceSetLogIds: winners.map(({ sourceSetLogId }) => sourceSetLogId),
+        calculationVersions: [...new Set(winners.flatMap(({ calculationVersions, calculationVersion }) => calculationVersions.length > 0 ? calculationVersions : [calculationVersion]))].sort(),
+        exerciseName: latest.effectiveDisplayName,
+        hasMoreSources: totalTieCount > sourceRows.length,
+        isTie: totalTieCount > 1,
+        sourceSessionIds: [...new Set(sourceRows.map(({ sourceSessionId }) => sourceSessionId))],
+        sourceSetLogIds: sourceRows.map(({ sourceSetLogId }) => sourceSetLogId),
+        totalTieCount,
         type: latest.type,
         value,
       };
     })
-    .sort((left, right) => right.achievedAt.getTime() - left.achievedAt.getTime());
+    .sort((left, right) => right.achievedAt.getTime() - left.achievedAt.getTime())
+    .slice(0, MAXIMUM_PERSONAL_RECORD_GROUPS);
 }
 
 export async function loadProgressInsights(
@@ -494,21 +677,129 @@ export async function loadProgressInsights(
     .where(eq(userPreferences.ownerFirebaseUid, viewer.uid))
     .limit(1);
   const preferences = preferenceRows[0] ?? { timezone: "UTC", unitSystem: "metric" as const };
+  const aggregateResult = await database.execute(sql`
+    SELECT
+      (
+        SELECT count(*)::int
+        FROM workout_sessions AS ws
+        WHERE ws.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'completed'
+      ) AS completed_sessions,
+      (
+        SELECT count(*)::int
+        FROM workout_sessions AS ws
+        WHERE ws.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'abandoned'
+      ) AS abandoned_sessions,
+      (
+        SELECT COALESCE(sum(
+          CASE
+            WHEN sl.measurement_kind = 'weight_reps' THEN COALESCE(sl.weight_kg, 0) * COALESCE(sl.repetitions, 0)
+            WHEN sl.measurement_kind = 'bodyweight_reps' THEN COALESCE(sl.added_weight_kg, 0) * COALESCE(sl.repetitions, 0)
+            ELSE 0
+          END
+        ), 0)::float8
+        FROM set_logs AS sl
+        INNER JOIN workout_sessions AS ws
+          ON ws.owner_firebase_uid = sl.owner_firebase_uid
+         AND ws.id = sl.session_id
+        INNER JOIN workout_exercise_states AS wes
+          ON wes.owner_firebase_uid = sl.owner_firebase_uid
+         AND wes.session_id = sl.session_id
+         AND wes.snapshot_id = sl.snapshot_id
+         AND wes.status = 'completed'
+        WHERE sl.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'completed'
+          AND sl.set_kind = 'work'
+      ) AS volume_kg,
+      (
+        SELECT COALESCE(sum(COALESCE(sl.duration_seconds, 0)), 0)::float8
+        FROM set_logs AS sl
+        INNER JOIN workout_sessions AS ws
+          ON ws.owner_firebase_uid = sl.owner_firebase_uid
+         AND ws.id = sl.session_id
+        INNER JOIN workout_exercise_states AS wes
+          ON wes.owner_firebase_uid = sl.owner_firebase_uid
+         AND wes.session_id = sl.session_id
+         AND wes.snapshot_id = sl.snapshot_id
+         AND wes.status = 'completed'
+        WHERE sl.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'completed'
+          AND sl.set_kind = 'work'
+      ) AS set_duration_seconds,
+      (
+        SELECT COALESCE(sum(COALESCE(sl.distance_m, 0)), 0)::float8
+        FROM set_logs AS sl
+        INNER JOIN workout_sessions AS ws
+          ON ws.owner_firebase_uid = sl.owner_firebase_uid
+         AND ws.id = sl.session_id
+        INNER JOIN workout_exercise_states AS wes
+          ON wes.owner_firebase_uid = sl.owner_firebase_uid
+         AND wes.session_id = sl.session_id
+         AND wes.snapshot_id = sl.snapshot_id
+         AND wes.status = 'completed'
+        WHERE sl.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'completed'
+          AND sl.set_kind = 'work'
+      ) AS set_distance_meters,
+      (
+        SELECT COALESCE(sum(COALESCE(cl.duration_seconds, 0)), 0)::float8
+        FROM cardio_logs AS cl
+        INNER JOIN workout_sessions AS ws
+          ON ws.owner_firebase_uid = cl.owner_firebase_uid
+         AND ws.id = cl.session_id
+        WHERE cl.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'completed'
+      ) AS cardio_duration_seconds,
+      (
+        SELECT COALESCE(sum(COALESCE(cl.distance_m, 0)), 0)::float8
+        FROM cardio_logs AS cl
+        INNER JOIN workout_sessions AS ws
+          ON ws.owner_firebase_uid = cl.owner_firebase_uid
+         AND ws.id = cl.session_id
+        WHERE cl.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'completed'
+      ) AS cardio_distance_meters
+  `);
+  const aggregateRow = (aggregateResult as unknown as { rows: Array<Record<string, unknown>> }).rows[0] ?? {};
+  const aggregateNumber = (key: string): number => {
+    const value = Number(aggregateRow[key] ?? 0);
+    return Number.isFinite(value) && value >= 0 ? value : 0;
+  };
+  const completedSessionCount = aggregateNumber("completed_sessions");
   const sessions = await database
     .select()
     .from(workoutSessions)
     .where(and(
       eq(workoutSessions.ownerFirebaseUid, viewer.uid),
-      inArray(workoutSessions.state, TERMINAL_STATES),
+      eq(workoutSessions.state, "completed"),
     ))
-    .orderBy(asc(workoutSessions.completedAt), asc(workoutSessions.id));
-  const completed = sessions.filter((session) => session.state === "completed" && session.completedAt);
+    .orderBy(desc(workoutSessions.completedAt), desc(workoutSessions.id))
+    .limit(MAXIMUM_PROGRESS_TIMELINE_SESSIONS);
+  const completed = sessions
+    .filter((session) => session.completedAt)
+    .reverse();
   const completedIds = completed.map(({ id }) => id);
   const logs = completedIds.length === 0
     ? []
     : await database
-        .select()
+        .select({
+          addedWeightKg: setLogs.addedWeightKg,
+          distanceM: setLogs.distanceM,
+          durationSeconds: setLogs.durationSeconds,
+          measurementKind: setLogs.measurementKind,
+          repetitions: setLogs.repetitions,
+          sessionId: setLogs.sessionId,
+          setKind: setLogs.setKind,
+          weightKg: setLogs.weightKg,
+        })
         .from(setLogs)
+        .innerJoin(workoutExerciseStates, and(
+          eq(workoutExerciseStates.ownerFirebaseUid, setLogs.ownerFirebaseUid),
+          eq(workoutExerciseStates.sessionId, setLogs.sessionId),
+          eq(workoutExerciseStates.snapshotId, setLogs.snapshotId),
+          eq(workoutExerciseStates.status, "completed"),
+        ))
         .where(and(
           eq(setLogs.ownerFirebaseUid, viewer.uid),
           inArray(setLogs.sessionId, completedIds),
@@ -522,22 +813,57 @@ export async function loadProgressInsights(
           eq(cardioLogs.ownerFirebaseUid, viewer.uid),
           inArray(cardioLogs.sessionId, completedIds),
         ));
+  const logsBySession = new Map<string, Array<typeof logs[number]>>();
+  for (const log of logs) {
+    const sessionLogs = logsBySession.get(log.sessionId);
+    if (sessionLogs) {
+      sessionLogs.push(log);
+    } else {
+      logsBySession.set(log.sessionId, [log]);
+    }
+  }
+  const cardioBySession = new Map<string, Array<typeof cardio[number]>>();
+  for (const row of cardio) {
+    const sessionCardio = cardioBySession.get(row.sessionId);
+    if (sessionCardio) {
+      sessionCardio.push(row);
+    } else {
+      cardioBySession.set(row.sessionId, [row]);
+    }
+  }
   const inputs = completed.map((session) => {
-    const sessionLogs = logs.filter(({ sessionId }) => sessionId === session.id);
-    const sessionCardio = cardio.find(({ sessionId }) => sessionId === session.id);
-    const estimated = sessionLogs
-      .filter((log) => log.measurementKind === "weight_reps")
-      .map((log) => estimateEpleyOneRepMaxKg(log.weightKg ?? 0, log.repetitions ?? 0))
-      .filter((value): value is number => value !== undefined);
+    const sessionLogs = logsBySession.get(session.id) ?? [];
+    const workLogs = sessionLogs.filter(({ setKind }) => setKind === "work");
+    const sessionCardio = cardioBySession.get(session.id)?.[0];
+    const estimated = workLogs
+      .filter((log) => log.measurementKind === "weight_reps" && log.weightKg !== null && log.repetitions !== null)
+      .flatMap((log) => {
+        try {
+          const value = estimateEpleyOneRepMaxKg(log.weightKg!, log.repetitions!);
+          return value === undefined ? [] : [value];
+        } catch {
+          return [];
+        }
+      });
+    const volume = workLogs.reduce((sum, log) => {
+      const loadKg = log.measurementKind === "bodyweight_reps"
+        ? log.addedWeightKg ?? 0
+        : log.measurementKind === "weight_reps"
+          ? log.weightKg ?? 0
+          : 0;
+      const repetitions = log.repetitions ?? 0;
+      const next = sum + (loadKg * repetitions);
+      return Number.isFinite(next) && next >= 0 ? next : sum;
+    }, 0);
+    const durationSeconds = workLogs.reduce((sum, log) => sum + (log.durationSeconds ?? 0), 0) + (sessionCardio?.durationSeconds ?? 0);
+    const distanceMeters = workLogs.reduce((sum, log) => sum + (log.distanceM ?? 0), 0) + (sessionCardio?.distanceM ?? 0);
     return {
       completedAt: session.completedAt!.toISOString(),
-      distanceMeters: sessionLogs.reduce((sum, log) => sum + (log.distanceM ?? 0), 0) + (sessionCardio?.distanceM ?? 0),
-      durationSeconds: sessionLogs.reduce((sum, log) => sum + (log.durationSeconds ?? 0), 0) + (sessionCardio?.durationSeconds ?? 0),
+      ...(Number.isFinite(distanceMeters) && distanceMeters >= 0 ? { distanceMeters } : {}),
+      ...(Number.isFinite(durationSeconds) && durationSeconds >= 0 ? { durationSeconds } : {}),
       ...(estimated.length === 0 ? {} : { estimatedOneRepMaxKg: Math.max(...estimated) }),
       id: session.id,
-      volumeKg: sessionLogs
-        .filter(({ setKind }) => setKind === "work")
-        .reduce((sum, log) => sum + ((log.weightKg ?? 0) * (log.repetitions ?? 0)), 0),
+      volumeKg: volume,
     };
   });
   const series = buildProgressSummarySeries(inputs, { timeZone: preferences.timezone });
@@ -562,12 +888,17 @@ export async function loadProgressInsights(
       state: projections.length === 0 ? "derived" : "persisted",
     },
     series,
+    scope: {
+      maxSessions: MAXIMUM_PROGRESS_TIMELINE_SESSIONS,
+      sessionCount: completedSessionCount,
+      truncated: completedSessionCount > MAXIMUM_PROGRESS_TIMELINE_SESSIONS,
+    },
     totals: {
-      abandonedSessions: sessions.filter(({ state }) => state === "abandoned").length,
-      completedSessions: completed.length,
-      distanceMeters: series.reduce((sum, point) => sum + (point.distanceMeters ?? 0), 0),
-      durationSeconds: series.reduce((sum, point) => sum + (point.durationSeconds ?? 0), 0),
-      volumeKg: series.reduce((sum, point) => sum + (point.volumeKg ?? 0), 0),
+      abandonedSessions: aggregateNumber("abandoned_sessions"),
+      completedSessions: completedSessionCount,
+      distanceMeters: aggregateNumber("set_distance_meters") + aggregateNumber("cardio_distance_meters"),
+      durationSeconds: aggregateNumber("set_duration_seconds") + aggregateNumber("cardio_duration_seconds"),
+      volumeKg: aggregateNumber("volume_kg"),
     },
   };
 }

@@ -45,3 +45,14 @@ The dedicated implementation brief dated August 25, 2026, is the authoritative s
 - Publication: the optimized WebP and its prompt sidecar are project assets. Superseded generated candidates and private local source outputs are excluded.
 
 Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.
+
+## Firebase Admin serverless dependency compatibility
+
+Accessed August 27, 2026:
+
+- [pnpm settings](https://pnpm.io/settings#overrides): pnpm 11 reads project dependency-resolution settings such as `overrides` from `pnpm-workspace.yaml`.
+- [Firebase Admin issue 3181](https://github.com/firebase/firebase-admin-node/issues/3181): documents the same Firebase Admin, `jwks-rsa`, `jose` 6, pnpm, Next.js, and serverless `ERR_REQUIRE_ESM` failure plus the narrowly scoped `jwks-rsa>jose` workaround.
+- [jwks-rsa issue 507](https://github.com/auth0/node-jwks-rsa/issues/507): records the CommonJS `require()` incompatibility after `jose` 6 became ESM-only.
+- [Next.js server external packages](https://nextjs.org/docs/app/api-reference/config/next-config-js/serverExternalPackages): explains that dependencies may use native Node.js `require`, and lists `firebase-admin` among automatically externalized packages.
+
+The project keeps Firebase Admin as the trusted server verifier, constrains only the incompatible transitive edge, and retains a fail-first CommonJS loading regression. Revisit and remove the override only after a newer upstream graph passes the same local and Vercel preview boundary.

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { and, asc, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "@/db/client";
 import {
@@ -15,6 +15,8 @@ import {
   programPrescriptions,
   programRevisions,
   programSections,
+  personalRecords,
+  personalRecordProjectionCheckpoints,
   setLogs,
   userEquipmentProfiles,
   userPrograms,
@@ -23,8 +25,12 @@ import {
   workoutSessions,
 } from "@/db/schema";
 import { EQUIPMENT_PROFILES, type EquipmentId, type EquipmentProfileKind } from "@/domain/equipment";
+import { deterministicSeedUuid } from "@/domain/seed/identity";
 import {
+  buildPersonalRecordProjectionCandidates,
+  PERSONAL_RECORD_CALCULATION_VERSION,
   parseMeasurement,
+  personalRecordCalculationVersionRank,
   type MeasurementKind,
   type WorkoutMeasurement,
 } from "@/domain/analytics";
@@ -511,6 +517,275 @@ function decodeMeasurement(
     throw new WorkoutRepositoryError("conflict", "The saved set measurement is malformed.");
   }
   return parseMeasurement({ kind: row.measurementKind, durationSeconds: row.durationSeconds, distanceMeters: row.distanceM, ...warmup });
+}
+
+type PersonalRecordProjectionSetRow = Readonly<{
+  setLogId: string;
+  sessionId: string;
+  measurementKind: MeasurementKind;
+  weightKg: number | null;
+  addedWeightKg: number | null;
+  repetitions: number | null;
+  durationSeconds: number | null;
+  distanceM: number | null;
+  recordedAt: Date;
+  effectiveCatalogExerciseId: string | null;
+  effectiveCustomExerciseId: string | null;
+  effectiveLoggingKind: MeasurementKind;
+}>;
+
+function projectionMeasurement(row: PersonalRecordProjectionSetRow): WorkoutMeasurement | undefined {
+  if (row.measurementKind !== row.effectiveLoggingKind) return undefined;
+  try {
+    if (row.measurementKind === "weight_reps") {
+      if (row.weightKg === null || row.repetitions === null) return undefined;
+      return parseMeasurement({ kind: row.measurementKind, weightKg: row.weightKg, repetitions: row.repetitions });
+    }
+    if (row.measurementKind === "bodyweight_reps") {
+      if (row.repetitions === null) return undefined;
+      return parseMeasurement({
+        kind: row.measurementKind,
+        repetitions: row.repetitions,
+        ...(row.addedWeightKg === null ? {} : { addedWeightKg: row.addedWeightKg }),
+      });
+    }
+    if (row.measurementKind === "duration") {
+      if (row.durationSeconds === null) return undefined;
+      return parseMeasurement({ kind: row.measurementKind, durationSeconds: row.durationSeconds });
+    }
+    if (row.distanceM === null || row.durationSeconds === null) return undefined;
+    return parseMeasurement({
+      kind: row.measurementKind,
+      distanceMeters: row.distanceM,
+      durationSeconds: row.durationSeconds,
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+function projectionIdentity(row: PersonalRecordProjectionSetRow): Readonly<{
+  catalogExerciseId: string | null;
+  customExerciseId: string | null;
+}> | undefined {
+  if ((row.effectiveCatalogExerciseId === null) === (row.effectiveCustomExerciseId === null)) {
+    return undefined;
+  }
+  return {
+    catalogExerciseId: row.effectiveCatalogExerciseId,
+    customExerciseId: row.effectiveCustomExerciseId,
+  };
+}
+
+async function projectPersonalRecords(
+  tx: TxDatabase,
+  ownerUid: string,
+  sessionId: string,
+  persist = true,
+): Promise<Readonly<{
+  candidateCount: number;
+  changedCount: number;
+  deletedCount: number;
+  insertedCount: number;
+  updatedCount: number;
+}>> {
+  const sessionSources = await tx
+    .select({ setLogId: setLogs.id })
+    .from(setLogs)
+    .where(and(
+      eq(setLogs.ownerFirebaseUid, ownerUid),
+      eq(setLogs.sessionId, sessionId),
+    ))
+    .orderBy(asc(setLogs.id));
+  const rows = await tx
+    .select({
+      setLogId: setLogs.id,
+      sessionId: setLogs.sessionId,
+      measurementKind: setLogs.measurementKind,
+      weightKg: setLogs.weightKg,
+      addedWeightKg: setLogs.addedWeightKg,
+      repetitions: setLogs.repetitions,
+      durationSeconds: setLogs.durationSeconds,
+      distanceM: setLogs.distanceM,
+      recordedAt: setLogs.recordedAt,
+      effectiveCatalogExerciseId: workoutExerciseStates.effectiveCatalogExerciseId,
+      effectiveCustomExerciseId: workoutExerciseStates.effectiveCustomExerciseId,
+      effectiveLoggingKind: workoutExerciseStates.effectiveLoggingKind,
+    })
+    .from(setLogs)
+    .innerJoin(workoutExerciseStates, and(
+      eq(workoutExerciseStates.ownerFirebaseUid, setLogs.ownerFirebaseUid),
+      eq(workoutExerciseStates.sessionId, setLogs.sessionId),
+      eq(workoutExerciseStates.snapshotId, setLogs.snapshotId),
+    ))
+    .where(and(
+      eq(setLogs.ownerFirebaseUid, ownerUid),
+      eq(setLogs.sessionId, sessionId),
+      eq(setLogs.setKind, "work"),
+      eq(workoutExerciseStates.ownerFirebaseUid, ownerUid),
+      eq(workoutExerciseStates.sessionId, sessionId),
+      eq(workoutExerciseStates.status, "completed"),
+    ))
+    .orderBy(asc(setLogs.id));
+
+  const candidates = (rows as PersonalRecordProjectionSetRow[]).flatMap((row) => {
+    const identity = projectionIdentity(row);
+    if (!identity) return [];
+    const identityKey = identity.catalogExerciseId !== null
+      ? `catalog:${identity.catalogExerciseId}`
+      : identity.customExerciseId !== null
+        ? `custom:${identity.customExerciseId}`
+        : undefined;
+    if (!identityKey) return [];
+    const measurement = projectionMeasurement(row);
+    const generated = measurement === undefined ? [] : buildPersonalRecordProjectionCandidates(measurement);
+    return generated.map((candidate) => ({
+      id: deterministicSeedUuid(
+        "personal-record",
+        `${ownerUid}:${row.setLogId}:${identityKey}:${candidate.recordType}`,
+      ),
+      ownerFirebaseUid: ownerUid,
+      catalogExerciseId: identity.catalogExerciseId,
+      customExerciseId: identity.customExerciseId,
+      type: candidate.recordType,
+      value: candidate.value,
+      sourceSetLogId: row.setLogId,
+      calculationVersion: PERSONAL_RECORD_CALCULATION_VERSION,
+      achievedAt: row.recordedAt,
+    }));
+  });
+
+  const currentVersionRank = personalRecordCalculationVersionRank(PERSONAL_RECORD_CALCULATION_VERSION);
+  if (currentVersionRank === undefined) {
+    throw new Error(`Unsupported personal-record calculation version: ${PERSONAL_RECORD_CALCULATION_VERSION}`);
+  }
+
+  if (candidates.length === 0 && sessionSources.length === 0) {
+    return { candidateCount: 0, changedCount: 0, deletedCount: 0, insertedCount: 0, updatedCount: 0 };
+  }
+
+  let insertedCount = 0;
+  let updatedCount = 0;
+  let deletedCount = 0;
+  for (const candidate of candidates) {
+    const identityPredicate = candidate.catalogExerciseId === null
+      ? and(
+          isNull(personalRecords.catalogExerciseId),
+          eq(personalRecords.customExerciseId, candidate.customExerciseId!),
+        )
+      : and(
+          eq(personalRecords.catalogExerciseId, candidate.catalogExerciseId),
+          isNull(personalRecords.customExerciseId),
+        );
+    const basePredicate = and(
+      eq(personalRecords.ownerFirebaseUid, ownerUid),
+      eq(personalRecords.type, candidate.type),
+      eq(personalRecords.sourceSetLogId, candidate.sourceSetLogId),
+      identityPredicate,
+    );
+    let existing = (await tx
+      .select({ id: personalRecords.id, calculationVersion: personalRecords.calculationVersion })
+      .from(personalRecords)
+      .where(basePredicate)
+      .limit(1))[0];
+
+    if (!existing) {
+      if (!persist) {
+        insertedCount += 1;
+        continue;
+      }
+      const inserted = await tx
+        .insert(personalRecords)
+        .values(candidate)
+        .onConflictDoNothing()
+        .returning({ id: personalRecords.id });
+      if (inserted[0]) {
+        insertedCount += 1;
+        continue;
+      }
+      existing = (await tx
+        .select({ id: personalRecords.id, calculationVersion: personalRecords.calculationVersion })
+        .from(personalRecords)
+        .where(basePredicate)
+        .limit(1))[0];
+      if (!existing) {
+        throw new Error("Personal-record candidate conflict did not resolve to a source row.");
+      }
+    }
+
+    const existingVersionRank = personalRecordCalculationVersionRank(existing.calculationVersion);
+    if (existingVersionRank === undefined || existingVersionRank >= currentVersionRank) continue;
+    if (!persist) {
+      updatedCount += 1;
+      continue;
+    }
+    const updated = await tx
+      .update(personalRecords)
+      .set({
+        calculationVersion: PERSONAL_RECORD_CALCULATION_VERSION,
+        updatedAt: new Date(),
+        value: candidate.value,
+      })
+      .where(and(
+        eq(personalRecords.id, existing.id),
+        eq(personalRecords.ownerFirebaseUid, ownerUid),
+        eq(personalRecords.calculationVersion, existing.calculationVersion),
+      ))
+      .returning({ id: personalRecords.id });
+    if (updated[0]) updatedCount += 1;
+  }
+
+  const candidateKeys = new Set(candidates.map((candidate) =>
+    `${candidate.sourceSetLogId}:${candidate.catalogExerciseId === null ? `custom:${candidate.customExerciseId}` : `catalog:${candidate.catalogExerciseId}`}:${candidate.type}`,
+  ));
+  const existingSessionRecords = sessionSources.length === 0
+    ? []
+    : await tx
+        .select({
+          calculationVersion: personalRecords.calculationVersion,
+          catalogExerciseId: personalRecords.catalogExerciseId,
+          customExerciseId: personalRecords.customExerciseId,
+          id: personalRecords.id,
+          sourceSetLogId: personalRecords.sourceSetLogId,
+          type: personalRecords.type,
+        })
+        .from(personalRecords)
+        .where(and(
+          eq(personalRecords.ownerFirebaseUid, ownerUid),
+          inArray(personalRecords.sourceSetLogId, sessionSources.map(({ setLogId }) => setLogId)),
+        ));
+  const staleIds = existingSessionRecords
+    .filter((record) => {
+      const rank = personalRecordCalculationVersionRank(record.calculationVersion);
+      if (rank === undefined || rank >= currentVersionRank) return false;
+      const identityKey = record.catalogExerciseId === null
+        ? `custom:${record.customExerciseId}`
+        : `catalog:${record.catalogExerciseId}`;
+      return !candidateKeys.has(`${record.sourceSetLogId}:${identityKey}:${record.type}`);
+    })
+    .map(({ id }) => id);
+  if (staleIds.length > 0) {
+    if (!persist) {
+      deletedCount += staleIds.length;
+    } else {
+      const deleted = await tx
+        .delete(personalRecords)
+        .where(and(
+          eq(personalRecords.ownerFirebaseUid, ownerUid),
+          inArray(personalRecords.id, staleIds),
+        ))
+        .returning({ id: personalRecords.id });
+      deletedCount += deleted.length;
+    }
+  }
+
+  return {
+    candidateCount: candidates.length,
+    changedCount: insertedCount + updatedCount + deletedCount,
+    deletedCount,
+    insertedCount,
+    updatedCount,
+  };
 }
 
 function parseCardioLog(row: Readonly<{
@@ -1864,6 +2139,7 @@ async function applyOperation(
       const cardio = await selectCardioLog(tx, ownerUid, session.id);
       if (!cardio) throw new WorkoutRepositoryError("not_ready", "Save a cardio result before completing the workout.");
     }
+    await projectPersonalRecords(tx, ownerUid, session.id);
     const update = await tx.update(workoutSessions).set({ state: "completed", completedAt: now }).where(and(eq(workoutSessions.ownerFirebaseUid, ownerUid), eq(workoutSessions.id, session.id), inArray(workoutSessions.state, RESUMABLE_STATES))).returning({ id: workoutSessions.id });
     if (!update[0]) throw new WorkoutRepositoryError("conflict", "The workout changed before it could be completed.", { retryable: true });
     return operationResult(tx, session, session.id, undefined);
@@ -2015,6 +2291,390 @@ async function submitWorkoutOperationInternal(database: Database, viewer: Viewer
     await insertIdempotency(tx, current.uid, { ...input, sessionId, idempotencyKey, kind, payload }, hash, result);
     return result;
   });
+}
+
+export type PersonalRecordProjectionRebuildInput = Readonly<{
+  /** Writes are opt-in; the default is a read-only dry run. */
+  apply?: boolean;
+  /** Maximum number of completed sessions handled by one committed batch. */
+  batchSize?: number;
+  /** Test/maintenance hook that throws after the requested batches commit. */
+  interruptAfterBatches?: number;
+}>;
+
+export type PersonalRecordProjectionRebuildResult = Readonly<{
+  /** Candidates observed in this invocation. */
+  candidateCount: number;
+  /** Candidate rows changed in this invocation. */
+  changedCount: number;
+  completed: boolean;
+  committedBatches: number;
+  /** Candidate rows deleted in this invocation. */
+  deletedCount: number;
+  /** Candidate rows inserted in this invocation. */
+  insertedCount: number;
+  mode: "applied" | "dry_run";
+  /** Completed sessions observed in this invocation. */
+  sessionsScanned: number;
+  /** Durable totals through the current cursor, including prior committed batches. */
+  totalCandidateCount: number;
+  totalChangedCount: number;
+  totalSessionsScanned: number;
+  /** Candidate rows updated in this invocation. */
+  updatedCount: number;
+}>;
+
+type PersonalRecordProjectionCheckpoint = Readonly<{
+  status: "completed" | "running";
+  lastSessionId: string | null;
+  sessionsScanned: number;
+  candidateCount: number;
+  changedCount: number;
+}>;
+
+type ProjectionBatchResult = Readonly<{
+  candidateCount: number;
+  changedCount: number;
+  committedBatch: boolean;
+  completed: boolean;
+  deletedCount: number;
+  insertedCount: number;
+  lastSessionId: string | null;
+  sessionsScanned: number;
+  totalCandidateCount: number;
+  totalChangedCount: number;
+  totalSessionsScanned: number;
+  updatedCount: number;
+}>;
+
+const DEFAULT_PROJECTION_REBUILD_BATCH_SIZE = 50;
+const MAXIMUM_PROJECTION_REBUILD_BATCH_SIZE = 1_000;
+
+function rebuildBatchSize(input: PersonalRecordProjectionRebuildInput): number {
+  const batchSize = input.batchSize ?? DEFAULT_PROJECTION_REBUILD_BATCH_SIZE;
+  if (!Number.isSafeInteger(batchSize) || batchSize < 1 || batchSize > MAXIMUM_PROJECTION_REBUILD_BATCH_SIZE) {
+    throw new RangeError(
+      `Personal-record rebuild batchSize must be between 1 and ${MAXIMUM_PROJECTION_REBUILD_BATCH_SIZE}.`,
+    );
+  }
+  return batchSize;
+}
+
+function rebuildInterruptAfterBatches(input: PersonalRecordProjectionRebuildInput): number | undefined {
+  const value = input.interruptAfterBatches;
+  if (value === undefined) return undefined;
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new RangeError("Personal-record rebuild interruptAfterBatches must be a positive integer.");
+  }
+  return value;
+}
+
+async function selectCompletedProjectionSessions(
+  tx: TxDatabase,
+  lastSessionId: string | null,
+  batchSize: number,
+): Promise<Readonly<{ id: string; ownerFirebaseUid: string }[]>> {
+  const predicates = [eq(workoutSessions.state, "completed")];
+  if (lastSessionId !== null) predicates.push(gt(workoutSessions.id, lastSessionId));
+  return tx
+    .select({ id: workoutSessions.id, ownerFirebaseUid: workoutSessions.ownerFirebaseUid })
+    .from(workoutSessions)
+    .where(and(...predicates))
+    .orderBy(asc(workoutSessions.id))
+    .limit(batchSize + 1);
+}
+
+async function lockProjectionCheckpoint(tx: TxDatabase): Promise<PersonalRecordProjectionCheckpoint> {
+  await tx
+    .insert(personalRecordProjectionCheckpoints)
+    .values({ calculationVersion: PERSONAL_RECORD_CALCULATION_VERSION })
+    .onConflictDoNothing();
+  const result = await tx.execute(sql`
+    SELECT status, last_session_id, sessions_scanned, candidate_count, changed_count
+    FROM personal_record_projection_checkpoints
+    WHERE calculation_version = ${PERSONAL_RECORD_CALCULATION_VERSION}
+    FOR UPDATE
+  `);
+  const row = (result as unknown as { rows: Array<Record<string, unknown>> }).rows[0];
+  if (!row || (row["status"] !== "running" && row["status"] !== "completed")) {
+    throw new Error("Personal-record projection checkpoint is missing or malformed.");
+  }
+  const sessionsScanned = Number(row["sessions_scanned"]);
+  const candidateCount = Number(row["candidate_count"]);
+  const changedCount = Number(row["changed_count"]);
+  if (
+    !Number.isSafeInteger(sessionsScanned) || sessionsScanned < 0
+    || !Number.isSafeInteger(candidateCount) || candidateCount < 0
+    || !Number.isSafeInteger(changedCount) || changedCount < 0
+  ) {
+    throw new Error("Personal-record projection checkpoint counters are malformed.");
+  }
+  return {
+    status: row["status"],
+    lastSessionId: typeof row["last_session_id"] === "string" ? row["last_session_id"] : null,
+    sessionsScanned,
+    candidateCount,
+    changedCount,
+  };
+}
+
+async function applyProjectionBatch(
+  database: Database,
+  batchSize: number,
+): Promise<ProjectionBatchResult> {
+  return database.transaction(async (transaction) => {
+    const tx = transaction as unknown as Database;
+    const checkpoint = await lockProjectionCheckpoint(tx);
+    if (checkpoint.status === "completed") {
+      return {
+        candidateCount: 0,
+        changedCount: 0,
+        committedBatch: false,
+        completed: true,
+        deletedCount: 0,
+        insertedCount: 0,
+        lastSessionId: checkpoint.lastSessionId,
+        sessionsScanned: 0,
+        totalCandidateCount: checkpoint.candidateCount,
+        totalChangedCount: checkpoint.changedCount,
+        totalSessionsScanned: checkpoint.sessionsScanned,
+        updatedCount: 0,
+      };
+    }
+
+    const selected = await selectCompletedProjectionSessions(tx, checkpoint.lastSessionId, batchSize);
+    const sessions = selected.slice(0, batchSize);
+    if (sessions.length === 0) {
+      await tx
+        .update(personalRecordProjectionCheckpoints)
+        .set({
+          lastSessionId: null,
+          status: "completed",
+          updatedAt: new Date(),
+        })
+        .where(eq(
+          personalRecordProjectionCheckpoints.calculationVersion,
+          PERSONAL_RECORD_CALCULATION_VERSION,
+        ));
+      return {
+        candidateCount: 0,
+        changedCount: 0,
+        committedBatch: false,
+        completed: true,
+        deletedCount: 0,
+        insertedCount: 0,
+        lastSessionId: null,
+        sessionsScanned: 0,
+        totalCandidateCount: checkpoint.candidateCount,
+        totalChangedCount: checkpoint.changedCount,
+        totalSessionsScanned: checkpoint.sessionsScanned,
+        updatedCount: 0,
+      };
+    }
+
+    let candidateCount = 0;
+    let changedCount = 0;
+    let deletedCount = 0;
+    let insertedCount = 0;
+    let updatedCount = 0;
+    const lockedOwners = new Set<string>();
+    for (const session of sessions) {
+      if (!lockedOwners.has(session.ownerFirebaseUid)) {
+        await lockOwner(tx, session.ownerFirebaseUid);
+        lockedOwners.add(session.ownerFirebaseUid);
+      }
+      const projection = await projectPersonalRecords(tx, session.ownerFirebaseUid, session.id);
+      candidateCount += projection.candidateCount;
+      changedCount += projection.changedCount;
+      deletedCount += projection.deletedCount;
+      insertedCount += projection.insertedCount;
+      updatedCount += projection.updatedCount;
+    }
+    const nextSessionId = sessions[sessions.length - 1]!.id;
+    const completed = selected.length <= batchSize;
+    await tx
+      .update(personalRecordProjectionCheckpoints)
+      .set({
+        candidateCount: checkpoint.candidateCount + candidateCount,
+        changedCount: checkpoint.changedCount + changedCount,
+        lastSessionId: completed ? null : nextSessionId,
+        sessionsScanned: checkpoint.sessionsScanned + sessions.length,
+        status: completed ? "completed" : "running",
+        updatedAt: new Date(),
+      })
+      .where(eq(
+        personalRecordProjectionCheckpoints.calculationVersion,
+        PERSONAL_RECORD_CALCULATION_VERSION,
+      ));
+    return {
+      candidateCount,
+      changedCount,
+      committedBatch: true,
+      completed,
+      deletedCount,
+      insertedCount,
+      lastSessionId: completed ? null : nextSessionId,
+      sessionsScanned: sessions.length,
+      totalCandidateCount: checkpoint.candidateCount + candidateCount,
+      totalChangedCount: checkpoint.changedCount + changedCount,
+      totalSessionsScanned: checkpoint.sessionsScanned + sessions.length,
+      updatedCount,
+    };
+  });
+}
+
+async function dryRunProjectionBatch(
+  database: Database,
+  lastSessionId: string | null,
+  batchSize: number,
+): Promise<ProjectionBatchResult> {
+  return database.transaction(async (transaction) => {
+    const tx = transaction as unknown as Database;
+    const selected = await selectCompletedProjectionSessions(tx, lastSessionId, batchSize);
+    const sessions = selected.slice(0, batchSize);
+    if (sessions.length === 0) {
+      return {
+        candidateCount: 0,
+        changedCount: 0,
+        committedBatch: false,
+        completed: true,
+        deletedCount: 0,
+        insertedCount: 0,
+        lastSessionId: null,
+        sessionsScanned: 0,
+        totalCandidateCount: 0,
+        totalChangedCount: 0,
+        totalSessionsScanned: 0,
+        updatedCount: 0,
+      };
+    }
+    let candidateCount = 0;
+    let changedCount = 0;
+    let deletedCount = 0;
+    let insertedCount = 0;
+    let updatedCount = 0;
+    for (const session of sessions) {
+      const projection = await projectPersonalRecords(tx, session.ownerFirebaseUid, session.id, false);
+      candidateCount += projection.candidateCount;
+      changedCount += projection.changedCount;
+      deletedCount += projection.deletedCount;
+      insertedCount += projection.insertedCount;
+      updatedCount += projection.updatedCount;
+    }
+    const completed = selected.length <= batchSize;
+    return {
+      candidateCount,
+      changedCount,
+      committedBatch: false,
+      completed,
+      deletedCount,
+      insertedCount,
+      lastSessionId: completed ? null : sessions[sessions.length - 1]!.id,
+      sessionsScanned: sessions.length,
+      totalCandidateCount: candidateCount,
+      totalChangedCount: changedCount,
+      totalSessionsScanned: sessions.length,
+      updatedCount,
+    };
+  });
+}
+
+async function dryRunProjectionRebuild(
+  database: Database,
+  batchSize: number,
+): Promise<Omit<ProjectionBatchResult, "committedBatch" | "lastSessionId">> {
+  let lastSessionId: string | null = null;
+  let candidateCount = 0;
+  let changedCount = 0;
+  let deletedCount = 0;
+  let insertedCount = 0;
+  let sessionsScanned = 0;
+  let updatedCount = 0;
+  while (true) {
+    const result = await dryRunProjectionBatch(database, lastSessionId, batchSize);
+    candidateCount += result.candidateCount;
+    changedCount += result.changedCount;
+    deletedCount += result.deletedCount;
+    insertedCount += result.insertedCount;
+    sessionsScanned += result.sessionsScanned;
+    updatedCount += result.updatedCount;
+    if (result.completed) {
+      return {
+        candidateCount,
+        changedCount,
+        completed: true,
+        deletedCount,
+        insertedCount,
+        sessionsScanned,
+        totalCandidateCount: candidateCount,
+        totalChangedCount: changedCount,
+        totalSessionsScanned: sessionsScanned,
+        updatedCount,
+      };
+    }
+    lastSessionId = result.lastSessionId;
+  }
+}
+
+/**
+ * Backfill candidates for every already-completed session, including sessions
+ * whose terminal completion receipt predates projection support. The default
+ * dry-run mode performs no writes; applying the same run again is idempotent.
+ */
+export async function rebuildPersonalRecordProjections(
+  database: Database,
+  input: PersonalRecordProjectionRebuildInput = {},
+): Promise<PersonalRecordProjectionRebuildResult> {
+  const apply = input.apply === true;
+  const batchSize = rebuildBatchSize(input);
+  const interruptAfterBatches = rebuildInterruptAfterBatches(input);
+  if (!apply) {
+    const result = await dryRunProjectionRebuild(database, batchSize);
+    return { ...result, committedBatches: 0, mode: "dry_run" };
+  }
+
+  let committedBatches = 0;
+  let candidateCount = 0;
+  let changedCount = 0;
+  let deletedCount = 0;
+  let insertedCount = 0;
+  let updatedCount = 0;
+  let sessionsScanned = 0;
+  let totalCandidateCount = 0;
+  let totalChangedCount = 0;
+  let totalSessionsScanned = 0;
+  while (true) {
+    const result = await applyProjectionBatch(database, batchSize);
+    if (result.committedBatch) committedBatches += 1;
+    candidateCount += result.candidateCount;
+    changedCount += result.changedCount;
+    deletedCount += result.deletedCount;
+    insertedCount += result.insertedCount;
+    updatedCount += result.updatedCount;
+    sessionsScanned += result.sessionsScanned;
+    totalCandidateCount = result.totalCandidateCount;
+    totalChangedCount = result.totalChangedCount;
+    totalSessionsScanned = result.totalSessionsScanned;
+    if (interruptAfterBatches !== undefined && committedBatches >= interruptAfterBatches) {
+      throw new Error(`Personal-record projection rebuild interrupted after ${committedBatches} committed batch(es).`);
+    }
+    if (result.completed) {
+      return {
+        candidateCount,
+        changedCount,
+        committedBatches,
+        completed: true,
+        deletedCount,
+        insertedCount,
+        mode: "applied",
+        sessionsScanned,
+        totalCandidateCount,
+        totalChangedCount,
+        totalSessionsScanned,
+        updatedCount,
+      };
+    }
+  }
 }
 
 export function submitWorkoutOperation(

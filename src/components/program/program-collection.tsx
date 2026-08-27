@@ -16,9 +16,11 @@ import {
 } from "@/client/private-api";
 import {
   parseProgramCollectionResponse,
+  programCollectionSuccess,
   retryableOperationKey,
   suggestedCloneName,
   validatedProgramName,
+  type ProgramCollectionMutationExpectation,
 } from "@/components/program/program-collection-model";
 import { Icon } from "@/components/ui/icon";
 import {
@@ -93,12 +95,13 @@ export function ProgramCollection({
     return true;
   }
 
-  function acceptResponse(value: unknown, successMessage: string) {
-    const parsed = parseProgramCollectionResponse(value);
+  function acceptResponse(value: unknown, expected: ProgramCollectionMutationExpectation) {
+    const parsed = parseProgramCollectionResponse(value, expected);
+    const success = programCollectionSuccess(parsed);
     setPrograms(parsed.programs);
     setFailure("");
-    setMessage(successMessage);
-    router.push("/app");
+    setMessage(success.message);
+    if (success.openActiveOverview) router.push("/app");
   }
 
   async function createProgram(event: FormEvent<HTMLFormElement>) {
@@ -127,7 +130,12 @@ export function ProgramCollection({
         },
         method: "POST",
       });
-      acceptResponse(response, `${name} is active. Opening its overview…`);
+      acceptResponse(response, {
+        equipmentProfileKind: createProfile,
+        kind: "create",
+        name,
+        priorProgramIds: programs.map((program) => program.id),
+      });
       createKey.current = undefined;
     } catch (error) {
       setFailure(failureMessage(error));
@@ -185,7 +193,13 @@ export function ProgramCollection({
         },
         method: "POST",
       });
-      acceptResponse(response, `${name} is active. Opening its overview…`);
+      acceptResponse(response, {
+        kind: "clone",
+        name,
+        priorProgramIds: programs.map((program) => program.id),
+        sourceEquipmentProfileKind: cloneSource.equipmentProfileKind,
+        sourceProgramId: cloneSource.id,
+      });
       cloneKey.current = undefined;
       cloneDialog.current?.close();
     } catch (error) {
@@ -215,10 +229,11 @@ export function ProgramCollection({
           method: "POST",
         },
       );
-      acceptResponse(
-        response,
-        `${program.name} is active. Opening its overview…`,
-      );
+      acceptResponse(response, {
+        kind: "activate",
+        programId: program.id,
+        revisionId: program.revisionId,
+      });
       activationKeys.current.delete(program.id);
     } catch (error) {
       setFailure(failureMessage(error));
@@ -353,7 +368,7 @@ export function ProgramCollection({
               autoComplete="off"
               disabled={!canMutate || busyOperation !== null}
               id="create-program-name"
-              maxLength={180}
+              maxLength={80}
               onChange={(event) => {
                 createKey.current = undefined;
                 setCreateName(event.currentTarget.value);
@@ -451,7 +466,7 @@ export function ProgramCollection({
               autoComplete="off"
               disabled={busyOperation === "clone"}
               id="clone-program-name"
-              maxLength={180}
+              maxLength={80}
               onChange={(event) => {
                 cloneKey.current = undefined;
                 setCloneName(event.currentTarget.value);

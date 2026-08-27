@@ -8,6 +8,7 @@ import {
   customExerciseApiError,
   privateJson,
   readBoundedJson,
+  requirePrivateMutationViewer,
   requirePrivateViewer,
 } from "@/server/http/custom-exercise-api";
 import {
@@ -31,7 +32,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     assertValidMutationRequest(request);
-    const viewer = requirePrivateViewer(await getCurrentViewer());
+    const viewer = requirePrivateMutationViewer(await getCurrentViewer());
     const input = createCustomExerciseRequestSchema.parse(await readBoundedJson(request));
     const result = await createCustomExercise(getDatabase(), viewer, input);
     return privateJson(result, { status: result.duplicate ? 200 : 201 });

@@ -16,6 +16,7 @@ import {
   programPrescriptions,
   programRevisions,
   programSections,
+  personalRecords,
   userProfiles,
   userEquipmentProfiles,
   idempotencyKeys,
@@ -35,12 +36,14 @@ import type { ViewerContext } from "@/server/auth/viewer";
 import {
   WorkoutRepositoryError,
   createWorkoutRepository,
+  rebuildPersonalRecordProjections,
 } from "@/server/repositories/workout-repository";
 
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
 const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
+const projectionCheckpointMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -50,6 +53,7 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
   await raw.exec(await readFile(upgradeMigrationUrl, "utf8"));
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
+  await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   return { raw, database };
@@ -614,21 +618,33 @@ describe("owner-scoped workout repository", () => {
       expect(exercise, `fixture has ${kind}`).toBeDefined();
       const set = exercise!.sets[0]!;
       const payload = { kind: "save_set" as const, setId: set.id, exerciseId: exercise!.id, phase: set.phase, measurement };
-      const version = versions.get(exercise!.id)!;
-      const saved = await operation({ sessionId: started.model.session.id, idempotencyKey: `set-${kind}`, kind: "save_set", expectedVersion: version, payload });
+      const initialVersion = versions.get(exercise!.id)!;
+      const saved = await operation({ sessionId: started.model.session.id, idempotencyKey: `set-${kind}`, kind: "save_set", expectedVersion: initialVersion, payload });
       expect(saved.status).toBe("saved");
-      expect(saved.exerciseVersion).toBe(version + 1);
+      expect(saved.exerciseVersion).toBe(initialVersion + 1);
       versions.set(exercise!.id, saved.exerciseVersion!);
-      const duplicate = await operation({ sessionId: started.model.session.id, idempotencyKey: `set-${kind}`, kind: "save_set", expectedVersion: version, payload });
+      const duplicate = await operation({ sessionId: started.model.session.id, idempotencyKey: `set-${kind}`, kind: "save_set", expectedVersion: initialVersion, payload });
       expect(duplicate.status).toBe("duplicate");
       const differentMeasurement = kind === "weight_reps"
         ? { ...measurement, weightKg: 21 }
         : kind === "bodyweight_reps"
           ? { ...measurement, repetitions: 13 }
           : kind === "duration"
-            ? { ...measurement, durationSeconds: 31 }
-            : { ...measurement, distanceMeters: 101 };
+        ? { ...measurement, durationSeconds: 31 }
+        : { ...measurement, distanceMeters: 101 };
       await expect(operation({ sessionId: started.model.session.id, idempotencyKey: `set-${kind}`, kind: "save_set", payload: { ...payload, measurement: differentMeasurement } as never })).rejects.toMatchObject({ code: "conflict" });
+      for (const extraSet of exercise!.sets.slice(1)) {
+        const extraVersion = versions.get(exercise!.id)!;
+        const extra = await operation({
+          sessionId: started.model.session.id,
+          idempotencyKey: `set-${kind}-${extraSet.position}`,
+          kind: "save_set",
+          expectedVersion: extraVersion,
+          payload: { ...payload, setId: extraSet.id },
+        });
+        expect(extra.status).toBe("saved");
+        versions.set(exercise!.id, extra.exerciseVersion!);
+      }
     }
     const weightExercise = exerciseByKind.get("weight_reps")!;
     await expect(operation({
@@ -647,9 +663,22 @@ describe("owner-scoped workout repository", () => {
 
     await operation({ sessionId: started.model.session.id, idempotencyKey: "cardio-1", kind: "save_cardio", payload: { kind: "save_cardio", mode: "walker", cardio: { mode: "walker", durationSeconds: 1200, distanceMeters: 1500, paceSecondsPerKilometer: 800, paceSource: "derived", inclinePercent: 2, notes: "walk" } } });
     expect((await repository.loadResume(viewer(fixture.ownerUid), { sessionId: started.model.session.id })).cardioLog?.cardio.paceSource).toBe("derived");
+    const completedExerciseIds = new Set<string>();
+    for (const exercise of new Set(exerciseByKind.values())) {
+      const completed = await operation({
+        sessionId: started.model.session.id,
+        idempotencyKey: `complete-${exercise.id}`,
+        kind: "complete_exercise",
+        expectedVersion: versions.get(exercise.id)!,
+        payload: { kind: "complete_exercise", exerciseId: exercise.id },
+      });
+      expect(completed.status).toBe("saved");
+      versions.set(exercise.id, completed.exerciseVersion!);
+      completedExerciseIds.add(exercise.id);
+    }
     for (const exercise of started.model.snapshot.exercises) {
       const state = started.model.exerciseStates.find(({ snapshotId }) => snapshotId === exercise.id)!;
-      if (state.status === "pending") {
+      if (state.status === "pending" && !completedExerciseIds.has(exercise.id)) {
         const skipped = await operation({ sessionId: started.model.session.id, idempotencyKey: `skip-${exercise.id}`, kind: "skip_exercise", expectedVersion: versions.get(exercise.id)!, payload: { kind: "skip_exercise", exerciseId: exercise.id, reason: "not today" } });
         expect(skipped.exerciseVersion).toBe(versions.get(exercise.id)! + 1);
         versions.set(exercise.id, skipped.exerciseVersion!);
@@ -658,12 +687,218 @@ describe("owner-scoped workout repository", () => {
     }
     const completed = await operation({ sessionId: started.model.session.id, idempotencyKey: "complete-session", kind: "complete_session", payload: { kind: "complete_session", sessionId: started.model.session.id } });
     expect(completed.sessionState).toBe("completed");
+    const records = await database
+      .select({
+        catalogExerciseId: personalRecords.catalogExerciseId,
+        calculationVersion: personalRecords.calculationVersion,
+        customExerciseId: personalRecords.customExerciseId,
+        sourceSetLogId: personalRecords.sourceSetLogId,
+        type: personalRecords.type,
+        value: personalRecords.value,
+      })
+      .from(personalRecords)
+      .where(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid));
+    expect(records).toHaveLength(14);
+    expect(records
+      .map(({ type, value }) => ({ type, value }))
+      .sort((left, right) => left.type.localeCompare(right.type) || left.value - right.value)
+      .map(({ type, value }) => [type, value])).toEqual([
+      ["distance", 100],
+      ["duration", 30],
+      ["duration", 30],
+      ["duration", 45],
+      ["estimated_1rm", 26.667],
+      ["estimated_1rm", 26.667],
+      ["max_repetitions", 10],
+      ["max_repetitions", 10],
+      ["max_repetitions", 12],
+      ["max_repetitions", 12],
+      ["max_weight", 20],
+      ["max_weight", 20],
+      ["volume", 200],
+      ["volume", 200],
+    ]);
+    expect(new Set(records.map(({ calculationVersion }) => calculationVersion))).toEqual(new Set(["v2"]));
+    expect(records.every(({ sourceSetLogId, catalogExerciseId, customExerciseId }) =>
+      sourceSetLogId.length > 0 && (catalogExerciseId === null) !== (customExerciseId === null))).toBe(true);
+    const replayed = await operation({ sessionId: started.model.session.id, idempotencyKey: "complete-session", kind: "complete_session", payload: { kind: "complete_session", sessionId: started.model.session.id } });
+    expect(replayed).toMatchObject({ status: "duplicate", sessionState: "completed" });
+    expect(await database.select({ id: personalRecords.id }).from(personalRecords).where(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid))).toHaveLength(records.length);
+    expect(await database.select({ id: personalRecords.id }).from(personalRecords).where(eq(personalRecords.ownerFirebaseUid, fixture.otherUid))).toHaveLength(0);
+    await database.delete(personalRecords).where(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid));
+    expect(await database.select({ id: personalRecords.id }).from(personalRecords).where(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid))).toHaveLength(0);
+    await expect(rebuildPersonalRecordProjections(database)).resolves.toMatchObject({
+      candidateCount: records.length,
+      changedCount: records.length,
+      deletedCount: 0,
+      insertedCount: records.length,
+      mode: "dry_run",
+      sessionsScanned: 1,
+    });
+    expect(await database.select({ id: personalRecords.id }).from(personalRecords).where(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid))).toHaveLength(0);
+    await expect(rebuildPersonalRecordProjections(database, { apply: true })).resolves.toMatchObject({
+      candidateCount: records.length,
+      insertedCount: records.length,
+      mode: "applied",
+      sessionsScanned: 1,
+    });
+    await expect(rebuildPersonalRecordProjections(database, { apply: true })).resolves.toMatchObject({
+      candidateCount: 0,
+      insertedCount: 0,
+      mode: "applied",
+      sessionsScanned: 0,
+      totalCandidateCount: records.length,
+      totalSessionsScanned: 1,
+    });
+    await expect(rebuildPersonalRecordProjections(database)).resolves.toMatchObject({
+      candidateCount: records.length,
+      changedCount: 0,
+      deletedCount: 0,
+      insertedCount: 0,
+      mode: "dry_run",
+      sessionsScanned: 1,
+      updatedCount: 0,
+    });
     await expect(operation({ sessionId: started.model.session.id, idempotencyKey: "after-terminal", kind: "save_note", payload: { kind: "save_note", exerciseId: weightExercise.id, note: "late" } })).rejects.toMatchObject({ code: "terminal" });
     const history = await repository.history(viewer(fixture.ownerUid));
     expect(history.sessions).toHaveLength(1);
     expect(history.sessions[0]?.exercises.find(({ snapshot }) => snapshot.id === weightExercise.id)?.snapshot.name).toBe(weightExercise.name);
     expect(history.sessions[0]?.exercises.flatMap(({ setLogs }) => setLogs).some(({ measurement }) => measurement.kind === "bodyweight_reps" && measurement.addedWeightKg === 5)).toBe(true);
     expect((await repository.history(viewer(fixture.otherUid))).sessions).toHaveLength(0);
+  });
+
+  it("removes recognized older projections for warm-up and skipped sources without touching future versions", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(database);
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      dayId: fixture.dayId,
+      idempotencyKey: "start-stale-projection-sources",
+      programId: fixture.programId,
+    });
+    const weightExercises = started.model.snapshot.exercises.filter(
+      ({ loggingKind }) => loggingKind === "weight_reps",
+    );
+    const warmupExercise = weightExercises[0];
+    const skippedExercise = weightExercises[1];
+    if (!warmupExercise || !skippedExercise) {
+      throw new Error("fixture needs two weight exercises");
+    }
+    const warmupState = started.model.exerciseStates.find(
+      ({ snapshotId }) => snapshotId === warmupExercise.id,
+    );
+    const skippedState = started.model.exerciseStates.find(
+      ({ snapshotId }) => snapshotId === skippedExercise.id,
+    );
+    if (!warmupState?.effectiveCatalogExerciseId || !skippedState?.effectiveCatalogExerciseId) {
+      throw new Error("fixture needs catalog identities");
+    }
+    const [warmupLog, skippedLog] = await database
+      .insert(setLogs)
+      .values([
+        {
+          clientIdempotencyKey: "stale-warmup-source",
+          measurementKind: "weight_reps",
+          ownerFirebaseUid: fixture.ownerUid,
+          recordedAt: new Date("2026-08-25T14:00:00.000Z"),
+          repetitions: 8,
+          sessionId: started.model.session.id,
+          setKind: "warmup",
+          setPosition: 1,
+          snapshotId: warmupExercise.id,
+          weightKg: 10,
+        },
+        {
+          clientIdempotencyKey: "stale-skipped-source",
+          measurementKind: "weight_reps",
+          ownerFirebaseUid: fixture.ownerUid,
+          recordedAt: new Date("2026-08-25T14:01:00.000Z"),
+          repetitions: 8,
+          sessionId: started.model.session.id,
+          setKind: "work",
+          setPosition: 1,
+          snapshotId: skippedExercise.id,
+          weightKg: 20,
+        },
+      ])
+      .returning({ id: setLogs.id });
+    if (!warmupLog || !skippedLog) throw new Error("fixture logs were not stored");
+    await database
+      .update(workoutExerciseStates)
+      .set({
+        lastClientOperationId: "stale-warmup-state",
+        status: "completed",
+        version: warmupState.version + 1,
+      })
+      .where(eq(workoutExerciseStates.snapshotId, warmupExercise.id));
+    await database
+      .update(workoutExerciseStates)
+      .set({
+        lastClientOperationId: "stale-skipped-state",
+        status: "skipped",
+        version: skippedState.version + 1,
+      })
+      .where(eq(workoutExerciseStates.snapshotId, skippedExercise.id));
+    await database
+      .update(workoutSessions)
+      .set({
+        completedAt: new Date("2026-08-25T14:02:00.000Z"),
+        state: "completed",
+      })
+      .where(eq(workoutSessions.id, started.model.session.id));
+    await database.insert(personalRecords).values([
+      {
+        achievedAt: new Date("2026-08-25T14:00:00.000Z"),
+        calculationVersion: "v1",
+        catalogExerciseId: warmupState.effectiveCatalogExerciseId,
+        id: randomUUID(),
+        ownerFirebaseUid: fixture.ownerUid,
+        sourceSetLogId: warmupLog.id,
+        type: "max_weight",
+        value: 10,
+      },
+      {
+        achievedAt: new Date("2026-08-25T14:01:00.000Z"),
+        calculationVersion: "v1",
+        catalogExerciseId: skippedState.effectiveCatalogExerciseId,
+        id: randomUUID(),
+        ownerFirebaseUid: fixture.ownerUid,
+        sourceSetLogId: skippedLog.id,
+        type: "max_weight",
+        value: 20,
+      },
+      {
+        achievedAt: new Date("2026-08-25T14:01:00.000Z"),
+        calculationVersion: "v99",
+        catalogExerciseId: skippedState.effectiveCatalogExerciseId,
+        id: randomUUID(),
+        ownerFirebaseUid: fixture.ownerUid,
+        sourceSetLogId: skippedLog.id,
+        type: "volume",
+        value: 160,
+      },
+    ]);
+
+    await expect(rebuildPersonalRecordProjections(database)).resolves.toMatchObject({
+      candidateCount: 0,
+      changedCount: 2,
+      deletedCount: 2,
+      mode: "dry_run",
+    });
+    await expect(
+      rebuildPersonalRecordProjections(database, { apply: true }),
+    ).resolves.toMatchObject({
+      candidateCount: 0,
+      changedCount: 2,
+      deletedCount: 2,
+      mode: "applied",
+    });
+    expect(
+      await database
+        .select({ calculationVersion: personalRecords.calculationVersion })
+        .from(personalRecords)
+        .where(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid)),
+    ).toEqual([{ calculationVersion: "v99" }]);
   });
 
   it("returns stable errors and freezes an abandoned session", async () => {
@@ -692,6 +927,98 @@ describe("owner-scoped workout repository", () => {
       kind: "abandon_session",
       payload: { kind: "abandon_session", sessionId: started.model.session.id, reason: "again" },
     })).rejects.toBeInstanceOf(WorkoutRepositoryError);
+  });
+
+  it("rolls back terminal completion when personal-record projection fails", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(fixture.database);
+    const started = await repository.startOrResume(viewer(fixture.ownerUid), {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "start-projection-overflow",
+    });
+    const operation = (input: Parameters<typeof repository.submitOperation>[1]) =>
+      repository.submitOperation(viewer(fixture.ownerUid), input);
+    const target = started.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "weight_reps");
+    if (!target) throw new Error("fixture weight exercise is missing");
+    let version = started.model.exerciseStates.find(({ snapshotId }) => snapshotId === target.id)?.version;
+    if (version === undefined) throw new Error("fixture weight state is missing");
+
+    for (const set of target.sets) {
+      const result = await operation({
+        sessionId: started.model.session.id,
+        idempotencyKey: `projection-overflow-set-${set.position}`,
+        kind: "save_set",
+        expectedVersion: version!,
+        payload: {
+          kind: "save_set",
+          setId: set.id,
+          exerciseId: target.id,
+          phase: set.phase,
+          measurement: {
+            kind: "weight_reps",
+            weightKg: 9_999_999.999,
+            repetitions: 2_000_000_000,
+            ...(set.phase === "warmup" ? { isWarmup: true } : {}),
+          },
+        },
+      });
+      version = result.exerciseVersion!;
+    }
+    const cardioOption = started.model.snapshot.cardioOptions[0];
+    if (cardioOption) {
+      await operation({
+        sessionId: started.model.session.id,
+        idempotencyKey: "projection-overflow-cardio",
+        kind: "save_cardio",
+        payload: {
+          kind: "save_cardio",
+          mode: cardioOption.mode,
+          cardio: {
+            mode: cardioOption.mode,
+            durationSeconds: 120,
+            distanceMeters: undefined,
+            paceSecondsPerKilometer: undefined,
+            paceSource: undefined,
+            inclinePercent: undefined,
+            notes: "",
+          },
+        },
+      });
+    }
+    for (const state of started.model.exerciseStates) {
+      if (state.snapshotId === target.id || state.status !== "pending") continue;
+      await operation({
+        sessionId: started.model.session.id,
+        idempotencyKey: `projection-overflow-skip-${state.snapshotId}`,
+        kind: "skip_exercise",
+        expectedVersion: state.version,
+        payload: { kind: "skip_exercise", exerciseId: state.snapshotId, reason: "projection failure" },
+      });
+    }
+    const completedExercise = await operation({
+      sessionId: started.model.session.id,
+      idempotencyKey: "projection-overflow-complete-exercise",
+      kind: "complete_exercise",
+      expectedVersion: version!,
+      payload: { kind: "complete_exercise", exerciseId: target.id },
+    });
+    expect(completedExercise.sessionState).toBe("active");
+
+    await expect(operation({
+      sessionId: started.model.session.id,
+      idempotencyKey: "projection-overflow-complete-session",
+      kind: "complete_session",
+      payload: { kind: "complete_session", sessionId: started.model.session.id },
+    })).rejects.toThrow();
+    const savedSession = await database
+      .select({ state: workoutSessions.state })
+      .from(workoutSessions)
+      .where(and(eq(workoutSessions.ownerFirebaseUid, fixture.ownerUid), eq(workoutSessions.id, started.model.session.id)))
+      .limit(1);
+    expect(savedSession[0]?.state).toBe("active");
+    expect(await database.select({ id: personalRecords.id }).from(personalRecords).where(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid))).toHaveLength(0);
   });
 
   it("rejects fractional integer measurements before integer-column writes", async () => {
@@ -1116,7 +1443,7 @@ describe("owner-scoped workout repository", () => {
     await expect(repository.history(viewer(fixture.ownerUid), { limit: 101 })).rejects.toMatchObject({ code: "invalid_request" });
   });
 
-  it("verifies substitutions server-side, advances outcome versions, and completes one exercise", async () => {
+  it("verifies substitutions server-side, advances outcome versions, and projects the effective identity", async () => {
     const { database } = await openDatabase();
     const fixture = await createFixture(database);
     const repository = createWorkoutRepository(fixture.database);
@@ -1211,5 +1538,57 @@ describe("owner-scoped workout repository", () => {
       payload: { kind: "save_note", exerciseId: exercise.id, note: "late" },
     })).rejects.toMatchObject({ code: "terminal" });
     expect((await repository.loadResume(viewer(fixture.ownerUid), { sessionId: started.model.session.id })).exerciseStates.find(({ snapshotId }) => snapshotId === exercise.id)?.status).toBe("completed");
+
+    const cardioOption = resumed.snapshot.cardioOptions[0];
+    if (cardioOption) {
+      await operation({
+        sessionId: started.model.session.id,
+        idempotencyKey: "substitute-cardio-1",
+        kind: "save_cardio",
+        payload: {
+          kind: "save_cardio",
+          mode: cardioOption.mode,
+          cardio: {
+            mode: cardioOption.mode,
+            durationSeconds: 120,
+            distanceMeters: undefined,
+            paceSecondsPerKilometer: undefined,
+            paceSource: undefined,
+            inclinePercent: undefined,
+            notes: "",
+          },
+        },
+      });
+    }
+    const latest = await repository.loadResume(viewer(fixture.ownerUid), { sessionId: started.model.session.id });
+    for (const state of latest.exerciseStates) {
+      if (state.status !== "pending") continue;
+      await operation({
+        sessionId: started.model.session.id,
+        idempotencyKey: `substitute-skip-${state.snapshotId}`,
+        kind: "skip_exercise",
+        expectedVersion: state.version,
+        payload: { kind: "skip_exercise", exerciseId: state.snapshotId, reason: "not today" },
+      });
+    }
+    await operation({
+      sessionId: started.model.session.id,
+      idempotencyKey: "substitute-complete-session",
+      kind: "complete_session",
+      payload: { kind: "complete_session", sessionId: started.model.session.id },
+    });
+    const projected = await database
+      .select({
+        catalogExerciseId: personalRecords.catalogExerciseId,
+        customExerciseId: personalRecords.customExerciseId,
+        sourceSetLogId: personalRecords.sourceSetLogId,
+        type: personalRecords.type,
+      })
+      .from(personalRecords)
+      .where(and(eq(personalRecords.ownerFirebaseUid, fixture.ownerUid), eq(personalRecords.customExerciseId, fixture.compatibleCustomId)));
+    expect(projected).toHaveLength(exercise.sets.length * 4);
+    expect(projected.every(({ catalogExerciseId, customExerciseId, sourceSetLogId }) =>
+      catalogExerciseId === null && customExerciseId === fixture.compatibleCustomId && sourceSetLogId.length > 0)).toBe(true);
+    expect(new Set(projected.map(({ type }) => type))).toEqual(new Set(["max_weight", "max_repetitions", "volume", "estimated_1rm"]));
   });
 });

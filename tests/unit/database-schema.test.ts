@@ -7,6 +7,7 @@ const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
 const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
+const projectionCheckpointMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
 
 const ids = {
   aliceProgram: "00000000-0000-4000-8000-000000000001",
@@ -67,6 +68,7 @@ async function openDatabase() {
   await database.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
   await database.exec(await readFile(upgradeMigrationUrl, "utf8"));
   await database.exec(await readFile(programCollectionMigrationUrl, "utf8"));
+  await database.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   openDatabases.push(database);
   return database;
 }
@@ -76,6 +78,17 @@ async function openBeforeWorkoutMigration() {
   await database.waitReady;
   await database.exec(await readFile(migrationUrl, "utf8"));
   await database.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
+  openDatabases.push(database);
+  return database;
+}
+
+async function openBeforeProjectionCheckpointMigration() {
+  const database = new PGlite();
+  await database.waitReady;
+  await database.exec(await readFile(migrationUrl, "utf8"));
+  await database.exec(await readFile(accountDeletionMigrationUrl, "utf8"));
+  await database.exec(await readFile(upgradeMigrationUrl, "utf8"));
+  await database.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   openDatabases.push(database);
   return database;
 }
@@ -156,6 +169,7 @@ describe("initial database migration", () => {
         "exercise_equipment",
         "idempotency_keys",
         "personal_records",
+        "personal_record_projection_checkpoints",
         "program_days",
         "program_prescriptions",
         "program_revisions",
@@ -185,14 +199,50 @@ describe("initial database migration", () => {
       WHERE (table_name = 'account_deletion_jobs' AND column_name = 'phase')
          OR (table_name = 'cardio_logs' AND column_name = 'pace_source')
          OR (table_name = 'user_programs' AND column_name = 'is_active')
+         OR (table_name = 'personal_record_projection_checkpoints' AND column_name = 'calculation_version')
+         OR (table_name = 'personal_record_projection_checkpoints' AND column_name = 'changed_count')
       ORDER BY table_name, column_name;
     `);
 
     expect(result.rows).toEqual([
       { table_name: "account_deletion_jobs", column_name: "phase" },
       { table_name: "cardio_logs", column_name: "pace_source" },
+      { table_name: "personal_record_projection_checkpoints", column_name: "calculation_version" },
+      { table_name: "personal_record_projection_checkpoints", column_name: "changed_count" },
       { table_name: "user_programs", column_name: "is_active" },
     ]);
+  });
+
+  it("upgrades a populated 0003 database without storing an owner cursor", async () => {
+    const database = await openBeforeProjectionCheckpointMigration();
+    await seedOwner(database, "alice");
+    await database.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
+    await database.exec(`
+      INSERT INTO personal_record_projection_checkpoints (
+        calculation_version, status, last_session_id, sessions_scanned, candidate_count, changed_count
+      ) VALUES ('v2', 'running', '00000000-0000-4000-8000-000000000003', 1, 2, 2);
+    `);
+    const columns = await database.query<{ column_name: string }>(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'personal_record_projection_checkpoints'
+      ORDER BY ordinal_position;
+    `);
+    expect(columns.rows.map(({ column_name }) => column_name)).toEqual([
+      "calculation_version",
+      "status",
+      "last_session_id",
+      "sessions_scanned",
+      "candidate_count",
+      "changed_count",
+      "created_at",
+      "updated_at",
+    ]);
+    const checkpoint = await database.query<{ last_session_id: string; changed_count: number }>(`
+      SELECT last_session_id, changed_count
+      FROM personal_record_projection_checkpoints;
+    `);
+    expect(checkpoint.rows).toEqual([{ last_session_id: "00000000-0000-4000-8000-000000000003", changed_count: 2 }]);
   });
 
   it("uses composite ownership keys to reject a cross-user child row", async () => {

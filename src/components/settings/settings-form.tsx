@@ -21,10 +21,10 @@ import { getFirebaseClientAuth } from "@/client/firebase";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
 import { Icon } from "@/components/ui/icon";
+import { parsePreferencesMutationResponse } from "@/components/settings/preferences-response";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import type {
   PreferencesReadModel,
-  ProfileProgramReadModel,
 } from "@/server/repositories/profile-program";
 import type { ViewerProvider } from "@/server/auth/viewer";
 
@@ -93,7 +93,7 @@ export function SettingsForm({
     setBusy(true);
     setMessage("Saving presentation preferences…");
     try {
-      const response = await privateApiMutation<{ profileProgram: ProfileProgramReadModel }>(
+      const raw = await privateApiMutation<unknown>(
         "/api/app/preferences",
         {
           body: {
@@ -106,8 +106,13 @@ export function SettingsForm({
           method: "PATCH",
         },
       );
+      const saved = parsePreferencesMutationResponse(raw, {
+        reducedMotion,
+        timezone,
+        unitSystem,
+      });
       saveKey.current = undefined;
-      setPreferences(response.profileProgram.preferences);
+      setPreferences(saved);
       setMessage("Preferences saved. Stored workout measurements remain in canonical kilograms and meters.");
       router.refresh();
     } catch (error) {
