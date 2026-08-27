@@ -23,8 +23,10 @@ const evidencePaths = {
 
 export type HostedAuthQaStage =
   | "assertions"
-  | "assertions_console"
+  | "assertions_console_errors"
+  | "assertions_console_warnings"
   | "assertions_mutations"
+  | "assertions_page_errors"
   | "assertions_request_failures"
   | "assertions_response_failures"
   | "browser_launch"
@@ -121,17 +123,18 @@ function isSupersededNextFlightRequest(request: Request): boolean {
 }
 
 function attachFailureCollectors(page: Page, origin: string) {
-  const consoleFailures: string[] = [];
+  const consoleErrors: string[] = [];
+  const consoleWarnings: string[] = [];
+  const pageErrors: string[] = [];
   const responseFailures: string[] = [];
   const requestFailures: string[] = [];
   const firstPartyMutations: string[] = [];
 
   page.on("console", (message) => {
-    if (message.type() === "error" || message.type() === "warning") {
-      consoleFailures.push(message.type());
-    }
+    if (message.type() === "error") consoleErrors.push("error");
+    if (message.type() === "warning") consoleWarnings.push("warning");
   });
-  page.on("pageerror", () => consoleFailures.push("pageerror"));
+  page.on("pageerror", () => pageErrors.push("pageerror"));
   page.on("request", (request) => {
     const url = new URL(request.url());
     if (
@@ -156,7 +159,9 @@ function attachFailureCollectors(page: Page, origin: string) {
   });
 
   return {
-    assertConsoleClean: () => assert.deepEqual(consoleFailures, []),
+    assertConsoleErrorsClean: () => assert.deepEqual(consoleErrors, []),
+    assertConsoleWarningsClean: () => assert.deepEqual(consoleWarnings, []),
+    assertPageErrorsClean: () => assert.deepEqual(pageErrors, []),
     assertRequestFailuresClean: () => assert.deepEqual(requestFailures, []),
     assertResponseFailuresClean: () => assert.deepEqual(responseFailures, []),
     firstPartyMutations,
@@ -360,8 +365,12 @@ async function runBrowserLifecycle(
     await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
 
     setStage("assertions");
-    setStage("assertions_console");
-    failures.assertConsoleClean();
+    setStage("assertions_console_errors");
+    failures.assertConsoleErrorsClean();
+    setStage("assertions_console_warnings");
+    failures.assertConsoleWarningsClean();
+    setStage("assertions_page_errors");
+    failures.assertPageErrorsClean();
     setStage("assertions_response_failures");
     failures.assertResponseFailuresClean();
     setStage("assertions_request_failures");
