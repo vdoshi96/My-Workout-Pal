@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="a72f603ee98e178db1de3024ab8c8ba8b6b049da0cb3bbe95f46fe8c7dc998d9">
+  <meta name="source-sha256" content="30dfdec097ddb7efbfa7d40f997a0baa883a3fbcf5638049806b018c154ee08c">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -34,9 +34,10 @@
 <li>Retained 14 missing-contract failures before implementing strict Firebase action-link parsing, response-to-identity binding, independent registration/recovered credentials, bounded official Identity Toolkit requests, and stable non-sensitive stages. A later three-failure checkpoint moved every test identity to <code>example.invalid</code> and required two purpose-separated identities after Firebase returned <code>auth/internal-error</code> when Admin link generation immediately followed application email dispatch on the same account.</li>
 <li>A safe capability check proved Firebase accepts the non-routable domain and generates verification/reset links in memory without email dispatch; the exact test identity was deleted and confirmed absent. A proposed cooldown test that would have sent a credential-bearing link to a routable address was blocked before execution and was not bypassed.</li>
 <li>Exact checkpoint <code>fd9c051</code> passed 27 focused tests, strict TypeScript, scoped lint, 39-document parity, and the opt-in production Chromium <code>1440×1000</code> lifecycle. The sanitized result reported verification and reset action codes confirmed, old password rejected, recovered password accepted, secure cookie verified, revocation denial, exactly three first-party session mutations, and Firebase users <code>0 → 0</code> with cleanup confirmed.</li>
+<li>The first aggregate replay retained three compatibility-test failures because two older hosted harnesses still expected the former two-field shared config and <code>example.com</code> identity. Checkpoint <code>1b3bdc9</code> aligns those truthful shared contracts with the API-key/auth-domain fields and <code>example.invalid</code>; all four affected suites pass 43 of 43. The corrected complete gate passes 102 files/698 tests, database 4/34, exact-two seed, PWA/docs, the production build, and 41-route isolation.</li>
 <li>The browser flow submitted no onboarding or application-data mutation. Both generated addresses were on <code>example.invalid</code>; no personal mailbox, routable test address, email, password, UID, action link, action code, API key, token, cookie value, provider payload, trace, video, browser profile, or network capture was retained. The two identity-free state screenshots were visually inspected.</li>
 <li>This closes provider action-code completion, not message delivery. Firebase accepted the production application&#39;s verification and recovery requests, but actual inbox delivery/click remains unobserved. Google consent/reauthentication and Vercel Spend Management remain separate interactive gates.</li>
-<li>Disk remained bounded after the restart: the run created only two screenshots totaling about 321 KB. Root and fixture build directories, Playwright reports/results, detached workers, and auxiliary worktrees remain absent; only the reusable 840 MB dependency tree and 781 MB pnpm store remain.</li>
+<li>Disk remained bounded after the restart: the provider run created only two screenshots totaling about 321 KB. The aggregate created one 203 MB root build, which was measured and deleted immediately after success. Root and fixture build directories, Playwright reports/results, detached workers, and auxiliary worktrees are absent; only the reusable 840 MB dependency tree and 781 MB pnpm store remain, with about 189 GiB free.</li>
 </ul>
 <h2>2026-08-27: Hosted authenticated media and actual-zoom release</h2>
 <ul>

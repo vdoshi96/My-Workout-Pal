@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="23a799f248c33cbcf8bdd35f748008291f119042d4f3dc2b5cb153cda870d3a8">
+  <meta name="source-sha256" content="97a9cd2c350dc5513512324c528053b1fa143a4c71a9844717e017f3ca445bb5">
   <title>Hosted Firebase email-action QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -59,12 +59,25 @@ firebaseUserCountAfter         0
 cleanupConfirmed               true
 </code></pre>
 <p>The exact first-party mutation set was one unverified session creation, one account-shell session deletion, and one recovered verified session creation. No onboarding, program, workout, preference, custom-exercise, analytics, or account-deletion endpoint was called. Serious/critical Axe scans, browser console warnings/errors, page errors, first-party HTTP failures, and unexpected first-party request failures were empty after accounting for the deliberately awaited Firebase credential failures.</p>
+<h2>Complete repository gate</h2>
+<p>The first aggregate replay failed 3 of 698 assertions because the shared safer identity/config boundary exposed two stale hosted-harness expectations. The correction kept <code>example.invalid</code>, updated the exact config shape, and passed the four affected suites 43 of 43. The stable branch tree then passed:</p>
+<pre><code class="language-text">pnpm verify
+typecheck                      passed
+lint                           passed
+test                           102 files / 698 tests
+db:check                       4 files / 34 tests
+seed:check                     27 exact-two mappings
+pwa:check                      passed
+docs:check                     39 pairs
+build                          passed
+production:check               41 App Router entries
+</code></pre>
 <p><img src="./hosted-auth-unverified-desktop.png" alt="Unverified account shell with permanent mutation disabled"></p>
 <p><img src="./hosted-auth-verified-desktop.png" alt="Verified account shell after action-code reset and fresh sign-in"></p>
 <p>Both images were visually inspected at native resolution. They show only the generic <code>My Workout Pal hosted QA</code> marker and account state; neither contains an address, UID, password, action link/code, API key, token, cookie, or opaque resource identifier.</p>
 <h2>Privacy, cleanup, and disk boundary</h2>
 <p>The runner captured both exact Firebase UIDs, deleted only those UIDs in <code>finally</code>, confirmed both returned <code>auth/user-not-found</code>, and required the aggregate count to equal the pre-run baseline before reporting success. Generated addresses and credentials existed only in process memory. No action URL, provider response, trace, video, HAR, storage state, saved browser profile, or raw network capture was retained.</p>
-<p>The production run created only the two retained screenshots, totaling about 321 KB. Root <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, and <code>playwright-report</code> are absent. The repository retains the reusable 840 MB dependency tree and 781 MB pnpm store to avoid repeated downloads and unpacking while final provider gates remain.</p>
+<p>The production run created only the two retained screenshots, totaling about 321 KB. The final aggregate created one 203 MB <code>.next</code> directory; it was measured and deleted immediately after the green result. Root <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, and <code>playwright-report</code> are absent. The repository retains the reusable 840 MB dependency tree and 781 MB pnpm store to avoid repeated downloads and unpacking while final provider gates remain; the data volume has about 189 GiB free.</p>
 <h2>Remaining external gates</h2>
 <ul>
 <li>Actual Firebase email delivery and inbox-click behavior remain unobserved.</li>

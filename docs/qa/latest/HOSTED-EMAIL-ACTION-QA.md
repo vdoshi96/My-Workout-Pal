@@ -44,6 +44,23 @@ cleanupConfirmed               true
 
 The exact first-party mutation set was one unverified session creation, one account-shell session deletion, and one recovered verified session creation. No onboarding, program, workout, preference, custom-exercise, analytics, or account-deletion endpoint was called. Serious/critical Axe scans, browser console warnings/errors, page errors, first-party HTTP failures, and unexpected first-party request failures were empty after accounting for the deliberately awaited Firebase credential failures.
 
+## Complete repository gate
+
+The first aggregate replay failed 3 of 698 assertions because the shared safer identity/config boundary exposed two stale hosted-harness expectations. The correction kept `example.invalid`, updated the exact config shape, and passed the four affected suites 43 of 43. The stable branch tree then passed:
+
+```text
+pnpm verify
+typecheck                      passed
+lint                           passed
+test                           102 files / 698 tests
+db:check                       4 files / 34 tests
+seed:check                     27 exact-two mappings
+pwa:check                      passed
+docs:check                     39 pairs
+build                          passed
+production:check               41 App Router entries
+```
+
 ![Unverified account shell with permanent mutation disabled](./hosted-auth-unverified-desktop.png)
 
 ![Verified account shell after action-code reset and fresh sign-in](./hosted-auth-verified-desktop.png)
@@ -54,7 +71,7 @@ Both images were visually inspected at native resolution. They show only the gen
 
 The runner captured both exact Firebase UIDs, deleted only those UIDs in `finally`, confirmed both returned `auth/user-not-found`, and required the aggregate count to equal the pre-run baseline before reporting success. Generated addresses and credentials existed only in process memory. No action URL, provider response, trace, video, HAR, storage state, saved browser profile, or raw network capture was retained.
 
-The production run created only the two retained screenshots, totaling about 321 KB. Root `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report` are absent. The repository retains the reusable 840 MB dependency tree and 781 MB pnpm store to avoid repeated downloads and unpacking while final provider gates remain.
+The production run created only the two retained screenshots, totaling about 321 KB. The final aggregate created one 203 MB `.next` directory; it was measured and deleted immediately after the green result. Root `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report` are absent. The repository retains the reusable 840 MB dependency tree and 781 MB pnpm store to avoid repeated downloads and unpacking while final provider gates remain; the data volume has about 189 GiB free.
 
 ## Remaining external gates
 
