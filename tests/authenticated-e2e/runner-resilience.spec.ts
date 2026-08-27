@@ -1075,19 +1075,22 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
 
   await first.bringToFront();
   await preparePushCompletion(first);
+  const requestsBeforeStaleNote = harness.signals.operationRequests.length;
   await second
     .getByLabel(/Private note for Dumbbell bench press/iu)
     .fill("This stale tab note must not reopen a completed workout.");
-  await second
-    .getByRole("button", { name: "Save note" })
-    .evaluate((button: HTMLButtonElement) => button.click());
-  await expect
-    .poll(async () =>
-      (await readStoredRunner(second, sessionId)).operations.some(
-        ({ kind, status }) => kind === "save_note" && status === "superseded",
-      ),
-    )
-    .toBe(true);
+  await expect(second.getByRole("button", { name: "Save note" })).toBeDisabled();
+  await expect(second.getByRole("textbox", { name: /Private note/iu })).not.toHaveValue(
+    "This stale tab note must not reopen a completed workout.",
+  );
+  expect(
+    (await readStoredRunner(second, sessionId)).operations.filter(
+      ({ kind }) => kind === "save_note",
+    ),
+  ).toEqual([]);
+  expect(harness.signals.operationRequests).toHaveLength(
+    requestsBeforeStaleNote,
+  );
 
   const requestsBeforeCompletion = harness.signals.operationRequests.length;
   const completionRequest = first.waitForRequest((request) => {
@@ -1112,9 +1115,13 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
       stateStatus: "completed",
       operations: expect.arrayContaining([
         expect.objectContaining({ kind: "complete_session", status: "saved" }),
-        expect.objectContaining({ kind: "save_note", status: "superseded" }),
       ]),
     });
+  expect(
+    (await readStoredRunner(first, sessionId)).operations.filter(
+      ({ kind }) => kind === "save_note",
+    ),
+  ).toEqual([]);
   expect(harness.signals.operationRequests).toHaveLength(
     requestsBeforeCompletion + 1,
   );
