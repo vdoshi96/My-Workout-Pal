@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="bf1e499959dac0e174595c4fae70e27f9d60ff7ee98966d0862cfbb22c9014ca">
+  <meta name="source-sha256" content="db7424e103f1e211f0c6de97ba83afcb51032cfb885f545ae357ad820685b6a9">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,15 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-27: Firebase client-auth hydration checkpoint</h2>
+<ul>
+<li>Planned the full-page Firebase browser-auth readiness correction before implementation on branch <code>vishal-firebase-auth-hydration</code> from released <code>main</code> <code>4b50bbbd71b1378083d072156333cea94fa43907</code>. The plan keeps the HTTP-only server session as the ownership boundary and makes client identity readiness only a fail-closed prerequisite for provider reauthentication UI.</li>
+<li>Retained failures first proved the absent readiness module, immediately enabled deletion, duplicate closed-dialog/live-page alerts, missing fixture configuration, and then an over-broad synthetic configuration that made unrelated WebKit scenarios load an external Firebase frame. Checkpoints <code>93ef623</code>, <code>7725db0</code>, <code>37aa910</code>, and <code>97b2f2c</code> implement bounded <code>authStateReady()</code> hydration, safe matching/missing/mismatch/unavailable states, later auth observation, dialog-scoped status, and an exact fixture-only missing-client scenario.</li>
+<li>Exact source-and-evidence checkpoint <code>96c85277d604c1219c72dc788c711c838d6df4c0</code> retains viewport-focused Chromium desktop and WebKit phone captures after genuine full-page Settings reload. The focused hydration replay passes 2 of 2 with a disabled destructive control, exact bounded Settings sign-in return, no UID disclosure, serious/critical Axe, no overflow, and empty unexpected console, page-error, first-party HTTP, and request-failure sets.</li>
+<li>The focused unit/component/policy matrix passes 5 files and 27 tests. Strict TypeScript and scoped lint pass. <code>pnpm verify</code> passes 93 files and 643 tests, four database files and 34 migration/bootstrap assertions, exact-two seed, PWA and 35-document parity, the production Webpack build, and the 41-route fixture-exclusion boundary. The complete authenticated production fixture passes 31 cases with one intentional engine-scoped skip.</li>
+<li>Protected preview <code>dpl_7w5AQu2iwbrY7wVhD7SGtUQuAJSH</code> is Ready with successful GitHub status. Read-only <code>/</code> and <code>/sign-in</code> requests return <code>200</code> with private no-store and the declared security headers; unauthenticated <code>/app/settings</code> contains the bounded <code>/sign-in?returnTo=%2Fapp</code> redirect, and the one-hour error scan has no entry. This does not claim a matching provider-restored identity or hosted deletion.</li>
+<li>The restart left only the reusable 840 MB dependency tree and 781 MB repository-local pnpm store. One build/browser boundary ran at a time; the roughly 181 MB fixture build and sub-megabyte focused test results were deleted after evidence extraction. Root <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, <code>playwright-report</code>, detached workers, and auxiliary worktrees are absent; about 196 GiB remained free.</li>
+</ul>
 <h2>2026-08-27: Runner resilience production release closeout</h2>
 <ul>
 <li>Fast-forwarded the reviewed runner lane into <code>main</code>. Code-and-test checkpoint <code>f0d888f09af143ecce2a0f7ef82f11f2e64adb5f</code> and QA checkpoint <code>fdfb01d97b6149f99b0c292930d06450bf910387</code> are in the public repository with no merge rewrite.</li>

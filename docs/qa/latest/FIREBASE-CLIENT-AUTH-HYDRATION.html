@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="3327a2cd0cc50b2a5b3fbd9289d65a68da7602053d7e8862450b862299be8179">
+  <title>Firebase client-auth hydration QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Firebase client-auth hydration QA</h1>
+<h2>Scope</h2>
+<p>This record covers the Firebase client-auth hydration source-and-evidence checkpoint <code>96c85277d604c1219c72dc788c711c838d6df4c0</code> on branch <code>vishal-firebase-auth-hydration</code>, based on released <code>main</code> <code>4b50bbbd71b1378083d072156333cea94fa43907</code>.</p>
+<p>The slice fixes one bounded account-deletion prerequisite: a fresh Settings page now waits for Firebase&#39;s persisted browser-auth state before reading <code>currentUser</code>. The server-derived viewer remains the ownership authority. Client identity readiness only decides whether the provider reauthentication UI may open; it never selects the deletion owner or authorizes a request.</p>
+<h2>Verified behavior</h2>
+<ul>
+<li>Firebase <code>authStateReady()</code> settles before <code>currentUser</code> is classified.</li>
+<li>A matching settled UID enables the review control only when the server viewer may permanently mutate.</li>
+<li>Loading, missing, mismatched, timed-out, rejected, observer-failed, unsupported, and later-changed identities keep deletion disabled.</li>
+<li>Safe client state contains no UID, email, token, cookie, SDK payload, or provider error.</li>
+<li>Missing and mismatched identities offer only <code>/sign-in?returnTo=%2Fapp%2Fsettings</code>; unavailable identity additionally offers a bounded readiness retry.</li>
+<li>The final deletion action rechecks current readiness. The existing server session, recent-authentication, CSRF, same-UID token, saga, and confirmed-only cleanup boundaries remain unchanged.</li>
+<li>Live-region status is present only while relevant, avoiding the duplicate hidden-dialog alert found during fail-first browser work.</li>
+</ul>
+<h2>Retained fail-first evidence</h2>
+<ul>
+<li>The first readiness unit test failed because no client-readiness module existed.</li>
+<li>The first Settings component test failed because deletion was enabled immediately and no loading state existed.</li>
+<li>A later status test found two simultaneous alerts: one in the closed dialog and one in the page. Rendering dialog status only while the dialog is open reduced the accessible status to the one visible source.</li>
+<li>The first browser attempt failed because the fixture explicitly passed <code>firebaseConfig: null</code>; the bounded hydration scenario now supplies synthetic public configuration only to that test.</li>
+<li>Applying that synthetic configuration to the complete fixture caused WebKit to load an external Firebase auth frame in unrelated scenarios. The exact <code>firebase-client-missing</code> scenario isolated the boundary without adding a production route, globally filtering the request, or treating the external failure as success.</li>
+</ul>
+<h2>Automated verification</h2>
+<ul>
+<li>Focused readiness, status, Settings, fixture-policy, and scenario tests pass: 5 files and 27 tests.</li>
+<li>Strict TypeScript and scoped lint pass.</li>
+<li><code>pnpm verify</code> passes 93 files and 643 tests, four database files and 34 migration/bootstrap tests, all 27 exact-two approved-video mappings, generated PWA and 35-document parity, the Next.js 16.3.2 Webpack build, and the 41-route production boundary.</li>
+<li><code>pnpm test:e2e:authenticated</code> passes 31 cases with one intentional engine-scoped skip across Chromium and WebKit phone, tablet, and desktop projects.</li>
+<li>The focused full-page hydration replay passes 2 of 2 in Chromium desktop and WebKit phone. It asserts the visible safe state, disabled destructive action, exact bounded return route, no UID disclosure, serious/critical Axe results, no horizontal overflow, and empty unexpected console, page-error, first-party HTTP, and request-failure sets.</li>
+</ul>
+<h2>Preview evidence</h2>
+<p>Exact checkpoint <code>96c85277d604c1219c72dc788c711c838d6df4c0</code> is Ready as protected Vercel preview <code>dpl_7w5AQu2iwbrY7wVhD7SGtUQuAJSH</code>; GitHub reports the Vercel status successful. Read-only preview requests to <code>/</code> and <code>/sign-in</code> return <code>200</code> with private no-store, a fresh nonce CSP, HSTS, frame denial, strict referrer policy, and the declared permissions policy. An unauthenticated <code>/app/settings</code> response contains the exact bounded Next redirect to <code>/sign-in?returnTo=%2Fapp</code> and no application error. The one-hour preview error-log query returned no entries.</p>
+<p>The protected preview verifies the server-rendered and unauthenticated boundaries. It does not prove a matching persisted Firebase browser identity because no disposable provider session was introduced into that hosted replay.</p>
+<h2>Browser evidence</h2>
+<h3>Chromium desktop: settled missing client identity</h3>
+<p><img src="firebase-client-auth-missing-chromium-desktop.png" alt="Desktop Settings state after Firebase settles without a browser identity"></p>
+<p>The production Settings component shows the bounded sign-in recovery action and a natively disabled permanent-deletion review. Synthetic fixture identity and environment details are excluded from the viewport capture.</p>
+<h3>WebKit phone: settled missing client identity</h3>
+<p><img src="firebase-client-auth-missing-webkit-phone.png" alt="Phone Settings state after Firebase settles without a browser identity"></p>
+<p>The phone viewport keeps the account/deletion card, recovery action, disabled review control, and fixed member navigation visible without overlap or horizontal overflow.</p>
+<h2>Disk and artifact hygiene</h2>
+<p>The post-restart run used one production build or browser boundary at a time. The fixture build peaked near 181 MB and the focused Playwright result directory remained under 1 MB; both were removed after the two screenshots were copied and visually inspected. Root <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, and <code>playwright-report</code> are absent.</p>
+<p>The ignored 840 MB <code>node_modules</code> tree and 781 MB repository-local pnpm store remain while the goal is active because they avoid repeatedly downloading and unpacking dependencies. No simulator, detached worker, auxiliary worktree, browser trace, video, or superseded QA run remains. Available workspace volume was about 196 GiB after cleanup.</p>
+<h2>Unproved gates</h2>
+<ul>
+<li>A real matching password and Google Firebase identity restored after a hosted full-page reload.</li>
+<li>Hosted wrong-password, popup-cancel, successful reauthentication, and deletion completion.</li>
+<li>Hosted two-user authorization replay and provider revocation.</li>
+<li>Actual 200-percent zoom closeout, authenticated production media fallback, and Vercel Spend Management inspection.</li>
+</ul>
+<p>These remain explicit later lanes; the credential-free missing-identity fixture is not presented as provider or destructive hosted proof.</p>
+
+  </main>
+</body>
+</html>
