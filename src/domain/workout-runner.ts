@@ -2064,24 +2064,27 @@ function mergeOperationCandidates(
     }
   }
 
-  const confirmedExerciseIds = new Set(
-    [...candidates.values()]
-      .filter(
-        ({ operation }) =>
-          operation.status === "saved" &&
-          (operation.kind === "complete_exercise" ||
-            operation.kind === "skip_exercise"),
-      )
-      .map(({ operation }) => operation.payload)
-      .filter(
-        (
-          payload,
-        ): payload is CompleteExerciseOperationPayload | SkipExerciseOperationPayload =>
-          payload.kind === "complete_exercise" || payload.kind === "skip_exercise",
-      )
-      .map(({ exerciseId }) => exerciseId),
-  );
-  if (confirmedExerciseIds.size > 0) {
+  const confirmedExerciseDecisions = new Map<string, OperationCandidate[]>();
+  for (const candidate of candidates.values()) {
+    if (
+      candidate.operation.status !== "saved" ||
+      (candidate.operation.kind !== "complete_exercise" &&
+        candidate.operation.kind !== "skip_exercise")
+    ) {
+      continue;
+    }
+    const payload = candidate.operation.payload;
+    if (
+      payload.kind !== "complete_exercise" &&
+      payload.kind !== "skip_exercise"
+    ) {
+      continue;
+    }
+    const decisions = confirmedExerciseDecisions.get(payload.exerciseId) ?? [];
+    decisions.push(candidate);
+    confirmedExerciseDecisions.set(payload.exerciseId, decisions);
+  }
+  if (confirmedExerciseDecisions.size > 0) {
     for (const candidate of candidates.values()) {
       if (
         candidate.operation.status === "saved" ||
@@ -2090,9 +2093,19 @@ function mergeOperationCandidates(
         continue;
       }
       const exerciseId = exerciseIdForOperation(candidate);
-      if (exerciseId === undefined || !confirmedExerciseIds.has(exerciseId)) {
+      if (exerciseId === undefined) {
         continue;
       }
+      const decisions = confirmedExerciseDecisions.get(exerciseId);
+      if (decisions === undefined) continue;
+      const sourceContainsConfirmedDecision = decisions.some(
+        ({ operation: decision }) =>
+          candidate.state.operations.some(
+            (sourceOperation) =>
+              sourceOperation.idempotencyKey === decision.idempotencyKey,
+          ),
+      );
+      if (sourceContainsConfirmedDecision) continue;
       candidates.set(candidate.operation.idempotencyKey, {
         ...candidate,
         operation: supersededOperation(
@@ -2152,7 +2165,22 @@ function mergeStateProjections(
   operations: readonly RunnerOperation[],
   candidates: ReadonlyMap<string, OperationCandidate>,
 ): ActiveWorkoutState {
-  const base = clone(latestState(existing, incoming)) as Mutable<ActiveWorkoutState>;
+  const confirmedTerminal = [...candidates.values()]
+    .filter(
+      ({ operation }) =>
+        operation.status === "saved" && isTerminalOperation(operation),
+    )
+    .sort(
+      (left, right) =>
+        left.operation.createdAt - right.operation.createdAt ||
+        left.operation.idempotencyKey.localeCompare(
+          right.operation.idempotencyKey,
+        ),
+    )
+    .at(-1);
+  const base = clone(
+    confirmedTerminal?.state ?? latestState(existing, incoming),
+  ) as Mutable<ActiveWorkoutState>;
   const drafts: Record<string, SetDraft> = { ...base.drafts };
   const loggedSets: Record<string, LoggedSet> = { ...base.loggedSets };
   const notesByExercise: Record<string, string> = { ...base.notesByExercise };
@@ -2175,6 +2203,40 @@ function mergeStateProjections(
   const remove = (items: string[], value: string): void => {
     const index = items.indexOf(value);
     if (index >= 0) items.splice(index, 1);
+  };
+  const restoreConfirmedExerciseProjection = (
+    exerciseId: string,
+    source: ActiveWorkoutState,
+  ): void => {
+    const exercise = base.snapshot.exercises.find(({ id }) => id === exerciseId);
+    for (const set of exercise?.sets ?? []) {
+      const draft = source.drafts[set.id];
+      if (draft === undefined) delete drafts[set.id];
+      else drafts[set.id] = clone(draft);
+      const loggedSet = source.loggedSets[set.id];
+      if (loggedSet === undefined) delete loggedSets[set.id];
+      else loggedSets[set.id] = clone(loggedSet);
+      if (source.dirtySetIds.includes(set.id)) addUnique(dirtySetIds, set.id);
+      else remove(dirtySetIds, set.id);
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(
+        source.notesByExercise,
+        exerciseId,
+      )
+    ) {
+      notesByExercise[exerciseId] = source.notesByExercise[exerciseId] ?? "";
+    } else {
+      delete notesByExercise[exerciseId];
+    }
+    if (source.dirtyNoteExerciseIds.includes(exerciseId)) {
+      addUnique(dirtyNoteExerciseIds, exerciseId);
+    } else {
+      remove(dirtyNoteExerciseIds, exerciseId);
+    }
+    const substitution = source.substitutions[exerciseId];
+    if (substitution === undefined) delete substitutions[exerciseId];
+    else substitutions[exerciseId] = clone(substitution);
   };
   const sourceStateFor = (operation: RunnerOperation): ActiveWorkoutState =>
     candidates.get(operation.idempotencyKey)?.state ?? base;
@@ -2209,6 +2271,10 @@ function mergeStateProjections(
         remove(dirtyNoteExerciseIds, operation.payload.exerciseId);
         break;
       case "skip_exercise":
+        restoreConfirmedExerciseProjection(
+          operation.payload.exerciseId,
+          source,
+        );
         addUnique(skippedExerciseIds, operation.payload.exerciseId);
         remove(completedExerciseIds, operation.payload.exerciseId);
         break;
@@ -2227,6 +2293,10 @@ function mergeStateProjections(
         break;
       }
       case "complete_exercise":
+        restoreConfirmedExerciseProjection(
+          operation.payload.exerciseId,
+          source,
+        );
         addUnique(completedExerciseIds, operation.payload.exerciseId);
         remove(skippedExerciseIds, operation.payload.exerciseId);
         break;

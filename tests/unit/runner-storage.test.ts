@@ -1013,6 +1013,10 @@ describe("schema-two atomic runner storage merge", () => {
       merged.state.operations.find(({ idempotencyKey }) => idempotencyKey === skipKey)
         ?.status,
     ).toBe("saved");
+    expect(merged.state.dirtySetIds).toEqual([]);
+    expect(merged.state.dirtyNoteExerciseIds).toEqual([]);
+    expect(merged.state.drafts["row-set"]).toBeUndefined();
+    expect(merged.state.notesByExercise["row"]).toBeUndefined();
 
     const reverseCompleted = mergeRunnerStorageRecords(
       runnerStorageRecord(stale, { revision: 50, committedAt: 10_000 }),
@@ -1031,6 +1035,10 @@ describe("schema-two atomic runner storage merge", () => {
       reverseCompleted.state.operations.find(({ idempotencyKey }) => idempotencyKey === skipKey)
         ?.status,
     ).toBe("saved");
+    expect(reverseCompleted.state.dirtySetIds).toEqual([]);
+    expect(reverseCompleted.state.dirtyNoteExerciseIds).toEqual([]);
+    expect(reverseCompleted.state.drafts["row-set"]).toBeUndefined();
+    expect(reverseCompleted.state.notesByExercise["row"]).toBeUndefined();
 
     let abandoned = stateFor("uid-a", "session-a");
     abandoned = runnerReducer(abandoned, {
@@ -1125,6 +1133,8 @@ describe("schema-two atomic runner storage merge", () => {
       errorCode: "superseded",
     });
     expect(merged.state.sync.status).toBe("idle");
+    expect(merged.state.dirtyNoteExerciseIds).toEqual([]);
+    expect(merged.state.notesByExercise["row"]).toBeUndefined();
 
     const submitted: string[] = [];
     await syncRunnerOperations(merged.state, {
@@ -1135,6 +1145,62 @@ describe("schema-two atomic runner storage merge", () => {
       },
     });
     expect(submitted).toEqual([]);
+  });
+
+  it("preserves a later note created from the confirmed exercise decision", () => {
+    let completed = stateFor("uid-a", "session-a");
+    completed = runnerReducer(completed, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 25, repetitions: 10 },
+    });
+    completed = runnerReducer(completed, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    completed = runnerReducer(completed, {
+      type: "operation_saved",
+      idempotencyKey: completed.operations.at(-1)!.idempotencyKey,
+      now: 102,
+    });
+    completed = runnerReducer(completed, {
+      type: "complete_exercise",
+      exerciseId: "row",
+      now: 103,
+    });
+    completed = runnerReducer(completed, {
+      type: "operation_saved",
+      idempotencyKey: completed.operations.at(-1)!.idempotencyKey,
+      now: 104,
+    });
+
+    let laterNote = runnerReducer(completed, {
+      type: "update_note",
+      exerciseId: "row",
+      note: "A deliberate post-completion note",
+    });
+    laterNote = runnerReducer(laterNote, {
+      type: "save_note",
+      exerciseId: "row",
+      now: 200,
+    });
+    const noteKey = laterNote.operations.at(-1)!.idempotencyKey;
+
+    const merged = mergeRunnerStorageRecords(
+      runnerStorageRecord(completed, { committedAt: 104 }),
+      runnerStorageRecord(laterNote, { committedAt: 200 }),
+    );
+
+    expect(
+      merged.state.operations.find(
+        ({ idempotencyKey }) => idempotencyKey === noteKey,
+      ),
+    ).toMatchObject({ status: "pending" });
+    expect(merged.state.notesByExercise["row"]).toBe(
+      "A deliberate post-completion note",
+    );
+    expect(merged.state.dirtyNoteExerciseIds).toEqual([]);
   });
 
   it("deduplicates identical canonical payloads with distinct keys", async () => {
