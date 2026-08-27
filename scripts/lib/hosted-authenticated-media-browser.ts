@@ -502,15 +502,14 @@ async function startSelectedVideo(
   await iframe.scrollIntoViewIfNeeded();
   await expect(iframe).toBeVisible();
   const frame = page.frameLocator(".runner-technique iframe");
-  const largePlay = frame.locator("button.ytp-large-play-button");
+  const play = frame.getByRole("button", { name: "Play video", exact: true });
   setStage("control");
-  await largePlay.waitFor({ state: "visible", timeout: 30_000 });
-  await largePlay.click();
+  await play.waitFor({ state: "visible", timeout: 30_000 });
+  await play.click();
   setStage("playing");
-  await expect.poll(
-    () => frame.locator("button.ytp-play-button").getAttribute("data-title-no-tooltip"),
-    { timeout: 30_000 },
-  ).toMatch(/Pause/iu);
+  await expect(
+    frame.getByRole("button", { name: "Pause video", exact: true }),
+  ).toBeVisible({ timeout: 30_000 });
 }
 
 async function inspectMedia(

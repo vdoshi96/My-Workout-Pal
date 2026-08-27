@@ -59,6 +59,8 @@ describe("hosted authenticated media QA command", () => {
     expect(browserSource).toContain('"media_demo_one_control"');
     expect(browserSource).toContain('"media_demo_one_playing"');
     expect(browserSource).toContain("scrollIntoViewIfNeeded");
+    expect(browserSource).toContain('{ name: "Play video", exact: true }');
+    expect(browserSource).toContain('{ name: "Pause video", exact: true }');
     expect(browserSource).not.toMatch(/screenshot\(|trace:\s*|recordVideo/u);
   });
 });
