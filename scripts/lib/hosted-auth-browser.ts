@@ -40,6 +40,8 @@ export type HostedAuthQaStage =
   | "assertions_request_failures_static_webmanifest"
   | "assertions_request_failures_static_webmanifest_aborted_variant"
   | "assertions_request_failures_static_webmanifest_failed"
+  | "assertions_request_failures_static_webmanifest_nested"
+  | "assertions_request_failures_static_webmanifest_non_get"
   | "assertions_request_failures_static_webmanifest_unknown"
   | "assertions_request_failures_static_webp"
   | "assertions_request_failures_sign_in"
@@ -209,7 +211,7 @@ function attachFailureCollectors(page: Page, origin: string) {
     requestFailureStage: (): HostedAuthQaStage | undefined => {
       if (requestFailures.length === 0) return undefined;
       const categories = new Set(requestFailures.map((failure) => {
-        const [, pathname = "", errorText = "unknown"] = failure.split(" ");
+        const [method = "", pathname = "", errorText = "unknown"] = failure.split(" ");
         if (pathname.startsWith("/api/")) return "api";
         if (pathname.startsWith("/_next/")) return "asset";
         if (pathname === "/app") return "app";
@@ -219,7 +221,11 @@ function attachFailureCollectors(page: Page, origin: string) {
         if (pathname.endsWith(".png")) return "static_png";
         if (pathname.endsWith(".svg")) return "static_svg";
         if (pathname.endsWith(".webmanifest")) {
-          return errorText.startsWith("net::ERR_ABORTED")
+          return pathname !== "/manifest.webmanifest"
+            ? "static_webmanifest_nested"
+            : method !== "GET"
+              ? "static_webmanifest_non_get"
+              : errorText.startsWith("net::ERR_ABORTED")
             ? "static_webmanifest_aborted_variant"
             : errorText === "net::ERR_FAILED"
             ? "static_webmanifest_failed"
@@ -243,6 +249,8 @@ function attachFailureCollectors(page: Page, origin: string) {
         case "static_webmanifest": return "assertions_request_failures_static_webmanifest";
         case "static_webmanifest_aborted_variant": return "assertions_request_failures_static_webmanifest_aborted_variant";
         case "static_webmanifest_failed": return "assertions_request_failures_static_webmanifest_failed";
+        case "static_webmanifest_nested": return "assertions_request_failures_static_webmanifest_nested";
+        case "static_webmanifest_non_get": return "assertions_request_failures_static_webmanifest_non_get";
         case "static_webmanifest_unknown": return "assertions_request_failures_static_webmanifest_unknown";
         case "static_webp": return "assertions_request_failures_static_webp";
         default: return "assertions_request_failures_other";
