@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
 import {
   HARNESS_SCENARIO_HEADER,
@@ -22,6 +22,29 @@ function headers(
   };
 }
 
+async function createHarnessContext(
+  browser: Browser,
+  scope: string,
+  viewer: "alice" | "alice-unverified" | "bob",
+  scenario: HarnessScenario = "ready",
+): Promise<BrowserContext> {
+  const context = await browser.newContext();
+  await context.route(/^http:\/\/127\.0\.0\.1:\d+\//, async (route) => {
+    await route.continue({
+      headers: { ...route.request().headers(), ...headers(scope, viewer, scenario) },
+    });
+  });
+  await context.route(/^https:\/\/www\.youtube-nocookie\.com\/embed\//, async (route) => {
+    await route.fulfill({
+      body: "<!doctype html><html lang=\"en\"><title>External demo omitted from authenticated harness</title></html>",
+      contentType: "text/html; charset=utf-8",
+      headers: { "cache-control": "no-store" },
+      status: 200,
+    });
+  });
+  return context;
+}
+
 async function openPage(
   browser: Browser,
   scope: string,
@@ -32,7 +55,7 @@ async function openPage(
   failedResponses: string[];
   page: Page;
 }>> {
-  const context = await browser.newContext({ extraHTTPHeaders: headers(scope, viewer, scenario) });
+  const context = await createHarnessContext(browser, scope, viewer, scenario);
   const page = await context.newPage();
   const errors: string[] = [];
   const failedResponses: string[] = [];
@@ -63,7 +86,9 @@ async function openPage(
 }
 
 async function assertAccessible(page: Page) {
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await new AxeBuilder({ page })
+    .exclude('iframe[src*="youtube-nocookie.com"]')
+    .analyze();
   expect(results.violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""))).toEqual([]);
 }
 
@@ -129,6 +154,40 @@ async function programCount(page: Page): Promise<number> {
     }
     return body.programs;
   });
+}
+
+async function saveWeightSet(
+  page: Page,
+  weight: string,
+  repetitions: string,
+  activation: "keyboard" | "pointer" = "pointer",
+) {
+  await page.getByLabel("Weight (lb)").fill(weight);
+  await page.getByLabel("Repetitions").fill(repetitions);
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
+      response.request().method() === "POST",
+  );
+  const saveButton = page.getByRole("button", { name: "Save set" });
+  if (activation === "keyboard") {
+    await saveButton.focus();
+    await expect(saveButton).toBeFocused();
+    await saveButton.press("Enter");
+  } else {
+    await saveButton.click();
+  }
+  return responsePromise;
+}
+
+async function submitRunnerAction(page: Page, name: string | RegExp) {
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
+      response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name }).click();
+  return responsePromise;
 }
 
 test("both synthetic owners onboard while unverified and foreign states fail closed", async ({ browser, browserName }, testInfo) => {
@@ -223,9 +282,7 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
 
 test("a failed onboarding retry keeps the same idempotency key and never claims success early", async ({ browser }, testInfo) => {
   const scope = `${testInfo.project.name}-retry`;
-  const context = await browser.newContext({
-    extraHTTPHeaders: headers(scope, "alice", "fail-next-save"),
-  });
+  const context = await createHarnessContext(browser, scope, "alice", "fail-next-save");
   const page = await context.newPage();
   const errors: string[] = [];
   const failedResponses: string[] = [];
@@ -264,4 +321,195 @@ test("a failed onboarding retry keeps the same idempotency key and never claims 
   expect(failedResponses).toEqual(["POST /api/app/profile-program/onboard 500"]);
   expect(errors).toEqual([]);
   await context.close();
+});
+
+test("an accepted runner save reconciles after an error response, replays once, and reaches immutable history", async ({ browser }, testInfo) => {
+  const scope = `${testInfo.project.name}-runner-recovery`;
+  const alice = await openPage(
+    browser,
+    scope,
+    "alice",
+    "accept-next-runner-then-error",
+  );
+  await alice.page.goto("/app");
+  const onboarded = await submitOnboarding(alice.page, "dumbbells");
+  expect(onboarded.response.status()).toBe(201);
+
+  const pushDay = alice.page.getByRole("link", { name: /Push/ });
+  await pushDay.focus();
+  await expect(pushDay).toBeFocused();
+  await pushDay.press("Enter");
+  await expect(alice.page).toHaveURL(/\/app\/program\/push$/u);
+  await expect(alice.page.getByRole("heading", { name: "Push" })).toBeVisible();
+  await assertAccessible(alice.page);
+
+  const startPromise = alice.page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/app/workouts" &&
+      response.request().method() === "POST",
+  );
+  await alice.page.getByRole("button", { name: "Start or resume workout" }).click();
+  const startResponse = await startPromise;
+  expect(startResponse.status()).toBe(201);
+  expect(startResponse.request().postDataJSON()).not.toHaveProperty("ownerUid");
+  await expect(alice.page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
+  const sessionId = new URL(alice.page.url()).pathname.split("/").at(-1)!;
+  await expect(
+    alice.page.getByRole("heading", { name: "Dumbbell bench press" }),
+  ).toBeVisible();
+  await assertAccessible(alice.page);
+
+  const interrupted = await saveWeightSet(alice.page, "25", "12", "keyboard");
+  expect(interrupted.status()).toBe(500);
+  const interruptedBody = interrupted.request().postDataJSON() as Record<string, unknown>;
+  expect(interruptedBody).not.toHaveProperty("ownerUid");
+  expect(interruptedBody).not.toHaveProperty("sequence");
+  await expect(alice.page.getByRole("heading", { name: "Save activity" })).toBeVisible();
+  await expect(alice.page.getByText("1 failed")).toBeVisible();
+  await expect(
+    alice.page.getByText("Local authenticated QA harness · synthetic data only"),
+  ).toBeVisible();
+  await assertAccessible(alice.page);
+  const interruptedEvidencePath = testInfo.outputPath(
+    "authenticated-runner-interrupted.png",
+  );
+  await alice.page.screenshot({ fullPage: true, path: interruptedEvidencePath });
+  await testInfo.attach("authenticated-runner-interrupted", {
+    contentType: "image/png",
+    path: interruptedEvidencePath,
+  });
+
+  const duplicate = await privateMutation(
+    alice.page,
+    `/api/app/workouts/${sessionId}/operations`,
+    interruptedBody,
+  );
+  expect(duplicate).toMatchObject({
+    body: { status: "duplicate" },
+    status: 200,
+  });
+  expect(duplicate.cacheControl).toContain("no-store");
+  expect(alice.failedResponses).toEqual([
+    `POST /api/app/workouts/${sessionId}/operations 500`,
+  ]);
+
+  await alice.page.reload();
+  await expect(
+    alice.page.getByRole("progressbar", { name: /1 of \d+ work sets logged/ }),
+  ).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Save activity" })).toHaveCount(0);
+  await assertAccessible(alice.page);
+
+  await alice.page.getByRole("button", { name: /2 Work Not logged/ }).click();
+  expect((await saveWeightSet(alice.page, "25", "11")).status()).toBe(200);
+  await alice.page.getByRole("button", { name: /3 Work Not logged/ }).click();
+  expect((await saveWeightSet(alice.page, "25", "10")).status()).toBe(200);
+  expect((await submitRunnerAction(alice.page, "Complete exercise")).status()).toBe(200);
+
+  for (const exerciseName of [
+    "Seated dumbbell shoulder press",
+    "Incline dumbbell press",
+    "Overhead dumbbell triceps extension",
+    "Dead bug",
+    "Front plank",
+  ]) {
+    await alice.page
+      .getByRole("button", { name: new RegExp(exerciseName, "i") })
+      .click();
+    expect((await submitRunnerAction(alice.page, "Skip exercise")).status()).toBe(200);
+  }
+
+  await alice.page.getByRole("button", { name: /Walker/ }).click();
+  await alice.page.getByLabel("Duration (seconds)").last().fill("1200");
+  await alice.page.getByLabel("Distance (mi)").last().fill("1");
+  await alice.page.getByLabel("Incline (%)").fill("2");
+  await alice.page.getByLabel("Cardio notes").fill("Synthetic QA walk");
+  expect((await submitRunnerAction(alice.page, "Save cardio")).status()).toBe(200);
+
+  const completionPromise = submitRunnerAction(alice.page, "Complete workout");
+  await expect(alice.page).toHaveURL(`/app/history/${sessionId}`);
+  expect((await completionPromise).status()).toBe(200);
+  await expect(alice.page.getByText("Completed workout")).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Push" })).toBeVisible();
+  await expect(alice.page.getByText(/25 lb · 12 reps/i)).toBeVisible();
+  await expect(alice.page.locator(".history-sets > li")).toHaveCount(3);
+  await expect(alice.page.getByRole("heading", { name: "Walker cardio" })).toBeVisible();
+  await expect(alice.page.getByText("Synthetic QA walk")).toBeVisible();
+  await assertAccessible(alice.page);
+  expect(
+    await alice.page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+
+  const evidencePath = testInfo.outputPath("authenticated-runner-history.png");
+  await alice.page.screenshot({ fullPage: true, path: evidencePath });
+  await testInfo.attach("authenticated-runner-history", {
+    contentType: "image/png",
+    path: evidencePath,
+  });
+
+  const bob = await openPage(browser, scope, "bob");
+  await bob.page.goto("/app");
+  expect((await submitOnboarding(bob.page, "barbell")).response.status()).toBe(201);
+  const unknownId = "00000000-0000-4000-8000-000000000099";
+  const readWorkout = (id: string) =>
+    bob.page.evaluate(async (targetId) => {
+      const response = await fetch(`/api/app/workouts/${targetId}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      return {
+        body: await response.json(),
+        cacheControl: response.headers.get("cache-control"),
+        status: response.status,
+      };
+    }, id);
+  const [foreign, missing] = await Promise.all([
+    readWorkout(sessionId),
+    readWorkout(unknownId),
+  ]);
+  expect(foreign).toEqual(missing);
+  expect(foreign).toMatchObject({ status: 404, body: { error: "not_found" } });
+  expect(foreign.cacheControl).toContain("no-store");
+
+  const foreignRouteResponse = await bob.page.goto(`/workout/${sessionId}`);
+  expect(foreignRouteResponse).not.toBeNull();
+  const foreignRouteBody = await foreignRouteResponse!.text();
+  expect(foreignRouteBody).toContain(sessionId);
+  const foreignRoute = {
+    body: foreignRouteBody.replaceAll(sessionId, "<requested-session-id>"),
+    cacheControl: foreignRouteResponse!.headers()["cache-control"],
+    status: foreignRouteResponse!.status(),
+  };
+  await expect(bob.page.getByText("This page could not be found.")).toBeVisible();
+  const missingRouteResponse = await bob.page.goto(`/workout/${unknownId}`);
+  expect(missingRouteResponse).not.toBeNull();
+  const missingRouteBody = await missingRouteResponse!.text();
+  expect(missingRouteBody).toContain(unknownId);
+  const missingRoute = {
+    body: missingRouteBody.replaceAll(unknownId, "<requested-session-id>"),
+    cacheControl: missingRouteResponse!.headers()["cache-control"],
+    status: missingRouteResponse!.status(),
+  };
+  await expect(bob.page.getByText("This page could not be found.")).toBeVisible();
+  expect(foreignRoute).toEqual(missingRoute);
+  expect(foreignRoute).toMatchObject({ status: 404 });
+  expect(foreignRoute.cacheControl).toContain("no-store");
+
+  expect([...bob.failedResponses].sort()).toEqual(
+    [
+      `GET /api/app/workouts/${sessionId} 404`,
+      `GET /api/app/workouts/${unknownId} 404`,
+      `GET /workout/${sessionId} 404`,
+      `GET /workout/${unknownId} 404`,
+    ].sort(),
+  );
+  expect(alice.failedResponses).toEqual([
+    `POST /api/app/workouts/${sessionId}/operations 500`,
+  ]);
+
+  await alice.page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));
+  await bob.close();
+  await alice.close();
 });

@@ -130,7 +130,7 @@ export function MemberProgramHome({
         <ol className="member-day-grid">
           {program.days.map((day) => (
             <li key={day.id}>
-              <Link href={`/app/program/${day.dayKey}`}>
+              <Link href={`/app/program/${day.dayKey}`} prefetch={false}>
                 <span>{String(day.dayNumber).padStart(2, "0")}</span>
                 <strong>{day.displayName}</strong>
                 <small>{day.prescriptions.length} movements · walker or runner</small>

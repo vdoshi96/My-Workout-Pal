@@ -23,6 +23,12 @@ export type RunnerPresentationOptions = Readonly<{
 const POUNDS_PER_KILOGRAM = 2.2046226218;
 const METERS_PER_MILE = 1_609.344;
 
+function canonicalDecimal(value: number, scale: number): number {
+  const factor = 10 ** scale;
+  const rounded = Math.round((value + Number.EPSILON) * factor) / factor;
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
 function unitSystemFrom(options: RunnerPresentationOptions): RunnerUnitSystem {
   return options.unitSystem ?? "metric";
 }
@@ -50,7 +56,10 @@ export function displayToKilograms(
   value: number,
   unitSystem: RunnerUnitSystem = "metric",
 ): number {
-  return unitSystem === "imperial" ? value / POUNDS_PER_KILOGRAM : value;
+  return canonicalDecimal(
+    unitSystem === "imperial" ? value / POUNDS_PER_KILOGRAM : value,
+    3,
+  );
 }
 
 export function metersToDisplay(
@@ -66,7 +75,10 @@ export function displayToMeters(
   value: number,
   unitSystem: RunnerUnitSystem = "metric",
 ): number {
-  return unitSystem === "imperial" ? value * METERS_PER_MILE : value;
+  return canonicalDecimal(
+    unitSystem === "imperial" ? value * METERS_PER_MILE : value,
+    3,
+  );
 }
 
 export function paceToDisplay(
@@ -82,9 +94,11 @@ export function displayToPace(
   valueSeconds: number,
   unitSystem: RunnerUnitSystem = "metric",
 ): number {
-  return unitSystem === "imperial"
-    ? valueSeconds / (METERS_PER_MILE / 1_000)
-    : valueSeconds;
+  return Math.round(
+    unitSystem === "imperial"
+      ? valueSeconds / (METERS_PER_MILE / 1_000)
+      : valueSeconds,
+  );
 }
 
 function formatNumber(value: number): string {

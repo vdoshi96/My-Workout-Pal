@@ -74,7 +74,7 @@ export function CuratedVideoPlayer({
       >
         <div className="curated-player-frame">
           <iframe
-            allow="encrypted-media; gyroscope; picture-in-picture; web-share"
+            allow="encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"

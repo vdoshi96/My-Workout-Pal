@@ -86,6 +86,10 @@ describe("approved curated video publication", () => {
     expect(available).toContain("dumbbell-bench-press demonstration 1");
     expect(available).toContain("dumbbell-bench-press demonstration 2");
     expect(available).toContain("youtube-nocookie.com/embed/AbCdEfGhI01");
+    expect(available).toContain(
+      'allow="encrypted-media; gyroscope; picture-in-picture"',
+    );
+    expect(available).not.toContain("web-share");
     expect(available).not.toContain("Manual review pending");
     expect(unavailable).toContain("Curated demos unavailable");
     expect(unavailable).not.toContain("required YouTube API credential");

@@ -1,73 +1,74 @@
-# Authenticated browser harness onboarding checkpoint
+# Authenticated browser harness: runner recovery checkpoint
 
 ## Outcome
 
-The repository now has a separate production-mode Next.js fixture for credential-free authenticated browser verification. It lives under `tests/fixtures/authenticated-app`, outside `src/app`, applies the real Drizzle migrations and starter seed to an in-memory PGlite database, renders production onboarding and member-program components, and invokes production repositories with bounded synthetic server viewers.
+The credential-free authenticated fixture now proves the production onboarding and persisted workout vertical against isolated in-memory PGlite. At source checkpoint `7c53a2f2ee7efd74233f21af2e6057e0f85e1cac`, a verified synthetic member can create the dumbbell starter, open Push by keyboard, start a real owner-scoped session, survive a server-accepted set followed by an error response, reconcile exactly once after reload, finish the workout, and read the immutable result. A second synthetic owner cannot distinguish Alice's session from an unknown session through either the private API or rendered workout route.
 
-This first slice proves onboarding, mutation eligibility, owner scoping, retry truth, and responsive/accessibility behavior without reading Firebase, Neon, Vercel, YouTube, ADC, Postgres, or OIDC credentials. It is not a Firebase emulator and does not prove hosted sessions, providers, email delivery, or secure production cookies.
+The fixture remains outside `src/app`, uses production repositories, route parsers, runner state, IndexedDB reconciliation, migrations, seed rows, and history presentation, and appears nowhere in the production route manifest. It is not a Firebase emulator and does not claim hosted sessions, provider consent, email delivery, secure production cookies, or literal network disconnection.
 
 ## Newest visual evidence
 
-Chromium desktop at 1,440 by 1,000 CSS pixels, after Alice created the dumbbell starter:
+WebKit phone in the explicit accepted-then-error state. The synthetic banner, one failed operation, retained set values, recovery action, and disabled terminal action are visible:
 
-![Synthetic Alice desktop view with all five dumbbell starter days](authenticated-dumbbells-desktop.png)
+![Synthetic WebKit phone runner showing the interrupted set recovery state](authenticated-runner-interrupted-phone.png)
 
-WebKit phone using the iPhone 14 device profile, after Bob created the barbell starter:
+Chromium desktop after server-confirmed completion. The read-only snapshot shows 25 pounds for 12, 11, and 10 repetitions; five skipped movements; and walker cardio with 20 minutes, one mile, 2 percent incline, and the immutable `Synthetic QA walk` note:
 
-![Synthetic Bob phone view of the barbell member-program layout](authenticated-barbell-phone.png)
+![Synthetic Chromium desktop immutable Push history with sets and cardio](authenticated-runner-history-desktop.png)
 
-The stitched WebKit image shows Pull, Legs, Upper, and Lower while the fixed bottom navigation covers the Push row at its captured position. The automated DOM assertion independently proves that the ordered list contains all five days.
-
-Both images carry the visible `Local authenticated QA harness · synthetic data only` banner and contain no real account or fitness data.
+These are the only retained authenticated-harness screenshots. Both contain synthetic data and the visible local-harness boundary; no real account, credential, or fitness record appears.
 
 ## Fixture and security boundary
 
-- `pnpm test:e2e:authenticated` selects an available unprivileged port by binding `127.0.0.1:0`, closes that reservation, and passes the selected port to Playwright. The Next fixture starts only on exact loopback and refuses to reuse an existing server.
-- The child-process environment is an explicit runtime allowlist. It does not inherit `DATABASE_URL*`, `NEON_*`, `PG*`, `POSTGRES_*`, Firebase, Google ADC, Vercel/OIDC, or YouTube credentials.
-- A deterministic runner step copies the maintained `public/contours.svg` into the ignored fixture-public boundary before build and deletes the copy afterward. The fixture build output and temporary asset are ignored.
-- The production source-policy test rejects fixture markers and imports beneath `src`. `pnpm production:check` inspects the production App Router manifest after `pnpm build` and rejects any harness or fixture route.
-- Synthetic identities are selected out of band before navigation and converted to production `ViewerContext` values on the fixture server. Request bodies and URLs never accept an owner UID.
-- Only implemented scenarios are admitted: ready, one-shot slow onboarding, one-shot failed save, expired session, and revoked session. Expired, revoked, malformed, or unknown identity state fails closed at the synthetic sign-in boundary.
-- Private responses, including unauthenticated teardown, carry `no-store`. Foreign and nonexistent clone requests return the same status, body, and cache policy and leave Bob's owned program count unchanged.
+- `pnpm test:e2e:authenticated` selects an available unprivileged exact-loopback port, builds the separate fixture with Next.js 16.3.2 Webpack, starts it in production mode, and refuses to reuse another server.
+- The child process inherits only an explicit non-provider environment allowlist. It receives no Firebase, Neon, Postgres, Vercel, Google ADC, OIDC, or YouTube credential.
+- Synthetic Alice and Bob are selected before navigation by test-only headers injected only into `http://127.0.0.1:<selected-port>` requests. Those headers never reach YouTube or another origin and never appear in application bodies or URLs.
+- The fixture adapts only its already double-submitted CSRF token into the production cookie name, then delegates the untouched request to `createWorkoutApi` and `createWorkoutRepository`. It does not copy workout schemas or ownership logic.
+- The one-shot `accept-next-runner-then-error` scenario lets the repository commit the first set and its idempotency receipt, then replaces only that successful HTTP response with a bounded `500 no-store`. This proves accepted-then-error reconciliation, not a literal browser disconnect.
+- The external `youtube-nocookie.com/embed/*` document is replaced with an inert test response so this persistence run is deterministic and credential-free. The application still renders the reviewed iframe URL, title, supported media permissions, and direct fallback. Real video playback is proven by the separate deployed-video evidence, not this fixture.
+- Production source tests reject harness imports or markers under `src`. `pnpm production:check` verifies 41 App Router entries and no fixture route.
 
-## Personally observed local flow
+## Personally observed flow
 
-Environment: the exact reviewed feature source later committed as `a3adc6051aca0d4035efe1c2a40e679eb54f6926` and merged to `main` as `b599616f5e2879e1663cc176b5617e40aab37483`. The fixture was built with Next.js 16.3.2 Webpack and started in production mode; no development watcher or HMR process supplied evidence.
+1. Expired and revoked contexts stopped at **Sign in required**. Unverified Alice remained read-only and could not create or mutate a program.
+2. Verified Alice used focus plus Enter to open Push, then started the production persisted runner with an owner-free program/day/idempotency request.
+3. Alice entered 25 pounds and 12 repetitions and activated **Save set** with the keyboard. The repository accepted the operation, while the harness returned the single permitted `500`. The UI visibly reported **Save activity** and **1 failed** without claiming success.
+4. Axe scanned that material failure state before reload. The first screenshot was captured only after the synthetic banner, retained values, failure message, and recovery control were visible.
+5. Replaying the captured request returned `200` with `status: duplicate`, the same persisted meaning, and `no-store`. A full reload then showed one of the required work sets logged and removed the false local failure.
+6. Alice logged the remaining 25-pound sets for 11 and 10 repetitions, completed dumbbell bench press, skipped the other five Push movements, saved walker cardio, and completed the session.
+7. The terminal operation navigated only after its `200` confirmation. Immutable history displayed all three sets, the skipped movements, time, distance, incline, and cardio note.
+8. Bob's reads of Alice's session and a random UUID returned identical `404 not_found` JSON and Cache-Control. Their rendered route responses also matched in status, `no-store`, and complete Next document after replacing only each caller-supplied session token that Next necessarily echoes in its router payload.
+9. The failure collectors were asserted twice: immediately after recovery and again after all remaining work, history evidence, and Bob checks. Alice had exactly the one intentional operations `500`; Bob had exactly two private API and two rendered-route `404`s. No later unexpected response could pass silently.
 
-1. Opened expired and revoked Alice contexts. Each stopped at **Sign in required** without loading a private program or producing a failed response.
-2. Opened unverified Alice. The production onboarding UI visibly reported **Read-only account**, kept **Create my program** disabled, and had no serious or critical Axe violation.
-3. Opened verified Alice, used engine-appropriate keyboard navigation to focus and activate **Skip to content**, created the dumbbell starter, and observed the five ordered Push, Pull, Legs, Upper, and Lower days.
-4. Opened verified Bob in the same isolated database scope, selected **Barbell + rack**, created a distinct five-day program, and observed the mobile member layout. The project-level horizontal-overflow assertion ran on Alice's production member-program surface in the same browser project.
-5. As Bob, attempted to clone Alice's program and an unknown UUID. Both returned indistinguishable `404 not_found` private responses with equivalent `Cache-Control`; Bob still owned exactly one program afterward.
-6. Injected one onboarding `500`. The form stayed on onboarding with an honest error, reused the same idempotency key on retry, then advanced only after the repository returned `201`. Only the explicitly consumed `500` was allowed; every other HTTP failure, console warning/error, and page error remained fatal.
-7. Replayed the slice in Chromium desktop and WebKit phone. Both projects completed with clean serious/critical Axe, console, page-error, and unexpected-response collectors.
+## Accessibility, responsive, and browser evidence
+
+- The vertical passes in Chromium desktop at 1,440 by 1,000 CSS pixels and WebKit phone using the iPhone 14 profile.
+- Real keyboard activation covers entry to Push and the first runner set save. The fixture also retains the engine-correct skip-link check from onboarding.
+- Serious/critical Axe scans cover the day page, ready runner, visible interrupted recovery state, reconciled runner, member program, and immutable history. The third-party iframe subtree is excluded; its app-owned title and fallback remain separately asserted.
+- The rest timer's prior 2.39-to-1 coral-on-ink failure now uses the tested high-contrast token. Both browsers complete with clean first-party console, page-error, and exact HTTP collectors.
+- The phone and desktop history surfaces have no horizontal overflow. Authenticated program/day links disable speculative App Router prefetch, preventing WebKit abort noise while preserving explicit navigation.
 
 ## Retained red-to-green evidence
 
-- The package-script test first failed because `test:integration` and the authenticated command did not exist. The corrected scripts expose real integration, database, production-manifest, non-browser, public-browser, and authenticated-browser boundaries.
-- The harness-policy test first failed because the synthetic context module and runner did not exist.
-- The first browser build failed because bundled SQL asset URLs were passed to Node `readFile`. The fixture now resolves the known migration filenames beneath an explicit validated repository root.
-- A development-server run produced HMR/router/hydration contamination. The reproducible command now builds and starts the fixture in production mode.
-- Browser collection first failed on a missing document title, private-route prefetch `404`s, and `/contours.svg`. Metadata, an honest fixture-only private-route fallback, a response-aware failure collector, and the temporary maintained asset boundary corrected them without masking HTTP failures.
-- Assertions first expected non-product equipment copy and the wrong WebKit focus key. They now use the rendered `Dumbbells` and `Barbell + rack` labels plus the established Chromium `Tab` and WebKit `Alt+Tab` path.
-- The fixture clone adapter first passed the transport-only `mode` property into a strict repository input and received `400 validation`. It now matches the production route's exact destructuring, so foreign and missing resources reach owner enforcement and return the required `404` equivalence.
-- Two policy assertions then failed because the runner inherited the whole local environment and an unauthenticated teardown response lacked `no-store`. The runtime allowlist and cache fix made both pass.
-- A dynamic-port policy assertion failed against hard-coded port 3110. The runner-selected loopback port now passes and removes the prior listener-collision class.
-- Expired/revoked parser assertions failed while a viewer was still present. Both scenarios now remove the synthetic viewer and pass in unit and browser checks.
+- The initial focused contract passed five checks and failed two: the new accepted-then-error scenario was unknown and six fixture workout/day/history route files were missing.
+- The first browser vertical failed serious contrast on the rest timer. The corrected token passed Axe in both engines.
+- The accepted 25-pound set initially conflicted after reload because the client kept a long imperial conversion while Postgres stored three decimal places. Presentation-boundary conversion now canonicalizes kilograms and meters to scale three and pace to an integer; 25 pounds persists and reconciles as 11.34 kilograms.
+- The first post-recovery test tried to overwrite set one because the runner intentionally does not auto-advance. The test now selects set two and set three explicitly, preserving the production conflict guard.
+- Immutable cardio history initially dropped `note_snapshot`. The repository view and shared history component now preserve and render it, with a PGlite regression.
+- Broad Playwright `extraHTTPHeaders` leaked fixture headers to third-party resources and caused CORS noise. Exact-loopback request interception replaced it. The external player document is inert rather than console-filtered.
+- Chromium then identified unsupported iframe permission `web-share`; the production player now retains only supported media permissions.
+- Exact response assertions exposed six hidden fixture detail-route prefetch `404`s. Both fixture and production authenticated day links now use `prefetch={false}`, with source parity checks.
+- Raw rendered 404 bodies differed only because Next echoed each requested session ID. Full-body equivalence now normalizes only that caller-provided token and no other content.
+- Final review found Alice's exact-failure assertion occurred before later history work. The same exact-one-500 assertion now runs again immediately before teardown.
 
 ## Automated verification
 
-- `pnpm exec vitest run tests/unit/authenticated-harness-policy.test.ts tests/unit/package-scripts.test.ts`: 2 files and 8 tests pass.
-- `pnpm typecheck`: pass.
-- `pnpm test:e2e:authenticated`: production fixture build passes; 4 of 4 Playwright cases pass across Chromium desktop and WebKit phone.
-- Both browser projects verify five program days for dumbbell and barbell profiles, expired/revoked/unverified boundaries, keyboard skip navigation, no horizontal overflow, no unexpected HTTP failure, no browser warning/error or page error, and no serious or critical Axe violation on the scoped states.
-- `pnpm verify`: pass on the final source. Strict TypeScript and full lint pass; Vitest passes 78 files and 521 tests; `db:check` passes Drizzle metadata plus 4 files and 33 migration/bootstrap assertions; the default production `seed:check` validates all 27 exact-two variations; PWA parity and 33-document parity pass; the Next.js 16.3.2 Webpack production build passes; and the production route-manifest boundary verifies 41 App Router entries without a harness route.
-- `pnpm test:e2e:release`: the primary replay passes 43 public production-mode cases with the one documented WebKit service-worker-control skip across Chromium phone, tablet, and desktop plus WebKit phone.
-- Independent review inspected the full diff, fixture boundary, runner environment, production manifest checker, plans, generated documentation, and screenshots; reproduced the 8 focused assertions, 4 authenticated browser cases, complete `pnpm verify`, and a clean 43-case public rerun; and returned explicit approval with no actionable finding. Its first public run observed one nondeterministic cross-origin YouTube `compute-pressure` Permissions-Policy warning in the tablet exercise case; the exact case then passed alone and the clean full rerun passed, so no warning is suppressed in source or retained as a product success state.
-- Git and production closeout: feature `a3adc6051aca0d4035efe1c2a40e679eb54f6926` and merge `b599616f5e2879e1663cc176b5617e40aab37483` are pushed. Vercel deployment `dpl_4AqbXLwy4B2TsvEJ3HejbLfw7dYQ` is Ready on `https://my-workout-pal-chi.vercel.app`; GitHub reports Vercel success for the exact merge SHA, public welcome and five-day program smoke checks pass, and the bounded one-hour production error scan returned no entries. This deployment proves the production build and unchanged public application still serve; the synthetic authenticated fixture itself is intentionally absent from production and does not become hosted-auth evidence.
+- Focused runner/publication/insights matrix: 5 files and 41 tests pass.
+- `pnpm typecheck` and full `pnpm lint`: pass.
+- `pnpm test:e2e:authenticated`: fixture build passes; 6 of 6 cases pass across Chromium desktop and WebKit phone.
+- `pnpm verify`: strict types and lint pass; Vitest passes 78 files and 524 tests; `db:check` passes Drizzle metadata plus 4 files and 33 assertions; the default seed check validates all 27 exact-two video mappings; PWA and 34-document parity pass; the production Webpack build passes; and the 41-entry production route boundary contains no harness route.
+- The first isolated `pnpm test:e2e:release` attempt passed 35 cases, skipped the documented WebKit service-worker case, and failed the eight exercise-detail cases because this credential-free worktree intentionally had no `DATABASE_URL`. The bounded rerun injected only the existing ignored local database URL into that single read-only process without printing or copying it. It passed 43 cases with the same one WebKit capability skip across Chromium phone, tablet, desktop, and WebKit phone. No Firebase, Admin, YouTube, or Vercel value entered the process, and no database write ran.
 
-## Evidence boundary and next slice
+## Evidence boundary and next lane
 
-This checkpoint proves only the isolated onboarding/ownership vertical slice plus regression safety for the already-released public application. The fixture header is an out-of-band test control, not a secure-session substitute. It does not prove real Firebase registration, Google consent, email verification or recovery delivery, hosted expiry/revocation, CSRF on HTTPS, secure-cookie attributes, Neon production, or Vercel behavior.
-
-Program collection UI, clone/activate, editing, custom exercises, confirmed equipment revision, real IndexedDB runner recovery, set/cardio logging, interruption reconciliation, history, records, progress, settings, deletion UI, slow/malformed/stale/offline cases, Chromium phone/tablet, WebKit desktop, dark mode, reduced motion, forced colors, 200 percent zoom, and the authenticated media runner remain future harness slices. Hosted provider and production evidence remains a separate release gate after those credential-free paths are complete.
+This checkpoint proves credential-free downstream authorization, repository-backed persistence, idempotent accepted-then-error recovery, reload reconciliation, terminal history, cardio-note preservation, first-party accessibility, and cross-user hiding. It does not prove literal offline events, tab close, post-load Firebase expiry, multi-tab conflicts, personal-record/progress presentation, hosted Firebase password/Google flows, email delivery, production secure cookies, or Spend Management. Those remain separate, truthfully unclaimed lanes.

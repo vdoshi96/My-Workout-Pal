@@ -133,6 +133,10 @@ describe("workout runner presentation helpers", () => {
   });
 
   it("converts imperial presentation values back to canonical metric values", () => {
+    expect(displayToKilograms(25, "imperial")).toBe(11.34);
+    expect(displayToKilograms(12.3456, "metric")).toBe(12.346);
+    expect(displayToMeters(0.1, "imperial")).toBe(160.934);
+    expect(displayToPace(600, "imperial")).toBe(373);
     expect(
       formatMeasurement(
         { kind: "weight_reps", weightKg: 10, repetitions: 5 },
