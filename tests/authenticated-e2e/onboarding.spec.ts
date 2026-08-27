@@ -816,7 +816,10 @@ test("owned customization publishes once, preserves history, and derives private
     .getByRole("group", { name: "Equipment profile" })
     .getByRole("button", { name: /Barbell \+ rack/ });
   await editorBarbellProfile.click();
-  await expect(alice.page.getByRole("heading", { name: "Review Barbell + rack" })).toBeFocused();
+  const equipmentReviewHeading = alice.page.getByRole("heading", {
+    name: "Review Barbell + rack",
+  });
+  await expect(equipmentReviewHeading).toBeFocused();
   const substitutionRows = alice.page.locator(".equipment-change-list > li");
   await expect(substitutionRows).toHaveCount(6);
   expect(await substitutionRows.locator("span").allTextContents()).toEqual([
@@ -846,7 +849,8 @@ test("owned customization publishes once, preserves history, and derives private
   await assertAccessible(alice.page);
   if (testInfo.project.name === "webkit-phone") {
     const equipmentEvidence = testInfo.outputPath("authenticated-equipment-review-phone.png");
-    await alice.page.screenshot({ fullPage: true, path: equipmentEvidence });
+    await equipmentReviewHeading.evaluate((heading) => heading.scrollIntoView({ block: "start" }));
+    await alice.page.screenshot({ path: equipmentEvidence });
     await testInfo.attach("authenticated-equipment-review-phone", {
       contentType: "image/png",
       path: equipmentEvidence,
