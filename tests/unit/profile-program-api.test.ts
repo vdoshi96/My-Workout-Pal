@@ -4,6 +4,7 @@ import {
   equipmentChangeRequestSchema,
   onboardingRequestSchema,
   preferencesUpdateRequestSchema,
+  programCollectionMutationRequestSchema,
   programPublishRequestSchema,
   profileProgramApiError,
 } from "@/server/http/profile-program-api";
@@ -71,7 +72,7 @@ describe("profile program API contract", () => {
     ).toBe(false);
   });
 
-  it("accepts only an owner-free, canonical five-day program publication", () => {
+  it("accepts only an owner-free, bounded program publication", () => {
     const prescription = {
       catalogExerciseId: "11111111-1111-4111-8111-111111111111",
       customExerciseId: null,
@@ -107,19 +108,30 @@ describe("profile program API contract", () => {
       },
     ];
     const day = (dayKey: string, dayNumber: number) => ({
-      cardio,
+      cardio: cardio.map((entry, index) => ({
+        ...entry,
+        cardioKey: `70000000-0000-4000-8${String(dayNumber).padStart(3, "0")}-${String(index + 1).padStart(12, "0")}`,
+      })),
       dayKey,
       dayNumber,
       displayName: dayKey[0]!.toUpperCase() + dayKey.slice(1),
       sections: [
         {
           kind: "strength",
-          prescriptions: [prescription],
+          prescriptions: [{
+            ...prescription,
+            prescriptionKey: `50000000-0000-4000-8${String(dayNumber).padStart(3, "0")}-000000000001`,
+          }],
+          sectionKey: `60000000-0000-4000-8${String(dayNumber).padStart(3, "0")}-000000000001`,
           title: "Strength",
         },
         {
           kind: "core",
-          prescriptions: [prescription],
+          prescriptions: [{
+            ...prescription,
+            prescriptionKey: `50000000-0000-4000-8${String(dayNumber).padStart(3, "0")}-000000000002`,
+          }],
+          sectionKey: `60000000-0000-4000-8${String(dayNumber).padStart(3, "0")}-000000000002`,
           title: "Core",
         },
       ],
@@ -145,6 +157,8 @@ describe("profile program API contract", () => {
       maximumSeconds: 45,
       minimumReps: null,
       minimumSeconds: 20,
+      prescriptionKey:
+        valid.days[0]!.sections[0]!.prescriptions[0]!.prescriptionKey,
       targetDistanceM: 160.934,
       targetWeightKg: null,
     };
@@ -225,14 +239,14 @@ describe("profile program API contract", () => {
           sections: entry.sections.filter(({ kind }) => kind !== "core"),
         })),
       }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       programPublishRequestSchema.safeParse({ ...valid, ownerUid: "other-user" }).success,
     ).toBe(false);
     expect(
       programPublishRequestSchema.safeParse({
         ...valid,
-        days: valid.days.slice(0, 4),
+        days: valid.days.slice(0, 0),
       }).success,
     ).toBe(false);
     expect(
@@ -303,6 +317,31 @@ describe("profile program API contract", () => {
               }
             : entry,
         ),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts a strict custom-routine creation envelope without an owner field", () => {
+    const valid = {
+      dayName: "Saturday outside",
+      equipmentProfileKind: "dumbbells",
+      firstCatalogExerciseId: "11111111-1111-4111-8111-111111111111",
+      idempotencyKey: "custom-program-1",
+      mode: "custom",
+      name: "Weekend route",
+      sectionName: "Main work",
+    };
+    expect(programCollectionMutationRequestSchema.safeParse(valid).success).toBe(true);
+    expect(
+      programCollectionMutationRequestSchema.safeParse({
+        ...valid,
+        ownerUid: "must-never-be-accepted",
+      }).success,
+    ).toBe(false);
+    expect(
+      programCollectionMutationRequestSchema.safeParse({
+        ...valid,
+        firstCatalogExerciseId: "not-an-id",
       }).success,
     ).toBe(false);
   });

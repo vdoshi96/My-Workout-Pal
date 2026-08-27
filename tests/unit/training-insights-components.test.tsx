@@ -85,6 +85,7 @@ const historySession: TrainingSessionDetail = {
       position: 1,
       prescriptionNote: "Keep the ribcage stacked.",
       restSeconds: 90,
+      sectionTitle: "Pull strength",
       sectionKind: "strength",
       setCount: 2,
       setKind: "work",
@@ -182,5 +183,6 @@ describe("shared persisted training-insight views", () => {
     expect(markup).toContain("1m 30s");
     expect(markup).toContain("12:04 / mi");
     expect(markup).toContain("Keep the ribcage stacked.");
+    expect(markup).toContain("Pull strength · completed");
   });
 });

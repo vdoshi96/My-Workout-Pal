@@ -27,6 +27,7 @@ function responseFixture() {
       profile: {},
       programs: [
         {
+          dayCount: 5,
           equipmentProfileKind: "barbell",
           id: affectedProgramId,
           isActive: true,
@@ -37,6 +38,7 @@ function responseFixture() {
           updatedAt: "2026-08-25T15:00:00.000Z",
         },
         {
+          dayCount: 3,
           equipmentProfileKind: "dumbbells",
           id: activeProgramId,
           isActive: false,

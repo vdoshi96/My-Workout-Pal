@@ -63,4 +63,33 @@ describe("owned workout server route model", () => {
       effectiveCustomExerciseId: "custom-a",
     }])).toThrow(/identity/i);
   });
+
+  it("uses an immutable snapshot equipment list when the active profile has since changed", () => {
+    const customExercises = [
+      {
+        id: "10000000-0000-4000-8000-000000000001",
+        name: "My neutral-grip press",
+        loggingKind: "weight_reps" as const,
+        equipmentIds: ["dumbbells"] as const,
+        aliases: [],
+      },
+      {
+        id: "10000000-0000-4000-8000-000000000002",
+        name: "My rack squat",
+        loggingKind: "weight_reps" as const,
+        equipmentIds: ["barbell", "rack"] as const,
+        aliases: [],
+      },
+    ];
+    const oldSnapshotCandidates = buildWorkoutRouteCandidates(
+      "barbell",
+      customExercises,
+      ["dumbbells", "bodyweight", "bench"],
+    );
+
+    expect(oldSnapshotCandidates.some(({ name }) => name === "Barbell bench press")).toBe(false);
+    expect(oldSnapshotCandidates.some(({ name }) => name === "My rack squat")).toBe(false);
+    expect(oldSnapshotCandidates.some(({ name }) => name === "Dumbbell bench press")).toBe(true);
+    expect(oldSnapshotCandidates.some(({ name }) => name === "My neutral-grip press")).toBe(true);
+  });
 });

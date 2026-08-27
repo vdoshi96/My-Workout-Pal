@@ -9,19 +9,27 @@ import {
 } from "@/components/program/program-mutation-response";
 import {
   addProgramPrescription,
+  addProgramCardio,
+  addProgramDay,
   addProgramSection,
+  duplicateProgramDay,
   filterProgramExerciseCandidates,
   programEditorCanonicalValue,
   programEditorDisplayValue,
   programEditorDraftFromPublishInput,
   programPublishInputFromReadModel,
   programEditorUnitLabels,
+  removeProgramCardio,
+  removeProgramDay,
   removeProgramSection,
   removeProgramPrescription,
   replaceProgramPrescription,
+  renameProgramDay,
   renameProgramSection,
+  reorderProgramDay,
   reorderProgramSection,
   reorderProgramPrescription,
+  reviewProgramDayRemoval,
   reviewProgramSectionRemoval,
   stripLocalProgramPrescriptionIds,
   validateProgramSectionStructure,
@@ -45,6 +53,7 @@ function programReadModel(): ActiveProgramReadModel {
     days: dayKeys.map((dayKey, dayIndex) => {
       const prescriptions = [0, 1].map((prescriptionIndex) => ({
         id: `33333333-3333-4333-8333-33333333333${dayIndex * 2 + prescriptionIndex}`,
+        prescriptionKey: `33333333-3333-4333-8333-33333333333${dayIndex * 2 + prescriptionIndex}`,
         catalogExerciseId: `44444444-4444-4444-8444-44444444444${prescriptionIndex}`,
         customExerciseId: null,
         exercise: {
@@ -78,6 +87,7 @@ function programReadModel(): ActiveProgramReadModel {
         ...prescriptions[1]!,
         displayOrder: 1,
         id: `99999999-9999-4999-8999-99999999999${dayIndex}`,
+        prescriptionKey: `99999999-9999-4999-8999-99999999999${dayIndex}`,
       };
       return {
         id: `55555555-5555-4555-8555-55555555555${dayIndex}`,
@@ -87,6 +97,7 @@ function programReadModel(): ActiveProgramReadModel {
         sections: [
           {
             id: `66666666-6666-4666-8666-66666666666${dayIndex}`,
+            sectionKey: `66666666-6666-4666-8666-66666666666${dayIndex}`,
             kind: "strength" as const,
             displayOrder: 1,
             title: "Strength",
@@ -94,6 +105,7 @@ function programReadModel(): ActiveProgramReadModel {
           },
           {
             id: `aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa${dayIndex}`,
+            sectionKey: `aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa${dayIndex}`,
             kind: "core" as const,
             displayOrder: 2,
             title: "Core",
@@ -104,6 +116,7 @@ function programReadModel(): ActiveProgramReadModel {
         cardio: [
           {
             id: `77777777-7777-4777-8777-77777777777${dayIndex}`,
+            cardioKey: `77777777-7777-4777-8777-77777777777${dayIndex}`,
             mode: "walker" as const,
             durationSeconds: 1_200,
             distanceM: null,
@@ -113,6 +126,7 @@ function programReadModel(): ActiveProgramReadModel {
           },
           {
             id: `88888888-8888-4888-8888-88888888888${dayIndex}`,
+            cardioKey: `88888888-8888-4888-8888-88888888888${dayIndex}`,
             mode: "runner" as const,
             durationSeconds: 1_800,
             distanceM: 5_000,
@@ -213,13 +227,33 @@ describe("program editor request model", () => {
         },
       },
     };
-    expect(() => parseEquipmentChangeResponse(missingCore, {
+    expect(parseEquipmentChangeResponse(missingCore, {
       changes: [],
       programId: activeProgram.id,
       targetProfileKind: "dumbbells",
-    })).toThrow(
-      "invalid equipment mutation response",
-    );
+    }).activeProgram).toEqual(missingCore.profileProgram.activeProgram);
+
+    const duplicateSectionKey = {
+      profileProgram: {
+        ...envelope.profileProgram,
+        activeProgram: {
+          ...activeProgram,
+          days: activeProgram.days.map((day, index) => index === 0
+            ? {
+                ...day,
+                sections: day.sections.map((section, sectionIndex) => sectionIndex === 1
+                  ? { ...section, sectionKey: day.sections[0]!.sectionKey }
+                  : section),
+              }
+            : day),
+        },
+      },
+    };
+    expect(() => parseEquipmentChangeResponse(duplicateSectionKey, {
+      changes: [],
+      programId: activeProgram.id,
+      targetProfileKind: "dumbbells",
+    })).toThrow("invalid equipment mutation response");
 
     const invalidFirstSection = {
       ...activeProgram.days[0]!.sections[0]!,
@@ -253,6 +287,51 @@ describe("program editor request model", () => {
       ...programPublishInputFromReadModel(activeProgram, "publish-binding"),
       name: "A different valid route",
     })).toThrow("does not match the published draft");
+    const reorderedCardioDraft = programPublishInputFromReadModel(
+      activeProgram,
+      "publish-cardio-order",
+    );
+    reorderedCardioDraft.days[0]!.cardio = reorderedCardioDraft.days[0]!.cardio.map(
+      (cardio) => ({
+        distanceM: cardio.distanceM,
+        durationSeconds: cardio.durationSeconds,
+        inclinePercent: cardio.inclinePercent,
+        cardioKey: cardio.cardioKey,
+        mode: cardio.mode,
+        notes: cardio.notes,
+        paceSecondsPerKm: cardio.paceSecondsPerKm,
+      }),
+    );
+    expect(() => parseProgramPublishResponse(envelope, reorderedCardioDraft)).not.toThrow();
+    const changedPrescriptionKey = {
+      ...envelope,
+      profileProgram: {
+        ...envelope.profileProgram,
+        activeProgram: {
+          ...activeProgram,
+          days: activeProgram.days.map((day, dayIndex) => dayIndex === 0
+            ? {
+                ...day,
+                sections: day.sections.map((section, sectionIndex) => sectionIndex === 0
+                  ? {
+                      ...section,
+                      prescriptions: section.prescriptions.map((prescription, index) => index === 0
+                        ? {
+                            ...prescription,
+                            prescriptionKey: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                          }
+                        : prescription),
+                    }
+                  : section),
+              }
+            : day),
+        },
+      },
+    };
+    expect(() => parseProgramPublishResponse(
+      changedPrescriptionKey,
+      programPublishInputFromReadModel(activeProgram, "publish-key-binding"),
+    )).toThrow("does not match the published draft");
     expect(() => parseEquipmentChangeResponse(envelope, {
       changes: [],
       programId: activeProgram.id,
@@ -378,15 +457,28 @@ describe("program editor request model", () => {
   it("edits sections immutably with stable keys and an explicit truthful removal review", () => {
     const input = programPublishInputFromReadModel(programReadModel(), "publish-key");
     const draft = programEditorDraftFromPublishInput(input);
-    const withAccessory = addProgramSection(draft, 0, "accessory", "accessory-draft");
+    const withAccessory = addProgramSection(
+      draft,
+      0,
+      "accessory",
+      "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+    );
     const renamed = renameProgramSection(withAccessory, 0, 2, "Accessory circuit");
     const moved = reorderProgramSection(renamed, 0, 2, -1);
 
     expect(moved).not.toBe(draft);
     expect(moved.days[0]!.sections.map(({ kind, draftKey, title }) => ({ kind, draftKey, title }))).toEqual([
-      { kind: "strength", draftKey: "section:push:strength", title: "Strength" },
-      { kind: "accessory", draftKey: "accessory-draft", title: "Accessory circuit" },
-      { kind: "core", draftKey: "section:push:core", title: "Core" },
+      {
+        kind: "strength",
+        draftKey: "66666666-6666-4666-8666-666666666660",
+        title: "Strength",
+      },
+      {
+        kind: "accessory",
+        draftKey: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+        title: "Accessory circuit",
+      },
+      { kind: "core", draftKey: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa0", title: "Core" },
     ]);
     expect(validateProgramSectionStructure(moved)).toEqual([
       "Push Accessory circuit needs at least one movement.",
@@ -402,17 +494,16 @@ describe("program editor request model", () => {
       }),
     );
     expect(validateProgramSectionStructure(populated)).toEqual([]);
-    expect(() => addProgramSection(populated, 0, "core", "duplicate-core")).toThrow(/already exists/i);
-    const missingCore = structuredClone(populated);
-    missingCore.days[0]!.sections = missingCore.days[0]!.sections.filter(
-      ({ kind }) => kind !== "core",
+    const withRepeatedCore = addProgramSection(
+      populated,
+      0,
+      "core",
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     );
-    expect(() => addProgramSection(missingCore, 0, "core", "repair-core")).toThrow(
-      /cannot be added/i,
-    );
+    expect(withRepeatedCore.days[0]!.sections.filter(({ kind }) => kind === "core")).toHaveLength(2);
     expect(() => removeProgramSection(moved, 0, 0, {
       confirmed: true,
-      draftKey: "section:push:strength",
+      draftKey: "66666666-6666-4666-8666-666666666660",
       exerciseNames: ["Wrong movement"],
       prescriptionKeys: ["not-the-source"],
     })).toThrow(/review/i);
@@ -422,16 +513,21 @@ describe("program editor request model", () => {
     const removed = removeProgramSection(populated, 0, 1, { ...review, confirmed: true });
 
     expect(removed.days[0]!.sections.map(({ kind, draftKey }) => ({ kind, draftKey }))).toEqual([
-      { kind: "strength", draftKey: "section:push:strength" },
-      { kind: "core", draftKey: "section:push:core" },
+      { kind: "strength", draftKey: "66666666-6666-4666-8666-666666666660" },
+      { kind: "core", draftKey: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa0" },
     ]);
     expect(moved.days[0]!.sections).toHaveLength(3);
     expect(stripLocalProgramPrescriptionIds(removed, new Set()).days[0]!.sections[0]).not.toHaveProperty("draftKey");
-    const readded = addProgramSection(removed, 0, "accessory", "accessory-again");
+    const readded = addProgramSection(
+      removed,
+      0,
+      "accessory",
+      "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    );
     expect(readded.days[0]!.sections.map(({ kind, draftKey }) => ({ kind, draftKey }))).toEqual([
-      { kind: "strength", draftKey: "section:push:strength" },
-      { kind: "core", draftKey: "section:push:core" },
-      { kind: "accessory", draftKey: "accessory-again" },
+      { kind: "strength", draftKey: "66666666-6666-4666-8666-666666666660" },
+      { kind: "core", draftKey: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa0" },
+      { kind: "accessory", draftKey: "cccccccc-cccc-4ccc-8ccc-cccccccccccc" },
     ]);
     const withoutStrength = removeProgramSection(
       readded,
@@ -445,9 +541,142 @@ describe("program editor request model", () => {
       1,
       { ...reviewProgramSectionRemoval(withoutStrength, 0, 1, []), confirmed: true },
     );
-    const coreReview = reviewProgramSectionRemoval(oneSection, 0, 0, ["Exercise 2"]);
-    expect(() => removeProgramSection(oneSection, 0, 0, { ...coreReview, confirmed: true })).toThrow(
-      /core section/i,
+    const coreReview = reviewProgramSectionRemoval(readded, 0, 1, ["Exercise 2"]);
+    const removedCore = removeProgramSection(readded, 0, 1, { ...coreReview, confirmed: true });
+    expect(removedCore.days[0]!.sections.map(({ kind }) => kind)).toEqual(["strength", "accessory"]);
+    expect(() => removeProgramSection(oneSection, 0, 0, {
+      ...reviewProgramSectionRemoval(oneSection, 0, 0, ["Exercise 2"]),
+      confirmed: true,
+    })).toThrow(/at least one section/i);
+  });
+
+  it("adds, renames, duplicates, reorders, and removes days by stable key", () => {
+    const input = programPublishInputFromReadModel(programReadModel(), "publish-key");
+    const draft = programEditorDraftFromPublishInput(input);
+    const addedDayKey = "12345678-1234-4234-8234-123456789012";
+    const addedSectionKey = "12345678-1234-4234-8234-123456789013";
+    const added = addProgramDay(draft, {
+      candidate: candidate({
+        id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        name: "New-day movement",
+      }),
+      dayKey: addedDayKey,
+      displayName: "Intervals",
+      sectionKey: addedSectionKey,
+      sectionKind: "accessory",
+      sectionTitle: "Engine room",
+    });
+
+    expect(added).not.toBe(draft);
+    expect(draft.days).toHaveLength(5);
+    expect(added.days.at(-1)).toMatchObject({
+      dayKey: addedDayKey,
+      dayNumber: 6,
+      displayName: "Intervals",
+      sections: [{
+        kind: "accessory",
+        sectionKey: addedSectionKey,
+        title: "Engine room",
+      }],
+      cardio: [],
+    });
+    const addedPrescription = added.days.at(-1)!.sections[0]!.prescriptions[0]!;
+    expect(addedPrescription.prescriptionKey).toMatch(/^[0-9a-f-]{36}$/i);
+
+    const renamed = renameProgramDay(added, addedDayKey, "Intervals and carries");
+    expect(renamed.days.at(-1)).toMatchObject({
+      dayKey: addedDayKey,
+      displayName: "Intervals and carries",
+    });
+    const reordered = reorderProgramDay(renamed, addedDayKey, -1);
+    expect(reordered.days.find((day) => day.dayKey === addedDayKey)?.dayNumber).toBe(5);
+    expect(reordered.days.map(({ dayNumber }) => dayNumber)).toEqual([1, 2, 3, 4, 5, 6]);
+
+    const duplicateDayKey = "12345678-1234-4234-8234-123456789014";
+    const duplicate = duplicateProgramDay(reordered, addedDayKey, { dayKey: duplicateDayKey });
+    const source = duplicate.days.find((day) => day.dayKey === addedDayKey)!;
+    const copy = duplicate.days.find((day) => day.dayKey === duplicateDayKey)!;
+    expect(copy.displayName).toBe(source.displayName);
+    expect(copy.dayNumber).toBe(source.dayNumber + 1);
+    expect(copy.sections[0]!.sectionKey).not.toBe(source.sections[0]!.sectionKey);
+    expect(copy.sections[0]!.prescriptions[0]!.prescriptionKey).not.toBe(
+      source.sections[0]!.prescriptions[0]!.prescriptionKey,
+    );
+    expect(copy.sections[0]!.prescriptions[0]!.sourcePrescriptionId).toBe(
+      source.sections[0]!.prescriptions[0]!.sourcePrescriptionId,
+    );
+
+    const review = reviewProgramDayRemoval(
+      duplicate,
+      duplicateDayKey,
+      copy.sections.flatMap(({ prescriptions }) => prescriptions.map(() => "New-day movement")),
+    );
+    expect(review.dayKey).toBe(duplicateDayKey);
+    expect(() => removeProgramDay(duplicate, duplicateDayKey, review)).toThrow(/confirm/i);
+    const removed = removeProgramDay(duplicate, duplicateDayKey, { ...review, confirmed: true });
+    expect(removed.days.some((day) => day.dayKey === duplicateDayKey)).toBe(false);
+    expect(removed.days.map(({ dayNumber }) => dayNumber)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(() => removeProgramDay(removed, duplicateDayKey, { ...review, confirmed: true })).toThrow(
+      /unavailable/i,
+    );
+  });
+
+  it("permits repeated classifications, optional cardio, and bounded topology validation", () => {
+    const draft = programEditorDraftFromPublishInput(
+      programPublishInputFromReadModel(programReadModel(), "publish-key"),
+    );
+    const noCardio = structuredClone(draft);
+    noCardio.days = [noCardio.days[0]!];
+    noCardio.days[0]!.cardio = [];
+    noCardio.days[0]!.sections = noCardio.days[0]!.sections.filter(({ kind }) => kind !== "core");
+    expect(validateProgramSectionStructure(noCardio)).toEqual([]);
+
+    const walkerKey = "12345678-1234-4234-8234-123456789015";
+    const runnerKey = "12345678-1234-4234-8234-123456789016";
+    const withWalker = addProgramCardio(noCardio, noCardio.days[0]!.dayKey, "walker", walkerKey);
+    const withBoth = addProgramCardio(withWalker, noCardio.days[0]!.dayKey, "runner", runnerKey);
+    expect(withBoth.days[0]!.cardio.map(({ mode, cardioKey }) => ({ mode, cardioKey }))).toEqual([
+      { mode: "walker", cardioKey: walkerKey },
+      { mode: "runner", cardioKey: runnerKey },
+    ]);
+    const cardioDuplicate = duplicateProgramDay(withBoth, noCardio.days[0]!.dayKey, {
+      dayKey: "12345678-1234-4234-8234-123456789017",
+    });
+    expect(cardioDuplicate.days[1]!.cardio.map(({ cardioKey }) => cardioKey)).not.toEqual([
+      walkerKey,
+      runnerKey,
+    ]);
+    expect(() => addProgramCardio(withBoth, noCardio.days[0]!.dayKey, "walker")).toThrow(/already exists/i);
+    const withoutWalker = removeProgramCardio(withBoth, noCardio.days[0]!.dayKey, walkerKey);
+    const withoutCardio = removeProgramCardio(withoutWalker, noCardio.days[0]!.dayKey, "runner");
+    expect(withoutCardio.days[0]!.cardio).toEqual([]);
+
+    const tooManyInDay = structuredClone(noCardio);
+    const firstSection = tooManyInDay.days[0]!.sections[0]!;
+    firstSection.prescriptions = Array.from({ length: 41 }, (_, index) => ({
+      ...firstSection.prescriptions[0]!,
+      prescriptionKey: `12345678-1234-4234-8234-${String(index + 100).padStart(12, "0")}`,
+    }));
+    expect(validateProgramSectionStructure(tooManyInDay)).toContain(
+      "Push Strength can contain at most 40 movements.",
+    );
+
+    const tooManyInRoutine = structuredClone(noCardio);
+    tooManyInRoutine.days = Array.from({ length: 14 }, (_, dayIndex) => ({
+      ...tooManyInRoutine.days[0]!,
+      dayKey: `22345678-1234-4234-8234-${String(dayIndex + 100).padStart(12, "0")}`,
+      dayNumber: dayIndex + 1,
+      sections: tooManyInRoutine.days[0]!.sections.map((section) => ({
+        ...section,
+        sectionKey: `32345678-1234-4234-8234-${String(dayIndex + 100).padStart(12, "0")}`,
+        prescriptions: Array.from({ length: 15 }, (_, prescriptionIndex) => ({
+          ...section.prescriptions[0]!,
+          prescriptionKey: `42345678-1234-4234-8234-${String(dayIndex * 20 + prescriptionIndex + 100).padStart(12, "0")}`,
+        })),
+      })),
+    }));
+    expect(validateProgramSectionStructure(tooManyInRoutine)).toContain(
+      "A routine can contain at most 200 movements.",
     );
   });
 
@@ -463,6 +692,7 @@ describe("program editor request model", () => {
     expect(draft.days).toHaveLength(5);
     expect(draft.days[0]!.sections[0]!.prescriptions[0]).toMatchObject({
       sourcePrescriptionId: "33333333-3333-4333-8333-333333333330",
+      prescriptionKey: "33333333-3333-4333-8333-333333333330",
       catalogExerciseId: "44444444-4444-4444-8444-444444444440",
       customExerciseId: null,
       minimumReps: 8,
@@ -470,6 +700,13 @@ describe("program editor request model", () => {
       minimumSeconds: null,
       maximumSeconds: null,
     });
+    expect(draft.days[0]!.sections[0]!.sectionKey).toBe(
+      "66666666-6666-4666-8666-666666666660",
+    );
+    expect(draft.days[0]!.cardio.map(({ cardioKey }) => cardioKey)).toEqual([
+      "77777777-7777-4777-8777-777777777770",
+      "88888888-8888-4888-8888-888888888880",
+    ]);
     expect(JSON.stringify(draft)).not.toContain("firebaseUid");
     expect(JSON.stringify(draft)).not.toContain("measurementKind");
   });
@@ -495,7 +732,7 @@ describe("program editor request model", () => {
 
     expect(next).not.toBe(draft);
     expect(draft.days[0]!.sections[0]!.prescriptions).toHaveLength(2);
-    expect(next.days[0]!.sections[0]!.prescriptions.at(-1)).toEqual({
+    expect(next.days[0]!.sections[0]!.prescriptions.at(-1)).toMatchObject({
       catalogExerciseId: "99999999-9999-4999-8999-999999999999",
       customExerciseId: null,
       displayName: null,
@@ -511,16 +748,20 @@ describe("program editor request model", () => {
       targetDistanceM: null,
       targetWeightKg: null,
     });
+    expect(next.days[0]!.sections[0]!.prescriptions.at(-1)!.prescriptionKey).toMatch(
+      /^[0-9a-f-]{36}$/i,
+    );
   });
 
   it("uses section and logging meaning defaults for accessory, repetition core, and timed core", () => {
     const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
     const withSections = structuredClone(draft);
-    withSections.days[0]!.sections.splice(1, 0, {
-      kind: "accessory",
-      prescriptions: [],
-      title: "Accessory",
-    });
+      withSections.days[0]!.sections.splice(1, 0, {
+        kind: "accessory",
+        prescriptions: [],
+        sectionKey: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        title: "Accessory",
+      });
     withSections.days[0]!.sections[2]!.prescriptions = [];
     const accessory = addProgramPrescription(withSections, 0, 1, candidate());
     const repetitionCore = addProgramPrescription(

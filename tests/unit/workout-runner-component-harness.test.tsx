@@ -34,6 +34,8 @@ const snapshotInput: RunnerSnapshotInput = {
       id: "press",
       name: "Floor press",
       loggingKind: "weight_reps",
+      sectionKind: "strength",
+      sectionTitle: "Strength route",
       sets: [
         {
           id: "press-work-1",
@@ -115,6 +117,8 @@ describe("WorkoutRunner injected boundary harness", () => {
       />,
     );
     expect(markup).toContain("Snapshot identity stays fixed");
+    expect(markup).toContain("Strength route");
+    expect(markup).toContain("No cardio segment is configured for this session.");
     expect(markup).toContain('value="20"');
     expect(markup).toContain("20 kg · 8–12 reps");
     expect(markup).toContain("Saved");
@@ -132,6 +136,50 @@ describe("WorkoutRunner injected boundary harness", () => {
     );
     expect(imperialMarkup).toContain('value="44.09"');
     expect(imperialMarkup).toContain("44.09 lb · 8–12 reps");
+  });
+
+  it("describes one or two configured cardio choices without fixed copy", () => {
+    const oneOption = createWorkoutSnapshot({
+      ...snapshotInput,
+      cardioOptions: [{
+        id: "cardio-walker",
+        mode: "walker",
+        targetDurationSeconds: 1_200,
+      }],
+    });
+    const twoOptions = createWorkoutSnapshot({
+      ...snapshotInput,
+      cardioOptions: [
+        {
+          id: "cardio-walker",
+          mode: "walker",
+          targetDurationSeconds: 1_200,
+        },
+        {
+          id: "cardio-runner",
+          mode: "runner",
+          targetDurationSeconds: 900,
+        },
+      ],
+    });
+    const render = (snapshot: typeof oneOption) => renderToStaticMarkup(
+      <WorkoutRunner
+        initialState={createRunnerState(snapshot, { now: 1_000 })}
+        storage={createInMemoryRunnerStorage()}
+        submitter={async () => ({ status: "saved", persistedId: "unused" })}
+        unitSystem="metric"
+      />,
+    );
+
+    const oneMarkup = render(oneOption);
+    expect(oneMarkup).toContain("Configured cardio option");
+    expect(oneMarkup).toContain("Choose the configured cardio option");
+    expect(oneMarkup).not.toContain("walker or runner template");
+
+    const twoMarkup = render(twoOptions);
+    expect(twoMarkup).toContain("Configured cardio options (2)");
+    expect(twoMarkup).toContain("Choose one of the 2 configured cardio options");
+    expect(twoMarkup).not.toContain("walker or runner template");
   });
 
   it("keeps a newer revision authoritative when an older submit is deferred", async () => {

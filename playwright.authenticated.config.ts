@@ -7,7 +7,7 @@ if (!portValue || !Number.isInteger(port) || port < 1024 || port > 65_535) {
 }
 const baseURL = `http://127.0.0.1:${port}`;
 const journeyAndGeometry =
-  /(?:onboarding|customization-geometry|firebase-auth-hydration|runner-resilience)\.spec\.ts/u;
+  /(?:onboarding|customization-geometry|firebase-auth-hydration|flexible-routine-publication|runner-resilience)\.spec\.ts/u;
 const geometryOnly = /customization-geometry\.spec\.ts/u;
 
 export default defineConfig({
@@ -83,7 +83,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm exec next start tests/fixtures/authenticated-app -H 127.0.0.1 -p ${port}`,
+    command: `${JSON.stringify(process.execPath)} node_modules/next/dist/bin/next start tests/fixtures/authenticated-app -H 127.0.0.1 -p ${port}`,
     reuseExistingServer: false,
     timeout: 120_000,
     url: `${baseURL}/app`,

@@ -297,9 +297,15 @@ describe("credential-free authenticated harness boundary", () => {
     expect(playwrightConfig).not.toContain("const port = 3110");
     expect(playwrightConfig).toContain("runner-resilience");
     expect(playwrightConfig).toContain("firebase-auth-hydration");
+    expect(playwrightConfig).toContain("flexible-routine-publication");
     expect(runner).toContain(
-      '["exec", "next", "build", "tests/fixtures/authenticated-app", "--webpack"]',
+      '[nextCli, "build", "tests/fixtures/authenticated-app", "--webpack"]',
     );
+    expect(runner).toContain("spawnSync(\n    process.execPath");
+    expect(runner).toContain('"node_modules/next/dist/bin/next"');
+    expect(runner).toContain('"node_modules/@playwright/test/cli.js"');
+    expect(runner).not.toContain('"exec", "next"');
+    expect(runner).not.toContain('"exec", "playwright"');
     expect(runner).toContain("const repositoryRoot = resolve(process.cwd())");
     expect(runner).toContain(
       "MWP_AUTH_HARNESS_REPOSITORY_ROOT: repositoryRoot",

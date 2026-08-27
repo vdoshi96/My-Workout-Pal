@@ -36,6 +36,7 @@ export type WorkoutResumeSessionSource = Readonly<{
   state: ResumeSessionState;
   dayId: string;
   dayName: string;
+  dayKey?: string | undefined;
   startedAt: DateValue | undefined;
   completedAt: DateValue | undefined;
   abandonedAt: DateValue | undefined;
@@ -291,7 +292,8 @@ export function hydrateWorkoutResumeState(
   if (
     session.programRevisionId !== source.snapshot.programRevisionId ||
     session.dayId !== source.snapshot.dayId ||
-    session.dayName !== source.snapshot.dayName
+    session.dayName !== source.snapshot.dayName ||
+    session.dayKey !== source.snapshot.dayKey
   ) {
     throw new RunnerResumeError(
       "snapshot_mismatch",
@@ -313,10 +315,21 @@ export function hydrateWorkoutResumeState(
       programRevisionId: source.snapshot.programRevisionId,
       dayId: source.snapshot.dayId,
       dayName: source.snapshot.dayName,
+      ...(source.snapshot.dayKey === undefined ? {} : { dayKey: source.snapshot.dayKey }),
+      ...(source.snapshot.equipmentProfileKind === undefined
+        ? {}
+        : { equipmentProfileKind: source.snapshot.equipmentProfileKind }),
+      ...(source.snapshot.availableEquipment === undefined
+        ? {}
+        : { availableEquipment: source.snapshot.availableEquipment }),
       exercises: source.snapshot.exercises.map((exercise) => ({
         id: exercise.id,
         name: exercise.name,
         loggingKind: exercise.loggingKind,
+        ...(exercise.sectionKind === undefined ? {} : { sectionKind: exercise.sectionKind }),
+        ...(exercise.sectionKey === undefined ? {} : { sectionKey: exercise.sectionKey }),
+        ...(exercise.sectionTitle === undefined ? {} : { sectionTitle: exercise.sectionTitle }),
+        ...(exercise.prescriptionKey === undefined ? {} : { prescriptionKey: exercise.prescriptionKey }),
         sets: exercise.sets.map((set) => ({
           id: set.id,
           position: set.position,

@@ -36,7 +36,9 @@ export default async function HarnessMemberDayPage({
         </span>
         <h1 id="member-day-title">{day.displayName}</h1>
         <p>
-          {day.prescriptions.length} movements with a configurable walker or runner finish.
+          {day.prescriptions.length} movements · {day.cardio.length === 0
+            ? "no cardio finish"
+            : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
         </p>
       </header>
       <div className="member-day-layout">
@@ -79,16 +81,24 @@ export default async function HarnessMemberDayPage({
           ))}
         </div>
         <aside className="member-cardio-card">
-          <span className="eyebrow">Cardio choice</span>
-          <h2>Walk or run</h2>
-          <ul>
-            {day.cardio.map((cardio) => (
-              <li key={cardio.id}>
-                <strong>{cardio.mode === "walker" ? "Walker" : "Runner"}</strong>
-                <span>{Math.round(cardio.durationSeconds / 60)} minutes</span>
-              </li>
-            ))}
-          </ul>
+          <span className="eyebrow">
+            {day.cardio.length === 0 ? "No cardio" : day.cardio.length === 1 ? "Cardio option" : "Cardio options"}
+          </span>
+          <h2>
+            {day.cardio.length === 0 ? "Strength only" : day.cardio.length === 1 ? "Configured finish" : "Choose a finish"}
+          </h2>
+          {day.cardio.length > 0 ? (
+            <ul>
+              {day.cardio.map((cardio) => (
+                <li key={cardio.id}>
+                  <strong>{cardio.mode === "walker" ? "Walker" : "Runner"}</strong>
+                  <span>{Math.round(cardio.durationSeconds / 60)} minutes</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>This day has no configured cardio segment.</p>
+          )}
           <p>
             The server snapshots this exact revision before the runner opens. A duplicate
             start resumes the existing active workout.

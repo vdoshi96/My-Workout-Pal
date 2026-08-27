@@ -21,6 +21,8 @@ const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const deletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
 const workoutMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url);
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
+const personalRecordMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
+const flexibleTopologyMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -30,6 +32,8 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(deletionMigrationUrl, "utf8"));
   await raw.exec(await readFile(workoutMigrationUrl, "utf8"));
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
+  await raw.exec(await readFile(personalRecordMigrationUrl, "utf8"));
+  await raw.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
@@ -80,6 +84,7 @@ function publishInputFromProgram(
     programId: program.id,
     days: program.days.map((day) => ({
       cardio: day.cardio.map((cardio) => ({
+        cardioKey: cardio.cardioKey,
         distanceM: cardio.distanceM,
         durationSeconds: cardio.durationSeconds,
         inclinePercent: cardio.inclinePercent,
@@ -92,6 +97,7 @@ function publishInputFromProgram(
       displayName: day.displayName,
       sections: day.sections.map((section) => ({
         kind: section.kind as "strength" | "accessory" | "core",
+        sectionKey: section.sectionKey,
         title: section.title,
         prescriptions: section.prescriptions.map((prescription) => ({
           catalogExerciseId: prescription.catalogExerciseId,
@@ -102,6 +108,7 @@ function publishInputFromProgram(
           minimumReps: prescription.minimumReps,
           minimumSeconds: prescription.minimumSeconds,
           notes: prescription.notes,
+          prescriptionKey: prescription.prescriptionKey,
           restSeconds: prescription.restSeconds,
           setCount: prescription.setCount,
           setKind: prescription.setKind,
@@ -198,6 +205,22 @@ describe("profile and active-program repository", () => {
           notes: index === 0 ? "Edited in the immutable publisher." : prescription.notes,
           restSeconds: index === 0 ? 120 : prescription.restSeconds,
         })),
+    );
+    expect(published.activeProgram?.days[0]?.dayKey).toBe(source.days[0]?.dayKey);
+    expect(published.activeProgram?.days[0]?.sections.map(({ sectionKey }) => sectionKey)).toEqual(
+      source.days[0]?.sections.map(({ sectionKey }) => sectionKey),
+    );
+    expect(
+      published.activeProgram?.days[0]?.sections[0]?.prescriptions.map(
+        ({ prescriptionKey }) => prescriptionKey,
+      ),
+    ).toEqual(
+      [...source.days[0]!.sections[0]!.prescriptions]
+        .reverse()
+        .map(({ prescriptionKey }) => prescriptionKey),
+    );
+    expect(published.activeProgram?.days[0]?.cardio.map(({ cardioKey }) => cardioKey)).toEqual(
+      source.days[0]?.cardio.map(({ cardioKey }) => cardioKey),
     );
     await expect(
       raw.query<{ value: unknown }>(
@@ -530,6 +553,35 @@ describe("profile and active-program repository", () => {
     const changedProgram = changed.activeProgram;
     if (!changedProgram) throw new Error("equipment change removed the active program");
     expect(changedProgram.revisionNumber).toBe(2);
+    expect(changedProgram.days.map(({ dayKey }) => dayKey)).toEqual(
+      ownProgram.days.map(({ dayKey }) => dayKey),
+    );
+    expect(
+      changedProgram.days.flatMap(({ sections }) =>
+        sections.map(({ sectionKey }) => sectionKey),
+      ),
+    ).toEqual(
+      ownProgram.days.flatMap(({ sections }) =>
+        sections.map(({ sectionKey }) => sectionKey),
+      ),
+    );
+    expect(
+      changedProgram.days.flatMap(({ prescriptions }) =>
+        prescriptions.map(({ prescriptionKey }) => prescriptionKey),
+      ),
+    ).toEqual(
+      ownProgram.days.flatMap(({ prescriptions }) =>
+        prescriptions.map(({ prescriptionKey }) => prescriptionKey),
+      ),
+    );
+    expect(
+      changedProgram.days.flatMap(({ cardio }) => cardio.map(({ cardioKey }) => cardioKey)),
+    ).toEqual(
+      ownProgram.days.flatMap(({ cardio }) => cardio.map(({ cardioKey }) => cardioKey)),
+    );
+    expect(changedProgram.days.map(({ id }) => id)).not.toEqual(
+      ownProgram.days.map(({ id }) => id),
+    );
     expect(changed.changes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

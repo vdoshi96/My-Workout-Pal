@@ -16,6 +16,7 @@ export function MemberProgramHome({
   initialProgram: ActiveProgramReadModel;
 }>) {
   const [program, setProgram] = useState(initialProgram);
+  const dayCountLabel = `${program.days.length} ${program.days.length === 1 ? "day" : "days"}`;
 
   return (
     <section className="member-program" aria-labelledby="member-program-title">
@@ -24,7 +25,7 @@ export function MemberProgramHome({
           <span className="eyebrow">Active published program</span>
           <h1 id="member-program-title">{program.name}</h1>
           <p>
-            Revision {program.revisionNumber} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label} · five days
+            Revision {program.revisionNumber} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label} · {dayCountLabel}
           </p>
         </div>
         <div className="member-program-actions">
@@ -54,7 +55,11 @@ export function MemberProgramHome({
               <Link href={`/app/program/${day.dayKey}`} prefetch={false}>
                 <span>{String(day.dayNumber).padStart(2, "0")}</span>
                 <strong>{day.displayName}</strong>
-                <small>{day.prescriptions.length} movements · walker or runner</small>
+                <small>
+                  {day.prescriptions.length} movements · {day.cardio.length === 0
+                    ? "no cardio"
+                    : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
+                </small>
                 <Icon name="chevron-right" />
               </Link>
             </li>

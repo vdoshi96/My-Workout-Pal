@@ -45,7 +45,7 @@ export const preferencesUpdateRequestSchema = z
   })
   .strict();
 
-const programNameSchema = z.string().trim().min(1).max(180);
+const programNameSchema = z.string().trim().min(1).max(80);
 
 export const programCollectionMutationRequestSchema = z.discriminatedUnion(
   "mode",
@@ -56,6 +56,17 @@ export const programCollectionMutationRequestSchema = z.discriminatedUnion(
         idempotencyKey: idempotencyKeySchema,
         mode: z.literal("starter"),
         name: programNameSchema,
+      })
+      .strict(),
+    z
+      .object({
+        dayName: z.string().trim().min(1).max(120),
+        equipmentProfileKind: profileKindSchema,
+        firstCatalogExerciseId: z.string().uuid(),
+        idempotencyKey: idempotencyKeySchema,
+        mode: z.literal("custom"),
+        name: programNameSchema,
+        sectionName: z.string().trim().min(1).max(120),
       })
       .strict(),
     z

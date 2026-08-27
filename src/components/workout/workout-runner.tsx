@@ -956,6 +956,20 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const activeSet = getActiveSetDisplay(state);
   const currentExerciseName =
     state.substitutions[currentExercise.id]?.name ?? currentExercise.name;
+  const currentExerciseSectionLabel = currentExercise.sectionTitle?.trim()
+    || (currentExercise.sectionKind === "strength"
+      ? "Strength"
+      : currentExercise.sectionKind === "accessory"
+        ? "Accessory"
+        : currentExercise.sectionKind === "core"
+          ? "Core"
+          : currentExercise.sectionKind === "cardio"
+            ? "Cardio"
+            : currentExercise.loggingKind === "duration"
+              ? "Timed movement"
+              : currentExercise.loggingKind === "distance_duration"
+                ? "Distance movement"
+                : "Movement");
   const currentEffectiveExerciseId =
     state.substitutions[currentExercise.id]?.id ??
     props.effectiveExerciseIdBySnapshot?.[currentExercise.id];
@@ -1178,7 +1192,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   }
 
   function renderCardio() {
-    if (state.snapshot.cardioOptions.length === 0) return null;
+    const cardioOptionCount = state.snapshot.cardioOptions.length;
+    if (cardioOptionCount === 0) return null;
     const cardioDraft = state.cardioDraft;
     const cardioPrefix = `runner-${state.snapshot.sessionId}-cardio`.replace(
       /[^a-zA-Z0-9_-]/g,
@@ -1191,7 +1206,11 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       >
         <div className="runner-section-heading">
           <div>
-            <span className="runner-eyebrow">Required route segment</span>
+            <span className="runner-eyebrow">
+              {cardioOptionCount === 1
+                ? "Configured cardio option"
+                : `Configured cardio options (${cardioOptionCount})`}
+            </span>
             <h3 id="runner-cardio-heading">Cardio finish</h3>
           </div>
           {state.loggedCardio ? (
@@ -1201,8 +1220,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           ) : null}
         </div>
         <p className="runner-muted">
-          Choose the walker or runner template that belongs to this immutable
-          session snapshot.
+          {cardioOptionCount === 1
+            ? "Choose the configured cardio option that belongs to this immutable session snapshot."
+            : `Choose one of the ${cardioOptionCount} configured cardio options in this immutable session snapshot.`}
         </p>
         <div
           className="runner-choice-grid"
@@ -1559,6 +1579,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           >
             <header className="runner-active-heading">
               <div>
+                <span className="runner-eyebrow">{currentExerciseSectionLabel}</span>
                 <span className="runner-eyebrow">
                   Exercise {state.currentExerciseIndex + 1} of{" "}
                   {state.snapshot.exercises.length}
@@ -1568,6 +1589,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   {currentExercise.loggingKind.replace("_", " ")} ·{" "}
                   {currentExercise.sets.length} prescribed sets
                 </p>
+                {state.snapshot.cardioOptions.length === 0 ? (
+                  <p className="runner-muted">No cardio segment is configured for this session.</p>
+                ) : null}
               </div>
               <span
                 className={classNames(

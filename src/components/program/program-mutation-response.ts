@@ -42,6 +42,7 @@ const prescriptionSchema = z.object({
     slug: z.string().min(1),
   }).passthrough(),
   id: uuid,
+  prescriptionKey: uuid,
   label: z.string().min(1),
   maximumReps: z.number().int().positive().nullable(),
   maximumSeconds: z.number().int().positive().nullable(),
@@ -62,12 +63,14 @@ const sectionSchema = z.object({
   id: uuid,
   kind: z.enum(["strength", "accessory", "core", "cardio"]),
   prescriptions: z.array(prescriptionSchema).min(1),
+  sectionKey: uuid,
   title: z.string().min(1),
 }).passthrough();
 
 const cardioSchema = z.object({
+  cardioKey: uuid,
   distanceM: nullableNumber,
-  durationSeconds: z.number().int().nonnegative(),
+  durationSeconds: z.number().int().positive(),
   id: uuid,
   inclinePercent: nullableNumber,
   mode: z.enum(["walker", "runner"]),
@@ -77,14 +80,14 @@ const cardioSchema = z.object({
 
 const activeProgramSchema = z.object({
   days: z.array(z.object({
-    cardio: z.array(cardioSchema).length(2),
-    dayKey: z.enum(["push", "pull", "legs", "upper", "lower"]),
-    dayNumber: z.number().int().min(1).max(5),
+    cardio: z.array(cardioSchema).max(2),
+    dayKey: z.union([uuid, z.enum(["push", "pull", "legs", "upper", "lower"])]),
+    dayNumber: z.number().int().min(1).max(14),
     displayName: z.string().min(1),
     id: uuid,
     prescriptions: z.array(prescriptionSchema).min(1),
-    sections: z.array(sectionSchema).min(1).max(4),
-  }).passthrough()).length(5),
+    sections: z.array(sectionSchema).min(1).max(12),
+  }).passthrough()).min(1).max(14),
   equipmentProfileKind: z.enum(["dumbbells", "barbell"]),
   id: uuid,
   name: z.string().min(1).max(80),
@@ -109,15 +112,22 @@ const mutationEnvelopeSchema = z.object({
 
 function activeProgramGraphIsValid(program: ActiveProgramReadModel): boolean {
   const identifiers = new Set<string>();
+  const topologyKeys = new Set<string>();
   function claim(id: string): boolean {
     if (identifiers.has(id)) return false;
     identifiers.add(id);
     return true;
   }
 
+  function claimTopologyKey(key: string): boolean {
+    if (topologyKeys.has(key)) return false;
+    topologyKeys.add(key);
+    return true;
+  }
+
   if (!claim(program.id) || !claim(program.revisionId)) return false;
   for (const day of program.days) {
-    if (!claim(day.id)) return false;
+    if (!claim(day.id) || !claimTopologyKey(day.dayKey)) return false;
     const flattened = day.sections.flatMap(({ prescriptions }) => prescriptions);
     if (
       flattened.length !== day.prescriptions.length ||
@@ -126,9 +136,17 @@ function activeProgramGraphIsValid(program: ActiveProgramReadModel): boolean {
       return false;
     }
     for (const [sectionIndex, section] of day.sections.entries()) {
-      if (!claim(section.id) || section.displayOrder !== sectionIndex + 1) return false;
+      if (
+        !claim(section.id) ||
+        !claimTopologyKey(section.sectionKey) ||
+        section.displayOrder !== sectionIndex + 1
+      ) return false;
       for (const [prescriptionIndex, prescription] of section.prescriptions.entries()) {
-        if (!claim(prescription.id) || prescription.displayOrder !== prescriptionIndex + 1) {
+        if (
+          !claim(prescription.id) ||
+          !claimTopologyKey(prescription.prescriptionKey) ||
+          prescription.displayOrder !== prescriptionIndex + 1
+        ) {
           return false;
         }
         const catalog = prescription.catalogExerciseId !== null;
@@ -156,10 +174,16 @@ function activeProgramGraphIsValid(program: ActiveProgramReadModel): boolean {
         if (catalog && prescription.customExercise !== null) return false;
       }
     }
-    for (const [cardioIndex, cardio] of day.cardio.entries()) {
-      if (!claim(cardio.id) || cardio.mode !== (cardioIndex === 0 ? "walker" : "runner")) {
+    const cardioModes = new Set<string>();
+    for (const cardio of day.cardio) {
+      if (
+        !claim(cardio.id) ||
+        !claimTopologyKey(cardio.cardioKey) ||
+        cardioModes.has(cardio.mode)
+      ) {
         return false;
       }
+      cardioModes.add(cardio.mode);
     }
   }
 
@@ -167,6 +191,7 @@ function activeProgramGraphIsValid(program: ActiveProgramReadModel): boolean {
     baseRevisionId: program.revisionId,
     days: program.days.map((day) => ({
       cardio: day.cardio.map((cardio) => ({
+        cardioKey: cardio.cardioKey,
         distanceM: cardio.distanceM,
         durationSeconds: cardio.durationSeconds,
         inclinePercent: cardio.inclinePercent,
@@ -188,6 +213,7 @@ function activeProgramGraphIsValid(program: ActiveProgramReadModel): boolean {
           minimumReps: prescription.minimumReps,
           minimumSeconds: prescription.minimumSeconds,
           notes: prescription.notes,
+          prescriptionKey: prescription.prescriptionKey,
           restSeconds: prescription.restSeconds,
           setCount: prescription.setCount,
           setKind: prescription.setKind,
@@ -195,6 +221,7 @@ function activeProgramGraphIsValid(program: ActiveProgramReadModel): boolean {
           targetDistanceM: prescription.targetDistanceM,
           targetWeightKg: prescription.targetWeightKg,
         })),
+        sectionKey: section.sectionKey,
         title: section.title,
       })),
     })),
@@ -256,7 +283,15 @@ export function parseProgramRevisionMutationResponse(
 function publishMeaning(input: ProgramPublishInput) {
   return {
     days: input.days.map((day) => ({
-      cardio: day.cardio,
+      cardio: day.cardio.map((cardio) => ({
+        cardioKey: cardio.cardioKey,
+        distanceM: cardio.distanceM,
+        durationSeconds: cardio.durationSeconds,
+        inclinePercent: cardio.inclinePercent,
+        mode: cardio.mode,
+        notes: cardio.notes,
+        paceSecondsPerKm: cardio.paceSecondsPerKm,
+      })),
       dayKey: day.dayKey,
       dayNumber: day.dayNumber,
       displayName: day.displayName,
@@ -271,12 +306,14 @@ function publishMeaning(input: ProgramPublishInput) {
           minimumReps: prescription.minimumReps,
           minimumSeconds: prescription.minimumSeconds,
           notes: prescription.notes,
+          prescriptionKey: prescription.prescriptionKey,
           restSeconds: prescription.restSeconds,
           setCount: prescription.setCount,
           setKind: prescription.setKind,
           targetDistanceM: prescription.targetDistanceM,
           targetWeightKg: prescription.targetWeightKg,
         })),
+        sectionKey: section.sectionKey,
         title: section.title,
       })),
     })),
@@ -290,6 +327,7 @@ function activeProgramPublishMeaning(program: ActiveProgramReadModel) {
     baseRevisionId: program.revisionId,
     days: program.days.map((day) => ({
       cardio: day.cardio.map((cardio) => ({
+        cardioKey: cardio.cardioKey,
         distanceM: cardio.distanceM,
         durationSeconds: cardio.durationSeconds,
         inclinePercent: cardio.inclinePercent,
@@ -311,6 +349,7 @@ function activeProgramPublishMeaning(program: ActiveProgramReadModel) {
           minimumReps: prescription.minimumReps,
           minimumSeconds: prescription.minimumSeconds,
           notes: prescription.notes,
+          prescriptionKey: prescription.prescriptionKey,
           restSeconds: prescription.restSeconds,
           setCount: prescription.setCount,
           setKind: prescription.setKind,
@@ -318,6 +357,7 @@ function activeProgramPublishMeaning(program: ActiveProgramReadModel) {
           targetDistanceM: prescription.targetDistanceM,
           targetWeightKg: prescription.targetWeightKg,
         })),
+        sectionKey: section.sectionKey,
         title: section.title,
       })),
     })) as ProgramPublishInput["days"],

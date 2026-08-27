@@ -35,6 +35,10 @@ const projectionCheckpointMigrationUrl = new URL(
   "../../drizzle/0004_personal_record_projection_checkpoint.sql",
   import.meta.url,
 );
+const flexibleTopologyMigrationUrl = new URL(
+  "../../drizzle/0005_flexible_routine_topology.sql",
+  import.meta.url,
+);
 const openDatabases: PGlite[] = [];
 const now = new Date("2026-08-25T20:00:00.000Z");
 const nowSeconds = Math.floor(now.getTime() / 1_000);
@@ -60,6 +64,7 @@ async function openDatabase(): Promise<{ database: Database; raw: PGlite }> {
   await raw.exec(await readFile(workoutMigrationUrl, "utf8"));
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
+  await raw.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);

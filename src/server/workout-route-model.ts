@@ -34,8 +34,11 @@ function nonblank(value: string, label: string): string {
 export function buildWorkoutRouteCandidates(
   profileKind: EquipmentProfileKind,
   customExercises: readonly CustomCandidateSource[],
+  availableEquipment?: readonly EquipmentId[],
 ): readonly ExerciseSubstitution[] {
-  const profile = EQUIPMENT_PROFILES[profileKind];
+  const profile = availableEquipment === undefined
+    ? EQUIPMENT_PROFILES[profileKind]
+    : { ...EQUIPMENT_PROFILES[profileKind], equipment: availableEquipment };
   const catalog = listCatalogExercises({ profile }).map((exercise) => ({
     id: deterministicSeedUuid("catalog-exercise", exercise.slug),
     name: exercise.name,

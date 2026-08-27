@@ -25,6 +25,8 @@ import {
 import { Icon } from "@/components/ui/icon";
 import {
   EQUIPMENT_PROFILES,
+  supportsEquipment,
+  type EquipmentId,
   type EquipmentProfileKind,
 } from "@/domain/equipment";
 import type { ProgramSummaryReadModel } from "@/server/repositories/profile-program";
@@ -58,16 +60,30 @@ function updatedLabel(value: string): string {
 
 export function ProgramCollection({
   canMutate,
+  initialCatalogMovements = [],
   initialPrograms,
 }: Readonly<{
   canMutate: boolean;
+  initialCatalogMovements?: readonly Readonly<{
+    id: string;
+    name: string;
+    requiredEquipment: readonly EquipmentId[];
+  }>[];
   initialPrograms: readonly ProgramSummaryReadModel[];
 }>) {
   const router = useRouter();
   const [programs, setPrograms] = useState(initialPrograms);
   const [createName, setCreateName] = useState("My strength plan");
+  const [createMode, setCreateMode] = useState<"starter" | "custom">("starter");
   const [createProfile, setCreateProfile] =
     useState<EquipmentProfileKind>("dumbbells");
+  const [customDayName, setCustomDayName] = useState("My training day");
+  const [customSectionName, setCustomSectionName] = useState("Main work");
+  const [firstCatalogExerciseId, setFirstCatalogExerciseId] = useState(
+    initialCatalogMovements.find((movement) =>
+      supportsEquipment(EQUIPMENT_PROFILES.dumbbells, movement.requiredEquipment),
+    )?.id ?? "",
+  );
   const [cloneSource, setCloneSource] =
     useState<ProgramSummaryReadModel | null>(null);
   const [cloneName, setCloneName] = useState("");
@@ -85,6 +101,27 @@ export function ProgramCollection({
     () => programs.find((program) => program.isActive),
     [programs],
   );
+  const compatibleCatalogMovements = useMemo(
+    () =>
+      initialCatalogMovements.filter((movement) =>
+        supportsEquipment(
+          EQUIPMENT_PROFILES[createProfile],
+          movement.requiredEquipment,
+        ),
+      ),
+    [createProfile, initialCatalogMovements],
+  );
+
+  function chooseProfile(profile: EquipmentProfileKind) {
+    createKey.current = undefined;
+    setCreateProfile(profile);
+    const compatible = initialCatalogMovements.filter((movement) =>
+      supportsEquipment(EQUIPMENT_PROFILES[profile], movement.requiredEquipment),
+    );
+    if (!compatible.some(({ id }) => id === firstCatalogExerciseId)) {
+      setFirstCatalogExerciseId(compatible[0]?.id ?? "");
+    }
+  }
 
   function begin(operation: string, pendingMessage: string): boolean {
     if (!canMutate || busyOperation) return false;
@@ -109,6 +146,21 @@ export function ProgramCollection({
     let name: string;
     try {
       name = validatedProgramName(createName);
+      if (createMode === "custom") {
+        if (customDayName.trim().length === 0) {
+          throw new Error("Enter the first day name.");
+        }
+        if (customSectionName.trim().length === 0) {
+          throw new Error("Enter the first section name.");
+        }
+        if (
+          !compatibleCatalogMovements.some(
+            ({ id }) => id === firstCatalogExerciseId,
+          )
+        ) {
+          throw new Error("Choose a compatible first movement.");
+        }
+      }
     } catch (error) {
       setFailure(failureMessage(error));
       setMessage("");
@@ -122,12 +174,23 @@ export function ProgramCollection({
     createKey.current = idempotencyKey;
     try {
       const response = await privateApiMutation<unknown>("/api/app/programs", {
-        body: {
-          equipmentProfileKind: createProfile,
-          idempotencyKey,
-          mode: "starter",
-          name,
-        },
+        body:
+          createMode === "starter"
+            ? {
+                equipmentProfileKind: createProfile,
+                idempotencyKey,
+                mode: "starter",
+                name,
+              }
+            : {
+                dayName: customDayName.trim(),
+                equipmentProfileKind: createProfile,
+                firstCatalogExerciseId,
+                idempotencyKey,
+                mode: "custom",
+                name,
+                sectionName: customSectionName.trim(),
+              },
         method: "POST",
       });
       acceptResponse(response, {
@@ -309,7 +372,7 @@ export function ProgramCollection({
                     </div>
                     <div>
                       <dt>Schedule</dt>
-                      <dd>Five days</dd>
+                      <dd>{program.dayCount} day{program.dayCount === 1 ? "" : "s"}</dd>
                     </div>
                     <div>
                       <dt>Updated</dt>
@@ -356,13 +419,48 @@ export function ProgramCollection({
           className="program-create-panel"
           aria-labelledby="create-program-title"
         >
-          <span className="eyebrow">Fresh starter</span>
+          <span className="eyebrow">New owned routine</span>
           <h2 id="create-program-title">Create a program</h2>
           <p>
-            Start from the published five-day route. You can edit its exercises,
-            targets, rest, notes, and cardio after creation.
+            Start with the five-day example or publish a one-day custom starting
+            point. Both become private, independent revisions you can edit.
           </p>
           <form onSubmit={(event) => void createProgram(event)}>
+            <fieldset disabled={!canMutate || busyOperation !== null}>
+              <legend>Starting point</legend>
+              <label>
+                <input
+                  checked={createMode === "starter"}
+                  name="create-program-mode"
+                  onChange={() => {
+                    createKey.current = undefined;
+                    setCreateMode("starter");
+                  }}
+                  type="radio"
+                  value="starter"
+                />
+                <span>
+                  <strong>Five-day example</strong>
+                  <small>Copy the published starter topology.</small>
+                </span>
+              </label>
+              <label>
+                <input
+                  checked={createMode === "custom"}
+                  name="create-program-mode"
+                  onChange={() => {
+                    createKey.current = undefined;
+                    setCreateMode("custom");
+                  }}
+                  type="radio"
+                  value="custom"
+                />
+                <span>
+                  <strong>Custom starting point</strong>
+                  <small>One named day, one section, one movement, no cardio.</small>
+                </span>
+              </label>
+            </fieldset>
             <label htmlFor="create-program-name">Program name</label>
             <input
               autoComplete="off"
@@ -385,8 +483,7 @@ export function ProgramCollection({
                       checked={createProfile === profile}
                       name="create-equipment-profile"
                       onChange={() => {
-                        createKey.current = undefined;
-                        setCreateProfile(profile);
+                        chooseProfile(profile);
                       }}
                       type="radio"
                       value={profile}
@@ -399,14 +496,73 @@ export function ProgramCollection({
                 ),
               )}
             </fieldset>
+            {createMode === "custom" ? (
+              <div className="program-custom-start-fields">
+                <label htmlFor="create-day-name">First day name</label>
+                <input
+                  autoComplete="off"
+                  disabled={!canMutate || busyOperation !== null}
+                  id="create-day-name"
+                  maxLength={120}
+                  onChange={(event) => {
+                    createKey.current = undefined;
+                    setCustomDayName(event.currentTarget.value);
+                  }}
+                  required
+                  value={customDayName}
+                />
+                <label htmlFor="create-section-name">First section name</label>
+                <input
+                  autoComplete="off"
+                  disabled={!canMutate || busyOperation !== null}
+                  id="create-section-name"
+                  maxLength={120}
+                  onChange={(event) => {
+                    createKey.current = undefined;
+                    setCustomSectionName(event.currentTarget.value);
+                  }}
+                  required
+                  value={customSectionName}
+                />
+                <label htmlFor="create-first-movement">First movement</label>
+                <select
+                  disabled={!canMutate || busyOperation !== null}
+                  id="create-first-movement"
+                  onChange={(event) => {
+                    createKey.current = undefined;
+                    setFirstCatalogExerciseId(event.currentTarget.value);
+                  }}
+                  required
+                  value={firstCatalogExerciseId}
+                >
+                  {compatibleCatalogMovements.map((movement) => (
+                    <option key={movement.id} value={movement.id}>
+                      {movement.name}
+                    </option>
+                  ))}
+                </select>
+                {compatibleCatalogMovements.length === 0 ? (
+                  <p className="program-limit-note">
+                    No compatible catalog movement is available for this profile.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             <button
               className="primary-action"
               disabled={
-                !canMutate || busyOperation !== null || programs.length >= 24
+                !canMutate ||
+                busyOperation !== null ||
+                programs.length >= 24 ||
+                (createMode === "custom" && compatibleCatalogMovements.length === 0)
               }
               type="submit"
             >
-              {busyOperation === "create" ? "Creating…" : "Create and activate"}
+              {busyOperation === "create"
+                ? "Creating…"
+                : createMode === "custom"
+                  ? "Publish custom routine"
+                  : "Create from example"}
               <Icon name="arrow-right" />
             </button>
             {programs.length >= 24 ? (
@@ -457,7 +613,7 @@ export function ProgramCollection({
               </button>
             </header>
             <p>
-              Revision {cloneSource.revisionNumber} and all five current days
+              Revision {cloneSource.revisionNumber} and all {cloneSource.dayCount} current day{cloneSource.dayCount === 1 ? "" : "s"}
               will be copied with new private record IDs. The source and workout
               history stay unchanged. The copy becomes active.
             </p>

@@ -25,6 +25,8 @@ const migrationUrls = [
   new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url),
   new URL("../../drizzle/0002_workout_canonical_measurements.sql", import.meta.url),
   new URL("../../drizzle/0003_program_collection.sql", import.meta.url),
+  new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url),
+  new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url),
 ] as const;
 const openDatabases: PGlite[] = [];
 
@@ -48,6 +50,7 @@ function publicationInput(
     baseRevisionId: program.revisionId,
     days: program.days.map((day) => ({
       cardio: day.cardio.map((cardio) => ({
+        cardioKey: cardio.cardioKey,
         distanceM: cardio.distanceM,
         durationSeconds: cardio.durationSeconds,
         inclinePercent: cardio.inclinePercent,
@@ -60,6 +63,7 @@ function publicationInput(
       displayName: day.displayName,
       sections: day.sections.map((section) => ({
         kind: section.kind as "accessory" | "core" | "strength",
+        sectionKey: section.sectionKey,
         prescriptions: section.prescriptions.map((prescription) => ({
           catalogExerciseId: prescription.catalogExerciseId,
           customExerciseId: prescription.customExerciseId,
@@ -69,6 +73,7 @@ function publicationInput(
           minimumReps: prescription.minimumReps,
           minimumSeconds: prescription.minimumSeconds,
           notes: prescription.notes,
+          prescriptionKey: prescription.prescriptionKey,
           restSeconds: prescription.restSeconds,
           setCount: prescription.setCount,
           setKind: prescription.setKind,
@@ -102,6 +107,134 @@ afterEach(async () => {
 });
 
 describe("owned program collection repository", () => {
+  it("creates, reads, clones, and revises a one-day custom routine with opaque keys", async () => {
+    const { database, raw } = await openDatabase();
+    const repository = createProfileProgramRepository(database);
+    const owner = viewer("custom-collection-owner");
+    await repository.onboard(owner, {
+      equipmentProfileKind: "dumbbells",
+      idempotencyKey: "custom-owner-onboard",
+    });
+    const exerciseId = (
+      await raw.query<{ id: string }>(
+        "SELECT id FROM catalog_exercises WHERE slug = 'dumbbell-bench-press';",
+      )
+    ).rows[0]?.id;
+    if (!exerciseId) throw new Error("custom routine fixture exercise missing");
+    const input = {
+      dayName: "Trail day",
+      equipmentProfileKind: "dumbbells" as const,
+      firstCatalogExerciseId: exerciseId,
+      idempotencyKey: "custom-routine-create",
+      name: "Trail routine",
+      sectionName: "Main trail work",
+    };
+
+    const created = await repository.createCustomProgram(owner, input);
+    const routine = created.activeProgram;
+    if (!routine) throw new Error("custom routine was not activated");
+    expect(created).toMatchObject({
+      affectedProgramId: routine.id,
+      affectedRevisionId: routine.revisionId,
+      replayed: false,
+    });
+    expect(created.programs).toEqual([
+      expect.objectContaining({
+        dayCount: 1,
+        id: routine.id,
+        isActive: true,
+      }),
+      expect.objectContaining({
+        dayCount: 5,
+        id: expect.not.stringMatching(new RegExp(`^${routine.id}$`)),
+      }),
+    ]);
+    expect(routine).toMatchObject({
+      name: "Trail routine",
+      sourceTemplateRevisionId: null,
+      days: [
+        {
+          dayNumber: 1,
+          dayKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
+          displayName: "Trail day",
+          sections: [
+            {
+              sectionKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
+              title: "Main trail work",
+              prescriptions: [
+                {
+                  prescriptionKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
+                  catalogExerciseId: exerciseId,
+                },
+              ],
+            },
+          ],
+          cardio: [],
+        },
+      ],
+    });
+    await expect(repository.getActiveProgram(owner, routine.id)).resolves.toEqual(routine);
+    const legacyDayAttempt = publicationInput(routine, "custom-invented-legacy");
+    legacyDayAttempt.days[0]!.dayKey = "push";
+    await expect(repository.publishProgram(owner, legacyDayAttempt)).rejects.toBeInstanceOf(
+      RepositoryValidationError,
+    );
+    await expect(
+      raw.query<{ count: string }>(
+        "SELECT count(*)::text AS count FROM program_revisions WHERE owner_firebase_uid = 'custom-collection-owner' AND program_id = $1;",
+        [routine.id],
+      ),
+    ).resolves.toMatchObject({ rows: [{ count: "1" }] });
+    const customDay = routine.days[0]!;
+    const customSection = customDay.sections[0]!;
+    const customPrescription = customSection.prescriptions[0]!;
+    const replay = await repository.createCustomProgram(owner, input);
+    expect(replay).toEqual({ ...created, replayed: true });
+
+    const clonedResult = await repository.cloneProgram(owner, {
+      idempotencyKey: "custom-routine-clone",
+      name: "Trail routine copy",
+      sourceProgramId: routine.id,
+      sourceRevisionId: routine.revisionId,
+    });
+    const cloned = clonedResult.activeProgram;
+    if (!cloned) throw new Error("custom routine clone was not activated");
+    expect(cloned.sourceTemplateRevisionId).toBeNull();
+    expect(cloned.days.map(({ dayKey }) => dayKey)).toEqual([customDay.dayKey]);
+    expect(cloned.days[0]!.sections[0]!.sectionKey).toBe(customSection.sectionKey);
+    expect(cloned.days[0]!.sections[0]!.prescriptions[0]!.prescriptionKey).toBe(
+      customPrescription.prescriptionKey,
+    );
+    expect(cloned.days[0]!.id).not.toBe(customDay.id);
+    expect(cloned.days[0]!.sections[0]!.id).not.toBe(customSection.id);
+    expect(cloned.days[0]!.sections[0]!.prescriptions[0]!.id).not.toBe(
+      customPrescription.id,
+    );
+
+    const equipmentChanged = await repository.confirmEquipmentChange(owner, {
+      baseRevisionId: cloned.revisionId,
+      equipmentProfileKind: "barbell",
+      idempotencyKey: "custom-routine-equipment",
+      programId: cloned.id,
+    });
+    const revised = equipmentChanged.activeProgram;
+    if (!revised) throw new Error("custom equipment revision was not activated");
+    expect(revised.sourceTemplateRevisionId).toBeNull();
+    expect(revised.days[0]!.dayKey).toBe(customDay.dayKey);
+    expect(revised.days[0]!.sections[0]!.sectionKey).toBe(customSection.sectionKey);
+    expect(revised.days[0]!.sections[0]!.prescriptions[0]!.prescriptionKey).toBe(
+      customPrescription.prescriptionKey,
+    );
+    expect(revised.days[0]!.id).not.toBe(cloned.days[0]!.id);
+    expect(revised.days[0]!.sections[0]!.id).not.toBe(cloned.days[0]!.sections[0]!.id);
+    expect(revised.days[0]!.sections[0]!.prescriptions[0]!.id).not.toBe(
+      cloned.days[0]!.sections[0]!.prescriptions[0]!.id,
+    );
+    await expect(
+      repository.getActiveProgram(viewer("custom-collection-foreign"), routine.id),
+    ).rejects.toBeInstanceOf(RepositoryNotFoundError);
+  });
+
   it("creates, clones, and activates complete programs without rewriting source meaning", async () => {
     const { database, raw } = await openDatabase();
     const repository = createProfileProgramRepository(database);
@@ -221,6 +354,21 @@ describe("owned program collection repository", () => {
     });
     expect(clone.days.map(({ dayKey }) => dayKey)).toEqual(
       source.days.map(({ dayKey }) => dayKey),
+    );
+    expect(clone.days.flatMap(({ sections }) => sections.map(({ sectionKey }) => sectionKey))).toEqual(
+      source.days.flatMap(({ sections }) => sections.map(({ sectionKey }) => sectionKey)),
+    );
+    expect(
+      clone.days.flatMap(({ prescriptions }) =>
+        prescriptions.map(({ prescriptionKey }) => prescriptionKey),
+      ),
+    ).toEqual(
+      source.days.flatMap(({ prescriptions }) =>
+        prescriptions.map(({ prescriptionKey }) => prescriptionKey),
+      ),
+    );
+    expect(clone.days.flatMap(({ cardio }) => cardio.map(({ cardioKey }) => cardioKey))).toEqual(
+      source.days.flatMap(({ cardio }) => cardio.map(({ cardioKey }) => cardioKey)),
     );
     expect(clone.days.flatMap(({ prescriptions }) => prescriptions.map(({ label }) => label))).toEqual(
       source.days.flatMap(({ prescriptions }) => prescriptions.map(({ label }) => label)),

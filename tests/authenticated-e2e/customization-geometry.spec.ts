@@ -199,9 +199,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
 
   await page.goto("/app/program/edit");
   await expect(page.getByRole("heading", { name: "Edit your route" })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Core section is required on every day" }),
-  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Add core section" })).toBeEnabled();
   const accessorySection = page
     .locator("fieldset.program-editor-section")
     .filter({ has: page.getByLabel("Section name for accessory") });
