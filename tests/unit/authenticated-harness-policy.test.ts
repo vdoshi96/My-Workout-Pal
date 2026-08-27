@@ -94,9 +94,26 @@ describe("credential-free authenticated harness boundary", () => {
       scope: "program-publish-recovery",
       viewer: { uid: "qa-auth-harness-alice" },
     });
+    expect(
+      harnessRequestContext(
+        new Headers({
+          [HARNESS_SCENARIO_HEADER]: "expire-session",
+          [HARNESS_VIEWER_HEADER]: "alice",
+        }),
+      ),
+    ).toEqual({ scenario: "expire-session", scope: "default", viewer: null });
+    expect(
+      harnessRequestContext(
+        new Headers({
+          [HARNESS_SCENARIO_HEADER]: "revoke-session",
+          [HARNESS_VIEWER_HEADER]: "alice",
+        }),
+      ),
+    ).toEqual({ scenario: "revoke-session", scope: "default", viewer: null });
+
     const expired = harnessRequestContext(
       new Headers({
-        [HARNESS_SCENARIO_HEADER]: "expire-session",
+        [HARNESS_SCENARIO_HEADER]: "expire-next-runner-operation",
         [HARNESS_SCOPE_HEADER]: "post-load-expired",
         [HARNESS_VIEWER_HEADER]: "alice",
       }),
@@ -111,7 +128,7 @@ describe("credential-free authenticated harness boundary", () => {
 
     const revoked = harnessRequestContext(
       new Headers({
-        [HARNESS_SCENARIO_HEADER]: "revoke-session",
+        [HARNESS_SCENARIO_HEADER]: "revoke-next-runner-operation",
         [HARNESS_SCOPE_HEADER]: "post-load-revoked",
         [HARNESS_VIEWER_HEADER]: "alice",
       }),

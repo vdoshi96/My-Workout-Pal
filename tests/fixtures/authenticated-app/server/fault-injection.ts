@@ -27,14 +27,14 @@ export function consumeHarnessSessionAuthFailure(
   context: HarnessRequestContext,
 ) {
   if (
-    context.scenario === "expire-session" &&
-    consumeHarnessFault(context, "expire-session")
+    context.scenario === "expire-next-runner-operation" &&
+    consumeHarnessFault(context, "expire-next-runner-operation")
   ) {
     return classifySessionVerificationFailure({ code: "auth/session-cookie-expired" });
   }
   if (
-    context.scenario === "revoke-session" &&
-    consumeHarnessFault(context, "revoke-session")
+    context.scenario === "revoke-next-runner-operation" &&
+    consumeHarnessFault(context, "revoke-next-runner-operation")
   ) {
     return classifySessionVerificationFailure({ code: "auth/session-cookie-revoked" });
   }

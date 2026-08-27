@@ -8,10 +8,12 @@ export type HarnessScenario =
   | "accept-next-program-publish-then-error"
   | "accept-next-runner-then-error"
   | "expire-session"
+  | "expire-next-runner-operation"
   | "fail-next-save"
   | "invalid"
   | "ready"
   | "revoke-session"
+  | "revoke-next-runner-operation"
   | "slow-onboard";
 
 export type HarnessRequestContext = Readonly<{
@@ -24,9 +26,11 @@ const scenarioValues = new Set<HarnessScenario>([
   "accept-next-program-publish-then-error",
   "accept-next-runner-then-error",
   "expire-session",
+  "expire-next-runner-operation",
   "fail-next-save",
   "ready",
   "revoke-session",
+  "revoke-next-runner-operation",
   "slow-onboard",
 ]);
 
@@ -67,6 +71,9 @@ export function harnessRequestContext(headers: Headers): HarnessRequestContext {
       requestedScope && /^[a-z0-9-]{1,40}$/.test(requestedScope)
         ? requestedScope
         : "default",
-    viewer: scenario === "invalid" ? null : viewerFromHeader(headers.get(HARNESS_VIEWER_HEADER)),
+    viewer:
+      scenario === "invalid" || scenario === "expire-session" || scenario === "revoke-session"
+        ? null
+        : viewerFromHeader(headers.get(HARNESS_VIEWER_HEADER)),
   };
 }
