@@ -2597,7 +2597,10 @@ export function resolveRunnerLocalTabConflict(
     );
   }
   const target = semanticTargetKey(runnerOperationSemanticTarget(chosen));
-  const at = timestamp(state, now);
+  const at = timestamp(
+    state,
+    now === undefined ? state.lastUpdatedAt + 1 : now,
+  );
   const operations = state.operations.map((operation) => {
     if (operation.idempotencyKey === idempotencyKey) {
       return {

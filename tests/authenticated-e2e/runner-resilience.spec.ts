@@ -33,6 +33,21 @@ type ResiliencePage = Readonly<{
   page: Page;
 }>;
 
+type ResilienceSignals = {
+  browserErrors: string[];
+  failedRequests: string[];
+  failedResponses: string[];
+  operationRequests: Request[];
+};
+
+type SharedResiliencePages = Readonly<{
+  close(): Promise<void>;
+  context: BrowserContext;
+  control: ResilienceControl;
+  pages: readonly [Page, Page];
+  signals: ResilienceSignals;
+}>;
+
 function projectContextOptions(testInfo: TestInfo): BrowserContextOptions {
   const use = testInfo.project.use;
   const viewport = use.viewport;
@@ -126,25 +141,45 @@ async function openResiliencePage(
     testInfo,
   );
   const page = await context.newPage();
-  const browserErrors: string[] = [];
-  const failedRequests: string[] = [];
-  const failedResponses: string[] = [];
-  const operationRequests: Request[] = [];
+  const signals: ResilienceSignals = {
+    browserErrors: [],
+    failedRequests: [],
+    failedResponses: [],
+    operationRequests: [],
+  };
+  monitorResiliencePage(page, signals);
+  return {
+    close: async () => {
+      expect(signals.browserErrors).toEqual([]);
+      await context.close();
+    },
+    control,
+    failedRequests: signals.failedRequests,
+    failedResponses: signals.failedResponses,
+    operationRequests: signals.operationRequests,
+    page,
+  };
+}
+
+function monitorResiliencePage(
+  page: Page,
+  signals: ResilienceSignals,
+): void {
   page.on("console", (message) => {
     if (
       (message.type() === "error" || message.type() === "warning") &&
       !message.text().startsWith("Failed to load resource:")
     ) {
-      browserErrors.push(message.text());
+      signals.browserErrors.push(message.text());
     }
   });
-  page.on("pageerror", (error) => browserErrors.push(error.message));
+  page.on("pageerror", (error) => signals.browserErrors.push(error.message));
   page.on("request", (request) => {
-    if (isOperationRequest(request)) operationRequests.push(request);
+    if (isOperationRequest(request)) signals.operationRequests.push(request);
   });
   page.on("response", (response) => {
     if (response.status() >= 400) {
-      failedResponses.push(
+      signals.failedResponses.push(
         `${response.request().method()} ${new URL(response.url()).pathname} ${response.status()}`,
       );
     }
@@ -155,21 +190,42 @@ async function openResiliencePage(
       url.hostname === "127.0.0.1" &&
       !isSupersededNextFlightRequest(request)
     ) {
-      failedRequests.push(
+      signals.failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
       );
     }
   });
+}
+
+async function openSharedResiliencePages(
+  browser: Browser,
+  scope: string,
+  testInfo: TestInfo,
+): Promise<SharedResiliencePages> {
+  const { context, control } = await createResilienceContext(
+    browser,
+    scope,
+    testInfo,
+  );
+  const signals: ResilienceSignals = {
+    browserErrors: [],
+    failedRequests: [],
+    failedResponses: [],
+    operationRequests: [],
+  };
+  const first = await context.newPage();
+  const second = await context.newPage();
+  monitorResiliencePage(first, signals);
+  monitorResiliencePage(second, signals);
   return {
     close: async () => {
-      expect(browserErrors).toEqual([]);
+      expect(signals.browserErrors).toEqual([]);
       await context.close();
     },
+    context,
     control,
-    failedRequests,
-    failedResponses,
-    operationRequests,
-    page,
+    pages: [first, second],
+    signals,
   };
 }
 
@@ -223,6 +279,100 @@ function operationKey(request: Request): string {
   }
   expect(body).not.toHaveProperty("ownerUid");
   return body["idempotencyKey"];
+}
+
+type StoredRunnerOperation = Readonly<{
+  errorCode: string | undefined;
+  idempotencyKey: string;
+  kind: string;
+  setId: string | undefined;
+  status: string;
+  weightKg: number | undefined;
+}>;
+
+type StoredRunnerSummary = Readonly<{
+  revision: number;
+  schemaVersion: number;
+  operations: readonly StoredRunnerOperation[];
+}>;
+
+async function readStoredRunner(
+  page: Page,
+  sessionId: string,
+): Promise<StoredRunnerSummary> {
+  return page.evaluate(async (expectedSessionId) => {
+    const records = await new Promise<unknown[]>((resolve, reject) => {
+      const open = indexedDB.open("my-workout-pal-runner");
+      open.onerror = () => reject(open.error ?? new Error("IndexedDB open failed"));
+      open.onsuccess = () => {
+        const database = open.result;
+        const transaction = database.transaction("runnerStates", "readonly");
+        const request = transaction.objectStore("runnerStates").getAll();
+        request.onerror = () => reject(request.error ?? new Error("IndexedDB read failed"));
+        request.onsuccess = () => resolve(request.result as unknown[]);
+        transaction.oncomplete = () => database.close();
+      };
+    });
+    const record = records.find(
+      (value) =>
+        typeof value === "object" &&
+        value !== null &&
+        (value as { sessionId?: unknown }).sessionId === expectedSessionId,
+    ) as
+      | {
+          revision?: unknown;
+          schemaVersion?: unknown;
+          state?: { operations?: unknown[] };
+        }
+      | undefined;
+    if (
+      record?.schemaVersion !== 2 ||
+      typeof record.revision !== "number" ||
+      !Array.isArray(record.state?.operations)
+    ) {
+      throw new Error("The expected schema-two runner record is unavailable.");
+    }
+    return {
+      revision: record.revision,
+      schemaVersion: record.schemaVersion,
+      operations: record.state.operations.map((value) => {
+        const operation = value as {
+          errorCode?: unknown;
+          idempotencyKey?: unknown;
+          kind?: unknown;
+          payload?: {
+            measurement?: { weightKg?: unknown };
+            setId?: unknown;
+          };
+          status?: unknown;
+        };
+        if (
+          typeof operation.idempotencyKey !== "string" ||
+          typeof operation.kind !== "string" ||
+          typeof operation.status !== "string"
+        ) {
+          throw new Error("A stored runner operation is malformed.");
+        }
+        return {
+          errorCode:
+            typeof operation.errorCode === "string"
+              ? operation.errorCode
+              : undefined,
+          idempotencyKey: operation.idempotencyKey,
+          kind: operation.kind,
+          setId:
+            typeof operation.payload?.setId === "string"
+              ? operation.payload.setId
+              : undefined,
+          status: operation.status,
+          weightKg:
+            typeof operation.payload?.measurement?.weightKg === "number"
+              ? operation.payload.measurement.weightKg
+              : undefined,
+        };
+      }),
+    };
+  }, sessionId);
 }
 
 async function cleanup(page: Page): Promise<void> {
@@ -401,3 +551,190 @@ for (const authCase of [
     await harness.close();
   });
 }
+
+test("two tabs retain distinct offline set operations through reload and retry", async ({
+  browser,
+}, testInfo) => {
+  const harness = await openSharedResiliencePages(
+    browser,
+    `${testInfo.project.name}-distinct-tab-operations`,
+    testInfo,
+  );
+  const [first, second] = harness.pages;
+  const sessionId = await onboardAndOpenPush(first);
+  const workoutPath = new URL(first.url()).pathname;
+  await second.goto(workoutPath);
+  await expect(
+    second.getByRole("heading", { name: "Dumbbell bench press" }),
+  ).toBeVisible();
+
+  await harness.context.setOffline(true);
+  await first.bringToFront();
+  await enterFirstSet(first, "25");
+  await expect
+    .poll(async () => (await readStoredRunner(first, sessionId)).operations.length)
+    .toBe(1);
+  await second.bringToFront();
+  await second.locator(".runner-set-tab").nth(1).click();
+  await enterFirstSet(second, "30");
+  await expect
+    .poll(async () => (await readStoredRunner(second, sessionId)).operations.length)
+    .toBe(2);
+  await first.bringToFront();
+  await expect(
+    first.getByRole("progressbar", { name: /2 of \d+ work sets logged/u }),
+  ).toBeVisible();
+
+  const queued = await readStoredRunner(first, sessionId);
+  expect(queued.schemaVersion).toBe(2);
+  expect(queued.revision).toBeGreaterThanOrEqual(2);
+  expect(
+    queued.operations.map(({ setId, status }) => ({ setId, status })),
+  ).toEqual([
+    { setId: expect.any(String), status: "pending" },
+    { setId: expect.any(String), status: "pending" },
+  ]);
+  expect(new Set(queued.operations.map(({ setId }) => setId)).size).toBe(2);
+  expect(harness.signals.operationRequests).toEqual([]);
+
+  await second.close();
+  harness.control.abortNextOperation = true;
+  await harness.context.setOffline(false);
+  await expect(first.getByRole("heading", { name: "Offline queued" })).toBeVisible();
+  harness.control.abortNextOperation = true;
+  await first.reload();
+  await expect(
+    first.getByRole("progressbar", { name: /2 of \d+ work sets logged/u }),
+  ).toBeVisible();
+  await expect(first.getByRole("heading", { name: "Offline queued" })).toBeVisible();
+  const restored = await readStoredRunner(first, sessionId);
+  expect(restored.operations).toHaveLength(2);
+  expect(
+    restored.operations.every(({ status }) => status === "pending"),
+  ).toBe(true);
+
+  harness.signals.failedRequests.length = 0;
+  const retry = first.getByRole("button", { name: "Retry connection" });
+  await retry.press("Enter");
+  await expect(
+    first.locator(".runner-progress").getByText("Saved", { exact: true }),
+  ).toBeVisible();
+  const saved = await readStoredRunner(first, sessionId);
+  expect(saved.operations).toHaveLength(2);
+  expect(saved.operations.every(({ status }) => status === "saved")).toBe(true);
+  expect(harness.signals.failedRequests).toEqual([]);
+  expect(harness.signals.failedResponses).toEqual([]);
+  await cleanup(first);
+  await harness.close();
+});
+
+test("two tabs block a divergent set until the member chooses one original key", async ({
+  browser,
+}, testInfo) => {
+  const harness = await openSharedResiliencePages(
+    browser,
+    `${testInfo.project.name}-same-target-conflict`,
+    testInfo,
+  );
+  const [first, second] = harness.pages;
+  const sessionId = await onboardAndOpenPush(first);
+  await second.goto(new URL(first.url()).pathname);
+  await expect(
+    second.getByRole("heading", { name: "Dumbbell bench press" }),
+  ).toBeVisible();
+  await harness.context.setOffline(true);
+
+  await first.getByLabel("Weight (lb)").fill("25");
+  await first.getByLabel("Repetitions").fill("12");
+  await second.getByLabel("Weight (lb)").fill("30");
+  await second.getByLabel("Repetitions").fill("12");
+  await Promise.all([
+    first
+      .getByRole("button", { name: "Save set" })
+      .evaluate((button: HTMLButtonElement) => button.click()),
+    second
+      .getByRole("button", { name: "Save set" })
+      .evaluate((button: HTMLButtonElement) => button.click()),
+  ]);
+  await expect
+    .poll(async () =>
+      (await readStoredRunner(first, sessionId)).operations
+        .map(({ status }) => status)
+        .sort(),
+    )
+    .toEqual(["failed", "failed"]);
+  await first.bringToFront();
+  const conflictHeading = first.getByRole("heading", {
+    name: "Choose the workout value to keep",
+  });
+  await expect(conflictHeading).toBeVisible();
+  await expect(conflictHeading).toBeFocused();
+  await assertAccessible(first);
+  const choice25 = first.getByRole("button", {
+    name: /Keep 25 lb · 12 reps for Set 1 · Dumbbell bench press/u,
+  });
+  const choice30 = first.getByRole("button", {
+    name: /Keep 30 lb · 12 reps for Set 1 · Dumbbell bench press/u,
+  });
+  await expect(choice25).toBeVisible();
+  await expect(choice30).toBeVisible();
+  for (const choice of [choice25, choice30]) {
+    const box = await choice.boundingBox();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  }
+  expect(
+    await first.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  ).toBe(true);
+  expect(harness.signals.operationRequests).toEqual([]);
+
+  const conflicted = await readStoredRunner(first, sessionId);
+  expect(conflicted.operations).toHaveLength(2);
+  expect(
+    conflicted.operations.every(
+      ({ errorCode, status }) =>
+        errorCode === "local_tab_conflict" && status === "failed",
+    ),
+  ).toBe(true);
+  const chosenKey = [...conflicted.operations].sort(
+    (left, right) => (right.weightKg ?? 0) - (left.weightKg ?? 0),
+  )[0]!.idempotencyKey;
+
+  await first.getByRole("button", { name: "Leave both values unresolved" }).click();
+  await expect(conflictHeading).toBeVisible();
+  expect((await readStoredRunner(first, sessionId)).operations).toEqual(
+    conflicted.operations,
+  );
+
+  await choice30.click();
+  await expect
+    .poll(async () =>
+      (await readStoredRunner(first, sessionId)).operations
+        .map(({ status }) => status)
+        .sort(),
+    )
+    .toEqual(["pending", "superseded"]);
+  await expect(conflictHeading).toHaveCount(0);
+  const resolved = await readStoredRunner(first, sessionId);
+  expect(resolved.operations.map(({ status }) => status).sort()).toEqual([
+    "pending",
+    "superseded",
+  ]);
+  const pending = resolved.operations.find(({ status }) => status === "pending");
+  expect(pending?.idempotencyKey).toBe(chosenKey);
+
+  await second.close();
+  const savedResponse = first.waitForResponse((response) =>
+    isOperationRequest(response.request()),
+  );
+  await harness.context.setOffline(false);
+  expect((await savedResponse).status()).toBe(200);
+  await expect(
+    first.locator(".runner-progress").getByText("Saved", { exact: true }),
+  ).toBeVisible();
+  expect(harness.signals.operationRequests).toHaveLength(1);
+  expect(operationKey(harness.signals.operationRequests[0]!)).toBe(chosenKey);
+  expect(harness.signals.failedRequests).toEqual([]);
+  expect(harness.signals.failedResponses).toEqual([]);
+  await cleanup(first);
+  await harness.close();
+});

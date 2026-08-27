@@ -257,17 +257,31 @@ describe("WorkoutRunner injected boundary harness", () => {
     });
     await persistRunnerState(storage, otherTab);
 
+    let localQueued = runnerReducer(initial, {
+      type: "update_note",
+      exerciseId: "press",
+      note: "Keep this local cue",
+    });
+    localQueued = runnerReducer(localQueued, {
+      type: "save_note",
+      exerciseId: "press",
+      now: 2_003,
+    });
+
     const adopted = await reloadRunnerStateFromStorage(
-      initial,
+      localQueued,
       storage,
       () => "online",
     );
-    expect(adopted).not.toBe(initial);
+    expect(adopted).not.toBe(localQueued);
     expect(adopted.connectivity).toBe("online");
     expect(adopted.loggedSets["press-work-1"]?.measurement).toMatchObject({
       weightKg: 30,
       repetitions: 7,
     });
+    expect(adopted.notesByExercise["press"]).toBe("Keep this local cue");
+    expect(adopted.operations).toHaveLength(2);
+    expect((await storage.load("runner:owner-harness:session-harness"))?.state.operations).toHaveLength(2);
 
     const identical = await reloadRunnerStateFromStorage(
       adopted,

@@ -15,6 +15,7 @@ import {
   getRestTimerView,
   isNavigationBlocked,
   loadRunnerState,
+  mergeRunnerStorageStates,
   navigationProtectionReason,
   persistRunnerState,
   runnerReducer,
@@ -176,11 +177,16 @@ export async function reloadRunnerStateFromStorage(
     snapshot: current.snapshot,
   });
   if (restored === undefined) return current;
+  const merged = mergeRunnerStorageStates(restored, current);
+  const durable =
+    stableIdempotencyKey(merged) === stableIdempotencyKey(restored)
+      ? restored
+      : await persistRunnerState(storage, current);
   const connectivity = getConnectivity();
   const candidate =
-    restored.connectivity === connectivity
-      ? restored
-      : runnerReducer(restored, {
+    durable.connectivity === connectivity
+      ? durable
+      : runnerReducer(durable, {
           type: "set_connectivity",
           connectivity,
         });

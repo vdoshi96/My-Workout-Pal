@@ -805,7 +805,6 @@ describe("schema-two atomic runner storage merge", () => {
     const resolved = runnerReducer(conflicted.state, {
       type: "resolve_local_tab_conflict",
       idempotencyKey: firstKey,
-      now: 103,
     });
 
     expect(
