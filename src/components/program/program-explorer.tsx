@@ -115,7 +115,12 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
             <div className="guest-map-stamp">Guest route · not saved</div>
           </div>
 
-          <section className="route-sheet selected-day" id="selected-day-sheet" aria-labelledby="selected-day-heading">
+          <section
+            aria-labelledby="selected-day-heading"
+            className="route-sheet selected-day"
+            id="selected-day-sheet"
+            tabIndex={-1}
+          >
             <header>
               <span className="selected-number" aria-hidden="true">{selectedIndex + 1}</span>
               <div>

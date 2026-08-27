@@ -66,4 +66,40 @@ describe("visible labels remain in accessible names", () => {
     expect(authenticatedMarkup).toContain("Saved training route");
     expect(authenticatedMarkup).toContain("Sign out");
   });
+
+  it("gives shared skip links a programmatic focus destination", () => {
+    const explorerMarkup = renderToStaticMarkup(
+      <ProgramExplorer
+        barbellProgram={createStarterProgram(EQUIPMENT_PROFILES.barbell)}
+        dumbbellProgram={createStarterProgram(EQUIPMENT_PROFILES.dumbbells)}
+        initialProfile="dumbbells"
+      />,
+    );
+    const publicMarkup = renderToStaticMarkup(
+      <PublicShell current="program"><h1>Program</h1></PublicShell>,
+    );
+    const authenticatedMarkup = renderToStaticMarkup(
+      <AuthenticatedShell
+        viewer={{
+          authTimeSeconds: 1,
+          displayName: "Verification athlete",
+          eligibleForPermanentMutations: true,
+          email: "athlete@example.com",
+          emailVerified: true,
+          provider: "password",
+          uid: "skip-link-focus-test",
+        }}
+      >
+        <h1>Program</h1>
+      </AuthenticatedShell>,
+    );
+
+    expect(publicMarkup).toContain('<main id="main-content" tabindex="-1">');
+    expect(authenticatedMarkup).toContain(
+      '<main class="member-main" id="main-content" tabindex="-1">',
+    );
+    expect(explorerMarkup).toContain(
+      'id="selected-day-sheet" tabindex="-1"',
+    );
+  });
 });

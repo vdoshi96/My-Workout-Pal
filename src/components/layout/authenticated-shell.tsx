@@ -46,7 +46,7 @@ export function AuthenticatedShell({
           <strong>Read-only account.</strong> Verify your email, then sign in again before saving permanent changes.
         </aside>
       ) : null}
-      <main className="member-main" id="main-content">{children}</main>
+      <main className="member-main" id="main-content" tabIndex={-1}>{children}</main>
     </div>
   );
 }

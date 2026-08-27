@@ -196,6 +196,7 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
   await expect(skipLink).toBeFocused();
   await skipLink.press("Enter");
   await expect(page).toHaveURL(/#main-content$/);
+  await expect(page.locator("#main-content")).toBeFocused();
   await expect(
     page.getByRole("heading", {
       level: 1,

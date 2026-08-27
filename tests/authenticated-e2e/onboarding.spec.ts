@@ -402,6 +402,7 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   await expect(skipLink).toBeFocused();
   await skipLink.press("Enter");
   await expect(alice.page).toHaveURL(/#main-content$/);
+  await expect(alice.page.locator("#main-content")).toBeFocused();
   const aliceOnboarding = await submitOnboarding(alice.page, "dumbbells");
   expect(aliceOnboarding.response.status()).toBe(201);
   const aliceProgram = activeProgramIds(aliceOnboarding.body);
