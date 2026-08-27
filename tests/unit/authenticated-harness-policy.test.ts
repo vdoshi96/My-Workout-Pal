@@ -428,7 +428,7 @@ describe("credential-free authenticated harness boundary", () => {
       "context.route(/^http:\\/\\/127\\.0\\.0\\.1:\\d+\\//",
     );
     expect(browserSpec).toContain(
-      "context.route(/^https:\\/\\/www\\.youtube-nocookie\\.com\\/embed\\//",
+      "/^https:\\/\\/www\\.youtube-nocookie\\.com\\/embed\\//",
     );
     expect(browserSpec).not.toContain("youtubei/v1");
     expect(browserSpec).not.toContain("api/stats/atr");
@@ -436,6 +436,7 @@ describe("credential-free authenticated harness boundary", () => {
     expect(browserSpec).toContain('page.on("requestfailed"');
     expect(browserSpec).toContain("request.failure()?.errorText");
     expect(browserSpec).toContain("isSupersededNextFlightRequest");
+    expect(browserSpec).toContain('["net::ERR_ABORTED", "cancelled"].includes');
     expect(browserSpec).toContain('url.searchParams.has("_rsc")');
     expect(browserSpec).toContain('request.headers()["rsc"] === "1"');
 
@@ -449,6 +450,9 @@ describe("credential-free authenticated harness boundary", () => {
     expect(geometrySpec).toContain('page.on("requestfailed"');
     expect(geometrySpec).toContain("request.failure()?.errorText");
     expect(geometrySpec).toContain("isSupersededNextFlightRequest");
+    expect(geometrySpec).toContain(
+      '["net::ERR_ABORTED", "cancelled"].includes',
+    );
 
     const resilienceSpec = readFileSync(
       resolve(
@@ -463,6 +467,9 @@ describe("credential-free authenticated harness boundary", () => {
     expect(resilienceSpec).toContain('route.abort("internetdisconnected")');
     expect(resilienceSpec).toContain('page.on("requestfailed"');
     expect(resilienceSpec).toContain('url.hostname === "127.0.0.1"');
+    expect(resilienceSpec).toContain(
+      '["net::ERR_ABORTED", "cancelled"].includes',
+    );
     expect(resilienceSpec).toContain("isExpectedNavigationFontCancellation");
     expect(resilienceSpec).toContain(
       "expect(harness.failedRequests).toEqual([])",

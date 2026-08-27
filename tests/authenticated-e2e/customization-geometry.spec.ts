@@ -24,7 +24,7 @@ function isSupersededNextFlightRequest(request: Request): boolean {
     request.method() === "GET" &&
     url.searchParams.has("_rsc") &&
     request.headers()["rsc"] === "1" &&
-    request.failure()?.errorText === "net::ERR_ABORTED"
+    ["net::ERR_ABORTED", "cancelled"].includes(request.failure()?.errorText ?? "")
   );
 }
 

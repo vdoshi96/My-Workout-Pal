@@ -85,7 +85,9 @@ function isSupersededNextFlightRequest(request: Request): boolean {
     request.method() === "GET" &&
     url.searchParams.has("_rsc") &&
     request.headers()["rsc"] === "1" &&
-    request.failure()?.errorText === "net::ERR_ABORTED"
+    ["net::ERR_ABORTED", "cancelled"].includes(
+      request.failure()?.errorText ?? "",
+    )
   );
 }
 
@@ -721,6 +723,14 @@ test("two tabs block a divergent set until the member chooses one original key",
     testInfo,
   );
   const [first, second] = harness.pages;
+  for (const page of harness.pages) {
+    await page.addInitScript(() => {
+      Object.defineProperty(globalThis, "BroadcastChannel", {
+        configurable: true,
+        value: undefined,
+      });
+    });
+  }
   const sessionId = await onboardAndOpenPush(first);
   await second.goto(new URL(first.url()).pathname);
   await expect(
@@ -748,6 +758,7 @@ test("two tabs block a divergent set until the member chooses one original key",
     )
     .toEqual(["failed", "failed"]);
   await first.bringToFront();
+  await first.evaluate(() => window.dispatchEvent(new Event("focus")));
   const conflictHeading = first.getByRole("heading", {
     name: "Choose the workout value to keep",
   });
