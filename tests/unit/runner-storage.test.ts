@@ -12,9 +12,12 @@ import {
   runnerReducer,
   runnerStorageKey,
   runnerStorageRecord,
+  syncRunnerOperations,
+  validateRunnerStorageRecord,
   type ActiveWorkoutState,
   type RunnerSnapshotInput,
   type RunnerStorageRecord,
+  type RunnerStorageRecordV1,
 } from "@/domain/workout-runner";
 import {
   IndexedDBRunnerStorage,
@@ -281,7 +284,7 @@ describe("IndexedDB runner storage", () => {
     });
   });
 
-  it("preserves a pending record through the v0 upgrade and a reopened connection", async () => {
+  it("preserves a schema-one pending record through an upgrade and reopen", async () => {
     const factory = new FakeFactory();
     const oldStore = factory.database.createObjectStore(
       RUNNER_STORAGE_OBJECT_STORE,
@@ -296,7 +299,13 @@ describe("IndexedDB runner storage", () => {
       type: "save_set",
       setId: "row-set",
     });
-    const record = runnerStorageRecord(pending);
+    const record: RunnerStorageRecordV1 = {
+      schemaVersion: 1,
+      key: runnerStorageKey("uid-a", "session-a"),
+      ownerUid: "uid-a",
+      sessionId: "session-a",
+      state: pending,
+    };
     oldStore.values.set(record.key, structuredClone(record));
 
     const first = createStorage(factory, "uid-a");
@@ -545,5 +554,685 @@ describe("schema-two atomic runner storage merge", () => {
     expect(
       merged.state.operations.map(({ errorCode }) => errorCode),
     ).toEqual(["local_tab_conflict", "local_tab_conflict"]);
+  });
+
+  it("treats skip and completion as one exercise decision target", () => {
+    let skipped = stateFor("uid-a", "session-a");
+    skipped = runnerReducer(skipped, {
+      type: "skip_exercise",
+      exerciseId: "row",
+      reason: "not today",
+      now: 101,
+    });
+    let completed = stateFor("uid-a", "session-a");
+    completed = runnerReducer(completed, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    completed = runnerReducer(completed, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    const setKey = completed.operations[0]!.idempotencyKey;
+    completed = runnerReducer(completed, {
+      type: "operation_saved",
+      idempotencyKey: setKey,
+      now: 102,
+    });
+    completed = runnerReducer(completed, {
+      type: "complete_exercise",
+      exerciseId: "row",
+      now: 103,
+    });
+
+    const merged = mergeRunnerStorageRecords(
+      runnerStorageRecord(skipped, { committedAt: 101 }),
+      runnerStorageRecord(completed, { committedAt: 102 }),
+    );
+
+    const decisions = merged.state.operations.filter(
+      ({ kind }) => kind === "skip_exercise" || kind === "complete_exercise",
+    );
+    expect(decisions.map(({ status }) => status)).toEqual([
+      "failed",
+      "failed",
+    ]);
+    expect(decisions.map(({ errorCode }) => errorCode)).toEqual([
+      "local_tab_conflict",
+      "local_tab_conflict",
+    ]);
+  });
+
+  it("treats walker and runner logs as one session cardio target", () => {
+    const input = structuredClone(snapshot) as unknown as RunnerSnapshotInput;
+    input.cardioOptions = [
+      {
+        id: "cardio-walker",
+        mode: "walker",
+        targetDurationSeconds: 600,
+        targetDistanceMeters: 1_000,
+      },
+      {
+        id: "cardio-runner",
+        mode: "runner",
+        targetDurationSeconds: 600,
+        targetDistanceMeters: 1_000,
+      },
+    ];
+    const cardioSnapshot = createWorkoutSnapshot(input);
+    let walker = createRunnerState(cardioSnapshot, { now: 100 });
+    walker = runnerReducer(walker, {
+      type: "select_cardio",
+      mode: "walker",
+      now: 101,
+    });
+    walker = runnerReducer(walker, {
+      type: "update_cardio_draft",
+      draft: {
+        mode: "walker",
+        durationSeconds: 600,
+        distanceMeters: 1_000,
+        paceSecondsPerKilometer: 600,
+        paceSource: "entered",
+        inclinePercent: undefined,
+        notes: "walker",
+      },
+      now: 102,
+    });
+    walker = runnerReducer(walker, { type: "save_cardio", now: 103 });
+
+    let runner = createRunnerState(cardioSnapshot, { now: 100 });
+    runner = runnerReducer(runner, {
+      type: "select_cardio",
+      mode: "runner",
+      now: 101,
+    });
+    runner = runnerReducer(runner, {
+      type: "update_cardio_draft",
+      draft: {
+        mode: "runner",
+        durationSeconds: 600,
+        distanceMeters: 1_000,
+        paceSecondsPerKilometer: 600,
+        paceSource: "entered",
+        inclinePercent: undefined,
+        notes: "runner",
+      },
+      now: 102,
+    });
+    runner = runnerReducer(runner, { type: "save_cardio", now: 104 });
+
+    const merged = mergeRunnerStorageRecords(
+      runnerStorageRecord(walker, { committedAt: 103 }),
+      runnerStorageRecord(runner, { committedAt: 104 }),
+    );
+
+    expect(merged.state.operations.map(({ status }) => status)).toEqual([
+      "failed",
+      "failed",
+    ]);
+    expect(merged.state.operations.map(({ errorCode }) => errorCode)).toEqual([
+      "local_tab_conflict",
+      "local_tab_conflict",
+    ]);
+  });
+
+  it("preserves revoked authentication state through validation and merge", async () => {
+    let revoked = stateFor("uid-a", "session-a");
+    revoked = runnerReducer(revoked, {
+      type: "set_auth",
+      auth: "revoked",
+      now: 123,
+    });
+    const record = runnerStorageRecord(revoked, { committedAt: 123 });
+
+    expect(validateRunnerStorageRecord(record).state).toMatchObject({
+      auth: "revoked",
+      sync: { status: "auth_revoked", errorCode: "session_revoked" },
+    });
+    const storage = new InMemoryRunnerStorage({ writerId: "tab-a" });
+    const committed = await storage.save(record.key, record);
+
+    expect(committed.state).toMatchObject({
+      auth: "revoked",
+      sync: { status: "auth_revoked", errorCode: "session_revoked" },
+    });
+  });
+
+  it("lets confirmed authority supersede a later-timestamp stale same-target write", () => {
+    let confirmed = stateFor("uid-a", "session-a");
+    confirmed = runnerReducer(confirmed, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    confirmed = runnerReducer(confirmed, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    const confirmedKey = confirmed.operations[0]!.idempotencyKey;
+    confirmed = runnerReducer(confirmed, {
+      type: "operation_saved",
+      idempotencyKey: confirmedKey,
+      now: 102,
+    });
+
+    let stale = stateFor("uid-a", "session-a");
+    stale = runnerReducer(stale, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 25, repetitions: 8 },
+    });
+    stale = runnerReducer(stale, {
+      type: "save_set",
+      setId: "row-set",
+      now: 9_999,
+    });
+    const staleKey = stale.operations[0]!.idempotencyKey;
+
+    const merged = mergeRunnerStorageRecords(
+      runnerStorageRecord(confirmed, { committedAt: 102 }),
+      runnerStorageRecord(stale, { committedAt: 9_999 }),
+    );
+
+    expect(
+      merged.state.operations.find(({ idempotencyKey }) => idempotencyKey === confirmedKey)
+        ?.status,
+    ).toBe("saved");
+    expect(
+      merged.state.operations.find(({ idempotencyKey }) => idempotencyKey === staleKey)
+        ?.status,
+    ).toBe("superseded");
+    expect(merged.state.loggedSets["row-set"]?.measurement).toMatchObject({
+      weightKg: 20,
+      repetitions: 8,
+    });
+  });
+
+  it("keeps an intentional edit when its source contains the saved predecessor", () => {
+    let confirmed = stateFor("uid-a", "session-a");
+    confirmed = runnerReducer(confirmed, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    confirmed = runnerReducer(confirmed, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    const confirmedKey = confirmed.operations[0]!.idempotencyKey;
+    confirmed = runnerReducer(confirmed, {
+      type: "operation_saved",
+      idempotencyKey: confirmedKey,
+      now: 102,
+    });
+    let later = runnerReducer(confirmed, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 25, repetitions: 8 },
+    });
+    later = runnerReducer(later, {
+      type: "save_set",
+      setId: "row-set",
+      now: 103,
+    });
+    const laterKey = later.operations.find(
+      ({ idempotencyKey }) => idempotencyKey !== confirmedKey,
+    )!.idempotencyKey;
+
+    const merged = mergeRunnerStorageRecords(
+      runnerStorageRecord(confirmed, { committedAt: 102 }),
+      runnerStorageRecord(later, { committedAt: 103 }),
+    );
+
+    expect(
+      merged.state.operations.find(({ idempotencyKey }) => idempotencyKey === confirmedKey)
+        ?.status,
+    ).toBe("saved");
+    expect(
+      merged.state.operations.find(({ idempotencyKey }) => idempotencyKey === laterKey)
+        ?.status,
+    ).toBe("pending");
+
+    const reverse = mergeRunnerStorageRecords(
+      runnerStorageRecord(later, { committedAt: 103 }),
+      runnerStorageRecord(confirmed, { committedAt: 102 }),
+    );
+    expect(
+      reverse.state.operations.find(({ idempotencyKey }) => idempotencyKey === confirmedKey)
+        ?.status,
+    ).toBe("saved");
+    expect(
+      reverse.state.operations.find(({ idempotencyKey }) => idempotencyKey === laterKey)
+        ?.status,
+    ).toBe("pending");
+  });
+
+  it("freezes a merged session after a saved terminal operation", () => {
+    let completed = stateFor("uid-a", "session-a");
+    completed = runnerReducer(completed, {
+      type: "skip_exercise",
+      exerciseId: "row",
+      reason: "not today",
+      now: 99,
+    });
+    const skipKey = completed.operations[0]!.idempotencyKey;
+    completed = runnerReducer(completed, {
+      type: "operation_saved",
+      idempotencyKey: skipKey,
+      now: 100,
+    });
+    completed = runnerReducer(completed, {
+      type: "complete_session",
+      now: 101,
+    });
+    const completeKey = completed.operations.at(-1)!.idempotencyKey;
+    completed = runnerReducer(completed, {
+      type: "operation_saved",
+      idempotencyKey: completeKey,
+      now: 102,
+    });
+
+    let stale = stateFor("uid-a", "session-a");
+    stale = runnerReducer(stale, {
+      type: "update_note",
+      exerciseId: "row",
+      note: "stale note",
+    });
+    stale = runnerReducer(stale, {
+      type: "save_note",
+      exerciseId: "row",
+      now: 9_999,
+    });
+    stale = runnerReducer(stale, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 30, repetitions: 10 },
+    });
+    stale = runnerReducer(stale, {
+      type: "save_set",
+      setId: "row-set",
+      now: 10_000,
+    });
+
+    const merged = mergeRunnerStorageRecords(
+      runnerStorageRecord(completed, { revision: 2, committedAt: 102 }),
+      runnerStorageRecord(stale, { revision: 1, committedAt: 10_000 }),
+    );
+
+    expect(merged.state.status).toBe("completed");
+    expect(
+      merged.state.operations
+        .filter(
+          ({ idempotencyKey }) =>
+            idempotencyKey !== completeKey && idempotencyKey !== skipKey,
+        )
+        .every(({ status }) => status === "superseded"),
+    ).toBe(true);
+    expect(
+      merged.state.operations.find(({ idempotencyKey }) => idempotencyKey === skipKey)
+        ?.status,
+    ).toBe("saved");
+
+    const reverseCompleted = mergeRunnerStorageRecords(
+      runnerStorageRecord(stale, { revision: 1, committedAt: 10_000 }),
+      runnerStorageRecord(completed, { revision: 2, committedAt: 102 }),
+    );
+    expect(reverseCompleted.state.status).toBe("completed");
+    expect(
+      reverseCompleted.state.operations
+        .filter(
+          ({ idempotencyKey }) =>
+            idempotencyKey !== completeKey && idempotencyKey !== skipKey,
+        )
+        .every(({ status }) => status === "superseded"),
+    ).toBe(true);
+    expect(
+      reverseCompleted.state.operations.find(({ idempotencyKey }) => idempotencyKey === skipKey)
+        ?.status,
+    ).toBe("saved");
+
+    let abandoned = stateFor("uid-a", "session-a");
+    abandoned = runnerReducer(abandoned, {
+      type: "abandon_session",
+      reason: "finished early",
+      now: 100,
+    });
+    const abandonKey = abandoned.operations[0]!.idempotencyKey;
+    abandoned = runnerReducer(abandoned, {
+      type: "operation_saved",
+      idempotencyKey: abandonKey,
+      now: 101,
+    });
+    const abandonedMerge = mergeRunnerStorageRecords(
+      runnerStorageRecord(abandoned, { revision: 2, committedAt: 101 }),
+      runnerStorageRecord(stale, { revision: 1, committedAt: 10_000 }),
+    );
+
+    expect(abandonedMerge.state.status).toBe("abandoned");
+    expect(
+      abandonedMerge.state.operations
+        .filter(({ idempotencyKey }) => idempotencyKey !== abandonKey)
+        .every(({ status }) => status === "superseded"),
+    ).toBe(true);
+  });
+
+  it("deduplicates identical canonical payloads with distinct keys", async () => {
+    let first = stateFor("uid-a", "session-a");
+    first = runnerReducer(first, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    first = runnerReducer(first, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+
+    let second = stateFor("uid-a", "session-a");
+    second = runnerReducer(second, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    second = runnerReducer(second, {
+      type: "save_set",
+      setId: "row-set",
+      now: 102,
+    });
+    const duplicate = {
+      ...second.operations[0]!,
+      idempotencyKey: "legacy-equivalent-key",
+    };
+    second = {
+      ...second,
+      operations: [duplicate],
+      loggedSets: {
+        ...second.loggedSets,
+        "row-set": {
+          ...second.loggedSets["row-set"]!,
+          operationKey: duplicate.idempotencyKey,
+        },
+      },
+    };
+
+    const merged = mergeRunnerStorageRecords(
+      runnerStorageRecord(first, { committedAt: 101 }),
+      runnerStorageRecord(second, { committedAt: 102 }),
+    );
+    expect(merged.state.operations.map(({ status }) => status)).not.toContain(
+      "failed",
+    );
+    expect(
+      merged.state.operations.filter(({ status }) => status === "pending"),
+    ).toHaveLength(1);
+
+    const submitted: string[] = [];
+    const synced = await syncRunnerOperations(merged.state, {
+      storage: new InMemoryRunnerStorage(),
+      submit: async ({ idempotencyKey }) => {
+        submitted.push(idempotencyKey);
+        return { status: "saved" };
+      },
+    });
+    expect(submitted).toHaveLength(1);
+    expect(synced.operations.filter(({ status }) => status === "saved")).toHaveLength(1);
+  });
+
+  it("upgrades a genuine schema-one record on its first write", async () => {
+    const factory = new FakeFactory();
+    const oldStore = factory.database.createObjectStore(
+      RUNNER_STORAGE_OBJECT_STORE,
+    ) as FakeStore;
+    let pending = stateFor("uid-a", "session-a");
+    pending = runnerReducer(pending, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 30, repetitions: 10 },
+    });
+    pending = runnerReducer(pending, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    const key = runnerStorageKey("uid-a", "session-a");
+    const v1: RunnerStorageRecordV1 = {
+      schemaVersion: 1,
+      key,
+      ownerUid: "uid-a",
+      sessionId: "session-a",
+      state: pending,
+    };
+    oldStore.values.set(key, structuredClone(v1));
+
+    const storage = createStorage(factory, "uid-a");
+    const loaded = await storage.load(key);
+    expect(loaded?.schemaVersion).toBe(1);
+    const committed = await storage.save(key, loaded!);
+
+    expect(committed).toMatchObject({
+      schemaVersion: 2,
+      revision: 1,
+      state: {
+        drafts: { "row-set": { weightKg: 30, repetitions: 10 } },
+        operations: [{ status: "pending" }],
+      },
+    });
+    expect(
+      (factory.database.stores.get(RUNNER_STORAGE_OBJECT_STORE)!.values.get(key) as RunnerStorageRecord)
+        .schemaVersion,
+    ).toBe(2);
+  });
+
+  it("atomically merges distinct operations from two in-memory writers", async () => {
+    const records = new Map<string, RunnerStorageRecord>();
+    const first = new InMemoryRunnerStorage({
+      ownerUid: "uid-a",
+      writerId: "tab-a",
+      records,
+    });
+    const second = new InMemoryRunnerStorage({
+      ownerUid: "uid-a",
+      writerId: "tab-b",
+      records,
+    });
+    const key = runnerStorageKey("uid-a", "session-a");
+    let firstState = stateFor("uid-a", "session-a");
+    firstState = runnerReducer(firstState, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    firstState = runnerReducer(firstState, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    let secondState = stateFor("uid-a", "session-a");
+    secondState = runnerReducer(secondState, {
+      type: "update_note",
+      exerciseId: "row",
+      note: "a distinct note",
+    });
+    secondState = runnerReducer(secondState, {
+      type: "save_note",
+      exerciseId: "row",
+      now: 102,
+    });
+
+    await Promise.all([
+      first.save(key, runnerStorageRecord(firstState, { committedAt: 101 })),
+      second.save(key, runnerStorageRecord(secondState, { committedAt: 102 })),
+    ]);
+    const loaded = await first.load(key);
+
+    expect(loaded?.schemaVersion).toBe(2);
+    expect(
+      loaded?.schemaVersion === 2 ? loaded.revision : undefined,
+    ).toBe(2);
+    expect(loaded?.state.operations).toHaveLength(2);
+    expect(loaded?.state.operations.map(({ status }) => status)).toEqual([
+      "pending",
+      "pending",
+    ]);
+    expect(loaded?.state.operations.map(({ idempotencyKey }) => idempotencyKey)).toEqual(
+      expect.arrayContaining([
+        firstState.operations[0]!.idempotencyKey,
+        secondState.operations[0]!.idempotencyKey,
+      ]),
+    );
+  });
+
+  it("atomically merges distinct operations from two IndexedDB writers", async () => {
+    const factory = new FakeFactory();
+    const first = new IndexedDBRunnerStorage({
+      factory,
+      ownerUid: "uid-a",
+      writerId: "tab-a",
+      clock: () => 101,
+    });
+    const second = new IndexedDBRunnerStorage({
+      factory,
+      ownerUid: "uid-a",
+      writerId: "tab-b",
+      clock: () => 102,
+    });
+    const key = runnerStorageKey("uid-a", "session-a");
+    let firstState = stateFor("uid-a", "session-a");
+    firstState = runnerReducer(firstState, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    firstState = runnerReducer(firstState, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    let secondState = stateFor("uid-a", "session-a");
+    secondState = runnerReducer(secondState, {
+      type: "update_note",
+      exerciseId: "row",
+      note: "a distinct note",
+    });
+    secondState = runnerReducer(secondState, {
+      type: "save_note",
+      exerciseId: "row",
+      now: 102,
+    });
+
+    await first.save(key, runnerStorageRecord(firstState, { committedAt: 101 }));
+    await second.save(key, runnerStorageRecord(secondState, { committedAt: 102 }));
+    const loaded = await first.load(key);
+
+    expect(loaded?.schemaVersion).toBe(2);
+    expect(
+      loaded?.state.operations.map(({ idempotencyKey }) => idempotencyKey),
+    ).toEqual(
+      expect.arrayContaining([
+        firstState.operations[0]!.idempotencyKey,
+        secondState.operations[0]!.idempotencyKey,
+      ]),
+    );
+    expect(loaded?.state.operations).toHaveLength(2);
+  });
+
+  it("keeps a confirmed IndexedDB value over a stale second writer", async () => {
+    const factory = new FakeFactory();
+    const first = new IndexedDBRunnerStorage({
+      factory,
+      ownerUid: "uid-a",
+      writerId: "tab-a",
+      clock: () => 102,
+    });
+    const second = new IndexedDBRunnerStorage({
+      factory,
+      ownerUid: "uid-a",
+      writerId: "tab-b",
+      clock: () => 9_999,
+    });
+    const key = runnerStorageKey("uid-a", "session-a");
+    let confirmed = stateFor("uid-a", "session-a");
+    confirmed = runnerReducer(confirmed, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+    });
+    confirmed = runnerReducer(confirmed, {
+      type: "save_set",
+      setId: "row-set",
+      now: 101,
+    });
+    const confirmedKey = confirmed.operations[0]!.idempotencyKey;
+    confirmed = runnerReducer(confirmed, {
+      type: "operation_saved",
+      idempotencyKey: confirmedKey,
+      now: 102,
+    });
+    let stale = stateFor("uid-a", "session-a");
+    stale = runnerReducer(stale, {
+      type: "update_set_draft",
+      setId: "row-set",
+      draft: { kind: "weight_reps", weightKg: 25, repetitions: 8 },
+    });
+    stale = runnerReducer(stale, {
+      type: "save_set",
+      setId: "row-set",
+      now: 9_999,
+    });
+    const staleKey = stale.operations[0]!.idempotencyKey;
+
+    await first.save(key, runnerStorageRecord(confirmed, { committedAt: 102 }));
+    await second.save(key, runnerStorageRecord(stale, { committedAt: 9_999 }));
+    const loaded = await first.load(key);
+
+    expect(
+      loaded?.state.operations.find(({ idempotencyKey }) => idempotencyKey === confirmedKey)
+        ?.status,
+    ).toBe("saved");
+    expect(
+      loaded?.state.operations.find(({ idempotencyKey }) => idempotencyKey === staleKey)
+        ?.status,
+    ).toBe("superseded");
+    expect(loaded?.state.loggedSets["row-set"]?.measurement).toMatchObject({
+      weightKg: 20,
+      repetitions: 8,
+    });
+  });
+
+  it("keeps post-commit notifications opaque and advisory", async () => {
+    const factory = new FakeFactory();
+    const notifications: unknown[] = [];
+    const storage = new IndexedDBRunnerStorage({
+      factory,
+      ownerUid: "uid-a",
+      writerId: "tab-a",
+      notify: (notification) => {
+        notifications.push(notification);
+        throw new Error("notification delivery is unavailable");
+      },
+    });
+    const state = stateFor("uid-a", "session-a");
+    const key = runnerStorageKey("uid-a", "session-a");
+
+    await expect(
+      storage.save(key, runnerStorageRecord(state)),
+    ).resolves.toMatchObject({ schemaVersion: 2, revision: 1 });
+    expect(notifications).toHaveLength(1);
+    expect(notifications[0]).toEqual({
+      namespaceDigest: expect.stringMatching(/^mwp_sha256_/),
+      revision: 1,
+      writerId: "tab-a",
+    });
+    expect(JSON.stringify(notifications[0])).not.toContain("uid-a");
+    await expect(storage.load(key)).resolves.toMatchObject({
+      schemaVersion: 2,
+      state,
+    });
   });
 });

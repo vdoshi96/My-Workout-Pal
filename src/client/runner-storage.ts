@@ -419,14 +419,18 @@ export class IndexedDBRunnerStorage implements RunnerStorage {
         },
       },
     );
-    this.notify?.({
-      namespaceDigest: stableIdempotencyKey({
-        ownerUid: expected.ownerUid,
-        sessionId: expected.sessionId,
-      }),
-      revision: committed.revision,
-      writerId: committed.writerId,
-    });
+    try {
+      this.notify?.({
+        namespaceDigest: stableIdempotencyKey({
+          ownerUid: expected.ownerUid,
+          sessionId: expected.sessionId,
+        }),
+        revision: committed.revision,
+        writerId: committed.writerId,
+      });
+    } catch {
+      // Notifications are advisory; a delivery failure cannot undo a commit.
+    }
     return cloneStorageRecord(committed) as RunnerStorageRecordV2;
   }
 

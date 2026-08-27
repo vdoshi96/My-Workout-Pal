@@ -1290,9 +1290,7 @@ export type RunnerOperationSemanticTarget = Readonly<{
     | "set"
     | "cardio"
     | "note"
-    | "skip"
-    | "substitution"
-    | "exercise_completion"
+    | "exercise_decision"
     | "session_terminal";
   id: string;
 }>;
@@ -1309,15 +1307,13 @@ export function runnerOperationSemanticTarget(
     case "save_set":
       return { kind: "set", id: operation.payload.setId };
     case "save_cardio":
-      return { kind: "cardio", id: operation.payload.mode };
+      return { kind: "cardio", id: "session" };
     case "save_note":
       return { kind: "note", id: operation.payload.exerciseId };
     case "skip_exercise":
-      return { kind: "skip", id: operation.payload.exerciseId };
     case "substitute_exercise":
-      return { kind: "substitution", id: operation.payload.exerciseId };
     case "complete_exercise":
-      return { kind: "exercise_completion", id: operation.payload.exerciseId };
+      return { kind: "exercise_decision", id: operation.payload.exerciseId };
     case "abandon_session":
     case "complete_session":
       return { kind: "session_terminal", id: operation.payload.sessionId };
@@ -1690,7 +1686,11 @@ function assertRunnerStateIntegrity(
   if (state["connectivity"] !== "online" && state["connectivity"] !== "offline") {
     corruptStorage("The saved workout connectivity state is invalid.");
   }
-  if (state["auth"] !== "valid" && state["auth"] !== "expired") {
+  if (
+    state["auth"] !== "valid" &&
+    state["auth"] !== "expired" &&
+    state["auth"] !== "revoked"
+  ) {
     corruptStorage("The saved workout authentication state is invalid.");
   }
   if (!isObjectRecord(state["sync"])) {
@@ -1702,6 +1702,7 @@ function assertRunnerStateIntegrity(
     sync["status"] !== "pending" &&
     sync["status"] !== "offline" &&
     sync["status"] !== "auth_expired" &&
+    sync["status"] !== "auth_revoked" &&
     sync["status"] !== "failed" &&
     sync["status"] !== "conflict"
   ) {
@@ -1836,6 +1837,7 @@ type OperationCandidate = Readonly<{
   operation: RunnerOperation;
   state: ActiveWorkoutState;
   fromIncoming: boolean;
+  sourceRevision: number;
 }>;
 
 type Mutable<T> = { -readonly [Key in keyof T]: T[Key] };
@@ -1908,6 +1910,20 @@ function supersededOperation(
   };
 }
 
+function canonicalOperationPayloadKey(operation: RunnerOperation): string {
+  return stableStringify({
+    kind: operation.kind,
+    payload: operation.payload,
+  });
+}
+
+function isTerminalOperation(operation: RunnerOperation): boolean {
+  return (
+    operation.kind === "complete_session" ||
+    operation.kind === "abandon_session"
+  );
+}
+
 function mergeOperationCandidates(
   existing: RunnerStorageRecord | undefined,
   incoming: RunnerStorageRecord,
@@ -1916,10 +1932,14 @@ function mergeOperationCandidates(
   candidates: ReadonlyMap<string, OperationCandidate>;
 }> {
   const candidates = new Map<string, OperationCandidate>();
-  const add = (state: ActiveWorkoutState, fromIncoming: boolean): void => {
+  const add = (
+    state: ActiveWorkoutState,
+    fromIncoming: boolean,
+    sourceRevision: number,
+  ): void => {
     for (const operation of state.operations) {
       const prior = candidates.get(operation.idempotencyKey);
-      const candidate = { operation, state, fromIncoming };
+      const candidate = { operation, state, fromIncoming, sourceRevision };
       if (prior === undefined) {
         candidates.set(operation.idempotencyKey, candidate);
         continue;
@@ -1936,8 +1956,10 @@ function mergeOperationCandidates(
       );
     }
   };
-  if (existing !== undefined) add(existing.state, false);
-  add(incoming.state, true);
+  if (existing !== undefined) {
+    add(existing.state, false, recordRevision(existing));
+  }
+  add(incoming.state, true, recordRevision(incoming));
 
   const byTarget = new Map<string, OperationCandidate[]>();
   for (const candidate of candidates.values()) {
@@ -1949,20 +1971,78 @@ function mergeOperationCandidates(
     byTarget.set(key, group);
   }
   for (const group of byTarget.values()) {
-    const saved = group.filter(({ operation }) => operation.status === "saved");
-    const active = group.filter(
+    const equivalentGroups = new Map<string, OperationCandidate[]>();
+    for (const candidate of group) {
+      if (candidate.operation.status === "superseded") continue;
+      const payloadKey = canonicalOperationPayloadKey(candidate.operation);
+      const equivalent = equivalentGroups.get(payloadKey) ?? [];
+      equivalent.push(candidate);
+      equivalentGroups.set(payloadKey, equivalent);
+    }
+    for (const equivalent of equivalentGroups.values()) {
+      if (equivalent.length <= 1) continue;
+      const winner = equivalent.reduce(chooseOperationCandidate);
+      for (const candidate of equivalent) {
+        if (
+          candidate.operation.idempotencyKey === winner.operation.idempotencyKey ||
+          candidate.operation.status === "saved"
+        ) {
+          continue;
+        }
+        candidates.set(candidate.operation.idempotencyKey, {
+          ...candidate,
+          operation: supersededOperation(
+            candidate.operation,
+            "Superseded by an equivalent operation with the same payload.",
+          ),
+        });
+      }
+    }
+    const mergedGroup = group.map(
+      (candidate) => candidates.get(candidate.operation.idempotencyKey) ?? candidate,
+    );
+    const saved = mergedGroup.filter(({ operation }) => operation.status === "saved");
+    const active = mergedGroup.filter(
       ({ operation }) =>
         operation.status === "pending" || operation.status === "failed",
     );
-    if (saved.length > 0) {
-      const savedInIncoming = saved.some(({ fromIncoming }) => fromIncoming);
-      const incomingIsNewer =
-        incoming.state.lastUpdatedAt > (existing?.state.lastUpdatedAt ?? -1);
+    const confirmedTerminal = [...candidates.values()].find(
+      ({ operation }) =>
+        operation.status === "saved" && isTerminalOperation(operation),
+    );
+    if (
+      confirmedTerminal !== undefined &&
+      !mergedGroup.some(({ operation }) => isTerminalOperation(operation)) &&
+      active.some(
+        ({ sourceRevision }) =>
+          sourceRevision < confirmedTerminal.sourceRevision,
+      )
+    ) {
       for (const candidate of active) {
-        if (
-          candidate.fromIncoming &&
-          (savedInIncoming || incomingIsNewer)
-        ) {
+        if (candidate.sourceRevision >= confirmedTerminal.sourceRevision) {
+          continue;
+        }
+        candidates.set(candidate.operation.idempotencyKey, {
+          ...candidate,
+          operation: supersededOperation(
+            candidate.operation,
+            "Superseded by the server-confirmed terminal session state.",
+          ),
+        });
+      }
+      continue;
+    }
+    if (saved.length > 0) {
+      for (const candidate of active) {
+        const sourceHasSavedTarget = candidate.state.operations.some(
+          (operation) =>
+            operation.status === "saved" &&
+            semanticTargetKey(runnerOperationSemanticTarget(operation)) ===
+              semanticTargetKey(
+                runnerOperationSemanticTarget(candidate.operation),
+              ),
+        );
+        if (sourceHasSavedTarget) {
           continue;
         }
         candidates.set(
