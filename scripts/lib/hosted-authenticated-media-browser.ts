@@ -102,6 +102,10 @@ export class HostedAuthenticatedMediaQaExecutionError extends Error {
   }
 }
 
+export type HostedAuthenticatedMediaNativeZoomAction =
+  | "restore_100_percent"
+  | "set_200_percent";
+
 function providerCode(error: unknown): string | undefined {
   if (typeof error !== "object" || error === null || !("code" in error)) {
     return undefined;
@@ -608,29 +612,23 @@ async function verifyActualZoom(
   origin: string,
   runnerPath: string,
   setStage: (stage: HostedAuthenticatedMediaQaStage) => void,
+  requestNativeZoom: (
+    action: HostedAuthenticatedMediaNativeZoomAction,
+  ) => Promise<void>,
 ): Promise<true> {
   setStage("zoom_state");
   await page.goto(`${origin}/app`);
-  await page.keyboard.press("Meta+0");
-  await page.waitForTimeout(400);
   const devicePixelRatioBefore = await page.evaluate(() => devicePixelRatio);
-  for (let index = 0; index < 5; index += 1) {
-    await page.keyboard.press("Meta+=");
-    await page.waitForTimeout(120);
-  }
+  await requestNativeZoom("set_200_percent");
+  await page.waitForTimeout(400);
   const devicePixelRatioAfter = await page.evaluate(() => devicePixelRatio);
   const reportedPercent = Math.round(
     devicePixelRatioAfter / devicePixelRatioBefore * 100,
   );
 
   try {
-    assert.equal(browserZoomEvidenceIsExact({
-      devicePixelRatioAfter,
-      devicePixelRatioBefore,
-      emulationUsed: false,
-      reportedPercent,
-      restoredPercent: 100,
-    }), true);
+    assert.equal(reportedPercent, 200);
+    assert.ok(Math.abs(devicePixelRatioAfter / devicePixelRatioBefore - 2) < 0.01);
     setStage("zoom_app");
     await assertOneAxis(page, `${origin}/app`, /Five-day starter route/u);
     setStage("zoom_collection");
@@ -644,16 +642,27 @@ async function verifyActualZoom(
     await assertOneAxis(page, `${origin}${runnerPath}`, /^Push$/u);
     await assertAccessible(page);
   } finally {
-    await page.keyboard.press("Meta+0");
+    setStage("zoom_restore");
+    await requestNativeZoom("restore_100_percent");
     await page.waitForTimeout(400);
   }
   const restored = await page.evaluate(() => devicePixelRatio);
-  assert.ok(Math.abs(restored - devicePixelRatioBefore) < 0.01);
+  const restoredPercent = Math.round(restored / devicePixelRatioBefore * 100);
+  assert.equal(browserZoomEvidenceIsExact({
+    devicePixelRatioAfter,
+    devicePixelRatioBefore,
+    emulationUsed: false,
+    reportedPercent,
+    restoredPercent,
+  }), true);
   return true;
 }
 
 export async function executeHostedAuthenticatedMediaQa(
   config: HostedAuthQaConfig,
+  requestNativeZoom: (
+    action: HostedAuthenticatedMediaNativeZoomAction,
+  ) => Promise<void>,
 ): Promise<Readonly<{
   blockedFirstEmbedVerified: true;
   cleanupConfirmed: true;
@@ -731,9 +740,8 @@ export async function executeHostedAuthenticatedMediaQa(
       (nextStage) => {
         stage = nextStage;
       },
+      requestNativeZoom,
     );
-    stage = "zoom_restore";
-    await page.keyboard.press("Meta+0");
     stage = "accessibility";
     await assertAccessible(page);
     stage = "assertions";

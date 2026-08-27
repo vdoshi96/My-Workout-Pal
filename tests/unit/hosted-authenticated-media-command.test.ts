@@ -42,6 +42,9 @@ describe("hosted authenticated media QA command", () => {
     );
     expect(source).toContain("Hosted authenticated media QA failed safely");
     expect(source).toContain("cleanup was confirmed");
+    expect(source).toContain("ready for native 200-percent zoom");
+    expect(source).toContain("ready to restore native 100-percent zoom");
+    expect(source).toContain("Native zoom confirmation timed out");
 
     const browserSource = readFileSync(
       new URL("../../scripts/lib/hosted-authenticated-media-browser.ts", import.meta.url),
@@ -57,6 +60,9 @@ describe("hosted authenticated media QA command", () => {
     expect(browserSource).toContain('/app/programs`, /^Your routes$/u');
     expect(browserSource).toContain('/app/program/edit`, /^Edit your route$/u');
     expect(browserSource).toContain('`${origin}${runnerPath}`, /^Push$/u');
+    expect(browserSource).toContain('requestNativeZoom("set_200_percent")');
+    expect(browserSource).toContain('requestNativeZoom("restore_100_percent")');
+    expect(browserSource).not.toContain('page.keyboard.press("Meta+=")');
     expect(browserSource).toContain('setStage("media_demo_one")');
     expect(browserSource).toContain('setStage("media_demo_two")');
     expect(browserSource).toContain('"media_demo_one_control"');

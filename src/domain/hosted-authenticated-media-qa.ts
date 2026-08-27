@@ -8,6 +8,7 @@ export type HostedAuthenticatedMediaQaConfigurationCode =
   | "approval_required"
   | "database_unavailable"
   | "firebase_unavailable"
+  | "native_zoom_required"
   | "origin_invalid"
   | "project_mismatch";
 
@@ -30,6 +31,9 @@ export function parseHostedAuthenticatedMediaQaConfig(
 ): HostedAuthQaConfig {
   if (environment["MWP_HOSTED_AUTHENTICATED_MEDIA_APPROVED"] !== "1") {
     throw new HostedAuthenticatedMediaQaConfigurationError("approval_required");
+  }
+  if (environment["MWP_HOSTED_AUTHENTICATED_MEDIA_NATIVE_ZOOM"] !== "1") {
+    throw new HostedAuthenticatedMediaQaConfigurationError("native_zoom_required");
   }
   if (!environment["DATABASE_URL"]?.trim()) {
     throw new HostedAuthenticatedMediaQaConfigurationError("database_unavailable");

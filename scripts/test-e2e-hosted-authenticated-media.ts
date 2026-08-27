@@ -3,6 +3,32 @@ import {
   parseHostedAuthenticatedMediaQaConfig,
 } from "../src/domain/hosted-authenticated-media-qa";
 
+type NativeZoomAction = "restore_100_percent" | "set_200_percent";
+
+async function waitForNativeZoom(action: NativeZoomAction): Promise<void> {
+  if (!process.stdin.isTTY) {
+    throw new Error("Native zoom confirmation requires an interactive terminal.");
+  }
+  const instruction = action === "set_200_percent"
+    ? "Hosted authenticated media QA is ready for native 200-percent zoom. Press Return after setting Chrome to 200 percent.\n"
+    : "Hosted authenticated media QA is ready to restore native 100-percent zoom. Press Return after resetting Chrome to 100 percent.\n";
+  process.stdout.write(instruction);
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      process.stdin.off("data", onData);
+      reject(new Error("Native zoom confirmation timed out."));
+    }, 120_000);
+    const onData = () => {
+      clearTimeout(timeout);
+      process.stdin.pause();
+      resolve();
+    };
+    process.stdin.once("data", onData);
+    process.stdin.resume();
+  });
+}
+
 async function main(): Promise<number> {
   let config: ReturnType<typeof parseHostedAuthenticatedMediaQaConfig>;
   try {
@@ -22,7 +48,7 @@ async function main(): Promise<number> {
       "./lib/hosted-authenticated-media-browser"
     );
     process.stdout.write(
-      `${JSON.stringify(await executeHostedAuthenticatedMediaQa(config))}\n`,
+      `${JSON.stringify(await executeHostedAuthenticatedMediaQa(config, waitForNativeZoom))}\n`,
     );
     return 0;
   } catch (error) {

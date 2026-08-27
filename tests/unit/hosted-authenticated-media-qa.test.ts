@@ -15,6 +15,7 @@ const validEnvironment = {
   FIREBASE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nfixture-not-a-real-private-key-value\n-----END PRIVATE KEY-----",
   FIREBASE_PROJECT_ID: "my-workout-pal-92819",
   MWP_HOSTED_AUTHENTICATED_MEDIA_APPROVED: "1",
+  MWP_HOSTED_AUTHENTICATED_MEDIA_NATIVE_ZOOM: "1",
   MWP_HOSTED_AUTH_ORIGIN: "https://my-workout-pal-chi.vercel.app",
   NEXT_PUBLIC_FIREBASE_API_KEY: "fixture-public-api-key",
   NEXT_PUBLIC_FIREBASE_APP_ID: "1:381810672975:web:fixture",
@@ -28,6 +29,7 @@ const invalidCases: readonly Readonly<[
   code: HostedAuthenticatedMediaQaConfigurationCode,
 ]>[] = [
   ["approval missing", { MWP_HOSTED_AUTHENTICATED_MEDIA_APPROVED: undefined }, "approval_required"],
+  ["native zoom approval missing", { MWP_HOSTED_AUTHENTICATED_MEDIA_NATIVE_ZOOM: undefined }, "native_zoom_required"],
   ["database missing", { DATABASE_URL: undefined }, "database_unavailable"],
   ["HTTP origin", { MWP_HOSTED_AUTH_ORIGIN: "http://my-workout-pal-chi.vercel.app" }, "origin_invalid"],
   ["unknown project", { FIREBASE_PROJECT_ID: "another-project" }, "project_mismatch"],

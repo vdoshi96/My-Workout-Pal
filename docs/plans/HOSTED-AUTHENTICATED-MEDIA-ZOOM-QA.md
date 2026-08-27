@@ -25,7 +25,7 @@ The same authenticated session visits `/app`, `/app/programs`, `/app/program/edi
 - The runner receives exactly two approved videos for the effective canonical exercise, with distinct valid 11-character IDs, display order 1 and 2, title/channel attribution, privacy-enhanced embeds, no autoplay, visible controls, and direct YouTube fallbacks.
 - At most one YouTube iframe is mounted. Switching tabs replaces the iframe; it does not start a second player.
 - Blocking the first embed request may not block sets, notes, skip, substitution, cardio, or alternate-demo selection. No application success is inferred from a third-party player request alone.
-- Browser zoom is actual browser state. Viewport emulation, device scale factor, CSS `zoom`, transforms, screenshots, or page-scale emulation are not substitutes.
+- Browser zoom is actual browser state. The interactive command pauses for a native macOS Chrome zoom gesture, then uses the authenticated Playwright page to measure the resulting device-pixel-ratio change and route geometry. Viewport emulation, device scale factor, CSS `zoom`, transforms, screenshots, or page-scale emulation are not substitutes.
 - No workout completion is required. Any started session and every owner row are removed during cleanup; global catalog/video/template counts and all other owners remain unchanged.
 
 ## Persistence contract
@@ -36,7 +36,7 @@ Screenshots are optional and identity-free; exact browser state, iframe/player s
 
 ## Authentication and authorization
 
-The command requires an explicit opt-in environment flag, exact production origin, expected Firebase project ID, and existing local Firebase Admin plus Neon credentials. It rejects any non-HTTPS or unexpected origin, project mismatch, absent credential, or aggregate baseline uncertainty before identity creation. Password verification uses Firebase Admin only for the disposable test identity; the application session still comes from the real client token and server exchange.
+The command requires explicit provider and native-zoom opt-in environment flags, an interactive terminal, exact production origin, expected Firebase project ID, and existing local Firebase Admin plus Neon credentials. It rejects any non-HTTPS or unexpected origin, project mismatch, absent credential, missing native-zoom authorization, or aggregate baseline uncertainty before identity creation. At the two bounded prompts an operator applies native Chrome 200-percent zoom and then native 100-percent reset; lack of confirmation times out into exact-account cleanup. Password verification uses Firebase Admin only for the disposable test identity; the application session still comes from the real client token and server exchange.
 
 No Google identity is used, so Google consent and Google reauthentication remain separate. A foreign-owner probe is unnecessary because the completed hosted deletion lane already proves cross-owner equivalence; this lane may not broaden into another two-user run.
 
