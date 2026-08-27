@@ -168,21 +168,21 @@ export async function runRunnerPersistenceCycle(
   options: RunnerPersistenceCycleOptions,
   isCurrent: RunnerPersistenceGuard = () => true,
 ): Promise<ActiveWorkoutState | undefined> {
-  await persistRunnerState(options.storage, state);
+  const committed = await persistRunnerState(options.storage, state);
   if (!isCurrent()) return undefined;
 
-  const hasPending = state.operations.some(
+  const hasPending = committed.operations.some(
     ({ status }) => status === "pending",
   );
   if (
     !hasPending ||
-    state.connectivity === "offline" ||
-    state.auth !== "valid"
+    committed.connectivity === "offline" ||
+    committed.auth !== "valid"
   ) {
-    return state;
+    return committed;
   }
 
-  const next = await syncRunnerOperations(state, {
+  const next = await syncRunnerOperations(committed, {
     storage: options.storage,
     submit: options.submitter,
   });

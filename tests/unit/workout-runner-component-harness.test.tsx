@@ -195,6 +195,45 @@ describe("WorkoutRunner injected boundary harness", () => {
     expect(stored?.state.operations.at(-1)?.status).toBe("pending");
   });
 
+  it("adopts the committed cross-tab merge when no operation needs submission", async () => {
+    const snapshot = createWorkoutSnapshot(snapshotInput);
+    const storage = createInMemoryRunnerStorage();
+    const initial = createRunnerState(snapshot, { now: 2_000 });
+    const draft = runnerReducer(initial, {
+      type: "update_set_draft",
+      setId: "press-work-1",
+      draft: { kind: "weight_reps", weightKg: 22.5, repetitions: 9 },
+    });
+    let confirmed = runnerReducer(draft, {
+      type: "save_set",
+      setId: "press-work-1",
+      now: 2_001,
+    });
+    confirmed = runnerReducer(confirmed, {
+      type: "operation_saved",
+      idempotencyKey: confirmed.operations[0]!.idempotencyKey,
+      now: 2_002,
+    });
+    await persistRunnerState(storage, confirmed);
+
+    let submitted = false;
+    const result = await runRunnerPersistenceCycle(initial, {
+      storage,
+      submitter: async () => {
+        submitted = true;
+        return { status: "saved", persistedId: "unexpected" };
+      },
+    });
+
+    expect(submitted).toBe(false);
+    expect(result?.loggedSets["press-work-1"]?.measurement).toMatchObject({
+      weightKg: 22.5,
+      repetitions: 9,
+    });
+    expect(result?.operations).toHaveLength(1);
+    expect(result?.operations[0]?.status).toBe("saved");
+  });
+
   it("keys restoration by owner and session, not session alone", () => {
     const ownerA = runnerSnapshotIdentity({
       ownerUid: "owner-a",
