@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   createHostedAuthQaIdentity,
   HostedAuthQaConfigurationError,
+  parseHostedAuthQaActionLink,
+  parseHostedAuthQaEmailVerificationResponse,
+  parseHostedAuthQaPasswordResetResponse,
   parseHostedAuthQaConfig,
   type HostedAuthQaConfigurationCode,
 } from "@/domain/hosted-auth-qa";
@@ -32,12 +35,15 @@ const invalidCases: readonly Readonly<[
   ["query URL", { MWP_HOSTED_AUTH_ORIGIN: "https://my-workout-pal-chi.vercel.app/?token=secret" }, "origin_invalid"],
   ["public project mismatch", { NEXT_PUBLIC_FIREBASE_PROJECT_ID: "another-project" }, "project_mismatch"],
   ["Admin project mismatch", { FIREBASE_PROJECT_ID: "another-project" }, "project_mismatch"],
+  ["Auth domain mismatch", { NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "another-project.firebaseapp.com" }, "project_mismatch"],
   ["Admin credential missing", { FIREBASE_PRIVATE_KEY: undefined }, "firebase_unavailable"],
 ];
 
 describe("hosted authentication QA boundary", () => {
   it("accepts only the approved production origin and matching Firebase project", () => {
     expect(parseHostedAuthQaConfig(validEnvironment)).toEqual({
+      apiKey: "fixture-public-api-key",
+      authDomain: "my-workout-pal-92819.firebaseapp.com",
       origin: "https://my-workout-pal-chi.vercel.app",
       projectId: "my-workout-pal-92819",
     });
@@ -59,7 +65,76 @@ describe("hosted authentication QA boundary", () => {
     expect(identity.password).toMatch(/[a-z]/u);
     expect(identity.password).toMatch(/[0-9]/u);
     expect(identity.password).toContain("!");
+    expect(identity.recoveredPassword).toHaveLength(47);
+    expect(identity.recoveredPassword).not.toBe(identity.password);
+    expect(identity.recoveredPassword).toMatch(/[A-Z]/u);
+    expect(identity.recoveredPassword).toMatch(/[a-z]/u);
+    expect(identity.recoveredPassword).toMatch(/[0-9]/u);
+    expect(identity.recoveredPassword).toContain("!");
     expect(identity.displayMarker).toBe("My Workout Pal hosted QA");
     expect(JSON.stringify(identity)).not.toContain("@gmail.com");
+  });
+
+  it("accepts only the exact Firebase action handler, project key, mode, and one action code", () => {
+    expect(parseHostedAuthQaActionLink(
+      "https://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=verification-code&apiKey=fixture-public-api-key&lang=en",
+      {
+        apiKey: "fixture-public-api-key",
+        authDomain: "my-workout-pal-92819.firebaseapp.com",
+        mode: "verifyEmail",
+      },
+    )).toEqual({ oobCode: "verification-code" });
+
+    expect(parseHostedAuthQaActionLink(
+      "https://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=reset-code&apiKey=fixture-public-api-key",
+      {
+        apiKey: "fixture-public-api-key",
+        authDomain: "my-workout-pal-92819.firebaseapp.com",
+        mode: "resetPassword",
+      },
+    )).toEqual({ oobCode: "reset-code" });
+  });
+
+  it.each([
+    ["HTTP", "http://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=code&apiKey=fixture-public-api-key"],
+    ["credentials", "https://user:secret@my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=code&apiKey=fixture-public-api-key"],
+    ["host", "https://example.com/__/auth/action?mode=verifyEmail&oobCode=code&apiKey=fixture-public-api-key"],
+    ["path", "https://my-workout-pal-92819.firebaseapp.com/not-auth/action?mode=verifyEmail&oobCode=code&apiKey=fixture-public-api-key"],
+    ["project key", "https://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=code&apiKey=wrong-key"],
+    ["mode", "https://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=code&apiKey=fixture-public-api-key"],
+    ["missing code", "https://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=verifyEmail&apiKey=fixture-public-api-key"],
+    ["repeated code", "https://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=one&oobCode=two&apiKey=fixture-public-api-key"],
+    ["unknown query", "https://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=code&apiKey=fixture-public-api-key&token=secret"],
+    ["fragment", "https://my-workout-pal-92819.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=code&apiKey=fixture-public-api-key#secret"],
+  ])("rejects a %s action link", (_name, actionLink) => {
+    expect(() => parseHostedAuthQaActionLink(actionLink, {
+      apiKey: "fixture-public-api-key",
+      authDomain: "my-workout-pal-92819.firebaseapp.com",
+      mode: "verifyEmail",
+    })).toThrowError("Hosted authentication QA action link is invalid.");
+  });
+
+  it("binds action responses to the captured disposable identity", () => {
+    expect(parseHostedAuthQaEmailVerificationResponse(
+      { email: "member@example.com", localId: "captured-uid" },
+      { email: "member@example.com", uid: "captured-uid" },
+    )).toEqual({ emailVerified: true });
+    expect(parseHostedAuthQaPasswordResetResponse(
+      { email: "member@example.com", requestType: "PASSWORD_RESET" },
+      "member@example.com",
+    )).toEqual({ requestType: "PASSWORD_RESET" });
+
+    expect(() => parseHostedAuthQaEmailVerificationResponse(
+      { email: "other@example.com", localId: "captured-uid" },
+      { email: "member@example.com", uid: "captured-uid" },
+    )).toThrowError("Hosted authentication QA action response is invalid.");
+    expect(() => parseHostedAuthQaEmailVerificationResponse(
+      { email: "member@example.com", localId: "other-uid" },
+      { email: "member@example.com", uid: "captured-uid" },
+    )).toThrowError("Hosted authentication QA action response is invalid.");
+    expect(() => parseHostedAuthQaPasswordResetResponse(
+      { email: "member@example.com", requestType: "VERIFY_EMAIL" },
+      "member@example.com",
+    )).toThrowError("Hosted authentication QA action response is invalid.");
   });
 });

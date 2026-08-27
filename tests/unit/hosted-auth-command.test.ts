@@ -47,5 +47,15 @@ describe("hosted authentication QA command", () => {
     expect(browserSource).toContain('["GET", "HEAD"].includes(request.method())');
     expect(browserSource).toContain('errorText.startsWith("net::ERR_ABORTED")');
     expect(browserSource).toContain('errorText === "cancelled"');
+    expect(browserSource).toContain('"verification_link_generated"');
+    expect(browserSource).toContain('"verification_code_confirmed"');
+    expect(browserSource).toContain('"password_reset_link_generated"');
+    expect(browserSource).toContain('"password_reset_code_verified"');
+    expect(browserSource).toContain('"password_reset_code_confirmed"');
+    expect(browserSource).toContain('"old_password_rejected"');
+    expect(browserSource).toContain("parseHostedAuthQaActionLink");
+    expect(browserSource).toContain("parseHostedAuthQaEmailVerificationResponse");
+    expect(browserSource).toContain("parseHostedAuthQaPasswordResetResponse");
+    expect(browserSource).not.toMatch(/console\.(?:log|error).*oob|process\.(?:stdout|stderr).*oob/iu);
   });
 });

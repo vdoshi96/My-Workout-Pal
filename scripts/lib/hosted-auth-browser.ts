@@ -8,6 +8,9 @@ import assert from "node:assert/strict";
 
 import {
   createHostedAuthQaIdentity,
+  parseHostedAuthQaActionLink,
+  parseHostedAuthQaEmailVerificationResponse,
+  parseHostedAuthQaPasswordResetResponse,
   type HostedAuthQaConfig,
 } from "../../src/domain/hosted-auth-qa";
 import { getFirebaseAdminAuth } from "../../src/server/firebase/admin";
@@ -34,6 +37,10 @@ export type HostedAuthQaStage =
   | "firebase_inventory_after"
   | "firebase_inventory_before"
   | "invalid_credentials"
+  | "old_password_rejected"
+  | "password_reset_code_confirmed"
+  | "password_reset_code_verified"
+  | "password_reset_link_generated"
   | "recovery_known"
   | "recovery_unknown"
   | "registration"
@@ -41,7 +48,8 @@ export type HostedAuthQaStage =
   | "sign_out"
   | "unverified_sign_in"
   | "unverified_session"
-  | "verification"
+  | "verification_code_confirmed"
+  | "verification_link_generated"
   | "verified_return_route"
   | "verified_sign_in_navigation"
   | "verified_sign_in_submit"
@@ -224,6 +232,34 @@ async function submitEmailForm(
   await page.keyboard.press("Enter");
 }
 
+async function postFirebaseAction(
+  config: HostedAuthQaConfig,
+  operation: "resetPassword" | "update",
+  body: Readonly<Record<string, string>>,
+): Promise<unknown> {
+  const response = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:${operation}?key=${encodeURIComponent(config.apiKey)}`,
+    {
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+      signal: AbortSignal.timeout(15_000),
+    },
+  );
+  if (!response.ok) {
+    throw new Error("Hosted authentication QA action request failed.");
+  }
+  const responseBody = await response.text();
+  if (responseBody.length > 32_768) {
+    throw new Error("Hosted authentication QA action response is invalid.");
+  }
+  try {
+    return JSON.parse(responseBody) as unknown;
+  } catch {
+    throw new Error("Hosted authentication QA action response is invalid.");
+  }
+}
+
 async function chooseAuthTask(page: Page, name: "Recovery" | "Register" | "Sign in") {
   const task = page.getByRole("button", { name, exact: true });
   await task.focus();
@@ -348,11 +384,62 @@ async function runBrowserLifecycle(
       (cookie) => cookie.name === sessionCookieName,
     )).toBe(false);
 
-    setStage("verification");
-    await auth.updateUser(created.uid, { emailVerified: true });
+    setStage("verification_link_generated");
+    const verificationLink = await auth.generateEmailVerificationLink(identity.email);
+    const verificationAction = parseHostedAuthQaActionLink(verificationLink, {
+      apiKey: config.apiKey,
+      authDomain: config.authDomain,
+      mode: "verifyEmail",
+    });
+    setStage("verification_code_confirmed");
+    parseHostedAuthQaEmailVerificationResponse(
+      await postFirebaseAction(config, "update", {
+        oobCode: verificationAction.oobCode,
+      }),
+      { email: identity.email, uid: created.uid },
+    );
+    assert.equal((await auth.getUser(created.uid)).emailVerified, true);
+
+    setStage("password_reset_link_generated");
+    const passwordResetLink = await auth.generatePasswordResetLink(identity.email);
+    const passwordResetAction = parseHostedAuthQaActionLink(passwordResetLink, {
+      apiKey: config.apiKey,
+      authDomain: config.authDomain,
+      mode: "resetPassword",
+    });
+    setStage("password_reset_code_verified");
+    parseHostedAuthQaPasswordResetResponse(
+      await postFirebaseAction(config, "resetPassword", {
+        oobCode: passwordResetAction.oobCode,
+      }),
+      identity.email,
+    );
+    setStage("password_reset_code_confirmed");
+    parseHostedAuthQaPasswordResetResponse(
+      await postFirebaseAction(config, "resetPassword", {
+        newPassword: identity.recoveredPassword,
+        oobCode: passwordResetAction.oobCode,
+      }),
+      identity.email,
+    );
+
     setStage("verified_return_route");
     await page.goto(`${config.origin}/sign-in?returnTo=%2Fapp`);
     await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
+
+    setStage("old_password_rejected");
+    const oldPasswordResponse = waitForFirebaseAuthResponse(page, "signInWithPassword");
+    await submitEmailForm(page, {
+      email: identity.email,
+      password: identity.password,
+      submitName: "Sign in with email",
+    });
+    assert.equal((await oldPasswordResponse).status(), 400);
+    expectedConsoleHttpStatuses.push(400);
+    await expect(page.locator(".auth-message")).toHaveText(
+      "The email or password is not valid.",
+    );
+
     setStage("verified_sign_in_submit");
     const verifiedSessionResponse = page.waitForResponse((response) => {
       const url = new URL(response.url());
@@ -362,7 +449,7 @@ async function runBrowserLifecycle(
     });
     await submitEmailForm(page, {
       email: identity.email,
-      password: identity.password,
+      password: identity.recoveredPassword,
       submitName: "Sign in with email",
     });
     setStage("verified_session_create");
@@ -421,11 +508,13 @@ export async function executeHostedAuthQa(
   config: HostedAuthQaConfig,
 ): Promise<Readonly<{
   cleanupConfirmed: true;
+  emailActionCodesVerified: true;
   engine: "chromium";
   firstPartyMutationCount: number;
   firebaseUserCountAfter: number;
   firebaseUserCountBefore: number;
   origin: string;
+  passwordRecoveryConfirmed: true;
   secureCookieVerified: true;
   status: "passed";
   viewport: "1440x1000";
@@ -504,11 +593,13 @@ export async function executeHostedAuthQa(
 
   return {
     cleanupConfirmed: true,
+    emailActionCodesVerified: true,
     engine: "chromium",
     firstPartyMutationCount: browserResult.firstPartyMutationCount,
     firebaseUserCountAfter: beforeCount,
     firebaseUserCountBefore: beforeCount,
     origin: config.origin,
+    passwordRecoveryConfirmed: true,
     secureCookieVerified: true,
     status: "passed",
     viewport: "1440x1000",
