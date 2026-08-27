@@ -75,7 +75,7 @@ The reserved example-domain address cannot receive a verification or recovery me
 - No onboarding, program, workout, preference, or custom-exercise mutation is submitted.
 - The disposable Firebase identity is confirmed absent after cleanup, and aggregate user count returns to its pre-run value.
 - No credential, token, cookie, UID, email address, environment value, provider payload, trace, video, or browser profile is retained.
-- Failures remain failures and identify whether cleanup was confirmed without exposing sensitive details.
+- Failures remain failures and identify a stable, non-sensitive lifecycle stage plus whether cleanup was confirmed without exposing sensitive details.
 
 ## Automated tests
 

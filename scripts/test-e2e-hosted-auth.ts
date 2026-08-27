@@ -22,10 +22,15 @@ async function main(): Promise<number> {
     return 0;
   } catch (error) {
     const { HostedAuthQaExecutionError } = await import("./lib/hosted-auth-browser");
+    const stage = error instanceof HostedAuthQaExecutionError
+      ? error.stage
+      : "unclassified";
     const cleanup = error instanceof HostedAuthQaExecutionError && error.cleanupConfirmed
       ? "Disposable Firebase identity cleanup was confirmed."
       : "One disposable Firebase identity may require manual cleanup.";
-    process.stderr.write(`Hosted authentication QA failed safely. ${cleanup}\n`);
+    process.stderr.write(
+      `Hosted authentication QA failed safely at the ${stage} stage. ${cleanup}\n`,
+    );
     return 1;
   }
 }

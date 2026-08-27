@@ -21,13 +21,33 @@ const evidencePaths = {
   verified: resolve(evidenceDirectory, "hosted-auth-verified-desktop.png"),
 } as const;
 
+export type HostedAuthQaStage =
+  | "assertions"
+  | "browser_launch"
+  | "cleanup"
+  | "duplicate_registration"
+  | "firebase_inventory_after"
+  | "firebase_inventory_before"
+  | "invalid_credentials"
+  | "recovery_known"
+  | "recovery_unknown"
+  | "registration"
+  | "revocation"
+  | "sign_out"
+  | "unverified_sign_in"
+  | "unverified_session"
+  | "verification"
+  | "verified_sign_in";
+
 export class HostedAuthQaExecutionError extends Error {
   readonly cleanupConfirmed: boolean;
+  readonly stage: HostedAuthQaStage;
 
-  constructor(cleanupConfirmed: boolean) {
+  constructor(cleanupConfirmed: boolean, stage: HostedAuthQaStage) {
     super("Hosted authentication QA failed.");
     this.name = "HostedAuthQaExecutionError";
     this.cleanupConfirmed = cleanupConfirmed;
+    this.stage = stage;
   }
 }
 
@@ -172,10 +192,12 @@ async function runBrowserLifecycle(
   config: HostedAuthQaConfig,
   identity: ReturnType<typeof createHostedAuthQaIdentity>,
   setCreatedUid: (uid: string) => void,
+  setStage: (stage: HostedAuthQaStage) => void,
 ): Promise<Readonly<{
   firstPartyMutationCount: number;
   secureCookieVerified: true;
 }>> {
+  setStage("browser_launch");
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { height: 1_000, width: 1_440 } });
   const page = await context.newPage();
@@ -186,6 +208,7 @@ async function runBrowserLifecycle(
     await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
     await assertAccessible(page);
 
+    setStage("invalid_credentials");
     await submitEmailForm(page, {
       email: identity.email,
       password: "Wrong-password-1!",
@@ -195,6 +218,7 @@ async function runBrowserLifecycle(
       "The email or password is not valid.",
     );
 
+    setStage("registration");
     await chooseAuthTask(page, "Register");
     await submitEmailForm(page, {
       email: identity.email,
@@ -207,6 +231,7 @@ async function runBrowserLifecycle(
     const created = await auth.getUserByEmail(identity.email);
     setCreatedUid(created.uid);
 
+    setStage("duplicate_registration");
     await chooseAuthTask(page, "Register");
     await submitEmailForm(page, {
       email: identity.email,
@@ -217,6 +242,7 @@ async function runBrowserLifecycle(
       "An account already uses this email. Sign in or reset the password.",
     );
 
+    setStage("recovery_unknown");
     await chooseAuthTask(page, "Recovery");
     const unknownRecovery = page.waitForResponse((response) =>
       response.url().includes("accounts:sendOobCode") && response.request().method() === "POST",
@@ -228,6 +254,7 @@ async function runBrowserLifecycle(
     await unknownRecovery;
     await expect(page.locator(".auth-message")).toHaveText(genericRecoveryMessage);
 
+    setStage("recovery_known");
     const knownRecovery = page.waitForResponse((response) =>
       response.url().includes("accounts:sendOobCode") && response.request().method() === "POST",
     );
@@ -238,6 +265,7 @@ async function runBrowserLifecycle(
     await knownRecovery;
     await expect(page.locator(".auth-message")).toHaveText(genericRecoveryMessage);
 
+    setStage("unverified_sign_in");
     await chooseAuthTask(page, "Sign in");
     await submitEmailForm(page, {
       email: identity.email,
@@ -245,6 +273,7 @@ async function runBrowserLifecycle(
       submitName: "Sign in with email",
     });
     await page.waitForURL(`${config.origin}/app`);
+    setStage("unverified_session");
     await expect(page.getByText("Email verification required", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Create my program" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
@@ -252,6 +281,7 @@ async function runBrowserLifecycle(
     await assertAccessible(page);
     await captureEvidence(page, evidencePaths.unverified);
 
+    setStage("sign_out");
     const shellSignOut = page.getByRole("button", { name: "Sign out", exact: true });
     await shellSignOut.focus();
     await page.keyboard.press("Enter");
@@ -260,7 +290,9 @@ async function runBrowserLifecycle(
       (cookie) => cookie.name === sessionCookieName,
     )).toBe(false);
 
+    setStage("verification");
     await auth.updateUser(created.uid, { emailVerified: true });
+    setStage("verified_sign_in");
     await submitEmailForm(page, {
       email: identity.email,
       password: identity.password,
@@ -273,12 +305,14 @@ async function runBrowserLifecycle(
     await assertAccessible(page);
     await captureEvidence(page, evidencePaths.verified);
 
+    setStage("revocation");
     await wait(1_100);
     await auth.revokeRefreshTokens(created.uid);
     await page.reload();
     await page.waitForURL(`${config.origin}/sign-in?returnTo=%2Fapp`);
     await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
 
+    setStage("assertions");
     failures.assertClean();
     assert.deepEqual(failures.firstPartyMutations, [
       "POST /api/auth/session",
@@ -310,11 +344,13 @@ export async function executeHostedAuthQa(
 }>> {
   const auth = getFirebaseAdminAuth();
   const identity = createHostedAuthQaIdentity();
+  let stage: HostedAuthQaStage = "firebase_inventory_before";
   const beforeCount = await firebaseUserCount(auth);
   let createdUid: string | undefined;
   let browserResult: Awaited<ReturnType<typeof runBrowserLifecycle>> | undefined;
   let runFailed = false;
   let cleanupConfirmed = false;
+  let failureStage: HostedAuthQaStage = stage;
 
   await mkdir(evidenceDirectory, { recursive: true });
   try {
@@ -325,16 +361,25 @@ export async function executeHostedAuthQa(
       (uid) => {
         createdUid = uid;
       },
+      (nextStage) => {
+        stage = nextStage;
+      },
     );
+    stage = "firebase_inventory_after";
     assert.equal(await firebaseUserCount(auth), beforeCount + 1);
   } catch {
     runFailed = true;
+    failureStage = stage;
   } finally {
+    stage = "cleanup";
     if (!createdUid) {
       try {
         createdUid = (await auth.getUserByEmail(identity.email)).uid;
       } catch (error) {
-        if (!isUserNotFound(error)) runFailed = true;
+        if (!isUserNotFound(error)) {
+          runFailed = true;
+          failureStage = "cleanup";
+        }
       }
     }
 
@@ -342,7 +387,10 @@ export async function executeHostedAuthQa(
       try {
         await auth.deleteUser(createdUid);
       } catch (error) {
-        if (!isUserNotFound(error)) runFailed = true;
+        if (!isUserNotFound(error)) {
+          runFailed = true;
+          failureStage = "cleanup";
+        }
       }
     }
 
@@ -351,6 +399,7 @@ export async function executeHostedAuthQa(
       cleanupConfirmed = identityAbsent && await firebaseUserCount(auth) === beforeCount;
     } catch {
       cleanupConfirmed = false;
+      failureStage = "cleanup";
     }
 
     if (runFailed) {
@@ -361,7 +410,8 @@ export async function executeHostedAuthQa(
   }
 
   if (runFailed || !cleanupConfirmed || !browserResult) {
-    throw new HostedAuthQaExecutionError(cleanupConfirmed);
+    if (!cleanupConfirmed) failureStage = "cleanup";
+    throw new HostedAuthQaExecutionError(cleanupConfirmed, failureStage);
   }
 
   return {

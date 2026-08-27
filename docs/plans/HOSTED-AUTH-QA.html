@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="efa3f3dca5fd4cf3257866cf23169d937c3987b67fc61af8bd2ee3f057d67e27">
+  <meta name="source-sha256" content="7aeb5f632b15a3c04b3ef7bbddc0b89b125b6ca706d7fb61781d10a82ac2127a">
   <title>Hosted authentication QA plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -77,7 +77,7 @@
 <li>No onboarding, program, workout, preference, or custom-exercise mutation is submitted.</li>
 <li>The disposable Firebase identity is confirmed absent after cleanup, and aggregate user count returns to its pre-run value.</li>
 <li>No credential, token, cookie, UID, email address, environment value, provider payload, trace, video, or browser profile is retained.</li>
-<li>Failures remain failures and identify whether cleanup was confirmed without exposing sensitive details.</li>
+<li>Failures remain failures and identify a stable, non-sensitive lifecycle stage plus whether cleanup was confirmed without exposing sensitive details.</li>
 </ul>
 <h2>Automated tests</h2>
 <p>Fail-first unit tests cover configuration acceptance and rejection, exact host and project matching, explicit approval, credential-free URLs, project mismatch, safe generated-identity shape, account-shell sign-out ordering, and malformed-success refusal. The hosted Playwright test is opt-in and excluded from the ordinary public release matrix. Existing unit and integration suites continue to prove CSRF ordering, malformed identity rejection, duplicate/invalid error mapping, unverified mutation denial, expired/revoked session classification, recent-auth deletion gates, and owner isolation.</p>

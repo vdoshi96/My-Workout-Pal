@@ -36,5 +36,7 @@ describe("hosted authentication QA command", () => {
 
     expect(source).not.toMatch(/error\.message|JSON\.stringify\(error|console\.error\(error/u);
     expect(source).toContain("Hosted authentication QA failed safely");
+    expect(source).toContain("error.stage");
+    expect(source).toContain("at the ${stage} stage");
   });
 });
