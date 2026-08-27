@@ -33,7 +33,11 @@ export default async function HarnessSettingsPage() {
     <SettingsForm
       canMutate={context.viewer.eligibleForPermanentMutations}
       equipmentProfileKind={model.equipment.profileKind}
-      firebaseConfig={fixtureFirebasePublicConfig}
+      firebaseConfig={
+        context.scenario === "firebase-client-missing"
+          ? fixtureFirebasePublicConfig
+          : null
+      }
       initialPreferences={model.preferences}
       ownerUid={model.profile.firebaseUid}
       viewerProvider={context.viewer.provider}

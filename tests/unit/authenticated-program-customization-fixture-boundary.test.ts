@@ -40,7 +40,7 @@ describe("authenticated customization fixture boundary", () => {
     expect(source("app/app/library/custom/[id]/page.tsx")).toContain("<CustomExerciseEditor");
     expect(source("app/app/settings/page.tsx")).toContain("<SettingsForm");
     expect(source("app/app/settings/page.tsx")).toContain(
-      "firebaseConfig={fixtureFirebasePublicConfig}",
+      'context.scenario === "firebase-client-missing"',
     );
     expect(source("app/app/settings/page.tsx")).toContain(
       "fixture-public-api-key-not-a-credential",

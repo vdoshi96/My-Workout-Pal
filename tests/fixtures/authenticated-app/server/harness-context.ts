@@ -10,6 +10,7 @@ export type HarnessScenario =
   | "expire-session"
   | "expire-next-runner-operation"
   | "fail-next-save"
+  | "firebase-client-missing"
   | "invalid"
   | "ready"
   | "revoke-session"
@@ -28,6 +29,7 @@ const scenarioValues = new Set<HarnessScenario>([
   "expire-session",
   "expire-next-runner-operation",
   "fail-next-save",
+  "firebase-client-missing",
   "ready",
   "revoke-session",
   "revoke-next-runner-operation",

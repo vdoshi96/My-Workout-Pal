@@ -29,7 +29,7 @@ test("full-page Settings fails closed until the browser Firebase identity is res
     await route.continue({
       headers: {
         ...route.request().headers(),
-        [HARNESS_SCENARIO_HEADER]: "ready",
+        [HARNESS_SCENARIO_HEADER]: "firebase-client-missing",
         [HARNESS_SCOPE_HEADER]: scope,
         [HARNESS_VIEWER_HEADER]: "alice",
       },
@@ -101,7 +101,7 @@ test("full-page Settings fails closed until the browser Firebase identity is res
 
   const cleanup = await page.request.delete("/api/harness/scope", {
     headers: {
-      [HARNESS_SCENARIO_HEADER]: "ready",
+      [HARNESS_SCENARIO_HEADER]: "firebase-client-missing",
       [HARNESS_SCOPE_HEADER]: scope,
       [HARNESS_VIEWER_HEADER]: "alice",
     },
