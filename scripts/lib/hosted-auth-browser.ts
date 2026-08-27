@@ -131,7 +131,7 @@ function attachFailureCollectors(page: Page, origin: string) {
   const firstPartyMutations: string[] = [];
 
   page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push("error");
+    if (message.type() === "error") consoleErrors.push(message.text());
     if (message.type() === "warning") consoleWarnings.push("warning");
   });
   page.on("pageerror", () => pageErrors.push("pageerror"));
@@ -159,13 +159,34 @@ function attachFailureCollectors(page: Page, origin: string) {
   });
 
   return {
-    assertConsoleErrorsClean: () => assert.deepEqual(consoleErrors, []),
+    assertConsoleErrorsClean: (expectedHttpStatuses: readonly number[]) => {
+      const genericHttpStatuses = consoleErrors.map((message) => {
+        const match = message.match(
+          /^Failed to load resource: the server responded with a status of (\d{3})/u,
+        );
+        return match?.[1] ? Number(match[1]) : undefined;
+      });
+      assert.equal(genericHttpStatuses.includes(undefined), false);
+      assert.deepEqual(
+        genericHttpStatuses.toSorted((left, right) => (left ?? 0) - (right ?? 0)),
+        expectedHttpStatuses.toSorted((left, right) => left - right),
+      );
+    },
     assertConsoleWarningsClean: () => assert.deepEqual(consoleWarnings, []),
     assertPageErrorsClean: () => assert.deepEqual(pageErrors, []),
     assertRequestFailuresClean: () => assert.deepEqual(requestFailures, []),
     assertResponseFailuresClean: () => assert.deepEqual(responseFailures, []),
     firstPartyMutations,
   };
+}
+
+function waitForFirebaseAuthResponse(page: Page, operation: string) {
+  return page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.hostname === "identitytoolkit.googleapis.com" &&
+      url.pathname.endsWith(`/accounts:${operation}`) &&
+      response.request().method() === "POST";
+  });
 }
 
 async function assertSecureSessionCookie(
@@ -221,6 +242,7 @@ async function runBrowserLifecycle(
   const context = await browser.newContext({ viewport: { height: 1_000, width: 1_440 } });
   const page = await context.newPage();
   const failures = attachFailureCollectors(page, config.origin);
+  const expectedConsoleHttpStatuses: number[] = [];
 
   try {
     await page.goto(`${config.origin}/sign-in?returnTo=%2Fapp`);
@@ -228,11 +250,17 @@ async function runBrowserLifecycle(
     await assertAccessible(page);
 
     setStage("invalid_credentials");
+    const invalidCredentialResponse = waitForFirebaseAuthResponse(
+      page,
+      "signInWithPassword",
+    );
     await submitEmailForm(page, {
       email: identity.email,
       password: "Wrong-password-1!",
       submitName: "Sign in with email",
     });
+    assert.equal((await invalidCredentialResponse).status(), 400);
+    expectedConsoleHttpStatuses.push(400);
     await expect(page.locator(".auth-message")).toHaveText(
       "The email or password is not valid.",
     );
@@ -252,11 +280,14 @@ async function runBrowserLifecycle(
 
     setStage("duplicate_registration");
     await chooseAuthTask(page, "Register");
+    const duplicateRegistrationResponse = waitForFirebaseAuthResponse(page, "signUp");
     await submitEmailForm(page, {
       email: identity.email,
       password: identity.password,
       submitName: "Create account",
     });
+    assert.equal((await duplicateRegistrationResponse).status(), 400);
+    expectedConsoleHttpStatuses.push(400);
     await expect(page.locator(".auth-message")).toHaveText(
       "An account already uses this email. Sign in or reset the password.",
     );
@@ -366,7 +397,7 @@ async function runBrowserLifecycle(
 
     setStage("assertions");
     setStage("assertions_console_errors");
-    failures.assertConsoleErrorsClean();
+    failures.assertConsoleErrorsClean(expectedConsoleHttpStatuses);
     setStage("assertions_console_warnings");
     failures.assertConsoleWarningsClean();
     setStage("assertions_page_errors");
