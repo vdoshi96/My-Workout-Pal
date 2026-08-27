@@ -67,6 +67,44 @@ No personal account or mailbox is used. Generated credentials live only in proce
 
 The reserved example-domain address cannot receive a verification or recovery message. This lane proves Firebase accepted the request and the UI represented it truthfully; it does not claim inbox delivery or verification-link completion. Google consent, personal email delivery, Vercel Spend Management, and paid settings remain out of scope.
 
+## Email action-link continuation
+
+### User outcome and navigation
+
+The same disposable password identity completes Firebase's email-verification and password-reset action-code semantics after the application requests both emails. The browser still starts on the production `/sign-in?returnTo=%2Fapp` surface, registers, requests recovery, signs in as unverified, and signs out. The trusted QA process then generates an Admin verification link and reset link for only the captured address, extracts each bounded action code in memory, applies it through Firebase's documented Identity Toolkit REST endpoints, and returns to the production sign-in page. The old password must fail after reset, while the new generated password must create a verified secure application session.
+
+This continuation does not deliver a message, inspect an inbox, add a custom email handler, or use a personal address. The already-observed application `sendEmailVerification` and `sendPasswordResetEmail` requests remain the delivery-request evidence; the Admin-generated links provide the otherwise missing action-code completion evidence.
+
+### UI states and domain invariants
+
+- The browser retains registration, duplicate registration, known and unknown recovery, unverified read-only, sign-out, verified session, secure-cookie, and revocation states.
+- Provider action states distinguish verification-link generation, link parsing, code application, verified-user confirmation, reset-link generation, reset-code inspection, reset confirmation, old-password rejection, and recovered-password sign-in.
+- `HostedAuthQaIdentity` contains two independent high-entropy passwords in process memory. The recovered password differs from the registration password and neither enters output, screenshots, shell arguments, URLs, files, or documentation.
+- A parsed action link must use HTTPS, the exact configured Firebase action-handler host and `/__/auth/action` path, the expected `mode`, the configured public API key, and one nonblank `oobCode`. Credentials, fragments, unknown parameters that change action meaning, wrong projects, wrong modes, malformed or repeated scalar values, and unexpected hosts fail closed before a provider write.
+- Verification succeeds only when the REST response identifies the generated email and Firebase Admin confirms the captured UID is verified. Reset-code inspection and confirmation must identify the same generated email and `PASSWORD_RESET` request type.
+- No raw action link, action code, API key, password, email, UID, provider response, or provider error enters terminal output or retained evidence.
+
+### Persistence, authentication, authorization, and recovery
+
+Firebase Authentication remains the only persistence boundary. The continuation may change `emailVerified` and the password for the exact captured disposable identity. It creates no Neon profile, program, workout, preference, custom exercise, or analytics row. The application still derives ownership only from the secure server session; action-code application grants no application ownership by itself.
+
+Every provider response is parsed structurally before the run advances. A malformed `2xx`, wrong email, wrong request type, expired or replayed code, network failure, or uncertain provider response fails the run. Cleanup still deletes only the exact captured Firebase UID in `finally` and verifies the aggregate user count returns to baseline. The runner never retries code application after an uncertain accepted response; it reconciles through Firebase Admin state instead.
+
+### Loading, worst-case, responsive, accessibility, privacy, and security
+
+Provider calls use bounded timeouts and stable non-sensitive stages. The worst path is interruption after one code changes the account. Exact-UID cleanup remains sufficient because no application data is created. The action-link work adds no viewport-specific UI; the existing 1,440 by 1,000 production browser pass continues to prove the sign-in, unverified, and verified surfaces, keyboard operation, and serious or critical Axe boundary. Phone, tablet, WebKit, reduced-motion, dark-mode, and 200% behavior remain covered by the broader authenticated and public matrices rather than repeated provider mutations.
+
+The official REST endpoints receive only the generated action code and recovered password that Firebase created for this exact disposable account. Those values remain in process memory and are never printed. Fetch failures and provider errors are reduced to stable stages. A failed run deletes screenshots and retains no trace, video, browser profile, action URL, or network payload.
+
+### Acceptance criteria, automated tests, and browser evidence
+
+- Pure tests fail first for the missing action-link parser, then cover exact host/path/key/mode acceptance plus hostile host, credential URL, wrong project key, wrong mode, repeated scalar, missing code, query credential, and fragment rejection.
+- Identity tests prove independent high-entropy registration and recovered passwords.
+- Command policy tests require stable action-code stages, structural response parsing, provider timeouts, exact-identity reconciliation, sanitized errors, and the absence of action-link or code output.
+- The hosted production run observes the application's real verification and recovery requests, completes an Admin-generated verification code, confirms the captured UID is verified, completes an Admin-generated password reset, rejects the old password, accepts the recovered password, creates the secure session, proves revocation denial, and restores Firebase users to the exact baseline.
+- The existing three intended first-party session mutations remain the complete application mutation set. The provider action-code calls are classified separately and create no Neon row.
+- The QA record states that Firebase email delivery and a real inbox click remain unobserved. It may claim provider action-code completion only after the exact sanitized production result passes.
+
 ## Acceptance criteria
 
 - The runner fails before browser launch without an explicit external-account approval flag.
