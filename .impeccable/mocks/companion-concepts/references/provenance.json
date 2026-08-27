@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-27T21:55:51Z",
+  "repositoryCommit": "d6228a03f15e4a181a33f96fe226f6c709cc9227",
+  "branch": "vishal/companion-concept",
+  "captureTool": "Codex in-app browser",
+  "source": "Local Next.js 16.3.2 rendering from the isolated worktree",
+  "guestAndPreviewServer": "next dev --webpack on loopback",
+  "memberServer": "Existing production-mode authenticated QA fixture with a synthetic viewer and local-only header-injection proxy",
+  "privacy": "No real account, member data, credential, or private reference recording was used.",
+  "retention": "Task-created audit screenshots were treated as private derived evidence, excluded from version control, and removed after concept generation. Only this non-image capture metadata is retained.",
+  "requestedViewports": [
+    { "name": "desktop", "width": 1440, "height": 1024 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "notes": [
+    "The in-app browser capture surface returned 1425×1013 desktop and 375×812 phone image pixels for some frames after browser chrome and scrollbar allocation.",
+    "Temporary pair images placed each current desktop capture beside its current phone capture for use as one Image Gen reference; those private inputs are not retained.",
+    "Reference captures document incumbent structure only. The concept boards follow the approved repositioning contract rather than preserving stale five-day or repeated-sample copy."
+  ]
+}

@@ -14,6 +14,7 @@ Use the following documents as the maintained project map:
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
 - `docs/plans/VERIFICATION.md`: automated and manual release matrix.
 - `docs/design/DIRECTION.md`: original visual world and interaction grammar.
+- `docs/design/COMPANION-VISUAL-CONCEPTS.md`: selected Corner Companions responsive board, production guardrails, required corrections, and pilot acceptance criteria.
 - `docs/design/PROGRAM-OVERVIEW.md`: approved comp and implementation inventory.
 - `docs/reference/SUBSTITUTIONS.md`: equipment compatibility and program mutation rules.
 - `docs/reference/EXERCISE-LIBRARY-EXPANSION.md`: names-first 135-movement target, metadata contract, video states, candidate inventory, and content-agent workflow.

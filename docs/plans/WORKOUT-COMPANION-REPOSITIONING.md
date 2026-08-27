@@ -132,19 +132,15 @@ Keep `/sample-progress` as a compatibility redirect to `/progress`. Existing pub
 - Route public **My workouts** actions through the protected `/app` boundary instead of attempting to infer session state in cached HTML.
 - Add a hosted-auth test that begins with the same bare public-header sign-in path a real visitor uses.
 
-## Visual concept gate
+## Selected visual direction
 
-Do not port a decorative animal treatment directly into production. First create exactly three guest/member concept pairs from the existing cartoon-gym visual world:
+The completed Wave 0 review compared three responsive image-based directions from the existing cartoon-gym visual world. On August 27, 2026, the user selected **Corner Companions** as the sole production direction for the Wave 3 pilot and any later approved rollout. The two alternatives were discarded, and their images, prompts, and direction-specific provenance are not retained on the concept branch.
 
-1. **Pal confetti:** Sparse, translucent animal and equipment medallions in an irregular polka-dot rhythm.
-2. **Corner companions:** One larger character vignette placed in unused corners of major surfaces.
-3. **Activity trail:** Small illustrated workout moments between sections, while route marks remain only for real workout state.
-
-Each direction must show the guest landing, signed-in home, and progress preview on phone and desktop. The five-day example stays subordinate. The user selects one direction before production CSS or component work begins.
+Corner Companions places one larger contextual character vignette in reserved whitespace on each approved surface. The guest landing page uses a planning companion, the signed-in home uses a preparation companion, and the guest Progress preview uses a calm review companion outside the chart and sample disclosure. Phone layouts use a collapsible dedicated slot after the primary content. Desktop layouts keep the vignette out of the member account rail and data plane. The five-day example stays subordinate.
 
 Generate purpose-built assets. Do not crop individual characters from the composite hero and present them as standalone artwork. Do not use emoji, handcrafted animal SVGs, copied characters, embedded text, a real person, private source material, or user data. Shipping assets retain prompt and transformation provenance beside the optimized raster files.
 
-Decorative imagery must be ignored by assistive technology and pointer input, stay out from behind fields, charts, error states, timers, and workout controls, disappear in forced-colors mode, require no motion, and preserve tested text contrast.
+Decorative imagery must be ignored by assistive technology and pointer input, stay out from behind fields, charts, error states, timers, and workout controls, disappear in forced-colors mode, require no motion, and preserve tested text contrast. The selection unlocks the bounded pilot after its product dependencies are ready; it does not authorize implementation, publication, or rollout from this concept branch.
 
 ## Worktree and agent plan
 
@@ -156,7 +152,7 @@ Every agent owns a user-visible vertical outcome, its domain rules, persistence 
 | --- | --- | --- | --- |
 | Authentication entry handoff | `vishal/auth-entry-handoff` | Public account action → Google or email → secure session → `/app` → visible member identity and sign out. | None. Merge first because it owns public account navigation. |
 | Flexible routine publication | `vishal/flexible-routine-publication` | Create example or blank routine → add, rename, reorder, or remove a day → publish one immutable revision → read the same structure on `/app`. | None. Own the migration and publish contract. |
-| Companion visual concepts | `vishal/companion-concept` | Three guest/member/progress concept pairs with no production code. | Current screenshots and animal asset. Wait for user selection before visual implementation. |
+| Companion visual direction | `vishal/companion-concept` | Retain the selected Corner Companions guest/member/progress board, decision record, and production guardrails with no production code. | Selection complete. Wait for companion home and copy before the Wave 3 pilot. |
 
 The coordinator creates `vishal/companion-integration` from the verified `main` commit. Each agent branches from that same commit, uses a separate worktree, pushes its branch, and requests integration without merging `main` independently.
 

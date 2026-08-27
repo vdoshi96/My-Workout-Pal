@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="49f254511d9afdcbc05cefbb8cab3f9a936aab85919ce4cc778b2600da758a64">
+  <title>Corner companions visual direction · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Corner companions visual direction</h1>
+<p><strong>Status:</strong> Selected production direction for the Wave 3 pilot. The board is design evidence, not a shipping asset or implemented interface.</p>
+<p>Corner Companions is the sole selected animal-surface direction for the guest landing page, signed-in home, and guest progress preview. Apply the same direction to phone and desktop layouts. Do not combine it with discarded concepts.</p>
+<h2>Decision record</h2>
+<p>The Wave 0 review compared three responsive image-based directions. On August 27, 2026, the user selected Corner Companions. The two alternatives were discarded, and their images, prompts, and direction-specific provenance are not retained on this branch.</p>
+<p>The selection establishes the visual target for a later pilot. It does not change components, styles, routes, authentication, persistence, deployment state, or publication authorization.</p>
+<h2>Selected board</h2>
+<p><img src="../../.impeccable/mocks/companion-concepts/corner-companions-board.png" alt="Corner Companions concept board showing the guest landing page, signed-in home, and guest progress preview on desktop and phone"></p>
+<p>Corner Companions gives each approved surface one larger contextual vignette in a reserved quiet area. The companion supports the task without becoming navigation, status, coaching, or a data signal.</p>
+<p>Source: <a href="../../.impeccable/mocks/companion-concepts/corner-companions-board.prompt.txt">generation prompt</a> and <a href="../../.impeccable/mocks/companion-concepts/corner-companions-board.png.json">provenance</a>.</p>
+<h2>Product contract</h2>
+<ul>
+<li>The guest landing page presents a flexible workout companion for planning, guidance, logging, and progress review. The starter example remains secondary.</li>
+<li>The signed-in home shows an unmistakable personal account state, a flexible routine, a dominant next action, routine editing, and progress review.</li>
+<li>The guest Progress page includes one visible <strong>Sample data · not your history</strong> disclosure. Member surfaces never use sample metrics.</li>
+<li>Desktop layouts use a horizontal public header or member account rail. Phone layouts use fixed bottom navigation and keep the primary action above it.</li>
+<li>Decorative animals stay outside text, fields, charts, disclosures, error states, timers, workout controls, and navigation.</li>
+</ul>
+<p>The direction preserves the established warm mineral paper, deep teal-blue ink, coral action, lichen support, stone rules, condensed display silhouette, humanist body copy, and original hand-inked animal language. Production artwork must use purpose-built characters rather than crops from the composite gym illustration.</p>
+<h2>Surface placement</h2>
+<ul>
+<li><strong>Guest landing:</strong> Place a planning companion beside the product promise, secondary to the primary and secondary actions.</li>
+<li><strong>Signed-in home:</strong> Place a preparation vignette near the next-workout area without covering routine or account controls.</li>
+<li><strong>Progress preview:</strong> Place a calm review companion near, but never inside, the chart or sample-data disclosure.</li>
+<li><strong>Phone:</strong> Use a dedicated slot after the primary content. Collapse the slot when space, forced colors, or image failure removes the art.</li>
+<li><strong>Desktop:</strong> Anchor the vignette in main-content whitespace, not the account rail or data plane.</li>
+</ul>
+<h2>Accessibility and motion</h2>
+<ul>
+<li>Adjacent headings and body copy carry the complete meaning. The illustration never provides the only account, sample, workout, or progress-state signal.</li>
+<li>Use empty alternative text, <code>aria-hidden</code>, and pointer-inert behavior for decorative images.</li>
+<li>Hide decorative art in forced-colors mode without leaving a layout gap.</li>
+<li>Keep the complete composition static. Reduced-motion mode must not remove information or state feedback.</li>
+<li>Preserve tested text contrast in light and dark themes and keep artwork outside critical reading and interaction regions.</li>
+</ul>
+<h2>Required board corrections</h2>
+<p>The generated board is directional rather than pixel-accurate production copy:</p>
+<ul>
+<li>Replace <strong>See your progress</strong> with the neutral <strong>Progress</strong> title so the guest preview does not imply personal data.</li>
+<li>Remove generated lettering from the illustrated notebook. Production artwork must keep the notebook text-free.</li>
+<li>Keep visible account identity, verification state, and sign-out controls on every signed-in layout.</li>
+</ul>
+<h2>Pilot acceptance criteria</h2>
+<p>Before rollout, the pilot must meet the following requirements:</p>
+<ul>
+<li>Verify guest, authenticated, unverified, empty, active-workout, slow, failure, and image-failure states without decorative overlap.</li>
+<li>Verify 320 px, 390 px, 430 px, 820 px, 1,280 px, and 1,440 px widths plus 200% zoom.</li>
+<li>Verify light theme, dark theme, forced colors, reduced motion, keyboard use, pointer use, and assistive-technology behavior.</li>
+<li>Keep the selected artwork provenance-backed, crop-safe, offline-safe where required, and separate from authenticated data and private caches.</li>
+<li>Confirm that image failure leaves product truth, navigation, state, and primary actions intact.</li>
+</ul>
+<p>Do not begin the broader surface rollout until the Corner Companions pilot is implemented, browser-verified, and explicitly approved.</p>
+
+  </main>
+</body>
+</html>

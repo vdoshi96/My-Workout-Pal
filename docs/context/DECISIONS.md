@@ -122,4 +122,14 @@ The canonical movement library can publish reviewed names, metadata, and instruc
 
 Successful bare sign-in defaults to the protected `/app` route. Public cached pages remain identity-neutral and use an account action that enters the protected boundary, so cached HTML never guesses or leaks member state.
 
-Visual warmth extends beyond the landing hero only after a three-direction concept review. Shipping animal patterns or vignettes must be purpose-built, decorative, static, contrast-safe, pointer-inert, hidden in forced colors, and separate from private data and critical workout controls.
+Visual warmth extends beyond the landing hero only through the selected animal-surface direction. Shipping vignettes must be purpose-built, decorative, static, contrast-safe, pointer-inert, hidden in forced colors, and separate from private data and critical workout controls.
+
+## 2026-08-27: Select Corner Companions for the animal surface system
+
+The completed three-direction review selected Corner Companions as the sole production direction for the Wave 3 pilot and any later approved rollout. Each approved surface receives one contextual character vignette in reserved whitespace. The vignette supports the nearby task without becoming navigation, coaching, status, or data.
+
+The guest landing page uses a planning companion, the signed-in home uses a preparation companion, and the guest Progress preview uses a calm review companion outside the chart and sample disclosure. Phone layouts place the art in a collapsible dedicated slot. Desktop layouts keep it out of the member account rail and data plane.
+
+Every production vignette is purpose-built, text-free, decorative, static, pointer-inert, ignored by assistive technology, and absent in forced-colors mode. Image failure cannot remove product meaning, account state, sample disclosure, navigation, or an action. The pilot must verify phone and desktop layouts, 200% zoom, contrast, reduced motion, forced colors, failure states, and offline asset behavior before rollout.
+
+Two alternatives were reviewed and discarded. Their images, prompts, and direction-specific provenance are not retained on the concept branch. The selection does not authorize a public branch push, merge, deployment, or production implementation.

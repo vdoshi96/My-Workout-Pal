@@ -1,6 +1,6 @@
 # Visual direction
 
-> **First-release direction:** Preserve the established colors, typography, and original animal world, but use `docs/plans/WORKOUT-COMPANION-REPOSITIONING.md` for the next visual phase. The route atlas becomes an example and workout-state motif rather than the product's universal frame. No animal background treatment ships before the three-direction concept gate.
+> **Next visual phase:** Preserve the established colors, typography, and original animal world while applying the selected Corner Companions direction from `docs/design/COMPANION-VISUAL-CONCEPTS.md`. The route atlas remains an example and workout-state motif rather than the product's universal frame. Production porting begins only in the bounded Wave 3 pilot.
 
 ## Training route atlas
 
