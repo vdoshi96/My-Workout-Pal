@@ -5,6 +5,7 @@ import {
   type Browser,
   type BrowserContext,
   type BrowserContextOptions,
+  type Locator,
   type Page,
   type Request,
   type TestInfo,
@@ -257,6 +258,26 @@ async function assertAccessible(page: Page): Promise<void> {
   ).toEqual([]);
 }
 
+async function attachRunnerEvidence(
+  page: Page,
+  testInfo: TestInfo,
+  name: string,
+): Promise<void> {
+  const path = testInfo.outputPath(`${name}.png`);
+  await page.screenshot({ fullPage: true, path });
+  await testInfo.attach(name, { contentType: "image/png", path });
+}
+
+async function attachRunnerRegionEvidence(
+  region: Locator,
+  testInfo: TestInfo,
+  name: string,
+): Promise<void> {
+  const path = testInfo.outputPath(`${name}.png`);
+  await region.screenshot({ path });
+  await testInfo.attach(name, { contentType: "image/png", path });
+}
+
 async function onboardAndOpenPush(page: Page): Promise<string> {
   await page.goto("/app");
   const onboard = page.waitForResponse(
@@ -493,6 +514,15 @@ test("a real aborted operation retries explicitly with the same key and no onlin
   await expect(
     harness.page.getByRole("heading", { name: "Offline queued" }),
   ).toBeVisible();
+  if (testInfo.project.name === "chromium-desktop") {
+    await attachRunnerRegionEvidence(
+      harness.page.locator(
+        'section[aria-labelledby="runner-offline-title"]',
+      ),
+      testInfo,
+      "runner-offline-recovery-desktop",
+    );
+  }
   expect(harness.operationRequests).toHaveLength(2);
   expect(operationKey(harness.operationRequests[1]!)).toBe(originalKey);
   expect(harness.failedRequests).toHaveLength(1);
@@ -565,6 +595,18 @@ for (const authCase of [
       harness.page.getByRole("heading", { name: authCase.banner }),
     ).toBeVisible();
     await assertAccessible(harness.page);
+    if (
+      authCase.status === "session_revoked" &&
+      testInfo.project.name === "webkit-phone"
+    ) {
+      await attachRunnerRegionEvidence(
+        harness.page.locator(
+          'section[aria-labelledby="runner-auth-blocked-title"]',
+        ),
+        testInfo,
+        "runner-revoked-reauthentication-phone",
+      );
+    }
 
     expect(harness.operationRequests).toHaveLength(1);
     const originalKey = operationKey(harness.operationRequests[0]!);
@@ -778,6 +820,15 @@ test("two tabs block a divergent set until the member chooses one original key",
   });
   await expect(choice25).toBeVisible();
   await expect(choice30).toBeVisible();
+  if (testInfo.project.name === "chromium-desktop") {
+    await attachRunnerRegionEvidence(
+      first.locator(
+        'section[aria-labelledby="runner-local-conflict-heading"]',
+      ),
+      testInfo,
+      "runner-local-tab-conflict-desktop",
+    );
+  }
   for (const choice of [choice25, choice30]) {
     const box = await choice.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
@@ -1082,6 +1133,13 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
     second.getByRole("heading", { name: "Push", exact: true }),
   ).toBeVisible();
   await assertAccessible(second);
+  if (testInfo.project.name === "webkit-phone") {
+    await attachRunnerEvidence(
+      second,
+      testInfo,
+      "runner-terminal-reconciliation-phone",
+    );
+  }
   expect(harness.signals.failedRequests).toEqual([]);
   expect(harness.signals.failedResponses).toEqual([]);
   await cleanup(first);
