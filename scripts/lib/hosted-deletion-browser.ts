@@ -600,7 +600,7 @@ async function renderedNotFound(
 ): Promise<SafePrivateResourceResponse> {
   const response = await page.goto(`${origin}/workout/${sessionId}`);
   assert.ok(response);
-  await expect(page.getByRole("heading", { name: "This route is not on the map." })).toBeVisible();
+  await expect(page.getByText("This page could not be found.", { exact: true })).toBeVisible();
   await assertAccessible(page);
   return {
     body: (await page.locator("body").innerText()).replaceAll(/\s+/gu, " ").trim(),
