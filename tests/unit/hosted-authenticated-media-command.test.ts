@@ -60,6 +60,8 @@ describe("hosted authenticated media QA command", () => {
     expect(browserSource).toContain('/app/programs`, /^Your routes$/u');
     expect(browserSource).toContain('/app/program/edit`, /^Edit your route$/u');
     expect(browserSource).toContain('`${origin}${runnerPath}`, /^Push$/u');
+    expect(browserSource).toContain('setStage("zoom_runner_geometry")');
+    expect(browserSource).toContain('setStage("zoom_runner_accessibility")');
     expect(browserSource).toContain('requestNativeZoom("set_200_percent")');
     expect(browserSource).toContain('requestNativeZoom("restore_100_percent")');
     expect(browserSource).toContain("if (reflowAssertionsPassed) setStage");

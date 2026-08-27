@@ -86,6 +86,8 @@ export type HostedAuthenticatedMediaQaStage =
   | "zoom_collection"
   | "zoom_editor"
   | "zoom_runner"
+  | "zoom_runner_accessibility"
+  | "zoom_runner_geometry"
   | "zoom_settings"
   | "zoom_state"
   | "zoom_restore";
@@ -639,8 +641,9 @@ async function verifyActualZoom(
     await assertAccessible(page);
     setStage("zoom_settings");
     await assertOneAxis(page, `${origin}/app/settings`, /^Settings$/u);
-    setStage("zoom_runner");
+    setStage("zoom_runner_geometry");
     await assertOneAxis(page, `${origin}${runnerPath}`, /^Push$/u);
+    setStage("zoom_runner_accessibility");
     await assertAccessible(page);
     reflowAssertionsPassed = true;
   } finally {
