@@ -139,9 +139,10 @@ function isSupersededNextFlightRequest(request: Request): boolean {
 
 function isSupersededManifestRequest(request: Request): boolean {
   const url = new URL(request.url());
+  const errorText = request.failure()?.errorText ?? "";
   return request.method() === "GET" &&
     url.pathname === "/manifest.webmanifest" &&
-    ["net::ERR_ABORTED", "cancelled"].includes(request.failure()?.errorText ?? "");
+    (errorText === "cancelled" || errorText.startsWith("net::ERR_ABORTED"));
 }
 
 function attachFailureCollectors(page: Page, origin: string) {
