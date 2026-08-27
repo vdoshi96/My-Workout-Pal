@@ -33,6 +33,9 @@ export type HostedAuthQaStage =
   | "assertions_request_failures_asset"
   | "assertions_request_failures_mixed"
   | "assertions_request_failures_other"
+  | "assertions_request_failures_public_root"
+  | "assertions_request_failures_service_worker"
+  | "assertions_request_failures_static_public"
   | "assertions_request_failures_sign_in"
   | "assertions_response_failures"
   | "browser_launch"
@@ -191,6 +194,9 @@ function attachFailureCollectors(page: Page, origin: string) {
         if (pathname.startsWith("/_next/")) return "asset";
         if (pathname === "/app") return "app";
         if (pathname === "/sign-in") return "sign_in";
+        if (pathname === "/") return "public_root";
+        if (pathname === "/service-worker.js") return "service_worker";
+        if (/\.(?:png|svg|webmanifest|webp)$/u.test(pathname)) return "static_public";
         return "other";
       }));
       if (categories.size > 1) return "assertions_request_failures_mixed";
@@ -199,6 +205,9 @@ function attachFailureCollectors(page: Page, origin: string) {
         case "app": return "assertions_request_failures_app";
         case "asset": return "assertions_request_failures_asset";
         case "sign_in": return "assertions_request_failures_sign_in";
+        case "public_root": return "assertions_request_failures_public_root";
+        case "service_worker": return "assertions_request_failures_service_worker";
+        case "static_public": return "assertions_request_failures_static_public";
         default: return "assertions_request_failures_other";
       }
     },
