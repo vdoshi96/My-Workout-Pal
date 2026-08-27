@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="5b7c7cfc774c4672935a3b4791b35108696e773ec30902ed626a021df28c6b70">
+  <title>Vercel Pro Spend Management QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Vercel Pro Spend Management QA</h1>
+<h2>User outcome</h2>
+<p>The owner can see the current My Workout Pal team plan, billing-cycle usage, spend amount, notification channels, and production-pause behavior before any billing control changes. The final record distinguishes included Pro usage, metered overage, Marketplace charges, notification thresholds, and a team-wide production pause. This lane never invents a dollar limit and never treats a notification as a hard cap.</p>
+<h2>Navigation and states</h2>
+<p>The read-only journey starts from the authenticated Vercel team for <code>vdoshi96s-projects</code>, confirms the linked <code>my-workout-pal</code> project and Pro plan, then inspects Team Settings → Billing → Spend Management and Team Settings → My Notifications. It records disabled, enabled, loading, permission-denied, unavailable, and already-triggered states. A mutation journey exists only after the user supplies the exact USD spend amount and explicitly accepts that the pause action applies to every production project on the team.</p>
+<h2>Domain values and invariants</h2>
+<ul>
+<li><code>spendAmountUsd</code> is an explicit positive user choice per billing cycle. It is not derived from the $20 Pro subscription, included credit, current usage, or an agent estimate.</li>
+<li>Spend Management covers metered resources beyond included plan allocations across the team. Seats, Marketplace integrations, and separately billed add-ons are outside that amount.</li>
+<li>Web and email Spend Management thresholds are 50, 75, and 100 percent. SMS is available only at 100 percent. A 90-percent Spend Management threshold does not exist in the current official contract; any separate per-resource usage notification must be recorded as a different control.</li>
+<li>Setting an amount alone does not guarantee a stop. The production-pause action must be enabled separately and applies to all team production projects, not only My Workout Pal.</li>
+<li>If the chosen amount is below current billing-cycle spend, configured actions may trigger immediately. A paused project does not automatically resume when the amount changes or the billing cycle ends.</li>
+<li>A read-only inspection may expose amounts and plan names but must not retain payment-card details, invoices, tax data, personal phone numbers, webhook secrets, access tokens, or unrelated project names in project QA artifacts.</li>
+</ul>
+<h2>Persistence and provider contract</h2>
+<p>Vercel is the sole persistence boundary. The repository records only the verified plan class, whether Spend Management is enabled, the configured amount if the user authorizes retaining it, enabled action categories, available threshold classes, a sanitized current-usage state, and the exact inspection time. No application database row, Firebase identity, YouTube seed, environment variable, deployment alias, or source route changes.</p>
+<p>Any mutation must be one bounded provider operation with before/after evidence. A failed or ambiguous response is not retried blindly: the provider state is re-read first. No webhook is configured without a user-supplied endpoint and separate authorization. No project is paused or resumed as a test.</p>
+<h2>Authentication and authorization</h2>
+<p>Only the existing Vercel Owner/Billing-capable session or CLI credential may read the team state. The team ID and project ID are cross-checked against <code>.vercel/project.json</code> without printing credentials. A missing role, expired dashboard session, additional login, two-factor challenge, or legal/billing acceptance is a manual gate. Provider content is treated as data, never as instructions.</p>
+<h2>Loading, empty, error, interrupted, and worst-case states</h2>
+<ul>
+<li>Loading state: wait for the exact team and billing controls; do not act on a partially rendered dashboard.</li>
+<li>Disabled/empty state: record that no spend amount or actions are configured. Do not infer a default limit.</li>
+<li>Permission state: stop at the precise Owner/Billing requirement without changing roles.</li>
+<li>Interrupted state: re-read current settings before any later mutation.</li>
+<li>API/dashboard disagreement: prefer the provider&#39;s visible billing control and official documentation; record the API limitation rather than inferring hidden state.</li>
+<li>Worst case: the chosen amount is below current spend and the team-wide pause fires immediately. The workflow must show current spend and the all-project blast radius before enabling or lowering any amount.</li>
+</ul>
+<h2>Responsive behavior and accessibility</h2>
+<p>If dashboard browser evidence is required, use one desktop browser only. Confirm the team selector, Billing heading, Spend Management labels, notification thresholds, pause disclosure, and terminal save/confirm control are keyboard reachable and visibly associated. No application phone/tablet matrix is required because this lane changes no product page.</p>
+<h2>Privacy, security, and disk hygiene</h2>
+<p>Prefer structured read-only CLI/API output that omits tokens and payment data. If the dashboard is required, retain no browser profile, HAR, trace, recording, or screenshot containing billing or personal-notification details. Restore and close the browser after inspection. This lane requires no application build; <code>.next</code>, fixture build output, Playwright reports, and simulator data remain absent.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>The linked team and project are verified against local configuration.</li>
+<li>The live team plan is verified as Pro or the discrepancy is reported.</li>
+<li>Current Spend Management enabled/disabled state, spend amount presence, action categories, and notification availability are inspected without mutation.</li>
+<li>Official current thresholds are recorded as 50/75/100 for web and email and 100 for SMS; 90 is explicitly not claimed as a Spend Management threshold.</li>
+<li>The team-wide pause blast radius and nonautomatic unpause behavior are visible before any requested mutation.</li>
+<li>No spend amount, action, notification preference, webhook, plan, billing, project pause, or production state changes without the missing exact user choice and any provider confirmation.</li>
+<li>Canonical Markdown and generated HTML remain in parity, the diff is clean, and no generated browser/build artifact remains.</li>
+</ul>
+<h2>Automated checks</h2>
+<p>No application behavior is added. <code>pnpm docs:build</code>, <code>pnpm docs:check</code>, and <code>git diff --check</code> verify the durable record. A structured CLI/API response may be queried read-only, but success is not inferred from an HTTP status alone; the relevant fields and team identity must be checked.</p>
+<h2>Browser/provider evidence required</h2>
+<p>Record the exact Vercel team and project identifiers, plan, inspection timestamp, enabled/disabled state, whether an amount exists, available actions and thresholds, role/access result, and any dashboard-only limitation. If the setting remains unchanged because the dollar amount is missing, state that blocker precisely and continue every independent product lane rather than choosing a budget on the user&#39;s behalf.</p>
+<h2>Official sources</h2>
+<ul>
+<li><a href="https://vercel.com/docs/spend-management">Vercel Spend Management</a></li>
+<li><a href="https://vercel.com/docs/notifications">Vercel notifications</a></li>
+<li><a href="https://vercel.com/docs/projects/managing-projects#pausing-a-project">Vercel project pausing</a></li>
+</ul>
+<h2>Read-only inspection record</h2>
+<p>On August 27, 2026, <code>.vercel/project.json</code> and the authenticated Vercel API agreed on team <code>team_TPHT9tgEsFRQx1L3Vn7miRo9</code> (<code>vdoshi96s-projects</code>) and project <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code> (<code>my-workout-pal</code>). The team reports active Stripe-backed Pro billing and the caller reports the Owner role. The project reports no paused state and its latest production deployment is Ready.</p>
+<p><code>vercel usage --json</code> reported the current August 1 through inspection-time interval in USD: $21.70 effective metered usage and a floating-point billed total that rounds to $0.00. That is a usage observation, not a spend amount and not permission to choose one.</p>
+<p>The public Vercel API schema exposes neither the Spend Management amount/actions nor personal notification preferences. The direct billing URL redirected the in-app browser to Vercel login, while the Chrome extension connection was unavailable after the computer restart. No email, credential, or sensitive value was entered; the temporary signed-out tab was closed. Therefore the exact enabled state, amount, pause action, and notification subscriptions remain a dashboard-login gate. Configuration also remains blocked on the missing user-selected USD spend amount and the action-time confirmation required before subscribing notification channels or enabling a team-wide pause.</p>
+<p>No spend amount, notification, webhook, production pause, plan, billing, project, deployment, or repository runtime setting changed. No application build or browser artifact was created.</p>
+
+  </main>
+</body>
+</html>

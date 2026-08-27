@@ -1,5 +1,13 @@
 # Project log
 
+## 2026-08-27: Vercel Pro spend-control audit
+
+- Planned a fail-closed provider inspection that distinguishes metered usage, the user-selected spend amount, notification thresholds, and the optional all-production-project pause. The workflow forbids inferring a dollar amount from the Pro subscription, current usage, or included credit.
+- Official current documentation confirms Spend Management is Pro-only, web/email thresholds are 50%, 75%, and 100%, SMS is 100% only, and 90% is not a Spend Management threshold. Reaching the amount pauses nothing unless that action is enabled; lowering below current spend can trigger actions immediately, and projects do not automatically unpause.
+- Authenticated API evidence verifies exact team `team_TPHT9tgEsFRQx1L3Vn7miRo9`, project `prj_aHNqBtTx1irlbhNNvHTvynQkb0P9`, active Pro billing, Owner role, no project pause, and a Ready latest production deployment. Current-period usage reports $21.70 effective metered usage and a billed total rounding to $0.00.
+- Vercel's public API exposes neither the Spend Management amount/actions nor personal notification preferences. The billing URL redirected the in-app browser to login; the Chrome extension connection was unavailable after restart. No email or credential was entered, and the temporary signed-out tab was closed.
+- The remaining provider step is precise: sign into the Vercel dashboard, inspect the existing amount/actions/subscriptions, obtain the user's exact USD spend amount, and request action-time confirmation before enabling notification channels or the team-wide pause. No billing, plan, spend, notification, webhook, pause, project, deployment, or application state changed, and no build/browser artifact was created.
+
 ## 2026-08-27: Actual 200-percent public zoom QA
 
 - Planned a no-build public production inspection that distinguishes real browser zoom from viewport, DPR-only, CSS-transform, or operating-system scaling. Chrome's own site zoom settings and toolbar reported exactly `200%`, with DPR changing from 2 to 4; Safari's Page Menu exposed and selected its exact `200%` option.
