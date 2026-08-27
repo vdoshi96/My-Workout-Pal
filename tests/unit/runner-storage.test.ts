@@ -860,8 +860,8 @@ describe("schema-two atomic runner storage merge", () => {
     });
 
     const merged = mergeRunnerStorageRecords(
-      runnerStorageRecord(completed, { revision: 2, committedAt: 102 }),
-      runnerStorageRecord(stale, { revision: 1, committedAt: 10_000 }),
+      runnerStorageRecord(completed, { committedAt: 102 }),
+      runnerStorageRecord(stale, { revision: 50, committedAt: 10_000 }),
     );
 
     expect(merged.state.status).toBe("completed");
@@ -879,8 +879,8 @@ describe("schema-two atomic runner storage merge", () => {
     ).toBe("saved");
 
     const reverseCompleted = mergeRunnerStorageRecords(
-      runnerStorageRecord(stale, { revision: 1, committedAt: 10_000 }),
-      runnerStorageRecord(completed, { revision: 2, committedAt: 102 }),
+      runnerStorageRecord(stale, { revision: 50, committedAt: 10_000 }),
+      runnerStorageRecord(completed, { committedAt: 102 }),
     );
     expect(reverseCompleted.state.status).toBe("completed");
     expect(
@@ -909,13 +909,24 @@ describe("schema-two atomic runner storage merge", () => {
       now: 101,
     });
     const abandonedMerge = mergeRunnerStorageRecords(
-      runnerStorageRecord(abandoned, { revision: 2, committedAt: 101 }),
-      runnerStorageRecord(stale, { revision: 1, committedAt: 10_000 }),
+      runnerStorageRecord(abandoned, { committedAt: 101 }),
+      runnerStorageRecord(stale, { revision: 50, committedAt: 10_000 }),
     );
 
     expect(abandonedMerge.state.status).toBe("abandoned");
     expect(
       abandonedMerge.state.operations
+        .filter(({ idempotencyKey }) => idempotencyKey !== abandonKey)
+        .every(({ status }) => status === "superseded"),
+    ).toBe(true);
+
+    const reverseAbandoned = mergeRunnerStorageRecords(
+      runnerStorageRecord(stale, { revision: 50, committedAt: 10_000 }),
+      runnerStorageRecord(abandoned, { committedAt: 101 }),
+    );
+    expect(reverseAbandoned.state.status).toBe("abandoned");
+    expect(
+      reverseAbandoned.state.operations
         .filter(({ idempotencyKey }) => idempotencyKey !== abandonKey)
         .every(({ status }) => status === "superseded"),
     ).toBe(true);

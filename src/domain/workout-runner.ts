@@ -1837,7 +1837,6 @@ type OperationCandidate = Readonly<{
   operation: RunnerOperation;
   state: ActiveWorkoutState;
   fromIncoming: boolean;
-  sourceRevision: number;
 }>;
 
 type Mutable<T> = { -readonly [Key in keyof T]: T[Key] };
@@ -1935,11 +1934,10 @@ function mergeOperationCandidates(
   const add = (
     state: ActiveWorkoutState,
     fromIncoming: boolean,
-    sourceRevision: number,
   ): void => {
     for (const operation of state.operations) {
       const prior = candidates.get(operation.idempotencyKey);
-      const candidate = { operation, state, fromIncoming, sourceRevision };
+      const candidate = { operation, state, fromIncoming };
       if (prior === undefined) {
         candidates.set(operation.idempotencyKey, candidate);
         continue;
@@ -1957,9 +1955,9 @@ function mergeOperationCandidates(
     }
   };
   if (existing !== undefined) {
-    add(existing.state, false, recordRevision(existing));
+    add(existing.state, false);
   }
-  add(incoming.state, true, recordRevision(incoming));
+  add(incoming.state, true);
 
   const byTarget = new Map<string, OperationCandidate[]>();
   for (const candidate of candidates.values()) {
@@ -2006,43 +2004,17 @@ function mergeOperationCandidates(
       ({ operation }) =>
         operation.status === "pending" || operation.status === "failed",
     );
-    const confirmedTerminal = [...candidates.values()].find(
-      ({ operation }) =>
-        operation.status === "saved" && isTerminalOperation(operation),
-    );
-    if (
-      confirmedTerminal !== undefined &&
-      !mergedGroup.some(({ operation }) => isTerminalOperation(operation)) &&
-      active.some(
-        ({ sourceRevision }) =>
-          sourceRevision < confirmedTerminal.sourceRevision,
-      )
-    ) {
-      for (const candidate of active) {
-        if (candidate.sourceRevision >= confirmedTerminal.sourceRevision) {
-          continue;
-        }
-        candidates.set(candidate.operation.idempotencyKey, {
-          ...candidate,
-          operation: supersededOperation(
-            candidate.operation,
-            "Superseded by the server-confirmed terminal session state.",
-          ),
-        });
-      }
-      continue;
-    }
     if (saved.length > 0) {
       for (const candidate of active) {
-        const sourceHasSavedTarget = candidate.state.operations.some(
-          (operation) =>
-            operation.status === "saved" &&
-            semanticTargetKey(runnerOperationSemanticTarget(operation)) ===
-              semanticTargetKey(
-                runnerOperationSemanticTarget(candidate.operation),
-              ),
+        const sourceContainsConfirmedPredecessor = saved.some(
+          ({ operation: savedOperation }) =>
+            candidate.state.operations.some(
+              (sourceOperation) =>
+                sourceOperation.idempotencyKey ===
+                savedOperation.idempotencyKey,
+            ),
         );
-        if (sourceHasSavedTarget) {
+        if (sourceContainsConfirmedPredecessor) {
           continue;
         }
         candidates.set(
@@ -2067,6 +2039,28 @@ function mergeOperationCandidates(
           operation: conflictOperation(candidate.operation),
         },
       );
+    }
+  }
+
+  const confirmedTerminal = [...candidates.values()].find(
+    ({ operation }) =>
+      operation.status === "saved" && isTerminalOperation(operation),
+  );
+  if (confirmedTerminal !== undefined) {
+    for (const candidate of candidates.values()) {
+      if (
+        candidate.operation.status === "saved" ||
+        candidate.operation.status === "superseded"
+      ) {
+        continue;
+      }
+      candidates.set(candidate.operation.idempotencyKey, {
+        ...candidate,
+        operation: supersededOperation(
+          candidate.operation,
+          "Superseded by the server-confirmed terminal session state.",
+        ),
+      });
     }
   }
 
