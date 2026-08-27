@@ -5,6 +5,8 @@ import { dirname, resolve } from "node:path";
 
 const packageManager = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const repositoryRoot = resolve(process.cwd());
+const requestedPlaywrightArguments = process.argv.slice(2);
+if (requestedPlaywrightArguments[0] === "--") requestedPlaywrightArguments.shift();
 const inheritedEnvironmentNames = [
   "CI",
   "FORCE_COLOR",
@@ -77,7 +79,14 @@ try {
   if (!process.exitCode) {
     const result = spawnSync(
       packageManager,
-      ["exec", "playwright", "test", "--config", "playwright.authenticated.config.ts"],
+      [
+        "exec",
+        "playwright",
+        "test",
+        "--config",
+        "playwright.authenticated.config.ts",
+        ...requestedPlaywrightArguments,
+      ],
       { env: environment, stdio: "inherit" },
     );
 

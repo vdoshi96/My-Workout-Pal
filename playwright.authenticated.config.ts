@@ -6,6 +6,8 @@ if (!portValue || !Number.isInteger(port) || port < 1024 || port > 65_535) {
   throw new Error("MWP_AUTH_HARNESS_PORT must be a reserved unprivileged loopback port.");
 }
 const baseURL = `http://127.0.0.1:${port}`;
+const journeyAndGeometry = /(?:onboarding|customization-geometry)\.spec\.ts/u;
+const geometryOnly = /customization-geometry\.spec\.ts/u;
 
 export default defineConfig({
   testDir: "./tests/authenticated-e2e",
@@ -24,11 +26,59 @@ export default defineConfig({
   projects: [
     {
       name: "chromium-desktop",
-      use: { browserName: "chromium", viewport: { width: 1440, height: 1000 } },
+      testMatch: journeyAndGeometry,
+      use: {
+        browserName: "chromium",
+        hasTouch: false,
+        isMobile: false,
+        viewport: { width: 1440, height: 1000 },
+      },
     },
     {
       name: "webkit-phone",
-      use: { ...devices["iPhone 14"] },
+      testMatch: journeyAndGeometry,
+      use: {
+        ...devices["iPhone 14"],
+        browserName: "webkit",
+        viewport: { width: 390, height: 844 },
+      },
+    },
+    {
+      name: "chromium-phone",
+      testMatch: geometryOnly,
+      use: {
+        ...devices["Pixel 7"],
+        browserName: "chromium",
+        viewport: { width: 390, height: 844 },
+      },
+    },
+    {
+      name: "chromium-tablet",
+      testMatch: geometryOnly,
+      use: {
+        ...devices["Galaxy Tab S4"],
+        browserName: "chromium",
+        viewport: { width: 820, height: 1180 },
+      },
+    },
+    {
+      name: "webkit-tablet",
+      testMatch: geometryOnly,
+      use: {
+        ...devices["iPad Pro 11"],
+        browserName: "webkit",
+        viewport: { width: 820, height: 1180 },
+      },
+    },
+    {
+      name: "webkit-desktop",
+      testMatch: geometryOnly,
+      use: {
+        browserName: "webkit",
+        hasTouch: false,
+        isMobile: false,
+        viewport: { width: 1440, height: 1000 },
+      },
     },
   ],
   webServer: {

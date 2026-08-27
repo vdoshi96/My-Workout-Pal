@@ -5,6 +5,7 @@ export const HARNESS_SCENARIO_HEADER = "x-mwp-harness-scenario";
 export const HARNESS_SCOPE_HEADER = "x-mwp-harness-scope";
 
 export type HarnessScenario =
+  | "accept-next-program-publish-then-error"
   | "accept-next-runner-then-error"
   | "expire-session"
   | "fail-next-save"
@@ -20,6 +21,7 @@ export type HarnessRequestContext = Readonly<{
 }>;
 
 const scenarioValues = new Set<HarnessScenario>([
+  "accept-next-program-publish-then-error",
   "accept-next-runner-then-error",
   "expire-session",
   "fail-next-save",
