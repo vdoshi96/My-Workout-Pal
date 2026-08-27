@@ -628,8 +628,10 @@ async function renderedNotFound(
   const response = await page.goto(`${origin}/workout/${sessionId}`);
   assert.ok(response);
   setStage(uiStage);
+  await expect.poll(async () =>
+    (await page.locator("body").innerText()).replaceAll(/\s+/gu, " ").trim(),
+  ).toMatch(/not found|not on the map/iu);
   const renderedBody = (await page.locator("body").innerText()).replaceAll(/\s+/gu, " ").trim();
-  assert.match(renderedBody, /not found|not on the map/iu);
   setStage(noindexStage);
   const responseBody = await response.text();
   const hydratedRobots = await page.locator('meta[name="robots"]').evaluateAll((elements) =>
