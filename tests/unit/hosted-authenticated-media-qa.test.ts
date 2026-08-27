@@ -39,6 +39,8 @@ const invalidCases: readonly Readonly<[
 describe("hosted authenticated media QA boundary", () => {
   it("accepts only the approved production, Firebase, and Neon boundary", () => {
     expect(parseHostedAuthenticatedMediaQaConfig(validEnvironment)).toEqual({
+      apiKey: "fixture-public-api-key",
+      authDomain: "my-workout-pal-92819.firebaseapp.com",
       origin: "https://my-workout-pal-chi.vercel.app",
       projectId: "my-workout-pal-92819",
     });

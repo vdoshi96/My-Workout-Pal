@@ -22,6 +22,8 @@ const validEnvironment = {
 describe("hosted deletion QA boundary", () => {
   it("accepts only explicit destructive approval with Firebase and Neon configuration", () => {
     expect(parseHostedDeletionQaConfig(validEnvironment)).toEqual({
+      apiKey: "fixture-public-api-key",
+      authDomain: "my-workout-pal-92819.firebaseapp.com",
       origin: "https://my-workout-pal-chi.vercel.app",
       projectId: "my-workout-pal-92819",
     });
@@ -48,7 +50,7 @@ describe("hosted deletion QA boundary", () => {
     expect(identities[0]?.email).not.toBe(identities[1]?.email);
     expect(identities[0]?.password).not.toBe(identities[1]?.password);
     for (const identity of identities) {
-      expect(identity.email).toMatch(/^mwp-qa-[a-f0-9]{32}@example\.com$/u);
+      expect(identity.email).toMatch(/^mwp-qa-[a-f0-9]{32}@example\.invalid$/u);
       expect(identity.password).toHaveLength(47);
     }
   });
