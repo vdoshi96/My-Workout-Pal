@@ -173,6 +173,7 @@ describe("credential-free authenticated harness boundary", () => {
   it("mounts the real day, workout, workout API, and history vertical slice only in the fixture", () => {
     const fixtureRoot = resolve(repositoryRoot, "tests/fixtures/authenticated-app/app");
     const requiredFixtureFiles = [
+      "sign-in/page.tsx",
       "app/program/[day]/page.tsx",
       "workout/[sessionId]/page.tsx",
       "app/history/[sessionId]/page.tsx",
