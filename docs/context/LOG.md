@@ -1,5 +1,11 @@
 # Project log
 
+## 2026-08-27: Runner resilience plan checkpoint
+
+- Closed the customization release on synchronized local/GitHub `main` `b8d4e9f327b67fdf755f338b1d335630159f3089`, whose public alias resolves to Ready production deployment `dpl_HJ1EjNPvp77RFD9VyLPHXoCjgwGm`. Created only `/private/tmp/mwp-runner-resilience` on `qa/runner-resilience` from that exact base.
+- Planned the next credential-free runner lane before source work. The plan treats authentication/connectivity as ephemeral runtime facts, advances owner-scoped runner storage through a schema-one-preserving version-two atomic operation merge, makes IndexedDB transactions rather than BroadcastChannel the correctness boundary, classifies real `session_revoked`, adds explicit connection retry and exact-session reauthentication, and defines fail-closed same-target multi-tab conflict resolution.
+- The planned browser evidence uses actual offline request interruption, real production workout API expiry/revocation envelopes, and two simultaneous pages in Chromium desktop and WebKit phone. Synthetic viewer return remains clearly separate from hosted Firebase/provider proof. No application source, provider, database, deployment, domain, or spend setting changed in this checkpoint.
+
 ## 2026-08-27: Firebase Admin serverless compatibility checkpoint
 
 - Pushed the reviewed customization branch through documentation checkpoint `a605bcb75dc60abe4870e65648813f2e7d27119e`. Its native preview and the current production deployment both returned `500` for unauthenticated `/app` before viewer resolution. Runtime logs identified one exact boundary: Firebase Admin's CommonJS `jwks-rsa@4.1.0` dependency attempted to `require()` ESM-only `jose@6.2.10`.

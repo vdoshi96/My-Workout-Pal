@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="bc093b3efef5659a6c54d7f9b271abbfd98183a11e6eed000ee608d6c464423e">
+  <title>Authenticated runner offline, reauthentication, and multi-tab resilience plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Authenticated runner offline, reauthentication, and multi-tab resilience plan</h1>
+<h2>User outcome</h2>
+<p>A verified member can keep working when a workout request loses its response, the browser is genuinely offline, the secure session expires or is revoked after the runner has loaded, or another tab edits the same session. Every saved-to-device operation remains owner-scoped and carries one stable idempotency key. The interface distinguishes queued-on-device, syncing, server-confirmed, authentication-blocked, connectivity-blocked, conflict, and terminal states; it never calls a change saved until the server confirms it.</p>
+<p>This is a bounded credential-free resilience checkpoint. It exercises production runner components, reducers, client adapters, IndexedDB, workout HTTP mapping, repositories, and immutable PGlite state under fixed synthetic viewers. It does not claim Firebase provider reauthentication, hosted cookies, Neon production writes, Vercel behavior, account deletion, authenticated production media, or Spend Management. Those remain separate release gates.</p>
+<h2>Navigation</h2>
+<ol>
+<li>Verified synthetic Alice opens <code>/app</code>, resumes a real persisted workout, and reaches <code>/workout/&lt;session-id&gt;</code> through the production start/resume boundary.</li>
+<li>Alice queues a set while the exact first-party operation request is genuinely aborted rather than replaced by fixture metadata. After that transport is restored, Alice reloads the exact session and sees the same operation and idempotency key still queued on this device.</li>
+<li>Without relying on a browser <code>online</code> event, Alice activates <strong>Retry connection</strong>. The preserved operation is submitted once and becomes server-confirmed; another failure returns to the honest offline state.</li>
+<li>In a separate run, Alice loads the runner while authenticated, queues an operation, and the next production operation request receives the real <code>session_expired</code> error envelope from the fixture&#39;s production workout API. The visible action opens <code>/sign-in?returnTo=%2Fworkout%2F&lt;session-id&gt;</code>.</li>
+<li>The fixture-only sign-in surface restores the same synthetic Alice viewer and returns to that exact session. A fresh server baseline wins over the stale device-only authentication flag, while the queued operation and its original key survive and sync exactly once.</li>
+<li>The revoked-session case repeats the same path with the real <code>session_revoked</code> code and revoked-specific copy. A foreign synthetic Bob return cannot load Alice&#39;s route, IndexedDB key, or queued operation and receives the same missing behavior as an unknown session.</li>
+<li>Two pages in one browser context open the same Alice session. Distinct offline operations created in each tab are atomically merged in IndexedDB and both survive reload. Divergent operations for the same semantic target are retained as a visible local-tab conflict; neither is guessed or submitted until Alice explicitly chooses one.</li>
+<li>A server-confirmed operation in one tab cannot be erased by a stale write in the other. A confirmed terminal completion freezes the other tab, reconciles its local state, and routes only after the terminal result is server-confirmed.</li>
+</ol>
+<p>The fixture may add a bounded <code>/sign-in</code> surface and test-only session-control boundary outside <code>src/app</code>. They exist only to select fixed synthetic server viewers for the return journey. Production continues to derive identity from Firebase Admin&#39;s secure cookie and never accepts a client UID.</p>
+<h2>UI states</h2>
+<ul>
+<li>Recovery: checking server plus device record, ready, storage blocked, corrupt/mismatched record, and owner/session denial.</li>
+<li>Connectivity: online, a request failed without a response, browser-declared offline, queued-on-device, retrying connection, still offline, and reconnected/syncing.</li>
+<li>Authentication: valid, expired, revoked, opening sign-in, returned as the same owner, and returned as another owner/missing.</li>
+<li>Multi-tab: synchronized, another tab changed this workout, two distinct operations merged, same-target conflict requiring a choice, chosen operation pending, stale operation superseded, and terminal elsewhere.</li>
+<li>Operation: pending, attempted, offline, authentication-blocked, saved, duplicate-confirmed, transient failure, permanent failure, server conflict, local-tab conflict, and superseded.</li>
+<li>Terminal: completing/abandoning, confirmed complete/abandoned, terminal failure, and terminal confirmed in another tab.</li>
+</ul>
+<p>The expired/revoked and offline banners each contain a keyboard-operable recovery action. Conflict copy names the affected set, cardio log, note, exercise decision, or session action without exposing database IDs. A live region announces material state changes. The first recovery control receives focus only when a new blocking state appears, not on every render.</p>
+<h2>Domain types and invariants</h2>
+<ul>
+<li>Authentication and connectivity are ephemeral runtime facts. A successfully server-rendered, same-owner resume baseline is authoritative for valid authentication; <code>navigator.onLine</code>, an explicit probe, or the current request result is authoritative for connectivity. A stored <code>expired</code>, <code>revoked</code>, or <code>offline</code> flag may explain the previous interruption but must not permanently override a fresh valid baseline.</li>
+<li><code>session_expired</code>, <code>session_invalid</code>, <code>auth_expired</code>, and the server&#39;s actual <code>session_revoked</code> code stop submission without consuming or replacing the queued idempotency key. Revocation remains distinguishable in presentation and tests.</li>
+<li>A runner operation is immutable in identity: owner, session, base revision, kind, normalized payload, and idempotency key cannot change. Equal keys require equal semantic payloads. Same-key/different-payload storage is corrupt and fails closed.</li>
+<li>Each operation has a semantic target: one set, one exercise note, cardio, one exercise decision, or the session terminal action. Distinct targets commute and merge. Divergent unresolved operations for one target become an explicit local-tab conflict. The product never chooses a winner from wall-clock time alone.</li>
+<li>A server-confirmed operation outranks a stale unconfirmed copy. A later intentionally queued operation for the same target remains a new pending operation only when it was created from the already-confirmed state; otherwise it conflicts. Confirmed terminal state outranks every mutable local projection and supersedes stale unsent work with truthful terminal copy.</li>
+<li>Operation ordering after a merge is deterministic: original creation time, then idempotency key. Sequence values are normalized locally and remain presentation/sync order only; the server still derives ownership and lifecycle state.</li>
+<li>Raw field tokens that have not been activated with <strong>Save activity</strong> remain tab-local editing state. Multi-tab durability begins when the user queues an immutable operation. Navigation protection continues to guard raw dirty fields.</li>
+<li>Conflict resolution is an explicit reducer action selecting one preserved idempotency key. The selected operation becomes pending with the same key; competing unconfirmed operations become superseded. Cancel leaves every conflicting operation blocked and durable.</li>
+<li>Different Firebase UIDs use different encoded storage keys. No merge, notification, cleanup, or fixture helper can read or write another owner&#39;s namespace.</li>
+</ul>
+<h2>Persistence contracts</h2>
+<ul>
+<li>Runner storage records advance to schema version 2 and add a monotonic storage revision, stable per-tab writer identity, committed timestamp, and the complete validated runner state. Existing schema-one records remain readable and migrate without dropping operations on the next atomic write. The IndexedDB database version is advanced deliberately while preserving the existing object store.</li>
+<li><code>RunnerStorage.save</code> becomes an atomic compare-and-merge operation that returns the committed record/state. IndexedDB performs the existing-record read, validation, pure operation merge, revision increment, and <code>put</code> inside one read/write transaction. The in-memory adapter implements the identical contract for domain tests.</li>
+<li>The write result, not the caller&#39;s stale input, becomes the active React state. Persistence and remote-sync queues adopt merged state before submitting anything.</li>
+<li>IndexedDB is the correctness mechanism. A same-origin <code>BroadcastChannel</code> publishes only an opaque digest of the owner/session storage namespace, revision, and writer identity after commit so other tabs can re-read; it carries no measurements, notes, UID, raw storage key, or operation payload and is never trusted as the state itself. Visibility and focus events also re-read as recovery hints.</li>
+<li>The pure merge validates record, owner, session, snapshot revision/day identity, operation key/payload equality, semantic target, terminal state, and supported schema. Corrupt, cross-owner, cross-session, and future-unsupported records fail closed without overwriting either copy.</li>
+<li>Sign-out and confirmed account deletion still clear only the current owner namespace. The new record metadata contains no provider token, cookie, email, or raw Firebase credential.</li>
+<li>Server persistence remains unchanged: private requests contain no UID, CSRF and viewer policy run server-side, idempotency receipts own duplicate meaning, immutable workout snapshots retain history, and every private response is <code>no-store</code>.</li>
+</ul>
+<h2>Authentication and authorization</h2>
+<p>Production pages and APIs continue to trust only the Firebase Admin session cookie. A post-load <code>401</code> is processed through the existing structured private-client error, not a test-only response parser. The exact return target is constructed from the already-owned opaque session path and normalized to the same-origin <code>/workout/&lt;uuid&gt;</code> route.</p>
+<p>The credential-free fixture selects Alice or Bob through its existing loopback-only, runner-injected test boundary. The new sign-in fixture is explicitly labeled synthetic and cannot appear in the production route manifest. It may restore a fixed viewer only for its fixed test scope; it never accepts an arbitrary UID or account claim from an application request body. Browser headers remain exact-loopback first-party only, the child environment stays allowlisted, and Firebase, Google ADC, Neon, Vercel, YouTube, and OIDC variables remain absent.</p>
+<p>Expired and revoked requests return the production <code>AuthPolicyError</code> status/code/message shape and <code>Cache-Control: no-store</code>. The repository is not called after viewer failure. Bob cannot load Alice&#39;s session or storage namespace, and foreign/missing API and rendered-route results remain indistinguishable after normalizing only the caller-supplied path token.</p>
+<h2>Loading, empty, error, interrupted, and worst-case behavior</h2>
+<ul>
+<li>A real browser offline transition queues locally and produces no HTTP success claim. Reload restores the operation. Explicit retry attempts the same key even if <code>navigator.onLine</code> stayed true and no <code>online</code> event fired.</li>
+<li>A retry that still throws a network error returns to offline with the operation intact. A later retry, <code>online</code>, or visible-page hint may try again; concurrent hints serialize through one persistence/sync queue.</li>
+<li>A valid same-owner server reload clears only stale ephemeral auth/connectivity blockers. It does not clear drafts, operations, conflicts, or device history. A server error or missing/foreign route cannot be treated as successful reauthentication.</li>
+<li>Expired/revoked responses block all later queue submission until a fresh same-owner server baseline loads. Repeated clicks cannot create a second key or duplicate row.</li>
+<li>Two tabs writing at the same moment serialize through the IndexedDB transaction. Distinct targets survive. Same-target divergence blocks both. A payload-hash collision, corrupt record, unsupported schema, or snapshot mismatch stops recovery and preserves the last committed record.</li>
+<li>If another tab confirms an operation while this tab is stale, the confirmed result remains authoritative. If another tab confirms terminal completion/abandonment, this tab stops timers and mutation controls, announces the terminal state, and cannot re-open the session locally.</li>
+<li>BroadcastChannel absence, message loss, duplicated notification, or tab suspension cannot lose data; reload, focus, visibility, and the next write re-read the durable record.</li>
+<li>Storage quota/blocking remains a separate local adapter failure. Network retry never suggests that unavailable local persistence succeeded.</li>
+</ul>
+<h2>Phone, tablet, and desktop behavior</h2>
+<p>The complete resilience journey runs in Chromium desktop and WebKit phone. Focused geometry assertions reuse the released authenticated phone/tablet/desktop matrix for banners, retry/reauth controls, conflict review, terminal disclosure, fixed navigation clearance, 44-pixel material targets, and zero horizontal overflow. The phone layout keeps the recovery action and affected-target summary above the fixed account navigation. Desktop may place conflict choices side-by-side; phone stacks them without changing reading or tab order.</p>
+<p>Reduced motion removes nonessential transitions without delaying state or focus. Dark and forced-color checks remain scoped to engines that support the emulation. This checkpoint does not relabel viewport emulation as actual 200-percent browser zoom; that remains a separate headed/manual release gate.</p>
+<h2>Accessibility</h2>
+<ul>
+<li>Offline, expired, revoked, conflict, syncing, and terminal-elsewhere states have named landmarks plus polite/assertive live behavior appropriate to urgency.</li>
+<li><strong>Retry connection</strong>, <strong>Reauthenticate and return</strong>, and conflict choice buttons have target-specific accessible names and at least 44-by-44-pixel hit areas.</li>
+<li>When auth first blocks the runner, focus moves once to the banner heading or primary action; activating reauthentication uses an ordinary same-origin link. Returning places focus at the runner recovery heading before the preserved operation syncs.</li>
+<li>When a local-tab conflict appears, focus moves once to the conflict heading. Choosing or cancelling returns focus to the affected runner control. Keyboard users can inspect both values before selecting one.</li>
+<li>Axe serious/critical scans run while offline, expired, revoked, conflicted, and terminal-in-another-tab states are visible. First-party console, page-error, HTTP failure, and request-failure collectors stay fail closed, with only each deliberately consumed offline/auth response identified by exact path and status/failure reason.</li>
+</ul>
+<h2>Privacy and security</h2>
+<p>Runner notes, loads, distances, idempotency keys, and conflict payloads stay inside owner-scoped IndexedDB or no-store private requests. Broadcast messages carry only an opaque namespace digest plus revision/writer metadata; tests verify they cannot cross owner namespaces. The UI describes targets with human labels and never prints raw Firebase UID, storage keys, operation hashes, cookies, SQL, or provider errors.</p>
+<p>QA uses only synthetic Alice/Bob data and retains the fixture banner. Logs and screenshots contain no secrets or private reference media. No provider, migration, seed, deployment, domain, or spend setting is changed in this lane until the independently reviewed source is merged under the established release workflow.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>A schema-one queued operation migrates to schema two and survives exact reload; unknown future schema and corrupt identity fail closed without overwrite.</li>
+<li>Two storage instances concurrently save distinct offline operations for one owner/session, and the next read contains both exactly once.</li>
+<li>Same-target divergent operations remain durable as one visible conflict with no request; explicit selection preserves the chosen original key and supersedes the other.</li>
+<li>A server-confirmed result survives a stale-tab write. Confirmed terminal state freezes and reconciles the other tab.</li>
+<li><code>session_expired</code> and <code>session_revoked</code> are both terminal authentication blockers, use the exact production <code>401 no-store</code> envelope, preserve the queued key, and expose the exact-session reauthentication link.</li>
+<li>Same-owner return through the synthetic fixture sign-in makes the fresh valid server baseline authoritative and syncs the original key exactly once. Bob cannot load, merge, inspect, or clear Alice&#39;s draft.</li>
+<li>Actual offline interception or browser offline context queues without a response; explicit retry succeeds without requiring an <code>online</code> event and reuses the key. A failed retry remains honestly offline.</li>
+<li>Broadcast messages are advisory only; dropping them does not change the eventual durable merge result.</li>
+<li>Chromium desktop and WebKit phone complete the offline, expiry, revocation, foreign-owner, two-tab distinct-operation, conflict-choice, stale-write, and terminal reconciliation paths with no unexpected first-party console/request failures, serious/critical Axe violations, or horizontal overflow.</li>
+<li>Production build and route-atlas checks contain no fixture sign-in, harness auth control, synthetic viewer marker, or resilience scenario route.</li>
+</ul>
+<h2>Automated tests and retained fail-first evidence</h2>
+<p>Before implementation, retain focused red tests for:</p>
+<ol>
+<li><code>reconcileWorkoutResumeState</code> incorrectly retaining stored expired/offline flags over a fresh valid/online server baseline;</li>
+<li><code>session_revoked</code> being classified as an ordinary retryable failure;</li>
+<li>the existing blind IndexedDB <code>put</code> erasing a distinct operation from another storage instance;</li>
+<li>no UI action retrying a network failure when no browser <code>online</code> event fires;</li>
+<li>no bounded reauthentication link/action in the visible auth-blocked state; and</li>
+<li>a two-page browser run losing one offline operation or submitting a same-target conflict.</li>
+</ol>
+<p>Pure/unit tests cover schema-one migration, version-two validation, atomic merge, deterministic ordering, same-key payload corruption, distinct targets, same-target conflict, conflict resolution, saved precedence, terminal precedence, owner/session/snapshot isolation, advisory notifications, offline retry, expired/revoked thrown and returned failure shapes, runtime-ephemeral recovery, and exact bounded return URLs. IndexedDB adapter tests prove the read and <code>put</code> share one read/write transaction and that <code>save</code> returns the committed merge.</p>
+<p>Fixture/API tests cover production <code>AuthPolicyError</code> mapping for expiry/revocation, no-store headers, viewer-before-repository order, synthetic sign-in scope, environment/header isolation, owner-indistinguishable denial, and production route exclusion. Browser tests use real route abort/context offline state and two simultaneous pages, not fixture-only metadata, for the storage and connectivity claims.</p>
+<p>Reproducible gates are:</p>
+<pre><code class="language-bash">pnpm exec vitest run tests/unit/workout-runner.test.ts tests/unit/workout-resume.test.ts tests/unit/runner-storage.test.ts tests/unit/workout-runner-component.test.ts tests/unit/authenticated-harness-policy.test.ts tests/integration/workout-api-contract.test.ts
+pnpm typecheck
+pnpm lint
+pnpm test:e2e:authenticated
+pnpm verify
+pnpm test:e2e:release
+</code></pre>
+<h2>Browser evidence required for completion</h2>
+<p>The newest authenticated QA record names the exact source commit, retained red failures, two production-mode browser projects/viewports, synthetic scope, session ID only in internal assertions, original idempotency-key equality result, exact expected offline/auth response set, server row/digest before and after duplicate/conflict paths, storage schema/revision result, foreign/missing equivalence, Axe/overflow/target results, and production-route exclusion. Retain only the newest minimal screenshots showing synthetic offline recovery, revoked reauthentication, local-tab conflict, and terminal reconciliation when each materially proves a distinct state.</p>
+<p>The report must say explicitly that the fixture proves credential-free client/domain/storage/server behavior with synthetic viewers. Hosted password/Google sign-in, provider revocation, secure production cookie renewal, and real production cross-account behavior remain pending until the separate configured-identity lane passes.</p>
+
+  </main>
+</body>
+</html>
