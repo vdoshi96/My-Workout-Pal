@@ -27,6 +27,7 @@ export function AuthenticatedNav() {
           aria-current={authenticatedDestinationIsCurrent(pathname, destination.href) ? "page" : undefined}
           href={destination.href}
           key={destination.href}
+          prefetch={false}
         >
           <Icon name={destination.icon} />
           <span>{destination.label}</span>

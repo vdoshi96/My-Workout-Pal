@@ -10,8 +10,8 @@ import {
 
 describe("training insights presenters", () => {
   it("converts canonical metrics only at presentation", () => {
-    expect(formatInsightVolume(100, "imperial")).toBe("220.5 lb");
-    expect(formatInsightVolume(100, "metric")).toBe("100 kg");
+    expect(formatInsightVolume(100, "imperial")).toBe("220.5 lb·reps");
+    expect(formatInsightVolume(100, "metric")).toBe("100 kg·reps");
     expect(formatInsightDistance(1_609.344, "imperial")).toBe("1 mi");
     expect(formatInsightDistance(1_609.344, "metric")).toBe("1.61 km");
   });
@@ -37,5 +37,6 @@ describe("training insights presenters", () => {
     expect(formatPersonalRecord("max_repetitions", 14, "metric").value).toBe("14 reps");
     expect(formatPersonalRecord("duration", 95, "metric").value).toBe("1m 35s");
     expect(formatPersonalRecord("distance", 5_000, "metric").value).toBe("5 km");
+    expect(formatPersonalRecord("volume", 100, "metric").value).toBe("100 kg·reps");
   });
 });
