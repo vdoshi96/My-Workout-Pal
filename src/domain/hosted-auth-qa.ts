@@ -113,10 +113,22 @@ export function createHostedAuthQaIdentity(): HostedAuthQaIdentity {
   }
   return {
     displayMarker: "My Workout Pal hosted QA",
-    email: `mwp-qa-${suffix}@example.com`,
+    email: `mwp-qa-${suffix}@example.invalid`,
     password,
     recoveredPassword,
   };
+}
+
+export function createHostedAuthQaIdentityPair(): Readonly<{
+  actionCode: HostedAuthQaIdentity;
+  application: HostedAuthQaIdentity;
+}> {
+  const application = createHostedAuthQaIdentity();
+  let actionCode = createHostedAuthQaIdentity();
+  while (actionCode.email === application.email) {
+    actionCode = createHostedAuthQaIdentity();
+  }
+  return { actionCode, application };
 }
 
 export type HostedAuthQaActionMode = "resetPassword" | "verifyEmail";

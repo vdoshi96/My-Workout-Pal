@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createHostedAuthQaIdentity,
+  createHostedAuthQaIdentityPair,
   HostedAuthQaConfigurationError,
   parseHostedAuthQaActionLink,
   parseHostedAuthQaEmailVerificationResponse,
@@ -59,7 +60,7 @@ describe("hosted authentication QA boundary", () => {
   it("generates a reserved-domain identity with a high-entropy password and no personal name", () => {
     const identity = createHostedAuthQaIdentity();
 
-    expect(identity.email).toMatch(/^mwp-qa-[a-f0-9]{32}@example\.com$/u);
+    expect(identity.email).toMatch(/^mwp-qa-[a-f0-9]{32}@example\.invalid$/u);
     expect(identity.password).toHaveLength(47);
     expect(identity.password).toMatch(/[A-Z]/u);
     expect(identity.password).toMatch(/[a-z]/u);
@@ -73,6 +74,18 @@ describe("hosted authentication QA boundary", () => {
     expect(identity.recoveredPassword).toContain("!");
     expect(identity.displayMarker).toBe("My Workout Pal hosted QA");
     expect(JSON.stringify(identity)).not.toContain("@gmail.com");
+  });
+
+  it("generates two distinct purpose-separated identities for one hosted run", () => {
+    const identities = createHostedAuthQaIdentityPair();
+
+    expect(identities.application.email).not.toBe(identities.actionCode.email);
+    expect(identities.application.email).toMatch(/@example\.invalid$/u);
+    expect(identities.actionCode.email).toMatch(/@example\.invalid$/u);
+    expect(identities.application.password).not.toBe(identities.actionCode.password);
+    expect(identities.application.recoveredPassword).not.toBe(
+      identities.actionCode.recoveredPassword,
+    );
   });
 
   it("accepts only the exact Firebase action handler, project key, mode, and one action code", () => {

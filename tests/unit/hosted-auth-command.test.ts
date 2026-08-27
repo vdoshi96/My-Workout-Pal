@@ -47,9 +47,15 @@ describe("hosted authentication QA command", () => {
     expect(browserSource).toContain('["GET", "HEAD"].includes(request.method())');
     expect(browserSource).toContain('errorText.startsWith("net::ERR_ABORTED")');
     expect(browserSource).toContain('errorText === "cancelled"');
-    expect(browserSource).toContain('"verification_link_generated"');
+    expect(browserSource).toContain('"action_identity_create"');
+    expect(browserSource).toContain("createHostedAuthQaIdentityPair");
+    expect(browserSource).toContain("beforeCount + 2");
+    expect(browserSource).toContain("createdUids");
+    expect(browserSource).toContain('"verification_link_request"');
+    expect(browserSource).toContain('"verification_link_parse"');
     expect(browserSource).toContain('"verification_code_confirmed"');
-    expect(browserSource).toContain('"password_reset_link_generated"');
+    expect(browserSource).toContain('"password_reset_link_request"');
+    expect(browserSource).toContain('"password_reset_link_parse"');
     expect(browserSource).toContain('"password_reset_code_verified"');
     expect(browserSource).toContain('"password_reset_code_confirmed"');
     expect(browserSource).toContain('"old_password_rejected"');

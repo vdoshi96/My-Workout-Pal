@@ -27,7 +27,7 @@ async function main(): Promise<number> {
       : "unclassified";
     const cleanup = error instanceof HostedAuthQaExecutionError && error.cleanupConfirmed
       ? "Disposable Firebase identity cleanup was confirmed."
-      : "One disposable Firebase identity may require manual cleanup.";
+      : "Up to two disposable Firebase identities may require manual cleanup.";
     process.stderr.write(
       `Hosted authentication QA failed safely at the ${stage} stage. ${cleanup}\n`,
     );

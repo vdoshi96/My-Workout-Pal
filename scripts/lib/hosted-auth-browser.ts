@@ -7,11 +7,12 @@ import { setTimeout as wait } from "node:timers/promises";
 import assert from "node:assert/strict";
 
 import {
-  createHostedAuthQaIdentity,
+  createHostedAuthQaIdentityPair,
   parseHostedAuthQaActionLink,
   parseHostedAuthQaEmailVerificationResponse,
   parseHostedAuthQaPasswordResetResponse,
   type HostedAuthQaConfig,
+  type HostedAuthQaIdentity,
 } from "../../src/domain/hosted-auth-qa";
 import { getFirebaseAdminAuth } from "../../src/server/firebase/admin";
 
@@ -25,6 +26,7 @@ const evidencePaths = {
 } as const;
 
 export type HostedAuthQaStage =
+  | "action_identity_create"
   | "assertions_console_errors"
   | "assertions_console_warnings"
   | "assertions_mutations"
@@ -40,7 +42,8 @@ export type HostedAuthQaStage =
   | "old_password_rejected"
   | "password_reset_code_confirmed"
   | "password_reset_code_verified"
-  | "password_reset_link_generated"
+  | "password_reset_link_parse"
+  | "password_reset_link_request"
   | "recovery_known"
   | "recovery_unknown"
   | "registration"
@@ -49,7 +52,8 @@ export type HostedAuthQaStage =
   | "unverified_sign_in"
   | "unverified_session"
   | "verification_code_confirmed"
-  | "verification_link_generated"
+  | "verification_link_parse"
+  | "verification_link_request"
   | "verified_return_route"
   | "verified_sign_in_navigation"
   | "verified_sign_in_submit"
@@ -274,8 +278,11 @@ async function captureEvidence(page: Page, path: string): Promise<void> {
 async function runBrowserLifecycle(
   auth: Auth,
   config: HostedAuthQaConfig,
-  identity: ReturnType<typeof createHostedAuthQaIdentity>,
-  setCreatedUid: (uid: string) => void,
+  identities: Readonly<{
+    actionCode: HostedAuthQaIdentity;
+    application: HostedAuthQaIdentity;
+  }>,
+  setCreatedUid: (role: "actionCode" | "application", uid: string) => void,
   setStage: (stage: HostedAuthQaStage) => void,
 ): Promise<Readonly<{
   firstPartyMutationCount: number;
@@ -287,6 +294,7 @@ async function runBrowserLifecycle(
   const page = await context.newPage();
   const failures = attachFailureCollectors(page, config.origin);
   const expectedConsoleHttpStatuses: number[] = [];
+  const identity = identities.application;
 
   try {
     await page.goto(`${config.origin}/sign-in?returnTo=%2Fapp`);
@@ -320,7 +328,7 @@ async function runBrowserLifecycle(
       "Account created. Verify the email before signing in to save permanent changes.",
     );
     const created = await auth.getUserByEmail(identity.email);
-    setCreatedUid(created.uid);
+    setCreatedUid("application", created.uid);
 
     setStage("duplicate_registration");
     await chooseAuthTask(page, "Register");
@@ -384,8 +392,19 @@ async function runBrowserLifecycle(
       (cookie) => cookie.name === sessionCookieName,
     )).toBe(false);
 
-    setStage("verification_link_generated");
-    const verificationLink = await auth.generateEmailVerificationLink(identity.email);
+    setStage("action_identity_create");
+    const actionIdentity = identities.actionCode;
+    const actionCreated = await auth.createUser({
+      displayName: actionIdentity.displayMarker,
+      email: actionIdentity.email,
+      emailVerified: false,
+      password: actionIdentity.password,
+    });
+    setCreatedUid("actionCode", actionCreated.uid);
+
+    setStage("verification_link_request");
+    const verificationLink = await auth.generateEmailVerificationLink(actionIdentity.email);
+    setStage("verification_link_parse");
     const verificationAction = parseHostedAuthQaActionLink(verificationLink, {
       apiKey: config.apiKey,
       authDomain: config.authDomain,
@@ -396,12 +415,13 @@ async function runBrowserLifecycle(
       await postFirebaseAction(config, "update", {
         oobCode: verificationAction.oobCode,
       }),
-      { email: identity.email, uid: created.uid },
+      { email: actionIdentity.email, uid: actionCreated.uid },
     );
-    assert.equal((await auth.getUser(created.uid)).emailVerified, true);
+    assert.equal((await auth.getUser(actionCreated.uid)).emailVerified, true);
 
-    setStage("password_reset_link_generated");
-    const passwordResetLink = await auth.generatePasswordResetLink(identity.email);
+    setStage("password_reset_link_request");
+    const passwordResetLink = await auth.generatePasswordResetLink(actionIdentity.email);
+    setStage("password_reset_link_parse");
     const passwordResetAction = parseHostedAuthQaActionLink(passwordResetLink, {
       apiKey: config.apiKey,
       authDomain: config.authDomain,
@@ -412,15 +432,15 @@ async function runBrowserLifecycle(
       await postFirebaseAction(config, "resetPassword", {
         oobCode: passwordResetAction.oobCode,
       }),
-      identity.email,
+      actionIdentity.email,
     );
     setStage("password_reset_code_confirmed");
     parseHostedAuthQaPasswordResetResponse(
       await postFirebaseAction(config, "resetPassword", {
-        newPassword: identity.recoveredPassword,
+        newPassword: actionIdentity.recoveredPassword,
         oobCode: passwordResetAction.oobCode,
       }),
-      identity.email,
+      actionIdentity.email,
     );
 
     setStage("verified_return_route");
@@ -430,8 +450,8 @@ async function runBrowserLifecycle(
     setStage("old_password_rejected");
     const oldPasswordResponse = waitForFirebaseAuthResponse(page, "signInWithPassword");
     await submitEmailForm(page, {
-      email: identity.email,
-      password: identity.password,
+      email: actionIdentity.email,
+      password: actionIdentity.password,
       submitName: "Sign in with email",
     });
     assert.equal((await oldPasswordResponse).status(), 400);
@@ -448,8 +468,8 @@ async function runBrowserLifecycle(
         response.request().method() === "POST";
     });
     await submitEmailForm(page, {
-      email: identity.email,
-      password: identity.recoveredPassword,
+      email: actionIdentity.email,
+      password: actionIdentity.recoveredPassword,
       submitName: "Sign in with email",
     });
     setStage("verified_session_create");
@@ -473,7 +493,7 @@ async function runBrowserLifecycle(
 
     setStage("revocation");
     await wait(1_100);
-    await auth.revokeRefreshTokens(created.uid);
+    await auth.revokeRefreshTokens(actionCreated.uid);
     await page.reload();
     await page.waitForURL(`${config.origin}/sign-in?returnTo=%2Fapp`);
     await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
@@ -520,10 +540,10 @@ export async function executeHostedAuthQa(
   viewport: "1440x1000";
 }>> {
   const auth = getFirebaseAdminAuth();
-  const identity = createHostedAuthQaIdentity();
+  const identities = createHostedAuthQaIdentityPair();
   let stage: HostedAuthQaStage = "firebase_inventory_before";
   const beforeCount = await firebaseUserCount(auth);
-  let createdUid: string | undefined;
+  const createdUids: Partial<Record<"actionCode" | "application", string>> = {};
   let browserResult: Awaited<ReturnType<typeof runBrowserLifecycle>> | undefined;
   let runFailed = false;
   let cleanupConfirmed = false;
@@ -534,46 +554,52 @@ export async function executeHostedAuthQa(
     browserResult = await runBrowserLifecycle(
       auth,
       config,
-      identity,
-      (uid) => {
-        createdUid = uid;
+      identities,
+      (role, uid) => {
+        createdUids[role] = uid;
       },
       (nextStage) => {
         stage = nextStage;
       },
     );
     stage = "firebase_inventory_after";
-    assert.equal(await firebaseUserCount(auth), beforeCount + 1);
+    assert.equal(await firebaseUserCount(auth), beforeCount + 2);
   } catch {
     runFailed = true;
     failureStage = stage;
   } finally {
     stage = "cleanup";
-    if (!createdUid) {
-      try {
-        createdUid = (await auth.getUserByEmail(identity.email)).uid;
-      } catch (error) {
-        if (!isUserNotFound(error)) {
-          runFailed = true;
-          failureStage = "cleanup";
+    for (const role of ["application", "actionCode"] as const) {
+      if (!createdUids[role]) {
+        try {
+          createdUids[role] = (await auth.getUserByEmail(identities[role].email)).uid;
+        } catch (error) {
+          if (!isUserNotFound(error)) {
+            runFailed = true;
+            failureStage = "cleanup";
+          }
         }
       }
-    }
 
-    if (createdUid) {
-      try {
-        await auth.deleteUser(createdUid);
-      } catch (error) {
-        if (!isUserNotFound(error)) {
-          runFailed = true;
-          failureStage = "cleanup";
+      const uid = createdUids[role];
+      if (uid) {
+        try {
+          await auth.deleteUser(uid);
+        } catch (error) {
+          if (!isUserNotFound(error)) {
+            runFailed = true;
+            failureStage = "cleanup";
+          }
         }
       }
     }
 
     try {
-      const identityAbsent = createdUid ? await identityIsAbsent(auth, createdUid) : true;
-      cleanupConfirmed = identityAbsent && await firebaseUserCount(auth) === beforeCount;
+      const identitiesAbsent = await Promise.all(
+        Object.values(createdUids).map((uid) => identityIsAbsent(auth, uid)),
+      );
+      cleanupConfirmed = identitiesAbsent.every(Boolean) &&
+        await firebaseUserCount(auth) === beforeCount;
     } catch {
       cleanupConfirmed = false;
       failureStage = "cleanup";

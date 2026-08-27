@@ -2,13 +2,13 @@
 
 ## User outcome
 
-A person can create a password account, receive truthful verification guidance, sign in with invalid and valid credentials, recover access without account enumeration, use a verified secure server session, sign out, and be rejected after server-side revocation on the public Vercel deployment. This verification uses a generated disposable identity; it never uses a production member, a personal mailbox, or a saved credential.
+A person can create a password account, receive truthful verification guidance, sign in with invalid and valid credentials, recover access without account enumeration, use a verified secure server session, sign out, and be rejected after server-side revocation on the public Vercel deployment. This verification uses two purpose-separated disposable identities on the reserved, non-routable `example.invalid` domain; it never uses a production member, a personal mailbox, or a saved credential.
 
 Google sign-in and Google reauthentication remain a separate interactive provider lane because they require a real Google consent session. The password harness must not claim that those flows passed.
 
 ## Navigation
 
-The browser starts at `/sign-in?returnTo=%2Fapp`, exercises Sign in, Register, and Recovery without leaving the same-origin application shell, then follows the secure session into `/app`. An unverified identity sees the read-only account banner and disabled onboarding mutation. Because a new member has no program or Settings model yet, an account-shell **Sign out** action remains available before onboarding; it clears only the server viewer's local runner namespace, removes the secure session, signs out the configured Firebase client, and returns to `/sign-in`. After server-side verification and a fresh sign-in, `/app` shows a verified account and enabled onboarding action. Revoking the server session and reloading `/app` returns to `/sign-in?returnTo=%2Fapp`.
+The browser starts at `/sign-in?returnTo=%2Fapp`, exercises Sign in, Register, and Recovery with the application identity without leaving the same-origin application shell, then follows its secure session into `/app`. That unverified identity sees the read-only account banner and disabled onboarding mutation. Because a new member has no program or Settings model yet, an account-shell **Sign out** action remains available before onboarding; it clears only the server viewer's local runner namespace, removes the secure session, signs out the configured Firebase client, and returns to `/sign-in`. The trusted runner then creates the separate action-code identity through Firebase Admin, completes verification and reset codes entirely in memory, and signs that recovered identity in through the public page. `/app` shows a verified account and enabled onboarding action. Revoking that identity's server session and reloading `/app` returns to `/sign-in?returnTo=%2Fapp`.
 
 ## UI states
 
@@ -27,15 +27,15 @@ The browser starts at `/sign-in?returnTo=%2Fapp`, exercises Sign in, Register, a
 
 `HostedAuthQaConfig` contains a normalized HTTPS origin, the one permitted Firebase project ID, and an explicit external-account approval flag. Configuration parsing rejects credentials in URLs, paths, query strings, fragments, HTTP, unknown hosts, missing Admin values, mismatched public/Admin project IDs, and an absent approval value.
 
-The disposable identity uses a random suffix, the reserved `example.com` domain, a generated high-entropy password, no personal name, and a recognizable QA display marker. Its UID is learned from Firebase Admin after registration and is never accepted from the application. At most one identity belongs to one test invocation. Cleanup may delete only that exact captured UID and runs in `finally`; it never searches for or sweeps unrelated users.
+Each disposable identity uses a distinct random suffix, the IANA-reserved non-routable `example.invalid` domain, two generated high-entropy passwords, no personal name, and a recognizable QA display marker. The application identity's UID is learned from Firebase Admin after browser registration; the action-code identity's UID is returned by its exact Admin creation. Neither UID is accepted from the application. Exactly two identities belong to one action-code test invocation. Cleanup may delete only those two captured UIDs and runs in `finally`; it never searches for or sweeps unrelated users.
 
-The browser test does not create a Neon profile or program. The only permanent-mutation control is inspected for disabled/enabled state, not submitted. Therefore an interrupted run can leave at most one disposable Firebase identity, never workout or program data. The report must state cleanup success or the exact manual credential gate without printing the email, password, UID, token, cookie, or Firebase configuration.
+The browser test does not create a Neon profile or program. The only permanent-mutation control is inspected for disabled/enabled state, not submitted. Therefore an interrupted run can leave at most the two named disposable Firebase identities, never workout or program data. The report must state cleanup success or the exact manual credential gate without printing either email, password, UID, token, cookie, or Firebase configuration.
 
 Account-shell sign-out uses the server-derived UID only to select the local IndexedDB namespace. The session DELETE request contains no UID and remains protected by the same-origin double-submit CSRF boundary. A structural parser must confirm the exact `{ authenticated: false }` response before the UI claims completion; malformed success retains the signed-in page and exposes a safe retry message.
 
 ## Persistence contracts
 
-Firebase Authentication is the only external persistence touched by this lane. Successful browser registration creates the disposable password identity. Firebase Admin reads its verification state, changes only `emailVerified` for that exact UID, revokes only that UID's refresh tokens, and finally deletes only that UID. The application session endpoint may create and delete its ordinary secure HTTP-only cookie. No database mutation endpoint is called.
+Firebase Authentication is the only external persistence touched by this lane. Successful browser registration creates the application password identity. Firebase Admin creates the separate action-code identity, reads its verification state, revokes only that UID's refresh tokens, and finally deletes both captured UIDs. Applying the verification and reset codes changes only the action-code identity. The application session endpoint may create and delete its ordinary secure HTTP-only cookie. No database mutation endpoint is called.
 
 The Playwright evidence directory may retain screenshots of the read-only and verified private shells only when they contain no credential, token, cookie, email, or UID. Traces, videos, storage state, environment dumps, provider payloads, and browser profiles are not retained.
 
@@ -47,11 +47,11 @@ CSRF and cross-user behavior remain covered by the existing integration and repo
 
 ## Loading, empty, error, interrupted, and worst-case behavior
 
-The runner validates all configuration before launching a browser. Missing secrets, a non-HTTPS or unknown origin, project mismatch, or absent explicit approval stops before registration. The test records the created UID immediately after Firebase confirms registration. Every later operation is inside `try/finally`; cleanup is attempted even after a browser assertion, session, verification, recovery, sign-out, or revocation failure.
+The runner validates all configuration before launching a browser. Missing secrets, a non-HTTPS or unknown origin, project mismatch, or absent explicit approval stops before registration. The test records each created UID immediately after Firebase confirms the corresponding registration or Admin creation. Every later operation is inside `try/finally`; cleanup is attempted even after a browser assertion, session, verification, recovery, sign-out, or revocation failure.
 
 First-party console, HTTP, page-error, and request-failure collectors fail closed. The only navigation-metadata exception is a browser-reported `ERR_ABORTED` or `cancelled` GET or HEAD request for the exact `/manifest.webmanifest` path while a full-document authentication transition supersedes the page; API, RSC, script, style, image, mutation, and every other failed request remain fatal. The two deliberate Firebase Identity Toolkit 400 responses are awaited by exact operation and must match the browser's two generic failed-resource console messages.
 
-If cleanup fails, the command exits nonzero and prints only a safe instruction that one disposable identity requires operator cleanup. It must not print the identity or raw provider error. A killed process between registration and `finally` is the worst path; the run report must inspect aggregate Firebase user count before and after execution and must not claim cleanup without a confirmed `auth/user-not-found` result.
+If cleanup fails, the command exits nonzero and prints only a safe instruction that up to two disposable identities require operator cleanup. It must not print either identity or raw provider error. A killed process between creation and `finally` is the worst path; the run report must inspect aggregate Firebase user count before and after execution and must not claim cleanup without a confirmed `auth/user-not-found` result for every captured UID.
 
 ## Mobile, tablet, and desktop behavior
 
@@ -63,45 +63,45 @@ Browser assertions use roles, labels, headings, and visible status text. The run
 
 ## Privacy and security
 
-No personal account or mailbox is used. Generated credentials live only in process memory and are never supplied as shell arguments, written to `.env`, printed, committed, included in screenshots, or preserved in Playwright traces. Firebase Admin secrets remain in ignored local environment variables. The runner refuses non-production-like HTTP targets and hosts outside the explicit allowlist. Provider errors are mapped to stable safe codes.
+No personal account or mailbox is used. Both identities use `example.invalid`, so email cannot be delivered to a third party. Generated credentials live only in process memory and are never supplied as shell arguments, written to `.env`, printed, committed, included in screenshots, or preserved in Playwright traces. Firebase Admin secrets remain in ignored local environment variables. The runner refuses non-production-like HTTP targets and hosts outside the explicit allowlist. Provider errors are mapped to stable safe codes.
 
-The reserved example-domain address cannot receive a verification or recovery message. This lane proves Firebase accepted the request and the UI represented it truthfully; it does not claim inbox delivery or verification-link completion. Google consent, personal email delivery, Vercel Spend Management, and paid settings remain out of scope.
+The reserved invalid-domain addresses cannot receive verification or recovery messages. This lane proves Firebase accepted the application requests and the UI represented them truthfully; it does not claim inbox delivery. Google consent, personal email delivery, Vercel Spend Management, and paid settings remain out of scope.
 
 ## Email action-link continuation
 
 ### User outcome and navigation
 
-The same disposable password identity completes Firebase's email-verification and password-reset action-code semantics after the application requests both emails. The browser still starts on the production `/sign-in?returnTo=%2Fapp` surface, registers, requests recovery, signs in as unverified, and signs out. The trusted QA process then generates an Admin verification link and reset link for only the captured address, extracts each bounded action code in memory, applies it through Firebase's documented Identity Toolkit REST endpoints, and returns to the production sign-in page. The old password must fail after reset, while the new generated password must create a verified secure application session.
+The purpose-separated action-code identity completes Firebase's email-verification and password-reset action-code semantics independently of the application identity used to observe email-request behavior. The browser still starts on the production `/sign-in?returnTo=%2Fapp` surface, registers the application identity, requests recovery, signs in as unverified, and signs out. The trusted QA process then creates the second identity through Firebase Admin, generates its verification and reset links without dispatching email, extracts each bounded action code in memory, applies it through Firebase's documented Identity Toolkit REST endpoints, and returns to the production sign-in page. The action identity's old password must fail after reset, while its new generated password must create a verified secure application session.
 
-This continuation does not deliver a message, inspect an inbox, add a custom email handler, or use a personal address. The already-observed application `sendEmailVerification` and `sendPasswordResetEmail` requests remain the delivery-request evidence; the Admin-generated links provide the otherwise missing action-code completion evidence.
+This continuation does not deliver a message, inspect an inbox, add a custom email handler, or use a routable address. The application identity's `sendEmailVerification` and `sendPasswordResetEmail` requests remain request-acceptance evidence; the action identity's Admin-generated links provide the otherwise missing provider action-code evidence. Purpose separation is required because Firebase returned a generic internal error when Admin link generation immediately followed an application email dispatch for the same disposable account; the harness must not reinterpret that provider failure as success.
 
 ### UI states and domain invariants
 
 - The browser retains registration, duplicate registration, known and unknown recovery, unverified read-only, sign-out, verified session, secure-cookie, and revocation states.
 - Provider action states distinguish verification-link generation, link parsing, code application, verified-user confirmation, reset-link generation, reset-code inspection, reset confirmation, old-password rejection, and recovered-password sign-in.
-- `HostedAuthQaIdentity` contains two independent high-entropy passwords in process memory. The recovered password differs from the registration password and neither enters output, screenshots, shell arguments, URLs, files, or documentation.
+- Each `HostedAuthQaIdentity` contains two independent high-entropy passwords in process memory, and the two generated identities have distinct addresses. Every recovered password differs from its registration password; none enters output, screenshots, shell arguments, URLs, files, or documentation.
 - A parsed action link must use HTTPS, the exact configured Firebase action-handler host and `/__/auth/action` path, the expected `mode`, the configured public API key, and one nonblank `oobCode`. Credentials, fragments, unknown parameters that change action meaning, wrong projects, wrong modes, malformed or repeated scalar values, and unexpected hosts fail closed before a provider write.
 - Verification succeeds only when the REST response identifies the generated email and Firebase Admin confirms the captured UID is verified. Reset-code inspection and confirmation must identify the same generated email and `PASSWORD_RESET` request type.
 - No raw action link, action code, API key, password, email, UID, provider response, or provider error enters terminal output or retained evidence.
 
 ### Persistence, authentication, authorization, and recovery
 
-Firebase Authentication remains the only persistence boundary. The continuation may change `emailVerified` and the password for the exact captured disposable identity. It creates no Neon profile, program, workout, preference, custom exercise, or analytics row. The application still derives ownership only from the secure server session; action-code application grants no application ownership by itself.
+Firebase Authentication remains the only persistence boundary. The continuation may change `emailVerified` and the password for the exact captured action-code identity. It creates no Neon profile, program, workout, preference, custom exercise, or analytics row. The application still derives ownership only from the secure server session; action-code application grants no application ownership by itself.
 
-Every provider response is parsed structurally before the run advances. A malformed `2xx`, wrong email, wrong request type, expired or replayed code, network failure, or uncertain provider response fails the run. Cleanup still deletes only the exact captured Firebase UID in `finally` and verifies the aggregate user count returns to baseline. The runner never retries code application after an uncertain accepted response; it reconciles through Firebase Admin state instead.
+Every provider response is parsed structurally before the run advances. A malformed `2xx`, wrong email, wrong request type, expired or replayed code, network failure, or uncertain provider response fails the run. Cleanup deletes only the two exact captured Firebase UIDs in `finally`, confirms both are absent, and verifies the aggregate user count returns to baseline. The runner never retries code application after an uncertain accepted response; it reconciles through Firebase Admin state instead.
 
 ### Loading, worst-case, responsive, accessibility, privacy, and security
 
-Provider calls use bounded timeouts and stable non-sensitive stages. The worst path is interruption after one code changes the account. Exact-UID cleanup remains sufficient because no application data is created. The action-link work adds no viewport-specific UI; the existing 1,440 by 1,000 production browser pass continues to prove the sign-in, unverified, and verified surfaces, keyboard operation, and serious or critical Axe boundary. Phone, tablet, WebKit, reduced-motion, dark-mode, and 200% behavior remain covered by the broader authenticated and public matrices rather than repeated provider mutations.
+Provider calls use bounded timeouts and stable non-sensitive stages. The worst path is interruption after one code changes one identity while both identities exist. Exact-UID cleanup remains sufficient because no application data is created. The action-link work adds no viewport-specific UI; the existing 1,440 by 1,000 production browser pass continues to prove the sign-in, unverified, and verified surfaces, keyboard operation, and serious or critical Axe boundary. Phone, tablet, WebKit, reduced-motion, dark-mode, and 200% behavior remain covered by the broader authenticated and public matrices rather than repeated provider mutations.
 
-The official REST endpoints receive only the generated action code and recovered password that Firebase created for this exact disposable account. Those values remain in process memory and are never printed. Fetch failures and provider errors are reduced to stable stages. A failed run deletes screenshots and retains no trace, video, browser profile, action URL, or network payload.
+The official REST endpoints receive only the generated action code and recovered password for the exact action-code account. Those values remain in process memory and are never printed. Fetch failures and provider errors are reduced to stable stages. A failed run deletes screenshots and retains no trace, video, browser profile, action URL, or network payload.
 
 ### Acceptance criteria, automated tests, and browser evidence
 
 - Pure tests fail first for the missing action-link parser, then cover exact host/path/key/mode acceptance plus hostile host, credential URL, wrong project key, wrong mode, repeated scalar, missing code, query credential, and fragment rejection.
-- Identity tests prove independent high-entropy registration and recovered passwords.
+- Identity tests prove independent high-entropy registration and recovered passwords, reserved non-routable addresses, and pairwise-distinct identities.
 - Command policy tests require stable action-code stages, structural response parsing, provider timeouts, exact-identity reconciliation, sanitized errors, and the absence of action-link or code output.
-- The hosted production run observes the application's real verification and recovery requests, completes an Admin-generated verification code, confirms the captured UID is verified, completes an Admin-generated password reset, rejects the old password, accepts the recovered password, creates the secure session, proves revocation denial, and restores Firebase users to the exact baseline.
+- The hosted production run observes the application's real verification and recovery requests for the application identity, creates the distinct action-code identity, completes its Admin-generated verification code, confirms its captured UID is verified, completes its Admin-generated password reset, rejects its old password, accepts its recovered password, creates the secure session, proves revocation denial, confirms both UIDs absent, and restores Firebase users to the exact baseline.
 - The existing three intended first-party session mutations remain the complete application mutation set. The provider action-code calls are classified separately and create no Neon row.
 - The QA record states that Firebase email delivery and a real inbox click remain unobserved. It may claim provider action-code completion only after the exact sanitized production result passes.
 
@@ -111,9 +111,9 @@ The official REST endpoints receive only the generated action code and recovered
 - Only the public My Workout Pal Vercel origin and Firebase project `my-workout-pal-92819` are accepted.
 - Invalid credentials, successful registration, duplicate registration, recovery request, unverified read-only sign-in, verified sign-in, secure-cookie attributes, sign-out, and revocation denial are observed in a real hosted browser.
 - A member with no profile/program can sign out through the account shell; no onboarding or database mutation is required to reach that action.
-- Verification is changed only through Firebase Admin for the captured disposable UID, followed by a fresh client sign-in.
+- Verification changes only for the captured action-code UID through the bounded Admin-link and REST flow, followed by a fresh client sign-in.
 - No onboarding, program, workout, preference, or custom-exercise mutation is submitted.
-- The disposable Firebase identity is confirmed absent after cleanup, and aggregate user count returns to its pre-run value.
+- Both disposable Firebase identities are confirmed absent after cleanup, and aggregate user count returns to its pre-run value.
 - No credential, token, cookie, UID, email address, environment value, provider payload, trace, video, or browser profile is retained.
 - Failures remain failures and identify a stable, non-sensitive lifecycle stage plus whether cleanup was confirmed without exposing sensitive details.
 
