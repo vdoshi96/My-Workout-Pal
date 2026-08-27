@@ -255,6 +255,19 @@ test("a real aborted operation retries explicitly with the same key and no onlin
   );
   harness.failedRequests.length = 0;
 
+  harness.control.abortNextOperation = true;
+  await harness.page.reload();
+  await expect(
+    harness.page.getByRole("heading", { name: "Offline queued" }),
+  ).toBeVisible();
+  expect(harness.operationRequests).toHaveLength(2);
+  expect(operationKey(harness.operationRequests[1]!)).toBe(originalKey);
+  expect(harness.failedRequests).toHaveLength(1);
+  expect(harness.failedRequests[0]).toMatch(
+    new RegExp(`^POST /api/app/workouts/${sessionId}/operations `, "u"),
+  );
+  harness.failedRequests.length = 0;
+
   const savedResponse = harness.page.waitForResponse((response) =>
     isOperationRequest(response.request()),
   );
@@ -273,8 +286,8 @@ test("a real aborted operation retries explicitly with the same key and no onlin
       .getByText("Saved", { exact: true }),
   ).toBeVisible();
 
-  expect(harness.operationRequests).toHaveLength(2);
-  expect(operationKey(harness.operationRequests[1]!)).toBe(originalKey);
+  expect(harness.operationRequests).toHaveLength(3);
+  expect(operationKey(harness.operationRequests[2]!)).toBe(originalKey);
   expect(harness.failedResponses).toEqual([]);
   expect(harness.failedRequests).toEqual([]);
   await cleanup(harness.page);
