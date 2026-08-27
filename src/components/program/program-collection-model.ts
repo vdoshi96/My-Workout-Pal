@@ -48,11 +48,15 @@ export type ProgramCollectionMutationExpectation = Readonly<
   | {
       equipmentProfileKind: "dumbbells" | "barbell";
       kind: "create";
+      knownAffectedProgramId?: string;
       name: string;
+      priorProgramIds: readonly string[];
     }
   | {
       kind: "clone";
+      knownAffectedProgramId?: string;
       name: string;
+      priorProgramIds: readonly string[];
       sourceEquipmentProfileKind: "dumbbells" | "barbell";
       sourceProgramId: string;
     }
@@ -105,7 +109,13 @@ export function parseProgramCollectionResponse(
       "The affected revision does not match the collection response.",
     );
   }
+  const affectedRootIsNewOrRememberedReplay =
+    (expected.kind !== "create" && expected.kind !== "clone") ||
+    !expected.priorProgramIds.includes(affectedProgram.id) ||
+    (parsed.data.profileProgram.replayed &&
+      expected.knownAffectedProgramId === affectedProgram.id);
   if (
+    !affectedRootIsNewOrRememberedReplay ||
     (expected.kind === "activate" &&
       (affectedProgram.id !== expected.programId ||
         affectedProgram.revisionId !== expected.revisionId)) ||

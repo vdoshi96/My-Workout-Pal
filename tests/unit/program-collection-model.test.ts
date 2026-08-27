@@ -56,6 +56,7 @@ const createExpectation = {
   equipmentProfileKind: "barbell" as const,
   kind: "create" as const,
   name: "Barbell build",
+  priorProgramIds: [activeProgramId],
 };
 
 describe("program collection client model", () => {
@@ -120,6 +121,7 @@ describe("program collection client model", () => {
       equipmentProfileKind: "dumbbells",
       kind: "create",
       name: "Different route",
+      priorProgramIds: [activeProgramId],
     })).toThrow("does not match the requested program operation");
     expect(() => parseProgramCollectionResponse(responseFixture(), {
       kind: "activate",
@@ -129,9 +131,33 @@ describe("program collection client model", () => {
     expect(() => parseProgramCollectionResponse(responseFixture(), {
       kind: "clone",
       name: "Barbell build",
+      priorProgramIds: [activeProgramId],
       sourceEquipmentProfileKind: "barbell",
       sourceProgramId: affectedProgramId,
     })).toThrow("does not match the requested program operation");
+  });
+
+  it("rejects a pre-existing root for create or clone while permitting an explicitly remembered replay", () => {
+    expect(() => parseProgramCollectionResponse(responseFixture(), {
+      ...createExpectation,
+      priorProgramIds: [activeProgramId, affectedProgramId],
+    })).toThrow("does not match the requested program operation");
+
+    expect(() => parseProgramCollectionResponse(responseFixture(), {
+      kind: "clone",
+      name: "Barbell build",
+      priorProgramIds: [activeProgramId, affectedProgramId],
+      sourceEquipmentProfileKind: "barbell",
+      sourceProgramId: activeProgramId,
+    })).toThrow("does not match the requested program operation");
+
+    const replay = responseFixture();
+    replay.profileProgram.replayed = true;
+    expect(parseProgramCollectionResponse(replay, {
+      ...createExpectation,
+      knownAffectedProgramId: affectedProgramId,
+      priorProgramIds: [activeProgramId, affectedProgramId],
+    }).affectedProgramId).toBe(affectedProgramId);
   });
 
   it("normalizes bounded names without inventing an empty value", () => {

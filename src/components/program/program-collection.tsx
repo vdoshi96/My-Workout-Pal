@@ -134,6 +134,7 @@ export function ProgramCollection({
         equipmentProfileKind: createProfile,
         kind: "create",
         name,
+        priorProgramIds: programs.map((program) => program.id),
       });
       createKey.current = undefined;
     } catch (error) {
@@ -195,6 +196,7 @@ export function ProgramCollection({
       acceptResponse(response, {
         kind: "clone",
         name,
+        priorProgramIds: programs.map((program) => program.id),
         sourceEquipmentProfileKind: cloneSource.equipmentProfileKind,
         sourceProgramId: cloneSource.id,
       });
