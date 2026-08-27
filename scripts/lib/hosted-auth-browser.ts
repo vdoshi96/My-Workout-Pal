@@ -39,6 +39,9 @@ export type HostedAuthQaStage =
   | "verification"
   | "verified_sign_in_navigation"
   | "verified_sign_in_submit"
+  | "verified_session_client_confirmation"
+  | "verified_session_create"
+  | "verified_session_create_rejected"
   | "verified_session_accessibility"
   | "verified_session_cookie"
   | "verified_session_ui";
@@ -297,11 +300,27 @@ async function runBrowserLifecycle(
     setStage("verification");
     await auth.updateUser(created.uid, { emailVerified: true });
     setStage("verified_sign_in_submit");
+    const verifiedSessionResponse = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.origin === config.origin &&
+        url.pathname === "/api/auth/session" &&
+        response.request().method() === "POST";
+    });
     await submitEmailForm(page, {
       email: identity.email,
       password: identity.password,
       submitName: "Sign in with email",
     });
+    setStage("verified_session_create");
+    const sessionResponse = await verifiedSessionResponse;
+    if (!sessionResponse.ok()) {
+      setStage("verified_session_create_rejected");
+      assert.ok(sessionResponse.ok());
+    }
+    setStage("verified_session_client_confirmation");
+    await expect(page.locator(".auth-message")).toHaveText(
+      "Signed in securely. Opening your route.",
+    );
     setStage("verified_sign_in_navigation");
     await page.waitForURL(`${config.origin}/app`);
     setStage("verified_session_ui");
