@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="19d8ab8d802a24462140e4f3a7685248b63986a314e84aecadc4e5cad4ee7edb">
+  <title>Wave 0 production release QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 0 production release QA</h1>
+<h2>Outcome</h2>
+<p>Wave 0 source is public, migration <code>0005_flexible_routine_topology</code> is applied and verified in production, and the application deployment was rolled back after a repeated authenticated release-gate failure. Production serves the prior verified application deployment. No database rollback was required.</p>
+<h2>Published source</h2>
+<ul>
+<li>Public integration branch: <code>vishal/wave-0-integration</code>, containing application candidate <code>e44c1328bb566e1e2af5072f178648cefad736b5</code> followed only by the blocked-release evidence commit.</li>
+<li>GitHub <code>main</code>: <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>, advanced as a strict fast-forward from <code>d6228a03f15e4a181a33f96fe226f6c709cc9227</code>.</li>
+<li>The selected Corner Companions board, prompt, provenance, and decision packet are public. The release contains no production companion CSS or component implementation.</li>
+<li>The dirty primary checkout remains at the old base because advancing it would overwrite pre-existing orchestrator planning changes.</li>
+</ul>
+<h2>Recovery point</h2>
+<p>Before the schema write, a private PostgreSQL custom-format recovery archive was created through encrypted transport. The archive was 189,394 bytes, contained 314 entries, and had SHA-256 <code>26a8b1a029003363ab3dc462774e3305ea2360e01bc396d4967acbdcdea44aa9</code>.</p>
+<p>The archive restored into an isolated local PostgreSQL database after removing only PostgreSQL 18&#39;s unsupported <code>transaction_timeout</code> setting for the PostgreSQL 16 restore target. The restored database contained five migration records, 36 application tables, 200 constraints, 17 application triggers, 6 equipment rows, 27 catalog exercises, 54 curated videos, and no user or workout rows. No credential or user row was printed or committed.</p>
+<h2>Production migration</h2>
+<p>The preflight confirmed <code>origin/main</code> at the approved base, five production migration records, table owner and active role <code>neondb_owner</code>, zero duplicate program day keys, three active descendant immutability triggers, and no user, program, or workout rows.</p>
+<p>Migration <code>drizzle/0005_flexible_routine_topology.sql</code> has SHA-256 <code>270adb8a10ec152412cf68b7545d784162a267e2345bb525986875ec4c13449c</code>. The designated table-owning role applied only the pending migration. Post-migration verification confirmed:</p>
+<ul>
+<li>Six migration records with the exact <code>0005</code> hash as the newest record.</li>
+<li>Non-null <code>section_key</code>, <code>prescription_key</code>, and <code>cardio_key</code> columns.</li>
+<li>Four owner-and-revision-scoped unique indexes.</li>
+<li>The <code>day_number</code> constraint bounded from 1 through 14.</li>
+<li>All three immutability triggers enabled.</li>
+<li>Zero failed backfills.</li>
+<li>Existing owner-scoped foreign keys and constraints retained.</li>
+<li>Starter counts unchanged at 6 equipment rows, 27 exercises, 44 compatibility edges, 54 aliases, 2 revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio prescriptions, and 54 approved videos.</li>
+<li>An immediate migration replay reported the checked-in migrations as current.</li>
+</ul>
+<p>No seed, delete, history rewrite, or production data repair ran.</p>
+<h2>Deployment and public verification</h2>
+<p>Git-connected preview <code>dpl_GFBoaoQ36SFP3ce1fefgCvcYCiyL</code> built the exact integration SHA and reached Ready. After the migration verification, GitHub <code>main</code> advanced to the exact SHA. Vercel production deployment <code>dpl_56XvQJJv4enVjRipeHf1USAZmQ5h</code> reached Ready and reported Git source <code>e44c1328bb566e1e2af5072f178648cefad736b5</code> from <code>main</code>.</p>
+<p>The first public matrix passed 46 cases, skipped the documented WebKit service-worker case, and timed out one WebKit phone guest journey while the newly deployed service-worker update notice intercepted the Push-day link. After alias convergence, the single permitted complete replay passed 47 cases with the same one documented skip. The matrix covered public discovery, account entry, seeded exercise details, serious and critical accessibility scans, responsive layouts, keyboard operation, dark mode, reduced motion, and supported Chromium offline behavior.</p>
+<h2>Authenticated verification and stop boundary</h2>
+<p>The bounded hosted authentication suite passed in Chromium desktop. It verified registration, email action-code semantics, password recovery, secure production cookies, protected return, visible verified identity, sign-out, revocation handling, and cleanup. It made three expected first-party mutations. Firebase inventory returned to one pre-existing user.</p>
+<p>The two-owner deletion and IDOR suite failed twice at <code>alice_session</code>. Both attempts created two verified disposable identities, stopped before owner data setup or foreign-owner probes, and confirmed cleanup. The exact Wave 0 deployment had zero bounded Vercel error-log entries and no HTTP 500 entry, but the client did not complete the suite&#39;s expected post-session navigation. Verification stopped at that first repeated boundary.</p>
+<p>Because the ownership suite did not cross its first account boundary, the hosted flexible-routine publication story, foreign-owner probes, immutable history story, and real Google sign-in were not claimed. Local combined evidence for those behaviors remains valid only for the exact local candidate and fixture.</p>
+<h2>Rollback and invariants</h2>
+<p>Vercel rolled the production alias back to <code>dpl_BCxN2q8qk5G1kNKkxNF2MzDLTqeB</code>, source <code>a353067558323cc21361fa1919507ee890c0f983</code>. The rollback target is Ready and the stable production hostname returns <code>200</code> with the expected CSP, HSTS, frame denial, referrer policy, and private no-store HTML response. Bounded error-log queries returned zero entries for both the failed Wave 0 deployment and the rollback target.</p>
+<p>Post-cleanup verification found one pre-existing Firebase user, zero user profiles, zero user programs, zero program revisions, zero workout sessions, 40 pre-existing terminal account-deletion job records, and six migration records. The migration remains forward-compatible with the rollback application. No rollback of production data was needed.</p>
+<h2>Remaining gate</h2>
+<p>Before another Wave 0 application release, reproduce the <code>alice_session</code> navigation failure with safe client diagnostics, correct it on a separately reviewed commit, and repeat the complete public, authenticated, ownership, flexible-routine, database-invariant, log, and real-Google matrices. Do not treat the successful password suite or local fixture as real-Google proof.</p>
+
+  </main>
+</body>
+</html>

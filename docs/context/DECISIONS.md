@@ -133,3 +133,11 @@ The guest landing page uses a planning companion, the signed-in home uses a prep
 Every production vignette is purpose-built, text-free, decorative, static, pointer-inert, ignored by assistive technology, and absent in forced-colors mode. Image failure cannot remove product meaning, account state, sample disclosure, navigation, or an action. The pilot must verify phone and desktop layouts, 200% zoom, contrast, reduced motion, forced colors, failure states, and offline asset behavior before rollout.
 
 Two alternatives were reviewed and discarded. Their images, prompts, and direction-specific provenance are not retained on the concept branch. The selection does not authorize a public branch push, merge, deployment, or production implementation.
+
+## 2026-08-27: Keep migration 0005 and roll back the Wave 0 application
+
+The user authorized publication of the selected Corner Companions packet and the exact Wave 0 integration commit. GitHub `main` and the public integration branch therefore retain `e44c1328bb566e1e2af5072f178648cefad736b5`.
+
+Production migration `0005_flexible_routine_topology` remains applied because it is additive, its backfill and ownership assertions passed, it preserves all immutability triggers, and the previously verified application remains read-compatible with the expanded schema. The production application does not remain on Wave 0. The two-owner hosted suite failed twice at Alice's post-session navigation boundary after session creation, so the release stopped before owner mutations and real Google verification. Vercel rolled the stable alias back to verified deployment `dpl_BCxN2q8qk5G1kNKkxNF2MzDLTqeB` at source `a353067558323cc21361fa1919507ee890c0f983`.
+
+Do not redeploy or promote Wave 0 until the exact hosted session-navigation failure is reproduced with safe diagnostics, corrected on a new reviewed commit, and the complete public, authenticated, ownership, flexible-routine, and real-Google release story passes. A database rollback is not required unless a later schema assertion fails.

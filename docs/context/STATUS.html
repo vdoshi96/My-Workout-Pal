@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="cf986981274bda24e67aa53b4fef149954d785a17a0e709ae1a01b73158b68ea">
+  <meta name="source-sha256" content="5234812b514e5711f83121fcc38512119d927ccc2029fd31b1526ce958617097">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,7 +29,8 @@
   <main>
 <h1>Project status</h1>
 <h2>Current phase</h2>
-<p>The verified first release remains deployed. The local <code>vishal/wave-0-integration</code> branch combines the ordinary authentication entry handoff, bounded flexible routine publication, and the selected Corner Companions decision packet. The combined source passes 107 files/738 tests, database 4/34, exact-two seed, service-worker and 45-document parity, the Webpack build, 41-route isolation, the public matrix with 47 passes and one documented WebKit service-worker skip, and the authenticated matrix with 34 passes and two intentional engine-scoped skips. Public exercise routes were verified without secrets through a loopback-only Neon HTTP QA transport backed by a task-owned PostgreSQL database containing migrations <code>0000</code> through <code>0005</code> and the deterministic seed. The branch isn&#39;t pushed, merged to <code>main</code>, migrated in production, or deployed. Corner Companions remains a private decision packet with no production CSS or component implementation. See <code>docs/qa/latest/WAVE-0-INTEGRATION-QA.md</code> for the exact gate and release order.</p>
+<p>Wave 0 source is public, but the application release is rolled back and blocked. GitHub <code>main</code> is the approved integration commit <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>, including the selected Corner Companions decision packet. The public <code>vishal/wave-0-integration</code> branch contains that candidate plus the later documentation-only blocked-release report. Production migration <code>0005_flexible_routine_topology</code> is applied and verified with SHA-256 <code>270adb8a10ec152412cf68b7545d784162a267e2345bb525986875ec4c13449c</code>; the schema remains forward-compatible with the prior application.</p>
+<p>Vercel built exact Wave 0 deployment <code>dpl_56XvQJJv4enVjRipeHf1USAZmQ5h</code> Ready, and the stabilized public matrix passed 47 cases with one documented WebKit service-worker skip. The bounded hosted authentication suite passed and confirmed disposable-account cleanup. The two-owner deletion and ownership suite then failed twice at Alice&#39;s post-session navigation boundary, with cleanup confirmed and no Vercel error entry. Verification stopped before owner mutations, the flexible-routine hosted story, and real Google sign-in. The production alias was rolled back to verified deployment <code>dpl_BCxN2q8qk5G1kNKkxNF2MzDLTqeB</code> at source <code>a353067558323cc21361fa1919507ee890c0f983</code>; it is Ready and returns <code>200</code>. See <code>docs/qa/latest/WAVE-0-PRODUCTION-RELEASE-QA.md</code> for recovery, migration, deployment, rollback, and cleanup evidence.</p>
 <p>The previously released evidence remains valid for its exact runtime: application source <code>a353067558323cc21361fa1919507ee890c0f983</code> is Ready as production <code>dpl_BCxN2q8qk5G1kNKkxNF2MzDLTqeB</code>; the stable tree passed 102 files/698 tests, database 4/34, exact-two seed, PWA/docs/build, 41-route isolation, public and authenticated matrices, configured sign-in, explicit <code>/app</code> return, and bounded error-log review. That evidence did not cover the ordinary bare public-header return path reported by the user.</p>
 <h2>What exists</h2>
 <ul>
@@ -164,7 +165,8 @@
 </ul>
 <h2>Worktrees</h2>
 <ul>
-<li>The only checkout is the primary repository workspace. No auxiliary worktree, delegated worker, simulator, or background browser remains. Generated <code>.next</code>, fixture <code>.next-authenticated</code>, <code>test-results</code>, and <code>playwright-report</code> directories are absent. The reusable 840 MB dependency tree and 781 MB repository-local pnpm store remain to avoid repeated downloads and unpacking; the data volume had about 187 GiB free during launch closeout.</li>
+<li>The dirty primary checkout remains at <code>d6228a03f15e4a181a33f96fe226f6c709cc9227</code>; its pre-existing orchestrator planning changes prevent safely advancing local <code>main</code> to public <code>origin/main</code> at <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>.</li>
+<li>The isolated release worktree is removed after the blocked-release report is pushed. The primary checkout remains the only worktree.</li>
 <li>The completed analytics worktree was integrated as <code>fedfba4</code> and removed after patch-equivalence verification.</li>
 <li>The completed YouTube worktree was integrated through <code>6b633b0</code>; its selected files matched the reviewed worktree before cleanup.</li>
 <li>The completed database worktree was integrated through <code>ff3d69c</code>, compared for selected-file equality, and removed.</li>
