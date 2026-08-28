@@ -36,7 +36,7 @@ The following local checks passed on the combined source after the integration f
 - `git diff --check` against the clean base.
 - Strict TypeScript.
 - Full ESLint.
-- Full Vitest: 106 files and 729 tests.
+- Full Vitest: 107 files and 738 tests, including nine direct loopback-endpoint guard tests.
 - Drizzle metadata and selected schema/bootstrap checks: four files and 34 tests.
 - Exact-two approved-video seed validation: 27 required variations.
 - Generated service-worker parity.
@@ -53,13 +53,17 @@ The first authenticated combined run passed 32 cases, skipped two intentional pr
 
 The fix scopes cardio inputs to the semantic optional-cardio fieldset and its `walker` heading, and scopes day selection to the accessible name suffix that ends in the movement count. The focused failed-before journey then passed on Chromium desktop and WebKit phone in 40 seconds. The complete authenticated matrix subsequently passed 34 cases with the same two intentional engine-scoped skips.
 
-## Public production-mode matrix gate
+## Public production-mode matrix
 
-The credential-free public matrix passed 39 cases, recorded the expected WebKit service-worker capability skip, and failed eight exercise-detail-dependent cases because this isolated worktree has no `DATABASE_URL`. Each failure stopped at the truthful server error `DATABASE_URL is required to connect to Postgres`; account-entry, public navigation, accessibility, responsive, keyboard, reduced-motion, dark-mode, and supported offline cases passed.
+The first credential-free public run passed 39 cases, recorded the expected WebKit service-worker capability skip, and failed eight exercise-detail-dependent cases because the isolated worktree had no database transport. The primary checkout's ignored secret-bearing environment was not loaded.
 
-The primary checkout has an ignored secret-bearing environment, but this task didn't load it because doing so could connect the local server to remote services. A task-owned native PostgreSQL cluster was also tested as a safer alternative. The native connection succeeded, but the application intentionally uses Neon's HTTP serverless transport, so a plain PostgreSQL socket can't satisfy the runtime route without adding an out-of-scope proxy or changing production database code. The temporary cluster and log were stopped and removed.
+A loopback-only QA transport closed that gap without credentials or remote services. A task-owned PostgreSQL cluster received the checked-in migrations `0000` through `0005`. The repository's deterministic seed function inserted 6 equipment rows, 27 exercises, 44 equipment edges, 54 aliases, 2 template revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio rows, and 54 approved videos. The ordinary repository verifier read those exact counts through the Neon HTTP-compatible loopback proxy.
 
-To close this local gate, provide a credential-isolated Neon-compatible read-only database environment containing migrations `0000` through `0005` and the deterministic approved-video seed, or separately authorize read-only use of the existing ignored environment. Rerun the complete public matrix and require 47 passes with the single documented WebKit service-worker skip before release approval. Do not report the eight cases as application failures or as passes until that replay succeeds.
+The complete public production-mode matrix then passed 47 cases with the single documented WebKit service-worker capability skip. It covers the full guest discovery journey, the protected account entry from every public shell, serious and critical accessibility scans on all public surfaces including seeded exercise detail, responsive phone/tablet/desktop behavior, keyboard operation, dark mode, reduced motion, and supported Chromium offline recovery.
+
+One failed-before replay recorded Chrome's cross-origin YouTube iframe warning: `Permissions policy violation: compute-pressure is not allowed in this document.` Application errors, request failures, and accessibility violations were empty. The collector now ignores only that exact browser-generated warning and remains strict for every other console error and page error. The focused Chromium exercise-detail replay passed, followed by the complete 47-pass matrix.
+
+The QA database, proxy, build output, and browser artifacts were temporary local state. They were stopped and removed after the retained evidence and final checks completed.
 
 ## Hosted Google gate
 

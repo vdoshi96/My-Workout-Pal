@@ -4,7 +4,13 @@ import { expect, test, type Page } from "@playwright/test";
 function capturePageErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(`console: ${message.text()}`);
+    const text = message.text();
+    if (
+      message.type() === "error" &&
+      text !== "Permissions policy violation: compute-pressure is not allowed in this document."
+    ) {
+      errors.push(`console: ${text}`);
+    }
   });
   page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
   return errors;

@@ -121,4 +121,6 @@ Run the following checks on the combined result and record exact totals:
 10. Exercise account entry, safe/private returns, visible identity, sign-out, flexible publication, stable routes, cardio bounds, workout conflicts, immutable snapshots, equipment revisions, and foreign-owner safety.
 11. Inspect the selected Corner Companions packet and confirm that no runtime visual implementation entered the diff.
 
+When no credential-isolated Neon database is available, use the loopback-only local Neon HTTP QA endpoint with a task-owned PostgreSQL cluster. Apply `0000` through `0005`, seed through the canonical deterministic seed function, verify exact rows through the application transport, and remove the temporary cluster after the matrix. Never point the QA endpoint or proxy at a non-loopback host.
+
 If integration exposes a defect, retain a concise failed-before test or reproduction and its passed-after result. After all checks pass, generate paired `WAVE-0-INTEGRATION-QA.md` and `WAVE-0-INTEGRATION-QA.html` files, retain only their newest supporting screenshots or reports in `docs/qa/latest/`, and preserve historical planning records elsewhere.
