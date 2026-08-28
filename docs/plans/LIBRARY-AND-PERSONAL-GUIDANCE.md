@@ -247,3 +247,46 @@ production.
   human-watch records satisfy the existing policy.
 - Focused and complete local gates plus Chromium desktop and WebKit phone
   authenticated evidence pass on the final branch.
+
+## Implementation record
+
+The neutral chooser checkpoint is commit `5255a5254fcde4c1b1558947bda64d47bad23743`.
+Its contract module and three focused test/documentation files are byte-for-byte
+identical to day-builder checkpoint
+`2436bac92ba3381e76646bf61210cd5fd4dae88f`; the two commits are parallel
+children of the verified Wave 0 baseline rather than a parent/child lineage.
+The exported adapter is `MovementChooserAdapter` from
+`src/components/exercises/movement-chooser.tsx`. It accepts only
+`MovementChooserAdapterProps` from the neutral contract module and returns the
+frozen selection shape without editor topology or guidance state.
+
+Catalog checkpoint `0f820535c4aec0686b7b73451513bc8d3dda7d26`
+splits all 27 released movements into eight validated category manifests while
+preserving released order, seed identity, metadata, and the 54 approved video
+rows. No one of the 216 expansion candidates was added to runtime data.
+
+Migration `0007_personal_guidance.sql` adds the owner/source-XOR personal store
+and immutable workout guidance snapshot. It also copies existing private custom
+exercise YouTube links into the new store, so this additive change does not
+silently discard earlier owner guidance. The day-builder branch owns
+`0006_program_cardio_display_order.sql`. Integration must merge that branch
+first, retain both SQL migrations in numeric order, and regenerate or reconcile
+the `0007` Drizzle snapshot metadata against the integrated `0006` snapshot.
+This branch does not duplicate `0006`, apply either migration, or deploy.
+
+Retained TDD evidence includes failures before the personal-guidance repository
+existed, before legacy private-video backfill existed, and when resume hydration
+dropped a correctly persisted guidance snapshot. The corresponding focused
+repository, migration, hydration, and immutability regressions pass after the
+implementation.
+
+The isolated authenticated production fixture completes the library journey in
+Chromium desktop and WebKit phone: search and source filtering, inline private
+creation, YouTube normalization, article replacement, exact chooser selection,
+publication through the owner-scoped server contract, workout start, private
+link presentation, live-link replacement without snapshot drift, axe scanning,
+and another-owner `404`. All 27 released catalog movements already have approved
+guidance, so the browser journey uses a private movement for the unavailable-app-
+guidance state instead of inventing an unapproved catalog record. Final combined
+editor-shell wiring remains the integrator's responsibility and consumes the
+already identical frozen contract.

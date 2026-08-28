@@ -139,3 +139,24 @@ Two alternatives were reviewed and discarded. Their images, prompts, and directi
 The application constructs the Neon WebSocket pool explicitly and registers one privacy-safe `error` listener before handing the pool to Drizzle. Neon already removes a client that fails while idle; the application listener prevents Node's unhandled event behavior from terminating a warm function and records only constant diagnostic text.
 
 The listener does not retry a query, convert an active database failure into success, expose the error object, or change the lazy database singleton. Interactive transactions remain on the WebSocket-backed pool. Authentication and CSRF routes remain database-independent, even if an idle pool event from earlier work occurs while one of those routes is running.
+
+## 2026-08-28: Keep personal guidance owner-scoped and snapshot it at workout start
+
+Personal guidance is stored separately from curated-video approval and is keyed
+by the server-derived owner plus exactly one catalog or private movement. The
+client never supplies ownership. At most two normalized HTTPS links are stored;
+recognized YouTube links use an exact privacy-enhanced embed origin, while other
+accepted links remain safe external anchors. Personal links are labeled as the
+member's links and are never described as reviewed or approved by the app.
+
+Routine publication continues to store only the canonical/private movement XOR.
+Workout start resolves guidance for the effective owner and movement, copies the
+presentation-safe value into the immutable exercise snapshot, and resume/history
+reads use that snapshot only. Later link edits cannot rewrite an active or
+historical workout. Existing private custom-exercise YouTube rows are copied by
+the additive migration so earlier owner guidance is not silently lost.
+
+The movement chooser communicates with routine editors only through the neutral
+`MovementChooserAdapterProps` contract. Its selection contains source, name, and
+logging kind only. Search state, equipment, guidance, editor positions, topology
+keys, and prescription defaults remain outside that boundary.

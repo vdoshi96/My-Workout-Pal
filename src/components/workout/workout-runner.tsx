@@ -52,6 +52,7 @@ import {
 } from "@/components/workout/workout-runner-presenters";
 import { CuratedVideoPlayer } from "@/components/video/curated-video-player";
 import type { CuratedVideoPair } from "@/domain/youtube/embed";
+import { PersonalGuidancePanel } from "@/components/workout/personal-guidance-panel";
 
 export type RunnerNavigationProtection = Readonly<{
   blocked: boolean;
@@ -976,6 +977,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const currentCuratedVideos = currentEffectiveExerciseId
     ? props.curatedVideosByExerciseId?.[currentEffectiveExerciseId]
     : undefined;
+  const currentPersonalGuidance = state.substitutions[currentExercise.id]
+    ? []
+    : currentExercise.guidance ?? [];
   const workSetCount = state.snapshot.exercises.reduce(
     (total, exercise) =>
       total + exercise.sets.filter(({ phase }) => phase === "work").length,
@@ -1613,18 +1617,30 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 <div className="runner-section-heading">
                   <div>
                     <span className="runner-eyebrow">
-                      Two-source technique check
+                      {currentCuratedVideos
+                        ? "Two-source technique check"
+                        : currentPersonalGuidance.length > 0
+                          ? "Personal technique reference"
+                          : "Technique check"}
                     </span>
                     <h3 id="runner-technique-heading">
-                      Technique demonstrations
+                      {currentCuratedVideos
+                        ? "Technique demonstrations"
+                        : "Technique guidance"}
                     </h3>
                   </div>
                   <span>
-                    {currentCuratedVideos ? "Approved pair" : "Unavailable"}
+                    {currentCuratedVideos
+                      ? "Approved pair"
+                      : currentPersonalGuidance.length > 0
+                        ? "Your links"
+                        : "Unavailable"}
                   </span>
                 </div>
                 {currentCuratedVideos ? (
                   <CuratedVideoPlayer videos={currentCuratedVideos} />
+                ) : currentPersonalGuidance.length > 0 ? (
+                  <PersonalGuidancePanel links={currentPersonalGuidance} />
                 ) : (
                   <p className="runner-empty">
                     No approved catalog pair is available for this movement.
