@@ -2,7 +2,7 @@
 
 ## Outcome
 
-Wave 0 source is public, migration `0005_flexible_routine_topology` is applied and verified in production, and exact application commit `e44c1328bb566e1e2af5072f178648cefad736b5` is Ready on the stable production hostname. The automated public, password-authenticated, ownership, flexible-routine, workout, immutable-history, accessibility, cleanup, database-invariant, and error-log gates pass. The final real-Google browser replay remains open for interactive consent or account selection.
+Wave 0 source is public, migration `0005_flexible_routine_topology` is applied and verified in production, and exact application commit `e44c1328bb566e1e2af5072f178648cefad736b5` is Ready on the stable production hostname. The public, password-authenticated, ownership, flexible-routine, workout, immutable-history, accessibility, cleanup, database-invariant, and real-Google gates pass. The error scan found one recoverable Neon WebSocket idle-listener process exit during the real-Google CSRF exchange; the immediately following session creation succeeded, and five direct endpoint replays returned `200`.
 
 ## Published source
 
@@ -68,8 +68,10 @@ The release re-promoted exact Wave 0 deployment `dpl_56XvQJJv4enVjRipeHf1USAZmQ5
 
 After the passing replay, production contains six migration records, zero user profiles, zero user programs, zero program revisions, and zero workout sessions. Firebase contains the same one pre-existing user as before the run. The database contains 57 completed terminal account-deletion saga records. These bounded audit rows intentionally survive profile deletion and include the failed-before diagnostic identities; they aren't user fitness data.
 
-The bounded two-hour Vercel error-log query for `dpl_56XvQJJv4enVjRipeHf1USAZmQ5h` returned no entries after the hosted replay. The stable production hostname resolves to that Ready deployment.
+The final Vercel scan found one `GET /api/auth/csrf` function exit at 10:38:56 PM US Central Daylight Time. The stack identifies an unhandled `@neondatabase/serverless` WebSocket idle event. The route itself has no database dependency. The following `POST /api/auth/session` succeeded at 10:38:57 PM, the browser reached `/app`, and five direct CSRF replays returned `200`. This event didn't block the release flow or alter data, but it remains a production resilience follow-up. The stable production hostname resolves to the Ready Wave 0 deployment.
 
-## Remaining interactive gate
+## Real Google replay
 
-Complete a real Google sign-in from the ordinary production account action. Verify the bounded `/app` return, visible identity, sign-out, malformed private return fallback, and external return fallback. Do not simulate Google. Keep the release evidence open until this interactive replay passes or records the exact provider gate.
+The ordinary production **Continue with Google** action used the user's real provider session. The provider returned to bounded `/app`; the private onboarding surface displayed the account name, **Verified account**, saved-account navigation, and **Sign out**. Signing out returned to `/sign-in`. No profile or program was created for the provider identity.
+
+The production password-authentication replay independently proved that malformed private and external `returnTo` values fall back to the safe application destination. Google wasn't simulated. After sign-out, Firebase still contained its one pre-existing user, and production retained zero user profiles, user programs, program revisions, and workout sessions.

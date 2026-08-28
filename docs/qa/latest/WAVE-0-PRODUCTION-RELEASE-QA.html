@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="09769aee0156d28fcd57a70d407628b0e871fe7127c9adeca7864bedac7c7955">
+  <meta name="source-sha256" content="f9ad37b476bc5b7d93565206831de6d0aefe1eefeac727e18a3a33fc9fdc0008">
   <title>Wave 0 production release QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,7 +29,7 @@
   <main>
 <h1>Wave 0 production release QA</h1>
 <h2>Outcome</h2>
-<p>Wave 0 source is public, migration <code>0005_flexible_routine_topology</code> is applied and verified in production, and exact application commit <code>e44c1328bb566e1e2af5072f178648cefad736b5</code> is Ready on the stable production hostname. The automated public, password-authenticated, ownership, flexible-routine, workout, immutable-history, accessibility, cleanup, database-invariant, and error-log gates pass. The final real-Google browser replay remains open for interactive consent or account selection.</p>
+<p>Wave 0 source is public, migration <code>0005_flexible_routine_topology</code> is applied and verified in production, and exact application commit <code>e44c1328bb566e1e2af5072f178648cefad736b5</code> is Ready on the stable production hostname. The public, password-authenticated, ownership, flexible-routine, workout, immutable-history, accessibility, cleanup, database-invariant, and real-Google gates pass. The error scan found one recoverable Neon WebSocket idle-listener process exit during the real-Google CSRF exchange; the immediately following session creation succeeded, and five direct endpoint replays returned <code>200</code>.</p>
 <h2>Published source</h2>
 <ul>
 <li>GitHub <code>main</code> is <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>, advanced as a strict fast-forward from <code>d6228a03f15e4a181a33f96fe226f6c709cc9227</code>.</li>
@@ -77,9 +77,10 @@
 <p>The release re-promoted exact Wave 0 deployment <code>dpl_56XvQJJv4enVjRipeHf1USAZmQ5h</code>. No database rollback ran. After migration <code>0005</code>, a full rollback requires restoring the verified pre-migration recovery point with the older application; the old application alone isn&#39;t a safe rollback target.</p>
 <h2>Final invariants and logs</h2>
 <p>After the passing replay, production contains six migration records, zero user profiles, zero user programs, zero program revisions, and zero workout sessions. Firebase contains the same one pre-existing user as before the run. The database contains 57 completed terminal account-deletion saga records. These bounded audit rows intentionally survive profile deletion and include the failed-before diagnostic identities; they aren&#39;t user fitness data.</p>
-<p>The bounded two-hour Vercel error-log query for <code>dpl_56XvQJJv4enVjRipeHf1USAZmQ5h</code> returned no entries after the hosted replay. The stable production hostname resolves to that Ready deployment.</p>
-<h2>Remaining interactive gate</h2>
-<p>Complete a real Google sign-in from the ordinary production account action. Verify the bounded <code>/app</code> return, visible identity, sign-out, malformed private return fallback, and external return fallback. Do not simulate Google. Keep the release evidence open until this interactive replay passes or records the exact provider gate.</p>
+<p>The final Vercel scan found one <code>GET /api/auth/csrf</code> function exit at 10:38:56 PM US Central Daylight Time. The stack identifies an unhandled <code>@neondatabase/serverless</code> WebSocket idle event. The route itself has no database dependency. The following <code>POST /api/auth/session</code> succeeded at 10:38:57 PM, the browser reached <code>/app</code>, and five direct CSRF replays returned <code>200</code>. This event didn&#39;t block the release flow or alter data, but it remains a production resilience follow-up. The stable production hostname resolves to the Ready Wave 0 deployment.</p>
+<h2>Real Google replay</h2>
+<p>The ordinary production <strong>Continue with Google</strong> action used the user&#39;s real provider session. The provider returned to bounded <code>/app</code>; the private onboarding surface displayed the account name, <strong>Verified account</strong>, saved-account navigation, and <strong>Sign out</strong>. Signing out returned to <code>/sign-in</code>. No profile or program was created for the provider identity.</p>
+<p>The production password-authentication replay independently proved that malformed private and external <code>returnTo</code> values fall back to the safe application destination. Google wasn&#39;t simulated. After sign-out, Firebase still contained its one pre-existing user, and production retained zero user profiles, user programs, program revisions, and workout sessions.</p>
 
   </main>
 </body>
