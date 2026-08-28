@@ -20,7 +20,7 @@ import {
   metersToDisplay,
   paceToDisplay,
 } from "@/components/workout/workout-runner-presenters";
-import type { ProgramMovementSelection } from "@/components/program/program-movement-selection";
+import type { MovementSelection } from "@/domain/exercises/movement-chooser-contract";
 
 export type ProgramExerciseCandidate = Readonly<{
   id: string;
@@ -53,7 +53,7 @@ export type ProgramEditorDraft = Omit<ProgramPublishInput, "days"> & {
 };
 
 export type ProgramDayCreateOptions = Readonly<{
-  candidate?: ProgramMovementSelection;
+  candidate?: MovementSelection;
   dayKey?: string;
   displayName: string;
   insertAt?: number;
@@ -817,7 +817,7 @@ function sectionAt(
   return section;
 }
 
-function candidateReference(candidate: ProgramMovementSelection) {
+function candidateReference(candidate: MovementSelection) {
   return candidate.source.kind === "catalog"
     ? { catalogExerciseId: candidate.source.id, customExerciseId: null }
     : { catalogExerciseId: null, customExerciseId: candidate.source.id };
@@ -825,7 +825,7 @@ function candidateReference(candidate: ProgramMovementSelection) {
 
 function defaultPrescription(
   sectionKind: ProgramSectionKind,
-  candidate: ProgramMovementSelection,
+  candidate: MovementSelection,
   usedKeys?: ReadonlySet<string>,
 ): ProgramPrescription {
   const duration =
@@ -859,7 +859,7 @@ export function addProgramPrescription<T extends ProgramPublishInput>(
   input: T,
   dayIndex: number,
   sectionIndex: number,
-  candidate: ProgramMovementSelection,
+  candidate: MovementSelection,
 ): T {
   const next = structuredClone(input) as T;
   const section = sectionAt(next, dayIndex, sectionIndex);
@@ -873,7 +873,7 @@ export function replaceProgramPrescription<T extends ProgramPublishInput>(
   dayIndex: number,
   sectionIndex: number,
   prescriptionIndex: number,
-  candidate: ProgramMovementSelection,
+  candidate: MovementSelection,
   currentLoggingKind: LoggingKind,
 ): T {
   const next = structuredClone(input) as T;

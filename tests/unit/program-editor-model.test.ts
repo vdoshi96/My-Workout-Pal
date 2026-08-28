@@ -39,7 +39,7 @@ import {
   type ProgramExerciseCandidate,
 } from "@/components/program/program-editor-model";
 import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
-import { programMovementSelectionFromCandidate } from "@/components/program/program-movement-selection";
+import type { MovementSelection } from "@/domain/exercises/movement-chooser-contract";
 
 function programReadModel(): ActiveProgramReadModel {
   const dayKeys = ["push", "pull", "legs", "upper", "lower"] as const;
@@ -158,8 +158,16 @@ function candidate(
   };
 }
 
-function selection(overrides: Partial<ProgramExerciseCandidate> = {}) {
-  return programMovementSelectionFromCandidate(candidate(overrides));
+function selectionFromCandidate(value: ProgramExerciseCandidate): MovementSelection {
+  return {
+    loggingKind: value.loggingKind,
+    name: value.name,
+    source: { id: value.id, kind: value.kind },
+  };
+}
+
+function selection(overrides: Partial<ProgramExerciseCandidate> = {}): MovementSelection {
+  return selectionFromCandidate(candidate(overrides));
 }
 
 describe("program editor request model", () => {
@@ -948,7 +956,7 @@ describe("program editor request model", () => {
       draft,
       0,
       0,
-      programMovementSelectionFromCandidate(distance),
+      selectionFromCandidate(distance),
     );
     const candidates = [
       candidate({ id: "44444444-4444-4444-8444-444444444440" }),
@@ -989,7 +997,7 @@ describe("program editor request model", () => {
       draft,
       0,
       0,
-      programMovementSelectionFromCandidate(custom),
+      selectionFromCandidate(custom),
     );
     expect(validateProgramExerciseSelections(customDraft, available)).toEqual([
       "Private carry needs a positive distance target before publication.",
@@ -999,7 +1007,7 @@ describe("program editor request model", () => {
       draft,
       0,
       0,
-      programMovementSelectionFromCandidate(catalog),
+      selectionFromCandidate(catalog),
     );
     expect(validateProgramExerciseSelections(catalogDraft, available)).toEqual([]);
     expect(validateProgramExerciseSelections(customDraft, available.filter((candidate) => candidate.kind === "catalog"))).toEqual([

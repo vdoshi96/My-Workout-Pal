@@ -1,5 +1,15 @@
 # Project log
 
+## 2026-08-28: Wave 1 flexible day-builder handoff
+
+- Built the authenticated routine/day editor slice on `vishal/flexible-day-builder` from exact Wave 0 baseline `4622f9e1b7783fd35cb6c23ae9396148c7c3357a` without changing guest, home, Progress, companion, or library-persistence ownership.
+- Added reviewed movement removal; arbitrary movement, section, and cardio ordering; useful 20-minute cardio defaults; clean-state saved-day navigation; and a complete publish/reload/start journey with stable opaque topology keys and immutable history.
+- Retained failed-before evidence for missing movement review/cardio reorder, mode-sorted reload, zero-distance publication, and one-second cardio defaults. The permission-correct final gate passes 109 Vitest files/747 tests, strict TypeScript, full lint, Drizzle, seed/PWA/docs, Webpack build, and 41-route isolation.
+- Integrated neutral library contract checkpoint `5255a5254fcde4c1b1558947bda64d47bad23743` as `2436bac`; the editor consumes exact `add`, `replace`, and `seed-day` requests and the source/name/logging-kind selection without guidance or owner data.
+- Added and locally verified migration `0006_program_cardio_display_order`; publication, reads, root clones, equipment revisions, and workout start preserve the authored two-choice order. The migration was not applied to production.
+- Final synthetic authenticated replay passed Chromium desktop in 10.1 seconds and WebKit phone in 17.7 seconds. Only the newest QA report and four representative frames remain in `docs/qa/latest/`.
+- Next handoff: push the feature branch, then let the coordinator reconcile the library and home/copy sibling branches. Do not merge or apply `0006` from this worker task.
+
 ## 2026-08-27: Launch readiness release
 
 - Resumed from the final completion audit without creating another worktree or delegated worker. The first complete authenticated replay passed 31 cases, skipped two intentional project-scoped cases, and failed only a WebKit phone Settings reload because the authenticated logo issued an unused private `/app` RSC prefetch. A focused policy test failed before the fix, then passed 13 of 13 after the logo adopted the account navigation's `prefetch={false}` boundary.

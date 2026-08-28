@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
-import { programMovementSelectionFromCandidate } from "@/components/program/program-movement-selection";
 import { parseProgramPublishResponse } from "@/components/program/program-mutation-response";
 import { reconcileProgramRevisionMutation } from "@/components/program/program-revision-reconciliation";
 import {
@@ -49,6 +48,12 @@ import {
   type ProgramSectionRemovalReview,
 } from "@/components/program/program-editor-model";
 import { Icon } from "@/components/ui/icon";
+import {
+  movementChooserSelectionSchema,
+  type MovementChooserError,
+  type MovementChooserRequest,
+  type MovementSelection,
+} from "@/domain/exercises/movement-chooser-contract";
 import {
   programPublishRequestSchema,
   type ProgramPublishInput,
@@ -152,24 +157,58 @@ function CanonicalMeasurementInput({
 
 type Prescription = ProgramPublishInput["days"][number]["sections"][number]["prescriptions"][number];
 type Cardio = ProgramPublishInput["days"][number]["cardio"][number];
+type MovementChooserRequestFor<Intent extends MovementChooserRequest["intent"]> =
+  MovementChooserRequest & Readonly<{ intent: Intent }>;
 type ExerciseChooser = Readonly<
   | {
       dayIndex: number;
-      mode: "add";
+      request: MovementChooserRequestFor<"add">;
       sectionIndex: number;
     }
   | {
-      mode: "seed-day";
-      sectionKind: ProgramSectionKind;
+      request: MovementChooserRequestFor<"seed-day">;
     }
   | {
-      currentLoggingKind: ProgramExerciseCandidate["loggingKind"];
       dayIndex: number;
-      mode: "replace";
       prescriptionIndex: number;
+      request: MovementChooserRequestFor<"replace">;
       sectionIndex: number;
   }
 >;
+
+function movementSelectionFromCandidate(
+  candidate: ProgramExerciseCandidate,
+): MovementSelection | null {
+  const parsed = movementChooserSelectionSchema.safeParse({
+    loggingKind: candidate.loggingKind,
+    name: candidate.name,
+    source: { id: candidate.id, kind: candidate.kind },
+  });
+  return parsed.success ? parsed.data : null;
+}
+
+function movementSelectionFromPrescription(
+  prescription: Prescription,
+  name: string,
+  loggingKind: ProgramExerciseCandidate["loggingKind"],
+): MovementSelection | null {
+  const source = prescription.catalogExerciseId
+    ? { id: prescription.catalogExerciseId, kind: "catalog" as const }
+    : prescription.customExerciseId
+      ? { id: prescription.customExerciseId, kind: "custom" as const }
+      : null;
+  if (!source) return null;
+  const parsed = movementChooserSelectionSchema.safeParse({ loggingKind, name, source });
+  return parsed.success ? parsed.data : null;
+}
+
+const CHOOSER_ERROR_MESSAGES: Readonly<Record<MovementChooserError["code"], string>> = {
+  authentication_required: "Sign in again before choosing a movement.",
+  create_failed: "The private movement could not be created. Your routine draft is unchanged.",
+  guidance_failed: "The private guidance could not be saved. Your routine draft is unchanged.",
+  invalid_selection: "That movement selection is unavailable. Choose another movement.",
+  load_failed: "Movements could not be loaded. Try again without leaving this draft.",
+};
 
 type SectionRemoval = Readonly<{
   dayIndex: number;
@@ -343,7 +382,7 @@ export function ProgramEditor({
     if (!chooser || !dialog || dialog.open) return;
     dialog.showModal();
     queueMicrotask(() => {
-      if (chooser.mode === "seed-day") dayNameRef.current?.focus();
+      if (chooser.request.intent === "seed-day") dayNameRef.current?.focus();
       else searchRef.current?.focus();
     });
   }, [chooser]);
@@ -543,10 +582,10 @@ export function ProgramEditor({
     setNewDaySectionName("Strength");
     setNewDaySectionKind("strength");
     setCandidateQuery("");
-    setChooser({ mode: "seed-day", sectionKind: "strength" });
+    setChooser({ request: { intent: "seed-day" } });
   }
 
-  function addDayFromCandidate(candidate: ProgramExerciseCandidate) {
+  function addDayFromSelection(selection: MovementSelection) {
     const displayName = newDayName.trim();
     const sectionTitle = newDaySectionName.trim();
     if (displayName.length === 0 || sectionTitle.length === 0) {
@@ -556,14 +595,14 @@ export function ProgramEditor({
     const dayKey = operationKey();
     try {
       setDraft((current) => addProgramDay(current, {
-        candidate: programMovementSelectionFromCandidate(candidate),
+        candidate: selection,
         dayKey,
         displayName,
         sectionKind: newDaySectionKind,
         sectionTitle,
       }));
       setSelectedDayKey(dayKey);
-      setMessage(`${displayName} added with ${candidate.name}. This day is still unpublished.`);
+      setMessage(`${displayName} added with ${selection.name}. This day is still unpublished.`);
       setErrors([]);
       dialogRef.current?.close();
     } catch (error) {
@@ -741,13 +780,17 @@ export function ProgramEditor({
     }
   }
 
-  function chooseCandidate(candidate: ProgramExerciseCandidate) {
+  function handleChooserError(error: MovementChooserError) {
+    setMessage(CHOOSER_ERROR_MESSAGES[error.code]);
+  }
+
+  function chooseMovement(selection: MovementSelection) {
     if (!chooser) return;
-    if (chooser.mode === "seed-day") {
-      addDayFromCandidate(candidate);
+    if (chooser.request.intent === "seed-day") {
+      addDayFromSelection(selection);
       return;
-    } else if (chooser.mode === "add") {
-      const selection = programMovementSelectionFromCandidate(candidate);
+    } else if (chooser.request.intent === "add") {
+      if (!("dayIndex" in chooser)) return;
       const localId = operationKey();
       localPrescriptionIdsRef.current.add(localId);
       setDraft((current) => {
@@ -764,25 +807,38 @@ export function ProgramEditor({
         added.sourcePrescriptionId = localId;
         return next;
       });
-      setMessage(`${candidate.name} added with editable defaults. This draft is still unpublished.`);
+      setMessage(`${selection.name} added with editable defaults. This draft is still unpublished.`);
     } else {
-      const selection = programMovementSelectionFromCandidate(candidate);
-      const reset = chooser.currentLoggingKind !== candidate.loggingKind;
+      if (!("prescriptionIndex" in chooser) || !("currentSelection" in chooser.request)) return;
+      const reset = chooser.request.currentSelection.loggingKind !== selection.loggingKind;
       setDraft((current) => replaceProgramPrescription(
         current,
         chooser.dayIndex,
         chooser.sectionIndex,
         chooser.prescriptionIndex,
         selection,
-        chooser.currentLoggingKind,
+        chooser.request.currentSelection.loggingKind,
       ));
       setMessage(
         reset
-          ? `${candidate.name} selected. Sets, rest, and notes were retained; the range and incompatible targets were reset.`
-          : `${candidate.name} selected. Compatible range and targets were retained.`,
+          ? `${selection.name} selected. Sets, rest, and notes were retained; the range and incompatible targets were reset.`
+          : `${selection.name} selected. Compatible range and targets were retained.`,
       );
     }
     dialogRef.current?.close();
+  }
+
+  function chooseCandidate(candidate: ProgramExerciseCandidate) {
+    const selection = movementSelectionFromCandidate(candidate);
+    if (!selection) {
+      handleChooserError({
+        code: "invalid_selection",
+        message: "That movement selection is unavailable. Choose another movement.",
+        retryable: false,
+      });
+      return;
+    }
+    chooseMovement(selection);
   }
 
   function openPrescriptionRemoval(
@@ -1097,11 +1153,23 @@ export function ProgramEditor({
                               disabled={!meaning}
                               onClick={() => {
                                 if (!meaning) return;
+                                const currentSelection = movementSelectionFromPrescription(
+                                  prescription,
+                                  movementLabel,
+                                  meaning.measurementKind,
+                                );
+                                if (!currentSelection) {
+                                  handleChooserError({
+                                    code: "invalid_selection",
+                                    message: "This movement cannot be replaced until its saved identity is recovered.",
+                                    retryable: false,
+                                  });
+                                  return;
+                                }
                                 openChooser({
-                                  currentLoggingKind: meaning.measurementKind,
                                   dayIndex: selectedDay,
-                                  mode: "replace",
                                   prescriptionIndex,
+                                  request: { intent: "replace", currentSelection },
                                   sectionIndex,
                                 });
                               }}
@@ -1151,7 +1219,7 @@ export function ProgramEditor({
                   className="program-editor-add"
                   onClick={() => openChooser({
                     dayIndex: selectedDay,
-                    mode: "add",
+                    request: { intent: "add" },
                     sectionIndex,
                   })}
                   type="button"
@@ -1275,9 +1343,9 @@ export function ProgramEditor({
               <div>
                 <span className="eyebrow">Compatible with this program</span>
                 <h2 id="exercise-chooser-title">
-                  {chooser.mode === "seed-day"
+                  {chooser.request.intent === "seed-day"
                     ? "Add day"
-                    : chooser.mode === "add" ? "Add movement" : "Replace movement"}
+                    : chooser.request.intent === "add" ? "Add movement" : "Replace movement"}
                 </h2>
               </div>
               <button
@@ -1286,7 +1354,7 @@ export function ProgramEditor({
                 type="button"
               >Close</button>
             </header>
-            {chooser.mode === "seed-day" ? (
+            {chooser.request.intent === "seed-day" ? (
               <div className="program-editor-day-creation-fields">
                 <label className="program-editor-field">
                   <span>Day name</span>
@@ -1358,7 +1426,7 @@ export function ProgramEditor({
               </div>
             )}
             <footer>
-              <p>{chooser.mode === "seed-day"
+              <p>{chooser.request.intent === "seed-day"
                 ? "Choosing a movement creates one new unpublished day with fresh topology keys."
                 : "Choosing a movement changes only this unpublished draft."}</p>
               <button onClick={() => dialogRef.current?.close()} type="button">Cancel</button>

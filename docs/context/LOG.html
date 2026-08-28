@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="9817ecf53ab20e5392a7455587091a5241b5de1166bd8ea6a158bb6c988c6e8f">
+  <meta name="source-sha256" content="9145d4af59def79cd5d09765a3a3aa07d6c1b55a0a6eec73484da10c1d3abb93">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,16 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-28: Wave 1 flexible day-builder handoff</h2>
+<ul>
+<li>Built the authenticated routine/day editor slice on <code>vishal/flexible-day-builder</code> from exact Wave 0 baseline <code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code> without changing guest, home, Progress, companion, or library-persistence ownership.</li>
+<li>Added reviewed movement removal; arbitrary movement, section, and cardio ordering; useful 20-minute cardio defaults; clean-state saved-day navigation; and a complete publish/reload/start journey with stable opaque topology keys and immutable history.</li>
+<li>Retained failed-before evidence for missing movement review/cardio reorder, mode-sorted reload, zero-distance publication, and one-second cardio defaults. The permission-correct final gate passes 109 Vitest files/747 tests, strict TypeScript, full lint, Drizzle, seed/PWA/docs, Webpack build, and 41-route isolation.</li>
+<li>Integrated neutral library contract checkpoint <code>5255a5254fcde4c1b1558947bda64d47bad23743</code> as <code>2436bac</code>; the editor consumes exact <code>add</code>, <code>replace</code>, and <code>seed-day</code> requests and the source/name/logging-kind selection without guidance or owner data.</li>
+<li>Added and locally verified migration <code>0006_program_cardio_display_order</code>; publication, reads, root clones, equipment revisions, and workout start preserve the authored two-choice order. The migration was not applied to production.</li>
+<li>Final synthetic authenticated replay passed Chromium desktop in 10.1 seconds and WebKit phone in 17.7 seconds. Only the newest QA report and four representative frames remain in <code>docs/qa/latest/</code>.</li>
+<li>Next handoff: push the feature branch, then let the coordinator reconcile the library and home/copy sibling branches. Do not merge or apply <code>0006</code> from this worker task.</li>
+</ul>
 <h2>2026-08-27: Launch readiness release</h2>
 <ul>
 <li>Resumed from the final completion audit without creating another worktree or delegated worker. The first complete authenticated replay passed 31 cases, skipped two intentional project-scoped cases, and failed only a WebKit phone Settings reload because the authenticated logo issued an unused private <code>/app</code> RSC prefetch. A focused policy test failed before the fix, then passed 13 of 13 after the logo adopted the account navigation&#39;s <code>prefetch={false}</code> boundary.</li>

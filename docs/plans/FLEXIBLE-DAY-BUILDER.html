@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="5f3415504cc88aeee22aecf0110b27ba6fce341f663972c82587752f11c69219">
+  <meta name="source-sha256" content="4c1b3b529a319b6eeaad0c9cb9eb40849ca91754b66cdceafe802dd0c3710326">
   <title>Flexible day-builder plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -58,7 +58,7 @@
 </ul>
 <h2>Types and ownership boundary</h2>
 <p>The day builder owns draft placement and accepts one narrow movement selection:</p>
-<pre><code class="language-ts">type ProgramMovementSelection = Readonly&lt;{
+<pre><code class="language-ts">type MovementSelection = Readonly&lt;{
   source: Readonly&lt;{
     kind: &quot;catalog&quot; | &quot;custom&quot;;
     id: string;
@@ -67,12 +67,13 @@
   loggingKind: LoggingKind;
 }&gt;;
 
-type ProgramMovementChooserIntent =
-  | Readonly&lt;{ kind: &quot;add&quot; }&gt;
-  | Readonly&lt;{ kind: &quot;replace&quot;; current: ProgramMovementSelection }&gt;
-  | Readonly&lt;{ kind: &quot;seed-day&quot; }&gt;;
+type MovementChooserRequest =
+  | Readonly&lt;{ intent: &quot;add&quot; }&gt;
+  | Readonly&lt;{ intent: &quot;replace&quot;; currentSelection: MovementSelection }&gt;
+  | Readonly&lt;{ intent: &quot;seed-day&quot; }&gt;;
 </code></pre>
 <p>The library worker owns chooser search, catalog and private data loading, equipment compatibility filtering, inline private creation, and guidance persistence. The discriminated chooser boundary requires <code>currentSelection</code> only for <code>replace</code>; <code>add</code> and <code>seed-day</code> carry no current selection. The chooser exposes dismiss and sanitized stable error callbacks. An error can&#39;t contain an owner identifier or private URL.</p>
+<p>The neutral contract enters this branch from reviewed checkpoint <code>5255a5254fcde4c1b1558947bda64d47bad23743</code> in <code>src/domain/exercises/movement-chooser-contract.ts</code>. The existing editor chooser adapts its candidate rows into the strict runtime selection schema before calling the day-builder consumer. The library can replace that presentation and data adapter later without taking ownership of editor placement or publication.</p>
 <p>A chooser selection contains no owner key, route identity, program identity, stable topology key, prescription target, guidance URL, or server-authoritative movement metadata. The returned name and logging kind are interface and default hints. The server revalidates movement existence, ownership, logging meaning, and equipment compatibility during publication. The editor captures its own day, section, and prescription destination before it opens the chooser and applies the returned selection there.</p>
 <p>The day builder owns the following transformations:</p>
 <ul>
@@ -162,7 +163,21 @@ type ProgramMovementChooserIntent =
 <li>Focused tests, broad verification, authenticated Chromium desktop and WebKit phone evidence, documentation parity, and Git diff review pass before the branch is pushed.</li>
 </ul>
 <h2>Verification record</h2>
-<p>Record the failed-before command, failing assertions, passed-after commands, browser results, and retained evidence here after the implementation gate completes.</p>
+<p>Failed-before evidence:</p>
+<ul>
+<li>The editor-model run reported two failures and 15 passes before cardio reordering and reviewed movement removal existed.</li>
+<li>The publication/repository run reported two failures and 21 passes: <code>[runner, walker]</code> reloaded as <code>[walker, runner]</code>, and zero-distance cardio parsed successfully.</li>
+<li>The cardio-default test reported the received one-second values before the builder adopted a useful 1,200-second default.</li>
+</ul>
+<p>Passed-after evidence:</p>
+<ul>
+<li>Focused chooser/editor/publication/migration/repository matrix: 6 files and 64 tests.</li>
+<li>Migration-impact matrix: 8 files and 83 tests.</li>
+<li>Complete permission-correct Vitest run: 109 files and 747 tests in 109.18 seconds.</li>
+<li>Strict TypeScript, full ESLint, Drizzle metadata, exact-two seed, generated service worker, documentation parity, Webpack production build, and the 41-entry production route boundary passed.</li>
+<li>Authenticated production-fixture journey: Chromium desktop passed in 10.1 seconds; WebKit phone passed in 17.7 seconds; 2 passed in 29.2 seconds.</li>
+</ul>
+<p>The newest report and representative synthetic frames are retained in <code>docs/qa/latest/FLEXIBLE-DAY-BUILDER-QA.md</code>. No migration was applied, no deployment ran, and this evidence makes no hosted-production claim.</p>
 
   </main>
 </body>

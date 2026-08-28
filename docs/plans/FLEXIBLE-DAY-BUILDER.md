@@ -40,7 +40,7 @@ The client keeps the following explicit states:
 The day builder owns draft placement and accepts one narrow movement selection:
 
 ```ts
-type ProgramMovementSelection = Readonly<{
+type MovementSelection = Readonly<{
   source: Readonly<{
     kind: "catalog" | "custom";
     id: string;
@@ -49,13 +49,15 @@ type ProgramMovementSelection = Readonly<{
   loggingKind: LoggingKind;
 }>;
 
-type ProgramMovementChooserIntent =
-  | Readonly<{ kind: "add" }>
-  | Readonly<{ kind: "replace"; current: ProgramMovementSelection }>
-  | Readonly<{ kind: "seed-day" }>;
+type MovementChooserRequest =
+  | Readonly<{ intent: "add" }>
+  | Readonly<{ intent: "replace"; currentSelection: MovementSelection }>
+  | Readonly<{ intent: "seed-day" }>;
 ```
 
 The library worker owns chooser search, catalog and private data loading, equipment compatibility filtering, inline private creation, and guidance persistence. The discriminated chooser boundary requires `currentSelection` only for `replace`; `add` and `seed-day` carry no current selection. The chooser exposes dismiss and sanitized stable error callbacks. An error can't contain an owner identifier or private URL.
+
+The neutral contract enters this branch from reviewed checkpoint `5255a5254fcde4c1b1558947bda64d47bad23743` in `src/domain/exercises/movement-chooser-contract.ts`. The existing editor chooser adapts its candidate rows into the strict runtime selection schema before calling the day-builder consumer. The library can replace that presentation and data adapter later without taking ownership of editor placement or publication.
 
 A chooser selection contains no owner key, route identity, program identity, stable topology key, prescription target, guidance URL, or server-authoritative movement metadata. The returned name and logging kind are interface and default hints. The server revalidates movement existence, ownership, logging meaning, and equipment compatibility during publication. The editor captures its own day, section, and prescription destination before it opens the chooser and applies the returned selection there.
 
@@ -163,4 +165,18 @@ Retain only the newest completed QA report and representative Chromium desktop a
 
 ## Verification record
 
-Record the failed-before command, failing assertions, passed-after commands, browser results, and retained evidence here after the implementation gate completes.
+Failed-before evidence:
+
+- The editor-model run reported two failures and 15 passes before cardio reordering and reviewed movement removal existed.
+- The publication/repository run reported two failures and 21 passes: `[runner, walker]` reloaded as `[walker, runner]`, and zero-distance cardio parsed successfully.
+- The cardio-default test reported the received one-second values before the builder adopted a useful 1,200-second default.
+
+Passed-after evidence:
+
+- Focused chooser/editor/publication/migration/repository matrix: 6 files and 64 tests.
+- Migration-impact matrix: 8 files and 83 tests.
+- Complete permission-correct Vitest run: 109 files and 747 tests in 109.18 seconds.
+- Strict TypeScript, full ESLint, Drizzle metadata, exact-two seed, generated service worker, documentation parity, Webpack production build, and the 41-entry production route boundary passed.
+- Authenticated production-fixture journey: Chromium desktop passed in 10.1 seconds; WebKit phone passed in 17.7 seconds; 2 passed in 29.2 seconds.
+
+The newest report and representative synthetic frames are retained in `docs/qa/latest/FLEXIBLE-DAY-BUILDER-QA.md`. No migration was applied, no deployment ran, and this evidence makes no hosted-production claim.
