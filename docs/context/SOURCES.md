@@ -17,6 +17,8 @@
 
 ## Hosting and persistence
 
+- [Neon serverless driver](https://neon.com/docs/serverless/serverless-driver) — accessed August 27, 2026; distinguishes stateless HTTP queries from the WebSocket `Pool`/`Client` path required for sessions, interactive transactions, and node-postgres compatibility.
+- [node-postgres pooling](https://node-postgres.com/features/pooling) — accessed August 27, 2026; documents that a pool emits errors on behalf of idle clients and demonstrates registering a pool `error` listener.
 - [Neon Vercel integration plan update](https://neon.com/docs/changelog/2025-11-07) — accessed August 25, 2026; confirms that Vercel integration users can select Neon's current Free plan rather than a paid legacy plan.
 - [Connect Vercel and Neon manually](https://neon.com/docs/guides/vercel-manual) — accessed August 25, 2026; confirms the canonical `DATABASE_URL` connection boundary and supported separation between Neon and Vercel configuration.
 - [Drizzle ORM Neon guide](https://orm.drizzle.team/docs/connect-neon) — accessed August 25, 2026; confirms the supported Neon serverless driver and Drizzle connection boundary used by migration, seed, and verification commands.

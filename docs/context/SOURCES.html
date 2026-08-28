@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="dd2b0fcc7eda028acb61822b3dffda2afe5b80454a2fb03887a6289644b3b913">
+  <meta name="source-sha256" content="8b16d445c3f079c6dc6a00525790eca5ddfdc7817c922230732e384ebdccf6bc">
   <title>Sources · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -45,6 +45,8 @@
 </ul>
 <h2>Hosting and persistence</h2>
 <ul>
+<li><a href="https://neon.com/docs/serverless/serverless-driver">Neon serverless driver</a> — accessed August 27, 2026; distinguishes stateless HTTP queries from the WebSocket <code>Pool</code>/<code>Client</code> path required for sessions, interactive transactions, and node-postgres compatibility.</li>
+<li><a href="https://node-postgres.com/features/pooling">node-postgres pooling</a> — accessed August 27, 2026; documents that a pool emits errors on behalf of idle clients and demonstrates registering a pool <code>error</code> listener.</li>
 <li><a href="https://neon.com/docs/changelog/2025-11-07">Neon Vercel integration plan update</a> — accessed August 25, 2026; confirms that Vercel integration users can select Neon&#39;s current Free plan rather than a paid legacy plan.</li>
 <li><a href="https://neon.com/docs/guides/vercel-manual">Connect Vercel and Neon manually</a> — accessed August 25, 2026; confirms the canonical <code>DATABASE_URL</code> connection boundary and supported separation between Neon and Vercel configuration.</li>
 <li><a href="https://orm.drizzle.team/docs/connect-neon">Drizzle ORM Neon guide</a> — accessed August 25, 2026; confirms the supported Neon serverless driver and Drizzle connection boundary used by migration, seed, and verification commands.</li>

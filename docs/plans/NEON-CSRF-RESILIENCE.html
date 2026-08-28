@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="e4943cf2c476c37eeeec9a346c7944a330a61edb00dbde1f5a3ec3a65a218e81">
+  <title>Neon idle-pool resilience · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Neon idle-pool resilience</h1>
+<h2>Outcome</h2>
+<p>Prevent an idle Neon WebSocket failure from becoming an uncaught exception that terminates a warm Vercel function. The database pool must consume and report idle-client errors without changing the result of the unrelated request that happens to be running when the event arrives.</p>
+<p>This is an operational resilience correction. It does not change authentication, CSRF token generation, workout data, database structure, or product UI.</p>
+<h2>Observed failure</h2>
+<p>The Wave 0 production deployment recorded one <code>GET /api/auth/csrf</code> response with status <code>200</code>, followed by a process exit with status <code>129</code>. The stack passed through the Neon pool&#39;s <code>idleListener</code> and Node&#39;s unhandled <code>error</code> event path. The CSRF route does not import or query the database; it was the next request handled by a warm process that still owned a shared pool created by an earlier database-backed request.</p>
+<p>The installed Neon pool follows the Node event-emitter contract: an idle client error is re-emitted as a pool <code>error</code> event. Without a pool listener, Node treats that event as uncaught and terminates the process.</p>
+<h2>Design</h2>
+<ul>
+<li>Construct the Neon <code>Pool</code> explicitly in the database factory instead of asking Drizzle to construct it from a connection string.</li>
+<li>Attach exactly one pool <code>error</code> listener before exposing the pool to Drizzle.</li>
+<li>Keep the existing lazy singleton so importing a repository or auth route never creates a connection.</li>
+<li>Let the pool remove the failed idle client using its existing lifecycle. Do not retry an unknown operation or mutate application data in the listener.</li>
+<li>Emit one bounded diagnostic without the error object, connection string, query text, user identity, or request data. The message identifies an idle-pool failure and states that the client was discarded.</li>
+<li>Preserve the local loopback HTTP QA configuration and all existing database types.</li>
+</ul>
+<h2>Application behavior</h2>
+<p>Navigation, route responses, loading states, responsive layouts, and accessibility semantics do not change. <code>/api/auth/csrf</code> remains database-independent and returns a no-store token response. Database-backed pages and mutations retain their current authorization and failure behavior.</p>
+<h2>Types and persistence</h2>
+<p><code>Database</code> remains a schema-typed Drizzle <code>NeonDatabase</code>. The underlying client remains a Neon <code>Pool</code>, now constructed explicitly. No schema, migration, snapshot, ownership, unit-conversion, or persistence contract changes.</p>
+<h2>Authorization and privacy</h2>
+<p>Firebase UID ownership checks and CSRF validation remain unchanged. The resilience diagnostic must be constant text so production logs cannot expose database credentials, SQL, fitness data, authentication claims, or provider data.</p>
+<h2>Failure recovery</h2>
+<p>An idle connection error causes Neon to remove that client. The pool remains available to create a replacement connection for later queries. Active query errors continue through the existing promise and route error paths; this listener does not turn failed database work into success. A failure in listener registration must be caught by tests and build-time type checking rather than deferred to production.</p>
+<h2>Test-driven evidence</h2>
+<p>Fail first with a unit assertion that the database factory&#39;s pool has an <code>error</code> listener and can receive a synthetic idle error without throwing. Also assert that logging is bounded and excludes the supplied error message.</p>
+<p>Then verify:</p>
+<ol>
+<li>Focused database-client unit tests.</li>
+<li>Existing database schema and route suites.</li>
+<li>TypeScript and ESLint.</li>
+<li>Full Vitest, documentation parity, and the Webpack production build.</li>
+<li>A production-mode local browser replay covering CSRF retrieval and a database-backed authenticated flow.</li>
+<li>Hosted deployment readiness, repeated direct CSRF responses, a database-backed warm-up followed by CSRF requests, and a bounded Vercel error-log scan.</li>
+</ol>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Every pool returned by <code>createDatabase</code> has one idle-error listener before use.</li>
+<li>A synthetic pool error does not throw or terminate the process.</li>
+<li>The diagnostic contains no raw error details.</li>
+<li>No database connection is created by importing the database module or serving the CSRF route.</li>
+<li>Existing query, transaction, authorization, and migration behavior remains green.</li>
+<li>Production serves the exact patched commit and the post-replay error scan contains no unhandled Neon pool error.</li>
+</ul>
+<h2>Rollback</h2>
+<p>The source change is isolated to database-client construction and tests. If the patch causes a regression before deployment, revert it without touching migration <code>0005</code>. After deployment, application rollback is allowed only to a commit compatible with the already-applied schema; Wave 0 proved that pre-<code>0005</code> application code is not a safe standalone rollback target.</p>
+
+  </main>
+</body>
+</html>

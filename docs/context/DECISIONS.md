@@ -133,3 +133,9 @@ The guest landing page uses a planning companion, the signed-in home uses a prep
 Every production vignette is purpose-built, text-free, decorative, static, pointer-inert, ignored by assistive technology, and absent in forced-colors mode. Image failure cannot remove product meaning, account state, sample disclosure, navigation, or an action. The pilot must verify phone and desktop layouts, 200% zoom, contrast, reduced motion, forced colors, failure states, and offline asset behavior before rollout.
 
 Two alternatives were reviewed and discarded. Their images, prompts, and direction-specific provenance are not retained on the concept branch. The selection does not authorize a public branch push, merge, deployment, or production implementation.
+
+## 2026-08-27: Handle idle Neon failures at the pool boundary
+
+The application constructs the Neon WebSocket pool explicitly and registers one privacy-safe `error` listener before handing the pool to Drizzle. Neon already removes a client that fails while idle; the application listener prevents Node's unhandled event behavior from terminating a warm function and records only constant diagnostic text.
+
+The listener does not retry a query, convert an active database failure into success, expose the error object, or change the lazy database singleton. Interactive transactions remain on the WebSocket-backed pool. Authentication and CSRF routes remain database-independent, even if an idle pool event from earlier work occurs while one of those routes is running.

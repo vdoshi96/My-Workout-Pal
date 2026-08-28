@@ -1,9 +1,9 @@
-import { neonConfig } from "@neondatabase/serverless";
+import { neonConfig, Pool } from "@neondatabase/serverless";
 import { drizzle, type NeonDatabase } from "drizzle-orm/neon-serverless";
 
 import { schema, type DatabaseSchema } from "@/db/schema";
 
-export type Database = NeonDatabase<DatabaseSchema>;
+export type Database = NeonDatabase<DatabaseSchema> & { readonly $client: Pool };
 
 type LocalQaEnvironment = Readonly<Record<string, string | undefined>>;
 
@@ -50,7 +50,12 @@ export function createDatabase(connectionString = process.env["DATABASE_URL"]): 
     throw new Error("DATABASE_URL is required to connect to Postgres");
   }
 
-  return drizzle(connectionString, { schema });
+  const pool = new Pool({ connectionString });
+  pool.on("error", () => {
+    console.error("A Neon database connection failed while idle; the pool discarded it.");
+  });
+
+  return drizzle(pool, { schema });
 }
 
 let database: Database | undefined;
