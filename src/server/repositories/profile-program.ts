@@ -884,17 +884,14 @@ async function loadProgramGraph(
           eq(programCardioPrescriptions.revisionId, revisionId),
         ),
       )
-      .orderBy(asc(programCardioPrescriptions.dayId), asc(programCardioPrescriptions.mode)),
+      .orderBy(asc(programCardioPrescriptions.dayId), asc(programCardioPrescriptions.displayOrder)),
   ]);
   return {
     revision,
     days,
     sections,
     prescriptions,
-    cardio: [...cardio].sort((left, right) => {
-      if (left.dayId !== right.dayId) return left.dayId.localeCompare(right.dayId);
-      return left.mode === right.mode ? 0 : left.mode === "walker" ? -1 : 1;
-    }),
+    cardio,
   };
 }
 
@@ -1571,6 +1568,14 @@ async function cloneTemplateRevision(
       scopedUuid("program-section", ownerFirebaseUid, `${programId}:${revisionId}:${section.id}`),
     ] as const),
   );
+  const nextCardioOrderByDay = new Map<string, number>();
+  const cardioOrderById = new Map(
+    template.cardio.map((cardio) => {
+      const displayOrder = (nextCardioOrderByDay.get(cardio.dayId) ?? 0) + 1;
+      nextCardioOrderByDay.set(cardio.dayId, displayOrder);
+      return [cardio.id, displayOrder] as const;
+    }),
+  );
   await database
     .insert(programPrescriptions)
     .values(
@@ -1623,6 +1628,7 @@ async function cloneTemplateRevision(
             ownerFirebaseUid,
             `template:${template.revision.id}:${cardio.id}`,
           ),
+          displayOrder: cardioOrderById.get(cardio.id)!,
           mode: cardio.mode,
           durationSeconds: cardio.durationSeconds,
           distanceM: cardio.distanceM,
@@ -1753,6 +1759,7 @@ async function cloneProgramGraphRevision(
     await database.insert(programCardioPrescriptions).values(
       source.cardio.map((cardio) => ({
         dayId: programDayId(cardio.dayId),
+        displayOrder: cardio.displayOrder,
         distanceM: cardio.distanceM,
         durationSeconds: cardio.durationSeconds,
         id: scopedUuid(
@@ -2073,6 +2080,7 @@ async function cloneEquipmentRevision(
           revisionId,
           dayId: programDayId(cardio.dayId),
           cardioKey: cardio.cardioKey,
+          displayOrder: cardio.displayOrder,
           mode: cardio.mode,
           durationSeconds: cardio.durationSeconds,
           distanceM: cardio.distanceM,
@@ -2345,13 +2353,14 @@ async function publishEditedProgramRevision(
     ),
   );
   const requestedCardio = input.days.flatMap((day) =>
-    day.cardio.map((cardio) => ({
+    day.cardio.map((cardio, cardioIndex) => ({
       id: cardioId(cardio.cardioKey),
       ownerFirebaseUid,
       programId: root.id,
       revisionId,
       dayId: dayId(day.dayKey),
       cardioKey: cardio.cardioKey,
+      displayOrder: cardioIndex + 1,
       mode: cardio.mode,
       durationSeconds: cardio.durationSeconds,
       distanceM: cardio.distanceM,

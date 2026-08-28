@@ -104,13 +104,14 @@ describe("authenticated customization fixture boundary", () => {
 
   it("applies the complete checked-in migration inventory", () => {
     const databaseBootstrap = source("server/database.ts");
-    expect(databaseBootstrap.match(/"000[0-5]_[^"]+\.sql"/gu)).toEqual([
+    expect(databaseBootstrap.match(/"000[0-6]_[^"]+\.sql"/gu)).toEqual([
       '"0000_initial.sql"',
       '"0001_account_deletion_saga.sql"',
       '"0002_workout_canonical_measurements.sql"',
       '"0003_program_collection.sql"',
       '"0004_personal_record_projection_checkpoint.sql"',
       '"0005_flexible_routine_topology.sql"',
+      '"0006_program_cardio_display_order.sql"',
     ]);
   });
 

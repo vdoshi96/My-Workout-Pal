@@ -45,6 +45,7 @@ const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measur
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const projectionCheckpointMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
 const flexibleRoutineMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
+const cardioDisplayOrderMigrationUrl = new URL("../../drizzle/0006_program_cardio_display_order.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -56,6 +57,7 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   await raw.exec(await readFile(flexibleRoutineMigrationUrl, "utf8"));
+  await raw.exec(await readFile(cardioDisplayOrderMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   return { raw, database };
@@ -234,6 +236,7 @@ async function createFixture(database: Database): Promise<Fixture> {
       revisionId,
       dayId: dayIds.get(cardio.dayId)!,
       cardioKey: randomUUID(),
+      displayOrder: cardio.mode === "walker" ? 1 : 2,
       mode: cardio.mode,
       durationSeconds: cardio.durationSeconds,
       distanceM: cardio.distanceM,

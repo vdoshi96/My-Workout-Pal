@@ -139,3 +139,9 @@ Two alternatives were reviewed and discarded. Their images, prompts, and directi
 The application constructs the Neon WebSocket pool explicitly and registers one privacy-safe `error` listener before handing the pool to Drizzle. Neon already removes a client that fails while idle; the application listener prevents Node's unhandled event behavior from terminating a warm function and records only constant diagnostic text.
 
 The listener does not retry a query, convert an active database failure into success, expose the error object, or change the lazy database singleton. Interactive transactions remain on the WebSocket-backed pool. Authentication and CSRF routes remain database-independent, even if an idle pool event from earlier work occurs while one of those routes is running.
+
+## 2026-08-28: Persist authored cardio choice order explicitly
+
+Walker and Runner are optional alternatives, not semantic positions. Program cardio rows therefore store a bounded display order within each owned revision day. Publication derives that order only from the validated day payload; reads, root clones, equipment revisions, and workout snapshot creation preserve it. Mode remains unique within the day but does not determine presentation order.
+
+Migration `0006_program_cardio_display_order` backfills existing published rows in their prior Walker-then-Runner presentation order while the descendant immutability trigger is narrowly suspended, then restores the guard before making the position required. It adds per-day order uniqueness and a one-to-two bound and does not change cardio meaning or workout history. Production application of this migration remains a separately reviewed release action.

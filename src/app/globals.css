@@ -549,12 +549,17 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .program-editor-wide { grid-column: 1 / -1; }
 .program-editor-cardio-grid { display: grid; gap: 1rem; }
 .program-editor-cardio-grid > section { background: var(--paper-deep); border-inline-start: .3rem solid var(--lichen); padding: 1rem; }
+.program-editor-cardio-grid > section > header { align-items: start; display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; }
+.program-editor-cardio-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .35rem; }
+.program-editor-cardio-actions button { background: transparent; border: 1px solid var(--rule); color: var(--ink); cursor: pointer; min-height: 2.75rem; padding: .45rem .65rem; }
+.program-editor-cardio-actions button:disabled { cursor: not-allowed; opacity: .45; }
 .program-editor-errors { background: color-mix(in srgb, var(--danger) 10%, var(--white)); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; }
 .program-editor-errors ul { margin-bottom: 0; }
 .program-editor-footer { align-items: center; display: grid; gap: 1rem; padding: 1rem; }
 .program-editor-footer strong { font-family: var(--font-display); text-transform: uppercase; }
 .program-editor-footer p { color: var(--ink-soft); font-size: .85rem; margin: .25rem 0 0; }
 .program-editor-footer .primary-action { width: fit-content; }
+.program-editor-footer-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; }
 .program-exercise-chooser { background: transparent; border: 0; color: var(--ink); margin: auto; max-height: calc(100dvh - 2rem); max-width: 46rem; padding: 0; width: calc(100% - 2rem); }
 .program-exercise-chooser::backdrop { background: color-mix(in srgb, var(--ink) 62%, transparent); backdrop-filter: blur(.18rem); }
 .program-exercise-chooser-sheet { background: var(--white); border: 1px solid var(--rule); display: grid; max-height: calc(100dvh - 2rem); overflow: hidden; }

@@ -171,4 +171,19 @@ describe("flexible routine publication contract", () => {
 
     expect(programPublishRequestSchema.safeParse(input).success).toBe(true);
   });
+
+  it("rejects a zero-distance cardio choice that workout start cannot snapshot", () => {
+    const input = cloneRoutine();
+    input.days[0]!.cardio.push({
+      cardioKey: "70000000-0000-4000-8000-000000000001",
+      distanceM: 0,
+      durationSeconds: 1_200,
+      inclinePercent: null,
+      mode: "runner",
+      notes: null,
+      paceSecondsPerKm: null,
+    });
+
+    expect(programPublishRequestSchema.safeParse(input).success).toBe(false);
+  });
 });

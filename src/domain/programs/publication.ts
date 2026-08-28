@@ -108,7 +108,7 @@ const programSectionPublishSchema = z
 
 const programCardioPublishSchema = z
   .object({
-    distanceM: canonicalMeters(0).nullable(),
+    distanceM: canonicalMeters(0).positive().nullable(),
     durationSeconds: z.number().int().positive().max(604_800),
     inclinePercent: z.number().finite().min(0).max(100).nullable(),
     cardioKey: opaqueTopologyKeySchema,

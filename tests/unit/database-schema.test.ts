@@ -9,6 +9,7 @@ const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measur
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const projectionCheckpointMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
 const flexibleTopologyMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
+const cardioDisplayOrderMigrationUrl = new URL("../../drizzle/0006_program_cardio_display_order.sql", import.meta.url);
 
 const ids = {
   aliceProgram: "00000000-0000-4000-8000-000000000001",
@@ -71,6 +72,7 @@ async function openDatabase() {
   await database.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   await database.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   await database.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
+  await database.exec(await readFile(cardioDisplayOrderMigrationUrl, "utf8"));
   openDatabases.push(database);
   return database;
 }
