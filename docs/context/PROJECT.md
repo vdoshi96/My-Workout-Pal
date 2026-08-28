@@ -30,7 +30,7 @@ My Workout Pal is a customizable workout companion that connects planning, in-wo
 - Neon Postgres through Vercel Marketplace, accessed through Drizzle ORM and versioned migrations.
 - Zod validation at every untrusted input boundary.
 - Authentication return targets are server-normalized to bounded local paths before client navigation. Missing or invalid destinations use `/app` as the safe member default.
-- Public exercise return targets use a separate allowlist for the program, five days, filtered library, and sample workout; direct or hostile origins fall back to the library.
+- Public exercise return targets use a separate allowlist for the program, five days, filtered library, sample workout, and canonical Progress preview. The old `/sample-progress` alias normalizes to `/progress`; direct or hostile origins fall back to the library.
 - Vitest for domain and integration tests. Playwright covers Chromium and WebKit browser flows.
 - Vercel Pro hosts preview and production deployments from GitHub.
 

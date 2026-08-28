@@ -72,7 +72,7 @@ The first Next.js 16.3.2 Turbopack production compile held the build lock withou
 
 ## 2026-08-25: Cache public reading routes only
 
-The service worker may cache the guest program, library, samples, offline page, and static assets. It does not intercept authenticated navigation or API requests. Account writes require a confirmed server response and must expose pending, failed, and retry states instead of treating an offline queue as saved data.
+The service worker may cache the guest program, library, sample workout, canonical Progress preview, offline page, and static assets. Compatibility aliases and authenticated routes remain uncached. It does not intercept authenticated navigation or API requests. Account writes require a confirmed server response and must expose pending, failed, and retry states instead of treating an offline queue as saved data.
 
 ## 2026-08-25: Prefer a nonce CSP for fitness and account data
 
@@ -90,7 +90,7 @@ The hero renders from its explicit project URL with reserved intrinsic dimension
 
 ## 2026-08-26: Preserve recognized public navigation origins
 
-Exercise-detail links carry a bounded `returnTo` value for their actual public source. The server accepts only the program overview, one of five public day paths, a normalized filtered library, or a normalized sample-workout route. Labels are derived from that recognized destination; untrusted labels, private paths, repeated scalars, absolute URLs, controls, fragments, and unknown routes fail closed to the exercise library.
+Exercise-detail links carry a bounded `returnTo` value for their actual public source. The server accepts only the program overview, one of five public day paths, a normalized filtered library, a normalized sample-workout route, or the canonical Progress preview. The old `/sample-progress` alias normalizes to `/progress`. Labels are derived from that recognized destination; untrusted labels, private paths, repeated scalars, absolute URLs, controls, fragments, and unknown routes fail closed to the exercise library.
 
 This explicit context is preferred to browser history because a direct visit, reload, copied link, or interrupted navigation may have no useful prior entry. Dynamic exercise links opt out of Next.js prefetch after WebKit exposed aborted RSC prefetch requests as page errors; deliberate navigation still server-renders the destination normally without speculative request noise.
 

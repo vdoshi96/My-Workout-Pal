@@ -4,12 +4,12 @@
 
 My Workout Pal must support two truthful experiences:
 
-- A guest can evaluate the complete seeded program, both equipment profiles, exercise guidance, a sample workout, and sample analytics without believing that activity is saved.
+- A guest can evaluate the five-day starter example, both equipment profiles, exercise guidance, a sample workout, and a disclosed Progress preview without believing that activity is saved or that five days are the product promise.
 - An authenticated and eligible user can own program revisions, custom exercises, workout logs, and derived progress without another user being able to read or mutate them.
 
 ## Navigation model
 
-Public navigation exposes **Program**, **Library**, **Sample progress**, and **Sign in**. Authenticated navigation exposes **Today**, **Program**, **Library**, **History**, **Progress**, and **Settings**. On narrow screens, the four highest-frequency destinations use a bottom navigation bar and secondary destinations remain in the account menu. On tablets and desktop, the same information architecture uses a persistent rail or header without changing route meaning.
+Public navigation exposes **Program**, **Library**, **Progress**, and **My workouts**. Authenticated navigation exposes **Home**, **Library**, **History**, **Progress**, and **Settings**. On narrow screens, these destinations use the established bottom navigation bars. On tablets and desktop, the same route meanings move into persistent header or rail navigation.
 
 An active workout becomes the primary task. The runner owns its own compact navigation and requires explicit confirmation before leaving with unsaved or failed changes.
 
@@ -75,7 +75,7 @@ Server Actions handle same-origin form and editor mutations. Route handlers hand
 - Epley estimated one-repetition maximum is `weightKg * (1 + repetitions / 30)` for positive weight and repetitions. It is not calculated for duration, distance, warm-up, or bodyweight-only sets.
 - A personal record compares canonical values within the same exercise variation and record type (`max_weight`, `estimated_1rm`, `volume`, `max_repetitions`, `distance`, or `duration`). An equal best is a tie, not a new higher record.
 - Presentation rounds only after canonical comparison. Weight conversion uses `1 kg = 2.2046226218 lb`.
-- Analytics derive from persisted completed sessions and logs. Sample analytics use a separate labeled fixture and never share a user record identifier.
+- Analytics derive from persisted completed sessions and logs. The public Progress preview uses a separate fixture with one **Sample data · not your history** disclosure and never shares a user record identifier.
 
 ## Starter program
 
@@ -319,7 +319,7 @@ Refresh resumes the same server session and overlays unacknowledged local operat
 ## Implementation slices
 
 1. Foundation: repository, documentation parity, design direction, scaffold, lint, typecheck, unit harness, and seeded domain contracts.
-2. Public catalog: starter program, equipment preview, day and exercise detail, library, dual-video component, sample workout, and sample analytics.
+2. Public catalog: starter program, equipment preview, day and exercise detail, library, dual-video component, sample workout, and the disclosed Progress preview.
 3. Identity and ownership: Firebase client/Admin sessions, eligibility, CSRF, protected layouts, profile, preferences, and IDOR tests.
 4. Program editing: immutable revisions, equipment substitution confirmation, custom exercises, and YouTube URL normalization.
 5. Runner and recovery: session snapshots, strength and cardio logs, timers, IndexedDB outbox, resume, and navigation protection.

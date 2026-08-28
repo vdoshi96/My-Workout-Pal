@@ -30,7 +30,7 @@ import { createStarterProgram } from "@/domain/programs/starter";
 
 function expectPublicChromePrefetchDisabled() {
   const chromeDestinations = observedLinks.filter(({ href }) =>
-    ["/", "/app", "/program", "/library", "/sample-progress"].includes(href),
+    ["/", "/app", "/program", "/library", "/progress"].includes(href),
   );
 
   expect(chromeDestinations.length).toBeGreaterThan(0);

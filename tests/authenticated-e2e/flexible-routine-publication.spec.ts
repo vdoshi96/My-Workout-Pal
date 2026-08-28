@@ -216,7 +216,7 @@ async function submitOnboarding(page: Page) {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Create my program" }).click();
+  await page.getByRole("button", { name: "Save the five-day example" }).click();
   return responsePromise;
 }
 
@@ -267,7 +267,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
 
   await alice.page.goto("/app");
   expect((await submitOnboarding(alice.page)).status()).toBe(201);
-  await alice.page.getByRole("link", { name: /Manage programs/ }).click();
+  await alice.page.getByRole("link", { name: /Manage routines/ }).click();
   await alice.page.getByRole("radio", { name: /Custom starting point/ }).check();
   await alice.page.getByLabel("Program name").fill("Weekend route");
   await alice.page.getByLabel("First day name").fill("Sunrise strength");

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="acce084c0ac8f23813f36d70e850cfb01f1718dc298c90ea33f3780b5aa49dd7">
+  <title>Personal home and companion copy plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Personal home and companion copy plan</h1>
+<h2>Outcome</h2>
+<p>Guests understand My Workout Pal as a customizable companion for planning a routine, training with guidance, logging work, and reviewing progress. The five-day starter remains a public, unsaved example instead of the product promise.</p>
+<p>After sign-in, a member lands on <code>/app</code> and can immediately identify their account, resume an active workout, open an owned day, edit or manage routines, and review personal history or progress. The home never substitutes public example data for owned data.</p>
+<p>This Wave 1 slice owns the public and member home composition, navigation labels, identity and sign-out visibility, sample disclosure, companion-oriented copy, focused tests, and browser evidence. It does not change Firebase provider setup, ownership enforcement, routine-editor controls, movement-library persistence, personal guidance, or the selected Corner Companions production visuals.</p>
+<h2>Navigation and terminology</h2>
+<ul>
+<li>Public navigation labels <code>/progress</code> as <strong>Progress</strong>. <code>/sample-progress</code> remains a compatibility redirect to the canonical route.</li>
+<li>Public cached pages remain identity-neutral. <strong>My workouts</strong> enters through <code>/app</code>, which preserves the existing bounded sign-in return contract.</li>
+<li>Member navigation labels <code>/app</code> as <strong>Home</strong>. Library, History, Progress, and Settings keep their existing destinations.</li>
+<li>Guest copy calls the public routine the <strong>five-day starter example</strong> only where the example is visible.</li>
+<li>Member copy uses <strong>routine</strong> for an owned training plan and names the saved routine and its actual number of days.</li>
+<li>The public progress preview contains one visible disclosure: <strong>Sample data · not your history</strong>. Titles, metric labels, chart labels, and supporting copy do not repeat the sample qualifier.</li>
+<li>Guest workout interactions retain action-level <strong>not saved</strong> warnings when a visitor could otherwise mistake temporary input for persistence.</li>
+</ul>
+<h2>Member-home states</h2>
+<h3>New account</h3>
+<p>The authenticated shell keeps the display name, verification state, and <strong>Sign out</strong> visible. The setup surface explains that the five-day starter is one editable example and creates no workout or progress data until the member chooses to save it. A verified member can save a private editable copy of the example; an unverified password member can browse the public example and sees the exact verification recovery requirement.</p>
+<p>This branch does not duplicate blank-routine creation owned by the flexible day-builder worker. Until that branch is integrated, new accounts truthfully offer only <strong>Save the five-day example</strong>. Final Wave 1 integration must expose the planned example-versus-blank choice once the day-builder supplies the persistence and editing behavior.</p>
+<h3>Ready account</h3>
+<p>The home greets the member by the server-derived display name, names the active routine, and shows its actual revision, equipment profile, and day count. It provides the following actions:</p>
+<ul>
+<li>Open an owned day to start or review it.</li>
+<li>Edit the active routine.</li>
+<li>Manage routines.</li>
+<li>Open the compatible movement library.</li>
+<li>Review History and Progress.</li>
+</ul>
+<p>The home shows an owned progress summary derived only from completed workouts. If no completed workout exists, it presents a first-workout action and no sample values.</p>
+<h3>Active workout</h3>
+<p>The home reads the owner-scoped resumable session from the server. <strong>Resume DAY_NAME</strong> is the dominant action and targets <code>/workout/SESSION_ID</code>. Competing day-start actions are unavailable until that workout is completed or abandoned; routine, library, history, and progress reading remain available.</p>
+<h3>Loading and failure</h3>
+<p>The route-level loading state says that the app is checking the member&#39;s routine, resumable workout, and progress. The route-level error state keeps the authenticated shell and identity visible, says that personal data did not load, states that no change was made, and offers a retry.</p>
+<h2>Types and persistence</h2>
+<ul>
+<li>Add one owner-scoped resumable-workout read that returns either no session or the existing immutable resume model. It accepts only an authenticated server viewer and no client owner identifier; verification continues to gate mutations, not owned reads.</li>
+<li>Reuse the existing active-program read model and progress-insights repository. The home receives a bounded presentation model containing only the fields required for the active action, routine summary, and owned progress summary.</li>
+<li>Do not add a migration, seed, browser-storage record, private cache entry, or mutation endpoint. The canonical public <code>/progress</code> preview remains eligible for the existing public navigation cache.</li>
+<li>Do not change start-or-resume, idempotency, immutable snapshot, active-program, or progress-calculation behavior.</li>
+<li>Keep <code>/app</code>, <code>/workout</code>, owned media, and all private APIs outside the public service-worker cache.</li>
+</ul>
+<h2>Authentication, authorization, and privacy</h2>
+<ul>
+<li>Derive account identity and every owned read from the revocation-aware HTTP-only server session.</li>
+<li>Keep Firebase client state out of home authorization and never accept a client-supplied UID.</li>
+<li>Preserve the existing bounded same-origin sign-in returns, secure-cookie behavior, CSRF order, email-verification gate, and sign-out cleanup.</li>
+<li>Keep private routine names, session identifiers, history, and progress out of public HTML, the service worker, logs, and retained screenshots unless the authenticated fixture uses synthetic data.</li>
+<li>Keep public pages identity-neutral so cached HTML cannot reveal or guess account state.</li>
+</ul>
+<h2>Failure recovery</h2>
+<ul>
+<li>A database or progress read failure uses the existing route error boundary and does not report a mutation or a saved result.</li>
+<li>A missing profile is the new-account state, not an error.</li>
+<li>A missing resumable workout is the ready state, not an error.</li>
+<li>An unverified member retains read access and sees permanent actions disabled with a verification explanation.</li>
+<li>An active session always outranks a competing start action. The home cannot invent a replacement session or silently open another day.</li>
+<li>Sign-out retains its current owner-scoped IndexedDB cleanup, secure-session deletion, Firebase sign-out, pending state, and retry message.</li>
+</ul>
+<h2>Responsive behavior and accessibility</h2>
+<ul>
+<li>Phone layouts keep the primary create, resume, or day action above the fixed member navigation.</li>
+<li>Desktop layouts keep the account rail, identity, verification state, sign-out, personal next action, routine, and progress planes distinct.</li>
+<li>Arbitrary 1-14 day routines wrap into usable rows instead of assuming five equal columns.</li>
+<li>Long display names, routine names, and day names wrap without horizontal overflow at 320 px, 390 px, 430 px, 820 px, 1,280 px, 1,440 px, and 200% zoom.</li>
+<li>Loading uses a polite live status. Read failures use an alert. Disabled competing actions use native disabled semantics or noninteractive text and do not rely on color.</li>
+<li>Headings remain hierarchical, visible labels remain in accessible names, focus styles stay visible, and controls keep the established 44 by 44 CSS pixel target where applicable.</li>
+<li>No production companion illustration, decorative background, animation, or image cache entry is added. The selected Corner Companions packet remains a Wave 3 dependency.</li>
+</ul>
+<h2>Test-driven implementation</h2>
+<p>Retain concise failed-before and passed-after evidence for the following behavior:</p>
+<ul>
+<li>The landing page positions a customizable workout companion and treats the five-day route as an unsaved example.</li>
+<li>Public navigation uses <code>/progress</code> and <strong>Progress</strong>; <code>/sample-progress</code> redirects to the canonical route.</li>
+<li>The progress preview renders exactly one <strong>Sample data · not your history</strong> disclosure and ordinary metric labels.</li>
+<li>Member navigation labels <code>/app</code> as <strong>Home</strong> without broadening its active-route match.</li>
+<li>The personal-home presenter distinguishes new, ready, active-session, unverified, and empty-progress states.</li>
+<li>The owner-scoped resumable read returns only the viewer&#39;s active session and treats another owner&#39;s or terminal session as absent.</li>
+<li>The active-session home exposes one dominant resume action and no competing start link.</li>
+<li>The ready home exposes every owned day plus edit, manage, library, History, and Progress actions.</li>
+<li>Loading and error copy remains actionable and does not claim that a read failure changed data.</li>
+<li>Public cache policy includes canonical <code>/progress</code>, excludes <code>/app/progress</code>, and keeps generated <code>public/sw.js</code> in parity.</li>
+</ul>
+<h2>Browser evidence</h2>
+<p>Run the public production-mode matrix across Chromium phone, tablet, and desktop plus WebKit phone. Cover the guest landing, canonical Progress route, compatibility redirect, one disclosure, starter not-saved warning, keyboard focus, target sizes, dark mode, reduced motion, accessibility, and zero horizontal overflow.</p>
+<p>Run the production-component authenticated fixture in Chromium desktop and WebKit phone. Use synthetic owners and real PGlite repositories to cover:</p>
+<ol>
+<li>A new verified member with visible identity and sign-out.</li>
+<li>An unverified member with read-only account state and disabled permanent setup.</li>
+<li>A returning member with an arbitrary owned routine, actual day count, day actions, edit/manage actions, empty owned progress, History, and Progress.</li>
+<li>A started workout that changes the home to a dominant resume action and removes competing start actions.</li>
+<li>A completed workout that removes the resume action and updates the owned progress summary without sample values.</li>
+<li>Phone and desktop Axe, focus, overflow, and first-viewport action checks.</li>
+</ol>
+<p>Retain only the newest completed Wave 1 report and the smallest synthetic screenshots that materially prove distinct desktop and phone states. Remove generated build, Playwright, trace, and report artifacts after their results are reviewed.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Guest and global metadata describe a customizable workout companion, not a fixed five-day solution.</li>
+<li>The five-day starter is clearly an unsaved example and remains publicly explorable.</li>
+<li>Public navigation says <strong>Progress</strong>, the canonical route is <code>/progress</code>, and the preview has one visible sample-data disclosure.</li>
+<li>A signed-in member always sees their display name, verification state, and <strong>Sign out</strong> in the private shell.</li>
+<li><code>/app</code> provides a personal next action and clear routes to owned days, routine editing, routine management, Library, History, and Progress.</li>
+<li>An active workout produces one dominant resume action and makes competing start actions unavailable.</li>
+<li>Empty, loading, error, verified, unverified, new-member, returning-member, and active-session states are truthful and usable on phone and desktop.</li>
+<li>No ownership, authentication, immutable-history, provider, editor, library, guidance, migration, deployment, or Corner Companions production-art boundary is weakened or expanded.</li>
+<li>Focused tests, complete verification, documentation and service-worker parity, the supported Webpack build, public browser matrix, and authenticated Chromium desktop plus WebKit phone flows pass.</li>
+<li>The completed branch is committed and pushed as <code>vishal/companion-home-copy</code> without merging <code>main</code>, applying a migration, deploying, aliasing production, or modifying another worktree.</li>
+</ul>
+
+  </main>
+</body>
+</html>

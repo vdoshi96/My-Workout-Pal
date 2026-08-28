@@ -6,7 +6,7 @@ import { Icon } from "@/components/ui/icon";
 const items = [
   { id: "program", href: "/program", label: "Program", icon: "map" },
   { id: "library", href: "/library", label: "Library", icon: "library" },
-  { id: "sample", href: "/sample-progress", label: "Sample", icon: "sample" },
+  { id: "progress", href: "/progress", label: "Progress", icon: "sample" },
   { id: "account", href: "/app", label: "My workouts", icon: "sign-in" },
 ] as const;
 
@@ -24,7 +24,7 @@ export function PublicShell({
           <span className="brand-mark" aria-hidden="true"><Icon name="map" /></span>
           <span>
             <strong>My Workout Pal</strong>
-            <small>Training route atlas</small>
+            <small>Your workout companion</small>
           </span>
         </Link>
         <nav className="public-nav" aria-label="Primary">

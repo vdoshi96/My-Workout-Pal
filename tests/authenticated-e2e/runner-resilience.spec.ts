@@ -285,7 +285,7 @@ async function onboardAndOpenPush(page: Page): Promise<string> {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Create my program" }).click();
+  await page.getByRole("button", { name: "Save the five-day example" }).click();
   expect((await onboard).status()).toBe(201);
   await page.getByRole("link", { name: /Push/ }).click();
   const start = page.waitForResponse(

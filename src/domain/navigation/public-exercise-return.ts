@@ -101,6 +101,12 @@ function canonicalSampleWorkoutContext(url: URL): PublicExerciseReturnContext | 
   };
 }
 
+function canonicalProgressContext(url: URL): PublicExerciseReturnContext | undefined {
+  if (url.pathname !== "/progress" && url.pathname !== "/sample-progress") return undefined;
+  if (url.searchParams.size > 0) return undefined;
+  return { href: "/progress", label: "Progress" };
+}
+
 export function resolvePublicExerciseReturn(
   rawReturnTo: string | readonly string[] | undefined,
   fallbackEquipment: EquipmentProfileKind,
@@ -132,6 +138,7 @@ export function resolvePublicExerciseReturn(
       canonicalProgramContext(url) ??
       canonicalLibraryContext(url) ??
       canonicalSampleWorkoutContext(url) ??
+      canonicalProgressContext(url) ??
       fallback
     );
   } catch {

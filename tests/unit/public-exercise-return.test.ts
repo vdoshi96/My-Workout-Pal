@@ -29,6 +29,14 @@ describe("public exercise return contexts", () => {
         label: "Pull sample workout",
       },
     ],
+    [
+      "/progress",
+      { href: "/progress", label: "Progress" },
+    ],
+    [
+      "/sample-progress",
+      { href: "/progress", label: "Progress" },
+    ],
   ])("keeps the allowlisted origin %s", (rawReturnTo, expected) => {
     expect(resolvePublicExerciseReturn(rawReturnTo, "dumbbells")).toEqual(expected);
   });

@@ -2250,6 +2250,7 @@ async function applyOperation(
 export function createWorkoutRepository(database: Database): WorkoutRepository {
   return {
     startOrResume: (viewer, input) => startOrResumeWorkout(database, viewer, input),
+    findResumable: (viewer) => findResumableWorkout(database, viewer),
     loadResume: (viewer, input) => loadResumeWorkout(database, viewer, input),
     submitOperation: (viewer, input) => submitWorkoutOperation(database, viewer, input),
     history: (viewer, input) => loadWorkoutHistory(database, viewer, input),
@@ -2259,11 +2260,37 @@ export function createWorkoutRepository(database: Database): WorkoutRepository {
 
 export type WorkoutRepository = Readonly<{
   startOrResume(viewer: ViewerContext | null | undefined, input: StartWorkoutInput): Promise<StartWorkoutResult>;
+  findResumable(viewer: ViewerContext | null | undefined): Promise<WorkoutResumeReadModel | undefined>;
   loadResume(viewer: ViewerContext | null | undefined, input: LoadResumeInput): Promise<WorkoutResumeReadModel>;
   submitOperation(viewer: ViewerContext | null | undefined, input: SubmitWorkoutOperationInput): Promise<WorkoutOperationResult>;
   history(viewer: ViewerContext | null | undefined, input?: WorkoutHistoryInput): Promise<WorkoutHistoryReadModel>;
   submitRunnerOperation(viewer: ViewerContext | null | undefined, operation: RunnerOperation): Promise<RunnerSubmitResult>;
 }>;
+
+export async function findResumableWorkout(
+  database: Database,
+  viewer: ViewerContext | null | undefined,
+): Promise<WorkoutResumeReadModel | undefined> {
+  const current = requireViewer(viewer);
+  return database.transaction(async (transaction) => {
+    const tx = transaction as unknown as Database;
+    const rows = await tx
+      .select({ id: workoutSessions.id })
+      .from(workoutSessions)
+      .where(and(
+        eq(workoutSessions.ownerFirebaseUid, current.uid),
+        inArray(workoutSessions.state, RESUMABLE_STATES),
+      ))
+      .orderBy(
+        desc(workoutSessions.updatedAt),
+        desc(workoutSessions.createdAt),
+        desc(workoutSessions.id),
+      )
+      .limit(1);
+    if (!rows[0]) return undefined;
+    return buildModel(tx, await selectSession(tx, current.uid, rows[0].id));
+  });
+}
 
 export async function startOrResumeWorkout(database: Database, viewer: ViewerContext | null | undefined, input: StartWorkoutInput): Promise<StartWorkoutResult> {
   const current = requireMutationViewer(viewer);

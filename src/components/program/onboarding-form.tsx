@@ -80,8 +80,11 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
     <section className="member-onboarding" aria-labelledby="onboarding-title">
       <header className="member-onboarding-copy contour-surface">
         <span className="eyebrow">Private setup · step 1 of 1</span>
-        <h1 id="onboarding-title">Build your starter route</h1>
-        <p>Choose the equipment and presentation preferences you use. The server will clone one immutable five-day starting revision into your account.</p>
+        <h1 id="onboarding-title">Start with the five-day example</h1>
+        <p>
+          Choose your equipment and presentation preferences. Saving creates a private,
+          editable copy of this example in your account; it does not lock you into five days.
+        </p>
       </header>
 
       {!canMutate ? (
@@ -168,7 +171,7 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
 
         <div className="onboarding-submit">
           <button className="primary-action" disabled={!canMutate || busy} type="submit">
-            {busy ? "Creating…" : "Create my program"}<Icon name="arrow-right" />
+            {busy ? "Creating…" : "Save the five-day example"}<Icon name="arrow-right" />
           </button>
           <p aria-live="polite" role="status">{message}</p>
         </div>

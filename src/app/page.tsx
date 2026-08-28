@@ -5,9 +5,9 @@ import { PublicShell } from "@/components/layout/public-shell";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = {
-  title: "Your free five-day workout plan",
+  title: "Your customizable workout companion",
   description:
-    "Browse every starter workout, exercise guide, and approved demonstration without an account. Sign in only when you want to customize or track.",
+    "Plan your own routine with a workout companion for guidance, logging, history, and progress. Explore the five-day starter example without an account.",
 };
 
 const starterDays = ["Push", "Pull", "Legs", "Upper", "Lower"] as const;
@@ -19,15 +19,15 @@ export default function HomePage() {
       <section className="landing-hero" aria-labelledby="landing-heading">
         <div className="landing-copy">
           <p className="landing-welcome">Welcome to My Workout Pal</p>
-          <h1 id="landing-heading">Your whole five-day plan. No account required.</h1>
+          <h1 id="landing-heading">A workout companion built around your routine.</h1>
           <p className="landing-lede">
-            Open every workout day, read every exercise guide, and choose between two
-            approved demonstrations for each movement. Start with dumbbells, or preview
-            the barbell route—everything public stays free to browse.
+            Plan your days, use guidance while you train, log your work, and review progress
+            in one personal place. Explore an unsaved starter example before deciding whether
+            you want an account.
           </p>
           <div className="landing-actions">
             <Link className="primary-action" href="/program">
-              Browse all five days
+              Explore the five-day example
               <Icon name="arrow-right" />
             </Link>
             <Link className="landing-text-link" href="#account-choice">
@@ -35,7 +35,7 @@ export default function HomePage() {
             </Link>
           </div>
           <p className="landing-assurance">
-            Guest exploration is temporary and never presented as saved activity.
+            Five-day starter example · not saved
           </p>
         </div>
 
@@ -62,10 +62,11 @@ export default function HomePage() {
       <section className="landing-route" aria-labelledby="starter-route-heading">
         <div>
           <p className="landing-section-number" aria-hidden="true">01</p>
-          <h2 id="starter-route-heading">A complete week, ready to inspect</h2>
+          <h2 id="starter-route-heading">One example, ready to inspect</h2>
           <p>
-            Strength, core, and configurable walker or runner cardio are included every
-            day. Switch equipment previews without creating an account.
+            This five-day starter shows strength, core, and walker or runner cardio. It is
+            not a promise about the routine you must use; signed-in routines can follow
+            the days and movements that fit you.
           </p>
         </div>
         <ol aria-label="Five starter workout days">
@@ -87,10 +88,10 @@ export default function HomePage() {
       <section className="landing-choice" id="account-choice" aria-labelledby="account-choice-heading">
         <header>
           <p className="landing-section-number" aria-hidden="true">02</p>
-          <h2 id="account-choice-heading">Browse first. Make it yours when you’re ready.</h2>
+          <h2 id="account-choice-heading">Explore first. Build your own when you’re ready.</h2>
           <p>
-            Signing in is optional for learning the plan. It is only required when the
-            app needs to remember something that belongs to you.
+            Signing in is optional for exploring the example. It is required only when
+            your companion needs to remember a routine, workout, or preference that belongs to you.
           </p>
         </header>
 
@@ -98,24 +99,27 @@ export default function HomePage() {
           <section aria-labelledby="guest-capabilities-heading">
             <h3 id="guest-capabilities-heading">Open to everyone</h3>
             <ul>
-              <li>All five starter days in both equipment profiles</li>
+              <li>A five-day starter example in both equipment profiles</li>
               <li>Every exercise instruction and both approved videos</li>
               <li>The searchable exercise library</li>
-              <li>Read-only sample workout and clearly labeled sample analytics</li>
+              <li>A read-only sample workout and a disclosed Progress preview</li>
             </ul>
-            <Link href="/program">Explore the free program <Icon name="arrow-right" /></Link>
+            <Link href="/program">Explore the starter example <Icon name="arrow-right" /></Link>
           </section>
 
           <section aria-labelledby="account-capabilities-heading">
             <h3 id="account-capabilities-heading">Sign in to make it yours</h3>
             <ul>
-              <li>Change sets, targets, weights, notes, and rest periods</li>
-              <li>Add, replace, or create exercises and programs</li>
+              <li>Shape routine days, movements, targets, notes, and rest periods</li>
+              <li>Add, replace, or create exercises and routines</li>
               <li>Track workouts and resume interrupted sessions</li>
               <li>Keep history, records, preferences, and personal analytics</li>
             </ul>
             <Link href="/app" prefetch={false}>
               Open my workouts <Icon name="arrow-right" />
+            </Link>
+            <Link href="/progress" prefetch={false}>
+              Preview Progress <Icon name="arrow-right" />
             </Link>
           </section>
         </div>

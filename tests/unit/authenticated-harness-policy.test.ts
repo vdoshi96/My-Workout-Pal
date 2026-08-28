@@ -500,9 +500,10 @@ describe("credential-free authenticated harness boundary", () => {
       resolve(repositoryRoot, "src/components/program/member-program-home.tsx"),
       "utf8",
     );
-    expect(memberProgramHome).toContain(
-      "<Link href={`/app/program/${day.dayKey}`} prefetch={false}>",
+    expect(memberProgramHome).toMatch(
+      /<Link[\s\S]{0,160}href=\{`\/app\/program\/\$\{day\.dayKey\}`\}[\s\S]{0,80}prefetch=\{false\}/u,
     );
+    expect(memberProgramHome).not.toContain('aria-label={`Open ${day.displayName} to start`}');
 
     const authenticatedNav = readFileSync(
       resolve(repositoryRoot, "src/components/layout/authenticated-nav.tsx"),

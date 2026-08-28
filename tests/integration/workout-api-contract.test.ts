@@ -88,6 +88,7 @@ function resumeModel(): WorkoutResumeReadModel {
 function repository(overrides: Partial<WorkoutRepository> = {}): WorkoutRepository {
   return {
     startOrResume: vi.fn(),
+    findResumable: vi.fn(),
     loadResume: vi.fn(),
     submitOperation: vi.fn(),
     history: vi.fn(),

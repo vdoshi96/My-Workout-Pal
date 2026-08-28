@@ -597,6 +597,7 @@ describe("owner-scoped workout repository", () => {
     const { database } = await openDatabase();
     const fixture = await createFixture(database);
     const repository = createWorkoutRepository(fixture.database);
+    await expect(repository.findResumable(viewer(fixture.ownerUid))).resolves.toBeUndefined();
     await expect(
       repository.startOrResume(viewer(fixture.ownerUid, false), {
         programId: fixture.programId,
@@ -609,9 +610,28 @@ describe("owner-scoped workout repository", () => {
       dayId: fixture.dayId,
       idempotencyKey: "start-owner",
     });
+    await expect(repository.findResumable(viewer(fixture.ownerUid))).resolves.toMatchObject({
+      session: {
+        dayName: started.model.session.dayName,
+        id: started.model.session.id,
+        state: "active",
+      },
+    });
+    await expect(repository.findResumable(viewer(fixture.otherUid))).resolves.toBeUndefined();
     await expect(
       repository.loadResume(viewer(fixture.otherUid), { sessionId: started.model.session.id }),
     ).rejects.toMatchObject({ code: "not_found" });
+    await repository.submitOperation(viewer(fixture.ownerUid), {
+      sessionId: started.model.session.id,
+      idempotencyKey: "abandon-owner-session",
+      kind: "abandon_session",
+      payload: {
+        kind: "abandon_session",
+        reason: "terminal-state-test",
+        sessionId: started.model.session.id,
+      },
+    });
+    await expect(repository.findResumable(viewer(fixture.ownerUid))).resolves.toBeUndefined();
   });
 
   it("maps malformed resource UUIDs to stable errors before typed database predicates", async () => {

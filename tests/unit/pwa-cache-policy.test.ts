@@ -16,7 +16,7 @@ describe("PWA public-cache policy", () => {
     "/program/push",
     "/library",
     "/library/dead-bug",
-    "/sample-progress",
+    "/progress",
     "/sample-workout",
     "/offline",
   ])("allows the public navigation path %s", (pathname) => {
@@ -26,7 +26,8 @@ describe("PWA public-cache policy", () => {
   it.each([
     "/api/auth/session",
     "/history",
-    "/progress",
+    "/sample-progress",
+    "/app/progress",
     "/settings",
     "/sign-in",
     "/today",

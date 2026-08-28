@@ -8,6 +8,8 @@ import {
   getViewerProfileProgram,
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
+import { loadProgressInsights } from "@/server/repositories/training-insights";
+import { createWorkoutRepository } from "@/server/repositories/workout-repository";
 import { getHarnessDatabase } from "../../server/database";
 import { harnessRequestContext } from "../../server/harness-context";
 
@@ -31,10 +33,27 @@ export default async function HarnessMemberHomePage() {
   if (!model?.activeProgram) {
     return <OnboardingForm canMutate={context.viewer.eligibleForPermanentMutations} />;
   }
+  const [progress, resumableWorkout] = await Promise.all([
+    loadProgressInsights(database, context.viewer),
+    createWorkoutRepository(database).findResumable(context.viewer),
+  ]);
   return (
     <MemberProgramHome
       canMutate={context.viewer.eligibleForPermanentMutations}
+      displayName={context.viewer.displayName}
       initialProgram={model.activeProgram}
+      progress={{
+        completedSessions: progress.totals.completedSessions,
+        distanceMeters: progress.totals.distanceMeters,
+        durationSeconds: progress.totals.durationSeconds,
+        unitSystem: progress.preferences.unitSystem,
+        volumeKg: progress.totals.volumeKg,
+      }}
+      resumableWorkout={resumableWorkout ? {
+        dayName: resumableWorkout.session.dayName,
+        sessionId: resumableWorkout.session.id,
+        state: resumableWorkout.session.state as "active" | "completing" | "draft",
+      } : null}
     />
   );
 }

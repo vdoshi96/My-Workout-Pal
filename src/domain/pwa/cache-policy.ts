@@ -1,8 +1,9 @@
-export const PWA_CACHE_NAME = "my-workout-pal-public-v3";
+export const PWA_CACHE_NAME = "my-workout-pal-public-v4";
 
 export const PWA_INSTALL_ASSETS = Object.freeze([
   "/",
   "/offline",
+  "/progress",
   "/apple-touch-icon.png",
   "/contours.svg",
   "/icon-192.png",
@@ -27,7 +28,7 @@ const publicNavigationExact = new Set([
   "/library",
   "/offline",
   "/program",
-  "/sample-progress",
+  "/progress",
   "/sample-workout",
 ]);
 const publicNavigationPrefixes = ["/library/", "/program/"] as const;

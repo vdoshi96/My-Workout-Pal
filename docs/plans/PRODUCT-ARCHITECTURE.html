@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="357a9406b2b5182c7317d6669129c8e47d298e2b37e3d6e69d400b74ed4e6817">
+  <meta name="source-sha256" content="6ed327fb9c807095fca2e4a91fe6d3eb60f53f1ed57a2bfe248d07e9a02dee19">
   <title>Product and architecture plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -31,11 +31,11 @@
 <h2>User outcomes</h2>
 <p>My Workout Pal must support two truthful experiences:</p>
 <ul>
-<li>A guest can evaluate the complete seeded program, both equipment profiles, exercise guidance, a sample workout, and sample analytics without believing that activity is saved.</li>
+<li>A guest can evaluate the five-day starter example, both equipment profiles, exercise guidance, a sample workout, and a disclosed Progress preview without believing that activity is saved or that five days are the product promise.</li>
 <li>An authenticated and eligible user can own program revisions, custom exercises, workout logs, and derived progress without another user being able to read or mutate them.</li>
 </ul>
 <h2>Navigation model</h2>
-<p>Public navigation exposes <strong>Program</strong>, <strong>Library</strong>, <strong>Sample progress</strong>, and <strong>Sign in</strong>. Authenticated navigation exposes <strong>Today</strong>, <strong>Program</strong>, <strong>Library</strong>, <strong>History</strong>, <strong>Progress</strong>, and <strong>Settings</strong>. On narrow screens, the four highest-frequency destinations use a bottom navigation bar and secondary destinations remain in the account menu. On tablets and desktop, the same information architecture uses a persistent rail or header without changing route meaning.</p>
+<p>Public navigation exposes <strong>Program</strong>, <strong>Library</strong>, <strong>Progress</strong>, and <strong>My workouts</strong>. Authenticated navigation exposes <strong>Home</strong>, <strong>Library</strong>, <strong>History</strong>, <strong>Progress</strong>, and <strong>Settings</strong>. On narrow screens, these destinations use the established bottom navigation bars. On tablets and desktop, the same route meanings move into persistent header or rail navigation.</p>
 <p>An active workout becomes the primary task. The runner owns its own compact navigation and requires explicit confirmation before leaving with unsaved or failed changes.</p>
 <h2>Application boundaries</h2>
 <h3>Server Components</h3>
@@ -91,7 +91,7 @@
 <li>Epley estimated one-repetition maximum is <code>weightKg * (1 + repetitions / 30)</code> for positive weight and repetitions. It is not calculated for duration, distance, warm-up, or bodyweight-only sets.</li>
 <li>A personal record compares canonical values within the same exercise variation and record type (<code>max_weight</code>, <code>estimated_1rm</code>, <code>volume</code>, <code>max_repetitions</code>, <code>distance</code>, or <code>duration</code>). An equal best is a tie, not a new higher record.</li>
 <li>Presentation rounds only after canonical comparison. Weight conversion uses <code>1 kg = 2.2046226218 lb</code>.</li>
-<li>Analytics derive from persisted completed sessions and logs. Sample analytics use a separate labeled fixture and never share a user record identifier.</li>
+<li>Analytics derive from persisted completed sessions and logs. The public Progress preview uses a separate fixture with one <strong>Sample data · not your history</strong> disclosure and never shares a user record identifier.</li>
 </ul>
 <h2>Starter program</h2>
 <p>All prescriptions use editable defaults. Compounds use three work sets of 8-12 repetitions and 90 seconds of rest. Accessories use two sets of 10-15 repetitions and 60 seconds of rest. Repetition-based core uses two sets of 8-15 repetitions. Timed core uses two sets of 20-45 seconds. Every day includes a walker or runner cardio template with time, distance, pace, incline, and notes.</p>
@@ -257,7 +257,7 @@
 <h2>Implementation slices</h2>
 <ol>
 <li>Foundation: repository, documentation parity, design direction, scaffold, lint, typecheck, unit harness, and seeded domain contracts.</li>
-<li>Public catalog: starter program, equipment preview, day and exercise detail, library, dual-video component, sample workout, and sample analytics.</li>
+<li>Public catalog: starter program, equipment preview, day and exercise detail, library, dual-video component, sample workout, and the disclosed Progress preview.</li>
 <li>Identity and ownership: Firebase client/Admin sessions, eligibility, CSRF, protected layouts, profile, preferences, and IDOR tests.</li>
 <li>Program editing: immutable revisions, equipment substitution confirmation, custom exercises, and YouTube URL normalization.</li>
 <li>Runner and recovery: session snapshots, strength and cardio logs, timers, IndexedDB outbox, resume, and navigation protection.</li>

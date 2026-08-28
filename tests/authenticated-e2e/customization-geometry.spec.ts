@@ -161,14 +161,14 @@ test("customization surfaces preserve geometry and media preferences", async ({
   await expect(page.getByText("Alice QA", { exact: true })).toBeVisible();
   await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Build your starter route" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Start with the five-day example" })).toBeVisible();
   await page.getByLabel("Time zone").fill("America/Chicago");
   const onboardingResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Create my program" }).click();
+  await page.getByRole("button", { name: "Save the five-day example" }).click();
   expect((await onboardingResponse).status()).toBe(201);
   await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
 
@@ -184,7 +184,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
   await assertMemberTargets(page);
   await assertAccessible(page);
 
-  await page.getByRole("link", { name: /Manage programs/ }).click();
+  await page.getByRole("link", { name: /Manage routines/ }).click();
   await expect(page.getByRole("heading", { name: "Your routes" })).toBeVisible();
   await expect(page.getByLabel("Program name")).toHaveAttribute("maxlength", "80");
   const cloneButton = page.getByRole("button", { name: "Clone" }).first();
