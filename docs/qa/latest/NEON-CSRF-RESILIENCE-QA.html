@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="d12dea7ed723e67db64b61913c20f9db59e49c51d4edded562dfa8a1ea6a014c">
+  <title>Neon CSRF resilience QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Neon CSRF resilience QA</h1>
+<h2>Outcome</h2>
+<p>The idle Neon pool error that terminated a warm Vercel function during the Wave 0 Google replay is fixed and released. Application commit <code>f5ef9cb9a9b462aceda339936972297796b67e16</code> is on public <code>main</code> and production deployment <code>dpl_9WBb8hprftiKBYGrZfRD9Juk4VKH</code> is Ready on the stable, project, and Git-main aliases.</p>
+<p>No migration, seed mutation, authentication contract, CSRF contract, workout behavior, or product UI changed.</p>
+<h2>Failed-before evidence</h2>
+<p>Wave 0 deployment <code>dpl_56XvQJJv4enVjRipeHf1USAZmQ5h</code> recorded an uncaught exception after a successful <code>GET /api/auth/csrf</code> response. The stack passed through <code>@neondatabase/serverless</code>&#39;s pool <code>idleListener</code>, WebSocket stream error reporting, and Node&#39;s unhandled <code>error</code> event path before the function exited with status <code>129</code>.</p>
+<p>The focused regression failed before implementation because a pool returned by <code>createDatabase</code> had zero <code>error</code> listeners. The CSRF route itself never imported the database; it happened to be the unrelated request in flight when a warm process&#39;s idle pool re-emitted the error.</p>
+<h2>Correction</h2>
+<p>The database factory now constructs the Neon <code>Pool</code> explicitly, registers one listener before passing it to Drizzle, and retains the existing lazy singleton. Neon removes the failed idle client. The listener prevents Node from treating the re-emitted event as uncaught and logs only constant text, never an error object, connection string, query, identity, or fitness data.</p>
+<p>Interactive transactions remain on the WebSocket pool. Active query failures still use their existing promise and route failure paths; the idle listener does not retry or convert a failed operation into success.</p>
+<h2>Local verification</h2>
+<ul>
+<li>Focused database, authentication-order, fixture-policy, and schema slice: 4 files/65 tests.</li>
+<li>Full Vitest: 108 files/739 tests.</li>
+<li>Drizzle metadata and schema/bootstrap checks: 4 files/34 tests.</li>
+<li>Strict TypeScript and full ESLint: passed.</li>
+<li>Exact-two seed and service-worker verification: passed.</li>
+<li>Documentation parity before closeout: 46 Markdown/HTML pairs.</li>
+<li>Next.js 16.3.2 Webpack production build and 41-route boundary: passed.</li>
+<li>Public production-mode browser matrix: 47 passed with one maintained WebKit service-worker capability skip.</li>
+<li>Authenticated production-mode browser matrix: 34 passed with two intentional engine-scoped skips.</li>
+</ul>
+<p>The first sandboxed full run failed only because the YouTube probe could not bind loopback (<code>listen EPERM 127.0.0.1</code>). The permission-correct rerun passed all 739 tests.</p>
+<h2>Hosted verification</h2>
+<p>Preview deployment <code>dpl_9SA5qVuVda9Way6txNg5gm2nbxG5</code> was Ready for the exact application commit. Five protected-preview CSRF requests returned <code>200</code>, GitHub&#39;s Vercel status succeeded, and the preview error scan was empty.</p>
+<p>Production deployment <code>dpl_9WBb8hprftiKBYGrZfRD9Juk4VKH</code> was then created from the same commit and became Ready on all production aliases. The mutation-free production replay performed:</p>
+<ol>
+<li>One <code>200</code> request to <code>/library/dumbbell-bench-press</code>, which reads the approved video pair through the Neon pool.</li>
+<li>A 15-second wait beyond the pool&#39;s configured idle timeout.</li>
+<li>Five further database-backed exercise requests, all <code>200</code>.</li>
+<li>Five interleaved <code>/api/auth/csrf</code> requests, all <code>200</code>.</li>
+<li>A second idle interval and a bounded exact-deployment error scan.</li>
+</ol>
+<p>The request log contains all eleven successful requests. The error scan contains no unhandled pool event and no handled idle-error diagnostic. Production remains at zero profiles, zero programs, zero program revisions, and zero workout sessions. The existing database verifier still reports 6 equipment rows, 27 exercises, 44 equipment edges, 54 aliases, 2 template revisions, 10 days, 26 sections, 60 prescriptions, 20 cardio rows, and 54 approved starter videos.</p>
+<p>The existing browser session was signed out, so the replay deliberately used the public database-backed exercise route rather than logging in, creating accounts, or mutating owned data. The broader deletion/IDOR harness was not run because it exceeded this replay&#39;s authorization.</p>
+<h2>Operational cleanup</h2>
+<ul>
+<li>Local <code>main</code>, public <code>origin/main</code>, and application commit were synchronized before closeout documentation.</li>
+<li>The restore-tested pre-<code>0005</code> archive was moved out of temporary storage into a durable user-private backup directory. Its 189,394-byte size, mode <code>600</code>, and SHA-256 <code>26a8b1a029003363ab3dc462774e3305ea2360e01bc396d4967acbdcdea44aa9</code> were preserved.</li>
+<li>Homebrew&#39;s existing .NET 9.0.120 installation was relinked without downloading or reinstalling it. <code>/opt/homebrew/bin/dotnet</code> and both installed 9.0.19 runtimes are available.</li>
+</ul>
+<h2>Exercise link handoff</h2>
+<p>The product owner explicitly approved the newer Grok 4.6 link selection: 216 URLs covering all 108 expansion movements. Every selected URL has start-to-end visual-timeline evidence and a successful scoped <code>youtube-nocookie</code> embed probe in the retained research document.</p>
+<p>This is final product-selection approval, not a claim that audio was reviewed. Runtime <code>approved_pair</code> rows still require the existing full-watch record before seeding, as required by the repository&#39;s curation policy. Wave 1 does not need another link-discovery or selection pass.</p>
+<h2>Release decision</h2>
+<p>The resilience defect is closed. No unresolved migration, authentication, persistence, recovery, local-tooling, or pool-lifecycle gate blocks Wave 1.</p>
+
+  </main>
+</body>
+</html>

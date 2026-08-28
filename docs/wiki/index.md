@@ -19,7 +19,7 @@ Use the following documents as the maintained project map:
 - `docs/design/PROGRAM-OVERVIEW.md`: approved comp and implementation inventory.
 - `docs/reference/SUBSTITUTIONS.md`: equipment compatibility and program mutation rules.
 - `docs/reference/EXERCISE-LIBRARY-EXPANSION.md`: names-first 135-movement target, metadata contract, video states, candidate inventory, and content-agent workflow.
-- `docs/reference/EXERCISE-LIBRARY-EXPANSION_grok.md`: Grok 4.6 YouTube candidate research for the 108 expansion movements; not approved catalog demonstrations.
+- `docs/reference/EXERCISE-LIBRARY-EXPANSION_grok.md`: the product owner's approved 216-link Grok 4.6 selection for the 108 expansion movements, with visual-timeline and scoped-embed evidence; runtime publication still requires recorded full-watch review.
 - `docs/reference/YOUTUBE-CURATION.md`: discovery, review, seeding, and refresh policy.
 - `docs/reference/DEPLOYMENT-RECOVERY.md`: environments, release checks, cost controls, and recovery.
 

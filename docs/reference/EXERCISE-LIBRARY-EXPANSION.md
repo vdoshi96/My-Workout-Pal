@@ -4,7 +4,7 @@
 
 This inventory defines the names-first expansion for My Workout Pal. It lets catalog and curation agents work from one bounded specification without inventing movement names, publishing unreviewed videos, or treating the five-day starter as the whole library.
 
-The existing 27 canonical movements remain the verified baseline. The following 108 candidates would bring the public canonical library to 135 movements before any later equipment-taxonomy expansion. A candidate is not ready for production merely because it appears in this document. Grok 4.6 candidate URL research is in [`EXERCISE-LIBRARY-EXPANSION_grok.md`](EXERCISE-LIBRARY-EXPANSION_grok.md). Those links are not approved demonstrations.
+The existing 27 canonical movements remain the verified baseline. The following 108 candidates would bring the public canonical library to 135 movements before any later equipment-taxonomy expansion. A movement is not ready for production merely because it appears in this document. The product owner's approved Grok 4.6 URL selections are in [`EXERCISE-LIBRARY-EXPANSION_grok.md`](EXERCISE-LIBRARY-EXPANSION_grok.md). Those URLs do not need another selection pass, but runtime video publication still requires the recorded full-watch evidence defined by the curation policy.
 
 ## Publication contract
 
