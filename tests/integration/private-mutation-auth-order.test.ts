@@ -16,6 +16,7 @@ import { POST as createCustomExercise } from "@/app/api/app/custom-exercises/rou
 import { PATCH as updateCustomExercise, DELETE as deleteCustomExercise } from "@/app/api/app/custom-exercises/[id]/route";
 import { PATCH as updatePreferences } from "@/app/api/app/preferences/route";
 import { POST as publishProgram } from "@/app/api/app/program/publish/route";
+import { PUT as replacePersonalGuidance } from "@/app/api/app/personal-guidance/route";
 import { PRIVATE_JSON_BODY_LIMIT_BYTES } from "@/server/http/custom-exercise-api";
 import { CSRF_COOKIE_NAME } from "@/server/auth/cookies";
 import { HARNESS_CSRF_COOKIE_NAME } from "../fixtures/authenticated-app/server/csrf";
@@ -54,7 +55,7 @@ type CustomExerciseMutationHandler = (
 
 type MutationCase = Readonly<{
   handler: MutationHandler | CustomExerciseMutationHandler;
-  method: "DELETE" | "PATCH" | "POST";
+  method: "DELETE" | "PATCH" | "POST" | "PUT";
   name: string;
   pathname: string;
 }>;
@@ -133,6 +134,12 @@ const productionMutations: readonly MutationCase[] = [
     method: "POST",
     name: "production custom create",
     pathname: "/api/app/custom-exercises",
+  },
+  {
+    handler: replacePersonalGuidance,
+    method: "PUT",
+    name: "production personal guidance replacement",
+    pathname: "/api/app/personal-guidance",
   },
   {
     handler: updateCustomExercise,

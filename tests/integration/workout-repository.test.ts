@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNotNull, sql } from "drizzle-orm";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Database } from "@/db/client";
@@ -38,6 +38,7 @@ import {
   createWorkoutRepository,
   rebuildPersonalRecordProjections,
 } from "@/server/repositories/workout-repository";
+import { replacePersonalGuidance } from "@/server/repositories/personal-guidance";
 
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
@@ -45,6 +46,7 @@ const upgradeMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measur
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const projectionCheckpointMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
 const flexibleRoutineMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
+const personalGuidanceMigrationUrl = new URL("../../drizzle/0007_personal_guidance.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -56,6 +58,7 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   await raw.exec(await readFile(flexibleRoutineMigrationUrl, "utf8"));
+  await raw.exec(await readFile(personalGuidanceMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   return { raw, database };
@@ -750,6 +753,112 @@ describe("owner-scoped workout repository", () => {
       }),
     ]);
     expect(new Set(concurrent.map(({ model }) => model.session.id))).toEqual(new Set([first.model.session.id]));
+  });
+
+  it("snapshots personal guidance so later replacement and removal cannot rewrite resume or history", async () => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const currentViewer = viewer(fixture.ownerUid);
+    const sourceRows = await database
+      .select({ id: programPrescriptions.catalogExerciseId })
+      .from(programPrescriptions)
+      .innerJoin(
+        programSections,
+        and(
+          eq(programSections.ownerFirebaseUid, programPrescriptions.ownerFirebaseUid),
+          eq(programSections.id, programPrescriptions.sectionId),
+        ),
+      )
+      .where(
+        and(
+          eq(programPrescriptions.ownerFirebaseUid, fixture.ownerUid),
+          eq(programPrescriptions.programId, fixture.programId),
+          eq(programSections.dayId, fixture.dayId),
+          isNotNull(programPrescriptions.catalogExerciseId),
+        ),
+      )
+      .orderBy(asc(programPrescriptions.displayOrder))
+      .limit(1);
+    const catalogId = sourceRows[0]?.id;
+    if (!catalogId) throw new Error("Expected a catalog prescription");
+
+    await replacePersonalGuidance(database, currentViewer, {
+      source: { kind: "catalog", id: catalogId },
+      links: ["https://youtu.be/AbCdEfGhI01"],
+      idempotencyKey: "snapshot-guidance-before-start",
+    });
+    const repository = createWorkoutRepository(database);
+    const started = await repository.startOrResume(currentViewer, {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "start-guidance-snapshot",
+    });
+    const guidedExercise = started.model.snapshot.exercises.find(
+      ({ guidance }) => guidance?.length,
+    );
+    expect(guidedExercise?.guidance).toEqual([
+      {
+        kind: "youtube",
+        canonicalUrl: "https://www.youtube.com/watch?v=AbCdEfGhI01",
+        videoId: "AbCdEfGhI01",
+        embedUrl: "https://www.youtube-nocookie.com/embed/AbCdEfGhI01",
+      },
+    ]);
+
+    await replacePersonalGuidance(database, currentViewer, {
+      source: { kind: "catalog", id: catalogId },
+      links: ["https://example.com/replacement"],
+      idempotencyKey: "snapshot-guidance-after-start",
+    });
+    const resumed = await repository.loadResume(currentViewer, {
+      sessionId: started.model.session.id,
+    });
+    expect(
+      resumed.snapshot.exercises.find(({ id }) => id === guidedExercise?.id)
+        ?.guidance,
+    ).toEqual(guidedExercise?.guidance);
+    expect(
+      hydrateWorkoutResumeState(resumed).snapshot.exercises.find(
+        ({ id }) => id === guidedExercise?.id,
+      )?.guidance,
+    ).toEqual(guidedExercise?.guidance);
+
+    for (const [index, exercise] of resumed.snapshot.exercises.entries()) {
+      await repository.submitOperation(currentViewer, {
+        sessionId: resumed.session.id,
+        idempotencyKey: `snapshot-guidance-skip-${index + 1}`,
+        kind: "skip_exercise",
+        payload: {
+          kind: "skip_exercise",
+          exerciseId: exercise.id,
+          reason: "snapshot regression",
+        },
+        expectedVersion: 1,
+      });
+    }
+    await repository.submitOperation(currentViewer, {
+      sessionId: resumed.session.id,
+      idempotencyKey: "snapshot-guidance-abandon",
+      kind: "abandon_session",
+      payload: {
+        kind: "abandon_session",
+        sessionId: resumed.session.id,
+        reason: "snapshot regression complete",
+      },
+    });
+    await replacePersonalGuidance(database, currentViewer, {
+      source: { kind: "catalog", id: catalogId },
+      links: [],
+      idempotencyKey: "snapshot-guidance-remove",
+    });
+
+    const history = await repository.history(currentViewer);
+    const historicalExercise = history.sessions
+      .find(({ session }) => session.id === resumed.session.id)
+      ?.exercises.find(({ snapshot }) => snapshot.id === guidedExercise?.id);
+    expect(historicalExercise?.snapshot.guidance).toEqual(
+      guidedExercise?.guidance,
+    );
   });
 
   it("does not resume a different requested day into the existing active session", async () => {

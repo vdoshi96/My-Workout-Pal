@@ -10,6 +10,10 @@ import {
   type EquipmentId,
   type EquipmentProfileKind,
 } from "@/domain/equipment";
+import {
+  normalizePersonalGuidanceLinks,
+  type PersonalGuidanceLink,
+} from "@/domain/exercises/personal-guidance";
 
 export type RunnerConnectivity = "online" | "offline";
 export type RunnerAuth = "valid" | "expired" | "revoked";
@@ -79,6 +83,7 @@ export type WorkoutExerciseInput = {
   sectionKey?: string | undefined;
   sectionTitle?: string | undefined;
   prescriptionKey?: string | undefined;
+  guidance?: readonly PersonalGuidanceLink[] | undefined;
   sets: readonly WorkoutSetInput[];
 };
 
@@ -125,6 +130,7 @@ export type WorkoutExerciseSnapshot = Readonly<{
   sectionKey?: string | undefined;
   sectionTitle?: string | undefined;
   prescriptionKey?: string | undefined;
+  guidance?: readonly PersonalGuidanceLink[] | undefined;
   sets: readonly WorkoutSetSnapshot[];
 }>;
 export type WorkoutSnapshot = Readonly<{
@@ -787,6 +793,58 @@ function normalizeCardioOptions(
   });
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeGuidanceSnapshot(
+  value: readonly PersonalGuidanceLink[] | undefined,
+): readonly PersonalGuidanceLink[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    throw new RangeError("exercise.guidance must be a list");
+  }
+  const normalized = normalizePersonalGuidanceLinks(
+    value.map((link) =>
+      isRecord(link) && typeof link["canonicalUrl"] === "string"
+        ? link["canonicalUrl"]
+        : link,
+    ),
+  );
+  if (
+    normalized.length !== value.length ||
+    normalized.some((link, index) => {
+      const candidate = value[index];
+      if (!isRecord(candidate) || candidate["kind"] !== link.kind) return true;
+      const expectedKeys =
+        link.kind === "youtube"
+          ? ["canonicalUrl", "embedUrl", "kind", "videoId"]
+          : ["canonicalUrl", "kind"];
+      if (
+        Object.keys(candidate).sort().join(":") !==
+        [...expectedKeys].sort().join(":")
+      ) {
+        return true;
+      }
+      if (
+        candidate["canonicalUrl"] !== link.canonicalUrl ||
+        candidate["kind"] !== link.kind
+      ) {
+        return true;
+      }
+      return link.kind === "youtube"
+        ? candidate["videoId"] !== link.videoId ||
+            candidate["embedUrl"] !== link.embedUrl
+        : false;
+    })
+  ) {
+    throw new RangeError(
+      "exercise.guidance contains an invalid presentation shape",
+    );
+  }
+  return Object.freeze([...normalized]);
+}
+
 export function createWorkoutSnapshot(
   input: RunnerSnapshotInput,
 ): WorkoutSnapshot {
@@ -841,6 +899,7 @@ export function createWorkoutSnapshot(
     if (exercise.prescriptionKey !== undefined) {
       assertString(exercise.prescriptionKey, "exercise.prescriptionKey");
     }
+    const guidance = normalizeGuidanceSnapshot(exercise.guidance);
     if (exerciseIds.has(exercise.id))
       throw new RangeError(`Duplicate exercise id: ${exercise.id}`);
     exerciseIds.add(exercise.id);
@@ -891,6 +950,7 @@ export function createWorkoutSnapshot(
       ...(exercise.sectionKey === undefined ? {} : { sectionKey: exercise.sectionKey }),
       ...(exercise.sectionTitle === undefined ? {} : { sectionTitle: exercise.sectionTitle }),
       ...(exercise.prescriptionKey === undefined ? {} : { prescriptionKey: exercise.prescriptionKey }),
+      ...(guidance.length === 0 ? {} : { guidance }),
       sets,
     };
   });

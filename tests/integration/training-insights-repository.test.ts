@@ -24,6 +24,7 @@ const workoutMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measur
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const projectionCheckpointMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
 const flexibleTopologyMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
+const personalGuidanceMigrationUrl = new URL("../../drizzle/0007_personal_guidance.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 const sessionIds = {
   aliceOlder: "10000000-0000-4000-8000-000000000001",
@@ -53,6 +54,7 @@ async function openDatabase(): Promise<{ database: Database; raw: PGlite }> {
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   await raw.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
+  await raw.exec(await readFile(personalGuidanceMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
