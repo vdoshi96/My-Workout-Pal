@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="6d84b908d8318615fda5c7bc42abeff49fb3937c77455007f7461c0fa2e7d421">
+  <meta name="source-sha256" content="f6be494ac74201f5ef84fabc640af0986fb615528043d1ecfec285f8444390ef">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -95,10 +95,10 @@
 <p>The guest landing page uses a planning companion, the signed-in home uses a preparation companion, and the guest Progress preview uses a calm review companion outside the chart and sample disclosure. Phone layouts place the art in a collapsible dedicated slot. Desktop layouts keep it out of the member account rail and data plane.</p>
 <p>Every production vignette is purpose-built, text-free, decorative, static, pointer-inert, ignored by assistive technology, and absent in forced-colors mode. Image failure cannot remove product meaning, account state, sample disclosure, navigation, or an action. The pilot must verify phone and desktop layouts, 200% zoom, contrast, reduced motion, forced colors, failure states, and offline asset behavior before rollout.</p>
 <p>Two alternatives were reviewed and discarded. Their images, prompts, and direction-specific provenance are not retained on the concept branch. The selection does not authorize a public branch push, merge, deployment, or production implementation.</p>
-<h2>2026-08-27: Keep migration 0005 and roll back the Wave 0 application</h2>
-<p>The user authorized publication of the selected Corner Companions packet and the exact Wave 0 integration commit. GitHub <code>main</code> and the public integration branch therefore retain <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>.</p>
-<p>Production migration <code>0005_flexible_routine_topology</code> remains applied because it is additive, its backfill and ownership assertions passed, it preserves all immutability triggers, and the previously verified application remains read-compatible with the expanded schema. The production application does not remain on Wave 0. The two-owner hosted suite failed twice at Alice&#39;s post-session navigation boundary after session creation, so the release stopped before owner mutations and real Google verification. Vercel rolled the stable alias back to verified deployment <code>dpl_BCxN2q8qk5G1kNKkxNF2MzDLTqeB</code> at source <code>a353067558323cc21361fa1919507ee890c0f983</code>.</p>
-<p>Do not redeploy or promote Wave 0 until the exact hosted session-navigation failure is reproduced with safe diagnostics, corrected on a new reviewed commit, and the complete public, authenticated, ownership, flexible-routine, and real-Google release story passes. A database rollback is not required unless a later schema assertion fails.</p>
+<h2>2026-08-27: Release Wave 0 only with migration 0005</h2>
+<p>The user authorized publication of the selected Corner Companions packet and the exact Wave 0 integration commit. GitHub <code>main</code> and the public integration branch retain application commit <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>.</p>
+<p>Production migration <code>0005_flexible_routine_topology</code> must precede application deployment. Its non-null topology keys make the older application write-incompatible even though its read paths can tolerate the expanded schema. A diagnostic rollback proved that the older onboarding path returns <code>500</code> because it doesn&#39;t supply <code>section_key</code>, <code>prescription_key</code>, or <code>cardio_key</code>. Therefore, after migration <code>0005</code>, rollback means restoring the verified recovery point and the older application together, or keeping schema <code>0005</code> and serving the exact Wave 0 application.</p>
+<p>The original hosted failure label was inaccurate. Session creation and secure-cookie verification passed; onboarding also returned <code>201</code>. The verifier retained a stale fixed-five-day summary assertion and did not distinguish onboarding from session setup. The corrected verifier uses the flexible summary contract, reports separate stages, and covers custom publication, reload, zero-or-one cardio, stable day keys, start-or-resume conflict reuse, equipment revision, immutable history, foreign-owner equivalence, and cleanup. Keep production on exact application commit <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>; later verifier and documentation commits don&#39;t change the deployed application tree.</p>
 
   </main>
 </body>

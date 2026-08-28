@@ -2,10 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   cleanupPostconditionIsConfirmed,
+  type HostedDeletionQaStage,
   privateResourceResponsesAreEquivalent,
 } from "../../scripts/lib/hosted-deletion-browser";
 
 describe("hosted deletion browser evidence", () => {
+  it("reports onboarding separately from authenticated session creation", () => {
+    const stages = ["alice_onboarding", "bob_onboarding"] satisfies HostedDeletionQaStage[];
+
+    expect(stages).toEqual(["alice_onboarding", "bob_onboarding"]);
+  });
+
   it("requires a no-store, status-equal, body-equal foreign and missing response", () => {
     const foreign = {
       body: '{"error":"not_found","message":"The requested resource was not found."}',

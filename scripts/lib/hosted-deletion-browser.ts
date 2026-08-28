@@ -69,6 +69,7 @@ export type HostedDeletionQaStage =
   | "alice_data_setup"
   | "alice_deletion"
   | "alice_intact_after_bob"
+  | "alice_onboarding"
   | "alice_session"
   | "assertions"
   | "assertions_alice_collectors"
@@ -81,6 +82,7 @@ export type HostedDeletionQaStage =
   | "assertions_bob_request_failures"
   | "assertions_bob_response_failures"
   | "bob_deletion"
+  | "bob_onboarding"
   | "bob_session"
   | "browser_launch"
   | "cleanup"
@@ -101,6 +103,11 @@ export type HostedDeletionQaStage =
   | "foreign_rendered_missing_load"
   | "foreign_rendered_missing_noindex"
   | "foreign_rendered_missing_ui"
+  | "flexible_routine_creation"
+  | "flexible_routine_equipment_revision"
+  | "flexible_routine_history"
+  | "flexible_routine_publication"
+  | "flexible_routine_workout"
   | "global_postcondition"
   | "identity_creation"
   | "public_return_evidence";
@@ -312,7 +319,10 @@ function attachFailureCollectors(page: Page, origin: string) {
   page.on("request", (request) => {
     const url = new URL(request.url());
     if (url.origin === origin && !["GET", "HEAD"].includes(request.method())) {
-      firstPartyMutations.push(`${request.method()} ${url.pathname}`);
+      const pathname = /\/api\/app\/workouts\/[^/]+\/operations$/u.test(url.pathname)
+        ? "/api/app/workouts/:sessionId/operations"
+        : url.pathname;
+      firstPartyMutations.push(`${request.method()} ${pathname}`);
     }
   });
   page.on("response", (response) => {
@@ -456,7 +466,9 @@ async function onboard(
   const identity = activeProgramIdentity(await response.json());
   await expect(page.getByRole("heading", { name: "Five-day starter route" })).toBeVisible();
   await expect(page.getByText(
-    profile === "barbell" ? /Barbell \+ rack · five days/u : /Dumbbells · five days/u,
+    profile === "barbell"
+      ? /^Revision 1 · Barbell \+ rack · 5 days$/u
+      : /^Revision 1 · Dumbbells · 5 days$/u,
   )).toBeVisible();
   return identity;
 }
@@ -502,6 +514,136 @@ async function privateRequest(
 
 function jsonBody(response: SafePrivateResourceResponse): Record<string, unknown> {
   return record(JSON.parse(response.body)) ?? assert.fail("Expected a JSON response.");
+}
+
+async function readActiveProgram(page: Page): Promise<Record<string, unknown>> {
+  const response = await privateRequest(page, { method: "GET", path: "/api/app/profile-program" });
+  assert.equal(response.status, 200);
+  assert.match(response.cacheControl, /no-store/iu);
+  const profileProgram = record(jsonBody(response)["profileProgram"]);
+  return record(profileProgram?.["activeProgram"]) ?? assert.fail("Expected an active program.");
+}
+
+function stringArray(value: unknown, key: string): string[] {
+  assert.ok(Array.isArray(value));
+  return value.map<string>((item) => {
+    const result = record(item)?.[key];
+    return typeof result === "string" ? result : assert.fail(`Expected ${key} to be a string.`);
+  });
+}
+
+async function submitRunnerAction(page: Page, name: string): Promise<void> {
+  const responsePromise = page.waitForResponse((response) =>
+    /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
+    response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name }).click();
+  assert.equal((await responsePromise).status(), 200);
+}
+
+async function verifyFlexibleRoutine(
+  page: Page,
+  config: HostedAuthQaConfig,
+  setStage: (stage: HostedDeletionQaStage) => void,
+): Promise<ActiveProgramIdentity> {
+  setStage("flexible_routine_creation");
+  await page.getByRole("link", { name: /Manage programs/u }).click();
+  await page.getByRole("radio", { name: /Custom starting point/u }).check();
+  await page.getByLabel("Program name").fill("Hosted Wave 0 route");
+  await page.getByLabel("First day name").fill("Sunrise strength");
+  await page.getByLabel("First section name").fill("Main work");
+  await page.getByLabel("First movement").selectOption({ label: "Dumbbell bench press" });
+  const createResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/api/app/programs" &&
+    response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name: "Publish custom routine" }).click();
+  assert.equal((await createResponse).status(), 201);
+  await expect(page.getByText("Revision 1 · Dumbbells · 1 day", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 movements · no cardio", { exact: true })).toBeVisible();
+  const created = await readActiveProgram(page);
+  assert.equal(created["sourceTemplateRevisionId"], null);
+  const createdDays = created["days"];
+  assert.ok(Array.isArray(createdDays));
+  assert.equal(createdDays.length, 1);
+  const originalDayKey = uuid(record(createdDays[0])?.["dayKey"]);
+
+  setStage("flexible_routine_workout");
+  await page.getByRole("link", { name: /Sunrise strength/u }).click();
+  await expect(page).toHaveURL(`${config.origin}/app/program/${originalDayKey}`);
+  await expect(page.getByText("This day has no configured cardio segment.", { exact: true })).toBeVisible();
+  const startResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/api/app/workouts" &&
+    response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name: "Start or resume workout" }).click();
+  assert.equal((await startResponse).status(), 201);
+  await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
+  const originalWorkoutUrl = page.url();
+  assert.match(originalWorkoutUrl, /\/workout\/[0-9a-f-]+$/u);
+  const activeSessionId = uuid(originalWorkoutUrl.split("/").at(-1));
+  const conflict = await privateRequest(page, {
+    body: { dayId: uuid(record(createdDays[0])?.["id"]), idempotencyKey: randomUUID(), programId: uuid(created["id"]) },
+    method: "POST",
+    path: "/api/app/workouts",
+  });
+  assert.equal(conflict.status, 200);
+  assert.equal(uuid(record(record(jsonBody(conflict)["model"])?.["session"])?.["id"]), activeSessionId);
+  await submitRunnerAction(page, "Skip exercise");
+  await submitRunnerAction(page, "Complete workout");
+  await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+$/u);
+  const originalHistoryUrl = page.url();
+
+  setStage("flexible_routine_publication");
+  await page.goto(`${config.origin}/app/program/edit`);
+  await page.getByLabel("Day name").fill("Sunrise power");
+  await page.getByRole("button", { name: "Add day" }).click();
+  const chooser = page.getByRole("dialog");
+  await chooser.getByLabel("Day name").fill("Mobility reset");
+  await chooser.getByLabel("First section name").fill("Tempo drills");
+  await chooser.getByRole("button", { name: /Dumbbell bench press/u }).click();
+  await page.getByRole("button", { name: "Add walker cardio" }).click();
+  const publishResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/api/app/program/publish" &&
+    response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name: "Publish new revision" }).click();
+  assert.equal((await publishResponse).status(), 200);
+  await expect(page.getByText(/Published revision 2/u)).toBeVisible();
+  await page.goto(`${config.origin}/app`);
+  await expect(page.getByText("Revision 2 · Dumbbells · 2 days", { exact: true })).toBeVisible();
+  const published = await readActiveProgram(page);
+  const publishedDays = published["days"];
+  assert.ok(Array.isArray(publishedDays));
+  assert.deepEqual(stringArray(publishedDays, "displayName"), ["Sunrise power", "Mobility reset"]);
+  assert.deepEqual(publishedDays.map((day) => (record(day)?.["cardio"] as unknown[])?.length), [0, 1]);
+  const publishedKeys = stringArray(publishedDays, "dayKey");
+  assert.equal(publishedKeys[0], originalDayKey);
+  assert.match(publishedKeys[1] ?? "", /^[0-9a-f-]{36}$/u);
+
+  setStage("flexible_routine_equipment_revision");
+  const beforeRevisionId = uuid(published["revisionId"]);
+  await page.getByRole("group", { name: "Equipment profile" })
+    .getByRole("button", { name: /Barbell \+ rack/u }).click();
+  const equipmentResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/api/app/profile-program/equipment" &&
+    response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name: "Confirm Barbell + rack" }).click();
+  assert.equal((await equipmentResponse).status(), 200);
+  const revised = await readActiveProgram(page);
+  assert.equal(revised["revisionNumber"], 3);
+  assert.equal(revised["equipmentProfileKind"], "barbell");
+  assert.notEqual(uuid(revised["revisionId"]), beforeRevisionId);
+  assert.deepEqual(stringArray(revised["days"], "dayKey"), publishedKeys);
+
+  setStage("flexible_routine_history");
+  await page.goto(originalHistoryUrl);
+  await expect(page.getByRole("heading", { name: "Sunrise strength" })).toBeVisible();
+  await expect(page.getByText(/Main work · skipped/u)).toBeVisible();
+  await expect(page.getByText("Sunrise power", { exact: true })).toHaveCount(0);
+  await assertAccessible(page);
+  return activeProgramIdentity({ profileProgram: { activeProgram: revised } });
 }
 
 async function createAliceResources(
@@ -911,12 +1053,17 @@ export async function executeHostedDeletionQa(
 
     stage = "alice_session";
     await signIn(alicePage, aliceContext, config, aliceIdentity);
-    const aliceProgram = await onboard(alicePage, config, "dumbbells");
+    stage = "alice_onboarding";
+    await onboard(alicePage, config, "dumbbells");
+    const aliceProgram = await verifyFlexibleRoutine(alicePage, config, (nextStage) => {
+      stage = nextStage;
+    });
     stage = "alice_data_setup";
     const aliceResources = await createAliceResources(alicePage, aliceProgram);
 
     stage = "bob_session";
     await signIn(bobPage, bobContext, config, bobIdentity);
+    stage = "bob_onboarding";
     const bobProgram = await onboard(bobPage, config, "barbell");
 
     const aliceBeforeForeign = await ownerPersistenceSnapshot(database, aliceUid);
@@ -954,8 +1101,8 @@ export async function executeHostedDeletionQa(
 
     stage = "alice_intact_after_bob";
     assert.deepEqual(await ownerPersistenceSnapshot(database, aliceUid), aliceBeforeForeign);
-    await alicePage.reload();
-    await expect(alicePage.getByRole("heading", { name: "Five-day starter route" })).toBeVisible();
+    await alicePage.goto(`${config.origin}/app`);
+    await expect(alicePage.getByRole("heading", { name: "Hosted Wave 0 route" })).toBeVisible();
     await assertAccessible(alicePage);
 
     stage = "alice_deletion";
@@ -1000,6 +1147,13 @@ export async function executeHostedDeletionQa(
     assert.deepEqual(aliceFailures.firstPartyMutations, [
       "POST /api/auth/session",
       "POST /api/app/profile-program/onboard",
+      "POST /api/app/programs",
+      "POST /api/app/workouts",
+      "POST /api/app/workouts",
+      "POST /api/app/workouts/:sessionId/operations",
+      "POST /api/app/workouts/:sessionId/operations",
+      "POST /api/app/program/publish",
+      "POST /api/app/profile-program/equipment",
       "POST /api/app/custom-exercises",
       "POST /api/app/workouts",
       "POST /api/auth/session",
