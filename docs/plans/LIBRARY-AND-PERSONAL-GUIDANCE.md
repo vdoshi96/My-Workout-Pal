@@ -91,7 +91,8 @@ Move canonical records into category manifests with one validated generator that
 produces the combined application catalog and database seed rows. Each record
 retains one stable slug, display name, logging kind, required equipment,
 movement family, aliases, primary muscles, exactly three reviewed instructions,
-content status, and video status.
+and no curation-workflow fields. Content review evidence and video status remain
+outside the runtime catalog manifest.
 
 Wave 1 preserves the 27 released records and their 54 approved videos exactly.
 It adds no expansion candidate to runtime data before its metadata and

@@ -7,8 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Database } from "@/db/client";
 import { schema } from "@/db/schema";
 import { seedStarterDatabase } from "@/db/starter-seed";
-import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
 import { buildStarterDatabaseRows } from "@/domain/seed/starter-database-rows";
+import { buildDefaultRequiredVideoVariations } from "@/domain/youtube/seed-validation";
 import type { CuratedVideoSeed } from "@/domain/youtube/types";
 import {
   getApprovedCuratedVideoPairBySlug,
@@ -30,8 +30,8 @@ afterEach(async () => {
   await Promise.all(openDatabases.splice(0).map((database) => database.close()));
 });
 
-function completeCatalogSeed(): readonly CuratedVideoSeed[] {
-  return Object.keys(CATALOG_EXERCISES).flatMap((canonicalExerciseSlug, index) => [
+function completeRequiredSeed(): readonly CuratedVideoSeed[] {
+  return buildDefaultRequiredVideoVariations().flatMap(({ canonicalExerciseSlug }, index) => [
     {
       canonicalExerciseSlug,
       variationId: "canonical",
@@ -62,7 +62,7 @@ function completeCatalogSeed(): readonly CuratedVideoSeed[] {
 describe("curated video persistence and reads", () => {
   it("seeds and replays the exact approved catalog pairs", async () => {
     const { raw, database } = await openDatabase();
-    const rows = buildStarterDatabaseRows(undefined, completeCatalogSeed());
+    const rows = buildStarterDatabaseRows(undefined, completeRequiredSeed());
 
     const first = await seedStarterDatabase(database, rows);
     const second = await seedStarterDatabase(database, rows);
@@ -75,7 +75,7 @@ describe("curated video persistence and reads", () => {
 
   it("returns only an exact ordered approved pair and omits an incomplete mapping", async () => {
     const { raw, database } = await openDatabase();
-    const rows = buildStarterDatabaseRows(undefined, completeCatalogSeed());
+    const rows = buildStarterDatabaseRows(undefined, completeRequiredSeed());
     await seedStarterDatabase(database, rows);
 
     const pair = await getApprovedCuratedVideoPairBySlug(database, "dumbbell-bench-press");
@@ -94,7 +94,7 @@ describe("curated video persistence and reads", () => {
 
   it("detects published metadata drift instead of silently overwriting it", async () => {
     const { raw, database } = await openDatabase();
-    const rows = buildStarterDatabaseRows(undefined, completeCatalogSeed());
+    const rows = buildStarterDatabaseRows(undefined, completeRequiredSeed());
     await seedStarterDatabase(database, rows);
     const changed = rows.curatedVideos[0]!;
     await raw.exec(`UPDATE curated_videos SET title = 'Unreviewed replacement' WHERE id = '${changed.id}';`);

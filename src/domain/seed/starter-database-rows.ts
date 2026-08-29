@@ -138,11 +138,16 @@ function nullable<T>(value: T | undefined): T | null {
 
 export function buildCuratedVideoDatabaseRows(
   seedRows: readonly CuratedVideoSeed[],
+  supportedCanonicalExerciseSlugs: readonly string[] = buildStarterDatabaseSeed()
+    .exercises.map(({ slug }) => slug),
 ): StarterDatabaseRows["curatedVideos"] {
   const validation = validateCuratedVideoSeed(
     buildDefaultRequiredVideoVariations(),
     seedRows,
-    { requireDefaultCatalogCoverage: true },
+    {
+      requireDefaultCatalogCoverage: true,
+      supportedCanonicalExerciseSlugs,
+    },
   );
   if (!validation.valid) {
     const summary = validation.errors
@@ -308,8 +313,9 @@ export function buildStarterDatabaseRows(
     templateSections,
     templatePrescriptions,
     templateCardioPrescriptions,
-    curatedVideos: curatedVideoSeed.length > 0
-      ? buildCuratedVideoDatabaseRows(curatedVideoSeed)
-      : [],
+    curatedVideos: buildCuratedVideoDatabaseRows(
+      curatedVideoSeed,
+      seed.exercises.map(({ slug }) => slug),
+    ),
   };
 }

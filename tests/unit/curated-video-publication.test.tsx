@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { ExerciseVideoField } from "@/components/video/exercise-video-field";
 import { WorkoutRunner } from "@/components/workout/workout-runner";
-import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
+import { generateCatalog } from "@/domain/exercises/catalog-generator";
 import {
   buildCuratedVideoDatabaseRows,
   buildStarterDatabaseRows,
@@ -13,6 +13,7 @@ import {
   createWorkoutSnapshot,
 } from "@/domain/workout-runner";
 import { createCuratedVideoPair } from "@/domain/youtube/embed";
+import { buildDefaultRequiredVideoVariations } from "@/domain/youtube/seed-validation";
 import type { CuratedVideoSeed } from "@/domain/youtube/types";
 
 const reviewedAt = "2026-08-26T20:00:00.000Z";
@@ -36,11 +37,21 @@ function video(
   };
 }
 
-function completeCatalogSeed(): readonly CuratedVideoSeed[] {
-  return Object.keys(CATALOG_EXERCISES).flatMap((slug, exerciseIndex) => [
-    video(slug, `A${String(exerciseIndex * 2).padStart(10, "0")}`, 1),
-    video(slug, `B${String(exerciseIndex * 2 + 1).padStart(10, "0")}`, 2),
-  ]);
+function completeRequiredSeed(): readonly CuratedVideoSeed[] {
+  return buildDefaultRequiredVideoVariations().flatMap(
+    ({ canonicalExerciseSlug }, exerciseIndex) => [
+      video(
+        canonicalExerciseSlug,
+        `A${String(exerciseIndex * 2).padStart(10, "0")}`,
+        1,
+      ),
+      video(
+        canonicalExerciseSlug,
+        `B${String(exerciseIndex * 2 + 1).padStart(10, "0")}`,
+        2,
+      ),
+    ],
+  );
 }
 
 describe("approved curated video publication", () => {
@@ -59,10 +70,10 @@ describe("approved curated video publication", () => {
     expect(videoIdsFor("dumbbell-romanian-deadlift")).toEqual(["KrRtk8KbJik", "MprE4ppd27U"]);
   });
 
-  it("maps a complete validated catalog manifest to deterministic database rows", () => {
-    const rows = buildCuratedVideoDatabaseRows(completeCatalogSeed());
+  it("maps the complete declared reviewed subset to deterministic database rows", () => {
+    const rows = buildCuratedVideoDatabaseRows(completeRequiredSeed());
 
-    expect(rows).toHaveLength(Object.keys(CATALOG_EXERCISES).length * 2);
+    expect(rows).toHaveLength(buildDefaultRequiredVideoVariations().length * 2);
     expect(rows[0]).toMatchObject({
       variationId: "canonical",
       approvalStatus: "approved",
@@ -137,5 +148,75 @@ describe("approved curated video publication", () => {
     expect(markup).toContain("Technique demonstrations");
     expect(markup).toContain("youtube-nocookie.com/embed/AbCdEfGhI01");
     expect(markup).toContain("Save set");
+  });
+
+  it("keeps synthetic text-only instructions visible without a public or private iframe", () => {
+    const textOnly = generateCatalog([{
+      slug: "synthetic-text-only-movement",
+      name: "Synthetic text-only movement",
+      role: "accessory",
+      loggingKind: "bodyweight_reps",
+      requiredEquipment: ["bodyweight"],
+      movementFamily: "synthetic-text-only",
+      primaryMuscles: ["core"],
+      aliases: ["Text-only movement"],
+      instructions: [
+        "Set a stable starting position.",
+        "Move under control.",
+        "Stop before the position changes.",
+      ],
+    }])["synthetic-text-only-movement"]!;
+    const publicMarkup = renderToStaticMarkup(
+      <main>
+        <ol>
+          {textOnly.instructions.map((instruction) => (
+            <li key={instruction}>{instruction}</li>
+          ))}
+        </ol>
+        <ExerciseVideoField videos={undefined} />
+      </main>,
+    );
+    const snapshot = createWorkoutSnapshot({
+      sessionId: "session-text-only",
+      ownerUid: "owner-text-only",
+      programRevisionId: "revision-text-only",
+      dayId: "day-text-only",
+      dayName: "Text-only day",
+      exercises: [{
+        id: "snapshot-text-only",
+        name: textOnly.name,
+        loggingKind: textOnly.loggingKind,
+        sets: [{
+          id: "text-only-work-1",
+          position: 1,
+          phase: "work",
+          target: {
+            kind: "bodyweight_reps",
+            minimumReps: 8,
+            maximumReps: 12,
+            restSeconds: 60,
+          },
+        }],
+      }],
+      cardioOptions: [],
+    });
+    const privateMarkup = renderToStaticMarkup(
+      <WorkoutRunner
+        curatedVideosByExerciseId={{}}
+        effectiveExerciseIdBySnapshot={{
+          "snapshot-text-only": "catalog-text-only",
+        }}
+        snapshot={snapshot}
+        storage={createInMemoryRunnerStorage()}
+        submitter={async () => ({ status: "saved", persistedId: "log" })}
+      />,
+    );
+
+    expect(publicMarkup).toContain("Move under control.");
+    expect(publicMarkup).toContain("Curated demos unavailable");
+    expect(publicMarkup).not.toContain("<iframe");
+    expect(privateMarkup).toContain("No approved catalog pair is available");
+    expect(privateMarkup).toContain("Save set");
+    expect(privateMarkup).not.toContain("<iframe");
   });
 });
