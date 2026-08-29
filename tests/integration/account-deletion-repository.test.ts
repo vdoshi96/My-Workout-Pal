@@ -43,6 +43,10 @@ const cardioDisplayOrderMigrationUrl = new URL(
   "../../drizzle/0006_program_cardio_display_order.sql",
   import.meta.url,
 );
+const personalGuidanceMigrationUrl = new URL(
+  "../../drizzle/0007_personal_guidance.sql",
+  import.meta.url,
+);
 const openDatabases: PGlite[] = [];
 const now = new Date("2026-08-25T20:00:00.000Z");
 const nowSeconds = Math.floor(now.getTime() / 1_000);
@@ -70,6 +74,7 @@ async function openDatabase(): Promise<{ database: Database; raw: PGlite }> {
   await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   await raw.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
   await raw.exec(await readFile(cardioDisplayOrderMigrationUrl, "utf8"));
+  await raw.exec(await readFile(personalGuidanceMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
@@ -98,6 +103,13 @@ async function seedOwnedGraph(database: Database, raw: PGlite, uid: string): Pro
   });
   const catalogExerciseId = program.days[0]!.prescriptions[0]!.catalogExerciseId;
   if (!catalogExerciseId) throw new Error("fixture exercise missing");
+  await raw.query(
+    `INSERT INTO personal_guidance_links (
+       owner_firebase_uid, catalog_exercise_id, kind,
+       normalized_url, display_order
+     ) VALUES ($1, $2, 'external', 'https://example.com/owner-guide', 1)`,
+    [uid, catalogExerciseId],
+  );
   const sessionId = uid === "alice"
     ? "10000000-0000-4000-8000-000000000001"
     : "20000000-0000-4000-8000-000000000001";
@@ -189,6 +201,7 @@ async function ownerCounts(raw: PGlite, uid: string): Promise<Record<string, num
     "custom_exercise_videos",
     "custom_exercise_equipment",
     "custom_exercise_aliases",
+    "personal_guidance_links",
     "workout_sessions",
     "workout_exercise_snapshots",
     "workout_exercise_states",

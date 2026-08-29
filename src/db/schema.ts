@@ -48,6 +48,10 @@ export const videoApprovalStatus = pgEnum("video_approval_status", [
   "restricted",
   "retired",
 ]);
+export const personalGuidanceKind = pgEnum("personal_guidance_kind", [
+  "youtube",
+  "external",
+]);
 export const revisionStatus = pgEnum("revision_status", ["draft", "published", "archived"]);
 export const sectionKind = pgEnum("section_kind", ["strength", "accessory", "core", "cardio"]);
 export const prescriptionSetKind = pgEnum("prescription_set_kind", ["warmup", "work"]);
@@ -350,6 +354,75 @@ export const customExerciseAliases = pgTable(
     check(
       "custom_exercise_aliases_normalized_form",
       sql`${table.normalizedAlias} = lower(trim(${table.alias}))`,
+    ),
+  ],
+);
+
+export const personalGuidanceLinks = pgTable(
+  "personal_guidance_links",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ownerFirebaseUid: text("owner_firebase_uid")
+      .notNull()
+      .references(() => userProfiles.firebaseUid, {
+        onDelete: "restrict",
+        onUpdate: "cascade",
+      }),
+    catalogExerciseId: uuid("catalog_exercise_id").references(
+      () => catalogExercises.id,
+      { onDelete: "restrict", onUpdate: "cascade" },
+    ),
+    customExerciseId: uuid("custom_exercise_id"),
+    kind: personalGuidanceKind("kind").notNull(),
+    normalizedUrl: text("normalized_url").notNull(),
+    youtubeVideoId: varchar("youtube_video_id", { length: 11 }),
+    displayOrder: integer("display_order").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.ownerFirebaseUid, table.customExerciseId],
+      foreignColumns: [customExercises.ownerFirebaseUid, customExercises.id],
+      name: "personal_guidance_custom_exercise_scope_fk",
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+    uniqueIndex("personal_guidance_catalog_order_unique")
+      .on(table.ownerFirebaseUid, table.catalogExerciseId, table.displayOrder)
+      .where(sql`${table.catalogExerciseId} is not null`),
+    uniqueIndex("personal_guidance_custom_order_unique")
+      .on(table.ownerFirebaseUid, table.customExerciseId, table.displayOrder)
+      .where(sql`${table.customExerciseId} is not null`),
+    uniqueIndex("personal_guidance_catalog_url_unique")
+      .on(table.ownerFirebaseUid, table.catalogExerciseId, table.normalizedUrl)
+      .where(sql`${table.catalogExerciseId} is not null`),
+    uniqueIndex("personal_guidance_custom_url_unique")
+      .on(table.ownerFirebaseUid, table.customExerciseId, table.normalizedUrl)
+      .where(sql`${table.customExerciseId} is not null`),
+    index("personal_guidance_owner_catalog_idx").on(
+      table.ownerFirebaseUid,
+      table.catalogExerciseId,
+    ),
+    index("personal_guidance_owner_custom_idx").on(
+      table.ownerFirebaseUid,
+      table.customExerciseId,
+    ),
+    check(
+      "personal_guidance_source_xor",
+      sql`num_nonnulls(${table.catalogExerciseId}, ${table.customExerciseId}) = 1`,
+    ),
+    check(
+      "personal_guidance_order_shape",
+      sql`${table.displayOrder} between 1 and 2`,
+    ),
+    check(
+      "personal_guidance_url_shape",
+      sql`length(${table.normalizedUrl}) between 1 and 2048 and ${table.normalizedUrl} like 'https://%'`,
+    ),
+    check(
+      "personal_guidance_kind_shape",
+      sql`(${table.kind} = 'youtube' and ${table.youtubeVideoId} ~ '^[A-Za-z0-9_-]{11}$') or (${table.kind} = 'external' and ${table.youtubeVideoId} is null)`,
     ),
   ],
 );
@@ -860,6 +933,20 @@ export const workoutExerciseSnapshots = pgTable(
     targetWeightKg: numeric("target_weight_kg", { precision: 10, scale: 3, mode: "number" }),
     targetDistanceM: numeric("target_distance_m", { precision: 12, scale: 3, mode: "number" }),
     prescriptionSnapshot: jsonb("prescription_snapshot").$type<Record<string, unknown>>().default({}).notNull(),
+    guidanceSnapshot: jsonb("guidance_snapshot")
+      .$type<
+        readonly (
+          | Readonly<{
+              kind: "youtube";
+              canonicalUrl: string;
+              videoId: string;
+              embedUrl: string;
+            }>
+          | Readonly<{ kind: "external"; canonicalUrl: string }>
+        )[]
+      >()
+      .default([])
+      .notNull(),
     createdAt: createdAt(),
   },
   (table) => [
@@ -894,6 +981,10 @@ export const workoutExerciseSnapshots = pgTable(
     check("workout_snapshots_exercise_xor", sql`num_nonnulls(${table.catalogExerciseId}, ${table.customExerciseId}) <= 1`),
     check("workout_snapshots_weight_nonnegative", sql`${table.targetWeightKg} is null or ${table.targetWeightKg} >= 0`),
     check("workout_snapshots_distance_nonnegative", sql`${table.targetDistanceM} is null or ${table.targetDistanceM} >= 0`),
+    check(
+      "workout_snapshots_guidance_shape",
+      sql`jsonb_typeof(${table.guidanceSnapshot}) = 'array' and jsonb_array_length(${table.guidanceSnapshot}) <= 2`,
+    ),
     check(
       "workout_snapshots_reps_range",
       sql`(${table.minimumReps} is null and ${table.maximumReps} is null) or (${table.minimumReps} is not null and ${table.maximumReps} is not null and ${table.minimumReps} > 0 and ${table.minimumReps} <= ${table.maximumReps})`,
@@ -1293,6 +1384,7 @@ export const schema = {
   customExerciseVideos,
   customExerciseEquipment,
   customExerciseAliases,
+  personalGuidanceLinks,
   programTemplates,
   programTemplateRevisions,
   templateDays,

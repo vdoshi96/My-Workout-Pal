@@ -16,8 +16,16 @@ import {
   updateCustomExercise,
 } from "@/server/repositories/custom-exercises";
 import type { ViewerContext } from "@/server/auth/viewer";
+import {
+  getPersonalGuidance,
+  replacePersonalGuidance,
+} from "@/server/repositories/personal-guidance";
 
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
+const personalGuidanceMigrationUrl = new URL(
+  "../../drizzle/0007_personal_guidance.sql",
+  import.meta.url,
+);
 const databases: PGlite[] = [];
 
 const verifiedViewer = (uid: string): ViewerContext => ({
@@ -34,6 +42,7 @@ async function openDatabase() {
   const raw = new PGlite();
   await raw.waitReady;
   await raw.exec(await readFile(migrationUrl, "utf8"));
+  await raw.exec(await readFile(personalGuidanceMigrationUrl, "utf8"));
   databases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
@@ -152,7 +161,6 @@ describe("custom exercise repository", () => {
       idempotencyKey: "custom-create-1",
       draft,
     });
-
     await expect(
       createCustomExercise(database, viewer, {
         idempotencyKey: "custom-create-1",
@@ -223,6 +231,11 @@ describe("custom exercise repository", () => {
       idempotencyKey: "custom-create-1",
       draft,
     });
+    await replacePersonalGuidance(database, viewer, {
+      source: { kind: "custom", id: created.exercise.id },
+      links: ["https://example.com/private-row"],
+      idempotencyKey: "custom-guidance-1",
+    });
 
     const updated = await updateCustomExercise(database, viewer, {
       exerciseId: created.exercise.id,
@@ -231,6 +244,14 @@ describe("custom exercise repository", () => {
       draft: { ...draft, name: "Supported row two", aliases: [] },
     });
     expect(updated.exercise).toMatchObject({ name: "Supported row two", aliases: [] });
+    await expect(
+      getPersonalGuidance(database, viewer, {
+        kind: "custom",
+        id: created.exercise.id,
+      }),
+    ).resolves.toMatchObject({
+      links: [{ canonicalUrl: "https://example.com/private-row" }],
+    });
     await expect(
       updateCustomExercise(database, viewer, {
         exerciseId: created.exercise.id,
@@ -247,5 +268,10 @@ describe("custom exercise repository", () => {
     await expect(getCustomExercise(database, viewer, created.exercise.id)).rejects.toMatchObject({
       code: "not_found",
     } satisfies Partial<CustomExerciseRepositoryError>);
+    await expect(
+      raw.query<{ count: number }>(
+        "SELECT count(*)::int AS count FROM personal_guidance_links WHERE owner_firebase_uid = 'alice'",
+      ),
+    ).resolves.toMatchObject({ rows: [{ count: 0 }] });
   });
 });

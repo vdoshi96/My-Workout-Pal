@@ -41,6 +41,10 @@ const cardioDisplayOrderMigrationUrl = new URL(
   "../../drizzle/0006_program_cardio_display_order.sql",
   import.meta.url,
 );
+const personalGuidanceMigrationUrl = new URL(
+  "../../drizzle/0007_personal_guidance.sql",
+  import.meta.url,
+);
 const openDatabases: PGlite[] = [];
 
 function viewer(uid: string, now: Date): ViewerContext {
@@ -65,6 +69,7 @@ async function openDatabase(): Promise<Database> {
   await raw.exec(await readFile(projectionCheckpointMigrationUrl, "utf8"));
   await raw.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
   await raw.exec(await readFile(cardioDisplayOrderMigrationUrl, "utf8"));
+  await raw.exec(await readFile(personalGuidanceMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);

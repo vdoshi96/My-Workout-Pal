@@ -330,6 +330,7 @@ export function hydrateWorkoutResumeState(
         ...(exercise.sectionKey === undefined ? {} : { sectionKey: exercise.sectionKey }),
         ...(exercise.sectionTitle === undefined ? {} : { sectionTitle: exercise.sectionTitle }),
         ...(exercise.prescriptionKey === undefined ? {} : { prescriptionKey: exercise.prescriptionKey }),
+        ...(exercise.guidance === undefined ? {} : { guidance: exercise.guidance }),
         sets: exercise.sets.map((set) => ({
           id: set.id,
           position: set.position,

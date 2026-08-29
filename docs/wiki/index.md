@@ -12,7 +12,8 @@ Use the following documents as the maintained project map:
 - `docs/plans/GUEST-LANDING-AND-CONTEXTUAL-NAVIGATION.md`: public welcome, optional account boundary, and origin-aware exercise navigation contract.
 - `docs/plans/WORKOUT-COMPANION-REPOSITIONING.md`: sign-in handoff, flexible routines, personal home, library expansion, private guidance, copy, visual concept, worktree, and release plan.
 - `docs/plans/FLEXIBLE-DAY-BUILDER.md`: Wave 1 editor interactions, chooser boundary, immutable publish and saved-day start flow, and focused evidence requirements.
-- `docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md`: Wave 1 library expansion, private movement and guidance persistence, neutral chooser contract, immutable workout snapshot handoff, and focused evidence requirements.
+- `docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md`: Wave 1 chooser contract, catalog manifests, owner-scoped personal guidance, immutable snapshots, integration boundary, and verification record.
+- `docs/plans/WAVE-1-INTEGRATION.md`: Wave 1 source provenance, integration contracts, migration order, combined acceptance criteria, and release stop boundary.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
 - `docs/plans/VERIFICATION.md`: automated and manual release matrix.

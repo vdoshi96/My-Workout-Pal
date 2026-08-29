@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f6aba73f9c36a323c6bf5ee0a028889f636c5ed27723e7595def71f9f551e462">
+  <meta name="source-sha256" content="dc8714205c5a152ee48a16a80793f7cb6d685ad1c869b0ab3cdb5e40c60faa43">
   <title>Library and personal guidance foundation plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -236,6 +236,43 @@ human-watch records satisfy the existing policy.</li>
 <li>Focused and complete local gates plus Chromium desktop and WebKit phone
 authenticated evidence pass on the final branch.</li>
 </ul>
+<h2>Implementation record</h2>
+<p>The neutral chooser checkpoint is commit <code>5255a5254fcde4c1b1558947bda64d47bad23743</code>.
+Its contract module and three focused test/documentation files are byte-for-byte
+identical to day-builder checkpoint
+<code>2436bac92ba3381e76646bf61210cd5fd4dae88f</code>; the two commits are parallel
+children of the verified Wave 0 baseline rather than a parent/child lineage.
+The exported adapter is <code>MovementChooserAdapter</code> from
+<code>src/components/exercises/movement-chooser.tsx</code>. It accepts only
+<code>MovementChooserAdapterProps</code> from the neutral contract module and returns the
+frozen selection shape without editor topology or guidance state.</p>
+<p>Catalog checkpoint <code>0f820535c4aec0686b7b73451513bc8d3dda7d26</code>
+splits all 27 released movements into eight validated category manifests while
+preserving released order, seed identity, metadata, and the 54 approved video
+rows. No one of the 216 expansion candidates was added to runtime data.</p>
+<p>Migration <code>0007_personal_guidance.sql</code> adds the owner/source-XOR personal store
+and immutable workout guidance snapshot. It also copies existing private custom
+exercise YouTube links into the new store, so this additive change does not
+silently discard earlier owner guidance. The day-builder branch owns
+<code>0006_program_cardio_display_order.sql</code>. Integration must merge that branch
+first, retain both SQL migrations in numeric order, and regenerate or reconcile
+the <code>0007</code> Drizzle snapshot metadata against the integrated <code>0006</code> snapshot.
+This branch does not duplicate <code>0006</code>, apply either migration, or deploy.</p>
+<p>Retained TDD evidence includes failures before the personal-guidance repository
+existed, before legacy private-video backfill existed, and when resume hydration
+dropped a correctly persisted guidance snapshot. The corresponding focused
+repository, migration, hydration, and immutability regressions pass after the
+implementation.</p>
+<p>The isolated authenticated production fixture completes the library journey in
+Chromium desktop and WebKit phone: search and source filtering, inline private
+creation, YouTube normalization, article replacement, exact chooser selection,
+publication through the owner-scoped server contract, workout start, private
+link presentation, live-link replacement without snapshot drift, axe scanning,
+and another-owner <code>404</code>. All 27 released catalog movements already have approved
+guidance, so the browser journey uses a private movement for the unavailable-app-
+guidance state instead of inventing an unapproved catalog record. Final combined
+editor-shell wiring remains the integrator&#39;s responsibility and consumes the
+already identical frozen contract.</p>
 
   </main>
 </body>

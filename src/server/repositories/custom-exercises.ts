@@ -10,6 +10,7 @@ import {
   customExercises,
   customExerciseVideos,
   idempotencyKeys,
+  personalGuidanceLinks,
   personalRecords,
   programPrescriptions,
   progressSummaries,
@@ -575,6 +576,14 @@ export async function deleteCustomExercise(
         409,
       );
     }
+    await tx
+      .delete(personalGuidanceLinks)
+      .where(
+        and(
+          eq(personalGuidanceLinks.ownerFirebaseUid, viewer.uid),
+          eq(personalGuidanceLinks.customExerciseId, input.exerciseId),
+        ),
+      );
     await tx
       .delete(customExerciseVideos)
       .where(

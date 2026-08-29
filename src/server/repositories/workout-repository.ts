@@ -51,6 +51,8 @@ import {
   type WorkoutSectionKind,
 } from "@/domain/workout-runner";
 import type { ViewerContext } from "@/server/auth/viewer";
+import type { PersonalGuidanceLink } from "@/domain/exercises/personal-guidance";
+import { listPersonalGuidanceForSources } from "@/server/repositories/personal-guidance";
 
 /**
  * The repository deliberately takes a ViewerContext rather than an ownership
@@ -305,6 +307,7 @@ type SnapshotRow = Readonly<{
   targetWeightKg: number | null;
   targetDistanceM: number | null;
   prescriptionSnapshot: Record<string, unknown>;
+  guidanceSnapshot: readonly PersonalGuidanceLink[];
 }>;
 
 type SnapshotInsertRow = Readonly<{
@@ -325,6 +328,7 @@ type SnapshotInsertRow = Readonly<{
   targetWeightKg: number | null;
   targetDistanceM: number | null;
   prescriptionSnapshot: Record<string, unknown>;
+  guidanceSnapshot: readonly PersonalGuidanceLink[];
 }>;
 
 type ExerciseStateRow = Readonly<{
@@ -939,6 +943,9 @@ function snapshotInputForRow(row: SnapshotRow): WorkoutExerciseInput {
     ...(sectionKey === undefined ? {} : { sectionKey }),
     ...(sectionTitle === undefined ? {} : { sectionTitle }),
     ...(prescriptionKey === undefined ? {} : { prescriptionKey }),
+    ...(row.guidanceSnapshot.length === 0
+      ? {}
+      : { guidance: row.guidanceSnapshot }),
     sets,
   };
 }
@@ -1083,6 +1090,7 @@ async function selectSnapshots(tx: TxDatabase, ownerUid: string, sessionId: stri
       targetWeightKg: workoutExerciseSnapshots.targetWeightKg,
       targetDistanceM: workoutExerciseSnapshots.targetDistanceM,
       prescriptionSnapshot: workoutExerciseSnapshots.prescriptionSnapshot,
+      guidanceSnapshot: workoutExerciseSnapshots.guidanceSnapshot,
     })
     .from(workoutExerciseSnapshots)
     .where(and(eq(workoutExerciseSnapshots.ownerFirebaseUid, ownerUid), eq(workoutExerciseSnapshots.sessionId, sessionId)))
@@ -1281,6 +1289,10 @@ function createSnapshotRows(
   equipmentProfileKind: EquipmentProfileKind,
   availableEquipment: readonly EquipmentId[],
   previousValuesByExercise: ReadonlyMap<string, ReadonlyMap<number, WorkoutMeasurement>>,
+  personalGuidanceByExercise: ReadonlyMap<
+    string,
+    readonly PersonalGuidanceLink[]
+  >,
 ): readonly SnapshotInsertRow[] {
   const sectionsById = new Map(sections.map((section) => [section.id, section] as const));
   const rows = [...prescriptions]
@@ -1326,6 +1338,10 @@ function createSnapshotRows(
         restSeconds: row.restSeconds,
         targetWeightKg: row.targetWeightKg,
         targetDistanceM: row.targetDistanceM,
+        guidanceSnapshot:
+          personalGuidanceByExercise.get(
+            exerciseIdentity(row.catalogExerciseId, row.customExerciseId),
+          ) ?? [],
         prescriptionSnapshot: snapshotJsonForRow(
           row,
           section,
@@ -1913,6 +1929,7 @@ async function selectSnapshotForOperation(tx: TxDatabase, ownerUid: string, sess
       targetWeightKg: workoutExerciseSnapshots.targetWeightKg,
       targetDistanceM: workoutExerciseSnapshots.targetDistanceM,
       prescriptionSnapshot: workoutExerciseSnapshots.prescriptionSnapshot,
+      guidanceSnapshot: workoutExerciseSnapshots.guidanceSnapshot,
     })
     .from(workoutExerciseSnapshots)
     .where(and(eq(workoutExerciseSnapshots.ownerFirebaseUid, ownerUid), eq(workoutExerciseSnapshots.sessionId, sessionId), eq(workoutExerciseSnapshots.id, validatedSnapshotId)))
@@ -2300,6 +2317,14 @@ export async function startOrResumeWorkout(database: Database, viewer: ViewerCon
     const day = await selectDay(tx, current.uid, program, revision, dayId);
     const meaning = await selectDayMeaning(tx, current.uid, program, revision, day);
     const previousValues = await selectPreviousValues(tx, current.uid, meaning.prescriptions);
+    const personalGuidance = await listPersonalGuidanceForSources(
+      tx,
+      current,
+      meaning.prescriptions.map((prescription) => ({
+        kind: prescription.catalogExerciseId === null ? "custom" as const : "catalog" as const,
+        id: prescription.catalogExerciseId ?? prescription.customExerciseId ?? "",
+      })),
+    );
     const snapshotRows = createSnapshotRows(
       "pending",
       current.uid,
@@ -2312,6 +2337,7 @@ export async function startOrResumeWorkout(database: Database, viewer: ViewerCon
       equipment.profileKind,
       equipment.availableEquipment,
       previousValues,
+      personalGuidance,
     );
     const insertedSession = await tx.insert(workoutSessions).values({
       ownerFirebaseUid: current.uid,

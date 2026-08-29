@@ -145,3 +145,24 @@ The listener does not retry a query, convert an active database failure into suc
 Walker and Runner are optional alternatives, not semantic positions. Program cardio rows therefore store a bounded display order within each owned revision day. Publication derives that order only from the validated day payload; reads, root clones, equipment revisions, and workout snapshot creation preserve it. Mode remains unique within the day but does not determine presentation order.
 
 Migration `0006_program_cardio_display_order` backfills existing published rows in their prior Walker-then-Runner presentation order while the descendant immutability trigger is narrowly suspended, then restores the guard before making the position required. It adds per-day order uniqueness and a one-to-two bound and does not change cardio meaning or workout history. Production application of this migration remains a separately reviewed release action.
+
+## 2026-08-28: Keep personal guidance owner-scoped and snapshot it at workout start
+
+Personal guidance is stored separately from curated-video approval and is keyed
+by the server-derived owner plus exactly one catalog or private movement. The
+client never supplies ownership. At most two normalized HTTPS links are stored;
+recognized YouTube links use an exact privacy-enhanced embed origin, while other
+accepted links remain safe external anchors. Personal links are labeled as the
+member's links and are never described as reviewed or approved by the app.
+
+Routine publication continues to store only the canonical/private movement XOR.
+Workout start resolves guidance for the effective owner and movement, copies the
+presentation-safe value into the immutable exercise snapshot, and resume/history
+reads use that snapshot only. Later link edits cannot rewrite an active or
+historical workout. Existing private custom-exercise YouTube rows are copied by
+the additive migration so earlier owner guidance is not silently lost.
+
+The movement chooser communicates with routine editors only through the neutral
+`MovementChooserAdapterProps` contract. Its selection contains source, name, and
+logging kind only. Search state, equipment, guidance, editor positions, topology
+keys, and prescription defaults remain outside that boundary.

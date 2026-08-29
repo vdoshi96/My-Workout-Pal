@@ -28,11 +28,37 @@ async function parsedBody(response: Response): Promise<unknown> {
   return response.json().catch(() => null);
 }
 
+export async function privateApiRead<T>(url: string): Promise<T> {
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    const body = await parsedBody(response);
+    if (!response.ok) {
+      const failure = responseErrorBody(body);
+      throw new PrivateApiClientError(
+        failure.code,
+        failure.message,
+        response.status,
+      );
+    }
+    return body as T;
+  } catch (error) {
+    if (error instanceof PrivateApiClientError) throw error;
+    throw new PrivateApiClientError(
+      "network_error",
+      "The request did not reach the server. Check the connection and try again.",
+      0,
+    );
+  }
+}
+
 export async function privateApiMutation<T>(
   url: string,
   options: Readonly<{
     body: unknown;
-    method: "DELETE" | "PATCH" | "POST";
+    method: "DELETE" | "PATCH" | "POST" | "PUT";
   }>,
 ): Promise<T> {
   try {

@@ -9,6 +9,7 @@ import {
   customExercises,
   customExerciseVideos,
   idempotencyKeys,
+  personalGuidanceLinks,
   personalRecords,
   programCardioPrescriptions,
   programDays,
@@ -222,6 +223,7 @@ async function deleteOwnedData(
     .where(eq(userPrograms.ownerFirebaseUid, ownerUid));
   await database.delete(programRevisions).where(eq(programRevisions.ownerFirebaseUid, ownerUid));
   await database.delete(userPrograms).where(eq(userPrograms.ownerFirebaseUid, ownerUid));
+  await database.delete(personalGuidanceLinks).where(eq(personalGuidanceLinks.ownerFirebaseUid, ownerUid));
   await database.delete(customExerciseVideos).where(eq(customExerciseVideos.ownerFirebaseUid, ownerUid));
   await database.delete(customExerciseAliases).where(eq(customExerciseAliases.ownerFirebaseUid, ownerUid));
   await database.delete(customExerciseEquipment).where(eq(customExerciseEquipment.ownerFirebaseUid, ownerUid));
