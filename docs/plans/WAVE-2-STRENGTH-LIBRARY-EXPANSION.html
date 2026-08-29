@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="fd94d4d5a51861e60ff1c3ef554239fea57669f3dd516216791c5b1a7add714d">
+  <title>Wave 2 strength library expansion plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 2 strength library expansion plan</h1>
+<h2>Outcome</h2>
+<p>Add the 65 distinct upper-body and lower-body movements assigned to the strength
+batch as generator-backed canonical catalog records. Preserve all 27 released
+records and their exact order, then append each distinct owned candidate once in
+the order from the expansion inventory.</p>
+<p>The inventory&#39;s <code>prone-dumbbell-row</code> candidate is the released
+<code>chest-supported-dumbbell-row</code>, not a distinct movement. Add the exact search
+alias <code>prone dumbbell row</code> to that released record instead of creating a second
+canonical slug. Preserve the two Grok links as unapproved candidate evidence for
+the existing movement and keep them outside runtime data.</p>
+<p>Every added record provides a stable slug, reviewed display name, supported
+logging kind, compatible existing equipment, movement family, primary muscles,
+search aliases, and exactly three useful instructions. The batch publishes no
+candidate video. A movement without a full-watch-approved pair remains useful
+through text guidance and renders no empty or unapproved iframe.</p>
+<h2>Scope and stop boundaries</h2>
+<p>This branch owns the following manifest files:</p>
+<ul>
+<li><code>src/domain/exercises/catalog-manifests/chest-and-pushing.ts</code></li>
+<li><code>src/domain/exercises/catalog-manifests/back-and-rear-shoulder.ts</code></li>
+<li><code>src/domain/exercises/catalog-manifests/shoulders.ts</code></li>
+<li><code>src/domain/exercises/catalog-manifests/arms.ts</code></li>
+<li><code>src/domain/exercises/catalog-manifests/lower-body-and-glutes.ts</code></li>
+</ul>
+<p>This branch also owns uniquely named strength-batch unit, browser, plan, and QA
+files. It can use existing production components and authenticated fixture
+routes without changing their contracts.</p>
+<p>This branch must not:</p>
+<ul>
+<li>Edit the core, conditioning and carries, or mobility and recovery manifests.</li>
+<li>Edit <code>catalog-generator.ts</code>, <code>catalog.ts</code>, <code>metadata.ts</code>, the manifest index,
+central snapshots, seed manifests, shared status or wiki pages, schema, or
+migrations unless a verified generator defect blocks the owned content.</li>
+<li>Copy the 132 product-selected strength URLs into runtime data or describe any
+pair as app-approved.</li>
+<li>Seed a database, apply a migration, deploy, change a provider or alias, merge
+<code>main</code>, or modify or remove another worktree.</li>
+</ul>
+<p>If the supported manifest schema can&#39;t represent an inventory candidate, stop
+and report the exact contract gap before changing a shared file.</p>
+<h2>Verified intake</h2>
+<p>Detached <code>HEAD</code>, local <code>main</code>, and <code>origin/main</code> resolved to
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code> before branch creation. The
+worktree had no tracked or untracked changes.</p>
+<p>Before manifest implementation, the branch consumed prerequisite checkpoint
+<code>7046a94bae41e90839b16d5329b58a1975600ee9</code> as local cherry-pick
+<code>ad92476</code>. Its explicit 27-variation policy separates released exact-two video
+requirements from catalog membership, so text-only catalog growth neither
+fabricates approved rows nor weakens fail-closed validation for the released
+subset.</p>
+<p>The inventory assigns 66 named candidates to this batch. Evidence review found
+one canonical duplicate, so the branch adds 65 records and one alias:</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th align="right">Existing records</th>
+<th align="right">Added candidates</th>
+<th align="right">Final category records</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chest and pushing</td>
+<td align="right">3</td>
+<td align="right">12</td>
+<td align="right">15</td>
+</tr>
+<tr>
+<td>Back and rear shoulder</td>
+<td align="right">4</td>
+<td align="right">11</td>
+<td align="right">15</td>
+</tr>
+<tr>
+<td>Shoulders</td>
+<td align="right">1</td>
+<td align="right">10</td>
+<td align="right">11</td>
+</tr>
+<tr>
+<td>Arms</td>
+<td align="right">2</td>
+<td align="right">12</td>
+<td align="right">14</td>
+</tr>
+<tr>
+<td>Lower body and glutes</td>
+<td align="right">9</td>
+<td align="right">20</td>
+<td align="right">29</td>
+</tr>
+<tr>
+<td><strong>Owned total</strong></td>
+<td align="right"><strong>19</strong></td>
+<td align="right"><strong>65</strong></td>
+<td align="right"><strong>84</strong></td>
+</tr>
+</tbody></table>
+<p>The complete canonical catalog contains 27 released records before this batch
+and 92 records after it. The later sibling batch adds the remaining 42
+candidates. Combined Wave 2 adds 107 records and reaches a corrected 134-record
+catalog target.</p>
+<p>All assigned candidates use the existing logging kinds and equipment IDs. The
+batch adds no durable database ID. The 216 Grok links are approved selections
+only; none has the required runtime full-watch record. Of the 132 selected links
+in the strength inventory, two remain evidence for the existing
+<code>chest-supported-dumbbell-row</code> after duplicate reconciliation.</p>
+<h2>Catalog contract</h2>
+<p>Append distinct candidates after each manifest&#39;s released records in the exact
+order from <code>docs/reference/EXERCISE-LIBRARY-EXPANSION.md</code>. Keep the released
+records unchanged except for adding the reviewed <code>prone dumbbell row</code> alias to
+<code>chest-supported-dumbbell-row</code>.</p>
+<p>For each candidate:</p>
+<ul>
+<li>Use the inventory slug, display name, logging kind, and required equipment
+without reinterpretation.</li>
+<li>Choose one supported role: <code>compound</code>, <code>accessory</code>, <code>core-reps</code>, or
+<code>core-timed</code>.</li>
+<li>Use a stable lowercase, hyphenated movement family that supports useful
+search without merging distinct variations.</li>
+<li>Name one or more primary muscles using the catalog&#39;s existing plain-language
+vocabulary.</li>
+<li>Add distinct aliases that improve real searches and don&#39;t duplicate after
+trim and case normalization.</li>
+<li>Write exactly three bounded instructions in setup, controlled execution, and
+finish or stopping order.</li>
+<li>Exclude medical, rehabilitation, pain, injury-prevention, physique, strength,
+mobility, performance, or other outcome claims.</li>
+</ul>
+<p>The generator remains the sole validation and assembly boundary. Generated
+records stay deeply frozen and deterministic.</p>
+<h2>Search, filters, and logging</h2>
+<p>The existing public catalog search matches names, slugs, movement families,
+aliases, primary muscles, and required equipment. The member chooser includes
+those terms plus the logging-kind label in its candidate search text. Equipment
+compatibility applies before a result becomes selectable.</p>
+<p>Focused tests cover representative name and alias queries from every owned
+category. They also prove that dumbbell-only profiles exclude rack and
+barbell-dependent movements, supported bodyweight records remain selectable,
+and representative duration, bodyweight-repetition, and weight-repetition
+records retain the inventory logging meaning.</p>
+<p>No strength movement uses <code>distance_duration</code>. That logging shape remains owned
+by the conditioning batch and existing runner contracts.</p>
+<h2>Video and guidance states</h2>
+<p>The added catalog records have no entry in the exact-two approved-video seed.
+The application therefore derives truthful unavailable app guidance for them.
+The public detail presents the three written instructions. The chooser offers
+truthfully labeled private-guidance fields, and the runner presents an
+unavailable app-guidance state while keeping logging usable. None mounts an
+app-approved video iframe for these records.</p>
+<p>Owner-provided guidance remains separate, private, and labeled as the member&#39;s
+link. This batch doesn&#39;t add, approve, or publish personal links and doesn&#39;t
+change snapshot or owner-isolation behavior.</p>
+<h2>Routine publication and persistence</h2>
+<p>The movement chooser returns the existing neutral selection shape only:</p>
+<pre><code class="language-ts">{
+  source: { kind: &quot;catalog&quot; | &quot;custom&quot;; id: string };
+  name: string;
+  loggingKind: LoggingKind;
+}
+</code></pre>
+<p>The routine editor continues to own placement, topology, targets, ordering, and
+publication. The server continues to resolve catalog slugs, enforce equipment
+compatibility, derive ownership from the verified session, publish a complete
+immutable revision, and snapshot movement meaning when a workout starts.</p>
+<p>This content batch adds no persistence path. A failed chooser load,
+publication, reload, or start keeps the existing retry and stale-revision
+behavior. A malformed or ambiguous response can&#39;t advance the editor.</p>
+<h2>Authorization, privacy, and safety</h2>
+<ul>
+<li>Derive owner identity only from the verified server session.</li>
+<li>Keep the canonical records public and free of owner data, URLs, or durable
+database IDs.</li>
+<li>Keep personal links, routine names, workout data, and session identifiers out
+of catalog manifests and shared screenshots.</li>
+<li>Keep the private reference recording and curation scratch artifacts outside
+Git and documentation.</li>
+<li>Do not create a public iframe for an unapproved candidate URL.</li>
+<li>Do not add medical advice, rehabilitation claims, outcome promises, or load
+prescriptions to movement instructions.</li>
+</ul>
+<h2>Accessibility and responsive behavior</h2>
+<p>Use existing production components without a layout or styling fork. In the
+authenticated Chromium desktop and WebKit phone journeys:</p>
+<ul>
+<li>Search fields, result controls, publication actions, and start actions remain
+keyboard-operable with visible names.</li>
+<li>Added names and unavailable-guidance messaging wrap without horizontal
+overflow at phone width.</li>
+<li>Empty-video messaging remains visible and understandable without color.</li>
+<li>The chooser and editor retain semantic dialog, list, status, and focus
+behavior.</li>
+<li>Automated accessibility scans report no critical or serious violations on
+the representative content state.</li>
+</ul>
+<h2>Test-driven implementation</h2>
+<p>Add <code>tests/unit/strength-catalog-expansion.test.tsx</code> before adding candidates.
+Retain concise failed-before evidence for these contracts:</p>
+<ol>
+<li>Each owned manifest contains the 65 distinct inventory slugs after its
+released prefix and in deterministic inventory order. The duplicate name is
+an alias of <code>chest-supported-dumbbell-row</code>, not another slug.</li>
+<li>The combined catalog contains 92 records, preserves the first 27 records
+exactly, and contains no durable <code>id</code> property.</li>
+<li>Every owned candidate has valid equipment, role, muscles, aliases, and
+exactly three claim-safe instructions.</li>
+<li>Representative name and alias searches respect equipment compatibility.</li>
+<li>Representative weight, bodyweight-repetition, and duration movements retain
+their logging meaning.</li>
+<li>Added movements have no approved catalog video rows and resolve to the
+truthful unavailable guidance state.</li>
+</ol>
+<p>Run the focused file in RED before changing manifests. After implementation,
+run the focused strength file with the existing generator, library, video, seed,
+chooser, guidance, snapshot, and editor regressions.</p>
+<h2>Browser evidence</h2>
+<p>Add <code>tests/authenticated-e2e/library-strength-expansion.spec.ts</code> and run it in
+the existing authenticated production fixture for <code>chromium-desktop</code> and
+<code>webkit-phone</code>.</p>
+<p>The journey must:</p>
+<ol>
+<li>Create or load a verified member&#39;s example routine.</li>
+<li>Open the real routine editor and chooser.</li>
+<li>Search an added upper-body movement by alias and add it.</li>
+<li>Search an added lower-body movement by name and add it.</li>
+<li>Publish the changed routine through the owner-scoped server boundary.</li>
+<li>Open and reload the saved day and prove both exact selections remain.</li>
+<li>Start the exact saved day through the production start control.</li>
+<li>Verify the runner renders both movements and the correct weight and duration
+logging controls.</li>
+<li>Verify the unavailable app-guidance state and the absence of an unapproved
+iframe.</li>
+<li>Capture one branch-unique screenshot per browser project after an
+accessibility scan.</li>
+</ol>
+<p>Use production components and fixture persistence. Do not substitute direct
+domain calls for chooser, publication, reload, or start proof.</p>
+<p>Run the exact spec through the branch-only
+<code>playwright.authenticated.strength.config.ts</code> and
+<code>scripts/test-e2e-authenticated-strength.mjs</code>. Do not edit the maintained
+authenticated matcher; the integration owner will add both Wave 2 spec names
+and rerun the combined matrix.</p>
+<h2>Integration obligation</h2>
+<p>The coordinator-mandated <code>prone dumbbell row</code> alias intentionally changes one
+released record. The shared released-record assertion in
+<code>tests/unit/catalog-generator.test.ts</code> still expects the former two-alias
+array, so this branch leaves that central snapshot untouched and reports its
+single expected mismatch. Integration must add the third alias to that snapshot
+after merging both Wave 2 branches, then rerun the complete catalog and seed
+suite. Removing the alias or restoring the old runtime record is not a valid
+reconciliation.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>All 65 distinct owned candidates appear exactly once in deterministic
+inventory order, and <code>prone dumbbell row</code> searches the released
+<code>chest-supported-dumbbell-row</code> record.</li>
+<li>The 27 released catalog records, their order, and the 54 approved starter
+video mappings remain unchanged.</li>
+<li>The combined strength-branch catalog contains 92 unique stable slugs.</li>
+<li>Every added record has supported metadata and exactly three useful,
+claim-safe instructions.</li>
+<li>Representative search, alias, equipment, muscle, and logging behavior passes.</li>
+<li>Representative upper-body and lower-body selections publish, reload, and
+start through the real authenticated editor flow in Chromium desktop and
+WebKit phone.</li>
+<li>Added records show instructions and truthful unavailable app guidance with no
+empty or unapproved iframe.</li>
+<li>No sibling manifest, shared central catalog file, schema, migration, seed
+manifest, shared status/wiki file, production system, or sibling worktree is
+changed.</li>
+</ul>
+<h2>Verification matrix</h2>
+<p>Run one large gate at a time and record exact totals:</p>
+<ul>
+<li>Focused strength RED, then focused strength and catalog GREEN.</li>
+<li>Strict TypeScript.</li>
+<li>Scoped ESLint, then full ESLint.</li>
+<li>Full Vitest.</li>
+<li>Drizzle and migration checks without applying a production migration.</li>
+<li>Exact-two approved-video seed validation.</li>
+<li>Generated PWA parity.</li>
+<li>Documentation build and parity.</li>
+<li>Next.js Webpack production build.</li>
+<li>Production route-boundary verification.</li>
+<li>Authenticated Chromium desktop and WebKit phone strength journeys.</li>
+<li><code>git diff --check</code>, changed-file review, and forbidden-path review.</li>
+</ul>
+<h2>Evidence and closeout</h2>
+<p>Keep the branch-specific QA report at
+<code>docs/qa/latest/WAVE-2-STRENGTH-LIBRARY-EXPANSION-QA.md</code> with its generated HTML
+counterpart. Keep only branch-unique screenshots from the newest completed
+strength run. Do not delete or rewrite the current Wave 1 QA package.</p>
+<p>Commit the reviewed implementation and evidence, then push
+<code>vishal/library-strength-expansion</code>. Report category counts, changed files,
+commits, exact verification totals, screenshot paths, inventory ambiguities,
+and integration requirements. Stop before merging or releasing.</p>
+
+  </main>
+</body>
+</html>
