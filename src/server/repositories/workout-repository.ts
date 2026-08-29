@@ -1503,6 +1503,7 @@ async function selectDayMeaning(
     .select({
       id: programCardioPrescriptions.id,
       cardioKey: programCardioPrescriptions.cardioKey,
+      displayOrder: programCardioPrescriptions.displayOrder,
       mode: programCardioPrescriptions.mode,
       durationSeconds: programCardioPrescriptions.durationSeconds,
       distanceM: programCardioPrescriptions.distanceM,
@@ -1517,7 +1518,7 @@ async function selectDayMeaning(
       eq(programCardioPrescriptions.revisionId, revision.id),
       eq(programCardioPrescriptions.dayId, day.id),
     ))
-    .orderBy(asc(programCardioPrescriptions.mode));
+    .orderBy(asc(programCardioPrescriptions.displayOrder));
   const typedPrescriptions = prescriptions as PrescriptionRow[];
   const catalogIds = typedPrescriptions.flatMap(({ catalogExerciseId }) => catalogExerciseId ? [catalogExerciseId] : []);
   const customIds = typedPrescriptions.flatMap(({ customExerciseId }) => customExerciseId ? [customExerciseId] : []);

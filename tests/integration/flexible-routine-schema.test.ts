@@ -14,6 +14,10 @@ const flexibleMigrationUrl = new URL(
   "../../drizzle/0005_flexible_routine_topology.sql",
   import.meta.url,
 );
+const cardioDisplayOrderMigrationUrl = new URL(
+  "../../drizzle/0006_program_cardio_display_order.sql",
+  import.meta.url,
+);
 
 const openDatabases: PGlite[] = [];
 
@@ -264,5 +268,197 @@ describe("flexible routine topology migration", () => {
         );
       `),
     ).rejects.toThrow(/program_days_number_shape|check constraint/i);
+  });
+
+  it("backfills durable cardio order without changing published meaning", async () => {
+    const database = await openBeforeFlexibleTopology();
+    await database.exec(await readFile(flexibleMigrationUrl, "utf8"));
+    await database.exec(`
+      INSERT INTO user_profiles (firebase_uid, display_name)
+      VALUES ('cardio-order-owner', 'Cardio order owner');
+
+      INSERT INTO user_programs (
+        id, owner_firebase_uid, program_key, name, is_active
+      ) VALUES (
+        '41000000-0000-4000-8000-000000000001',
+        'cardio-order-owner',
+        'cardio-order-program',
+        'Cardio order program',
+        true
+      );
+
+      INSERT INTO program_revisions (
+        id, owner_firebase_uid, program_id, revision_number, status,
+        equipment_profile_kind, published_at
+      ) VALUES (
+        '11000000-0000-4000-8000-000000000001',
+        'cardio-order-owner',
+        '41000000-0000-4000-8000-000000000001',
+        1,
+        'draft',
+        'dumbbells',
+        null
+      );
+
+      INSERT INTO program_days (
+        id, owner_firebase_uid, program_id, revision_id, day_number, day_key,
+        display_name
+      ) VALUES (
+        '31000000-0000-4000-8000-000000000001',
+        'cardio-order-owner',
+        '41000000-0000-4000-8000-000000000001',
+        '11000000-0000-4000-8000-000000000001',
+        1,
+        '31000000-0000-4000-8000-000000000001',
+        'Cardio choice day'
+      );
+
+      INSERT INTO program_cardio_prescriptions (
+        id, owner_firebase_uid, program_id, revision_id, day_id, cardio_key,
+        mode, duration_seconds
+      ) VALUES
+        (
+          '71000000-0000-4000-8000-000000000002',
+          'cardio-order-owner',
+          '41000000-0000-4000-8000-000000000001',
+          '11000000-0000-4000-8000-000000000001',
+          '31000000-0000-4000-8000-000000000001',
+          '71000000-0000-4000-8000-000000000002',
+          'runner',
+          900
+        ),
+        (
+          '71000000-0000-4000-8000-000000000001',
+          'cardio-order-owner',
+          '41000000-0000-4000-8000-000000000001',
+          '11000000-0000-4000-8000-000000000001',
+          '31000000-0000-4000-8000-000000000001',
+          '71000000-0000-4000-8000-000000000001',
+          'walker',
+          1200
+        );
+
+      UPDATE program_revisions
+      SET status = 'published', published_at = now()
+      WHERE id = '11000000-0000-4000-8000-000000000001';
+
+      UPDATE user_programs
+      SET active_revision_id = '11000000-0000-4000-8000-000000000001'
+      WHERE id = '41000000-0000-4000-8000-000000000001';
+    `);
+
+    const before = await database.query(`
+      SELECT id::text, cardio_key, mode, duration_seconds
+      FROM program_cardio_prescriptions
+      ORDER BY mode;
+    `);
+    await database.exec(await readFile(cardioDisplayOrderMigrationUrl, "utf8"));
+
+    expect(
+      await database.query(`
+        SELECT mode, display_order
+        FROM program_cardio_prescriptions
+        ORDER BY display_order;
+      `),
+    ).toMatchObject({
+      rows: [
+        { display_order: 1, mode: "walker" },
+        { display_order: 2, mode: "runner" },
+      ],
+    });
+    await expect(
+      database.query(`
+        SELECT id::text, cardio_key, mode, duration_seconds
+        FROM program_cardio_prescriptions
+        ORDER BY mode;
+      `),
+    ).resolves.toEqual(before);
+    await expect(
+      database.exec(`
+        UPDATE program_cardio_prescriptions
+        SET display_order = 2
+        WHERE id = '71000000-0000-4000-8000-000000000001';
+      `),
+    ).rejects.toThrow(/published program revision descendants are immutable/i);
+
+    await database.exec(`
+      INSERT INTO program_revisions (
+        id, owner_firebase_uid, program_id, revision_number, status,
+        equipment_profile_kind, published_at
+      ) VALUES (
+        '11000000-0000-4000-8000-000000000002',
+        'cardio-order-owner',
+        '41000000-0000-4000-8000-000000000001',
+        2,
+        'draft',
+        'dumbbells',
+        null
+      );
+
+      INSERT INTO program_days (
+        id, owner_firebase_uid, program_id, revision_id, day_number, day_key,
+        display_name
+      ) VALUES (
+        '31000000-0000-4000-8000-000000000002',
+        'cardio-order-owner',
+        '41000000-0000-4000-8000-000000000001',
+        '11000000-0000-4000-8000-000000000002',
+        1,
+        '31000000-0000-4000-8000-000000000002',
+        'Draft cardio order day'
+      );
+    `);
+    await expect(
+      database.exec(`
+        INSERT INTO program_cardio_prescriptions (
+          id, owner_firebase_uid, program_id, revision_id, day_id, cardio_key,
+          display_order, mode, duration_seconds
+        ) VALUES (
+          '71000000-0000-4000-8000-000000000003',
+          'cardio-order-owner',
+          '41000000-0000-4000-8000-000000000001',
+          '11000000-0000-4000-8000-000000000002',
+          '31000000-0000-4000-8000-000000000002',
+          '71000000-0000-4000-8000-000000000003',
+          3,
+          'runner',
+          900
+        );
+      `),
+    ).rejects.toThrow(/program_cardio_display_order_shape|check constraint/i);
+    await database.exec(`
+      INSERT INTO program_cardio_prescriptions (
+        id, owner_firebase_uid, program_id, revision_id, day_id, cardio_key,
+        display_order, mode, duration_seconds
+      ) VALUES (
+        '71000000-0000-4000-8000-000000000004',
+        'cardio-order-owner',
+        '41000000-0000-4000-8000-000000000001',
+        '11000000-0000-4000-8000-000000000002',
+        '31000000-0000-4000-8000-000000000002',
+        '71000000-0000-4000-8000-000000000004',
+        1,
+        'runner',
+        900
+      );
+    `);
+    await expect(
+      database.exec(`
+        INSERT INTO program_cardio_prescriptions (
+          id, owner_firebase_uid, program_id, revision_id, day_id, cardio_key,
+          display_order, mode, duration_seconds
+        ) VALUES (
+          '71000000-0000-4000-8000-000000000005',
+          'cardio-order-owner',
+          '41000000-0000-4000-8000-000000000001',
+          '11000000-0000-4000-8000-000000000002',
+          '31000000-0000-4000-8000-000000000002',
+          '71000000-0000-4000-8000-000000000005',
+          1,
+          'walker',
+          1200
+        );
+      `),
+    ).rejects.toThrow(/program_cardio_prescriptions_order_unique|unique constraint/i);
   });
 });

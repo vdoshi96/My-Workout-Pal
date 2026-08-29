@@ -6,7 +6,19 @@ Wave 0 is released. GitHub `main` and production application source are `e44c132
 
 A bounded Neon resilience follow-up is released in application commit `f5ef9cb9a9b462aceda339936972297796b67e16`. Production deployment `dpl_9WBb8hprftiKBYGrZfRD9Juk4VKH` is Ready on all three production aliases. The correction explicitly owns the Neon WebSocket pool, attaches one privacy-safe idle-error listener before Drizzle receives it, and leaves active query errors, transactions, authentication, CSRF, and persistence behavior unchanged. Fail-first coverage and the local release gate pass: 108 Vitest files/739 tests, database 4/34, exact-two seed, service-worker verification, 46-document parity, the Webpack build, 41-route isolation, the public matrix at 47 passes/one documented WebKit service-worker skip, and the authenticated matrix at 34 passes/two intentional engine-scoped skips. The exact production replay warmed a database-backed public exercise route, waited 15 seconds, then completed five more database reads and five CSRF requests at `200`; the exact-deployment error scan was empty. Production remained at zero profiles, programs, revisions, and workout sessions. Wave 1 may begin.
 
+Wave 1 flexible day-builder implementation is complete on unmerged branch `vishal/flexible-day-builder`, based exactly on `4622f9e1b7783fd35cb6c23ae9396148c7c3357a`. It includes neutral chooser checkpoint `5255a5254fcde4c1b1558947bda64d47bad23743`, reviewed movement removal, arbitrary optional sections, durable two-choice cardio ordering, exact publish/reload/start behavior, and migration `0006_program_cardio_display_order`. The permission-correct local gate passes 109 Vitest files/747 tests, strict TypeScript, full lint, Drizzle metadata, seed/PWA/docs checks, the Webpack build, the 41-route boundary, and the focused authenticated Chromium desktop plus WebKit phone journey. This work is not on `main`, deployed, or applied to production; the coordinator must integrate sibling Wave 1 branches and the schema owner must separately review migration application.
+
 The primary checkout is aligned with released `origin/main`. The newer Grok research is integrated as the product owner's approved 216-link selection for the 108 expansion movements. Runtime video publication remains gated only by the existing per-video full-watch record, not another link-selection pass. Local branch `vishal/pre-wave1-primary-preservation` retains the exact pre-sync planning state until the closeout comparison proves that no other unique work remains. The restore-tested pre-`0005` database archive now resides in a durable user-private backup directory outside the repository with mode `600` and its original checksum. The existing Homebrew .NET 9.0.120 installation is linked again and the ordinary `dotnet` command is restored.
+
+## Active Wave 1 day-builder handoff
+
+- Last completed: editor/publication implementation, exact chooser-contract integration, durable cardio order, newest QA evidence, and the complete local verification gate.
+- In progress: final feature-branch commit and push only.
+- Next: the coordinator reconciles `vishal/flexible-day-builder`, `vishal/library-guidance-foundation`, and `vishal/companion-home-copy`; the schema owner separately reviews migration `0006` before any environment application.
+- Known issue: none within the owned day-builder slice. Hosted Firebase/Neon and deployment evidence are intentionally absent, not failed.
+- Verification: 109 Vitest files/747 tests, strict TypeScript, full lint, Drizzle metadata, exact-two seed, service-worker and 48-document parity, Webpack build, 41-route boundary, Chromium desktop, and WebKit phone.
+- Important files: `src/components/program/program-editor.tsx`, `src/components/program/program-editor-model.ts`, `src/domain/exercises/movement-chooser-contract.ts`, `src/server/repositories/profile-program.ts`, `src/server/repositories/workout-repository.ts`, `drizzle/0006_program_cardio_display_order.sql`, `docs/plans/FLEXIBLE-DAY-BUILDER.md`, and `docs/qa/latest/FLEXIBLE-DAY-BUILDER-QA.md`.
+- Open question: only the release sequencing of migration `0006` with the other Wave 1 branches; this worker made no production change.
 
 ## What exists
 
@@ -141,7 +153,7 @@ The primary checkout is aligned with released `origin/main`. The newer Grok rese
 
 ## Worktrees
 
-- The only checkout is the primary repository workspace. No auxiliary worktree, delegated worker, simulator, or background browser remains. Generated `.next`, fixture `.next-authenticated`, `test-results`, and `playwright-report` directories are absent. The reusable 840 MB dependency tree and 781 MB repository-local pnpm store remain to avoid repeated downloads and unpacking; the data volume had about 187 GiB free during launch closeout.
+- Three Wave 1 worktrees remain active for coordinator integration: `vishal/flexible-day-builder` owns the editor/publication slice, `vishal/library-guidance-foundation` owns library and private-guidance work, and `vishal/companion-home-copy` owns signed-in home and companion copy. This worker did not modify or remove either sibling worktree. The primary checkout remains on `main` at the verified Wave 0 baseline.
 - The completed analytics worktree was integrated as `fedfba4` and removed after patch-equivalence verification.
 - The completed YouTube worktree was integrated through `6b633b0`; its selected files matched the reviewed worktree before cleanup.
 - The completed database worktree was integrated through `ff3d69c`, compared for selected-file equality, and removed.

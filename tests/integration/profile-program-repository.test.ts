@@ -23,6 +23,7 @@ const workoutMigrationUrl = new URL("../../drizzle/0002_workout_canonical_measur
 const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collection.sql", import.meta.url);
 const personalRecordMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
 const flexibleTopologyMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
+const cardioDisplayOrderMigrationUrl = new URL("../../drizzle/0006_program_cardio_display_order.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -34,6 +35,7 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(programCollectionMigrationUrl, "utf8"));
   await raw.exec(await readFile(personalRecordMigrationUrl, "utf8"));
   await raw.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
+  await raw.exec(await readFile(cardioDisplayOrderMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
@@ -157,9 +159,11 @@ describe("profile and active-program repository", () => {
         dayIndex === 0
           ? {
               ...day,
-              cardio: day.cardio.map((cardio, cardioIndex) =>
-                cardioIndex === 0 ? { ...cardio, distanceM: imperialDistanceM } : cardio,
-              ) as ProgramPublishInput["days"][number]["cardio"],
+              cardio: day.cardio
+                .map((cardio, cardioIndex) =>
+                  cardioIndex === 0 ? { ...cardio, distanceM: imperialDistanceM } : cardio,
+                )
+                .reverse() as ProgramPublishInput["days"][number]["cardio"],
               sections: day.sections.map((section, sectionIndex) =>
                 sectionIndex === 0
                   ? {
@@ -194,7 +198,14 @@ describe("profile and active-program repository", () => {
       revisionNumber: 2,
       equipmentProfileKind: "dumbbells",
     });
-    expect(published.activeProgram?.days[0]?.cardio[0]?.distanceM).toBe(160.934);
+    expect(
+      published.activeProgram?.days[0]?.cardio.find(
+        ({ cardioKey }) => cardioKey === source.days[0]!.cardio[0]!.cardioKey,
+      )?.distanceM,
+    ).toBe(160.934);
+    expect(published.activeProgram?.days[0]?.cardio.map(({ mode }) => mode)).toEqual(
+      [...source.days[0]!.cardio].reverse().map(({ mode }) => mode),
+    );
     expect(
       published.activeProgram?.days[0]?.sections[0]?.prescriptions.map(({ id, notes, restSeconds }) => ({ id, notes, restSeconds })),
     ).toEqual(
@@ -220,7 +231,7 @@ describe("profile and active-program repository", () => {
         .map(({ prescriptionKey }) => prescriptionKey),
     );
     expect(published.activeProgram?.days[0]?.cardio.map(({ cardioKey }) => cardioKey)).toEqual(
-      source.days[0]?.cardio.map(({ cardioKey }) => cardioKey),
+      [...source.days[0]!.cardio].reverse().map(({ cardioKey }) => cardioKey),
     );
     await expect(
       raw.query<{ value: unknown }>(

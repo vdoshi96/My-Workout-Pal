@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="4c1b3b529a319b6eeaad0c9cb9eb40849ca91754b66cdceafe802dd0c3710326">
+  <title>Flexible day-builder plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Flexible day-builder plan</h1>
+<h2>Outcome</h2>
+<p>A verified member can open the active routine editor, shape any saved day without relying on starter names or counts, publish one complete immutable revision, reload the saved day, and start a workout from that exact revision.</p>
+<p>The editor supports movement add, replace, reviewed removal, and keyboard ordering; arbitrary optional section add, rename, reviewed removal, and keyboard ordering; and zero, one, or two ordered alternative cardio choices. Stable opaque topology keys survive rename and reorder operations. Publication creates new descendant rows and never rewrites an earlier routine revision or workout snapshot.</p>
+<p>This Wave 1 slice consumes the Wave 0 flexible-publication contract. It doesn&#39;t change the guest landing page, signed-in home, Progress naming, companion copy, canonical or private library persistence, private guidance persistence, or inline private-movement creation.</p>
+<h2>Navigation and flow</h2>
+<p>The member flow uses the following routes:</p>
+<ol>
+<li>Open <code>/app/program/edit</code> from the active owned routine.</li>
+<li>Select any day by its stable route key without discarding draft changes.</li>
+<li>Add, replace, reorder, or review removal of movements.</li>
+<li>Add, rename, reorder, or review removal of optional sections. Every published movement remains in one structural section, but no section name or classification is mandatory.</li>
+<li>Add, remove, configure, and reorder zero to two alternative cardio choices.</li>
+<li>Publish through <code>/api/app/program/publish</code> with the existing retry-stable idempotency key.</li>
+<li>Open the selected saved day by its stable route key, reload it, and start or resume its exact server-snapshotted revision.</li>
+</ol>
+<p>Changing the selected day inside the editor doesn&#39;t navigate or reset the draft. Leaving the editor with unpublished changes keeps the existing discard review.</p>
+<h2>Editor state</h2>
+<p>The client keeps the following explicit states:</p>
+<ul>
+<li>Clean: The draft matches the active published revision.</li>
+<li>Dirty: At least one draft field, order, selection, or canonical-unit input differs from the baseline.</li>
+<li>Choosing: The editor has an add, replace, or seed-day request waiting for the library chooser.</li>
+<li>Reviewing removal: The editor names the exact movement or section descendants that the next publication omits.</li>
+<li>Invalid: The error summary names structural, selection, or measurement blockers without discarding the draft.</li>
+<li>Publishing: Controls are unavailable while one request is in flight.</li>
+<li>Published: The returned graph matches the submitted operation and becomes the clean baseline.</li>
+<li>Conflict or failure: The active revision remains unchanged, the local draft remains available, and the same operation can be reconciled or retried safely.</li>
+</ul>
+<h2>Types and ownership boundary</h2>
+<p>The day builder owns draft placement and accepts one narrow movement selection:</p>
+<pre><code class="language-ts">type MovementSelection = Readonly&lt;{
+  source: Readonly&lt;{
+    kind: &quot;catalog&quot; | &quot;custom&quot;;
+    id: string;
+  }&gt;;
+  name: string;
+  loggingKind: LoggingKind;
+}&gt;;
+
+type MovementChooserRequest =
+  | Readonly&lt;{ intent: &quot;add&quot; }&gt;
+  | Readonly&lt;{ intent: &quot;replace&quot;; currentSelection: MovementSelection }&gt;
+  | Readonly&lt;{ intent: &quot;seed-day&quot; }&gt;;
+</code></pre>
+<p>The library worker owns chooser search, catalog and private data loading, equipment compatibility filtering, inline private creation, and guidance persistence. The discriminated chooser boundary requires <code>currentSelection</code> only for <code>replace</code>; <code>add</code> and <code>seed-day</code> carry no current selection. The chooser exposes dismiss and sanitized stable error callbacks. An error can&#39;t contain an owner identifier or private URL.</p>
+<p>The neutral contract enters this branch from reviewed checkpoint <code>5255a5254fcde4c1b1558947bda64d47bad23743</code> in <code>src/domain/exercises/movement-chooser-contract.ts</code>. The existing editor chooser adapts its candidate rows into the strict runtime selection schema before calling the day-builder consumer. The library can replace that presentation and data adapter later without taking ownership of editor placement or publication.</p>
+<p>A chooser selection contains no owner key, route identity, program identity, stable topology key, prescription target, guidance URL, or server-authoritative movement metadata. The returned name and logging kind are interface and default hints. The server revalidates movement existence, ownership, logging meaning, and equipment compatibility during publication. The editor captures its own day, section, and prescription destination before it opens the chooser and applies the returned selection there.</p>
+<p>The day builder owns the following transformations:</p>
+<ul>
+<li>Preserve a prescription key when replacing a movement.</li>
+<li>Preserve compatible fields for a same-logging-kind replacement.</li>
+<li>Retain sets, rest, kind, and notes but reset incompatible ranges and targets for a cross-kind replacement.</li>
+<li>Generate a fresh opaque prescription key when adding a movement.</li>
+<li>Preserve cardio keys when reordering choices.</li>
+<li>Require a fresh review bound to the exact prescription or section keys before destructive removal.</li>
+</ul>
+<h2>Persistence and authorization</h2>
+<p>Wave 0 migration <code>0005_flexible_routine_topology</code> and the existing publication repository remain the topology and authorization boundary. Migration <code>0006_program_cardio_display_order</code> adds one bounded <code>display_order</code> value to owned program cardio rows because mode order can&#39;t preserve a member&#39;s chosen alternative order. The migration backfills existing rows deterministically in Walker-then-Runner order, restores the published-row immutability trigger before it makes the value required, and adds revision-day uniqueness and 1-2 bounds. It changes no cardio meaning, workout snapshot, or template row.</p>
+<p>Publication writes array position as cardio display order. Program reads, root cloning, equipment revisions, and workout start preserve and order by that value. This slice doesn&#39;t edit catalog or private-library storage and doesn&#39;t apply the migration to production.</p>
+<p>Publication keeps these guarantees:</p>
+<ul>
+<li>The server derives Firebase UID from the revocation-aware HTTP-only session.</li>
+<li>Same-origin CSRF and verified mutation eligibility run before request parsing and database construction.</li>
+<li>The request contains no owner key.</li>
+<li>The repository validates the active owner-scoped base revision and every catalog or owner-private movement.</li>
+<li>One publication writes a complete revision with new descendant row IDs and preserved stable topology keys.</li>
+<li>A stale revision, missing or foreign movement, changed idempotency payload, incompatible equipment reference, or invalid aggregate writes nothing.</li>
+<li>Private responses remain <code>Cache-Control: private, no-store</code>.</li>
+</ul>
+<p>Workout start continues to accept the opaque program-day row ID from the owner-scoped saved-day route. The server snapshots the selected published day name, section titles, movement meaning, targets, order, and optional cardio before returning the runner session.</p>
+<h2>Bounds and validation</h2>
+<p>The editor and publication boundary preserve these Wave 0 limits:</p>
+<ul>
+<li>1-14 ordered days.</li>
+<li>1-12 structural sections per day.</li>
+<li>1-40 movements per day and at most 200 movements per routine.</li>
+<li>Zero to two unique cardio choices per day.</li>
+<li>Day and section names contain 1-120 characters.</li>
+<li>Program names contain 1-80 characters.</li>
+<li>Existing prescription, notes, canonical measurement, and duration limits.</li>
+</ul>
+<p>The interface never assumes five days, a section named Core, one section of each classification, or a Walker and Runner pair. The <code>strength</code>, <code>accessory</code>, and <code>core</code> values remain internal default-prescription classifications under the Wave 0 contract; they don&#39;t determine the visible section name, uniqueness, presence, or order.</p>
+<h2>Failure recovery</h2>
+<ul>
+<li>Keep all draft data after validation, request, response-shape, connection, and stale-revision failures.</li>
+<li>Keep one idempotency key for an interrupted publication until a confirmed response establishes the next clean baseline.</li>
+<li>Validate the complete returned graph and bind it to the submitted operation before showing a saved state.</li>
+<li>If a selected movement disappears, identify the unavailable draft movement and don&#39;t send the request.</li>
+<li>If a removal review becomes stale after another edit, refuse the removal and require a fresh review.</li>
+<li>If the selected day disappears from a confirmed publication response, select the nearest surviving saved day.</li>
+<li>If a saved-day start finds another resumable day, show the existing named conflict and don&#39;t open the wrong workout.</li>
+</ul>
+<h2>Responsive behavior and accessibility</h2>
+<p>Phone layouts keep one selected day and its controls in document order. Tablet and desktop layouts keep the day outline beside the editor. No layout changes topology meaning.</p>
+<p>All ordering uses visible <strong>Up</strong> and <strong>Down</strong> controls and requires no drag gesture. Every action name includes its day, section, movement, or cardio choice. Removal uses a labeled modal dialog, moves focus to the destructive action, supports <strong>Cancel</strong> and Escape, and restores focus to the nearest surviving control. Validation uses an alert summary; save and ordering changes use a polite live region. Controls retain visible focus, 44 by 44 CSS pixel targets, reduced-motion behavior, dark-mode contrast, forced-colors legibility, and reachability at 200% zoom.</p>
+<h2>Privacy</h2>
+<p>Routine names, day and section names, private movements, targets, and notes are account data. They don&#39;t enter public caches, service-worker routes, analytics, logs, or public evidence. Screenshots use synthetic fixture owners and contain no Firebase credential, database URL, owner UID, private guidance link, or private recording derivative.</p>
+<h2>Test-driven implementation</h2>
+<p>Retain concise failed-before and passed-after evidence for the following behavior:</p>
+<ul>
+<li>Cardio ordering preserves the two opaque keys and doesn&#39;t mutate the source draft.</li>
+<li>Migration <code>0006</code> backfills existing optional cardio, preserves immutable meaning, accepts order 1-2, and rejects duplicate or out-of-range order.</li>
+<li>A stale or unconfirmed movement-removal review can&#39;t remove a movement.</li>
+<li>A confirmed movement-removal review removes only the named prescription and preserves the remaining order and keys.</li>
+<li>Add and replace consume the narrow selection shape while keeping the existing target-retention and reset rules.</li>
+<li>The editor renders arbitrary day and section names, exposes keyboard ordering for movements, sections, and cardio, and doesn&#39;t contain fixed five-day or mandatory-Core assumptions.</li>
+<li>Publish accepts the complete arbitrary topology, returns the exact stable keys and cardio order, and leaves the earlier revision unchanged.</li>
+<li>Reload resolves the selected stable day route, and workout start snapshots the exact saved order and zero-to-two cardio shape.</li>
+</ul>
+<p>Run focused unit and component tests before repository and workout integration tests. The final gate includes strict TypeScript, full ESLint, all Vitest files, Drizzle metadata, deterministic seed validation, generated service-worker verification, documentation parity, the supported Webpack production build, and the production route-boundary check.</p>
+<h2>Browser evidence</h2>
+<p>The production-mode authenticated fixture uses synthetic owners and the real PGlite repositories. Replay this focused journey in Chromium desktop and WebKit phone:</p>
+<ol>
+<li>Open an owned arbitrary-name routine and select a nonstarter day.</li>
+<li>Add and replace movements through the selection boundary, reorder them, and cancel then confirm one reviewed removal.</li>
+<li>Add, rename, and reorder an optional section; cancel then confirm its removal review.</li>
+<li>Start with zero cardio, add two alternatives, reorder them, remove one, then add it again and retain the authored two-choice order.</li>
+<li>Publish, reload the saved-day route, and verify names, counts, keys, and order.</li>
+<li>Start the saved day and verify the immutable runner snapshot uses the published movement, section, and cardio order.</li>
+<li>Verify keyboard operation, dialog focus restoration, no serious or critical Axe result, no horizontal overflow, private no-store responses, and no unexpected console, page, or first-party request failures.</li>
+</ol>
+<p>Retain only the newest completed QA report and representative Chromium desktop and WebKit phone screenshots under <code>docs/qa/latest/</code>.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>An authenticated owner can add, replace, review removal of, and reorder movements without changing another owner or an earlier revision.</li>
+<li>The owner can add, rename, reorder, and review removal of optional sections without a fixed Core requirement.</li>
+<li>The owner can configure and reorder zero, one, or two alternative cardio choices without requiring a Walker and Runner pair.</li>
+<li>A two-choice cardio reorder survives publication, reload, root cloning, equipment revision, and workout snapshot creation.</li>
+<li>Stable day, section, prescription, and cardio keys survive rename and reorder operations and round-trip through publication.</li>
+<li>The selected saved day reloads by its stable route key and starts an exact immutable workout snapshot.</li>
+<li>Arbitrary names and counts work within the documented safety bounds.</li>
+<li>The chooser boundary remains limited to movement selection; no competing catalog, private movement, or guidance persistence is added.</li>
+<li>Focused tests, broad verification, authenticated Chromium desktop and WebKit phone evidence, documentation parity, and Git diff review pass before the branch is pushed.</li>
+</ul>
+<h2>Verification record</h2>
+<p>Failed-before evidence:</p>
+<ul>
+<li>The editor-model run reported two failures and 15 passes before cardio reordering and reviewed movement removal existed.</li>
+<li>The publication/repository run reported two failures and 21 passes: <code>[runner, walker]</code> reloaded as <code>[walker, runner]</code>, and zero-distance cardio parsed successfully.</li>
+<li>The cardio-default test reported the received one-second values before the builder adopted a useful 1,200-second default.</li>
+</ul>
+<p>Passed-after evidence:</p>
+<ul>
+<li>Focused chooser/editor/publication/migration/repository matrix: 6 files and 64 tests.</li>
+<li>Migration-impact matrix: 8 files and 83 tests.</li>
+<li>Complete permission-correct Vitest run: 109 files and 747 tests in 109.18 seconds.</li>
+<li>Strict TypeScript, full ESLint, Drizzle metadata, exact-two seed, generated service worker, documentation parity, Webpack production build, and the 41-entry production route boundary passed.</li>
+<li>Authenticated production-fixture journey: Chromium desktop passed in 10.1 seconds; WebKit phone passed in 17.7 seconds; 2 passed in 29.2 seconds.</li>
+</ul>
+<p>The newest report and representative synthetic frames are retained in <code>docs/qa/latest/FLEXIBLE-DAY-BUILDER-QA.md</code>. No migration was applied, no deployment ran, and this evidence makes no hosted-production claim.</p>
+
+  </main>
+</body>
+</html>

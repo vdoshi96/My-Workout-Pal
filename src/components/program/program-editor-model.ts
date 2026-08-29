@@ -20,6 +20,7 @@ import {
   metersToDisplay,
   paceToDisplay,
 } from "@/components/workout/workout-runner-presenters";
+import type { MovementSelection } from "@/domain/exercises/movement-chooser-contract";
 
 export type ProgramExerciseCandidate = Readonly<{
   id: string;
@@ -52,7 +53,7 @@ export type ProgramEditorDraft = Omit<ProgramPublishInput, "days"> & {
 };
 
 export type ProgramDayCreateOptions = Readonly<{
-  candidate?: ProgramExerciseCandidate;
+  candidate?: MovementSelection;
   dayKey?: string;
   displayName: string;
   insertAt?: number;
@@ -80,6 +81,13 @@ export type ProgramDayRemovalReview = Readonly<{
   dayKey: string;
   exerciseNames: readonly string[];
   prescriptionKeys: readonly string[];
+}>;
+
+export type ProgramPrescriptionRemovalReview = Readonly<{
+  confirmed: boolean;
+  exerciseName: string;
+  prescriptionKey: string;
+  sectionKey: string;
 }>;
 
 export function programEditorUnitLabels(
@@ -528,7 +536,7 @@ function defaultCardio(mode: ProgramCardioMode, cardioKey: string): ProgramCardi
   return {
     cardioKey,
     distanceM: null,
-    durationSeconds: 1,
+    durationSeconds: 1_200,
     inclinePercent: null,
     mode,
     notes: null,
@@ -573,6 +581,29 @@ export function removeProgramCardio(
     throw new RangeError("The requested cardio choice is unavailable.");
   }
   day.cardio.splice(cardioIndex, 1);
+  return next;
+}
+
+export function reorderProgramCardio(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  dayIndexOrKey: number | string,
+  cardioKey: string,
+  direction: -1 | 1,
+): ProgramEditorDraft {
+  const next = editorDraftClone(input);
+  const day = dayAtEditor(next, dayIndexOrKey);
+  const cardioIndex = day.cardio.findIndex((cardio) => cardio.cardioKey === cardioKey);
+  const targetIndex = cardioIndex + direction;
+  if (
+    cardioIndex < 0 ||
+    targetIndex < 0 ||
+    targetIndex >= day.cardio.length
+  ) {
+    throw new RangeError("The cardio move is outside this day.");
+  }
+  const [moved] = day.cardio.splice(cardioIndex, 1);
+  if (!moved) throw new RangeError("The cardio move is outside this day.");
+  day.cardio.splice(targetIndex, 0, moved);
   return next;
 }
 
@@ -786,15 +817,15 @@ function sectionAt(
   return section;
 }
 
-function candidateReference(candidate: ProgramExerciseCandidate) {
-  return candidate.kind === "catalog"
-    ? { catalogExerciseId: candidate.id, customExerciseId: null }
-    : { catalogExerciseId: null, customExerciseId: candidate.id };
+function candidateReference(candidate: MovementSelection) {
+  return candidate.source.kind === "catalog"
+    ? { catalogExerciseId: candidate.source.id, customExerciseId: null }
+    : { catalogExerciseId: null, customExerciseId: candidate.source.id };
 }
 
 function defaultPrescription(
   sectionKind: ProgramSectionKind,
-  candidate: ProgramExerciseCandidate,
+  candidate: MovementSelection,
   usedKeys?: ReadonlySet<string>,
 ): ProgramPrescription {
   const duration =
@@ -828,7 +859,7 @@ export function addProgramPrescription<T extends ProgramPublishInput>(
   input: T,
   dayIndex: number,
   sectionIndex: number,
-  candidate: ProgramExerciseCandidate,
+  candidate: MovementSelection,
 ): T {
   const next = structuredClone(input) as T;
   const section = sectionAt(next, dayIndex, sectionIndex);
@@ -842,7 +873,7 @@ export function replaceProgramPrescription<T extends ProgramPublishInput>(
   dayIndex: number,
   sectionIndex: number,
   prescriptionIndex: number,
-  candidate: ProgramExerciseCandidate,
+  candidate: MovementSelection,
   currentLoggingKind: LoggingKind,
 ): T {
   const next = structuredClone(input) as T;
@@ -871,11 +902,34 @@ export function replaceProgramPrescription<T extends ProgramPublishInput>(
   return next;
 }
 
+export function reviewProgramPrescriptionRemoval(
+  input: ProgramPublishInput | ProgramEditorDraft,
+  dayIndex: number,
+  sectionIndex: number,
+  prescriptionIndex: number,
+  exerciseName: string,
+): ProgramPrescriptionRemovalReview {
+  const section = sectionAtEditor(editorDraftClone(input), dayIndex, sectionIndex);
+  const prescription = section.prescriptions[prescriptionIndex];
+  if (!prescription) throw new RangeError("The requested program movement is unavailable.");
+  const normalizedName = exerciseName.trim();
+  if (normalizedName.length === 0) {
+    throw new RangeError("The movement removal review must name the movement.");
+  }
+  return {
+    confirmed: false,
+    exerciseName: normalizedName,
+    prescriptionKey: prescription.prescriptionKey,
+    sectionKey: section.sectionKey,
+  };
+}
+
 export function removeProgramPrescription<T extends ProgramPublishInput>(
   input: T,
   dayIndex: number,
   sectionIndex: number,
   prescriptionIndex: number,
+  review: ProgramPrescriptionRemovalReview,
 ): T {
   const next = structuredClone(input) as T;
   const section = sectionAt(next, dayIndex, sectionIndex);
@@ -884,6 +938,17 @@ export function removeProgramPrescription<T extends ProgramPublishInput>(
   }
   if (!section.prescriptions[prescriptionIndex]) {
     throw new RangeError("The requested program movement is unavailable.");
+  }
+  const prescription = section.prescriptions[prescriptionIndex]!;
+  if (
+    !review.confirmed ||
+    review.exerciseName.trim().length === 0 ||
+    review.sectionKey !== section.sectionKey ||
+    review.prescriptionKey !== prescription.prescriptionKey
+  ) {
+    throw new RangeError(
+      "The movement removal review is incomplete or stale; confirm the named movement before removing.",
+    );
   }
   section.prescriptions.splice(prescriptionIndex, 1);
   return next;

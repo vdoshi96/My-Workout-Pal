@@ -27,9 +27,11 @@ import {
   renameProgramDay,
   renameProgramSection,
   reorderProgramDay,
+  reorderProgramCardio,
   reorderProgramSection,
   reorderProgramPrescription,
   reviewProgramDayRemoval,
+  reviewProgramPrescriptionRemoval,
   reviewProgramSectionRemoval,
   stripLocalProgramPrescriptionIds,
   validateProgramSectionStructure,
@@ -37,6 +39,7 @@ import {
   type ProgramExerciseCandidate,
 } from "@/components/program/program-editor-model";
 import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
+import type { MovementSelection } from "@/domain/exercises/movement-chooser-contract";
 
 function programReadModel(): ActiveProgramReadModel {
   const dayKeys = ["push", "pull", "legs", "upper", "lower"] as const;
@@ -153,6 +156,18 @@ function candidate(
     searchText: "route press chest dumbbells",
     ...overrides,
   };
+}
+
+function selectionFromCandidate(value: ProgramExerciseCandidate): MovementSelection {
+  return {
+    loggingKind: value.loggingKind,
+    name: value.name,
+    source: { id: value.id, kind: value.kind },
+  };
+}
+
+function selection(overrides: Partial<ProgramExerciseCandidate> = {}): MovementSelection {
+  return selectionFromCandidate(candidate(overrides));
 }
 
 describe("program editor request model", () => {
@@ -487,7 +502,7 @@ describe("program editor request model", () => {
       moved,
       0,
       1,
-      candidate({
+      selection({
         id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         name: "Accessory row",
         role: null,
@@ -556,7 +571,7 @@ describe("program editor request model", () => {
     const addedDayKey = "12345678-1234-4234-8234-123456789012";
     const addedSectionKey = "12345678-1234-4234-8234-123456789013";
     const added = addProgramDay(draft, {
-      candidate: candidate({
+      candidate: selection({
         id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
         name: "New-day movement",
       }),
@@ -635,9 +650,13 @@ describe("program editor request model", () => {
     const runnerKey = "12345678-1234-4234-8234-123456789016";
     const withWalker = addProgramCardio(noCardio, noCardio.days[0]!.dayKey, "walker", walkerKey);
     const withBoth = addProgramCardio(withWalker, noCardio.days[0]!.dayKey, "runner", runnerKey);
-    expect(withBoth.days[0]!.cardio.map(({ mode, cardioKey }) => ({ mode, cardioKey }))).toEqual([
-      { mode: "walker", cardioKey: walkerKey },
-      { mode: "runner", cardioKey: runnerKey },
+    expect(withBoth.days[0]!.cardio.map(({ mode, cardioKey, durationSeconds }) => ({
+      mode,
+      cardioKey,
+      durationSeconds,
+    }))).toEqual([
+      { mode: "walker", cardioKey: walkerKey, durationSeconds: 1_200 },
+      { mode: "runner", cardioKey: runnerKey, durationSeconds: 1_200 },
     ]);
     const cardioDuplicate = duplicateProgramDay(withBoth, noCardio.days[0]!.dayKey, {
       dayKey: "12345678-1234-4234-8234-123456789017",
@@ -678,6 +697,29 @@ describe("program editor request model", () => {
     expect(validateProgramSectionStructure(tooManyInRoutine)).toContain(
       "A routine can contain at most 200 movements.",
     );
+  });
+
+  it("reorders alternative cardio immutably while preserving opaque identities", () => {
+    const draft = programEditorDraftFromPublishInput(
+      programPublishInputFromReadModel(programReadModel(), "publish-key"),
+    );
+    const dayKey = draft.days[0]!.dayKey;
+    const originalKeys = draft.days[0]!.cardio.map(({ cardioKey }) => cardioKey);
+
+    const reordered = reorderProgramCardio(
+      draft,
+      dayKey,
+      originalKeys[1]!,
+      -1,
+    );
+
+    expect(reordered).not.toBe(draft);
+    expect(reordered.days[0]!.cardio.map(({ mode, cardioKey }) => ({ mode, cardioKey }))).toEqual([
+      { mode: "runner", cardioKey: originalKeys[1] },
+      { mode: "walker", cardioKey: originalKeys[0] },
+    ]);
+    expect(draft.days[0]!.cardio.map(({ cardioKey }) => cardioKey)).toEqual(originalKeys);
+    expect(() => reorderProgramCardio(draft, dayKey, originalKeys[0]!, -1)).toThrow(/outside/i);
   });
 
   it("maps the owner-free active revision and preserves stable source identities", () => {
@@ -728,7 +770,7 @@ describe("program editor request model", () => {
 
   it("adds a strength movement with editable defaults without mutating the source draft", () => {
     const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
-    const next = addProgramPrescription(draft, 0, 0, candidate());
+    const next = addProgramPrescription(draft, 0, 0, selection());
 
     expect(next).not.toBe(draft);
     expect(draft.days[0]!.sections[0]!.prescriptions).toHaveLength(2);
@@ -763,18 +805,18 @@ describe("program editor request model", () => {
         title: "Accessory",
       });
     withSections.days[0]!.sections[2]!.prescriptions = [];
-    const accessory = addProgramPrescription(withSections, 0, 1, candidate());
+    const accessory = addProgramPrescription(withSections, 0, 1, selection());
     const repetitionCore = addProgramPrescription(
       accessory,
       0,
       2,
-      candidate({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", loggingKind: "bodyweight_reps" }),
+      selection({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", loggingKind: "bodyweight_reps" }),
     );
     const timedCore = addProgramPrescription(
       repetitionCore,
       0,
       2,
-      candidate({ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", loggingKind: "duration" }),
+      selection({ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", loggingKind: "duration" }),
     );
 
     expect(accessory.days[0]!.sections[1]!.prescriptions[0]).toMatchObject({
@@ -806,7 +848,7 @@ describe("program editor request model", () => {
       0,
       0,
       0,
-      candidate(),
+      selection(),
       "weight_reps",
     );
     const duration = replaceProgramPrescription(
@@ -814,7 +856,7 @@ describe("program editor request model", () => {
       0,
       0,
       0,
-      candidate({
+      selection({
         id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         loggingKind: "duration",
         name: "Route hold",
@@ -848,15 +890,46 @@ describe("program editor request model", () => {
     );
   });
 
-  it("refuses to empty a section and filters compatible candidates by bounded text", () => {
+  it("requires an exact movement-removal review and refuses to empty a section", () => {
     const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
     const oneRow = structuredClone(draft);
     oneRow.days[0]!.sections[0]!.prescriptions.splice(1);
 
-    expect(() => removeProgramPrescription(oneRow, 0, 0, 0)).toThrow(/last movement/i);
-    const removed = removeProgramPrescription(draft, 0, 0, 1);
+    const oneRowReview = reviewProgramPrescriptionRemoval(
+      oneRow,
+      0,
+      0,
+      0,
+      "Exercise 1",
+    );
+    expect(() => removeProgramPrescription(oneRow, 0, 0, 0, {
+      ...oneRowReview,
+      confirmed: true,
+    })).toThrow(/last movement/i);
+
+    const review = reviewProgramPrescriptionRemoval(draft, 0, 0, 1, "Exercise 2");
+    expect(() => removeProgramPrescription(draft, 0, 0, 1, review)).toThrow(/confirm/i);
+    expect(() => removeProgramPrescription(draft, 0, 0, 0, {
+      ...review,
+      confirmed: true,
+    })).toThrow(/stale/i);
+    const removed = removeProgramPrescription(draft, 0, 0, 1, {
+      ...review,
+      confirmed: true,
+    });
     expect(removed.days[0]!.sections[0]!.prescriptions).toHaveLength(1);
     expect(draft.days[0]!.sections[0]!.prescriptions).toHaveLength(2);
+
+    expect(review).toEqual({
+      confirmed: false,
+      exerciseName: "Exercise 2",
+      prescriptionKey: draft.days[0]!.sections[0]!.prescriptions[1]!.prescriptionKey,
+      sectionKey: draft.days[0]!.sections[0]!.sectionKey,
+    });
+  });
+
+  it("filters compatible candidates by bounded text", () => {
+    const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
 
     const custom = candidate({
       id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
@@ -868,6 +941,7 @@ describe("program editor request model", () => {
     });
     expect(filterProgramExerciseCandidates([candidate(), custom], " BACK   ")).toEqual([custom]);
     expect(filterProgramExerciseCandidates([candidate(), custom], "x".repeat(121))).toEqual([]);
+    expect(draft.days[0]!.displayName).toBe("Push");
   });
 
   it("blocks a distance-duration selection until it has a positive distance target", () => {
@@ -878,7 +952,12 @@ describe("program editor request model", () => {
       name: "Loaded carry",
       role: null,
     });
-    const next = addProgramPrescription(draft, 0, 0, distance);
+    const next = addProgramPrescription(
+      draft,
+      0,
+      0,
+      selectionFromCandidate(distance),
+    );
     const candidates = [
       candidate({ id: "44444444-4444-4444-8444-444444444440" }),
       candidate({ id: "44444444-4444-4444-8444-444444444441" }),
@@ -914,12 +993,22 @@ describe("program editor request model", () => {
       custom,
     ];
 
-    const customDraft = addProgramPrescription(draft, 0, 0, custom);
+    const customDraft = addProgramPrescription(
+      draft,
+      0,
+      0,
+      selectionFromCandidate(custom),
+    );
     expect(validateProgramExerciseSelections(customDraft, available)).toEqual([
       "Private carry needs a positive distance target before publication.",
     ]);
 
-    const catalogDraft = addProgramPrescription(draft, 0, 0, catalog);
+    const catalogDraft = addProgramPrescription(
+      draft,
+      0,
+      0,
+      selectionFromCandidate(catalog),
+    );
     expect(validateProgramExerciseSelections(catalogDraft, available)).toEqual([]);
     expect(validateProgramExerciseSelections(customDraft, available.filter((candidate) => candidate.kind === "catalog"))).toEqual([
       "A selected movement is no longer available.",
@@ -929,7 +1018,7 @@ describe("program editor request model", () => {
   it("strips only client-local prescription identifiers before publication", () => {
     const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
     const localId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
-    const added = addProgramPrescription(draft, 0, 0, candidate());
+    const added = addProgramPrescription(draft, 0, 0, selection());
     added.days[0]!.sections[0]!.prescriptions.at(-1)!.sourcePrescriptionId = localId;
 
     const publishable = stripLocalProgramPrescriptionIds(added, new Set([localId]));

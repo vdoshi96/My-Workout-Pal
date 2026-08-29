@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="ea7d261892c967be073e743ed28d3097b877f674c3c359bd0969279b2ceef509">
+  <meta name="source-sha256" content="afb23a597867bfc7b4246ae4a91396601524fb8f0280b3460bdd0318f13c415e">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -98,6 +98,9 @@
 <h2>2026-08-27: Handle idle Neon failures at the pool boundary</h2>
 <p>The application constructs the Neon WebSocket pool explicitly and registers one privacy-safe <code>error</code> listener before handing the pool to Drizzle. Neon already removes a client that fails while idle; the application listener prevents Node&#39;s unhandled event behavior from terminating a warm function and records only constant diagnostic text.</p>
 <p>The listener does not retry a query, convert an active database failure into success, expose the error object, or change the lazy database singleton. Interactive transactions remain on the WebSocket-backed pool. Authentication and CSRF routes remain database-independent, even if an idle pool event from earlier work occurs while one of those routes is running.</p>
+<h2>2026-08-28: Persist authored cardio choice order explicitly</h2>
+<p>Walker and Runner are optional alternatives, not semantic positions. Program cardio rows therefore store a bounded display order within each owned revision day. Publication derives that order only from the validated day payload; reads, root clones, equipment revisions, and workout snapshot creation preserve it. Mode remains unique within the day but does not determine presentation order.</p>
+<p>Migration <code>0006_program_cardio_display_order</code> backfills existing published rows in their prior Walker-then-Runner presentation order while the descendant immutability trigger is narrowly suspended, then restores the guard before making the position required. It adds per-day order uniqueness and a one-to-two bound and does not change cardio meaning or workout history. Production application of this migration remains a separately reviewed release action.</p>
 
   </main>
 </body>

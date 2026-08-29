@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f29795c119deaa2ee9747a12fcdb9fd1bf6189236fd17b215cfc8cb18758bb97">
+  <meta name="source-sha256" content="6cca1ddaa84410d1f5546f139102b2c44b2554c2d98c486904b0b9cf8e479408">
   <title>Project wiki · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,6 +39,8 @@
 <li><code>docs/plans/SURFACES.md</code>: route-by-route implementation plans and evidence requirements.</li>
 <li><code>docs/plans/GUEST-LANDING-AND-CONTEXTUAL-NAVIGATION.md</code>: public welcome, optional account boundary, and origin-aware exercise navigation contract.</li>
 <li><code>docs/plans/WORKOUT-COMPANION-REPOSITIONING.md</code>: sign-in handoff, flexible routines, personal home, library expansion, private guidance, copy, visual concept, worktree, and release plan.</li>
+<li><code>docs/plans/FLEXIBLE-DAY-BUILDER.md</code>: Wave 1 editor interactions, chooser boundary, immutable publish and saved-day start flow, and focused evidence requirements.</li>
+<li><code>docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md</code>: Wave 1 library expansion, private movement and guidance persistence, neutral chooser contract, immutable workout snapshot handoff, and focused evidence requirements.</li>
 <li><code>docs/plans/NEON-CSRF-RESILIENCE.md</code>: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.</li>
 <li><code>docs/plans/PROGRAM-COLLECTION.md</code>: owned-program creation, cloning, activation, authorization, recovery, and verification design.</li>
 <li><code>docs/plans/VERIFICATION.md</code>: automated and manual release matrix.</li>
@@ -52,6 +54,16 @@
 <li><code>docs/reference/DEPLOYMENT-RECOVERY.md</code>: environments, release checks, cost controls, and recovery.</li>
 </ul>
 <p>Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.</p>
+<h2>Wave 1 day-builder architecture</h2>
+<p>The unmerged <code>vishal/flexible-day-builder</code> branch separates library selection from routine placement:</p>
+<ul>
+<li><code>src/domain/exercises/movement-chooser-contract.ts</code> owns the neutral add, replace, and seed-day request plus the sanitized selection/error boundary.</li>
+<li><code>src/components/program/program-editor.tsx</code> owns destination state, accessible ordering and removal review, publication recovery, and mapping the selection into the catalog/custom XOR.</li>
+<li><code>src/components/program/program-editor-model.ts</code> owns immutable draft transformations, fresh opaque keys, defaults, same-kind retention, and cross-kind reset.</li>
+<li><code>src/server/repositories/profile-program.ts</code> remains the owner-scoped publication authority and creates complete immutable revisions.</li>
+<li><code>drizzle/0006_program_cardio_display_order.sql</code> and <code>src/db/schema.ts</code> persist alternative cardio order explicitly; program reads, root clones, equipment revisions, and <code>src/server/repositories/workout-repository.ts</code> preserve it into the workout snapshot.</li>
+</ul>
+<p>The library may replace the editor&#39;s current candidate-list adapter without taking ownership of topology, targets, publication, or guidance snapshots. Production migration application remains a separate schema-owner release action. See <code>docs/plans/FLEXIBLE-DAY-BUILDER.md</code>, <code>docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md</code>, and <code>docs/context/DECISIONS.md</code> for the detailed contracts.</p>
 
   </main>
 </body>
