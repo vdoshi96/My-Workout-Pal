@@ -2,7 +2,13 @@
 
 ## Release invariant
 
-Every seeded canonical exercise and equipment variation must have exactly two ordered, unique demonstrations that passed mechanical eligibility, human quality review, and a complete human viewing. A missing metadata check, incomplete official-or-authorized-browser discovery manifest, or incomplete watch review blocks production seeding. The application must not substitute arbitrary links.
+Every variation in the explicit app-video requirement policy must have exactly
+two ordered, unique demonstrations that passed mechanical eligibility, human
+quality review, and a complete human viewing. Catalog records outside that
+policy can seed with reviewed names and instructions but no app-approved video
+rows. A missing metadata check, incomplete official-or-authorized-browser
+discovery manifest, or incomplete watch review blocks video seeding. The
+application must not substitute arbitrary links.
 
 ## Credential and quota boundary
 
@@ -10,7 +16,14 @@ Every seeded canonical exercise and equipment variation must have exactly two or
 
 Official YouTube documentation accessed August 26, 2026, assigns `search.list` a separate default bucket of 100 calls per day at one unit per call. `videos.list` costs one unit in the combined quota for other endpoints. The local checkpoint counts successful calls and estimates documented method units; the provider quota page remains authoritative for rejected, invalid, or external calls that did not become successful checkpoint progress.
 
-Without a target manifest, the command derives exactly one target with stable `variationId: "canonical"` from each of the 27 catalog records. Each target carries a movement stem, useful aliases, and only relevant barbell/dumbbell discriminator terms; bodyweight targets do not require a title to contain `bodyweight`. A private `--targets` manifest or `YOUTUBE_CURATION_TARGETS` path explicitly overrides this default, including an intentional empty array.
+Without a target manifest, the command derives exactly one target with stable
+`variationId: "canonical"` from each of the 27 variations in the explicit
+app-video requirement policy. Catalog growth does not expand this target set.
+Each target carries a movement stem, useful aliases, and only relevant
+barbell/dumbbell discriminator terms; bodyweight targets do not require a title
+to contain `bodyweight`. A private `--targets` manifest or
+`YOUTUBE_CURATION_TARGETS` path explicitly overrides this default, including an
+intentional empty array.
 
 The curation command stores resumable progress outside production data. It records completed official queries, durable per-query page counts, page tokens, hydrated IDs, rejection codes, quota estimates, review status, ranked eligible candidates, and proposed pairs. A separate ignored browser receipt records rendered query runs and exact card observations without mutating official query keys or search accounting. Input targets are deduplicated by canonical exercise plus variation, pending hydration IDs are deduplicated across targets, and the report emits one target entry per key. Discovered-candidate, review, and rejection maps use the scoped `canonicalExerciseSlug::variationId::videoId` key. A configurable request budget stops before the next API request would exceed its limit. Search and hydration request caps are independent within the run's total unit cap: reaching the search cap still permits low-cost metadata hydration for IDs already in the checkpoint. Re-running continues a query only when quota interrupted it before the configured total page cap. Reaching `maxPagesPerQuery` marks that official query complete so repeated runs cannot crawl deeper pages or starve later exercises. Existing IDs are checked before search quota is spent.
 
@@ -82,7 +95,15 @@ The seed does not store indefinite ranking scores or stale view counts as produc
 
 ## Validation
 
-`pnpm seed:check` derives the required set from all 27 catalog records when `--required` is omitted: each record maps to the durable `variationId: "canonical"`. A supplied required manifest must contain unique keys, cover every default catalog mapping, and contain no unsupported or non-canonical mapping. The checker must reject any seed with a missing required mapping, count other than two, invalid ID syntax, duplicate ID within a variation or anywhere else in the production seed, wrong variation, missing approval, missing full-watch confirmation, duplicate order, or unsupported canonical exercise reference.
+`pnpm seed:check` derives the required set from the 27 explicitly declared
+app-video variations when `--required` is omitted. Each declaration maps to the
+durable `variationId: "canonical"`. A supplied required manifest must contain
+unique keys, cover every default declared mapping, and contain no unsupported
+or noncanonical mapping. The checker rejects any seed with a missing required
+mapping, count other than two, invalid ID syntax, duplicate ID within a
+variation or anywhere else in the production seed, extra row, wrong variation,
+missing approval, missing full-watch confirmation, duplicate order, or
+unsupported canonical exercise reference.
 
 The checker also confirms that reused starter prescriptions point to the same canonical exercise and therefore reuse the same approved demonstrations.
 
@@ -96,7 +117,7 @@ Checkpoint schema is versioned. State from the earlier unscoped schema is reject
 
 ## Local command scaffold
 
-Run `pnpm youtube:curate` with an official `YOUTUBE_API_KEY` in ignored `.env.local` or the process environment. The package command loads `.env.local` when the file exists. Without `--targets` (or `YOUTUBE_CURATION_TARGETS`), the command invokes the typed workflow for the complete 27-record catalog-derived target set. A private target manifest explicitly overrides that set, including an intentional empty array. The command resumes from `.local/youtube-curation/checkpoint.json`, and writes the review proposal to `.local/youtube-curation/review-report.json`. The report includes query provenance, discovery status, mechanical rejection codes, view-count-ordered eligible candidates, proposed pairs, and quota-blocked state when a request budget stops progress. Set `YOUTUBE_CURATION_MAX_QUOTA_UNITS`, `YOUTUBE_CURATION_MAX_SEARCH_REQUESTS`, `YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS`, and `YOUTUBE_CURATION_MAX_PAGES_PER_QUERY` (or the matching command-line flags) to bound a run. The page value is a durable total cap for each query, not a per-run allowance. Use `--refresh-unavailable` to explicitly retry IDs previously omitted by `videos.list`.
+Run `pnpm youtube:curate` with an official `YOUTUBE_API_KEY` in ignored `.env.local` or the process environment. The package command loads `.env.local` when the file exists. Without `--targets` (or `YOUTUBE_CURATION_TARGETS`), the command invokes the typed workflow for the complete 27-variation policy-derived target set. A private target manifest explicitly overrides that set, including an intentional empty array. The command resumes from `.local/youtube-curation/checkpoint.json`, and writes the review proposal to `.local/youtube-curation/review-report.json`. The report includes query provenance, discovery status, mechanical rejection codes, view-count-ordered eligible candidates, proposed pairs, and quota-blocked state when a request budget stops progress. Set `YOUTUBE_CURATION_MAX_QUOTA_UNITS`, `YOUTUBE_CURATION_MAX_SEARCH_REQUESTS`, `YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS`, and `YOUTUBE_CURATION_MAX_PAGES_PER_QUERY` (or the matching command-line flags) to bound a run. The page value is a durable total cap for each query, not a per-run allowance. Use `--refresh-unavailable` to explicitly retry IDs previously omitted by `videos.list`.
 
 For an authorized browser fallback, place schema-v2 `queryRuns` and `candidates` arrays in ignored `.local/youtube-curation/browser-candidates.json`, then run `pnpm youtube:import-browser`. Every exact deduplicated required query must contain one complete 15-card bounded window. The command writes `.local/youtube-curation/browser-imports.json` with mode `0600`, inserts new scoped IDs without official query keys, and hydrates pending IDs when the local API key is available. Use `--no-hydrate` for an import-only checkpoint or `--max-hydrate-requests` to bound provider checks. Missing or whitespace-empty input performs no new import, and a prior receipt can reconstruct checkpoint candidates after an interrupted receipt-first write. Reimport is idempotent.
 
@@ -110,7 +131,11 @@ If `YOUTUBE_API_KEY` is missing, the command exits before creating state or maki
 Missing YOUTUBE_API_KEY; refusing to run YouTube curation.
 ```
 
-Run `pnpm seed:check --seed SEED.json` to validate against the complete catalog-derived requirement, or add `--required REQUIRED.json` to validate a private override that still must cover the complete default set. Both paths use the typed domain seed validator, reject incomplete exact-two mappings, and never write production data.
+Run `pnpm seed:check --seed SEED.json` to validate against the complete explicit
+app-video requirement policy, or add `--required REQUIRED.json` to validate a
+private override that still covers the complete default set. Both paths use the
+typed domain seed validator, reject incomplete exact-two mappings, and never
+write production data.
 
 ## Player requirements
 

@@ -1,21 +1,24 @@
 import { describe, expect, it } from "vitest";
 
-import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
 import {
   assertDefaultYouTubeCurationTargets,
   buildDefaultYouTubeCurationTargets,
 } from "@/domain/youtube/targets";
+import { APPROVED_VIDEO_REQUIRED_VARIATIONS } from "@/domain/youtube/video-requirements";
 
 describe("default YouTube curation targets", () => {
-  it("covers each catalog record exactly once with the durable canonical variation", () => {
+  it("covers each declared video-required variation exactly once", () => {
     const targets = buildDefaultYouTubeCurationTargets();
     const keys = targets.map((target) => `${target.canonicalExerciseSlug}::${target.variationId}`);
 
     expect(targets).toHaveLength(27);
     expect(new Set(keys).size).toBe(targets.length);
-    expect(new Set(targets.map((target) => target.canonicalExerciseSlug))).toEqual(
-      new Set(Object.keys(CATALOG_EXERCISES)),
-    );
+    expect(new Set(keys)).toEqual(new Set(
+      APPROVED_VIDEO_REQUIRED_VARIATIONS.map(
+        ({ canonicalExerciseSlug, variationId }) =>
+          `${canonicalExerciseSlug}::${variationId}`,
+      ),
+    ));
     expect(targets.every((target) => target.variationId === "canonical")).toBe(true);
   });
 
@@ -40,7 +43,7 @@ describe("default YouTube curation targets", () => {
       "exactly one",
     );
     expect(() => assertDefaultYouTubeCurationTargets(targets.slice(1))).toThrow(
-      "catalog",
+      "video-required",
     );
   });
 });

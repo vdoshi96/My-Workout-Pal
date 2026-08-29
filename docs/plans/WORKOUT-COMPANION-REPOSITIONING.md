@@ -74,7 +74,7 @@ These bounds are recommended implementation limits, not a claim that a useful ro
 ### Exercise library and personal guidance
 
 - Every canonical movement can ship when it has a unique name, stable slug, logging kind, equipment requirements, movement family, search aliases, primary muscles, and concise reviewed instructions.
-- Canonical video status is explicit: `not_started`, `in_review`, `approved_pair`, or `unavailable`.
+- Canonical video curation status is explicit outside the catalog manifest: `not_started`, `in_review`, `approved_pair`, or `unavailable`.
 - An `approved_pair` still requires exactly two unique, eligible, fully watched demonstrations and the existing curation evidence. A movement without an approved pair renders useful text guidance and no empty player.
 - The app does not block a larger name-and-instruction library on video availability.
 - A member can add a canonical or private movement from the routine editor's searchable chooser.

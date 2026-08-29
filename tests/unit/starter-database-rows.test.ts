@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { buildStarterDatabaseRows } from "@/domain/seed/starter-database-rows";
-import { buildStarterDatabaseSeed } from "@/domain/seed/starter-database";
+import {
+  buildStarterDatabaseSeed,
+  type StarterDatabaseSeed,
+} from "@/domain/seed/starter-database";
+import { APPROVED_CURATED_VIDEO_SEED } from "@/domain/youtube/approved-curated-video-seed";
+import { buildDefaultRequiredVideoVariations } from "@/domain/youtube/seed-validation";
 
 const UUID_V5 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -107,5 +112,66 @@ describe("starter database seed rows", () => {
         lowerSections.some(({ id }) => id === sectionId),
     );
     expect(lowerPrescription).toBeDefined();
+  });
+
+  it("seeds a synthetic text-only catalog record without fabricating an approved pair", () => {
+    const base = buildStarterDatabaseSeed();
+    const textOnlySlug = "synthetic-text-only-movement";
+    const expanded: StarterDatabaseSeed = {
+      ...base,
+      exercises: [
+        ...base.exercises,
+        {
+          slug: textOnlySlug,
+          name: "Synthetic text-only movement",
+          role: "accessory",
+          loggingKind: "bodyweight_reps",
+          movementFamily: "synthetic-text-only",
+          muscles: ["core"],
+          instructions: [
+            "Set a stable starting position.",
+            "Move under control.",
+            "Stop before the position changes.",
+          ].join("\n"),
+        },
+      ],
+      exerciseEquipment: [
+        ...base.exerciseEquipment,
+        { exerciseSlug: textOnlySlug, equipmentId: "bodyweight" },
+      ],
+      exerciseAliases: [
+        ...base.exerciseAliases,
+        {
+          exerciseSlug: textOnlySlug,
+          alias: "Text-only movement",
+          normalizedAlias: "text-only movement",
+        },
+      ],
+    };
+    const rows = buildStarterDatabaseRows(expanded);
+    const textOnlyRow = rows.catalogExercises.find(
+      ({ slug }) => slug === textOnlySlug,
+    );
+
+    expect(rows.catalogExercises).toHaveLength(base.exercises.length + 1);
+    expect(buildDefaultRequiredVideoVariations()).toHaveLength(27);
+    expect(rows.curatedVideos).toHaveLength(54);
+    expect(textOnlyRow?.instructions).toContain("Move under control.");
+    expect(
+      rows.curatedVideos.some(({ exerciseId }) => exerciseId === textOnlyRow?.id),
+    ).toBe(false);
+  });
+
+  it("fails closed when a declared approved pair is missing", () => {
+    const firstRequired = buildDefaultRequiredVideoVariations()[0]!;
+    const missingPair = APPROVED_CURATED_VIDEO_SEED.filter(
+      ({ canonicalExerciseSlug, variationId }) =>
+        canonicalExerciseSlug !== firstRequired.canonicalExerciseSlug
+        || variationId !== firstRequired.variationId,
+    );
+
+    expect(() =>
+      buildStarterDatabaseRows(buildStarterDatabaseSeed(), missingPair),
+    ).toThrow(/required-video-count/i);
   });
 });

@@ -15,9 +15,13 @@ Every production catalog record must contain:
 - One or more existing equipment IDs: `bodyweight`, `dumbbells`, `barbell`, `plates`, `bench`, or `rack`.
 - A movement family, primary muscles, search aliases, and three concise form instructions.
 - A content-review status and reviewer evidence for name, equipment, logging meaning, instructions, and duplicate detection.
-- A video status: `not_started`, `in_review`, `approved_pair`, or `unavailable`.
 
-An `approved_pair` requires exactly two unique, eligible, fully watched demonstrations under the existing YouTube curation policy. `not_started`, `in_review`, and `unavailable` records still provide useful names and instructions, but render no empty or unapproved catalog player.
+Video curation status stays in a separate policy source, not in the catalog
+manifest schema. An `approved_pair` requires exactly two unique, eligible, fully
+watched demonstrations under the existing YouTube curation policy.
+`not_started`, `in_review`, and `unavailable` curation records still correspond
+to useful catalog names and instructions, but render no empty or unapproved
+catalog player.
 
 Do not add a new equipment category in this batch. Bands, cables, kettlebells, pull-up bars, suspension trainers, machines, medicine balls, and cardio machines require their own equipment-profile and compatibility plan.
 
@@ -191,7 +195,7 @@ For every candidate, the content agent must:
 5. Add movement family, primary muscles, aliases, and compatibility tests.
 6. Generate deterministic catalog and seed output.
 7. Verify public and member-library search, detail, and routine-chooser behavior.
-8. Leave video status truthful. Do not add an arbitrary video to satisfy a count.
+8. Leave the separate video-curation status truthful. Do not add an arbitrary video to satisfy a count.
 
 The video-research agent works later from the private curation checkpoint. It can propose exact movement-variation candidates and fill research evidence, but only a human full-watch review can approve a pair for the production seed.
 

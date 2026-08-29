@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
+import { CATALOG_MANIFEST_RECORDS } from "@/domain/exercises/catalog-manifests";
 
 describe("canonical exercise metadata", () => {
   it("gives every seeded exercise muscles, aliases, movement family, and original cues", () => {
     const exercises = Object.values(CATALOG_EXERCISES);
 
-    expect(exercises).toHaveLength(27);
+    expect(exercises).toHaveLength(CATALOG_MANIFEST_RECORDS.length);
     for (const exercise of exercises) {
       expect(exercise.primaryMuscles.length).toBeGreaterThan(0);
       expect(exercise.aliases.length).toBeGreaterThan(0);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="25d84cefa9aae8583911cf17beab50045b2d4cd5ed0b102f1a7912cd6ba69cb2">
+  <meta name="source-sha256" content="dbe25511cd6fc5cd2b709b2580b9d6cb63d341e132d13f90482741503a1f6732">
   <title>Library and personal guidance foundation plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -105,7 +105,8 @@ breakpoints.</p>
 produces the combined application catalog and database seed rows. Each record
 retains one stable slug, display name, logging kind, required equipment,
 movement family, aliases, primary muscles, exactly three reviewed instructions,
-content status, and video status.</p>
+and no curation-workflow fields. Content review evidence and video status remain
+outside the runtime catalog manifest.</p>
 <p>Wave 1 preserves the 27 released records and their 54 approved videos exactly.
 It adds no expansion candidate to runtime data before its metadata and
 instructions pass review. Generator tests prove deterministic output, unique
