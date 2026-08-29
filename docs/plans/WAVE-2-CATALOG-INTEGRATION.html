@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="be4225d9238092ffaa9250e1d77b65ce2309fd352f09da3f61bc2c41f9fba3da">
+  <title>Wave 2 catalog integration plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 2 catalog integration plan</h1>
+<h2>Outcome</h2>
+<p>Produce one reviewable local integration candidate on
+<code>vishal/wave-2-catalog-integration</code> from base
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>. Integrate the shared catalog and
+video-eligibility contract, the strength catalog expansion, and the core,
+conditioning, and mobility expansion without duplicating the shared
+prerequisite.</p>
+<p>The generated catalog must contain 134 deterministic records: the 27 released
+records followed by 107 additions. The strength package contributes 65
+distinct records. The core, conditioning, and mobility package contributes 42
+records. <code>prone-dumbbell-row</code> is not a catalog record; the released
+<code>chest-supported-dumbbell-row</code> record gains the exact alias
+<code>prone dumbbell row</code>.</p>
+<p>Keep the approved-video boundary at exactly 27 declared canonical variations
+and 54 already-reviewed rows. Catalog-only records remain searchable,
+selectable, publishable, runnable, and useful through written instructions
+without gaining an approved video or empty iframe.</p>
+<h2>Scope and stop boundaries</h2>
+<p>This integration may:</p>
+<ul>
+<li>Create and push <code>vishal/wave-2-catalog-integration</code>.</li>
+<li>Preserve the shared checkpoint and both source packages through explicit Git
+provenance.</li>
+<li>Resolve integration conflicts, central assertions, authenticated Playwright
+discovery, documentation, and local QA evidence.</li>
+<li>Run local database bootstrap, schema, seed, build, route, and browser gates.</li>
+</ul>
+<p>This integration must not:</p>
+<ul>
+<li>Merge or fast-forward local or GitHub <code>main</code>.</li>
+<li>Apply a production migration, seed or mutate production data, deploy,
+promote, or change a provider or alias.</li>
+<li>Add, approve, or seed a Grok URL, candidate URL, candidate video ID, iframe,
+or provider mapping.</li>
+<li>Change schema or migrations unless an unexpected verified product blocker is
+reported before work continues.</li>
+<li>Add Wave 3 Corner Companions artwork, CSS, or runtime assets.</li>
+<li>Modify or remove a sibling worktree or source branch.</li>
+<li>Commit private recordings, transcripts, frames, curation scratch files,
+credentials, or owner-derived data.</li>
+</ul>
+<h2>Verified intake</h2>
+<p>Before branch creation, the integration worktree was clean and detached at
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>. Local <code>main</code>, <code>origin/main</code>, and the
+live GitHub <code>main</code> ref resolved to the same commit. Each required source tip has
+that base as its merge base.</p>
+<p>The verified remote inputs are:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Remote branch</th>
+<th>Required tip</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Catalog and video eligibility</td>
+<td><code>origin/vishal/catalog-video-eligibility-contract</code></td>
+<td><code>7046a94bae41e90839b16d5329b58a1975600ee9</code></td>
+</tr>
+<tr>
+<td>Strength expansion</td>
+<td><code>origin/vishal/library-strength-expansion</code></td>
+<td><code>5863659f274b932ba4e0ca1b8e9fc0a23f703c38</code></td>
+</tr>
+<tr>
+<td>Core, conditioning, and mobility expansion</td>
+<td><code>origin/vishal/library-core-conditioning-expansion</code></td>
+<td><code>ac5b1b51b24f6554ac4ae9b731f8140ad73cf904</code></td>
+</tr>
+</tbody></table>
+<p>Shared checkpoint <code>7046a94</code>, strength prerequisite cherry-pick <code>ad92476</code>, and
+core prerequisite cherry-pick <code>1cc190a</code> have stable patch ID
+<code>36dd3f8aadbe2782d71d1088f33b2a2b0c49d3af</code>, the same parent, and identical
+tree <code>0b873ced560c5b698d08307e7466671181dcf5ff</code>. Preserve <code>7046a94</code> as the
+canonical shared commit and omit the two patch-equivalent duplicates.</p>
+<h2>Integration order and provenance</h2>
+<p>Integrate the sources in the following order:</p>
+<ol>
+<li>Cherry-pick shared checkpoint <code>7046a94</code> so its exact commit remains in the
+candidate history.</li>
+<li>Cherry-pick strength content <code>bbd44ab</code> and evidence <code>5863659</code> without
+prerequisite duplicate <code>ad92476</code>.</li>
+<li>Cherry-pick core, conditioning, and mobility content/evidence <code>ac5b1b51</code>
+without prerequisite duplicate <code>1cc190a</code>.</li>
+<li>Resolve every overlap explicitly. Record the chosen content and reason in
+the integration QA report. Never accept one side wholesale when that action
+would discard another source package&#39;s owned records or evidence.</li>
+<li>Add an integration checkpoint for central assertions, matcher composition,
+canonical documentation, generated HTML, and the consolidated QA package.</li>
+</ol>
+<p>Preserve the two source-worker plans as intentional implementation history.
+Consolidate completed evidence under <code>docs/qa/latest/</code> only after the combined
+candidate passes its complete gate.</p>
+<h2>Integration failed-before evidence</h2>
+<p>Source reports retain feature-level red-to-green evidence. Keep additional
+integration evidence only for failures that the combined candidate exposes.
+The expected initial assertion mismatches are:</p>
+<ol>
+<li>The released-record generator snapshot expects the former two-alias value
+for <code>chest-supported-dumbbell-row</code>. Update it to require the exact third
+alias <code>prone dumbbell row</code>.</li>
+<li>The shared library-filter assertion expects only
+<code>dumbbell-romanian-deadlift</code> for <code>dumbbell RDL</code>. Update it to require both
+<code>dumbbell-romanian-deadlift</code> and
+<code>single-leg-dumbbell-romanian-deadlift</code> in deterministic order.</li>
+<li>The shared workout-repository fixture excludes <code>distance_duration</code> from its
+logging-kind expectation. Add the supported kind and prove all 19 tests in
+that file recover.</li>
+</ol>
+<p>Also retain concise evidence for textual conflicts or genuine combined
+defects, including the exact command, failing assertion or path, root cause,
+correction, and passing replay. Keep sandbox or permission failures separate
+from product failures, and treat them as infrastructure only after an unchanged
+approved rerun passes.</p>
+<h2>Catalog and type contract</h2>
+<p>The category manifests remain the only authored catalog-membership source. The
+generator validates and deeply freezes the combined output. Preserve the
+released 27-record prefix and visit additions in category and inventory order.</p>
+<p>Each of the 107 additions must include:</p>
+<ul>
+<li>One unique stable slug and display name.</li>
+<li>One supported logging kind: <code>weight_reps</code>, <code>bodyweight_reps</code>, <code>duration</code>, or
+<code>distance_duration</code>.</li>
+<li>One or more existing equipment IDs.</li>
+<li>One supported role, one movement family, one or more primary muscles, and
+useful distinct aliases.</li>
+<li>Exactly three concise, claim-safe instructions in setup, controlled
+execution, and finish or stopping order.</li>
+<li>No durable database ID, URL, provider state, owner data, or video status.</li>
+</ul>
+<p>The five added <code>distance_duration</code> records are supported catalog members. The
+editor requires a positive distance before publication, the runner logs
+canonical meters and duration, and presentation converts units only at
+validated input and display boundaries.</p>
+<h2>Search, navigation, and interface states</h2>
+<p>Public and authenticated libraries must search names, slugs, movement families,
+aliases, primary muscles, equipment, and the existing authenticated
+logging-kind labels. Apply equipment compatibility before a result becomes
+selectable. For literal query <code>dumbbell RDL</code>, return the bilateral movement
+before the single-leg movement.</p>
+<p>Public and member exercise-detail routes keep written instructions available
+when approved app guidance is absent. A catalog-only record renders the
+truthful unavailable state with zero iframe elements. Approved released records
+retain the existing two-option player.</p>
+<p>The routine editor uses the neutral chooser result only:</p>
+<pre><code class="language-ts">{
+  source: { kind: &quot;catalog&quot; | &quot;custom&quot;; id: string };
+  name: string;
+  loggingKind: LoggingKind;
+}
+</code></pre>
+<p>The editor owns placement, targets, ordering, replacement defaults, and
+publication. Search, equipment metadata, guidance, and ownership don&#39;t enter
+the selection callback.</p>
+<h2>Persistence, authorization, and history</h2>
+<p>Catalog expansion adds no persistence path. Stable database identities remain
+derived from canonical slugs at the seed boundary. The existing server derives
+Firebase UID from the verified session, validates catalog membership and
+equipment compatibility, and publishes a complete immutable revision.</p>
+<p>Workout start snapshots the selected revision, exercise meaning, logging kind,
+targets, and resolved owner guidance. Reload, resume, and history read the
+snapshot instead of mutable catalog or guidance state. A later catalog or
+guidance edit can&#39;t rewrite an active or completed workout.</p>
+<p>Store weight in kilograms and distance in meters. Keep owner-provided guidance
+separate, private, and labeled as the member&#39;s link. A catalog-only record must
+remain publishable and runnable when app guidance is unavailable.</p>
+<h2>Video eligibility and seed stability</h2>
+<p>Video-required membership comes only from the explicit stable policy module.
+It remains exactly 27 canonical variations. The checked-in approved manifest
+remains exactly 54 rows, with two reviewed rows for each required variation and
+no row for any catalog-only addition.</p>
+<p>Seed construction must add catalog, compatibility, and alias rows for all 134
+records while preserving the exact approved-video rows byte for byte. Seed
+validation continues to reject missing, duplicate, extra, unknown, unsupported,
+pending, rejected, or incomplete video rows.</p>
+<p>No central assertion may expect 135 catalog records. Assertions for 27 required
+variations and 54 approved rows must remain explicit and independent of total
+catalog membership.</p>
+<h2>Failure recovery, responsive behavior, and accessibility</h2>
+<p>Search, chooser, publication, and workout failures keep the existing draft,
+retry, stale-revision, and idempotency behavior. A missing video can&#39;t block
+selection, publication, logging, resume, or history. A malformed response can&#39;t
+advance the editor or runner.</p>
+<p>At phone and desktop sizes, long names, results, target fields, publication
+errors, and runner controls must remain visible without horizontal overflow.
+Preserve keyboard operation, visible focus, label-in-name, semantic headings and
+lists, focus restoration, status announcements, 44-by-44 CSS-pixel touch
+targets, reduced motion, and forced-colors behavior. Run accessibility checks
+on representative expanded chooser, editor, detail, and runner states.</p>
+<h2>Authenticated browser evidence</h2>
+<p>Add exact spec names <code>library-strength-expansion.spec.ts</code> and
+<code>library-core-conditioning-expansion.spec.ts</code> to the maintained authenticated
+Playwright matcher without removing any existing journey.</p>
+<p>Run each exact expansion journey on <code>chromium-desktop</code> and <code>webkit-phone</code>.
+Then rerun the combined maintained authenticated matrix. The journeys must use
+the real editor, owner-scoped publication, reload, saved-day start, production
+runner, correct logging controls, truthful unavailable guidance, zero iframe,
+and accessibility scans.</p>
+<p>The manifests, public search, exercise detail, seed graph, and runtime guidance
+are shared public/runtime behavior. Run the maintained public matrix after the
+focused authenticated evidence and record any documented engine capability
+skip separately from a failure.</p>
+<h2>Verification matrix</h2>
+<p>Run one large gate at a time and record exact file, test, pass, fail, and skip
+totals:</p>
+<ul>
+<li>Integration RED for the three central assertion mismatches, then their exact
+passing replay.</li>
+<li>Focused catalog generator, metadata, category, filter, chooser, publication,
+starter-row, seed, YouTube policy, missing-video presentation, runner,
+snapshot, history, and workout-repository tests.</li>
+<li>Full Vitest.</li>
+<li>Strict TypeScript and full ESLint.</li>
+<li>Database bootstrap and migration tests without applying an external
+migration.</li>
+<li>Drizzle schema metadata validation.</li>
+<li><code>pnpm seed:check</code> plus an approved-row byte comparison.</li>
+<li>Service-worker generation and parity.</li>
+<li>Documentation generation and Markdown/HTML parity.</li>
+<li>Next.js Webpack production build and route-boundary verification.</li>
+<li>Focused authenticated Chromium desktop and WebKit phone journeys.</li>
+<li>Combined maintained authenticated matrix.</li>
+<li>Maintained public matrix.</li>
+<li><code>git diff --check</code>, generated-output checks, forbidden-content scans, and a
+clean worktree audit.</li>
+</ul>
+<h2>Documentation and evidence closeout</h2>
+<p>Update <code>PRODUCT.md</code>, <code>docs/context/STATUS.md</code>, relevant decisions and plans,
+<code>docs/wiki/index.md</code>, and the corrected expansion reference when verified
+product truth changes. Preserve the worker plans and intentional historical
+135-candidate wording only where the text clearly labels the superseded intake.
+Describe the released product contract as 134 records, 107 additions, 27
+video-required variations, and 54 approved rows.</p>
+<p>After the complete candidate passes, retain one Wave 2 integration report and
+its HTML counterpart plus only the newest combined screenshots under
+<code>docs/qa/latest/</code>. Remove superseded generated evidence from that directory only
+after the replacement is verified. Keep source-worker plans and any evidence
+outside <code>docs/qa/latest/</code> that the final report cites as intentional provenance.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>The clean candidate descends from the exact requested base and records all
+three required source tips or their intentional patch-equivalent provenance.</li>
+<li>The catalog contains exactly 134 unique records in deterministic order: 27
+released records, 65 strength additions, and 42 core, conditioning, and
+mobility additions.</li>
+<li><code>prone-dumbbell-row</code> is absent, and <code>chest-supported-dumbbell-row</code> contains
+exact alias <code>prone dumbbell row</code>.</li>
+<li><code>dumbbell RDL</code> returns both required slugs in deterministic order.</li>
+<li>All five <code>distance_duration</code> additions select, publish, run, and retain their
+canonical logging meaning.</li>
+<li>Every addition has supported metadata and exactly three safe instructions.</li>
+<li>Approved video eligibility remains 27 variations and 54 byte-stable rows;
+no candidate video or iframe enters runtime data.</li>
+<li>Catalog-only records work through search, selection, immutable publication,
+runner logging, resume, and history with truthful unavailable guidance.</li>
+<li>Ownership, immutable snapshots, kilogram/meter storage, private guidance,
+PWA cache boundaries, accessibility, and responsive behavior pass without
+regression.</li>
+<li>Focused tests, complete static/data/build gates, both focused authenticated
+journeys, the combined authenticated matrix, and the public matrix pass with
+only documented capability skips.</li>
+<li>Canonical Markdown and generated HTML agree, and <code>docs/qa/latest/</code> contains
+only the verified Wave 2 integration evidence package.</li>
+<li>The final branch is clean, pushed, and reported with exact SHA, provenance,
+conflict decisions, totals, QA paths, sibling worktrees, and release gates.</li>
+<li>Local and GitHub <code>main</code>, production data, providers, deployments, and sibling
+worktrees remain unchanged.</li>
+</ul>
+
+  </main>
+</body>
+</html>
