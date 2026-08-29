@@ -460,7 +460,12 @@ describe("canonical catalog generator", () => {
       "conditioning-and-carries",
       "mobility-and-recovery",
     ]);
-    expect(CATALOG_MANIFEST_RECORDS).toHaveLength(27);
+    expect(CATALOG_MANIFEST_RECORDS).toHaveLength(
+      Object.keys(CATALOG_EXERCISES).length,
+    );
+    expect(CATALOG_MANIFEST_RECORDS.length).toBeGreaterThanOrEqual(
+      releasedCatalogSnapshot.length,
+    );
     expect(
       CATALOG_MANIFEST_RECORDS.every(
         (record) => !Object.prototype.hasOwnProperty.call(record, "id"),
@@ -498,10 +503,12 @@ describe("canonical catalog generator", () => {
       ),
     );
 
-    expect(Object.keys(CATALOG_EXERCISES)).toEqual(
+    expect(Object.keys(CATALOG_EXERCISES).slice(0, releasedCatalogSnapshot.length)).toEqual(
       releasedCatalogSnapshot.map(([slug]) => slug),
     );
-    expect(CATALOG_EXERCISES).toEqual(expected);
+    for (const [slug, exercise] of Object.entries(expected)) {
+      expect(CATALOG_EXERCISES[slug]).toEqual(exercise);
+    }
   });
 
   it("normalizes aliases with the same rule used by seed rows", () => {

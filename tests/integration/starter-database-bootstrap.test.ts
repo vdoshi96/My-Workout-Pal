@@ -14,6 +14,7 @@ import {
   buildStarterDatabaseRows,
   type StarterDatabaseRows,
 } from "@/domain/seed/starter-database-rows";
+import { buildDefaultRequiredVideoVariations } from "@/domain/youtube/seed-validation";
 
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
@@ -39,6 +40,7 @@ afterEach(async () => {
 describe("starter database bootstrap", () => {
   it("publishes the complete starter graph and reruns without material changes", async () => {
     const { raw, database } = await openDatabase();
+    const expectedRows = buildStarterDatabaseRows();
 
     const first = await seedStarterDatabase(database);
     const before = await raw.query<{ payload: unknown }>(`
@@ -62,7 +64,7 @@ describe("starter database bootstrap", () => {
     expect(first).toEqual(second);
     expect(first).toMatchObject({
       catalogEquipment: 6,
-      catalogExercises: 27,
+      catalogExercises: expectedRows.catalogExercises.length,
       templateRevisions: 2,
       templateDays: 10,
       templateSections: 26,
@@ -70,6 +72,8 @@ describe("starter database bootstrap", () => {
       templateCardioPrescriptions: 20,
       approvedVideos: 54,
     });
+    expect(buildDefaultRequiredVideoVariations()).toHaveLength(27);
+    expect(expectedRows.curatedVideos).toHaveLength(54);
     expect(after.rows[0]?.payload).toEqual(before.rows[0]?.payload);
     expect(
       await raw.query<{ status: string; published_at: Date | null }>(`

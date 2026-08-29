@@ -1,7 +1,12 @@
 import { CATALOG_EXERCISES } from "../exercises/catalog.ts";
+import {
+  APPROVED_VIDEO_REQUIRED_VARIATIONS,
+  DEFAULT_YOUTUBE_VARIATION_ID,
+  validateVideoRequiredVariationPolicy,
+} from "./video-requirements.ts";
 import type { YouTubeCurationTarget } from "./types.ts";
 
-export const DEFAULT_YOUTUBE_VARIATION_ID = "canonical";
+export { DEFAULT_YOUTUBE_VARIATION_ID } from "./video-requirements.ts";
 
 type DefaultYouTubeCurationTarget = YouTubeCurationTarget & Readonly<{ variationId: string }>;
 
@@ -75,21 +80,27 @@ function targetForCatalogRecord(exercise: (typeof CATALOG_EXERCISES)[string]): D
   };
 }
 
-function targetKey(target: DefaultYouTubeCurationTarget): string {
+function targetKey(target: Readonly<{
+  canonicalExerciseSlug: string;
+  variationId: string;
+}>): string {
   return `${target.canonicalExerciseSlug}::${target.variationId}`;
 }
 
 export function assertDefaultYouTubeCurationTargets(
   targets: readonly DefaultYouTubeCurationTarget[],
 ): void {
-  const catalogSlugs = Object.keys(CATALOG_EXERCISES);
-  const expectedKeys = new Set(catalogSlugs.map((slug) => `${slug}::${DEFAULT_YOUTUBE_VARIATION_ID}`));
+  const requiredVariations = validateVideoRequiredVariationPolicy(
+    APPROVED_VIDEO_REQUIRED_VARIATIONS,
+    Object.keys(CATALOG_EXERCISES),
+  );
+  const expectedKeys = new Set(requiredVariations.map(targetKey));
   const actualKeys = new Set(targets.map(targetKey));
-  if (targets.length !== catalogSlugs.length || actualKeys.size !== targets.length) {
-    throw new Error("Default YouTube targets must contain exactly one target per catalog record.");
+  if (targets.length !== requiredVariations.length || actualKeys.size !== targets.length) {
+    throw new Error("Default YouTube targets must contain exactly one target per video-required variation.");
   }
   if (actualKeys.size !== expectedKeys.size || [...expectedKeys].some((key) => !actualKeys.has(key))) {
-    throw new Error("Default YouTube targets must cover every catalog record exactly once.");
+    throw new Error("Default YouTube targets must cover every video-required variation exactly once.");
   }
   for (const target of targets) {
     const catalogExercise = CATALOG_EXERCISES[target.canonicalExerciseSlug];
@@ -122,7 +133,13 @@ export function assertDefaultYouTubeCurationTargets(
 }
 
 export function buildDefaultYouTubeCurationTargets(): readonly DefaultYouTubeCurationTarget[] {
-  const targets = Object.values(CATALOG_EXERCISES).map(targetForCatalogRecord);
+  const requiredVariations = validateVideoRequiredVariationPolicy(
+    APPROVED_VIDEO_REQUIRED_VARIATIONS,
+    Object.keys(CATALOG_EXERCISES),
+  );
+  const targets = requiredVariations.map(({ canonicalExerciseSlug }) =>
+    targetForCatalogRecord(CATALOG_EXERCISES[canonicalExerciseSlug]!),
+  );
   assertDefaultYouTubeCurationTargets(targets);
   return targets;
 }

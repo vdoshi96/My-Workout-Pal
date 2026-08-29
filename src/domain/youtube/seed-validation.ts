@@ -1,6 +1,10 @@
 import { CATALOG_EXERCISES } from "../exercises/catalog.ts";
-import { DEFAULT_YOUTUBE_VARIATION_ID } from "./targets.ts";
 import { YOUTUBE_VIDEO_ID_PATTERN } from "./normalization.ts";
+import {
+  APPROVED_VIDEO_REQUIRED_VARIATIONS,
+  DEFAULT_YOUTUBE_VARIATION_ID,
+  validateVideoRequiredVariationPolicy,
+} from "./video-requirements.ts";
 import type {
   CuratedVideoSeed,
   RequiredVideoVariation,
@@ -33,10 +37,10 @@ function hasOwnValue(record: Record<string, unknown>, property: string): boolean
 }
 
 export function buildDefaultRequiredVideoVariations(): readonly RequiredVideoVariation[] {
-  return Object.keys(CATALOG_EXERCISES).map((canonicalExerciseSlug) => ({
-    canonicalExerciseSlug,
-    variationId: DEFAULT_YOUTUBE_VARIATION_ID,
-  }));
+  return validateVideoRequiredVariationPolicy(
+    APPROVED_VIDEO_REQUIRED_VARIATIONS,
+    Object.keys(CATALOG_EXERCISES),
+  );
 }
 
 export function validateCuratedVideoSeed(
@@ -49,9 +53,7 @@ export function validateCuratedVideoSeed(
 ): SeedValidationResult {
   const errors: SeedValidationError[] = [];
   const supportedCanonicalExerciseSlugs = new Set(
-    options.requireDefaultCatalogCoverage
-      ? Object.keys(CATALOG_EXERCISES)
-      : options.supportedCanonicalExerciseSlugs ?? Object.keys(CATALOG_EXERCISES),
+    options.supportedCanonicalExerciseSlugs ?? Object.keys(CATALOG_EXERCISES),
   );
   const requiredKeys = new Set(requiredVariations.map((variation) => key(variation.canonicalExerciseSlug, variation.variationId)));
   const rowsByKey = new Map<string, CuratedVideoSeed[]>();
@@ -82,7 +84,7 @@ export function validateCuratedVideoSeed(
         const variationId = defaultKey.slice(separatorIndex + 2);
         errors.push({
           code: "missing-required-variation",
-          message: "The production required manifest must cover every catalog canonical variation.",
+          message: "The production required manifest must cover every declared video-required variation.",
           canonicalExerciseSlug,
           variationId,
         });

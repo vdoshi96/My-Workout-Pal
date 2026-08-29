@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
+import { APPROVED_CURATED_VIDEO_SEED } from "@/domain/youtube/approved-curated-video-seed";
 import {
   buildDefaultRequiredVideoVariations,
   validateCuratedVideoSeed,
@@ -103,12 +105,45 @@ describe("curated video seed validation", () => {
     );
   });
 
-  it("derives all catalog canonical variations for the production checker", () => {
+  it("derives the declared reviewed canonical variations for the production checker", () => {
     const defaults = buildDefaultRequiredVideoVariations();
 
     expect(defaults).toHaveLength(27);
     expect(new Set(defaults.map((variation) => `${variation.canonicalExerciseSlug}::${variation.variationId}`)).size).toBe(27);
     expect(defaults.every((variation) => variation.variationId === "canonical")).toBe(true);
+  });
+
+  it("recognizes a supported text-only catalog row but rejects an undeclared video row", () => {
+    const textOnlyRow: CuratedVideoSeed = {
+      ...APPROVED_CURATED_VIDEO_SEED[0]!,
+      canonicalExerciseSlug: "synthetic-text-only-movement",
+      videoId: "TextOnly001",
+    };
+    const result = validateCuratedVideoSeed(
+      buildDefaultRequiredVideoVariations(),
+      [...APPROVED_CURATED_VIDEO_SEED, textOnlyRow],
+      {
+        supportedCanonicalExerciseSlugs: [
+          ...Object.keys(CATALOG_EXERCISES),
+          textOnlyRow.canonicalExerciseSlug,
+        ],
+        requireDefaultCatalogCoverage: true,
+      },
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({
+        code: "wrong-variation",
+        canonicalExerciseSlug: textOnlyRow.canonicalExerciseSlug,
+      }),
+    );
+    expect(result.errors).not.toContainEqual(
+      expect.objectContaining({
+        code: "unsupported-canonical-exercise",
+        canonicalExerciseSlug: textOnlyRow.canonicalExerciseSlug,
+      }),
+    );
   });
 
   it("rejects reuse of one video ID across two required variations", () => {

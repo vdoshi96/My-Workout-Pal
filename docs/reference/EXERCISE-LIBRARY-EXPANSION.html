@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b2119bee7d05f8f2131db134fdf33ee2212e9ef91ed07e078c382046c3989c5d">
+  <meta name="source-sha256" content="9a874e17526dc565c26cba66db9c1791bcc94e7089a2cfd756dd34e87b3c34ca">
   <title>Exercise library expansion inventory · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,9 +39,13 @@
 <li>One or more existing equipment IDs: <code>bodyweight</code>, <code>dumbbells</code>, <code>barbell</code>, <code>plates</code>, <code>bench</code>, or <code>rack</code>.</li>
 <li>A movement family, primary muscles, search aliases, and three concise form instructions.</li>
 <li>A content-review status and reviewer evidence for name, equipment, logging meaning, instructions, and duplicate detection.</li>
-<li>A video status: <code>not_started</code>, <code>in_review</code>, <code>approved_pair</code>, or <code>unavailable</code>.</li>
 </ul>
-<p>An <code>approved_pair</code> requires exactly two unique, eligible, fully watched demonstrations under the existing YouTube curation policy. <code>not_started</code>, <code>in_review</code>, and <code>unavailable</code> records still provide useful names and instructions, but render no empty or unapproved catalog player.</p>
+<p>Video curation status stays in a separate policy source, not in the catalog
+manifest schema. An <code>approved_pair</code> requires exactly two unique, eligible, fully
+watched demonstrations under the existing YouTube curation policy.
+<code>not_started</code>, <code>in_review</code>, and <code>unavailable</code> curation records still correspond
+to useful catalog names and instructions, but render no empty or unapproved
+catalog player.</p>
 <p>Do not add a new equipment category in this batch. Bands, cables, kettlebells, pull-up bars, suspension trainers, machines, medicine balls, and cardio machines require their own equipment-profile and compatibility plan.</p>
 <h2>Candidate status</h2>
 <p>Every entry in the following tables has this initial state:</p>
@@ -798,7 +802,7 @@
 <li>Add movement family, primary muscles, aliases, and compatibility tests.</li>
 <li>Generate deterministic catalog and seed output.</li>
 <li>Verify public and member-library search, detail, and routine-chooser behavior.</li>
-<li>Leave video status truthful. Do not add an arbitrary video to satisfy a count.</li>
+<li>Leave the separate video-curation status truthful. Do not add an arbitrary video to satisfy a count.</li>
 </ol>
 <p>The video-research agent works later from the private curation checkpoint. It can propose exact movement-variation candidates and fill research evidence, but only a human full-watch review can approve a pair for the production seed.</p>
 <h2>Acceptance criteria</h2>
