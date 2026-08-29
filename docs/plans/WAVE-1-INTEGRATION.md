@@ -83,7 +83,7 @@ Keep public `/progress` canonical and public-cacheable. Keep `/sample-progress` 
 
 The day builder owns day, section, prescription, and cardio placement; topology; stable keys; default retention and reset; publication; and exact-start behavior. Preserve arbitrary bounded day and section names and counts, optional sections and cardio, authored cardio order, and final-row safeguards.
 
-Example and blank creation must use the existing strict program-creation request, retry key, owner-scoped repository transaction, and active-program invariant. Do not add a client-only shortcut or a parallel API route. The example uses the starter template; blank creation uses the existing blank template contract and enters the same editor/publication lifecycle.
+Example and blank creation use the existing onboarding request, retry key, owner-scoped repository transaction, and exactly-one-active-program invariant. The mode participates in the idempotency hash and strict response contract. Example uses the starter template; blank writes one minimal valid published custom graph inside that same transaction and enters the existing editor/publication lifecycle. There is no client-only shortcut, hidden starter clone, or parallel API route.
 
 Every successful publication creates a complete immutable revision. Starting a workout snapshots the selected revision, day, exercise meaning, targets, and resolved guidance. Later edits can't rewrite an active or completed workout.
 
@@ -122,7 +122,7 @@ Every interactive path must work with keyboard input and visible focus, expose s
 
 Keep this local order:
 
-1. `0000_initial_schema.sql`
+1. `0000_initial.sql`
 2. `0001_account_deletion_saga.sql`
 3. `0002_workout_canonical_measurements.sql`
 4. `0003_program_collection.sql`

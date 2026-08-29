@@ -1,11 +1,20 @@
 # Project log
 
+## 2026-08-29: Wave 1 integration candidate
+
+- Integrated the exact day-builder, library/personal-guidance, and personal-home/copy tips in the required order from clean baseline `4622f9e1b7783fd35cb6c23ae9396148c7c3357a`, preserving separate merge provenance and the byte-identical chooser checkpoints.
+- Resolved the integration-owned product seams: example and blank onboarding now share one owner-scoped idempotent transaction, and the real day editor mounts one library chooser adapter for add, replace, and seed-day operations, including fresh private selections.
+- Reconciled migration `0006_program_cardio_display_order.sql` before `0007_personal_guidance.sql`, regenerated `0007_snapshot.json` from the integrated `0006` state, and verified the complete `0000`-`0007` chain plus the restored cardio immutability trigger against a disposable local PostgreSQL database.
+- Passed strict TypeScript, full ESLint, 118 Vitest files/814 tests, Drizzle, schema/bootstrap, exact-two seed, generated service worker and 50-document parity, the Webpack production build, the 44-route boundary, 38 authenticated browser cases with two intentional skips, and 47 public cases with the documented WebKit service-worker skip. Final post-cleanup browser replays repeated both matrices.
+- Consolidated `docs/qa/latest/` to one combined Wave 1 report, generated HTML, and the newest synthetic screenshots. Removed generated browser/build outputs and the disposable database after retaining the evidence.
+- Next handoff: review the pushed `vishal/wave-1-integration` candidate. Merging `main`, applying production migrations, seeding candidate guidance links, deploying, or changing production aliases/providers requires separate release authorization.
+
 ## 2026-08-28: Wave 1 flexible day-builder handoff
 
 - Built the authenticated routine/day editor slice on `vishal/flexible-day-builder` from exact Wave 0 baseline `4622f9e1b7783fd35cb6c23ae9396148c7c3357a` without changing guest, home, Progress, companion, or library-persistence ownership.
 - Added reviewed movement removal; arbitrary movement, section, and cardio ordering; useful 20-minute cardio defaults; clean-state saved-day navigation; and a complete publish/reload/start journey with stable opaque topology keys and immutable history.
 - Retained failed-before evidence for missing movement review/cardio reorder, mode-sorted reload, zero-distance publication, and one-second cardio defaults. The permission-correct final gate passes 109 Vitest files/747 tests, strict TypeScript, full lint, Drizzle, seed/PWA/docs, Webpack build, and 41-route isolation.
-- Integrated neutral library contract checkpoint `5255a5254fcde4c1b1558947bda64d47bad23743` as `2436bac`; the editor consumes exact `add`, `replace`, and `seed-day` requests and the source/name/logging-kind selection without guidance or owner data.
+- Implemented neutral day-builder contract checkpoint `2436bac92ba3381e76646bf61210cd5fd4dae88f`; the parallel library checkpoint `5255a5254fcde4c1b1558947bda64d47bad23743` was later proved patch- and blob-identical. The editor consumes exact `add`, `replace`, and `seed-day` requests and the source/name/logging-kind selection without guidance or owner data.
 - Added and locally verified migration `0006_program_cardio_display_order`; publication, reads, root clones, equipment revisions, and workout start preserve the authored two-choice order. The migration was not applied to production.
 - Final synthetic authenticated replay passed Chromium desktop in 10.1 seconds and WebKit phone in 17.7 seconds. Only the newest QA report and four representative frames remain in `docs/qa/latest/`.
 - Next handoff: push the feature branch, then let the coordinator reconcile the library and home/copy sibling branches. Do not merge or apply `0006` from this worker task.

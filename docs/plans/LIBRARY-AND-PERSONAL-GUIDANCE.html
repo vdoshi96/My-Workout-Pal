@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="dc8714205c5a152ee48a16a80793f7cb6d685ad1c869b0ab3cdb5e40c60faa43">
+  <meta name="source-sha256" content="25d84cefa9aae8583911cf17beab50045b2d4cd5ed0b102f1a7912cd6ba69cb2">
   <title>Library and personal guidance foundation plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -254,10 +254,10 @@ rows. No one of the 216 expansion candidates was added to runtime data.</p>
 and immutable workout guidance snapshot. It also copies existing private custom
 exercise YouTube links into the new store, so this additive change does not
 silently discard earlier owner guidance. The day-builder branch owns
-<code>0006_program_cardio_display_order.sql</code>. Integration must merge that branch
-first, retain both SQL migrations in numeric order, and regenerate or reconcile
-the <code>0007</code> Drizzle snapshot metadata against the integrated <code>0006</code> snapshot.
-This branch does not duplicate <code>0006</code>, apply either migration, or deploy.</p>
+<code>0006_program_cardio_display_order.sql</code>. Wave 1 integration merged that branch
+first, retained both SQL migrations in numeric order, and regenerated the
+<code>0007</code> Drizzle snapshot against the integrated <code>0006</code> snapshot. The integrated
+candidate applies neither migration to production and does not deploy.</p>
 <p>Retained TDD evidence includes failures before the personal-guidance repository
 existed, before legacy private-video backfill existed, and when resume hydration
 dropped a correctly persisted guidance snapshot. The corresponding focused
@@ -270,9 +270,10 @@ publication through the owner-scoped server contract, workout start, private
 link presentation, live-link replacement without snapshot drift, axe scanning,
 and another-owner <code>404</code>. All 27 released catalog movements already have approved
 guidance, so the browser journey uses a private movement for the unavailable-app-
-guidance state instead of inventing an unapproved catalog record. Final combined
-editor-shell wiring remains the integrator&#39;s responsibility and consumes the
-already identical frozen contract.</p>
+guidance state instead of inventing an unapproved catalog record. The integrated
+editor now consumes the adapter for add, replace, and seed-day requests through
+the already identical frozen contract; the editor still owns destinations,
+defaults, stable keys, and publication.</p>
 
   </main>
 </body>

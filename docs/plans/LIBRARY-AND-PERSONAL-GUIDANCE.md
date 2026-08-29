@@ -269,10 +269,10 @@ Migration `0007_personal_guidance.sql` adds the owner/source-XOR personal store
 and immutable workout guidance snapshot. It also copies existing private custom
 exercise YouTube links into the new store, so this additive change does not
 silently discard earlier owner guidance. The day-builder branch owns
-`0006_program_cardio_display_order.sql`. Integration must merge that branch
-first, retain both SQL migrations in numeric order, and regenerate or reconcile
-the `0007` Drizzle snapshot metadata against the integrated `0006` snapshot.
-This branch does not duplicate `0006`, apply either migration, or deploy.
+`0006_program_cardio_display_order.sql`. Wave 1 integration merged that branch
+first, retained both SQL migrations in numeric order, and regenerated the
+`0007` Drizzle snapshot against the integrated `0006` snapshot. The integrated
+candidate applies neither migration to production and does not deploy.
 
 Retained TDD evidence includes failures before the personal-guidance repository
 existed, before legacy private-video backfill existed, and when resume hydration
@@ -287,6 +287,7 @@ publication through the owner-scoped server contract, workout start, private
 link presentation, live-link replacement without snapshot drift, axe scanning,
 and another-owner `404`. All 27 released catalog movements already have approved
 guidance, so the browser journey uses a private movement for the unavailable-app-
-guidance state instead of inventing an unapproved catalog record. Final combined
-editor-shell wiring remains the integrator's responsibility and consumes the
-already identical frozen contract.
+guidance state instead of inventing an unapproved catalog record. The integrated
+editor now consumes the adapter for add, replace, and seed-day requests through
+the already identical frozen contract; the editor still owns destinations,
+defaults, stable keys, and publication.

@@ -166,3 +166,9 @@ The movement chooser communicates with routine editors only through the neutral
 `MovementChooserAdapterProps` contract. Its selection contains source, name, and
 logging kind only. Search state, equipment, guidance, editor positions, topology
 keys, and prescription defaults remain outside that boundary.
+
+## 2026-08-29: Compose Wave 1 through one onboarding transaction and one chooser
+
+New-account setup extends the existing owner-scoped onboarding transaction with an `example` or `blank` mode. The mode is included in the idempotency request hash and response contract. Example clones the reviewed starter. Blank directly writes one minimal valid published custom graph after profile and equipment persistence; it does not create a hidden starter, clone an intermediate root, or add another API route. Both modes preserve exactly one active owner graph and enter the existing editor and publication lifecycle.
+
+The routine editor mounts `MovementChooserAdapter` directly for add, replace, and seed-day requests and removes its duplicate static chooser dialog. The adapter owns loading, search, compatibility, private creation, and guidance. The editor owns placement, stable topology keys, defaults, same-kind retention, cross-kind reset, and publication. A newly created private movement is held only as a local selection hint until the next server read so the editor can render its label and logging controls; the server remains authoritative for ownership, existence, equipment compatibility, and logging meaning.

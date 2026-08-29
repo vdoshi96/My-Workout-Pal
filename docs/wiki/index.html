@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="590867231e7863dfd14f8d49d9c7efb75f0b09805bf39085b30cafdcbe25e860">
+  <meta name="source-sha256" content="377ac31895bad1c93bbc8d112909de1e63f9226a38ecf214a8b23e16487c4aa2">
   <title>Project wiki · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -56,16 +56,17 @@
 <li><code>docs/reference/DEPLOYMENT-RECOVERY.md</code>: environments, release checks, cost controls, and recovery.</li>
 </ul>
 <p>Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.</p>
-<h2>Wave 1 day-builder architecture</h2>
-<p>The unmerged <code>vishal/flexible-day-builder</code> branch separates library selection from routine placement:</p>
+<h2>Wave 1 integrated architecture</h2>
+<p>The <code>vishal/wave-1-integration</code> candidate composes library selection with routine placement while preserving the source boundaries:</p>
 <ul>
 <li><code>src/domain/exercises/movement-chooser-contract.ts</code> owns the neutral add, replace, and seed-day request plus the sanitized selection/error boundary.</li>
 <li><code>src/components/program/program-editor.tsx</code> owns destination state, accessible ordering and removal review, publication recovery, and mapping the selection into the catalog/custom XOR.</li>
 <li><code>src/components/program/program-editor-model.ts</code> owns immutable draft transformations, fresh opaque keys, defaults, same-kind retention, and cross-kind reset.</li>
-<li><code>src/server/repositories/profile-program.ts</code> remains the owner-scoped publication authority and creates complete immutable revisions.</li>
+<li><code>src/server/repositories/profile-program.ts</code> remains the owner-scoped publication authority and creates complete immutable revisions. Its existing onboarding transaction now accepts example or blank mode, includes the mode in the idempotency contract, and creates exactly one valid owned graph without a second persistence path.</li>
 <li><code>drizzle/0006_program_cardio_display_order.sql</code> and <code>src/db/schema.ts</code> persist alternative cardio order explicitly; program reads, root clones, equipment revisions, and <code>src/server/repositories/workout-repository.ts</code> preserve it into the workout snapshot.</li>
+<li><code>drizzle/0007_personal_guidance.sql</code> follows <code>0006</code>, owns owner-scoped personal guidance and guidance snapshots, and was regenerated against the integrated cardio-order schema state.</li>
 </ul>
-<p>The library may replace the editor&#39;s current candidate-list adapter without taking ownership of topology, targets, publication, or guidance snapshots. Production migration application remains a separate schema-owner release action. See <code>docs/plans/FLEXIBLE-DAY-BUILDER.md</code>, <code>docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md</code>, and <code>docs/context/DECISIONS.md</code> for the detailed contracts.</p>
+<p>The editor mounts the library-owned chooser adapter without giving it ownership of topology, targets, or publication. The library owns guidance persistence and the workout repository snapshots guidance at start. Production migration application remains a separate schema-owner release action. See <code>docs/plans/FLEXIBLE-DAY-BUILDER.md</code>, <code>docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md</code>, <code>docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md</code>, and <code>docs/context/DECISIONS.md</code> for the detailed contracts.</p>
 
   </main>
 </body>

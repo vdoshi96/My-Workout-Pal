@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f69eef5f616e7ceacf0c4f178bd96f09963f52002858ed36a1be8a7c3586eb78">
+  <meta name="source-sha256" content="09d949120702db07e1f182579f0096c94a65f53156d07225e6b58030af2fe69b">
   <title>Wave 1 integration plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -110,7 +110,7 @@
 <p>Keep public <code>/progress</code> canonical and public-cacheable. Keep <code>/sample-progress</code> as a permanent redirect. Render <strong>Sample data · not your history</strong> once on the public preview. Keep <code>/app/progress</code> private and uncached.</p>
 <h3>Routine types and persistence</h3>
 <p>The day builder owns day, section, prescription, and cardio placement; topology; stable keys; default retention and reset; publication; and exact-start behavior. Preserve arbitrary bounded day and section names and counts, optional sections and cardio, authored cardio order, and final-row safeguards.</p>
-<p>Example and blank creation must use the existing strict program-creation request, retry key, owner-scoped repository transaction, and active-program invariant. Do not add a client-only shortcut or a parallel API route. The example uses the starter template; blank creation uses the existing blank template contract and enters the same editor/publication lifecycle.</p>
+<p>Example and blank creation use the existing onboarding request, retry key, owner-scoped repository transaction, and exactly-one-active-program invariant. The mode participates in the idempotency hash and strict response contract. Example uses the starter template; blank writes one minimal valid published custom graph inside that same transaction and enters the existing editor/publication lifecycle. There is no client-only shortcut, hidden starter clone, or parallel API route.</p>
 <p>Every successful publication creates a complete immutable revision. Starting a workout snapshots the selected revision, day, exercise meaning, targets, and resolved guidance. Later edits can&#39;t rewrite an active or completed workout.</p>
 <h3>Library, chooser, and guidance boundary</h3>
 <p>Retain the neutral chooser result exactly:</p>
@@ -137,7 +137,7 @@
 <h2>Migration and schema gate</h2>
 <p>Keep this local order:</p>
 <ol>
-<li><code>0000_initial_schema.sql</code></li>
+<li><code>0000_initial.sql</code></li>
 <li><code>0001_account_deletion_saga.sql</code></li>
 <li><code>0002_workout_canonical_measurements.sql</code></li>
 <li><code>0003_program_collection.sql</code></li>

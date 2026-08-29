@@ -29,14 +29,15 @@ Use the following documents as the maintained project map:
 
 Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.
 
-## Wave 1 day-builder architecture
+## Wave 1 integrated architecture
 
-The unmerged `vishal/flexible-day-builder` branch separates library selection from routine placement:
+The `vishal/wave-1-integration` candidate composes library selection with routine placement while preserving the source boundaries:
 
 - `src/domain/exercises/movement-chooser-contract.ts` owns the neutral add, replace, and seed-day request plus the sanitized selection/error boundary.
 - `src/components/program/program-editor.tsx` owns destination state, accessible ordering and removal review, publication recovery, and mapping the selection into the catalog/custom XOR.
 - `src/components/program/program-editor-model.ts` owns immutable draft transformations, fresh opaque keys, defaults, same-kind retention, and cross-kind reset.
-- `src/server/repositories/profile-program.ts` remains the owner-scoped publication authority and creates complete immutable revisions.
+- `src/server/repositories/profile-program.ts` remains the owner-scoped publication authority and creates complete immutable revisions. Its existing onboarding transaction now accepts example or blank mode, includes the mode in the idempotency contract, and creates exactly one valid owned graph without a second persistence path.
 - `drizzle/0006_program_cardio_display_order.sql` and `src/db/schema.ts` persist alternative cardio order explicitly; program reads, root clones, equipment revisions, and `src/server/repositories/workout-repository.ts` preserve it into the workout snapshot.
+- `drizzle/0007_personal_guidance.sql` follows `0006`, owns owner-scoped personal guidance and guidance snapshots, and was regenerated against the integrated cardio-order schema state.
 
-The library may replace the editor's current candidate-list adapter without taking ownership of topology, targets, publication, or guidance snapshots. Production migration application remains a separate schema-owner release action. See `docs/plans/FLEXIBLE-DAY-BUILDER.md`, `docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md`, and `docs/context/DECISIONS.md` for the detailed contracts.
+The editor mounts the library-owned chooser adapter without giving it ownership of topology, targets, or publication. The library owns guidance persistence and the workout repository snapshots guidance at start. Production migration application remains a separate schema-owner release action. See `docs/plans/FLEXIBLE-DAY-BUILDER.md`, `docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md`, `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`, and `docs/context/DECISIONS.md` for the detailed contracts.

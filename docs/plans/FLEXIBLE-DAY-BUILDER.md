@@ -57,7 +57,7 @@ type MovementChooserRequest =
 
 The library worker owns chooser search, catalog and private data loading, equipment compatibility filtering, inline private creation, and guidance persistence. The discriminated chooser boundary requires `currentSelection` only for `replace`; `add` and `seed-day` carry no current selection. The chooser exposes dismiss and sanitized stable error callbacks. An error can't contain an owner identifier or private URL.
 
-The neutral contract enters this branch from reviewed checkpoint `5255a5254fcde4c1b1558947bda64d47bad23743` in `src/domain/exercises/movement-chooser-contract.ts`. The existing editor chooser adapts its candidate rows into the strict runtime selection schema before calling the day-builder consumer. The library can replace that presentation and data adapter later without taking ownership of editor placement or publication.
+The day-builder's neutral contract checkpoint is `2436bac92ba3381e76646bf61210cd5fd4dae88f` in `src/domain/exercises/movement-chooser-contract.ts`. Wave 1 integration mounts the library-owned `MovementChooserAdapter` for add, replace, and seed-day requests while the editor retains placement, topology, defaults, and publication. A small editor-local hint map recognizes a newly created private selection until the next server read; it does not expand the frozen contract or replace server validation.
 
 A chooser selection contains no owner key, route identity, program identity, stable topology key, prescription target, guidance URL, or server-authoritative movement metadata. The returned name and logging kind are interface and default hints. The server revalidates movement existence, ownership, logging meaning, and equipment compatibility during publication. The editor captures its own day, section, and prescription destination before it opens the chooser and applies the returned selection there.
 
@@ -179,4 +179,4 @@ Passed-after evidence:
 - Strict TypeScript, full ESLint, Drizzle metadata, exact-two seed, generated service worker, documentation parity, Webpack production build, and the 41-entry production route boundary passed.
 - Authenticated production-fixture journey: Chromium desktop passed in 10.1 seconds; WebKit phone passed in 17.7 seconds; 2 passed in 29.2 seconds.
 
-The newest report and representative synthetic frames are retained in `docs/qa/latest/FLEXIBLE-DAY-BUILDER-QA.md`. No migration was applied, no deployment ran, and this evidence makes no hosted-production claim.
+The worker checkpoint remains available in branch history. The newest combined report and representative synthetic frames are retained in `docs/qa/latest/WAVE-1-INTEGRATION-QA.md`. No production migration was applied, no deployment ran, and this evidence makes no hosted-production claim.

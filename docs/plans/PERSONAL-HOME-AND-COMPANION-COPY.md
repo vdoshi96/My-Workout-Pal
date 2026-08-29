@@ -22,9 +22,7 @@ This Wave 1 slice owns the public and member home composition, navigation labels
 
 ### New account
 
-The authenticated shell keeps the display name, verification state, and **Sign out** visible. The setup surface explains that the five-day starter is one editable example and creates no workout or progress data until the member chooses to save it. A verified member can save a private editable copy of the example; an unverified password member can browse the public example and sees the exact verification recovery requirement.
-
-This branch does not duplicate blank-routine creation owned by the flexible day-builder worker. Until that branch is integrated, new accounts truthfully offer only **Save the five-day example**. Final Wave 1 integration must expose the planned example-versus-blank choice once the day-builder supplies the persistence and editing behavior.
+The authenticated shell keeps the display name, verification state, and **Sign out** visible. The setup surface offers **Example routine** and **Blank routine** through one owner-scoped onboarding transaction. Example clones the five-day starter. Blank creates one minimal valid published custom graph—Day 1, Main work, and one compatible replaceable movement—because publication and chooser loading require persisted profile, equipment, program, and movement state. It then opens the existing routine editor without creating a second program or persistence path. The mode is part of the retry-stable idempotency contract. An unverified password member can browse the public example and sees the exact verification recovery requirement, but both permanent setup choices remain disabled.
 
 ### Ready account
 

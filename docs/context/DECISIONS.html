@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="dad6faec67648291ee4a5cad617241d7fe7674489b9f021b1bf0d6f7f5f344e6">
+  <meta name="source-sha256" content="282bba7817ff48faa488935445793b256e428c7d8a755d7329e04738828462c4">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -118,6 +118,9 @@ the additive migration so earlier owner guidance is not silently lost.</p>
 <code>MovementChooserAdapterProps</code> contract. Its selection contains source, name, and
 logging kind only. Search state, equipment, guidance, editor positions, topology
 keys, and prescription defaults remain outside that boundary.</p>
+<h2>2026-08-29: Compose Wave 1 through one onboarding transaction and one chooser</h2>
+<p>New-account setup extends the existing owner-scoped onboarding transaction with an <code>example</code> or <code>blank</code> mode. The mode is included in the idempotency request hash and response contract. Example clones the reviewed starter. Blank directly writes one minimal valid published custom graph after profile and equipment persistence; it does not create a hidden starter, clone an intermediate root, or add another API route. Both modes preserve exactly one active owner graph and enter the existing editor and publication lifecycle.</p>
+<p>The routine editor mounts <code>MovementChooserAdapter</code> directly for add, replace, and seed-day requests and removes its duplicate static chooser dialog. The adapter owns loading, search, compatibility, private creation, and guidance. The editor owns placement, stable topology keys, defaults, same-kind retention, cross-kind reset, and publication. A newly created private movement is held only as a local selection hint until the next server read so the editor can render its label and logging controls; the server remains authoritative for ownership, existence, equipment compatibility, and logging meaning.</p>
 
   </main>
 </body>
