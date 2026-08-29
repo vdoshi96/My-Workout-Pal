@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="fae9285946e6b807b4553b1bcf1816597731073bff140ca844b1b4a1fe94b4d1">
+  <title>Wave 2 core and conditioning expansion QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 2 core and conditioning expansion QA</h1>
+<p>Date: 2026-08-29
+Scope: Core, conditioning, carries, mobility, and recovery canonical content only</p>
+<h2>Bounded inventory</h2>
+<p>This branch owns 42 generator-backed catalog additions:</p>
+<ul>
+<li>Core: 18 additions after the eight released records.</li>
+<li>Conditioning and carries: 14 additions.</li>
+<li>Mobility and recovery: 10 additions.</li>
+</ul>
+<p>The logging distribution is 21 <code>bodyweight_reps</code>, 12 <code>duration</code>, four
+<code>weight_reps</code>, and five <code>distance_duration</code> records. The branch does not define
+the combined Wave 2 or final catalog total.</p>
+<h2>TDD evidence</h2>
+<p>Before any manifest additions, the focused inventory contract failed all seven
+tests because the 42 candidates were absent. The failure covered exact category
+order, generator shape, logging distribution, search and equipment visibility,
+distance defaults, replacement behavior, and runner distance-duration meaning.</p>
+<p>After the three owned manifests were implemented, the same focused command
+passed one file and seven tests. A broader focused replay then passed eight
+files and 78 tests across generator, catalog/video eligibility, text-only
+presentation, metadata, filtering, editor logging, and runner behavior.</p>
+<h2>Browser evidence</h2>
+<p>The explicit production-component journey is
+<code>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts</code>. A
+temporary focused Playwright configuration selected the file without changing
+the maintained shared matcher. The final replay passed in both requested
+projects: two tests passed in 12.8 seconds after the authenticated fixture
+completed its production build.</p>
+<p>The verified Alice fixture used the real routine editor to find representative
+owned records by names and aliases, then added all four represented logging
+shapes:</p>
+<ul>
+<li><code>Dumbbell clean</code> — <code>weight_reps</code>.</li>
+<li><code>Crunch</code> — <code>bodyweight_reps</code>.</li>
+<li><code>Flutter kick</code> — <code>duration</code> with the 20–45 second default.</li>
+<li><code>Dumbbell farmer carry</code> — <code>distance_duration</code> with the 20–45 second default
+and no invented distance.</li>
+</ul>
+<p>The first carry publication attempt produced the exact positive-distance
+blocker before any publish request. The deliberate imperial fixture input was
+converted to meter storage, revision 2 published, the editor reloaded all four
+exact movements, and the exact saved day started. The runner then stored both
+<code>distanceMeters</code> and <code>durationSeconds</code> for the carry. It rendered
+<strong>Unavailable</strong>, the no-approved-pair explanation, a working logging action,
+and zero iframes. Critical and serious Axe results were empty on the editor and
+runner surfaces.</p>
+<p>The first browser development replay exposed an ambiguous test selector for
+<code>Dumbbell clean</code> and an incomplete WebKit onboarding navigation. Later replay
+refinements used the exact accessible candidate meaning, waited for the saved
+member home, and asserted the fixture&#39;s imperial presentation while checking
+canonical meter values in the server read models. These were test precision
+issues, not product failures.</p>
+<p>Retained screenshots and SHA-256 values:</p>
+<table>
+<thead>
+<tr>
+<th>Evidence</th>
+<th>SHA-256</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>library-core-conditioning-editor-chromium-desktop.png</code></td>
+<td><code>f253e2737a4ea1d366fdd3f0f7ab9326b5d015e7f5d9e3e6f6dc0c84947f9e76</code></td>
+</tr>
+<tr>
+<td><code>library-core-conditioning-runner-chromium-desktop.png</code></td>
+<td><code>f2b57ffdde8a39c391e1d5f0ea2f9d6a905b82fe4e43bca1a831cf786b59cf8d</code></td>
+</tr>
+<tr>
+<td><code>library-core-conditioning-editor-webkit-phone.png</code></td>
+<td><code>2102ccd4b04b1f716da53b733e0cab3d09fb2fb88853b8022c7279e82dfaf1cc</code></td>
+</tr>
+<tr>
+<td><code>library-core-conditioning-runner-webkit-phone.png</code></td>
+<td><code>81c8f7d9f9b430386a50bed65b4c3c4fac18be47b92957fe902a98c42cc9a024</code></td>
+</tr>
+</tbody></table>
+<h2>Verification matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Focused owned and adjacent contracts</td>
+<td>Passed: eight files, 78 tests</td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td>Passed: <code>tsc --noEmit</code></td>
+</tr>
+<tr>
+<td>ESLint</td>
+<td>Passed: full <code>eslint .</code> and scoped owned files</td>
+</tr>
+<tr>
+<td>Full Vitest before integration reconciliation</td>
+<td>120 files passed, one failed; 810 tests passed, 19 failed of 829</td>
+</tr>
+<tr>
+<td>Drizzle metadata</td>
+<td>Passed: <code>drizzle-kit check</code></td>
+</tr>
+<tr>
+<td>Database schema/bootstrap</td>
+<td>Passed: four files, 34 tests</td>
+</tr>
+<tr>
+<td>Approved-video seed</td>
+<td>Passed: 27 required variations, exactly two rows each</td>
+</tr>
+<tr>
+<td>Approved seed file</td>
+<td>Unchanged: 54 rows, SHA-256 <code>3fec4225c70c23b8bc38e146b91b7fcdf779883e9b1a647c2c4026a5e1db51dd</code></td>
+</tr>
+<tr>
+<td>PWA/service worker</td>
+<td>Passed: generated service worker verified</td>
+</tr>
+<tr>
+<td>Documentation parity</td>
+<td>Passed: 54 maintained Markdown/HTML pairs</td>
+</tr>
+<tr>
+<td>Production build</td>
+<td>Passed: Next.js 16.3.2 Webpack build</td>
+</tr>
+<tr>
+<td>Production route boundary</td>
+<td>Passed: 44 App Router entries</td>
+</tr>
+<tr>
+<td>Authenticated browser</td>
+<td>Passed: Chromium desktop and WebKit phone, two tests</td>
+</tr>
+</tbody></table>
+<p>The full Vitest exception is one shared fixture-setup contract mismatch, not 19
+independent product failures. <code>tests/integration/workout-repository.test.ts</code>
+still expects the catalog logging-kind set to equal:</p>
+<pre><code class="language-text">Set { &quot;weight_reps&quot;, &quot;bodyweight_reps&quot;, &quot;duration&quot; }
+</code></pre>
+<p>The content batch truthfully produces:</p>
+<pre><code class="language-text">Set { &quot;weight_reps&quot;, &quot;bodyweight_reps&quot;, &quot;duration&quot;, &quot;distance_duration&quot; }
+</code></pre>
+<p>Each of that file&#39;s 19 cases stops at the same setup assertion before its
+repository behavior begins. The coordinator assigned the minimal expectation
+reconciliation and all 19 repository-test/full-suite replays to Wave 2
+integration. This branch intentionally leaves that shared test untouched.</p>
+<p>The shared catalog/video-eligibility prerequisite was integrated from upstream
+checkpoint <code>7046a94bae41e90839b16d5329b58a1975600ee9</code>. It preserves the released
+27-variation video policy and unchanged 54 approved rows while allowing these
+text-only records to enter the canonical catalog.</p>
+<h2>Integration boundary</h2>
+<p>The maintained authenticated Playwright matcher is intentionally unchanged.
+Wave 2 integration owns adding both new expansion spec names and replaying the
+combined matrix. It also owns the one shared logging-kind expectation described
+above. This branch must not be merged directly to <code>main</code> by this worker.</p>
+
+  </main>
+</body>
+</html>
