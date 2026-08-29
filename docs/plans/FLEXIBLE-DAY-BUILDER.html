@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="13a65b86ecfc9b74b663bb15687e9081e143d4548a93076588568826a5f44b8e">
+  <meta name="source-sha256" content="87bb96a0bc21353cd97ef57474b115a1f03c17f23bd710171509aeb13991dc0a">
   <title>Flexible day-builder plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -177,7 +177,14 @@ type MovementChooserRequest =
 <li>Strict TypeScript, full ESLint, Drizzle metadata, exact-two seed, generated service worker, documentation parity, Webpack production build, and the 41-entry production route boundary passed.</li>
 <li>Authenticated production-fixture journey: Chromium desktop passed in 10.1 seconds; WebKit phone passed in 17.7 seconds; 2 passed in 29.2 seconds.</li>
 </ul>
-<p>The worker checkpoint remains available in branch history. The newest combined report and representative synthetic frames are retained in <code>docs/qa/latest/WAVE-1-INTEGRATION-QA.md</code>. No production migration was applied, no deployment ran, and this evidence makes no hosted-production claim.</p>
+<p>The worker checkpoint remains available in branch and remote provenance history.
+Its integration report and synthetic frames were superseded by the later Wave 1
+production package, which remains at exact commit
+<code>b364d1987a8190a6d8bb92e7a8d7a64f077c0843</code> on
+<code>origin/vishal/wave-1-production-release</code> and in Git history. This worker
+checkpoint itself applied no production migration and made no hosted-production
+claim; the production branch owns that later release evidence. The active
+<code>docs/qa/latest/</code> directory now retains only the newest Wave 2 integration set.</p>
 
   </main>
 </body>

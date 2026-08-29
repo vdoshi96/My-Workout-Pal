@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="0be9a82352e918f9562a5dd23fc9244b0c76444c71788252f4ffdbc399b9820f">
+  <meta name="source-sha256" content="ee2ea96349e2bb66ac6ae826013ed451f50cbb7103b1e0d0f825f99ad3615990">
   <title>Wave 2 catalog integration QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -50,6 +50,47 @@ video policy remains exactly 27 canonical variations and 54 already-reviewed
 rows. No candidate URL, Grok URL, provider, approval, seed mapping, iframe,
 schema, migration, production row, secret, private media, or Wave 3 artwork was
 added.</p>
+<h2>Post-handoff authoritative-state correction</h2>
+<p>The fully verified Wave 2 application/content checkpoint is exact commit
+<code>301b618b888613d95d69dffc5c42b6fb0dd26797</code>. All application, database, build,
+route, authenticated-browser, public-browser, accessibility, and zero-iframe
+results in this report were completed at or before that checkpoint.</p>
+<p>The final candidate tip containing this correction is a documentation-only
+successor. No application or browser matrix was rerun after <code>301b618</code>; the
+successor relies on the unchanged verified application tree and adds only the
+authoritative Markdown reconciliation and its generated HTML. Its exact remote
+SHA is recorded in the branch handoff rather than self-referenced from the
+commit that contains this report.</p>
+<p>Post-handoff review found that the inherited project status still described the
+already-completed Wave 1 production release as pending. The correction
+reconciles the exact release plan, recovery gate, and production closeout at
+commits <code>6a4c42f</code>, <code>994b426</code>, and
+<code>b364d1987a8190a6d8bb92e7a8d7a64f077c0843</code> with the Wave 2 docs:</p>
+<ul>
+<li>Wave 1 application, local and public <code>main</code>, and production source are exact
+commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>.</li>
+<li>Migrations <code>0006</code> and <code>0007</code> were restore-gated and applied in order.</li>
+<li>Deployment <code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code> reached Ready on the three
+production aliases.</li>
+<li>Public, authenticated, password, real-Google, and Wave 1 product replays
+passed. Production returned to its baseline with no disposable owned rows,
+and the 216 candidate guidance links were not seeded.</li>
+<li>Live local and remote branch checks found no
+<code>vishal/pre-wave1-primary-preservation</code> ref. Its unique pre-sync state remains
+outside the repository in the private mode-<code>600</code> bundle recorded in canonical
+status; no bundle content was inspected or published.</li>
+</ul>
+<p>The Wave 1 production report remains on
+<code>origin/vishal/wave-1-production-release</code> and in Git history. It was not restored
+to <code>docs/qa/latest/</code>, which remains exactly this Wave 2 report and HTML plus the
+six existing Wave 2 screenshots.</p>
+<p>The docs-only gate rendered and verified 56 Markdown/HTML pairs, passed
+<code>git diff --check</code>, preserved the eight-file latest-evidence set and all six
+screenshot hashes, and found no runtime, test, catalog, schema, seed, or public-
+asset change relative to <code>301b618</code>. The <code>pnpm docs:build</code> wrapper stopped before
+the configured script at a noninteractive dependency-purge prompt; the exact
+configured commands <code>node scripts/render-docs.mjs</code> and
+<code>node scripts/render-docs.mjs --check</code> then passed unchanged.</p>
 <h2>Source provenance</h2>
 <p>The integration used this exact sequence:</p>
 <table>

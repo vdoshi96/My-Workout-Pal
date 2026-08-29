@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="ecc89764cdaf1a70c1c9b93a3d5c444daddc2c411abe0602606006ba634dcc2c">
+  <meta name="source-sha256" content="adc278bac5c8ae88bf0ca62a5ff4f7956129f02f7a1b7dbeed0049c9fd081c71">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,10 +29,23 @@
   <main>
 <h1>Project status</h1>
 <h2>Current phase</h2>
-<p>Wave 0 is released. GitHub <code>main</code> and production application source are <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>; Vercel deployment <code>dpl_56XvQJJv4enVjRipeHf1USAZmQ5h</code> is Ready on the stable hostname. Migration <code>0005_flexible_routine_topology</code> was restore-gated, applied by the schema owner, and verified before application deployment. Ordinary Google and password authentication, bounded private returns, visible account state, flexible routine publication, stable day routing, zero/one-cardio behavior, resumable-session conflicts, immutable history, equipment revisions, and owner isolation passed hosted replay. The public Corner Companions decision packet is published, but no companion production CSS, component, or runtime image has shipped.</p>
-<p>A bounded Neon resilience follow-up is released in application commit <code>f5ef9cb9a9b462aceda339936972297796b67e16</code>. Production deployment <code>dpl_9WBb8hprftiKBYGrZfRD9Juk4VKH</code> is Ready on all three production aliases. The correction explicitly owns the Neon WebSocket pool, attaches one privacy-safe idle-error listener before Drizzle receives it, and leaves active query errors, transactions, authentication, CSRF, and persistence behavior unchanged. Fail-first coverage and the local release gate pass: 108 Vitest files/739 tests, database 4/34, exact-two seed, service-worker verification, 46-document parity, the Webpack build, 41-route isolation, the public matrix at 47 passes/one documented WebKit service-worker skip, and the authenticated matrix at 34 passes/two intentional engine-scoped skips. The exact production replay warmed a database-backed public exercise route, waited 15 seconds, then completed five more database reads and five CSRF requests at <code>200</code>; the exact-deployment error scan was empty. Production remained at zero profiles, programs, revisions, and workout sessions. The isolated Wave 1 candidate has not changed production.</p>
-<p>Wave 1 is integrated into public source <code>main</code> at
-<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>, after local verification on
+<p>Wave 1 is released. GitHub <code>main</code>, local <code>main</code>, and Vercel production source
+are exact application commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>.
+Ready deployment <code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code> retains the stable,
+project, and Git-main production aliases. Migrations
+<code>0006_program_cardio_display_order.sql</code> and <code>0007_personal_guidance.sql</code> were
+restore-gated and applied in that order by <code>neondb_owner</code>; final verification
+found 36 public tables, 148 public indexes, zero invalid constraints, zero
+disabled user triggers, and the cardio immutability trigger enabled.</p>
+<p>Hosted production verification passed the maintained public and authenticated
+matrices, password recovery and revocation, real Google return,
+reauthentication, revocation, and sign-out, owner-isolation and deletion,
+reviewed media, native 200% zoom, and the complete Wave 1 editor, guidance,
+cardio, runner, history, Home, Progress, conflict, and equipment-revision
+replays. Production returned to its baseline: one existing Google identity, no
+disposable identity or owned application row, and all 70 retained deletion
+audits terminal and completed. The 216 candidate guidance links were not seeded.</p>
+<p>Wave 1 was integrated and locally verified on
 <code>origin/vishal/wave-1-integration</code> from baseline
 <code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code>. It contains the exact source tips
 in order: day builder <code>af43c950991de499b8e32a6fac5d58f19be44eed</code>, library and personal guidance
@@ -43,9 +56,10 @@ in order: day builder <code>af43c950991de499b8e32a6fac5d58f19be44eed</code>, lib
 <code>33d2fbaf150856a6f0fa146b154bff6cc2d55cde</code> and the same four blobs.
 Implementation checkpoint <code>000a038a9add854dfe59ad796f7b11033753e0d7</code>
 completes the integration-owned product and schema seams; documentation/evidence
-checkpoint <code>ae44979880105d02771503637b8a2fa151e9bd05</code> records its local gate. The
-Wave 1 production migrations have not been applied and the source has not been
-deployed or production-verified.</p>
+checkpoint <code>ae44979880105d02771503637b8a2fa151e9bd05</code> records its local gate.
+The later production record is preserved at exact documentation commit
+<code>b364d1987a8190a6d8bb92e7a8d7a64f077c0843</code> on
+<code>origin/vishal/wave-1-production-release</code> and in Git history.</p>
 <p>The integrated schema retains <code>0006_program_cardio_display_order.sql</code> before <code>0007_personal_guidance.sql</code>. Regenerated <code>0007</code> snapshot <code>30c8bbd1-d86e-463e-89ac-3586832e4370</code> has the exact <code>0006</code> snapshot as its predecessor and contains both cardio-order and personal-guidance state. Example and blank creation share the onboarding transaction, and the real editor uses the library adapter with no nested chooser. The complete local static, migration, build, route, authenticated-browser, and public-browser gate is preserved in Git history at Wave 1 evidence checkpoint <code>ae44979880105d02771503637b8a2fa151e9bd05</code>; its superseded report was removed from <code>docs/qa/latest/</code> under the newest-only evidence policy.</p>
 <p>Wave 2 is locally integrated and verified on
 <code>vishal/wave-2-catalog-integration</code> from exact public-main base
@@ -62,13 +76,13 @@ migrated, deployed, production-seeded, or production-verified.</p>
 Grok research remains the product owner&#39;s approved 216-link selection for the
 original 108-name intake; none of those candidate links entered runtime data.
 Runtime video publication remains gated by the existing per-video full-watch
-record, not another link-selection pass. Local branch
-<code>vishal/pre-wave1-primary-preservation</code> retains the exact pre-sync planning
-state until the closeout comparison proves that no other unique work remains.
-The restore-tested pre-<code>0005</code> database archive remains in a durable user-private
-backup directory outside the repository with mode <code>600</code> and its original
-checksum. The existing Homebrew .NET 9.0.120 installation is linked again and
-the ordinary <code>dotnet</code> command is restored.</p>
+record, not another link-selection pass. The obsolete
+<code>vishal/pre-wave1-primary-preservation</code> branch exists neither locally nor on
+<code>origin</code>. Its unique pre-sync state is retained outside the repository in the
+private mode-<code>600</code> Git bundle
+<code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-pre-wave1-preservation-4ad6dff.bundle</code>;
+this record exposes no bundle contents. The restore-tested Wave 1 pre-<code>0006</code>
+archive likewise remains private, mode <code>600</code>, and outside the repository.</p>
 <h2>Active Wave 2 integration handoff</h2>
 <ul>
 <li>Last completed: exact source integration, duplicate-prerequisite proof,
@@ -238,7 +252,11 @@ label as revision metadata without duplicating the catalog exercise.</li>
 </ul>
 <h2>Worktrees</h2>
 <ul>
-<li>Three source worktrees remain outside this integration checkout: <code>vishal/flexible-day-builder</code> owns the editor/publication slice, <code>vishal/library-guidance-foundation</code> owns library and private guidance, and <code>vishal/companion-home-copy</code> owns signed-in home and copy. This integration does not remove or modify sibling worktrees.</li>
+<li>The clean completed Wave 1 day-builder, library-guidance, companion-home, and
+integration worktrees and their local branches were removed during the Wave 1
+production closeout after their commits were proved ancestors of <code>main</code>.
+Remote provenance branches remain. This Wave 2 integration did not remove or
+modify any sibling worktree.</li>
 <li>The completed analytics worktree was integrated as <code>fedfba4</code> and removed after patch-equivalence verification.</li>
 <li>The completed YouTube worktree was integrated through <code>6b633b0</code>; its selected files matched the reviewed worktree before cleanup.</li>
 <li>The completed database worktree was integrated through <code>ff3d69c</code>, compared for selected-file equality, and removed.</li>

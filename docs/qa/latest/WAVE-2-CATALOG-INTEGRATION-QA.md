@@ -25,6 +25,52 @@ rows. No candidate URL, Grok URL, provider, approval, seed mapping, iframe,
 schema, migration, production row, secret, private media, or Wave 3 artwork was
 added.
 
+## Post-handoff authoritative-state correction
+
+The fully verified Wave 2 application/content checkpoint is exact commit
+`301b618b888613d95d69dffc5c42b6fb0dd26797`. All application, database, build,
+route, authenticated-browser, public-browser, accessibility, and zero-iframe
+results in this report were completed at or before that checkpoint.
+
+The final candidate tip containing this correction is a documentation-only
+successor. No application or browser matrix was rerun after `301b618`; the
+successor relies on the unchanged verified application tree and adds only the
+authoritative Markdown reconciliation and its generated HTML. Its exact remote
+SHA is recorded in the branch handoff rather than self-referenced from the
+commit that contains this report.
+
+Post-handoff review found that the inherited project status still described the
+already-completed Wave 1 production release as pending. The correction
+reconciles the exact release plan, recovery gate, and production closeout at
+commits `6a4c42f`, `994b426`, and
+`b364d1987a8190a6d8bb92e7a8d7a64f077c0843` with the Wave 2 docs:
+
+- Wave 1 application, local and public `main`, and production source are exact
+  commit `a202a815ad3b7320bbc68b819303822ca4773b1d`.
+- Migrations `0006` and `0007` were restore-gated and applied in order.
+- Deployment `dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH` reached Ready on the three
+  production aliases.
+- Public, authenticated, password, real-Google, and Wave 1 product replays
+  passed. Production returned to its baseline with no disposable owned rows,
+  and the 216 candidate guidance links were not seeded.
+- Live local and remote branch checks found no
+  `vishal/pre-wave1-primary-preservation` ref. Its unique pre-sync state remains
+  outside the repository in the private mode-`600` bundle recorded in canonical
+  status; no bundle content was inspected or published.
+
+The Wave 1 production report remains on
+`origin/vishal/wave-1-production-release` and in Git history. It was not restored
+to `docs/qa/latest/`, which remains exactly this Wave 2 report and HTML plus the
+six existing Wave 2 screenshots.
+
+The docs-only gate rendered and verified 56 Markdown/HTML pairs, passed
+`git diff --check`, preserved the eight-file latest-evidence set and all six
+screenshot hashes, and found no runtime, test, catalog, schema, seed, or public-
+asset change relative to `301b618`. The `pnpm docs:build` wrapper stopped before
+the configured script at a noninteractive dependency-purge prompt; the exact
+configured commands `node scripts/render-docs.mjs` and
+`node scripts/render-docs.mjs --check` then passed unchanged.
+
 ## Source provenance
 
 The integration used this exact sequence:

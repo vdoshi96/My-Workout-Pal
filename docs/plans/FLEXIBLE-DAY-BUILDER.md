@@ -179,4 +179,11 @@ Passed-after evidence:
 - Strict TypeScript, full ESLint, Drizzle metadata, exact-two seed, generated service worker, documentation parity, Webpack production build, and the 41-entry production route boundary passed.
 - Authenticated production-fixture journey: Chromium desktop passed in 10.1 seconds; WebKit phone passed in 17.7 seconds; 2 passed in 29.2 seconds.
 
-The worker checkpoint remains available in branch history. The newest combined report and representative synthetic frames are retained in `docs/qa/latest/WAVE-1-INTEGRATION-QA.md`. No production migration was applied, no deployment ran, and this evidence makes no hosted-production claim.
+The worker checkpoint remains available in branch and remote provenance history.
+Its integration report and synthetic frames were superseded by the later Wave 1
+production package, which remains at exact commit
+`b364d1987a8190a6d8bb92e7a8d7a64f077c0843` on
+`origin/vishal/wave-1-production-release` and in Git history. This worker
+checkpoint itself applied no production migration and made no hosted-production
+claim; the production branch owns that later release evidence. The active
+`docs/qa/latest/` directory now retains only the newest Wave 2 integration set.

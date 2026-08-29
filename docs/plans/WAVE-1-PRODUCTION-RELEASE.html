@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="cdd4a98413e17a5c39c5df00720231c62e229291c9ad5bd46ce02d2564c08d3a">
+  <title>Wave 1 production release plan and record · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 1 production release plan and record</h1>
+<h2>Outcome</h2>
+<p>Wave 1 was released on August 29, 2026. Production migrations
+<code>0006_program_cardio_display_order</code> and <code>0007_personal_guidance</code> passed separate
+schema-owner transactions and post-migration verification before application
+commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code> advanced to public <code>main</code> and
+Vercel production. A private, checksum-verified pre-<code>0006</code> archive passed an
+isolated restore rehearsal first.</p>
+<p>The application, local and public <code>main</code>, and production source remain the exact
+application commit. Release documentation is retained separately on
+<code>origin/vishal/wave-1-production-release</code> so the documentation closeout does not
+trigger a replacement deployment from <code>main</code>.</p>
+<h2>Exact identities</h2>
+<table>
+<thead>
+<tr>
+<th>Identity</th>
+<th>Verified value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Application and <code>main</code> commit</td>
+<td><code>a202a815ad3b7320bbc68b819303822ca4773b1d</code></td>
+</tr>
+<tr>
+<td>Application tree</td>
+<td><code>2f79527b017391aa7a49d2c48b96dd2e169ba784</code></td>
+</tr>
+<tr>
+<td>Previous <code>main</code> baseline</td>
+<td><code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code></td>
+</tr>
+<tr>
+<td>Production deployment</td>
+<td><code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code></td>
+</tr>
+<tr>
+<td><code>0006</code> SHA-256</td>
+<td><code>e20555d7abccee6c620054bc62257b38dbaba2739ca5305e8daf6ca064eb56f5</code></td>
+</tr>
+<tr>
+<td><code>0007</code> SHA-256</td>
+<td><code>59dce2363f73c2c2a53ef9b4668d1ce57dbf575a8ef0759094ccb4c50eaea4e0</code></td>
+</tr>
+<tr>
+<td>Production evidence commit</td>
+<td><code>b364d1987a8190a6d8bb92e7a8d7a64f077c0843</code></td>
+</tr>
+</tbody></table>
+<p>The Ready deployment retained the stable, project, and Git-main production
+aliases, Node.js 24.x, region <code>iad1</code>, the existing Firebase providers, and the
+existing Neon resource.</p>
+<h2>Recovery gate</h2>
+<p>Before migration, the schema owner created a private mode-<code>600</code> PostgreSQL
+custom-format archive outside the repository and verified its checksum. An
+isolated local restore reproduced the exact six pre-Wave-1 migration identities,
+schema objects, triggers, constraints, privacy-safe starter aggregates, zero
+owned rows, retained deletion audits, and the projection checkpoint. The
+disposable restore environment was removed and the archive was not uploaded.</p>
+<p>Rollback remains restore-gated because neither Wave 1 migration has a checked-in
+down path. No production restore was necessary or attempted.</p>
+<h2>Ordered schema release</h2>
+<p>Migration <code>0006</code> ran first in one explicit <code>neondb_owner</code> transaction. Its gate
+verified deterministic cardio-order backfill, non-null one-to-two order,
+owner/revision/day/order uniqueness, validated constraints, expected ownership,
+and the enabled cardio immutability trigger.</p>
+<p>The first <code>0007</code> verification attempt rolled back safely because its gate did
+not account for PostgreSQL identifier truncation. Post-rollback checks proved
+that <code>0006</code> remained intact and no <code>0007</code> object or data remained. The unchanged
+<code>0007</code> migration then passed the corrected structural gate in a new transaction.
+Final verification found 36 public tables, 148 public indexes, zero invalid
+constraints, zero disabled user triggers, and enabled cardio immutability.</p>
+<h2>Application and hosted verification</h2>
+<p>Vercel built the Git-connected deployment only after both schema gates passed.
+The exact application candidate had already passed TypeScript, ESLint, 118
+Vitest files and 814 tests, four database files and 34 tests, Drizzle metadata,
+the exact-two approved-video seed check, PWA generation, 50-document parity, the
+production build, and the 44-route boundary.</p>
+<p>Hosted verification passed the maintained public matrix, all unique runnable
+authenticated fixture cases, password verification/recovery and revocation,
+real Google return, reauthentication, revocation and sign-out, owner-isolation
+and deletion, reviewed media, native 200% zoom, and the complete Wave 1 editor,
+guidance, cardio, runner, history, Home, Progress, conflict, and equipment-
+revision story.</p>
+<h2>Data and provider reconciliation</h2>
+<p>Every disposable Firebase identity and owned application row was removed.
+Production returned to one baseline Google identity and zero owned profiles,
+programs, workout sessions, guidance links, idempotency rows, records, and
+progress rows. All 70 retained deletion audits were terminal and completed.
+The released 27 catalog exercises and 54 already-approved video rows remained
+unchanged. The 216 candidate guidance links were not seeded, no provider or
+alias changed, and no private recovery contents were published.</p>
+<h2>Evidence retention and later branch reconciliation</h2>
+<p>The full production QA report and its six hosted screenshots remain available
+at exact commit <code>b364d1987a8190a6d8bb92e7a8d7a64f077c0843</code> on
+<code>origin/vishal/wave-1-production-release</code> and in Git history. They are not copied
+into <code>docs/qa/latest/</code>, which retains only the newer Wave 2 integration report,
+its HTML counterpart, and six current Wave 2 screenshots.</p>
+<p>Clean completed Wave 1 source worktrees and local branches were removed after
+ancestry verification; remote provenance branches remain. Later live review
+confirmed that <code>vishal/pre-wave1-primary-preservation</code> exists neither locally
+nor on <code>origin</code>. Its unique pre-sync state is preserved outside the repository
+in the private mode-<code>600</code> bundle
+<code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-pre-wave1-preservation-4ad6dff.bundle</code>.</p>
+<p>This record does not authorize a replacement production deployment, another
+migration, a provider change, or candidate-video approval or seeding.</p>
+
+  </main>
+</body>
+</html>

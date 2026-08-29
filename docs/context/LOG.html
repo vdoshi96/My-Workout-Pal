@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d9be2e4bddcbefb7474007f68dd14c283f9f42af8462129ccd3f1221290abdaf">
+  <meta name="source-sha256" content="2344ff136bb7df9bd7fcf04935339f944621dba8aae42aae3220a3f4154af3da">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,40 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-29: Wave 1 production release</h2>
+<ul>
+<li>Created the private mode-<code>600</code> pre-<code>0006</code> archive and passed an isolated
+PostgreSQL restore rehearsal before any schema write. The archive stayed
+outside the repository and was not uploaded.</li>
+<li>Applied exact migrations <code>0006_program_cardio_display_order.sql</code> and
+<code>0007_personal_guidance.sql</code> in separate schema-owner transactions. The first
+<code>0007</code> attempt rolled back safely when its verification gate did not account
+for PostgreSQL identifier truncation; the unchanged migration then passed the
+corrected structural gate. Final state was 36 tables, 148 indexes, no invalid
+constraints or disabled user triggers, and enabled cardio immutability.</li>
+<li>Advanced public and local <code>main</code> to exact application commit
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>. Vercel deployment
+<code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code> reached Ready from that exact source and
+retained the three production aliases.</li>
+<li>Passed exact-candidate static, database, migration, seed, PWA, documentation,
+build, and route gates. Hosted public and authenticated matrices, password
+lifecycle, real Google, owner-isolation/deletion, reviewed media, native zoom,
+and the complete Wave 1 member journey passed.</li>
+<li>Removed every disposable identity and owned application row, returning
+production to its baseline. All 70 retained deletion audits were completed,
+and the 216 candidate guidance links were not seeded.</li>
+<li>Removed clean completed Wave 1 source worktrees and local branches after
+ancestry proof; remote provenance remains. The authoritative production
+report remains at exact commit
+<code>b364d1987a8190a6d8bb92e7a8d7a64f077c0843</code> on
+<code>origin/vishal/wave-1-production-release</code> and in Git history rather than in
+the newest-only Wave 2 evidence directory.</li>
+<li>Later live branch review confirmed that
+<code>vishal/pre-wave1-primary-preservation</code> exists neither locally nor on
+<code>origin</code>. Its unique pre-sync state is preserved outside the repository in
+the private mode-<code>600</code> bundle
+<code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-pre-wave1-preservation-4ad6dff.bundle</code>.</li>
+</ul>
 <h2>2026-08-29: Wave 1 integration candidate</h2>
 <ul>
 <li>Integrated the exact day-builder, library/personal-guidance, and personal-home/copy tips in the required order from clean baseline <code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code>, preserving separate merge provenance and the byte-identical chooser checkpoints.</li>

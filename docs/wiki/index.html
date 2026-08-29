@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="48993e30d865a8644d373a02d5265eeeea082b0ff4539d9fb47267dc6f283553">
+  <meta name="source-sha256" content="0b2f14ec758b4a3792ef34e421e3a3b49f5b0406b2dd4d3b2c75c72396b81242">
   <title>Project wiki · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -42,6 +42,7 @@
 <li><code>docs/plans/FLEXIBLE-DAY-BUILDER.md</code>: Wave 1 editor interactions, chooser boundary, immutable publish and saved-day start flow, and focused evidence requirements.</li>
 <li><code>docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md</code>: Wave 1 chooser contract, catalog manifests, owner-scoped personal guidance, immutable snapshots, integration boundary, and verification record.</li>
 <li><code>docs/plans/WAVE-1-INTEGRATION.md</code>: Wave 1 source provenance, integration contracts, migration order, combined acceptance criteria, and release stop boundary.</li>
+<li><code>docs/plans/WAVE-1-PRODUCTION-RELEASE.md</code>: exact release identities, restore-tested recovery, ordered production migrations, hosted verification, and cleanup record.</li>
 <li><code>docs/plans/WAVE-2-CATALOG-INTEGRATION.md</code>: Wave 2 source provenance, duplicate reconciliation, 134-record catalog contract, stable approved-video subset, verification matrix, and local-only release stop.</li>
 <li><code>docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md</code>: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.</li>
 <li><code>docs/plans/NEON-CSRF-RESILIENCE.md</code>: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.</li>
@@ -60,8 +61,10 @@ alias, and runtime publication still requires recorded full-watch review.</li>
 <li><code>docs/reference/DEPLOYMENT-RECOVERY.md</code>: environments, release checks, cost controls, and recovery.</li>
 </ul>
 <p>Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.</p>
-<h2>Wave 1 integrated architecture</h2>
-<p>The <code>vishal/wave-1-integration</code> candidate composes library selection with routine placement while preserving the source boundaries:</p>
+<h2>Wave 1 released architecture</h2>
+<p>Released application commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>
+composes library selection with routine placement while preserving the source
+boundaries:</p>
 <ul>
 <li><code>src/domain/exercises/movement-chooser-contract.ts</code> owns the neutral add, replace, and seed-day request plus the sanitized selection/error boundary.</li>
 <li><code>src/components/program/program-editor.tsx</code> owns destination state, accessible ordering and removal review, publication recovery, and mapping the selection into the catalog/custom XOR.</li>
@@ -70,7 +73,18 @@ alias, and runtime publication still requires recorded full-watch review.</li>
 <li><code>drizzle/0006_program_cardio_display_order.sql</code> and <code>src/db/schema.ts</code> persist alternative cardio order explicitly; program reads, root clones, equipment revisions, and <code>src/server/repositories/workout-repository.ts</code> preserve it into the workout snapshot.</li>
 <li><code>drizzle/0007_personal_guidance.sql</code> follows <code>0006</code>, owns owner-scoped personal guidance and guidance snapshots, and was regenerated against the integrated cardio-order schema state.</li>
 </ul>
-<p>The editor mounts the library-owned chooser adapter without giving it ownership of topology, targets, or publication. The library owns guidance persistence and the workout repository snapshots guidance at start. Production migration application remains a separate schema-owner release action. See <code>docs/plans/FLEXIBLE-DAY-BUILDER.md</code>, <code>docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md</code>, <code>docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md</code>, and <code>docs/context/DECISIONS.md</code> for the detailed contracts.</p>
+<p>The editor mounts the library-owned chooser adapter without giving it ownership
+of topology, targets, or publication. The library owns guidance persistence and
+the workout repository snapshots guidance at start. Production migrations
+<code>0006</code> and <code>0007</code> were restore-gated, applied, and verified in that order;
+Ready deployment <code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code> reports the exact released
+Git source on the production aliases. The public, authenticated, password,
+real-Google, and Wave 1 product replays passed, production returned to baseline,
+and the 216 candidates remained unseeded. The full production report remains at
+exact commit <code>b364d1987a8190a6d8bb92e7a8d7a64f077c0843</code> on
+<code>origin/vishal/wave-1-production-release</code> and in Git history; the active latest
+directory remains reserved for Wave 2. See the four Wave 1 plans and
+<code>docs/context/DECISIONS.md</code> for the detailed contracts.</p>
 
   </main>
 </body>

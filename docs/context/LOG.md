@@ -1,5 +1,39 @@
 # Project log
 
+## 2026-08-29: Wave 1 production release
+
+- Created the private mode-`600` pre-`0006` archive and passed an isolated
+  PostgreSQL restore rehearsal before any schema write. The archive stayed
+  outside the repository and was not uploaded.
+- Applied exact migrations `0006_program_cardio_display_order.sql` and
+  `0007_personal_guidance.sql` in separate schema-owner transactions. The first
+  `0007` attempt rolled back safely when its verification gate did not account
+  for PostgreSQL identifier truncation; the unchanged migration then passed the
+  corrected structural gate. Final state was 36 tables, 148 indexes, no invalid
+  constraints or disabled user triggers, and enabled cardio immutability.
+- Advanced public and local `main` to exact application commit
+  `a202a815ad3b7320bbc68b819303822ca4773b1d`. Vercel deployment
+  `dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH` reached Ready from that exact source and
+  retained the three production aliases.
+- Passed exact-candidate static, database, migration, seed, PWA, documentation,
+  build, and route gates. Hosted public and authenticated matrices, password
+  lifecycle, real Google, owner-isolation/deletion, reviewed media, native zoom,
+  and the complete Wave 1 member journey passed.
+- Removed every disposable identity and owned application row, returning
+  production to its baseline. All 70 retained deletion audits were completed,
+  and the 216 candidate guidance links were not seeded.
+- Removed clean completed Wave 1 source worktrees and local branches after
+  ancestry proof; remote provenance remains. The authoritative production
+  report remains at exact commit
+  `b364d1987a8190a6d8bb92e7a8d7a64f077c0843` on
+  `origin/vishal/wave-1-production-release` and in Git history rather than in
+  the newest-only Wave 2 evidence directory.
+- Later live branch review confirmed that
+  `vishal/pre-wave1-primary-preservation` exists neither locally nor on
+  `origin`. Its unique pre-sync state is preserved outside the repository in
+  the private mode-`600` bundle
+  `/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-pre-wave1-preservation-4ad6dff.bundle`.
+
 ## 2026-08-29: Wave 1 integration candidate
 
 - Integrated the exact day-builder, library/personal-guidance, and personal-home/copy tips in the required order from clean baseline `4622f9e1b7783fd35cb6c23ae9396148c7c3357a`, preserving separate merge provenance and the byte-identical chooser checkpoints.

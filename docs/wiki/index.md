@@ -14,6 +14,7 @@ Use the following documents as the maintained project map:
 - `docs/plans/FLEXIBLE-DAY-BUILDER.md`: Wave 1 editor interactions, chooser boundary, immutable publish and saved-day start flow, and focused evidence requirements.
 - `docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md`: Wave 1 chooser contract, catalog manifests, owner-scoped personal guidance, immutable snapshots, integration boundary, and verification record.
 - `docs/plans/WAVE-1-INTEGRATION.md`: Wave 1 source provenance, integration contracts, migration order, combined acceptance criteria, and release stop boundary.
+- `docs/plans/WAVE-1-PRODUCTION-RELEASE.md`: exact release identities, restore-tested recovery, ordered production migrations, hosted verification, and cleanup record.
 - `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`: Wave 2 source provenance, duplicate reconciliation, 134-record catalog contract, stable approved-video subset, verification matrix, and local-only release stop.
 - `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
@@ -33,9 +34,11 @@ Use the following documents as the maintained project map:
 
 Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.
 
-## Wave 1 integrated architecture
+## Wave 1 released architecture
 
-The `vishal/wave-1-integration` candidate composes library selection with routine placement while preserving the source boundaries:
+Released application commit `a202a815ad3b7320bbc68b819303822ca4773b1d`
+composes library selection with routine placement while preserving the source
+boundaries:
 
 - `src/domain/exercises/movement-chooser-contract.ts` owns the neutral add, replace, and seed-day request plus the sanitized selection/error boundary.
 - `src/components/program/program-editor.tsx` owns destination state, accessible ordering and removal review, publication recovery, and mapping the selection into the catalog/custom XOR.
@@ -44,4 +47,15 @@ The `vishal/wave-1-integration` candidate composes library selection with routin
 - `drizzle/0006_program_cardio_display_order.sql` and `src/db/schema.ts` persist alternative cardio order explicitly; program reads, root clones, equipment revisions, and `src/server/repositories/workout-repository.ts` preserve it into the workout snapshot.
 - `drizzle/0007_personal_guidance.sql` follows `0006`, owns owner-scoped personal guidance and guidance snapshots, and was regenerated against the integrated cardio-order schema state.
 
-The editor mounts the library-owned chooser adapter without giving it ownership of topology, targets, or publication. The library owns guidance persistence and the workout repository snapshots guidance at start. Production migration application remains a separate schema-owner release action. See `docs/plans/FLEXIBLE-DAY-BUILDER.md`, `docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md`, `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`, and `docs/context/DECISIONS.md` for the detailed contracts.
+The editor mounts the library-owned chooser adapter without giving it ownership
+of topology, targets, or publication. The library owns guidance persistence and
+the workout repository snapshots guidance at start. Production migrations
+`0006` and `0007` were restore-gated, applied, and verified in that order;
+Ready deployment `dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH` reports the exact released
+Git source on the production aliases. The public, authenticated, password,
+real-Google, and Wave 1 product replays passed, production returned to baseline,
+and the 216 candidates remained unseeded. The full production report remains at
+exact commit `b364d1987a8190a6d8bb92e7a8d7a64f077c0843` on
+`origin/vishal/wave-1-production-release` and in Git history; the active latest
+directory remains reserved for Wave 2. See the four Wave 1 plans and
+`docs/context/DECISIONS.md` for the detailed contracts.
