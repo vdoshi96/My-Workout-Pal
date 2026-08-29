@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="2d9c4ad2d2a0399dcc985ce175e0a0100c4716ac700000540ddd612de19122e1">
+  <meta name="source-sha256" content="0ac15df76c0b90e9ba2a57ba9926eb7b8d6f82b862be48902f9fa819b9ea58d7">
   <title>Wave 1 production release plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -31,6 +31,14 @@
 <h2>Outcome</h2>
 <p>Release application commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code> after production migrations <code>0006_program_cardio_display_order</code> and <code>0007_personal_guidance</code> pass separate schema-owner transactions and post-migration verification. Keep a private, checksum-verified, restore-tested pre-<code>0006</code> archive. Preserve the three existing production aliases, Firebase providers, Neon resource, baseline users, and retained deletion audit records.</p>
 <p>The deployed application source must remain the exact candidate commit. Store release documentation on <code>vishal/wave-1-production-release</code> so documentation closeout doesn&#39;t trigger a replacement application deployment from <code>main</code>.</p>
+<h2>Completion</h2>
+<p>Completed on August 29, 2026. Production migrations <code>0006</code> and <code>0007</code>, public
+and local <code>main</code>, Ready deployment <code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code>, hosted
+verification, data reconciliation, log review, and completed-source cleanup all
+passed the gates below. The exact application remains
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>; documentation-only closeout remains
+on <code>vishal/wave-1-production-release</code>. See
+<code>docs/qa/latest/WAVE-1-PRODUCTION-RELEASE-QA.md</code> for the authoritative result.</p>
 <h2>Exact release identities</h2>
 <p>The release uses the following immutable inputs:</p>
 <table>

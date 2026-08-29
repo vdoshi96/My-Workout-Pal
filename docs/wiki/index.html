@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="26057ad64cb0220238dd94dc7a2f82afe562c5dfcc8b40c38c1041b2763dfeb7">
+  <meta name="source-sha256" content="b13e638d8177805c70cb93d9e3812cc2a9e53c337a8ba3ad9085cbf5b7fb8010">
   <title>Project wiki · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -57,8 +57,10 @@
 <li><code>docs/reference/DEPLOYMENT-RECOVERY.md</code>: environments, release checks, cost controls, and recovery.</li>
 </ul>
 <p>Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.</p>
-<h2>Wave 1 integrated architecture</h2>
-<p>The <code>vishal/wave-1-integration</code> candidate composes library selection with routine placement while preserving the source boundaries:</p>
+<h2>Wave 1 released architecture</h2>
+<p>Released application commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>
+composes library selection with routine placement while preserving the source
+boundaries:</p>
 <ul>
 <li><code>src/domain/exercises/movement-chooser-contract.ts</code> owns the neutral add, replace, and seed-day request plus the sanitized selection/error boundary.</li>
 <li><code>src/components/program/program-editor.tsx</code> owns destination state, accessible ordering and removal review, publication recovery, and mapping the selection into the catalog/custom XOR.</li>
@@ -67,7 +69,14 @@
 <li><code>drizzle/0006_program_cardio_display_order.sql</code> and <code>src/db/schema.ts</code> persist alternative cardio order explicitly; program reads, root clones, equipment revisions, and <code>src/server/repositories/workout-repository.ts</code> preserve it into the workout snapshot.</li>
 <li><code>drizzle/0007_personal_guidance.sql</code> follows <code>0006</code>, owns owner-scoped personal guidance and guidance snapshots, and was regenerated against the integrated cardio-order schema state.</li>
 </ul>
-<p>The editor mounts the library-owned chooser adapter without giving it ownership of topology, targets, or publication. The library owns guidance persistence and the workout repository snapshots guidance at start. Production migration application remains a separate schema-owner release action. See <code>docs/plans/FLEXIBLE-DAY-BUILDER.md</code>, <code>docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md</code>, <code>docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md</code>, and <code>docs/context/DECISIONS.md</code> for the detailed contracts.</p>
+<p>The editor mounts the library-owned chooser adapter without giving it ownership
+of topology, targets, or publication. The library owns guidance persistence and
+the workout repository snapshots guidance at start. Production migrations
+<code>0006</code> and <code>0007</code> are applied and verified in that order; the Ready Vercel
+deployment reports the exact released Git source. See
+<code>docs/qa/latest/WAVE-1-PRODUCTION-RELEASE-QA.md</code> for the recovery, migration,
+hosted-verification, data-reconciliation, log, and cleanup record, and the three
+Wave 1 feature plans plus <code>docs/context/DECISIONS.md</code> for detailed contracts.</p>
 
   </main>
 </body>

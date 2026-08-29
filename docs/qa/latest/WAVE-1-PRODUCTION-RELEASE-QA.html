@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="9de730faca9f3446db147325af0792d37d5aeb4050b5d9daa7e9f83feaf0ddd5">
+  <meta name="source-sha256" content="b977bbef151583b8b70b1a172f95e4121c40300012fedd3df6256bed1fa5fd35">
   <title>Wave 1 production release QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,9 +28,19 @@
 <body>
   <main>
 <h1>Wave 1 production release QA</h1>
-<h2>Status</h2>
-<p>The production release has passed intake, read-only environment preflight, private archive creation, and isolated restore rehearsal. No production schema or application release write has run at this checkpoint. Continue only through the ordered <code>0006</code>, <code>0007</code>, exact-<code>main</code>, exact-deployment, hosted-verification, and cleanup gates in <code>docs/plans/WAVE-1-PRODUCTION-RELEASE.md</code>.</p>
-<h2>Release identity</h2>
+<h2>Result</h2>
+<p>Wave 1 is released. GitHub and local <code>main</code>, the Vercel production Git source,
+and the verified application source all resolve to
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>. Production migrations <code>0006</code> and
+<code>0007</code> were applied in that order by the schema-owner role after the private
+archive passed an isolated restore rehearsal. Hosted public, password, Google,
+owner-isolation, media, zoom, and Wave 1 member-flow checks passed. Disposable
+identities and owned rows were removed without changing the one baseline Google
+identity or the retained deletion audits.</p>
+<p>No application rollback or database restore was required. The release did not
+seed the 216 candidate guidance links, change an identity provider, change a
+Vercel alias, or publish recovery contents.</p>
+<h2>Exact release identity</h2>
 <table>
 <thead>
 <tr>
@@ -39,20 +49,24 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>Candidate commit</td>
+<td>Application and <code>main</code> commit</td>
 <td><code>a202a815ad3b7320bbc68b819303822ca4773b1d</code></td>
 </tr>
 <tr>
-<td>Candidate tree</td>
+<td>Application tree</td>
 <td><code>2f79527b017391aa7a49d2c48b96dd2e169ba784</code></td>
 </tr>
 <tr>
-<td>Public <code>main</code> baseline</td>
+<td>Previous <code>main</code> baseline</td>
 <td><code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code></td>
 </tr>
 <tr>
-<td>Current production deployment</td>
-<td><code>dpl_HAdDiwWwqRQbs8y8SM3TTwid529j</code></td>
+<td>Production deployment</td>
+<td><code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code></td>
+</tr>
+<tr>
+<td>Deployment URL</td>
+<td><code>my-workout-cpefx8dfc-vdoshi96s-projects.vercel.app</code></td>
 </tr>
 <tr>
 <td>Vercel project</td>
@@ -75,20 +89,52 @@
 <td><code>59dce2363f73c2c2a53ef9b4668d1ce57dbf575a8ef0759094ccb4c50eaea4e0</code></td>
 </tr>
 </tbody></table>
-<p>Live GitHub refs matched the required baseline and candidate. The local candidate was clean, had the required tree, and descended from the exact baseline. Vercel&#39;s stable, project, and Git-main production aliases all pointed to the Ready baseline deployment from exact Git source <code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code>.</p>
-<h2>Environment preflight</h2>
+<p>Vercel&#39;s authenticated deployment record reports Ready production source
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code> from GitHub branch <code>main</code>, Node.js
+24.x, and region <code>iad1</code>. The existing aliases remain exactly:</p>
 <ul>
-<li>Vercel remains linked to the expected Next.js project on Node.js 24.x in <code>iad1</code>. Required Neon and Firebase Production variables exist. Every pullable required value matched the ignored local operator environment. <code>FIREBASE_PRIVATE_KEY</code> remained Sensitive and returned only Vercel&#39;s placeholder.</li>
-<li>Firebase Admin access passed against <code>my-workout-pal-92819</code>. Email/Password and Google are enabled, the Google client credentials are configured, and the production, Firebase-default, and localhost domains are authorized. Firebase contained one pre-existing identity.</li>
-<li>Neon returned PostgreSQL 18.6, database <code>neondb</code>, schema <code>public</code>, and current/session role <code>neondb_owner</code> inside a read-only transaction. The database used 12 MB.</li>
-<li><code>public</code> contained 35 tables and 140 indexes, and <code>drizzle.__drizzle_migrations</code> contained six exact records through <code>0005</code>. Every inspected constraint was validated, and all ten inspected program/workout triggers were enabled with state <code>O</code>.</li>
-<li>Wave 1 schema was absent: no cardio <code>display_order</code>, no personal-guidance enum or table, and no workout <code>guidance_snapshot</code>.</li>
-<li>Starter counts were 6 equipment rows, 27 exercises, 44 compatibility rows, 54 aliases, 54 approved videos, 2 template revisions, 10 days, 26 sections, 60 prescriptions, and 20 template cardio rows.</li>
-<li>Owned-data counts were zero for profiles, programs, revisions, days, sections, prescriptions, cardio rows, custom exercises, custom videos, workout sessions, and workout snapshots. The database retained 57 account-deletion audit rows and one personal-record projection checkpoint.</li>
+<li><code>my-workout-pal-chi.vercel.app</code></li>
+<li><code>my-workout-pal-vdoshi96s-projects.vercel.app</code></li>
+<li><code>my-workout-pal-git-main-vdoshi96s-projects.vercel.app</code></li>
 </ul>
-<p>No identity provider, alias, project setting, paid configuration, or production data changed during preflight.</p>
-<h2>Recovery archive</h2>
-<p>The release created the following private PostgreSQL custom-format archive over the configured unpooled TLS connection:</p>
+<p>The deployment-specific hostname retains the project&#39;s Vercel SSO protection;
+the three production aliases are the public hosted-verification surface.</p>
+<h2>Source provenance</h2>
+<p>The released candidate descends from exact baseline
+<code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code> and contains these reviewed source
+tips in order:</p>
+<table>
+<thead>
+<tr>
+<th>Source lane</th>
+<th>Exact tip</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Flexible day builder</td>
+<td><code>af43c950991de499b8e32a6fac5d58f19be44eed</code></td>
+</tr>
+<tr>
+<td>Library and personal guidance</td>
+<td><code>b54801b28d40eb106f38fea44ac1da71d468b199</code></td>
+</tr>
+<tr>
+<td>Personal Home and companion copy</td>
+<td><code>b1722b0e9bd1c0e5185f5bc40856667266c44d22</code></td>
+</tr>
+</tbody></table>
+<p>Day-chooser checkpoint <code>2436bac92ba3381e76646bf61210cd5fd4dae88f</code>
+and parallel library checkpoint
+<code>5255a5254fcde4c1b1558947bda64d47bad23743</code> retain stable patch ID
+<code>33d2fbaf150856a6f0fa146b154bff6cc2d55cde</code> and the same four blobs. Integration
+implementation checkpoint <code>000a038a9add854dfe59ad796f7b11033753e0d7</code>
+closes the shared contracts; documentation checkpoint
+<code>ae44979880105d02771503637b8a2fa151e9bd05</code> precedes exact release candidate
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>. Remote provenance branches remain
+available after local source-worktree cleanup.</p>
+<h2>Recovery point</h2>
+<p>The release created this private PostgreSQL custom-format archive over the
+configured unpooled TLS connection before either migration:</p>
 <table>
 <thead>
 <tr>
@@ -101,7 +147,7 @@
 <td><code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-wave1-pre-0006-20260829T1735Z.dump</code></td>
 </tr>
 <tr>
-<td>File mode</td>
+<td>Mode</td>
 <td><code>600</code></td>
 </tr>
 <tr>
@@ -120,21 +166,209 @@
 <td>Archive entries</td>
 <td>320</td>
 </tr>
+<tr>
+<td>Restore rehearsal</td>
+<td>Passed in an isolated disposable PostgreSQL database</td>
+</tr>
 </tbody></table>
-<p>The archive isn&#39;t committed or uploaded. No private row or credential entered output or documentation.</p>
-<h2>Restore rehearsal</h2>
-<p>PostgreSQL 18.6 <code>pg_restore</code> rendered the custom archive into a private temporary SQL stream. The local PostgreSQL 16.15 target doesn&#39;t support PostgreSQL 18&#39;s <code>transaction_timeout</code> setting, so the rehearsal removed exactly that one <code>SET transaction_timeout = 0;</code> line from the temporary stream. No schema or data statement changed.</p>
-<p>The isolated restore reproduced the following privacy-safe state:</p>
+<p>The archive was produced by PostgreSQL 18.6 tooling. The local PostgreSQL 16.15
+restore target does not recognize PostgreSQL 18&#39;s <code>transaction_timeout</code>
+setting, so the rehearsal removed only that one <code>SET</code> line from a private
+temporary SQL stream. Schema and data statements were unchanged. The restored
+database reproduced all six pre-Wave-1 migration identities, 35 public tables,
+140 public indexes, validated constraints, enabled application triggers,
+starter aggregates, zero owned rows, 57 retained deletion audits, and one
+projection checkpoint. The disposable database, cluster, socket, log, and SQL
+stream were removed; the archive checksum remained unchanged.</p>
+<h2>Ordered migration record</h2>
+<p>Read-only invariants were repeated immediately before the first schema write.
+Migration <code>0006_program_cardio_display_order.sql</code> then ran in one explicit
+schema-owner transaction and recorded migration ID 7 at journal timestamp
+<code>1787892956681</code>. Verification proved the deterministic backfill, non-null
+one-to-two order, owner/revision/day/order uniqueness, validated check, expected
+ownership, and enabled <code>program_cardio_prescriptions_immutable_after_publish</code>
+trigger with state <code>O</code>.</p>
+<p>The first <code>0007</code> transaction was deliberately rolled back when the verification
+gate compared long foreign-key names without accounting for PostgreSQL&#39;s
+identifier-length truncation. Post-rollback checks proved seven migration
+records, no <code>0007</code> schema objects or data, and every <code>0006</code> invariant intact.
+The unchanged exact <code>0007_personal_guidance.sql</code> was then applied in a new
+schema-owner transaction with structural foreign-key checks. It recorded
+migration ID 9 at journal timestamp <code>1787894772216</code>; the absent ID 8 reflects
+the rolled-back transaction&#39;s non-transactional sequence allocation, not a
+missing migration.</p>
+<p>Final verification proved the personal-guidance enum and table, bounded source
+XOR and URL/order checks, owner-scoped foreign keys, partial uniqueness and read
+indexes, non-null bounded workout guidance snapshots, expected ownership, zero
+legacy custom-video rows to migrate, and preservation of all <code>0006</code> invariants.
+The exact final migration records are:</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Journal timestamp</th>
+<th>SHA-256</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>7</td>
+<td><code>1787892956681</code></td>
+<td><code>e20555d7abccee6c620054bc62257b38dbaba2739ca5305e8daf6ca064eb56f5</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>1787894772216</code></td>
+<td><code>59dce2363f73c2c2a53ef9b4668d1ce57dbf575a8ef0759094ccb4c50eaea4e0</code></td>
+</tr>
+</tbody></table>
+<p>The final production schema has 36 public tables and 148 public indexes, zero
+invalid constraints, zero disabled user triggers, and the cardio immutability
+trigger enabled with state <code>O</code>. Rollback remains restore-gated because neither
+migration has a checked-in down path.</p>
+<h2>Main and deployment</h2>
+<p>Public <code>main</code> advanced normally from the exact baseline to the exact candidate
+without a merge commit or replacement tree. <code>origin/main</code>, local <code>main</code>, and
+the primary checkout now resolve to the identical application commit. The
+primary checkout was clean before the fast-forward and was restored to clean
+after generated browser evidence was extracted.</p>
+<p>Vercel built the Git-connected production deployment only after both migration
+gates passed. The Ready deployment kept the existing project, region, runtime,
+providers, environment scopes, and three aliases. Stable production responses
+retain private no-store rendering, strict CSP, HSTS, frame denial,
+<code>nosniff</code>, referrer policy, permissions policy, and the expected popup-compatible
+cross-origin opener policy. Maintained <code>/sw.js</code> returns JavaScript with
+revalidation caching. Browser navigation from <code>/sample-progress</code> reaches
+canonical <code>/progress</code> through the maintained permanent redirect.</p>
+<h2>Verification totals</h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Exact-candidate <code>pnpm verify</code></td>
+<td>Passed: TypeScript, ESLint, 118 Vitest files/814 tests, 4 database files/34 tests, Drizzle, exact-two approved-video seed, PWA, 50-document parity, production build, and 44-route boundary</td>
+</tr>
+<tr>
+<td>Hosted public matrix</td>
+<td>47 passed, one documented Chromium-only service-worker/offline skip in WebKit</td>
+</tr>
+<tr>
+<td>Authenticated fixture matrix</td>
+<td>38 runnable cases passed, two intentional engine-scoped skips</td>
+</tr>
+<tr>
+<td>WebKit follow-up</td>
+<td>One full-run RSC access-control console entry did not recur in the exact focused WebKit-desktop replay</td>
+</tr>
+<tr>
+<td>Hosted password lifecycle</td>
+<td>Passed verification/recovery action codes, secure session, revocation denial, three intended session mutations, and cleanup</td>
+</tr>
+<tr>
+<td>Hosted deletion and IDOR</td>
+<td>Passed 12 intended first-party mutations, four foreign/missing probes, unchanged global counts, and cleanup</td>
+</tr>
+<tr>
+<td>Hosted media and native zoom</td>
+<td>Passed both videos, first-embed fallback, exact native Chrome 200% zoom and restore, three intended mutations, and cleanup</td>
+</tr>
+<tr>
+<td>Hosted Wave 1 member flow</td>
+<td>Passed the complete disposable-owner editor, runner, history, Home, Progress, snapshot, conflict, and equipment-revision story with cleanup</td>
+</tr>
+<tr>
+<td>Real Google provider</td>
+<td>Passed safe <code>/app</code> return, visible verified identity, visible example/blank choices, token revocation redirect, reauthentication, and sign-out</td>
+</tr>
+</tbody></table>
+<p>The authenticated matrix&#39;s first aggregate produced 37 passes, two expected
+skips, and one WebKit-desktop console assertion for a cancelled RSC request. The
+exact failed case passed unchanged on immediate focused replay, so all 38 unique
+runnable cases have a passing result. No product source changed for the replay.</p>
+<h2>Hosted Wave 1 behavior</h2>
+<p>The production member replay used a generated verified password identity and
+proved:</p>
 <ul>
-<li>Six migration records from timestamp <code>1787688103412</code> through <code>1787867429188</code>, with exact <code>0005</code> hash <code>270adb8a10ec152412cf68b7545d784162a267e2345bb525986875ec4c13449c</code>.</li>
-<li>35 public tables, 140 public indexes, 200 validated constraints, zero invalid or unvalidated constraints, and 17 application triggers all enabled with state <code>O</code>.</li>
-<li>Every starter, owned-data, deletion-audit, and projection-checkpoint aggregate from production preflight.</li>
-<li>No Wave 1 schema shape.</li>
-<li>Archive checksum <code>adcf511735677700332bb3afd884151f360a2da276c537f3e7ebf7fcf92b6ac5</code> unchanged after the restore.</li>
+<li>blank onboarding, idempotent replay, and conflict on mismatched reuse;</li>
+<li>add, duplicate, reorder, and remove day operations;</li>
+<li>the real editor chooser for seed-day, catalog replace, and catalog add;</li>
+<li>inline private movement creation;</li>
+<li>private guidance HTTP rejection, accepted HTTPS creation, replacement after
+workout start, and immutable pre-replacement snapshot preservation;</li>
+<li>zero-, one-, and two-cardio editor states plus authored Runner-before-Walker
+order in the UI and database;</li>
+<li>publication, reload, exact saved-day start, and the published revision;</li>
+<li>no-data, resumable, and completed personal Home states;</li>
+<li>alternate-day conflict while a workout was resumable;</li>
+<li>complete workout history and owned Progress projection;</li>
+<li>equipment revision without rewriting the completed session&#39;s program or
+guidance snapshots.</li>
 </ul>
-<p>The disposable database, cluster, socket, log, and temporary SQL stream were deleted after verification. The private custom archive remains the restore-gated recovery point.</p>
-<h2>Next release gate</h2>
-<p>Repeat the live read-only Git, Vercel, Firebase, Neon migration, trigger, constraint, and aggregate checks. If they match, apply only <code>0006</code> in one schema-owner transaction, record its exact Drizzle identity in that transaction, and verify every <code>0006</code> invariant before applying <code>0007</code>.</p>
+<p>The separate hosted owner-isolation suite exercised missing and cross-owner
+resources without disclosing ownership. Password and Google session checks
+proved bounded return, visible verification state, sign-out, and revocation.
+No onboarding mutation was submitted under the baseline Google identity.</p>
+<h2>Final data and provider reconciliation</h2>
+<p>Production began with zero profiles, preferences, equipment profiles, custom
+content, guidance, programs, revisions, days, sections, prescriptions, cardio
+prescriptions, workout sessions, workout snapshots/states, set/cardio logs,
+idempotency rows, records, or progress rows. It ended with those same aggregates
+at zero.</p>
+<p>Firebase began and ended with one enabled baseline Google identity. Final Admin
+enumeration found zero <code>example.invalid</code> disposable identities and provider set
+<code>google.com</code>. PostgreSQL retains 27 catalog exercises, 54 already-approved
+videos, and one personal-record projection checkpoint. The retained deletion
+audit count increased from 57 to 70 because each disposable deletion remains an
+intentional terminal audit; all 70 are completed and none are nonterminal. The
+216 candidate guidance links remain unseeded and <code>personal_guidance_links</code>
+contains zero rows.</p>
+<h2>Runtime and security logs</h2>
+<p>A bounded six-hour exact-deployment query inspected up to 1,000 recent request
+records and a separate untruncated error-level result set. There were no 5xx
+responses. The error-level set contained one status-200
+<code>/app/program/edit</code> destination-stream cancellation produced when browser QA
+navigated away from a streamed response. It was not a failed response and did
+not recur as a product assertion. The error set contained no Neon, WebSocket,
+idle-connection, or CSRF failure recurrence. Expected <code>/api/auth/csrf</code> request
+traffic was present during hosted mutations.</p>
+<h2>Evidence and cleanup</h2>
+<p>This report and its generated HTML counterpart are the canonical production
+record. The retained screenshots are:</p>
+<ul>
+<li><code>hosted-auth-unverified-desktop.png</code></li>
+<li><code>hosted-auth-verified-desktop.png</code></li>
+<li><code>hosted-deletion-public-return-desktop.png</code></li>
+<li><code>hosted-deletion-review-desktop.png</code></li>
+<li><code>hosted-wave1-editor-desktop.png</code></li>
+<li><code>hosted-wave1-runner-desktop.png</code></li>
+</ul>
+<p>Superseded Wave 1 integration reports and screenshots were removed after this
+package passed parity. The clean completed day-builder, library-guidance,
+companion-home, and integration worktrees were removed, and their four local
+branches were deleted only after proving their commits were ancestors of
+<code>main</code>. Remote provenance branches remain unchanged.</p>
+<p>The current <code>vishal/wave-1-production-release</code> worktree remains only to retain
+and push this documentation without triggering a replacement application
+deployment from <code>main</code>. Local branch <code>vishal/pre-wave1-primary-preservation</code>
+remains unresolved because it contains one unique pre-sync documentation commit;
+it has no active worktree. No other Wave 1 source worktree remains.</p>
+<h2>Remaining limitations</h2>
+<ul>
+<li>The recovery archive is private and restore-tested, but a production restore
+was neither necessary nor attempted.</li>
+<li>The deployment-specific hostname is Vercel-SSO protected; exact Git-source
+identity comes from the authenticated deployment record, while hosted product
+verification ran on the stable public alias.</li>
+<li>Password verification and recovery used Firebase-generated action codes and
+did not claim inbox delivery.</li>
+<li>The documentation closeout stays on
+<code>vishal/wave-1-production-release</code>; merging it to <code>main</code> would create an
+unnecessary replacement application deployment. Production remains on exact
+application SHA <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>.</li>
+</ul>
 
   </main>
 </body>

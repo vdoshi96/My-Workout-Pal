@@ -1,5 +1,52 @@
 # Project log
 
+## 2026-08-29: Wave 1 production release
+
+- Created private pre-`0006` archive
+  `/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-wave1-pre-0006-20260829T1735Z.dump`
+  with mode `600`, 320 entries, and SHA-256
+  `adcf511735677700332bb3afd884151f360a2da276c537f3e7ebf7fcf92b6ac5`.
+  An isolated PostgreSQL restore reproduced the exact pre-release migrations,
+  schema objects, triggers, and privacy-safe aggregates; the disposable restore
+  environment was removed and the private archive was not uploaded.
+- Applied exact migrations `0006_program_cardio_display_order.sql` and
+  `0007_personal_guidance.sql` in separate schema-owner transactions with hashes
+  `e20555d7abccee6c620054bc62257b38dbaba2739ca5305e8daf6ca064eb56f5`
+  and
+  `59dce2363f73c2c2a53ef9b4668d1ce57dbf575a8ef0759094ccb4c50eaea4e0`.
+  The first `0007` attempt rolled back safely when its verification gate failed
+  to account for PostgreSQL identifier truncation; the unchanged migration then
+  passed structural checks. Final production state is 36 tables, 148 indexes,
+  no invalid constraints or disabled user triggers, and enabled cardio
+  immutability.
+- Fast-forwarded public and local `main` from exact baseline
+  `4622f9e1b7783fd35cb6c23ae9396148c7c3357a` to exact application commit
+  `a202a815ad3b7320bbc68b819303822ca4773b1d`. Ready production deployment
+  `dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH` reports that exact GitHub source on `main`
+  and retains the three existing production aliases, Node.js 24.x, and `iad1`.
+- Passed exact-candidate `pnpm verify` at 118 Vitest files/814 tests, database
+  4/34, Drizzle, exact-two seed, PWA, 50-document parity, build, and 44 routes.
+  Hosted public production passed 47 cases with one documented WebKit
+  service-worker skip. All 38 unique authenticated fixture cases passed with two
+  intentional skips after one WebKit RSC cancellation passed unchanged on exact
+  replay.
+- Passed hosted password action-code/recovery/revocation, real Google return and
+  revocation/reauthentication/sign-out, owner-isolation/deletion, reviewed media,
+  native 200% zoom, and the complete Wave 1 editor/guidance/cardio/runner/history/
+  Home/Progress/equipment-revision journey. Every disposable identity and owned
+  row was removed; Firebase returned to one baseline Google identity, owned
+  database aggregates returned to zero, and all 70 retained deletion audits are
+  completed. The 216 candidate guidance links remain unseeded.
+- The bounded exact-deployment log scan found no 5xx response and no Neon
+  WebSocket, idle-connection, or CSRF error recurrence. One status-200 streamed
+  response logged destination cancellation when browser QA navigated away.
+- Removed the four clean completed Wave 1 source worktrees and local branches
+  after proving their commits are in `main`; remote provenance branches remain.
+  Retained only the current production evidence worktree and the unresolved
+  no-worktree `vishal/pre-wave1-primary-preservation` branch. Production evidence
+  stays on `vishal/wave-1-production-release` so it does not trigger an
+  unnecessary replacement deployment from `main`.
+
 ## 2026-08-29: Wave 1 integration candidate
 
 - Integrated the exact day-builder, library/personal-guidance, and personal-home/copy tips in the required order from clean baseline `4622f9e1b7783fd35cb6c23ae9396148c7c3357a`, preserving separate merge provenance and the byte-identical chooser checkpoints.

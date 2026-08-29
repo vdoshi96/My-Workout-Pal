@@ -6,6 +6,16 @@ Release application commit `a202a815ad3b7320bbc68b819303822ca4773b1d` after prod
 
 The deployed application source must remain the exact candidate commit. Store release documentation on `vishal/wave-1-production-release` so documentation closeout doesn't trigger a replacement application deployment from `main`.
 
+## Completion
+
+Completed on August 29, 2026. Production migrations `0006` and `0007`, public
+and local `main`, Ready deployment `dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH`, hosted
+verification, data reconciliation, log review, and completed-source cleanup all
+passed the gates below. The exact application remains
+`a202a815ad3b7320bbc68b819303822ca4773b1d`; documentation-only closeout remains
+on `vishal/wave-1-production-release`. See
+`docs/qa/latest/WAVE-1-PRODUCTION-RELEASE-QA.md` for the authoritative result.
+
 ## Exact release identities
 
 The release uses the following immutable inputs:

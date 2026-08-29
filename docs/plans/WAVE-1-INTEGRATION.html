@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="09d949120702db07e1f182579f0096c94a65f53156d07225e6b58030af2fe69b">
+  <meta name="source-sha256" content="b1c072f2d0809a0ea170553ab65109050617e22bed9aa74a178a992d45098a34">
   <title>Wave 1 integration plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -189,7 +189,12 @@
 </ul>
 <p>The authenticated journey must cover example and blank creation, arbitrary editor operations, canonical and private selection, inline private creation, personal-guidance replacement, publish and reload, exact start, zero-cardio and one-cardio behavior, resume conflict, immutable history after edits, equipment revision, every personal-home state, unverified gates, and cross-owner safe failures.</p>
 <h2>Evidence retention and closeout</h2>
-<p>Keep <code>docs/qa/latest/WAVE-1-INTEGRATION-QA.md</code> and its generated HTML counterpart as the canonical report. Retain only screenshots from the newest coherent combined run. Remove superseded generated test output only after the replacement passes.</p>
+<p>The integration report and its generated HTML counterpart were canonical until
+the production release. After the production package passed, the source
+provenance and combined acceptance record were folded into
+<code>docs/qa/latest/WAVE-1-PRODUCTION-RELEASE-QA.md</code>; superseded integration output
+and screenshots were removed. Retain only that newest coherent production
+package and its required screenshots.</p>
 <p>Commit integration corrections with focused messages, then push <code>vishal/wave-1-integration</code>. Report source SHAs, merge and correction commits, migration identities and order, verification totals, retained evidence, limitations, and the separate production release sequence. Stop before merging <code>main</code> or performing any release action.</p>
 
   </main>

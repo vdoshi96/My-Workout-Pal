@@ -180,6 +180,11 @@ The authenticated journey must cover example and blank creation, arbitrary edito
 
 ## Evidence retention and closeout
 
-Keep `docs/qa/latest/WAVE-1-INTEGRATION-QA.md` and its generated HTML counterpart as the canonical report. Retain only screenshots from the newest coherent combined run. Remove superseded generated test output only after the replacement passes.
+The integration report and its generated HTML counterpart were canonical until
+the production release. After the production package passed, the source
+provenance and combined acceptance record were folded into
+`docs/qa/latest/WAVE-1-PRODUCTION-RELEASE-QA.md`; superseded integration output
+and screenshots were removed. Retain only that newest coherent production
+package and its required screenshots.
 
 Commit integration corrections with focused messages, then push `vishal/wave-1-integration`. Report source SHAs, merge and correction commits, migration identities and order, verification totals, retained evidence, limitations, and the separate production release sequence. Stop before merging `main` or performing any release action.

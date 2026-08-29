@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="078aac1f93a6815d7eec82f5bac7732e5e8f04cb23bbc9424dc8f4666a366602">
+  <meta name="source-sha256" content="58aa2915aa3c361dc98be1239afa5be9b33c912a5f4cd9a6db770cdb0b30ffb7">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,26 +29,66 @@
   <main>
 <h1>Project status</h1>
 <h2>Current phase</h2>
-<p>Wave 0 is released. GitHub <code>main</code> and production application source are <code>e44c1328bb566e1e2af5072f178648cefad736b5</code>; Vercel deployment <code>dpl_56XvQJJv4enVjRipeHf1USAZmQ5h</code> is Ready on the stable hostname. Migration <code>0005_flexible_routine_topology</code> was restore-gated, applied by the schema owner, and verified before application deployment. Ordinary Google and password authentication, bounded private returns, visible account state, flexible routine publication, stable day routing, zero/one-cardio behavior, resumable-session conflicts, immutable history, equipment revisions, and owner isolation passed hosted replay. The public Corner Companions decision packet is published, but no companion production CSS, component, or runtime image has shipped.</p>
-<p>A bounded Neon resilience follow-up is released in application commit <code>f5ef9cb9a9b462aceda339936972297796b67e16</code>. Production deployment <code>dpl_9WBb8hprftiKBYGrZfRD9Juk4VKH</code> is Ready on all three production aliases. The correction explicitly owns the Neon WebSocket pool, attaches one privacy-safe idle-error listener before Drizzle receives it, and leaves active query errors, transactions, authentication, CSRF, and persistence behavior unchanged. Fail-first coverage and the local release gate pass: 108 Vitest files/739 tests, database 4/34, exact-two seed, service-worker verification, 46-document parity, the Webpack build, 41-route isolation, the public matrix at 47 passes/one documented WebKit service-worker skip, and the authenticated matrix at 34 passes/two intentional engine-scoped skips. The exact production replay warmed a database-backed public exercise route, waited 15 seconds, then completed five more database reads and five CSRF requests at <code>200</code>; the exact-deployment error scan was empty. Production remained at zero profiles, programs, revisions, and workout sessions. The isolated Wave 1 candidate has not changed production.</p>
-<p>Wave 1 is locally integrated, verified, and pushed on <code>origin/vishal/wave-1-integration</code> from baseline <code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code>. It contains the exact source tips in order: day builder <code>af43c950991de499b8e32a6fac5d58f19be44eed</code>, library and personal guidance <code>b54801b28d40eb106f38fea44ac1da71d468b199</code>, and personal home and copy <code>b1722b0e9bd1c0e5185f5bc40856667266c44d22</code>. Day chooser checkpoint <code>2436bac92ba3381e76646bf61210cd5fd4dae88f</code> and parallel library checkpoint <code>5255a5254fcde4c1b1558947bda64d47bad23743</code> have stable patch ID <code>33d2fbaf150856a6f0fa146b154bff6cc2d55cde</code> and the same four blobs. Implementation checkpoint <code>000a038a9add854dfe59ad796f7b11033753e0d7</code> completes the integration-owned product and schema seams; pushed documentation/evidence checkpoint <code>ae44979880105d02771503637b8a2fa151e9bd05</code> records the final local gate. The candidate is not merged into public <code>main</code>, deployed, migrated in production, or production-verified.</p>
-<p>The integrated schema retains <code>0006_program_cardio_display_order.sql</code> before <code>0007_personal_guidance.sql</code>. Regenerated <code>0007</code> snapshot <code>30c8bbd1-d86e-463e-89ac-3586832e4370</code> has the exact <code>0006</code> snapshot as its predecessor and contains both cardio-order and personal-guidance state. Example and blank creation share the onboarding transaction, and the real editor uses the library adapter with no nested chooser. The complete local static, migration, build, route, authenticated-browser, and public-browser gates pass at the totals recorded in <code>docs/qa/latest/WAVE-1-INTEGRATION-QA.md</code>.</p>
-<p>The primary checkout is aligned with released <code>origin/main</code>. The newer Grok research is integrated as the product owner&#39;s approved 216-link selection for the 108 expansion movements. Runtime video publication remains gated only by the existing per-video full-watch record, not another link-selection pass. Local branch <code>vishal/pre-wave1-primary-preservation</code> retains the exact pre-sync planning state until the closeout comparison proves that no other unique work remains. The restore-tested pre-<code>0005</code> database archive now resides in a durable user-private backup directory outside the repository with mode <code>600</code> and its original checksum. The existing Homebrew .NET 9.0.120 installation is linked again and the ordinary <code>dotnet</code> command is restored.</p>
-<h2>Active Wave 1 integration handoff</h2>
+<p>Wave 1 is released. GitHub <code>main</code>, local <code>main</code>, and Vercel production source
+are exact application commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>.
+Ready deployment <code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code> retains the stable,
+project, and Git-main aliases. Production migrations
+<code>0006_program_cardio_display_order.sql</code> and <code>0007_personal_guidance.sql</code> were
+applied in order by <code>neondb_owner</code> after private archive creation and an
+isolated restore rehearsal. Final schema verification reports 36 public tables,
+148 indexes, zero invalid constraints, zero disabled user triggers, and the
+cardio immutability trigger enabled.</p>
+<p>Hosted production verification passed the public matrix, password and Google
+authentication, owner-isolation/deletion probes, reviewed media and native 200%
+zoom, and the complete Wave 1 editor, guidance, cardio, runner, history, Home,
+Progress, conflict, and equipment-revision story. Disposable Firebase identities
+and owned database rows are absent. The one baseline Google identity remains;
+all 70 retained deletion jobs are terminal and completed; the 216 candidate
+guidance links remain unseeded. The bounded exact-deployment log review found no
+5xx response and no Neon WebSocket, idle-connection, or CSRF error recurrence.</p>
+<p>The private pre-<code>0006</code> archive is
+<code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-wave1-pre-0006-20260829T1735Z.dump</code>,
+mode <code>600</code>, SHA-256
+<code>adcf511735677700332bb3afd884151f360a2da276c537f3e7ebf7fcf92b6ac5</code>.
+Its contents remain private and it was not uploaded. Rollback remains
+restore-gated because the two Wave 1 migrations have no checked-in down path.</p>
+<p>The primary checkout is clean and aligned with released <code>origin/main</code>. Clean
+completed Wave 1 source worktrees and their four local branches were removed;
+remote provenance branches remain. This production-evidence worktree stays on
+<code>vishal/wave-1-production-release</code> so its documentation commit cannot trigger a
+replacement application deployment. Local branch
+<code>vishal/pre-wave1-primary-preservation</code> remains without a worktree because it
+contains one unresolved unique pre-sync documentation commit.</p>
+<h2>Wave 1 production handoff</h2>
 <ul>
-<li>Last completed: exact source integration, example-versus-blank onboarding, real editor chooser composition, <code>0000</code>-<code>0007</code> fixture reconciliation, full static/build gates, 38 authenticated browser passes with two intentional skips, 47 public browser passes with one documented WebKit service-worker skip, final documentation generation, and the candidate push through evidence checkpoint <code>ae44979880105d02771503637b8a2fa151e9bd05</code>.</li>
-<li>In progress: review handoff only.</li>
-<li>Next: obtain review and separate release authorization. Do not merge <code>main</code>, apply production migrations, seed guidance candidates, or deploy from this integration task.</li>
-<li>Known limitation: this is local synthetic verification. Migrations have no down path and require restore readiness; no hosted or production claim is made.</li>
-<li>Verification: 118 Vitest files/814 tests, Drizzle metadata, full local migration/bootstrap checks, exact-two seed, service worker, Webpack production build, 44-route boundary, and both maintained browser matrices pass.</li>
-<li>Important files: <code>docs/plans/WAVE-1-INTEGRATION.md</code>, <code>docs/qa/latest/WAVE-1-INTEGRATION-QA.md</code>, <code>drizzle/0006_program_cardio_display_order.sql</code>, <code>drizzle/0007_personal_guidance.sql</code>, <code>drizzle/meta/_journal.json</code>, and <code>tests/fixtures/authenticated-app/server/database.ts</code>.</li>
-<li>Open question: none within candidate scope; production release remains a separate authorization and restore-gated operation.</li>
+<li>Last completed: restore-tested recovery, ordered production migrations,
+exact-commit <code>main</code> and deployment, hosted provider/member/public replay,
+runtime/data reconciliation, and completed source-worktree cleanup.</li>
+<li>In progress: documentation-only evidence closeout on
+<code>vishal/wave-1-production-release</code>.</li>
+<li>Next: no application release action remains. Review the canonical production
+record without merging it to <code>main</code> unless a replacement deployment is
+intentionally desired.</li>
+<li>Known limitations: the deployment-specific hostname is Vercel-SSO protected;
+password action-code evidence does not claim inbox delivery; a production
+restore was not needed or attempted.</li>
+<li>Verification: exact-candidate <code>pnpm verify</code> passed 118 Vitest files/814 tests,
+database 4/34, Drizzle, seed, PWA, documentation, build, and 44-route gates;
+public production passed 47/48 with one documented WebKit service-worker
+skip; all 38 unique authenticated fixture cases passed with two intentional
+skips after one transient WebKit case passed on exact replay.</li>
+<li>Important files: <code>docs/plans/WAVE-1-PRODUCTION-RELEASE.md</code>,
+<code>docs/qa/latest/WAVE-1-PRODUCTION-RELEASE-QA.md</code>,
+<code>drizzle/0006_program_cardio_display_order.sql</code>,
+<code>drizzle/0007_personal_guidance.sql</code>, and <code>docs/context/LOG.md</code>.</li>
+<li>Open question: reconcile the unique preservation-branch documentation commit
+separately; it does not block or alter this release.</li>
 </ul>
 <h2>What exists</h2>
 <ul>
 <li>A public GitHub repository at <code>vdoshi96/My-Workout-Pal</code>. Local <code>main</code> tracks <code>origin/main</code>, and Vercel production is connected to that branch.</li>
 <li>A fully inspected private reference recording, with temporary inspection artifacts outside the repository.</li>
-<li>The Wave 1 candidate includes verified flexible day editing and cardio order, one frozen chooser contract, generated catalog manifests, equipment-compatible canonical/private search, inline private movement creation inside the real editor, owner-scoped personal guidance, immutable guidance snapshots, example-or-blank onboarding, resumable-workout home state, and canonical public Progress navigation.</li>
+<li>Released Wave 1 includes verified flexible day editing and cardio order, one frozen chooser contract, generated catalog manifests, equipment-compatible canonical/private search, inline private movement creation inside the real editor, owner-scoped personal guidance, immutable guidance snapshots, example-or-blank onboarding, resumable-workout home state, and canonical public Progress navigation.</li>
 <li>The initial product record and context documentation.</li>
 <li>An authoritative workout-companion repositioning plan and a 108-candidate names-first exercise expansion inventory. These are plans, not implemented application behavior.</li>
 <li>A strict Next.js 16.3.2 foundation with a distinct public companion welcome route at <code>/</code>, the approved route-atlas five-day example at <code>/program</code>, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout, disclosed Progress preview at <code>/progress</code>, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.</li>

@@ -30,9 +30,11 @@ Use the following documents as the maintained project map:
 
 Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.
 
-## Wave 1 integrated architecture
+## Wave 1 released architecture
 
-The `vishal/wave-1-integration` candidate composes library selection with routine placement while preserving the source boundaries:
+Released application commit `a202a815ad3b7320bbc68b819303822ca4773b1d`
+composes library selection with routine placement while preserving the source
+boundaries:
 
 - `src/domain/exercises/movement-chooser-contract.ts` owns the neutral add, replace, and seed-day request plus the sanitized selection/error boundary.
 - `src/components/program/program-editor.tsx` owns destination state, accessible ordering and removal review, publication recovery, and mapping the selection into the catalog/custom XOR.
@@ -41,4 +43,11 @@ The `vishal/wave-1-integration` candidate composes library selection with routin
 - `drizzle/0006_program_cardio_display_order.sql` and `src/db/schema.ts` persist alternative cardio order explicitly; program reads, root clones, equipment revisions, and `src/server/repositories/workout-repository.ts` preserve it into the workout snapshot.
 - `drizzle/0007_personal_guidance.sql` follows `0006`, owns owner-scoped personal guidance and guidance snapshots, and was regenerated against the integrated cardio-order schema state.
 
-The editor mounts the library-owned chooser adapter without giving it ownership of topology, targets, or publication. The library owns guidance persistence and the workout repository snapshots guidance at start. Production migration application remains a separate schema-owner release action. See `docs/plans/FLEXIBLE-DAY-BUILDER.md`, `docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md`, `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`, and `docs/context/DECISIONS.md` for the detailed contracts.
+The editor mounts the library-owned chooser adapter without giving it ownership
+of topology, targets, or publication. The library owns guidance persistence and
+the workout repository snapshots guidance at start. Production migrations
+`0006` and `0007` are applied and verified in that order; the Ready Vercel
+deployment reports the exact released Git source. See
+`docs/qa/latest/WAVE-1-PRODUCTION-RELEASE-QA.md` for the recovery, migration,
+hosted-verification, data-reconciliation, log, and cleanup record, and the three
+Wave 1 feature plans plus `docs/context/DECISIONS.md` for detailed contracts.

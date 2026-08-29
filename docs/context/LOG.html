@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d9be2e4bddcbefb7474007f68dd14c283f9f42af8462129ccd3f1221290abdaf">
+  <meta name="source-sha256" content="bd66995a3787808971fd885216e0c361176489275964d4492fc4e96d9989e063">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,53 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-29: Wave 1 production release</h2>
+<ul>
+<li>Created private pre-<code>0006</code> archive
+<code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-wave1-pre-0006-20260829T1735Z.dump</code>
+with mode <code>600</code>, 320 entries, and SHA-256
+<code>adcf511735677700332bb3afd884151f360a2da276c537f3e7ebf7fcf92b6ac5</code>.
+An isolated PostgreSQL restore reproduced the exact pre-release migrations,
+schema objects, triggers, and privacy-safe aggregates; the disposable restore
+environment was removed and the private archive was not uploaded.</li>
+<li>Applied exact migrations <code>0006_program_cardio_display_order.sql</code> and
+<code>0007_personal_guidance.sql</code> in separate schema-owner transactions with hashes
+<code>e20555d7abccee6c620054bc62257b38dbaba2739ca5305e8daf6ca064eb56f5</code>
+and
+<code>59dce2363f73c2c2a53ef9b4668d1ce57dbf575a8ef0759094ccb4c50eaea4e0</code>.
+The first <code>0007</code> attempt rolled back safely when its verification gate failed
+to account for PostgreSQL identifier truncation; the unchanged migration then
+passed structural checks. Final production state is 36 tables, 148 indexes,
+no invalid constraints or disabled user triggers, and enabled cardio
+immutability.</li>
+<li>Fast-forwarded public and local <code>main</code> from exact baseline
+<code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code> to exact application commit
+<code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>. Ready production deployment
+<code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code> reports that exact GitHub source on <code>main</code>
+and retains the three existing production aliases, Node.js 24.x, and <code>iad1</code>.</li>
+<li>Passed exact-candidate <code>pnpm verify</code> at 118 Vitest files/814 tests, database
+4/34, Drizzle, exact-two seed, PWA, 50-document parity, build, and 44 routes.
+Hosted public production passed 47 cases with one documented WebKit
+service-worker skip. All 38 unique authenticated fixture cases passed with two
+intentional skips after one WebKit RSC cancellation passed unchanged on exact
+replay.</li>
+<li>Passed hosted password action-code/recovery/revocation, real Google return and
+revocation/reauthentication/sign-out, owner-isolation/deletion, reviewed media,
+native 200% zoom, and the complete Wave 1 editor/guidance/cardio/runner/history/
+Home/Progress/equipment-revision journey. Every disposable identity and owned
+row was removed; Firebase returned to one baseline Google identity, owned
+database aggregates returned to zero, and all 70 retained deletion audits are
+completed. The 216 candidate guidance links remain unseeded.</li>
+<li>The bounded exact-deployment log scan found no 5xx response and no Neon
+WebSocket, idle-connection, or CSRF error recurrence. One status-200 streamed
+response logged destination cancellation when browser QA navigated away.</li>
+<li>Removed the four clean completed Wave 1 source worktrees and local branches
+after proving their commits are in <code>main</code>; remote provenance branches remain.
+Retained only the current production evidence worktree and the unresolved
+no-worktree <code>vishal/pre-wave1-primary-preservation</code> branch. Production evidence
+stays on <code>vishal/wave-1-production-release</code> so it does not trigger an
+unnecessary replacement deployment from <code>main</code>.</li>
+</ul>
 <h2>2026-08-29: Wave 1 integration candidate</h2>
 <ul>
 <li>Integrated the exact day-builder, library/personal-guidance, and personal-home/copy tips in the required order from clean baseline <code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code>, preserving separate merge provenance and the byte-identical chooser checkpoints.</li>
