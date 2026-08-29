@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="f8b85fa66f96d0b6a32b61bf910758a74a0b3ce814dba66a75f13372615c10cf">
+  <title>Wave 1 integration QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 1 integration QA</h1>
+<h2>Status</h2>
+<p>Integration verification is in progress. This report records only evidence observed on <code>vishal/wave-1-integration</code>; it does not treat isolated worker results as combined proof.</p>
+<h2>Candidate identity</h2>
+<ul>
+<li>Base: <code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code></li>
+<li>Flexible day builder: <code>af43c950991de499b8e32a6fac5d58f19be44eed</code></li>
+<li>Library and personal guidance: <code>b54801b28d40eb106f38fea44ac1da71d468b199</code></li>
+<li>Personal home and companion copy: <code>b1722b0e9bd1c0e5185f5bc40856667266c44d22</code></li>
+<li>Candidate branch: <code>vishal/wave-1-integration</code></li>
+<li>Candidate commit: Pending</li>
+</ul>
+<h2>Baseline and provenance</h2>
+<p>Before branch creation, detached <code>HEAD</code>, local <code>main</code>, <code>origin/main</code>, and the merge base all resolved to the required base, and the worktree was clean. A read-only GitHub remote-head query confirmed all three source tips.</p>
+<p>Chooser checkpoint <code>2436bac92ba3381e76646bf61210cd5fd4dae88f</code> is an ancestor of the day-builder tip. Library checkpoint <code>5255a525</code> is an ancestor of the library tip. Their two documentation files, contract module, and contract test resolve to four matching Git blob IDs, proving byte identity before integration.</p>
+<h2>Failed-before integration evidence</h2>
+<p>Pending the first combined merge, schema, and product runs. Record only integration-created conflicts or gaps here; don&#39;t duplicate worker feature failures.</p>
+<h2>Integration record</h2>
+<p>Pending.</p>
+<h2>Migration review</h2>
+<p>Pending review of <code>0006_program_cardio_display_order.sql</code>, <code>0007_personal_guidance.sql</code>, the integrated <code>0007_snapshot.json</code>, journal order, local PGlite chain, fixtures, and schema/bootstrap assertions.</p>
+<h2>Static and data verification</h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Result</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TypeScript</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>ESLint</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Vitest</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Drizzle and schema</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>PGlite <code>0000</code>-<code>0007</code></td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Deterministic seed and exact-two</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>PWA/service worker</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Diff check</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Webpack production build</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Route boundary</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+</tbody></table>
+<h2>Browser verification</h2>
+<table>
+<thead>
+<tr>
+<th>Journey</th>
+<th>Chromium desktop</th>
+<th>WebKit phone</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Example and blank creation</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Arbitrary editor and chooser operations</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Inline private creation and personal guidance</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Publish, reload, exact start, and cardio order</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Resume conflict and immutable history</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Equipment revision</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Home, unverified, and cross-owner states</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+<tr>
+<td>Public Progress and redirect</td>
+<td>Pending</td>
+<td>Pending</td>
+</tr>
+</tbody></table>
+<p>The maintained public browser matrix is pending. Retained screenshot inventory is pending.</p>
+<h2>Boundaries and limitations</h2>
+<p>No production migration, data seed, deployment, alias/provider change, <code>main</code> merge, or sibling-worktree removal is part of this QA run. Local verification can&#39;t prove a future production release.</p>
+<h2>Release sequence after separate authorization</h2>
+<p>Pending final candidate identity and reviewed migration gate. The release sequence will remain documentation-only until the user gives separate release authorization.</p>
+
+  </main>
+</body>
+</html>

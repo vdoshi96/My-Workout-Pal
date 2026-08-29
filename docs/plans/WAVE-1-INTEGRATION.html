@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="f69eef5f616e7ceacf0c4f178bd96f09963f52002858ed36a1be8a7c3586eb78">
+  <title>Wave 1 integration plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 1 integration plan</h1>
+<h2>Outcome</h2>
+<p>Produce one reviewable local integration candidate on <code>vishal/wave-1-integration</code> from the exact Wave 1 source tips. Preserve each branch&#39;s behavior and Git provenance, prove the combined schema and product contracts locally, and push the candidate without merging it into <code>main</code> or changing production.</p>
+<p>The candidate must compose the signed-in home handoff with the existing program-creation and flexible-editor persistence path. A member can choose the five-day example or a blank routine, edit arbitrary bounded topology, select canonical or private movements, attach owner-only guidance, publish an immutable revision, and start the exact saved day. The integration must not create a second routine persistence path.</p>
+<h2>Scope and stop boundaries</h2>
+<p>This integration may:</p>
+<ul>
+<li>Create and push <code>vishal/wave-1-integration</code>.</li>
+<li>Merge the three exact source tips into the integration branch in the approved order.</li>
+<li>Resolve integration conflicts and add integration-only tests, product composition, migrations metadata, documentation, and local QA evidence.</li>
+<li>Run the complete migration chain against local PGlite and run local production-mode browsers.</li>
+</ul>
+<p>This integration must not:</p>
+<ul>
+<li>Merge or fast-forward <code>main</code> locally or on GitHub.</li>
+<li>Apply a migration to Neon or any other external database.</li>
+<li>Seed the 216 product-approved candidate links or label them runtime-approved.</li>
+<li>Deploy, promote, change an alias, change a provider, or modify paid configuration.</li>
+<li>Remove sibling worktrees or source branches.</li>
+<li>Add Corner Companions production art or CSS.</li>
+</ul>
+<h2>Verified intake</h2>
+<p>The clean integration base is <code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code>. Before branch creation, detached <code>HEAD</code>, local <code>main</code>, <code>origin/main</code>, and their merge base all resolved to that commit, with no tracked or untracked changes.</p>
+<p>The remote source tips are:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Remote branch</th>
+<th>Required tip</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Flexible day builder</td>
+<td><code>origin/vishal/flexible-day-builder</code></td>
+<td><code>af43c950991de499b8e32a6fac5d58f19be44eed</code></td>
+</tr>
+<tr>
+<td>Library and personal guidance</td>
+<td><code>origin/vishal/library-guidance-foundation</code></td>
+<td><code>b54801b28d40eb106f38fea44ac1da71d468b199</code></td>
+</tr>
+<tr>
+<td>Personal home and companion copy</td>
+<td><code>origin/vishal/companion-home-copy</code></td>
+<td><code>b1722b0e9bd1c0e5185f5bc40856667266c44d22</code></td>
+</tr>
+</tbody></table>
+<p>Each tip has the required base as its merge base. A read-only GitHub query confirmed that the three remote heads resolve to the required commits.</p>
+<h2>Integration order and provenance</h2>
+<p>Integrate the branches in the following order:</p>
+<ol>
+<li>Merge <code>af43c950991de499b8e32a6fac5d58f19be44eed</code> and retain its commits, including chooser checkpoint <code>2436bac92ba3381e76646bf61210cd5fd4dae88f</code>.</li>
+<li>Merge <code>b54801b28d40eb106f38fea44ac1da71d468b199</code>. Library checkpoint <code>5255a525</code> introduces the same four blobs as <code>2436bac9</code>, so resolve the shared history as one contract rather than keeping incompatible duplicates.</li>
+<li>Merge <code>b1722b0e9bd1c0e5185f5bc40856667266c44d22</code> and reconcile home, onboarding, fixture, locator, documentation, and generated-output overlaps without discarding either branch&#39;s behavior.</li>
+</ol>
+<p>Use merge commits so the candidate records the exact source parents. Record every manual conflict resolution in the QA report. Do not squash the source branches.</p>
+<h2>Integration-only failed-before evidence</h2>
+<p>Worker reports already contain their feature-level red-to-green evidence. Do not recreate or fabricate those failures.</p>
+<p>Retain concise integration-only failed-before evidence from the first combined state, including:</p>
+<ul>
+<li>Textual merge conflicts and their paths.</li>
+<li>Duplicate or stale generated documentation and service-worker output.</li>
+<li>A migration-chain, schema snapshot, fixture, or journal mismatch caused by combining <code>0006</code> and <code>0007</code>.</li>
+<li>A missing example-versus-blank home composition or duplicate persistence seam.</li>
+<li>Combined test, build, route, or browser failures that did not exist on the isolated branches.</li>
+</ul>
+<p>Record the exact command, focused failure, root cause, correction, and passing replay. Infrastructure failures remain separate from product failures.</p>
+<h2>Product composition</h2>
+<h3>Navigation and home states</h3>
+<p>Keep <code>/app</code> as the private default after sign-in. It derives identity, verification, active program, resumable workout, and progress from server-owned data.</p>
+<p>The home must keep the following states coherent:</p>
+<ul>
+<li>New account: show one choice between <strong>Start with the example</strong> and <strong>Start blank</strong>. Both choices call the existing owner-scoped program-creation boundary.</li>
+<li>Ready account: make the next workout or routine action clear and retain edit, library, history, progress, and settings navigation.</li>
+<li>Active workout: make <strong>Resume workout</strong> dominant, suppress competing starts, and retain read-only program, day, library, history, progress, and settings navigation.</li>
+<li>Unverified password account: keep browsing and review available, explain the verification gate, and block permanent creation, editing, and starts.</li>
+<li>Empty progress: show no sample values on private routes.</li>
+<li>Loading and persistence error: keep account identity and safe navigation visible, retain entered choices, and provide retry without duplicating a program.</li>
+</ul>
+<p>Keep public <code>/progress</code> canonical and public-cacheable. Keep <code>/sample-progress</code> as a permanent redirect. Render <strong>Sample data · not your history</strong> once on the public preview. Keep <code>/app/progress</code> private and uncached.</p>
+<h3>Routine types and persistence</h3>
+<p>The day builder owns day, section, prescription, and cardio placement; topology; stable keys; default retention and reset; publication; and exact-start behavior. Preserve arbitrary bounded day and section names and counts, optional sections and cardio, authored cardio order, and final-row safeguards.</p>
+<p>Example and blank creation must use the existing strict program-creation request, retry key, owner-scoped repository transaction, and active-program invariant. Do not add a client-only shortcut or a parallel API route. The example uses the starter template; blank creation uses the existing blank template contract and enters the same editor/publication lifecycle.</p>
+<p>Every successful publication creates a complete immutable revision. Starting a workout snapshots the selected revision, day, exercise meaning, targets, and resolved guidance. Later edits can&#39;t rewrite an active or completed workout.</p>
+<h3>Library, chooser, and guidance boundary</h3>
+<p>Retain the neutral chooser result exactly:</p>
+<pre><code class="language-ts">{
+  source: { kind: &quot;catalog&quot; | &quot;custom&quot;; id: string };
+  name: string;
+  loggingKind: LoggingKind;
+}
+</code></pre>
+<p><code>replace</code> requires a current selection. <code>add</code> and <code>seed-day</code> don&#39;t. Keep editor positions, topology, defaults, equipment metadata, search state, and guidance out of this callback.</p>
+<p>The library owns generated catalog manifests, compatibility and private loading, search, inline private creation, owner-scoped personal guidance, and guidance snapshots. Guidance is stored separately from public catalog data and never changes public approval state. The chooser returns a selection to the day builder, which decides where to place it.</p>
+<h3>Authorization and privacy</h3>
+<ul>
+<li>Derive Firebase UID only from the verified server session.</li>
+<li>Reject client ownership and lifecycle fields.</li>
+<li>Keep custom exercises and personal guidance owner-scoped, with foreign resources indistinguishable from missing resources.</li>
+<li>Keep stable opaque keys and safe, normalized HTTPS guidance URLs.</li>
+<li>Keep private links and owner identifiers out of errors, logs, public caches, analytics, and documentation evidence.</li>
+<li>Keep the 216 candidate links outside runtime-approved guidance until each video passes the separate full-watch curation gate.</li>
+</ul>
+<h3>Recovery and accessibility</h3>
+<p>Creation, guidance changes, publication, and workout operations retain stable retry keys through interrupted responses. A malformed or ambiguous success response can&#39;t advance client state. Stale revisions preserve the draft and offer an explicit recovery action.</p>
+<p>Every interactive path must work with keyboard input and visible focus, expose status changes to assistive technology, preserve label-in-name, and avoid focus loss after movement or topology changes. Phone layouts must keep fixed navigation clear, prevent horizontal overflow, and keep destructive review and chooser controls reachable. Reduced motion and forced colors must remain usable. No Wave 3 decorative production assets may enter these surfaces.</p>
+<h2>Migration and schema gate</h2>
+<p>Keep this local order:</p>
+<ol>
+<li><code>0000_initial_schema.sql</code></li>
+<li><code>0001_account_deletion_saga.sql</code></li>
+<li><code>0002_workout_canonical_measurements.sql</code></li>
+<li><code>0003_program_collection.sql</code></li>
+<li><code>0004_personal_record_projection_checkpoint.sql</code></li>
+<li><code>0005_flexible_routine_topology.sql</code></li>
+<li><code>0006_program_cardio_display_order.sql</code></li>
+<li><code>0007_personal_guidance.sql</code></li>
+</ol>
+<p>Regenerate or reconcile <code>0007_snapshot.json</code> and the Drizzle journal against the integrated <code>0006</code> schema. Update authenticated PGlite fixture migrations, bootstrap assertions, and schema tests so they use the same chain.</p>
+<p>Review both new migrations for:</p>
+<ul>
+<li>Server-derived ownership and composite owner constraints.</li>
+<li>Backfill determinism and non-null transitions.</li>
+<li>Check constraints, uniqueness, indexes, and foreign-key delete behavior.</li>
+<li>Interaction with program and workout immutability triggers.</li>
+<li>Local rollback and recovery implications.</li>
+<li>The requirement to apply <code>0006</code> before code reads cardio display order and <code>0007</code> before code reads or writes guidance.</li>
+</ul>
+<p>Run the empty local PGlite migration chain from <code>0000</code> through <code>0007</code>, repository/bootstrap checks, and migrated-fixture behavior. Do not connect these commands to production.</p>
+<h2>Acceptance criteria</h2>
+<p>The candidate is acceptable only if all of the following conditions are met:</p>
+<ul>
+<li>Git history contains the exact three source tips and documents every integration correction.</li>
+<li>The chooser contract remains byte-identical to the agreed checkpoint.</li>
+<li>Example and blank creation share one owner-scoped persistence path.</li>
+<li>Flexible topology, canonical/private chooser, inline private creation, personal guidance, publication, exact start, resume, history, equipment revisions, and owner isolation compose without regression.</li>
+<li>Zero-cardio and one-cardio days preserve authored order and exact workout behavior.</li>
+<li>Active sessions suppress competing starts while review navigation stays available.</li>
+<li><code>/progress</code>, <code>/sample-progress</code>, sample disclosure, identity, verification, and sign-out behavior remain correct.</li>
+<li>The <code>0000</code>-<code>0007</code> local migration chain and schema/bootstrap checks pass.</li>
+<li>No candidate video is seeded, no production migration runs, and no deployment or alias/provider change occurs.</li>
+<li>Only the newest coherent QA report and browser evidence remain under <code>docs/qa/latest/</code>.</li>
+</ul>
+<h2>Verification matrix</h2>
+<p>Run one gate at a time and record exact totals:</p>
+<ul>
+<li>Strict TypeScript.</li>
+<li>Full ESLint.</li>
+<li>Full Vitest.</li>
+<li>Drizzle metadata, schema, migration, repository, and bootstrap checks.</li>
+<li>Deterministic seed and exact-two approved-video checks.</li>
+<li>Generated PWA/service-worker parity.</li>
+<li>Documentation build and parity.</li>
+<li><code>git diff --check</code>.</li>
+<li>Next.js Webpack production build.</li>
+<li>Production route-boundary verification.</li>
+<li>Maintained public production-mode browser matrix.</li>
+<li>Combined authenticated production-mode Chromium desktop and WebKit phone journeys.</li>
+</ul>
+<p>The authenticated journey must cover example and blank creation, arbitrary editor operations, canonical and private selection, inline private creation, personal-guidance replacement, publish and reload, exact start, zero-cardio and one-cardio behavior, resume conflict, immutable history after edits, equipment revision, every personal-home state, unverified gates, and cross-owner safe failures.</p>
+<h2>Evidence retention and closeout</h2>
+<p>Keep <code>docs/qa/latest/WAVE-1-INTEGRATION-QA.md</code> and its generated HTML counterpart as the canonical report. Retain only screenshots from the newest coherent combined run. Remove superseded generated test output only after the replacement passes.</p>
+<p>Commit integration corrections with focused messages, then push <code>vishal/wave-1-integration</code>. Report source SHAs, merge and correction commits, migration identities and order, verification totals, retained evidence, limitations, and the separate production release sequence. Stop before merging <code>main</code> or performing any release action.</p>
+
+  </main>
+</body>
+</html>
