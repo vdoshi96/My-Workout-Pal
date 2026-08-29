@@ -168,13 +168,13 @@ describe("Wave 2 strength catalog expansion", () => {
       expect(manifestProjection(manifest.slice(releasedCount))).toEqual(additions);
     }
 
-    expect(Object.keys(CATALOG_EXERCISES)).toHaveLength(92);
+    expect(Object.keys(CATALOG_EXERCISES)).toHaveLength(134);
     expect(Object.keys(CATALOG_EXERCISES).slice(0, 27)).toEqual(
       APPROVED_VIDEO_REQUIRED_VARIATIONS.map(
         ({ canonicalExerciseSlug }) => canonicalExerciseSlug,
       ),
     );
-    expect(Object.keys(CATALOG_EXERCISES).slice(27)).toEqual(ADDED_SLUGS);
+    expect(Object.keys(CATALOG_EXERCISES).slice(27, 27 + ADDED_SLUGS.length)).toEqual(ADDED_SLUGS);
   });
 
   it("keeps authored records ID-free and generates complete bounded content", () => {
@@ -260,7 +260,7 @@ describe("Wave 2 strength catalog expansion", () => {
 
     const rows = buildStarterDatabaseRows();
     const wallSit = rows.catalogExercises.find(({ slug }) => slug === "wall-sit");
-    expect(rows.catalogExercises).toHaveLength(92);
+    expect(rows.catalogExercises).toHaveLength(134);
     expect(rows.curatedVideos).toHaveLength(54);
     expect(wallSit?.instructions.split("\n")).toHaveLength(3);
     expect(

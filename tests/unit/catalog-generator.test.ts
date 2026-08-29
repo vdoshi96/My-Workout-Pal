@@ -229,7 +229,7 @@ const releasedCatalogSnapshot: readonly ReleasedCatalogSnapshot[] = [
     ["dumbbells", "bench"],
     "horizontal-row",
     ["lats", "upper back", "biceps"],
-    ["incline bench dumbbell row", "chest-supported DB row"],
+    ["incline bench dumbbell row", "chest-supported DB row", "prone dumbbell row"],
     [
       "Set a stable torso position before starting the pull.",
       "Row the weight toward the ribs without using momentum.",

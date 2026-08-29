@@ -260,7 +260,7 @@ async function createFixture(database: Database): Promise<Fixture> {
     .select({ loggingKind: catalogExercises.loggingKind })
     .from(catalogExercises);
   expect(new Set(exerciseKinds.map(({ loggingKind }) => loggingKind))).toEqual(
-    new Set(["weight_reps", "bodyweight_reps", "duration"]),
+    new Set(["weight_reps", "bodyweight_reps", "duration", "distance_duration"]),
   );
   const pullDay = sourceDays.find(({ dayKey }) => dayKey === "pull")!;
   return {

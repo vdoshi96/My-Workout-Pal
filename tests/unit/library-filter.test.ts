@@ -42,12 +42,19 @@ describe("exercise library filtering", () => {
       listCatalogExercises({ profile: EQUIPMENT_PROFILES.dumbbells, query: "RDL" }).map(
         (exercise) => exercise.slug,
       ),
-    ).toEqual(["dumbbell-romanian-deadlift"]);
+    ).toEqual([
+      "dumbbell-romanian-deadlift",
+      "single-leg-dumbbell-romanian-deadlift",
+    ]);
     expect(
       listCatalogExercises({ profile: EQUIPMENT_PROFILES.barbell, query: "rack squat" }).map(
         (exercise) => exercise.slug,
       ),
-    ).toEqual(["barbell-back-squat"]);
+    ).toEqual([
+      "barbell-back-squat",
+      "barbell-front-squat",
+      "zercher-squat",
+    ]);
   });
 
   it("filters only compatible owner-provided custom records with aliases", () => {
