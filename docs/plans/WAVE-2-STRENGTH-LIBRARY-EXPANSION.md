@@ -166,7 +166,8 @@ behavior. A malformed or ambiguous response can't advance the editor.
 - Keep the canonical records public and free of owner data, URLs, or durable
   database IDs.
 - Keep personal links, routine names, workout data, and session identifiers out
-  of catalog manifests and shared screenshots.
+  of catalog manifests. Use only synthetic authenticated-fixture values in
+  shared browser screenshots.
 - Keep the private reference recording and curation scratch artifacts outside
   Git and documentation.
 - Do not create a public iframe for an unapproved candidate URL.

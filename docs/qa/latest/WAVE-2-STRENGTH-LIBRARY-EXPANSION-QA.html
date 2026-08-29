@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="4fd66c202deab076dc5991bb085a02917e7e7c720e525e50fb9d10b134dac910">
+  <title>Wave 2 strength library expansion QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 2 strength library expansion QA</h1>
+<h2>Status</h2>
+<p>The Strength-owned Wave 2 batch is implemented and locally verified on
+<code>vishal/library-strength-expansion</code>. Implementation checkpoint <code>bbd44ab</code>
+adds 65 distinct canonical records across the five owned manifests and adds
+the exact alias <code>prone dumbbell row</code> to the released
+<code>chest-supported-dumbbell-row</code>. The branch catalog contains 92 records: the 27
+released records in their released order followed by the 65 Strength additions
+in bounded inventory order.</p>
+<p>The branch publishes no video candidate, approved row, durable database ID,
+schema change, migration, provider change, production seed, deployment, or
+<code>main</code> merge. The approved seed remains 54 rows for the explicit 27-variation
+policy. The core, conditioning and carries, and mobility and recovery manifests
+are unchanged.</p>
+<p>Two full-suite assertions remain intentionally assigned to Wave 2 integration
+because both live in shared central tests. All other 825 Vitest tests pass.</p>
+<h2>Intake and prerequisite</h2>
+<p>Before branch creation, detached <code>HEAD</code>, local <code>main</code>, and <code>origin/main</code> all
+resolved to <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>; the worktree was clean.</p>
+<p>The branch consumed exact prerequisite checkpoint
+<code>7046a94bae41e90839b16d5329b58a1975600ee9</code> from
+<code>origin/vishal/catalog-video-eligibility-contract</code>. The clean cherry-pick is
+local commit <code>ad92476</code>, and its tree is identical to the source checkpoint. The
+prerequisite explicitly limits exact-two video requirements to the 27 released
+canonical variations, allowing catalog-only growth without fabricated approved
+videos.</p>
+<h2>Content totals</h2>
+<table>
+<thead>
+<tr>
+<th>Owned category</th>
+<th align="right">Released prefix</th>
+<th align="right">Added</th>
+<th align="right">Branch category total</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chest and pushing</td>
+<td align="right">3</td>
+<td align="right">12</td>
+<td align="right">15</td>
+</tr>
+<tr>
+<td>Back and rear shoulder</td>
+<td align="right">4</td>
+<td align="right">11</td>
+<td align="right">15</td>
+</tr>
+<tr>
+<td>Shoulders</td>
+<td align="right">1</td>
+<td align="right">10</td>
+<td align="right">11</td>
+</tr>
+<tr>
+<td>Arms</td>
+<td align="right">2</td>
+<td align="right">12</td>
+<td align="right">14</td>
+</tr>
+<tr>
+<td>Lower body and glutes</td>
+<td align="right">9</td>
+<td align="right">20</td>
+<td align="right">29</td>
+</tr>
+<tr>
+<td><strong>Owned total</strong></td>
+<td align="right"><strong>19</strong></td>
+<td align="right"><strong>65</strong></td>
+<td align="right"><strong>84</strong></td>
+</tr>
+</tbody></table>
+<p>The 65 additions contain 53 <code>weight_reps</code>, 11 <code>bodyweight_reps</code>, and one
+<code>duration</code> record. Every addition has supported equipment, role, movement
+family, primary muscles, at least one normalized-distinct alias, and exactly
+three nonblank, claim-safe instructions. No Strength record uses
+<code>distance_duration</code>.</p>
+<p>The inventory originally assigned 66 names to this worker. Coordinator review
+resolved <code>prone-dumbbell-row</code> as a duplicate of released
+<code>chest-supported-dumbbell-row</code>, so it is not another slug. Its two selected Grok
+links remain unapproved evidence for the existing movement and never enter the
+runtime seed. The corrected combined Wave 2 target is 107 additions and 134
+catalog records after the sibling&#39;s 42 additions are integrated.</p>
+<h2>Failed-before and passed-after evidence</h2>
+<p>The focused test was added before any manifest edit and run with:</p>
+<pre><code class="language-text">pnpm exec vitest run tests/unit/strength-catalog-expansion.test.tsx
+</code></pre>
+<p>The RED run produced one failed file and five failed tests. Each failure was
+specific to absent production content:</p>
+<ul>
+<li>the first owned manifest expansion was empty rather than the expected ordered
+chest rows;</li>
+<li>generated additions were <code>undefined</code>;</li>
+<li>the released row lacked <code>prone dumbbell row</code>;</li>
+<li>alias search for <code>strict press</code> returned no barbell overhead press;</li>
+<li><code>wall-sit</code> had no duration logging record.</li>
+</ul>
+<p>After implementation, the first GREEN replay passed one file and five tests.
+The final post-review replay also passed one file and five tests. The test proves
+all 65 ordered slugs and equipment mappings, the 92-record catalog, the released
+27-order prefix, no durable IDs, the 53/11/1 logging split, alias search,
+equipment filtering, three-instruction bounds, 27 video requirements, 54
+approved rows, and no approved row or iframe for a representative addition.</p>
+<h2>Content review</h2>
+<p>An independent read-only GPT-5.6 Luna review covered all 65 records and the
+alias reconciliation. It identified six concrete cue or alias issues in
+<code>dumbbell-rear-delt-row</code>, <code>dumbbell-high-pull</code>, <code>barbell-skull-crusher</code>,
+<code>barbell-jm-press</code>, <code>barbell-good-morning</code>, and <code>frog-pump</code>. All six were
+corrected. The follow-up review approved the complete 65-record batch with no
+remaining concrete issue.</p>
+<h2>Browser evidence</h2>
+<p>The exact requested spec
+<code>tests/authenticated-e2e/library-strength-expansion.spec.ts</code> ran explicitly
+through the branch-only authenticated runner in both requested projects:</p>
+<pre><code class="language-text">node scripts/test-e2e-authenticated-strength.mjs \
+  --project=chromium-desktop \
+  --project=webkit-phone \
+  tests/authenticated-e2e/library-strength-expansion.spec.ts
+</code></pre>
+<p>Result: two tests passed in 10.3 seconds after one production-fixture build. In
+each project, verified synthetic member Alice:</p>
+<ol>
+<li>onboarded to the real five-day routine;</li>
+<li>opened the production routine editor and movement chooser;</li>
+<li>found <code>Dumbbell floor press</code> by the <code>floor dumbbell press</code> alias;</li>
+<li>selected <code>Wall sit</code> by name and received the 20–45 second editor defaults;</li>
+<li>saw private-guidance fields rather than an approved-pair claim for each new
+movement;</li>
+<li>published revision 2 through <code>/api/app/program/publish</code>;</li>
+<li>opened and reloaded the saved day with both exact selections;</li>
+<li>started the immutable workout snapshot through the production start control;</li>
+<li>selected both additions in the runner, including the duration input for
+<code>Wall sit</code>;</li>
+<li>saw <strong>Unavailable</strong> and the explicit no-approved-pair message with zero
+iframes; and</li>
+<li>passed the critical/serious accessibility scan with no console or local
+request failures.</li>
+</ol>
+<p>Screenshots use synthetic fixture data only:</p>
+<ul>
+<li><a href="./library-strength-expansion-chromium-desktop.png">Chromium desktop runner</a></li>
+<li><a href="./library-strength-expansion-webkit-phone.png">WebKit phone runner</a></li>
+</ul>
+<p>The maintained authenticated matcher is unchanged. The branch-only config and
+runner exist solely to execute the exact requested spec before combined Wave 2
+matcher reconciliation.</p>
+<h2>Verification matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Focused Strength RED</td>
+<td>Expected: one file, five failed tests before manifest edits</td>
+</tr>
+<tr>
+<td>Focused Strength GREEN</td>
+<td>Passed: one file, five tests</td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td>Passed: <code>tsc --noEmit</code></td>
+</tr>
+<tr>
+<td>Scoped ESLint</td>
+<td>Passed: five manifests plus Strength unit/browser/config/runner files</td>
+</tr>
+<tr>
+<td>Full ESLint</td>
+<td>Passed: <code>eslint .</code></td>
+</tr>
+<tr>
+<td>Full Vitest with loopback permission</td>
+<td>119/121 files and 825/827 tests passed; only two approved shared-test mismatches remain</td>
+</tr>
+<tr>
+<td>All non-shared-test files</td>
+<td>Passed: 119 files, 811 tests</td>
+</tr>
+<tr>
+<td>Unaffected assertions in the two shared files</td>
+<td>Passed: 14 tests; only the two named integration assertions skipped</td>
+</tr>
+<tr>
+<td>YouTube loopback probe</td>
+<td>Passed unchanged: one file, three tests; earlier sandbox <code>EPERM</code> did not recur with approved loopback execution</td>
+</tr>
+<tr>
+<td>Drizzle and database bootstrap</td>
+<td>Passed: <code>drizzle-kit check</code>; four files, 34 tests</td>
+</tr>
+<tr>
+<td>Approved-video seed</td>
+<td>Passed: 27 required variations, exactly two approved rows each; 54 rows unchanged</td>
+</tr>
+<tr>
+<td>PWA/service worker</td>
+<td>Passed: generated service worker verified</td>
+</tr>
+<tr>
+<td>Documentation parity</td>
+<td>Passed after this report: 54 Markdown/HTML pairs</td>
+</tr>
+<tr>
+<td>Authenticated browser</td>
+<td>Passed: two projects, two tests</td>
+</tr>
+<tr>
+<td>Production build</td>
+<td>Passed: Next.js 16.3.2 Webpack build, 14 static-generation tasks</td>
+</tr>
+<tr>
+<td>Production route boundary</td>
+<td>Passed: 44 App Router entries</td>
+</tr>
+<tr>
+<td>Diff hygiene</td>
+<td>Passed: no whitespace errors; owned and prerequisite paths reviewed separately</td>
+</tr>
+</tbody></table>
+<p>The first sandboxed full Vitest attempt also hit <code>listen EPERM 127.0.0.1</code> in the
+unchanged YouTube probe. The exact test passed three of three with approved
+loopback execution. A final full-suite replay with the same permission removed
+that infrastructure failure and produced exactly the two coordinator-approved
+shared assertions below.</p>
+<h2>Integration obligations</h2>
+<p>Wave 2 integration must make two narrow shared-test updates after merging both
+content branches:</p>
+<ol>
+<li><code>tests/unit/catalog-generator.test.ts</code>, test <strong>preserves every released
+record and its iteration order</strong>, line 510 currently expects the released
+<code>chest-supported-dumbbell-row</code> alias array without <code>prone dumbbell row</code>.
+Update the released-record snapshot to expect that third exact alias.</li>
+<li><code>tests/unit/library-filter.test.ts</code>, test <strong>searches aliases, muscles,
+movement families, and equipment</strong>, line 45 currently expects <code>dumbbell RDL</code>
+to return only <code>dumbbell-romanian-deadlift</code>. Update the exact deterministic
+result to also contain <code>single-leg-dumbbell-romanian-deadlift</code>; preserve the
+useful alias <code>single-leg dumbbell RDL</code> and do not weaken the assertion.</li>
+</ol>
+<p>The integration owner must also add both Wave 2 spec names to the maintained
+authenticated matcher and rerun the combined browser matrix. When integrating
+the sibling 42 additions, verify 107 total Wave 2 additions and a final
+134-record catalog while retaining the same 27 required video variations and
+54 approved rows.</p>
+<p>Do not reconcile either assertion by deleting an alias, changing runtime
+content, reintroducing catalog-wide video requirements, or editing an approved
+seed row. Shared status/wiki and combined documentation reconciliation remain
+integration-owned.</p>
+<h2>Commit handoff</h2>
+<ul>
+<li><code>ad92476</code> — clean local cherry-pick of the shared catalog/video eligibility
+prerequisite (<code>7046a94bae41e90839b16d5329b58a1975600ee9</code>).</li>
+<li><code>bbd44ab</code> — 65-record Strength content expansion, focused/browser tests,
+plan, runner/config, and browser screenshots.</li>
+<li>This paired QA report is committed separately after final documentation
+parity so its own checkpoint can be reported without circular self-reference.</li>
+</ul>
+<p>The completed branch is pushed as <code>vishal/library-strength-expansion</code>. It is not
+merged into <code>main</code> and no production action has been performed.</p>
+
+  </main>
+</body>
+</html>
