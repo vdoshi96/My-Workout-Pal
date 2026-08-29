@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
+import { MovementChooserAdapter } from "@/components/exercises/movement-chooser";
 import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
 import { parseProgramPublishResponse } from "@/components/program/program-mutation-response";
 import { reconcileProgramRevisionMutation } from "@/components/program/program-revision-reconciliation";
@@ -14,7 +15,6 @@ import {
   addProgramDay,
   addProgramSection,
   duplicateProgramDay,
-  filterProgramExerciseCandidates,
   programEditorCanonicalValue,
   programEditorDisplayValue,
   programEditorDraftFromReadModel,
@@ -176,17 +176,6 @@ type ExerciseChooser = Readonly<
   }
 >;
 
-function movementSelectionFromCandidate(
-  candidate: ProgramExerciseCandidate,
-): MovementSelection | null {
-  const parsed = movementChooserSelectionSchema.safeParse({
-    loggingKind: candidate.loggingKind,
-    name: candidate.name,
-    source: { id: candidate.id, kind: candidate.kind },
-  });
-  return parsed.success ? parsed.data : null;
-}
-
 function movementSelectionFromPrescription(
   prescription: Prescription,
   name: string,
@@ -249,7 +238,10 @@ export function ProgramEditor({
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [chooser, setChooser] = useState<ExerciseChooser | null>(null);
-  const [candidateQuery, setCandidateQuery] = useState("");
+  const [dayCreatorOpen, setDayCreatorOpen] = useState(false);
+  const [selectionHints, setSelectionHints] = useState<ReadonlyMap<string, MovementSelection>>(
+    () => new Map(),
+  );
   const [newDayName, setNewDayName] = useState("");
   const [newDaySectionName, setNewDaySectionName] = useState("");
   const [newDaySectionKind, setNewDaySectionKind] = useState<ProgramSectionKind>("strength");
@@ -259,8 +251,6 @@ export function ProgramEditor({
   const [pendingMeasurementKeys, setPendingMeasurementKeys] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
   const dayNameRef = useRef<HTMLInputElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const sectionRemovalDialogRef = useRef<HTMLDialogElement>(null);
@@ -305,10 +295,6 @@ export function ProgramEditor({
     ] as const)),
     [candidates],
   );
-  const filteredCandidates = useMemo(
-    () => filterProgramExerciseCandidates(candidates, candidateQuery),
-    [candidateQuery, candidates],
-  );
   const unitLabels = programEditorUnitLabels(unitSystem);
 
   const markMeasurementPending = useCallback((key: string, pending: boolean) => {
@@ -339,6 +325,10 @@ export function ProgramEditor({
     if (source && candidateKey === sourceKey) {
       return { label: source.label, measurementKind: source.measurementKind };
     }
+    const selectionHint = candidateKey ? selectionHints.get(candidateKey) : undefined;
+    if (selectionHint) {
+      return { label: selectionHint.name, measurementKind: selectionHint.loggingKind };
+    }
     const candidate = candidateKey ? candidateByKey.get(candidateKey) : undefined;
     return candidate
       ? { label: candidate.name, measurementKind: candidate.loggingKind }
@@ -347,7 +337,6 @@ export function ProgramEditor({
 
   function dismissChooser() {
     setChooser(null);
-    setCandidateQuery("");
     queueMicrotask(() => returnFocusRef.current?.focus());
   }
 
@@ -373,19 +362,12 @@ export function ProgramEditor({
     returnFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
-    setCandidateQuery("");
     setChooser(next);
   }
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!chooser || !dialog || dialog.open) return;
-    dialog.showModal();
-    queueMicrotask(() => {
-      if (chooser.request.intent === "seed-day") dayNameRef.current?.focus();
-      else searchRef.current?.focus();
-    });
-  }, [chooser]);
+    if (dayCreatorOpen) queueMicrotask(() => dayNameRef.current?.focus());
+  }, [dayCreatorOpen]);
 
   useEffect(() => {
     dirtyRef.current = dirty;
@@ -581,7 +563,16 @@ export function ProgramEditor({
     setNewDayName(`Day ${draft.days.length + 1}`);
     setNewDaySectionName("Strength");
     setNewDaySectionKind("strength");
-    setCandidateQuery("");
+    setDayCreatorOpen(true);
+  }
+
+  function chooseFirstDayMovement() {
+    if (newDayName.trim().length === 0 || newDaySectionName.trim().length === 0) {
+      setMessage("Give the new day and first section a name before choosing a movement.");
+      dayNameRef.current?.focus();
+      return;
+    }
+    setDayCreatorOpen(false);
     setChooser({ request: { intent: "seed-day" } });
   }
 
@@ -604,7 +595,7 @@ export function ProgramEditor({
       setSelectedDayKey(dayKey);
       setMessage(`${displayName} added with ${selection.name}. This day is still unpublished.`);
       setErrors([]);
-      dialogRef.current?.close();
+      setChooser(null);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "The day could not be added.");
     }
@@ -786,6 +777,15 @@ export function ProgramEditor({
 
   function chooseMovement(selection: MovementSelection) {
     if (!chooser) return;
+    const selectionKey = programEditorExerciseCandidateKey(
+      selection.source.kind,
+      selection.source.id,
+    );
+    setSelectionHints((current) => {
+      const next = new Map(current);
+      next.set(selectionKey, selection);
+      return next;
+    });
     if (chooser.request.intent === "seed-day") {
       addDayFromSelection(selection);
       return;
@@ -825,20 +825,7 @@ export function ProgramEditor({
           : `${selection.name} selected. Compatible range and targets were retained.`,
       );
     }
-    dialogRef.current?.close();
-  }
-
-  function chooseCandidate(candidate: ProgramExerciseCandidate) {
-    const selection = movementSelectionFromCandidate(candidate);
-    if (!selection) {
-      handleChooserError({
-        code: "invalid_selection",
-        message: "That movement selection is unavailable. Choose another movement.",
-        retryable: false,
-      });
-      return;
-    }
-    chooseMovement(selection);
+    setChooser(null);
   }
 
   function openPrescriptionRemoval(
@@ -898,7 +885,11 @@ export function ProgramEditor({
       draft,
       localPrescriptionIdsRef.current,
     );
-    const selectionErrors = validateProgramExerciseSelections(publishableDraft, candidates);
+    const selectionErrors = validateProgramExerciseSelections(
+      publishableDraft,
+      candidates,
+      [...selectionHints.values()],
+    );
     if (selectionErrors.length > 0) {
       setErrors([...selectionErrors]);
       setMessage("The draft has exercise selection errors and was not sent.");
@@ -1328,111 +1319,66 @@ export function ProgramEditor({
         </div>
       </div>
 
-      {chooser ? (
-        <dialog
-          aria-labelledby="exercise-chooser-title"
-          className="program-exercise-chooser"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) event.currentTarget.close();
-          }}
-          onClose={dismissChooser}
-          ref={dialogRef}
+      {dayCreatorOpen ? (
+        <section
+          aria-labelledby="program-day-creator-title"
+          className="program-editor-day-creation-fields program-editor-day-setup"
         >
-          <div className="program-exercise-chooser-sheet">
-            <header>
-              <div>
-                <span className="eyebrow">Compatible with this program</span>
-                <h2 id="exercise-chooser-title">
-                  {chooser.request.intent === "seed-day"
-                    ? "Add day"
-                    : chooser.request.intent === "add" ? "Add movement" : "Replace movement"}
-                </h2>
-              </div>
-              <button
-                aria-label="Close exercise chooser"
-                onClick={() => dialogRef.current?.close()}
-                type="button"
-              >Close</button>
-            </header>
-            {chooser.request.intent === "seed-day" ? (
-              <div className="program-editor-day-creation-fields">
-                <label className="program-editor-field">
-                  <span>Day name</span>
-                  <input
-                    aria-required="true"
-                    maxLength={120}
-                    onChange={(event) => setNewDayName(event.target.value)}
-                    ref={dayNameRef}
-                    value={newDayName}
-                  />
-                </label>
-                <label className="program-editor-field">
-                  <span>First section name</span>
-                  <input
-                    aria-required="true"
-                    maxLength={120}
-                    onChange={(event) => setNewDaySectionName(event.target.value)}
-                    value={newDaySectionName}
-                  />
-                </label>
-                <label className="program-editor-field">
-                  <span>Section classification</span>
-                  <select
-                    onChange={(event) => setNewDaySectionKind(event.target.value as ProgramSectionKind)}
-                    value={newDaySectionKind}
-                  >
-                    {PROGRAM_SECTION_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
-                  </select>
-                </label>
-                <p>Choose one compatible movement to make this new day publishable. Cardio is optional.</p>
-              </div>
-            ) : null}
-            <label className="program-exercise-search">
-              <span>Search compatible movements</span>
-              <input
-                maxLength={120}
-                onChange={(event) => setCandidateQuery(event.target.value)}
-                placeholder="Name, equipment, or logging type"
-                ref={searchRef}
-                type="search"
-                value={candidateQuery}
-              />
-            </label>
-            <p className="program-exercise-result-count" aria-live="polite">
-              {filteredCandidates.length} compatible result{filteredCandidates.length === 1 ? "" : "s"}
-            </p>
-            {filteredCandidates.length > 0 ? (
-              <ul className="program-exercise-results">
-                {filteredCandidates.map((candidate) => (
-                  <li key={`${candidate.kind}-${candidate.id}`}>
-                    <button onClick={() => chooseCandidate(candidate)} type="button">
-                      <span>
-                        <strong>{candidate.name}</strong>
-                        <small>
-                          {candidate.loggingKind.replaceAll("_", " ")} · {candidate.requiredEquipment.join(" + ")}
-                        </small>
-                      </span>
-                      <span>{candidate.kind === "custom" ? "Private" : "Canonical"}</span>
-                      <Icon name="chevron-right" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="program-exercise-empty">
-                <strong>No compatible match</strong>
-                <p>Try a broader search, or create a private exercise for this equipment profile.</p>
-                <Link href="/app/library/custom/new">Create private exercise</Link>
-              </div>
-            )}
-            <footer>
-              <p>{chooser.request.intent === "seed-day"
-                ? "Choosing a movement creates one new unpublished day with fresh topology keys."
-                : "Choosing a movement changes only this unpublished draft."}</p>
-              <button onClick={() => dialogRef.current?.close()} type="button">Cancel</button>
-            </footer>
-          </div>
-        </dialog>
+          <header>
+            <span className="eyebrow">New unpublished day</span>
+            <h2 id="program-day-creator-title">Name the day before choosing its first movement</h2>
+          </header>
+          <label className="program-editor-field">
+            <span>Day name</span>
+            <input
+              aria-required="true"
+              maxLength={120}
+              onChange={(event) => setNewDayName(event.target.value)}
+              ref={dayNameRef}
+              value={newDayName}
+            />
+          </label>
+          <label className="program-editor-field">
+            <span>First section name</span>
+            <input
+              aria-required="true"
+              maxLength={120}
+              onChange={(event) => setNewDaySectionName(event.target.value)}
+              value={newDaySectionName}
+            />
+          </label>
+          <label className="program-editor-field">
+            <span>Section classification</span>
+            <select
+              onChange={(event) => setNewDaySectionKind(event.target.value as ProgramSectionKind)}
+              value={newDaySectionKind}
+            >
+              {PROGRAM_SECTION_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
+            </select>
+          </label>
+          <p>Choosing a movement next creates one new day with fresh topology keys. Cardio is optional.</p>
+          <footer>
+            <button
+              onClick={() => {
+                setDayCreatorOpen(false);
+                queueMicrotask(() => returnFocusRef.current?.focus());
+              }}
+              type="button"
+            >Cancel</button>
+            <button className="primary-action" onClick={chooseFirstDayMovement} type="button">
+              Choose first movement
+            </button>
+          </footer>
+        </section>
+      ) : null}
+
+      {chooser ? (
+        <MovementChooserAdapter
+          onDismiss={dismissChooser}
+          onError={handleChooserError}
+          onSelect={chooseMovement}
+          request={chooser.request}
+        />
       ) : null}
 
       {dayRemoval ? (

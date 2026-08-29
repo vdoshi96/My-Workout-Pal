@@ -32,7 +32,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
     const { database } = await getHarnessDatabase(context.scope);
     const profileProgram = await onboardViewer(database, viewer, input);
-    return privateJson({ profileProgram }, { status: 201 });
+    return privateJson({ mode: input.mode, profileProgram }, { status: 201 });
   } catch (error) {
     return profileProgramApiError(error);
   }

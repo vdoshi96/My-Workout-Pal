@@ -24,6 +24,7 @@ const programCollectionMigrationUrl = new URL("../../drizzle/0003_program_collec
 const personalRecordMigrationUrl = new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url);
 const flexibleTopologyMigrationUrl = new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url);
 const cardioDisplayOrderMigrationUrl = new URL("../../drizzle/0006_program_cardio_display_order.sql", import.meta.url);
+const personalGuidanceMigrationUrl = new URL("../../drizzle/0007_personal_guidance.sql", import.meta.url);
 const openDatabases: PGlite[] = [];
 
 async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
@@ -36,6 +37,7 @@ async function openDatabase(): Promise<{ raw: PGlite; database: Database }> {
   await raw.exec(await readFile(personalRecordMigrationUrl, "utf8"));
   await raw.exec(await readFile(flexibleTopologyMigrationUrl, "utf8"));
   await raw.exec(await readFile(cardioDisplayOrderMigrationUrl, "utf8"));
+  await raw.exec(await readFile(personalGuidanceMigrationUrl, "utf8"));
   openDatabases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
@@ -348,6 +350,7 @@ describe("profile and active-program repository", () => {
       timezone: "America/Chicago",
       reducedMotion: true,
       idempotencyKey: "onboarding-a",
+      mode: "example",
     });
     const second = await repository.onboard(viewer("member-a"), {
       equipmentProfileKind: "dumbbells",
@@ -355,6 +358,7 @@ describe("profile and active-program repository", () => {
       timezone: "America/Chicago",
       reducedMotion: true,
       idempotencyKey: "onboarding-a",
+      mode: "example",
     });
 
     expect(second).toEqual(first);
@@ -400,6 +404,76 @@ describe("profile and active-program repository", () => {
         "SELECT count(*)::text AS count FROM user_programs WHERE owner_firebase_uid = 'member-a';",
       ),
     ).resolves.toMatchObject({ rows: [{ count: "1" }] });
+  });
+
+  it("onboards one minimal blank graph with owner-scoped replay and mode mismatch protection", async () => {
+    const { database, raw } = await openDatabase();
+    const repository = createProfileProgramRepository(database);
+    const first = await repository.onboard(viewer("member-blank"), {
+      equipmentProfileKind: "barbell",
+      idempotencyKey: "onboarding-blank",
+      mode: "blank",
+    });
+    const replay = await repository.onboard(viewer("member-blank"), {
+      equipmentProfileKind: "barbell",
+      idempotencyKey: "onboarding-blank",
+      mode: "blank",
+    });
+
+    expect(replay).toEqual(first);
+    expect(first.profile.firebaseUid).toBe("member-blank");
+    expect(first.equipment.profileKind).toBe("barbell");
+    expect(first.activeProgram).toMatchObject({
+      days: [{
+        cardio: [],
+        displayName: "Day 1",
+        sections: [{ title: "Main work" }],
+      }],
+      name: "Blank routine",
+      sourceTemplateRevisionId: null,
+      status: "published",
+    });
+    expect(first.activeProgram?.days[0]?.prescriptions).toHaveLength(1);
+    expect(first.activeProgram?.days[0]?.prescriptions[0]?.exercise.slug).toBe("dead-bug");
+
+    await expect(
+      repository.onboard(viewer("member-blank"), {
+        equipmentProfileKind: "barbell",
+        idempotencyKey: "onboarding-blank",
+        mode: "example",
+      }),
+    ).rejects.toBeInstanceOf(RepositoryConflictError);
+
+    await expect(raw.query<{
+      days: string;
+      idempotency: string;
+      prescriptions: string;
+      programs: string;
+      revisions: string;
+      sections: string;
+    }>(`SELECT
+      (SELECT count(*)::text FROM user_programs WHERE owner_firebase_uid = 'member-blank') AS programs,
+      (SELECT count(*)::text FROM program_revisions WHERE owner_firebase_uid = 'member-blank') AS revisions,
+      (SELECT count(*)::text FROM program_days WHERE owner_firebase_uid = 'member-blank') AS days,
+      (SELECT count(*)::text FROM program_sections WHERE owner_firebase_uid = 'member-blank') AS sections,
+      (SELECT count(*)::text FROM program_prescriptions WHERE owner_firebase_uid = 'member-blank') AS prescriptions,
+      (SELECT count(*)::text FROM idempotency_keys WHERE owner_firebase_uid = 'member-blank') AS idempotency;`))
+      .resolves.toMatchObject({ rows: [{
+        days: "1",
+        idempotency: "1",
+        prescriptions: "1",
+        programs: "1",
+        revisions: "1",
+        sections: "1",
+      }] });
+
+    const foreign = await repository.onboard(viewer("member-blank-other"), {
+      equipmentProfileKind: "barbell",
+      idempotencyKey: "onboarding-blank",
+      mode: "blank",
+    });
+    expect(foreign.profile.firebaseUid).toBe("member-blank-other");
+    expect(foreign.activeProgram?.id).not.toBe(first.activeProgram?.id);
   });
 
   it("denies an unverified permanent mutation without writes", async () => {

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const viewer = requirePrivateViewer(await getCurrentViewer());
     const input = onboardingRequestSchema.parse(await readBoundedJson(request));
     const profileProgram = await onboardViewer(getDatabase(), viewer, input);
-    return privateJson({ profileProgram }, { status: 201 });
+    return privateJson({ mode: input.mode, profileProgram }, { status: 201 });
   } catch (error) {
     return profileProgramApiError(error);
   }

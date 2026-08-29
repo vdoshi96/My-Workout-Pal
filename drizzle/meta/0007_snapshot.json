@@ -1,5 +1,5 @@
 {
-  "id": "51563227-731a-4b42-b96e-6084ac68fbea",
+  "id": "30c8bbd1-d86e-463e-89ac-3586832e4370",
   "prevId": "732fe07b-adbb-4d41-b3c6-d84fb7c22ee1",
   "version": "7",
   "dialect": "postgresql",
@@ -1946,7 +1946,7 @@
         },
         "personal_guidance_kind_shape": {
           "name": "personal_guidance_kind_shape",
-          "value": "(\"personal_guidance_links\".\"kind\" = 'youtube' and \"personal_guidance_links\".\"youtube_video_id\" ~ '^[A-Za-z0-9_-]{11}$') or (\"personal_guidance_links\".\"kind\" = 'external' and \"personal_guidance_links\".\"youtube_video_id\" is null)"
+          "value": "(\"personal_guidance_links\".\"kind\" = 'youtube' and \"personal_guidance_links\".\"youtube_video_id\" is not null and \"personal_guidance_links\".\"youtube_video_id\" ~ '^[A-Za-z0-9_-]{11}$') or (\"personal_guidance_links\".\"kind\" = 'external' and \"personal_guidance_links\".\"youtube_video_id\" is null)"
         }
       },
       "isRLSEnabled": false

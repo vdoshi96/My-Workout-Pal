@@ -90,6 +90,10 @@ describe("authenticated customization fixture boundary", () => {
     expect(editor).toContain('aria-label={`Move ${movementLabel} down`}');
     expect(editor).toContain('aria-label={`Replace ${movementLabel}`}');
     expect(editor).toContain('aria-label={`Remove ${movementLabel}`}');
+    expect(editor).toContain("<MovementChooserAdapter");
+    expect(editor).toContain("selectionHints");
+    expect(editor).not.toContain("filterProgramExerciseCandidates");
+    expect(editor).not.toContain('className="program-exercise-chooser"');
     expect(existsSync(equipmentControlPath)).toBe(true);
     const equipmentControl = readFileSync(equipmentControlPath, "utf8");
     expect(editor).toContain("<EquipmentProfileControl");
@@ -104,7 +108,7 @@ describe("authenticated customization fixture boundary", () => {
 
   it("applies the complete checked-in migration inventory", () => {
     const databaseBootstrap = source("server/database.ts");
-    expect(databaseBootstrap.match(/"000[0-6]_[^"]+\.sql"/gu)).toEqual([
+    expect(databaseBootstrap.match(/"000[0-7]_[^"]+\.sql"/gu)).toEqual([
       '"0000_initial.sql"',
       '"0001_account_deletion_saga.sql"',
       '"0002_workout_canonical_measurements.sql"',
@@ -112,6 +116,7 @@ describe("authenticated customization fixture boundary", () => {
       '"0004_personal_record_projection_checkpoint.sql"',
       '"0005_flexible_routine_topology.sql"',
       '"0006_program_cardio_display_order.sql"',
+      '"0007_personal_guidance.sql"',
     ]);
   });
 

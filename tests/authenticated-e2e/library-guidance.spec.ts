@@ -79,7 +79,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Create my program" }).click();
+  await page.getByRole("button", { name: "Start with example" }).click();
   expect((await onboarding).status()).toBe(201);
   await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
 

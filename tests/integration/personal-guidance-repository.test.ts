@@ -20,6 +20,7 @@ const migrationUrls = [
   "0003_program_collection.sql",
   "0004_personal_record_projection_checkpoint.sql",
   "0005_flexible_routine_topology.sql",
+  "0006_program_cardio_display_order.sql",
   "0007_personal_guidance.sql",
 ].map((name) => new URL(`../../drizzle/${name}`, import.meta.url));
 
@@ -89,6 +90,19 @@ afterEach(async () => {
 });
 
 describe("personal guidance repository", () => {
+  it("rejects a SQL-level YouTube row without its required video identity", async () => {
+    const { raw } = await openDatabase();
+    await seedViewer(raw, "youtube-shape-owner");
+    const catalogId = await firstCatalogId(raw);
+
+    await expect(raw.query(
+      `INSERT INTO personal_guidance_links (
+         owner_firebase_uid, catalog_exercise_id, kind, normalized_url, youtube_video_id, display_order
+       ) VALUES ($1, $2, 'youtube', 'https://www.youtube.com/watch?v=AbCdEfGhI01', null, 1)`,
+      ["youtube-shape-owner", catalogId],
+    )).rejects.toThrow(/personal_guidance_kind_shape|check constraint/i);
+  });
+
   it("backfills existing private YouTube guidance when the personal store is introduced", async () => {
     const raw = new PGlite();
     await raw.waitReady;

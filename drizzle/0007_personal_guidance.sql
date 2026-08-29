@@ -13,7 +13,7 @@ CREATE TABLE "personal_guidance_links" (
 	CONSTRAINT "personal_guidance_source_xor" CHECK (num_nonnulls("personal_guidance_links"."catalog_exercise_id", "personal_guidance_links"."custom_exercise_id") = 1),
 	CONSTRAINT "personal_guidance_order_shape" CHECK ("personal_guidance_links"."display_order" between 1 and 2),
 	CONSTRAINT "personal_guidance_url_shape" CHECK (length("personal_guidance_links"."normalized_url") between 1 and 2048 and "personal_guidance_links"."normalized_url" like 'https://%'),
-	CONSTRAINT "personal_guidance_kind_shape" CHECK (("personal_guidance_links"."kind" = 'youtube' and "personal_guidance_links"."youtube_video_id" ~ '^[A-Za-z0-9_-]{11}$') or ("personal_guidance_links"."kind" = 'external' and "personal_guidance_links"."youtube_video_id" is null))
+	CONSTRAINT "personal_guidance_kind_shape" CHECK (("personal_guidance_links"."kind" = 'youtube' and "personal_guidance_links"."youtube_video_id" is not null and "personal_guidance_links"."youtube_video_id" ~ '^[A-Za-z0-9_-]{11}$') or ("personal_guidance_links"."kind" = 'external' and "personal_guidance_links"."youtube_video_id" is null))
 );
 --> statement-breakpoint
 INSERT INTO "personal_guidance_links" (

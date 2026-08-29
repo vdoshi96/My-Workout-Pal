@@ -182,18 +182,38 @@ function activeProgramIds(body: unknown): ActiveProgramIds {
   return { id: record["id"], revisionId: record["revisionId"] };
 }
 
-async function submitOnboarding(page: Page, profile: "barbell" | "dumbbells") {
+async function submitOnboarding(
+  page: Page,
+  profile: "barbell" | "dumbbells",
+  mode: "example" | "blank" = "example",
+) {
   if (profile === "barbell") {
     await page.getByRole("radio", { name: /Barbell \+ rack/ }).check();
+  }
+  if (mode === "blank") {
+    await page.getByRole("radio", { name: /Blank routine/ }).check();
   }
   const responsePromise = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Save the five-day example" }).click();
+  await page.getByRole("button", {
+    name: mode === "example" ? "Start with example" : "Start blank",
+  }).click();
   const response = await responsePromise;
   return { body: await response.json(), response };
+}
+
+async function chooseEditorMovement(
+  page: Page,
+  query: string,
+  name: string | RegExp,
+) {
+  const chooser = page.getByRole("dialog");
+  await chooser.getByRole("searchbox", { name: "Search movements" }).fill(query);
+  await chooser.getByRole("button", { name }).click();
+  await chooser.getByRole("button", { name: "Use this movement" }).click();
 }
 
 async function privateMutation(page: Page, path: string, body: unknown) {
@@ -376,6 +396,61 @@ async function completePullWorkoutForInsights(page: Page): Promise<string> {
   return sessionId;
 }
 
+test("new accounts choose one idempotent example or blank graph through onboarding", async ({ browser }, testInfo) => {
+  const scope = `${testInfo.project.name}-onboarding-modes`;
+  const example = await openPage(browser, scope, "alice", testInfo);
+  await example.page.goto("/app");
+  const exampleResult = await submitOnboarding(example.page, "dumbbells", "example");
+  expect(exampleResult.response.status()).toBe(201);
+  expect(exampleResult.body).toMatchObject({ mode: "example" });
+  const exampleProfile = await readProfileProgram(example.page);
+  expect(exampleProfile.programs).toHaveLength(1);
+  expect(exampleProfile.activeProgram?.days).toHaveLength(5);
+
+  const blank = await openPage(browser, scope, "bob", testInfo);
+  await blank.page.goto("/app");
+  const blankResult = await submitOnboarding(blank.page, "barbell", "blank");
+  expect(blankResult.response.status()).toBe(201);
+  expect(blankResult.body).toMatchObject({ mode: "blank" });
+  await expect(blank.page).toHaveURL(/\/app\/program\/edit$/u);
+  await expect(blank.page.getByRole("heading", { name: "Edit your route" })).toBeVisible();
+  await expect(blank.page.getByLabel("Program name")).toHaveValue("Blank routine");
+  const blankProfile = await readProfileProgram(blank.page);
+  expect(blankProfile.programs).toHaveLength(1);
+  expect(blankProfile.activeProgram).toMatchObject({
+    days: [{
+      cardio: [],
+      displayName: "Day 1",
+      prescriptions: [{ label: "Dead bug" }],
+      sections: [{ title: "Main work" }],
+    }],
+    name: "Blank routine",
+    sourceTemplateRevisionId: null,
+  });
+
+  const blankRequest = blankResult.response.request().postDataJSON() as Record<string, unknown>;
+  expect(blankRequest).toMatchObject({
+    equipmentProfileKind: "barbell",
+    mode: "blank",
+  });
+  const beforeReplay = await readScopeSummary(blank.page);
+  const replay = await privateMutation(blank.page, "/api/app/profile-program/onboard", blankRequest);
+  expect(replay).toMatchObject({ body: { mode: "blank" }, status: 201 });
+  expect(await readScopeSummary(blank.page)).toEqual(beforeReplay);
+  const mismatch = await privateMutation(blank.page, "/api/app/profile-program/onboard", {
+    ...blankRequest,
+    mode: "example",
+  });
+  expect(mismatch).toMatchObject({ body: { error: "conflict" }, status: 409 });
+  expect(JSON.stringify(mismatch.body)).not.toContain("bob");
+
+  expect(example.failedResponses).toEqual([]);
+  expect(blank.failedResponses).toEqual(["POST /api/app/profile-program/onboard 409"]);
+  await blank.page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));
+  await blank.close();
+  await example.close();
+});
+
 test("both synthetic owners onboard while unverified and foreign states fail closed", async ({ browser, browserName }, testInfo) => {
   const scope = testInfo.project.name;
 
@@ -390,7 +465,8 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   const unverified = await openPage(browser, scope, "alice-unverified", testInfo);
   await unverified.page.goto("/app");
   await expect(unverified.page.getByText("Read-only account.")).toBeVisible();
-  await expect(unverified.page.getByRole("button", { name: "Save the five-day example" })).toBeDisabled();
+  await expect(unverified.page.getByRole("button", { name: "Start with example" })).toBeDisabled();
+  await expect(unverified.page.getByRole("radio", { name: /Blank routine/ })).toBeDisabled();
   await assertAccessible(unverified.page);
   expect(unverified.failedResponses).toEqual([]);
   await unverified.close();
@@ -565,7 +641,7 @@ test("a failed onboarding retry keeps the same idempotency key and never claims 
   const first = await submitOnboarding(page, "dumbbells");
   expect(first.response.status()).toBe(500);
   await expect(page.getByText("The request could not be completed.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Start with the five-day example" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Start with the example or start blank" })).toBeVisible();
   const firstBody = first.response.request().postDataJSON() as { idempotencyKey?: unknown };
 
   const retry = await submitOnboarding(page, "dumbbells");
@@ -771,8 +847,7 @@ test("owned customization publishes once, preserves history, and derives private
   await newAccessorySection.getByLabel("Section name for accessory").fill("Custom assistance");
   await newAccessorySection.getByRole("button", { name: "Add movement" }).click();
   await expect(alice.page.getByRole("heading", { name: "Add movement" })).toBeVisible();
-  await alice.page.getByLabel("Search compatible movements").fill("QA supported row");
-  await alice.page.getByRole("button", { name: /QA supported row/ }).click();
+  await chooseEditorMovement(alice.page, "QA supported row", /QA supported row/);
   const customPrescription = alice.page
     .locator("li.program-editor-prescription")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "QA supported row" }) });
@@ -786,8 +861,7 @@ test("owned customization publishes once, preserves history, and derives private
   await expect(customTarget).toHaveValue("44.1");
   await customPrescription.getByLabel("Notes").fill("QA immutable program note");
   await newAccessorySection.getByRole("button", { name: "Add movement" }).click();
-  await alice.page.getByLabel("Search compatible movements").fill("Dumbbell curl");
-  await alice.page.getByRole("button", { name: /Dumbbell curl/ }).click();
+  await chooseEditorMovement(alice.page, "Dumbbell curl", /Dumbbell curl/);
   const moveCustomDown = customPrescription.getByRole("button", {
     name: "Move QA supported row down",
   });
@@ -1161,8 +1235,7 @@ test("an incompatible private movement blocks an editor equipment change without
     .locator("fieldset.program-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for accessory") });
   await accessorySection.getByRole("button", { name: "Add movement" }).click();
-  await alice.page.getByLabel("Search compatible movements").fill("QA rack press");
-  await alice.page.getByRole("button", { name: /QA rack press/ }).click();
+  await chooseEditorMovement(alice.page, "QA rack press", /QA rack press/);
   const publishResponse = alice.page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/program/publish" &&

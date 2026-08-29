@@ -21,6 +21,7 @@ describe("profile program API contract", () => {
       onboardingRequestSchema.safeParse({
         equipmentProfileKind: "dumbbells",
         idempotencyKey: "onboard-1",
+        mode: "example",
         reducedMotion: true,
         timezone: "America/Chicago",
         unitSystem: "imperial",
@@ -30,7 +31,21 @@ describe("profile program API contract", () => {
       onboardingRequestSchema.safeParse({
         equipmentProfileKind: "dumbbells",
         idempotencyKey: "onboard-1",
+        mode: "blank",
         ownerUid: "must-never-be-accepted",
+      }).success,
+    ).toBe(false);
+    expect(
+      onboardingRequestSchema.safeParse({
+        equipmentProfileKind: "dumbbells",
+        idempotencyKey: "onboard-without-mode",
+      }).success,
+    ).toBe(false);
+    expect(
+      onboardingRequestSchema.safeParse({
+        equipmentProfileKind: "dumbbells",
+        idempotencyKey: "onboard-unknown-mode",
+        mode: "custom",
       }).success,
     ).toBe(false);
 

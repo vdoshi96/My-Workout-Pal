@@ -28,6 +28,7 @@ const migrationUrls = [
   new URL("../../drizzle/0004_personal_record_projection_checkpoint.sql", import.meta.url),
   new URL("../../drizzle/0005_flexible_routine_topology.sql", import.meta.url),
   new URL("../../drizzle/0006_program_cardio_display_order.sql", import.meta.url),
+  new URL("../../drizzle/0007_personal_guidance.sql", import.meta.url),
 ] as const;
 const openDatabases: PGlite[] = [];
 

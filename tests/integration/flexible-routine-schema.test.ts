@@ -18,6 +18,10 @@ const cardioDisplayOrderMigrationUrl = new URL(
   "../../drizzle/0006_program_cardio_display_order.sql",
   import.meta.url,
 );
+const personalGuidanceMigrationUrl = new URL(
+  "../../drizzle/0007_personal_guidance.sql",
+  import.meta.url,
+);
 
 const openDatabases: PGlite[] = [];
 
@@ -353,6 +357,13 @@ describe("flexible routine topology migration", () => {
       ORDER BY mode;
     `);
     await database.exec(await readFile(cardioDisplayOrderMigrationUrl, "utf8"));
+    await database.exec(await readFile(personalGuidanceMigrationUrl, "utf8"));
+
+    await expect(database.query<{ tgenabled: string }>(`
+      SELECT tgenabled
+      FROM pg_trigger
+      WHERE tgname = 'program_cardio_prescriptions_immutable_after_publish';
+    `)).resolves.toMatchObject({ rows: [{ tgenabled: "O" }] });
 
     expect(
       await database.query(`

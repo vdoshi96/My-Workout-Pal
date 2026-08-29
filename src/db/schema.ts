@@ -422,7 +422,7 @@ export const personalGuidanceLinks = pgTable(
     ),
     check(
       "personal_guidance_kind_shape",
-      sql`(${table.kind} = 'youtube' and ${table.youtubeVideoId} ~ '^[A-Za-z0-9_-]{11}$') or (${table.kind} = 'external' and ${table.youtubeVideoId} is null)`,
+      sql`(${table.kind} = 'youtube' and ${table.youtubeVideoId} is not null and ${table.youtubeVideoId} ~ '^[A-Za-z0-9_-]{11}$') or (${table.kind} = 'external' and ${table.youtubeVideoId} is null)`,
     ),
   ],
 );

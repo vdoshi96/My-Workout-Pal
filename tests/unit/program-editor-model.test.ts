@@ -189,6 +189,7 @@ describe("program editor request model", () => {
       targetProfileKind: "dumbbells",
     }).activeProgram).toEqual(activeProgram);
     expect(parseOnboardingResponse({
+      mode: "example",
       profileProgram: {
         activeProgram,
         equipment: { profileKind: "dumbbells" },
@@ -201,10 +202,30 @@ describe("program editor request model", () => {
       },
     }, {
       equipmentProfileKind: "dumbbells",
+      mode: "example",
       reducedMotion: false,
       timezone: "UTC",
       unitSystem: "metric",
     })).toEqual(activeProgram);
+    expect(() => parseOnboardingResponse({
+      mode: "blank",
+      profileProgram: {
+        activeProgram,
+        equipment: { profileKind: "dumbbells" },
+        preferences: {
+          reducedMotion: false,
+          timezone: "UTC",
+          unitSystem: "metric",
+          updatedAt: "2026-08-26T18:00:00.000Z",
+        },
+      },
+    }, {
+      equipmentProfileKind: "dumbbells",
+      mode: "example",
+      reducedMotion: false,
+      timezone: "UTC",
+      unitSystem: "metric",
+    })).toThrow("does not match the requested onboarding setup");
 
     const duplicateDay = {
       profileProgram: {
@@ -969,6 +990,27 @@ describe("program editor request model", () => {
     ]);
     next.days[0]!.sections[0]!.prescriptions.at(-1)!.targetDistanceM = 500;
     expect(validateProgramExerciseSelections(next, candidates)).toEqual([]);
+  });
+
+  it("accepts a freshly created chooser selection hint without weakening server authority", () => {
+    const draft = programPublishInputFromReadModel(programReadModel(), "publish-key");
+    const fresh = selectionFromCandidate(candidate({
+      id: "d0d0d0d0-d0d0-40d0-80d0-d0d0d0d0d0d0",
+      kind: "custom",
+      loggingKind: "duration",
+      name: "Private tempo hold",
+      role: null,
+    }));
+    const next = addProgramPrescription(draft, 0, 0, fresh);
+    const initialCandidates = [
+      candidate({ id: "44444444-4444-4444-8444-444444444440" }),
+      candidate({ id: "44444444-4444-4444-8444-444444444441" }),
+    ];
+
+    expect(validateProgramExerciseSelections(next, initialCandidates)).toEqual([
+      "A selected movement is no longer available.",
+    ]);
+    expect(validateProgramExerciseSelections(next, initialCandidates, [fresh])).toEqual([]);
   });
 
   it("resolves catalog and custom selections by kind when their UUIDs collide", () => {

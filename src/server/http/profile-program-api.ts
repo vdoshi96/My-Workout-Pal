@@ -20,6 +20,7 @@ export const onboardingRequestSchema = z
   .object({
     equipmentProfileKind: profileKindSchema,
     idempotencyKey: idempotencyKeySchema,
+    mode: z.enum(["example", "blank"]),
     reducedMotion: z.boolean().default(false),
     timezone: z.string().trim().min(1).max(64).default("UTC"),
     unitSystem: z.enum(["metric", "imperial"]).default("metric"),

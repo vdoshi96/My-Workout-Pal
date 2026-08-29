@@ -161,14 +161,14 @@ test("customization surfaces preserve geometry and media preferences", async ({
   await expect(page.getByText("Alice QA", { exact: true })).toBeVisible();
   await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Start with the five-day example" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Start with the example or start blank" })).toBeVisible();
   await page.getByLabel("Time zone").fill("America/Chicago");
   const onboardingResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Save the five-day example" }).click();
+  await page.getByRole("button", { name: "Start with example" }).click();
   expect((await onboardingResponse).status()).toBe(201);
   await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
 

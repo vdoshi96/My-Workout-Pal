@@ -982,13 +982,23 @@ export function filterProgramExerciseCandidates(
 export function validateProgramExerciseSelections(
   input: ProgramPublishInput | ProgramEditorDraft,
   candidates: readonly ProgramExerciseCandidate[],
+  selectionHints: readonly MovementSelection[] = [],
 ): readonly string[] {
-  const candidateByKey = new Map(
+  const candidateByKey = new Map<string, Readonly<{ loggingKind: LoggingKind; name: string }>>(
     candidates.map((candidate) => [
       programEditorExerciseCandidateKey(candidate.kind, candidate.id),
       candidate,
     ] as const),
   );
+  for (const selection of selectionHints) {
+    const key = programEditorExerciseCandidateKey(
+      selection.source.kind,
+      selection.source.id,
+    );
+    if (!candidateByKey.has(key)) {
+      candidateByKey.set(key, selection);
+    }
+  }
   const issues: string[] = [...validateProgramSectionStructure(input)];
   for (const day of input.days) {
     for (const section of day.sections) {

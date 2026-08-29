@@ -21,11 +21,16 @@ import {
   replacePersonalGuidance,
 } from "@/server/repositories/personal-guidance";
 
-const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
-const personalGuidanceMigrationUrl = new URL(
-  "../../drizzle/0007_personal_guidance.sql",
-  import.meta.url,
-);
+const migrationUrls = [
+  "0000_initial.sql",
+  "0001_account_deletion_saga.sql",
+  "0002_workout_canonical_measurements.sql",
+  "0003_program_collection.sql",
+  "0004_personal_record_projection_checkpoint.sql",
+  "0005_flexible_routine_topology.sql",
+  "0006_program_cardio_display_order.sql",
+  "0007_personal_guidance.sql",
+].map((name) => new URL(`../../drizzle/${name}`, import.meta.url));
 const databases: PGlite[] = [];
 
 const verifiedViewer = (uid: string): ViewerContext => ({
@@ -41,8 +46,9 @@ const verifiedViewer = (uid: string): ViewerContext => ({
 async function openDatabase() {
   const raw = new PGlite();
   await raw.waitReady;
-  await raw.exec(await readFile(migrationUrl, "utf8"));
-  await raw.exec(await readFile(personalGuidanceMigrationUrl, "utf8"));
+  for (const migrationUrl of migrationUrls) {
+    await raw.exec(await readFile(migrationUrl, "utf8"));
+  }
   databases.push(raw);
   const database = drizzle(raw, { schema }) as unknown as Database;
   await seedStarterDatabase(database);
@@ -200,16 +206,17 @@ describe("custom exercise repository", () => {
     );
     await raw.query(
       `INSERT INTO program_sections (
-         id, owner_firebase_uid, program_id, revision_id, day_id, kind, display_order, title
-       ) VALUES ($1, 'alice', $2, $3, $4, 'strength', 1, 'Strength')`,
+         id, owner_firebase_uid, program_id, revision_id, day_id, section_key,
+         kind, display_order, title
+       ) VALUES ($1, 'alice', $2, $3, $4, $1::uuid::text, 'strength', 1, 'Strength')`,
       [sectionId, programId, revisionId, dayId],
     );
     await raw.query(
       `INSERT INTO program_prescriptions (
          owner_firebase_uid, program_id, revision_id, section_id,
-         custom_exercise_id, display_order, set_count, measurement_kind,
+         prescription_key, custom_exercise_id, display_order, set_count, measurement_kind,
          minimum_reps, maximum_reps, rest_seconds
-       ) VALUES ('alice', $1, $2, $3, $4, 1, 3, 'weight_reps', 8, 12, 90)`,
+       ) VALUES ('alice', $1, $2, $3, $3::uuid::text, $4, 1, 3, 'weight_reps', 8, 12, 90)`,
       [programId, revisionId, sectionId, created.exercise.id],
     );
 

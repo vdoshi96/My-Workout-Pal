@@ -74,7 +74,7 @@ test("full-page Settings fails closed until the browser Firebase identity is res
   });
 
   await page.goto("/app");
-  await page.getByRole("button", { name: "Save the five-day example" }).click();
+  await page.getByRole("button", { name: "Start with example" }).click();
   await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
   await page.goto("/app/settings");
   await page.reload();

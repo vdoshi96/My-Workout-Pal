@@ -243,6 +243,7 @@ const equipmentEnvelopeSchema = z.object({
 }).strict();
 
 const onboardingEnvelopeSchema = z.object({
+  mode: z.enum(["example", "blank"]),
   profileProgram: z.object({
     activeProgram: activeProgramSchema,
     equipment: z.object({ profileKind: z.enum(["dumbbells", "barbell"]) }).strict(),
@@ -444,6 +445,7 @@ export function parseOnboardingResponse(
   value: unknown,
   expected: Readonly<{
     equipmentProfileKind: "dumbbells" | "barbell";
+    mode: "example" | "blank";
     reducedMotion: boolean;
     timezone: string;
     unitSystem: "metric" | "imperial";
@@ -456,6 +458,7 @@ export function parseOnboardingResponse(
   const model = parsed.data.profileProgram;
   if (
     !activeProgramGraphIsValid(model.activeProgram as ActiveProgramReadModel) ||
+    parsed.data.mode !== expected.mode ||
     model.activeProgram.equipmentProfileKind !== expected.equipmentProfileKind ||
     model.equipment.profileKind !== expected.equipmentProfileKind ||
     model.preferences.reducedMotion !== expected.reducedMotion ||
