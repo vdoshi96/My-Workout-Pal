@@ -95,11 +95,14 @@ test("browses, creates, links, selects, and isolates private movements", async (
   await dialog.getByRole("radio", { name: "All" }).check();
 
   await dialog.getByRole("button", { name: "Create private movement" }).click();
-  await dialog.getByLabel("Movement name").fill("Suitcase march");
-  await dialog.getByLabel("How results are logged").selectOption("duration");
-  await dialog.getByLabel("Instructions").fill("March slowly while keeping the load steady.");
-  await dialog.getByLabel("Your link 1").fill("https://youtu.be/AbCdEfGhI01?t=20");
-  await dialog.getByRole("button", { name: "Create and use" }).click();
+  const createRegion = dialog.getByRole("region", { name: "Create private movement" });
+  await createRegion.getByLabel("Movement name").fill("Suitcase march");
+  await createRegion.getByLabel("How results are logged").selectOption("duration");
+  await createRegion
+    .getByLabel("Instructions")
+    .fill("March slowly while keeping the load steady.");
+  await createRegion.getByLabel("Your link 1").fill("https://youtu.be/AbCdEfGhI01?t=20");
+  await createRegion.getByRole("button", { name: "Create and use" }).click();
 
   const chosen = page.getByLabel("Chosen movement");
   await expect(chosen).toContainText("custom:");

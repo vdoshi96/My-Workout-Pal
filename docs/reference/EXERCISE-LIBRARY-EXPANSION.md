@@ -4,7 +4,16 @@
 
 This inventory defines the names-first expansion for My Workout Pal. It lets catalog and curation agents work from one bounded specification without inventing movement names, publishing unreviewed videos, or treating the five-day starter as the whole library.
 
-The existing 27 canonical movements remain the verified baseline. The following 108 candidates would bring the public canonical library to 135 movements before any later equipment-taxonomy expansion. A movement is not ready for production merely because it appears in this document. The product owner's approved Grok 4.6 URL selections are in [`EXERCISE-LIBRARY-EXPANSION_grok.md`](EXERCISE-LIBRARY-EXPANSION_grok.md). Those URLs do not need another selection pass, but runtime video publication still requires the recorded full-watch evidence defined by the curation policy.
+The existing 27 canonical movements are the verified baseline. The source
+inventory below named 108 possible additions, but duplicate review found that
+`prone-dumbbell-row` is the released `chest-supported-dumbbell-row` under a
+different name. Wave 2 therefore adds 107 distinct catalog records for a final
+catalog of 134, while preserving exact alias `prone dumbbell row` on the
+released record. The product owner's approved Grok 4.6 URL selections remain
+in [`EXERCISE-LIBRARY-EXPANSION_grok.md`](EXERCISE-LIBRARY-EXPANSION_grok.md)
+as research for the original 108-name intake. Those URLs do not need another
+selection pass, but they are not runtime approvals: publication still requires
+the recorded human full-watch evidence defined by the curation policy.
 
 ## Publication contract
 
@@ -25,14 +34,18 @@ catalog player.
 
 Do not add a new equipment category in this batch. Bands, cables, kettlebells, pull-up bars, suspension trainers, machines, medicine balls, and cardio machines require their own equipment-profile and compatibility plan.
 
-## Candidate status
+## Intake and implementation status
 
-Every entry in the following tables has this initial state:
+The following tables preserve the original 108-name intake. In the Wave 2
+integration candidate, 107 distinct additions have reviewed catalog metadata
+and exactly three instructions, and the duplicate row is resolved as an alias:
 
-- Content status: `candidate`.
+- Catalog content status: locally verified candidate; not merged or deployed by
+  the Wave 2 integration task.
 - Video status: `not_started`.
 - Approved video IDs: none.
-- Production eligibility: false until metadata, instructions, duplicates, tests, and seed output pass review.
+- Video publication eligibility: false until the existing curation policy and
+  human full-watch record approve an exact pair.
 
 ### Chest and pushing
 
@@ -63,7 +76,7 @@ Every entry in the following tables has this initial state:
 | `barbell-shrug` | Barbell shrug | `weight_reps` | barbell, plates |
 | `dumbbell-shrug` | Dumbbell shrug | `weight_reps` | dumbbells |
 | `inverted-row` | Inverted row | `bodyweight_reps` | bodyweight, barbell, rack |
-| `prone-dumbbell-row` | Prone dumbbell row | `weight_reps` | dumbbells, bench |
+| `prone-dumbbell-row` *(duplicate intake name; alias on `chest-supported-dumbbell-row`)* | Prone dumbbell row | `weight_reps` | dumbbells, bench |
 | `dumbbell-dead-row` | Dumbbell dead row | `weight_reps` | dumbbells |
 | `barbell-rack-pull` | Barbell rack pull | `weight_reps` | barbell, plates, rack |
 | `dumbbell-high-pull` | Dumbbell high pull | `weight_reps` | dumbbells |
@@ -201,7 +214,10 @@ The video-research agent works later from the private curation checkpoint. It ca
 
 ## Acceptance criteria
 
-- The generated catalog contains 135 unique stable slugs after all candidates pass review.
+- The generated catalog contains 134 unique stable slugs: the released 27 plus
+  107 distinct additions after duplicate reconciliation.
+- `prone-dumbbell-row` is not a record; `chest-supported-dumbbell-row` retains
+  exact alias `prone dumbbell row`.
 - Every record has complete searchable metadata and exactly three reviewed instructions.
 - The library and routine chooser render entries without an approved pair and clearly distinguish app-approved demonstrations from owner-provided links.
 - Existing 54 approved starter videos retain their exact validated mappings.

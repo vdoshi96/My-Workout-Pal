@@ -172,3 +172,25 @@ keys, and prescription defaults remain outside that boundary.
 New-account setup extends the existing owner-scoped onboarding transaction with an `example` or `blank` mode. The mode is included in the idempotency request hash and response contract. Example clones the reviewed starter. Blank directly writes one minimal valid published custom graph after profile and equipment persistence; it does not create a hidden starter, clone an intermediate root, or add another API route. Both modes preserve exactly one active owner graph and enter the existing editor and publication lifecycle.
 
 The routine editor mounts `MovementChooserAdapter` directly for add, replace, and seed-day requests and removes its duplicate static chooser dialog. The adapter owns loading, search, compatibility, private creation, and guidance. The editor owns placement, stable topology keys, defaults, same-kind retention, cross-kind reset, and publication. A newly created private movement is held only as a local selection hint until the next server read so the editor can render its label and logging controls; the server remains authoritative for ownership, existence, equipment compatibility, and logging meaning.
+
+## 2026-08-29: Reconcile the Wave 2 inventory to 134 catalog records
+
+The original expansion inventory contains 108 names, but `prone-dumbbell-row`
+duplicates the released `chest-supported-dumbbell-row`. The catalog therefore
+keeps the released record and adds exact alias `prone dumbbell row`; it does not
+create another slug. Wave 2 adds 107 distinct records for a deterministic total
+of 134: the released 27-record prefix, 65 Strength additions, and 42 Core,
+conditioning, carry, and mobility additions.
+
+Catalog membership remains independent from approved-video eligibility. The
+required-video declaration stays at exactly 27 canonical variations and the
+checked-in reviewed seed stays at exactly 54 rows. A catalog-only record remains
+searchable, selectable, publishable, runnable, and honest about unavailable
+guidance, with no empty or fabricated iframe. Expanding catalog content cannot
+implicitly approve a video, add a candidate URL, or widen the seed contract.
+
+Catalog order remains the released prefix followed by category and inventory
+order. Logging kinds remain part of the record contract, including the five
+new `distance_duration` movements; storage keeps distance in meters and weight
+in kilograms. Published revisions, workout snapshots, and history continue to
+preserve the selected record's meaning without retroactive rewrites.

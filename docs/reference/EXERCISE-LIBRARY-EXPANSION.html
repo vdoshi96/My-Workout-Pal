@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="9a874e17526dc565c26cba66db9c1791bcc94e7089a2cfd756dd34e87b3c34ca">
+  <meta name="source-sha256" content="c5e9bfc00f8bea86f2bcff570a7c4c29c4e56bd870b12f9b83e300f2a6838e6b">
   <title>Exercise library expansion inventory · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -30,7 +30,16 @@
 <h1>Exercise library expansion inventory</h1>
 <h2>Purpose</h2>
 <p>This inventory defines the names-first expansion for My Workout Pal. It lets catalog and curation agents work from one bounded specification without inventing movement names, publishing unreviewed videos, or treating the five-day starter as the whole library.</p>
-<p>The existing 27 canonical movements remain the verified baseline. The following 108 candidates would bring the public canonical library to 135 movements before any later equipment-taxonomy expansion. A movement is not ready for production merely because it appears in this document. The product owner&#39;s approved Grok 4.6 URL selections are in <a href="EXERCISE-LIBRARY-EXPANSION_grok.html"><code>EXERCISE-LIBRARY-EXPANSION_grok.md</code></a>. Those URLs do not need another selection pass, but runtime video publication still requires the recorded full-watch evidence defined by the curation policy.</p>
+<p>The existing 27 canonical movements are the verified baseline. The source
+inventory below named 108 possible additions, but duplicate review found that
+<code>prone-dumbbell-row</code> is the released <code>chest-supported-dumbbell-row</code> under a
+different name. Wave 2 therefore adds 107 distinct catalog records for a final
+catalog of 134, while preserving exact alias <code>prone dumbbell row</code> on the
+released record. The product owner&#39;s approved Grok 4.6 URL selections remain
+in <a href="EXERCISE-LIBRARY-EXPANSION_grok.html"><code>EXERCISE-LIBRARY-EXPANSION_grok.md</code></a>
+as research for the original 108-name intake. Those URLs do not need another
+selection pass, but they are not runtime approvals: publication still requires
+the recorded human full-watch evidence defined by the curation policy.</p>
 <h2>Publication contract</h2>
 <p>Every production catalog record must contain:</p>
 <ul>
@@ -47,13 +56,17 @@ watched demonstrations under the existing YouTube curation policy.
 to useful catalog names and instructions, but render no empty or unapproved
 catalog player.</p>
 <p>Do not add a new equipment category in this batch. Bands, cables, kettlebells, pull-up bars, suspension trainers, machines, medicine balls, and cardio machines require their own equipment-profile and compatibility plan.</p>
-<h2>Candidate status</h2>
-<p>Every entry in the following tables has this initial state:</p>
+<h2>Intake and implementation status</h2>
+<p>The following tables preserve the original 108-name intake. In the Wave 2
+integration candidate, 107 distinct additions have reviewed catalog metadata
+and exactly three instructions, and the duplicate row is resolved as an alias:</p>
 <ul>
-<li>Content status: <code>candidate</code>.</li>
+<li>Catalog content status: locally verified candidate; not merged or deployed by
+the Wave 2 integration task.</li>
 <li>Video status: <code>not_started</code>.</li>
 <li>Approved video IDs: none.</li>
-<li>Production eligibility: false until metadata, instructions, duplicates, tests, and seed output pass review.</li>
+<li>Video publication eligibility: false until the existing curation policy and
+human full-watch record approve an exact pair.</li>
 </ul>
 <h3>Chest and pushing</h3>
 <table>
@@ -197,7 +210,7 @@ catalog player.</p>
 <td>bodyweight, barbell, rack</td>
 </tr>
 <tr>
-<td><code>prone-dumbbell-row</code></td>
+<td><code>prone-dumbbell-row</code> <em>(duplicate intake name; alias on <code>chest-supported-dumbbell-row</code>)</em></td>
 <td>Prone dumbbell row</td>
 <td><code>weight_reps</code></td>
 <td>dumbbells, bench</td>
@@ -807,7 +820,10 @@ catalog player.</p>
 <p>The video-research agent works later from the private curation checkpoint. It can propose exact movement-variation candidates and fill research evidence, but only a human full-watch review can approve a pair for the production seed.</p>
 <h2>Acceptance criteria</h2>
 <ul>
-<li>The generated catalog contains 135 unique stable slugs after all candidates pass review.</li>
+<li>The generated catalog contains 134 unique stable slugs: the released 27 plus
+107 distinct additions after duplicate reconciliation.</li>
+<li><code>prone-dumbbell-row</code> is not a record; <code>chest-supported-dumbbell-row</code> retains
+exact alias <code>prone dumbbell row</code>.</li>
 <li>Every record has complete searchable metadata and exactly three reviewed instructions.</li>
 <li>The library and routine chooser render entries without an approved pair and clearly distinguish app-approved demonstrations from owner-provided links.</li>
 <li>Existing 54 approved starter videos retain their exact validated mappings.</li>

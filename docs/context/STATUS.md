@@ -6,29 +6,83 @@ Wave 0 is released. GitHub `main` and production application source are `e44c132
 
 A bounded Neon resilience follow-up is released in application commit `f5ef9cb9a9b462aceda339936972297796b67e16`. Production deployment `dpl_9WBb8hprftiKBYGrZfRD9Juk4VKH` is Ready on all three production aliases. The correction explicitly owns the Neon WebSocket pool, attaches one privacy-safe idle-error listener before Drizzle receives it, and leaves active query errors, transactions, authentication, CSRF, and persistence behavior unchanged. Fail-first coverage and the local release gate pass: 108 Vitest files/739 tests, database 4/34, exact-two seed, service-worker verification, 46-document parity, the Webpack build, 41-route isolation, the public matrix at 47 passes/one documented WebKit service-worker skip, and the authenticated matrix at 34 passes/two intentional engine-scoped skips. The exact production replay warmed a database-backed public exercise route, waited 15 seconds, then completed five more database reads and five CSRF requests at `200`; the exact-deployment error scan was empty. Production remained at zero profiles, programs, revisions, and workout sessions. The isolated Wave 1 candidate has not changed production.
 
-Wave 1 is locally integrated, verified, and pushed on `origin/vishal/wave-1-integration` from baseline `4622f9e1b7783fd35cb6c23ae9396148c7c3357a`. It contains the exact source tips in order: day builder `af43c950991de499b8e32a6fac5d58f19be44eed`, library and personal guidance `b54801b28d40eb106f38fea44ac1da71d468b199`, and personal home and copy `b1722b0e9bd1c0e5185f5bc40856667266c44d22`. Day chooser checkpoint `2436bac92ba3381e76646bf61210cd5fd4dae88f` and parallel library checkpoint `5255a5254fcde4c1b1558947bda64d47bad23743` have stable patch ID `33d2fbaf150856a6f0fa146b154bff6cc2d55cde` and the same four blobs. Implementation checkpoint `000a038a9add854dfe59ad796f7b11033753e0d7` completes the integration-owned product and schema seams; pushed documentation/evidence checkpoint `ae44979880105d02771503637b8a2fa151e9bd05` records the final local gate. The candidate is not merged into public `main`, deployed, migrated in production, or production-verified.
+Wave 1 is integrated into public source `main` at
+`a202a815ad3b7320bbc68b819303822ca4773b1d`, after local verification on
+`origin/vishal/wave-1-integration` from baseline
+`4622f9e1b7783fd35cb6c23ae9396148c7c3357a`. It contains the exact source tips
+in order: day builder `af43c950991de499b8e32a6fac5d58f19be44eed`, library and personal guidance
+`b54801b28d40eb106f38fea44ac1da71d468b199`, and personal home and copy
+`b1722b0e9bd1c0e5185f5bc40856667266c44d22`. Day chooser checkpoint
+`2436bac92ba3381e76646bf61210cd5fd4dae88f` and parallel library checkpoint
+`5255a5254fcde4c1b1558947bda64d47bad23743` have stable patch ID
+`33d2fbaf150856a6f0fa146b154bff6cc2d55cde` and the same four blobs.
+Implementation checkpoint `000a038a9add854dfe59ad796f7b11033753e0d7`
+completes the integration-owned product and schema seams; documentation/evidence
+checkpoint `ae44979880105d02771503637b8a2fa151e9bd05` records its local gate. The
+Wave 1 production migrations have not been applied and the source has not been
+deployed or production-verified.
 
-The integrated schema retains `0006_program_cardio_display_order.sql` before `0007_personal_guidance.sql`. Regenerated `0007` snapshot `30c8bbd1-d86e-463e-89ac-3586832e4370` has the exact `0006` snapshot as its predecessor and contains both cardio-order and personal-guidance state. Example and blank creation share the onboarding transaction, and the real editor uses the library adapter with no nested chooser. The complete local static, migration, build, route, authenticated-browser, and public-browser gates pass at the totals recorded in `docs/qa/latest/WAVE-1-INTEGRATION-QA.md`.
+The integrated schema retains `0006_program_cardio_display_order.sql` before `0007_personal_guidance.sql`. Regenerated `0007` snapshot `30c8bbd1-d86e-463e-89ac-3586832e4370` has the exact `0006` snapshot as its predecessor and contains both cardio-order and personal-guidance state. Example and blank creation share the onboarding transaction, and the real editor uses the library adapter with no nested chooser. The complete local static, migration, build, route, authenticated-browser, and public-browser gate is preserved in Git history at Wave 1 evidence checkpoint `ae44979880105d02771503637b8a2fa151e9bd05`; its superseded report was removed from `docs/qa/latest/` under the newest-only evidence policy.
 
-The primary checkout is aligned with released `origin/main`. The newer Grok research is integrated as the product owner's approved 216-link selection for the 108 expansion movements. Runtime video publication remains gated only by the existing per-video full-watch record, not another link-selection pass. Local branch `vishal/pre-wave1-primary-preservation` retains the exact pre-sync planning state until the closeout comparison proves that no other unique work remains. The restore-tested pre-`0005` database archive now resides in a durable user-private backup directory outside the repository with mode `600` and its original checksum. The existing Homebrew .NET 9.0.120 installation is linked again and the ordinary `dotnet` command is restored.
+Wave 2 is locally integrated and verified on
+`vishal/wave-2-catalog-integration` from exact public-main base
+`a202a815ad3b7320bbc68b819303822ca4773b1d`. The sole applied prerequisite is
+canonical checkpoint `7046a94bae41e90839b16d5329b58a1975600ee9`, followed by Strength content
+`bbd44ab`, Strength QA `5863659`, and Core/conditioning tip `ac5b1b5`.
+Patch-equivalent prerequisite commits `ad92476` and `1cc190a` were not applied.
+The candidate contains 134 catalog records: the released 27, 65 Strength
+additions, and 42 Core, conditioning, carry, and mobility additions. The
+approved-video boundary remains 27 canonical variations and 54 reviewed rows.
+This candidate is pushed only to its feature branch; it is not merged,
+migrated, deployed, production-seeded, or production-verified.
 
-## Active Wave 1 integration handoff
+The primary checkout is aligned with `origin/main` at the Wave 2 base. The newer
+Grok research remains the product owner's approved 216-link selection for the
+original 108-name intake; none of those candidate links entered runtime data.
+Runtime video publication remains gated by the existing per-video full-watch
+record, not another link-selection pass. Local branch
+`vishal/pre-wave1-primary-preservation` retains the exact pre-sync planning
+state until the closeout comparison proves that no other unique work remains.
+The restore-tested pre-`0005` database archive remains in a durable user-private
+backup directory outside the repository with mode `600` and its original
+checksum. The existing Homebrew .NET 9.0.120 installation is linked again and
+the ordinary `dotnet` command is restored.
 
-- Last completed: exact source integration, example-versus-blank onboarding, real editor chooser composition, `0000`-`0007` fixture reconciliation, full static/build gates, 38 authenticated browser passes with two intentional skips, 47 public browser passes with one documented WebKit service-worker skip, final documentation generation, and the candidate push through evidence checkpoint `ae44979880105d02771503637b8a2fa151e9bd05`.
+## Active Wave 2 integration handoff
+
+- Last completed: exact source integration, duplicate-prerequisite proof,
+  central contract reconciliation, 122 Vitest files/834 tests, 4 database
+  files/34 tests, Drizzle and seed checks, PWA parity, production build and
+  44-route boundary, both exact Wave 2 browser journeys on Chromium desktop and
+  WebKit phone, the maintained authenticated matrix at 42 passes/two intentional
+  skips, and the public matrix at 47 passes/one documented WebKit PWA skip.
 - In progress: review handoff only.
-- Next: obtain review and separate release authorization. Do not merge `main`, apply production migrations, seed guidance candidates, or deploy from this integration task.
-- Known limitation: this is local synthetic verification. Migrations have no down path and require restore readiness; no hosted or production claim is made.
-- Verification: 118 Vitest files/814 tests, Drizzle metadata, full local migration/bootstrap checks, exact-two seed, service worker, Webpack production build, 44-route boundary, and both maintained browser matrices pass.
-- Important files: `docs/plans/WAVE-1-INTEGRATION.md`, `docs/qa/latest/WAVE-1-INTEGRATION-QA.md`, `drizzle/0006_program_cardio_display_order.sql`, `drizzle/0007_personal_guidance.sql`, `drizzle/meta/_journal.json`, and `tests/fixtures/authenticated-app/server/database.ts`.
-- Open question: none within candidate scope; production release remains a separate authorization and restore-gated operation.
+- Next: obtain review and separate release authorization. Do not merge `main`,
+  mutate production data, migrate, deploy, change providers, or approve/seed a
+  candidate video from this integration task.
+- Known limitation: this is a local candidate with synthetic authenticated data
+  and a disposable local Postgres public-browser fixture. No hosted or
+  production claim is made.
+- Verification: exact catalog count/order/search, all supported logging kinds,
+  immutable publication/runner/history behavior, accessibility, zero iframes
+  for unavailable guidance, and both maintained browser matrices pass.
+- Important files: `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`,
+  `docs/qa/latest/WAVE-2-CATALOG-INTEGRATION-QA.md`,
+  `src/domain/exercises/catalog-manifests/`, and
+  `src/domain/youtube/video-requirements.ts`.
+- Open question: none within candidate scope; release remains a separate
+  authorization.
 
 ## What exists
 
 - A public GitHub repository at `vdoshi96/My-Workout-Pal`. Local `main` tracks `origin/main`, and Vercel production is connected to that branch.
 - A fully inspected private reference recording, with temporary inspection artifacts outside the repository.
-- The Wave 1 candidate includes verified flexible day editing and cardio order, one frozen chooser contract, generated catalog manifests, equipment-compatible canonical/private search, inline private movement creation inside the real editor, owner-scoped personal guidance, immutable guidance snapshots, example-or-blank onboarding, resumable-workout home state, and canonical public Progress navigation.
+- The Wave 1 source on `main` includes verified flexible day editing and cardio order, one frozen chooser contract, generated catalog manifests, equipment-compatible canonical/private search, inline private movement creation inside the real editor, owner-scoped personal guidance, immutable guidance snapshots, example-or-blank onboarding, resumable-workout home state, and canonical public Progress navigation.
 - The initial product record and context documentation.
-- An authoritative workout-companion repositioning plan and a 108-candidate names-first exercise expansion inventory. These are plans, not implemented application behavior.
+- An authoritative workout-companion repositioning plan and the original
+  108-name expansion inventory. The Wave 2 candidate implements 107 distinct
+  additions after resolving one duplicate as an alias; the Grok link inventory
+  remains non-runtime research.
 - A strict Next.js 16.3.2 foundation with a distinct public companion welcome route at `/`, the approved route-atlas five-day example at `/program`, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout, disclosed Progress preview at `/progress`, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
 - Development and production select Webpack explicitly because `next.config.ts` defines a custom `webpack` function. An isolated Next.js 16.3.2 development start identified Webpack, reached ready, and served `/program` with `200`.
 - Pure starter-program, equipment-substitution, program-draft editing, library-filter, canonical exercise-metadata, safe authenticated-return, double-progression eligibility, and persisted-data analytics domains.
@@ -41,8 +95,15 @@ The primary checkout is aligned with released `origin/main`. The newer Grok rese
 - A nonce-based strict Content Security Policy and companion browser security headers. Next.js request rendering applies a fresh nonce to framework output; the YouTube referrer and Firebase popup policies are explicit.
 - Pure canonical-unit analytics cover volume, Epley estimated one-repetition maximum, exact ties, progress summaries, and presentation-only rounding.
 - Owner-scoped custom-exercise domain and server repositories cover verified create, read, list, optimistic update, guarded deletion, private aliases/equipment, and up to two normalized YouTube URLs. Logging-kind changes require a clone once program or workout meaning references the exercise.
-- All 27 canonical starter exercises have original route cues, movement families, aliases, and primary-muscle metadata. Library search includes those fields while still applying equipment compatibility first.
-- A database-neutral, deterministic seed manifest derives all six equipment rows, 27 catalog exercises, compatibility edges, aliases, and both five-day equipment revisions from the canonical product domain. It preserves the Lower-day “Heavy goblet squat” label as revision metadata without duplicating the catalog exercise.
+- All 134 Wave 2 catalog exercises have deterministic names, route cues,
+  movement families, aliases, primary-muscle metadata, logging kinds,
+  compatibility, and exactly three instructions. Library search includes those
+  fields while applying equipment compatibility first.
+- A database-neutral, deterministic seed manifest derives all six equipment
+  rows, 134 catalog exercises, compatibility edges, aliases, the stable 54-row
+  approved-video subset, and both five-day equipment revisions from the
+  canonical product domain. It preserves the Lower-day “Heavy goblet squat”
+  label as revision metadata without duplicating the catalog exercise.
 - Canonical database rows have stable RFC 4122 version-five identities derived from a fixed public namespace and bounded seed keys. The checked-in migration and transactional seeder have been applied to Neon, rerun without material change, and verified read-only.
 - The complete bounded Drizzle schema is integrated: 31 user, catalog, template, program, immutable workout, idempotency, personal-record, progress-summary, projection-maintenance, and account-deletion tables plus composite ownership constraints and publication/history guards.
 - The account-deletion migration removes the deletion job's restrictive profile foreign key, adds bounded saga phase/idempotency metadata and completion invariants, and refuses a non-empty legacy job table. The owner-scoped repository deletes every owned graph in an explicit transaction, preserves other owners and global rows, rolls back on a late failure, moves the durable job to the Firebase phase, and resumes after the profile is gone. A transaction-local owner-matched exception permits only deletion of otherwise immutable program/workout history during that transaction. Migration `0001_account_deletion_saga` is applied to Neon.

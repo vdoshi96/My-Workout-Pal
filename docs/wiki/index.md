@@ -14,6 +14,7 @@ Use the following documents as the maintained project map:
 - `docs/plans/FLEXIBLE-DAY-BUILDER.md`: Wave 1 editor interactions, chooser boundary, immutable publish and saved-day start flow, and focused evidence requirements.
 - `docs/plans/LIBRARY-AND-PERSONAL-GUIDANCE.md`: Wave 1 chooser contract, catalog manifests, owner-scoped personal guidance, immutable snapshots, integration boundary, and verification record.
 - `docs/plans/WAVE-1-INTEGRATION.md`: Wave 1 source provenance, integration contracts, migration order, combined acceptance criteria, and release stop boundary.
+- `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`: Wave 2 source provenance, duplicate reconciliation, 134-record catalog contract, stable approved-video subset, verification matrix, and local-only release stop.
 - `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
@@ -22,8 +23,11 @@ Use the following documents as the maintained project map:
 - `docs/design/COMPANION-VISUAL-CONCEPTS.md`: selected Corner Companions responsive board, production guardrails, required corrections, and pilot acceptance criteria.
 - `docs/design/PROGRAM-OVERVIEW.md`: approved comp and implementation inventory.
 - `docs/reference/SUBSTITUTIONS.md`: equipment compatibility and program mutation rules.
-- `docs/reference/EXERCISE-LIBRARY-EXPANSION.md`: names-first 135-movement target, metadata contract, video states, candidate inventory, and content-agent workflow.
-- `docs/reference/EXERCISE-LIBRARY-EXPANSION_grok.md`: the product owner's approved 216-link Grok 4.6 selection for the 108 expansion movements, with visual-timeline and scoped-embed evidence; runtime publication still requires recorded full-watch review.
+- `docs/reference/EXERCISE-LIBRARY-EXPANSION.md`: original 108-name intake, reviewed duplicate resolution, 134-record catalog contract, video states, inventory, and content-agent workflow.
+- `docs/reference/EXERCISE-LIBRARY-EXPANSION_grok.md`: the product owner's
+  approved 216-link Grok 4.6 selection for the original 108-name intake, with
+  visual-timeline and scoped-embed evidence; one intake name resolves as an
+  alias, and runtime publication still requires recorded full-watch review.
 - `docs/reference/YOUTUBE-CURATION.md`: discovery, review, seeding, and refresh policy.
 - `docs/reference/DEPLOYMENT-RECOVERY.md`: environments, release checks, cost controls, and recovery.
 

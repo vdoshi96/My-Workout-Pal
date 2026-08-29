@@ -234,6 +234,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
   await alice.page.goto("/app");
   expect((await submitOnboarding(alice.page)).status()).toBe(201);
   await expect(alice.page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await alice.page.waitForLoadState("networkidle");
   const onboarded = await readProfileProgram(alice.page);
   const usesImperialUnits = onboarded.preferences.unitSystem === "imperial";
   const targetDistanceInput = usesImperialUnits ? "0.025" : "40";
@@ -297,10 +298,20 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
       new URL(response.url()).pathname === "/api/app/program/publish" &&
       response.request().method() === "POST",
   );
+  const refreshedEditorResponse = alice.page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return (
+      response.request().method() === "GET" &&
+      response.request().headers()["rsc"] === "1" &&
+      url.pathname === "/app/program/edit" &&
+      url.searchParams.has("_rsc")
+    );
+  });
   await alice.page.getByRole("button", { name: "Publish new revision" }).click();
   expect((await publishResponse).status()).toBe(200);
   expect(publishRequests).toBe(1);
   await expect(alice.page.getByText(/Published revision 2/u)).toBeVisible();
+  expect((await refreshedEditorResponse).status()).toBe(200);
 
   await alice.page.reload();
   for (const name of ["Dumbbell clean", "Crunch", "Flutter kick", "Dumbbell farmer carry"]) {

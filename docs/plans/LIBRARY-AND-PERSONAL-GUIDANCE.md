@@ -9,7 +9,9 @@ and starting the routine preserve the selected movement and snapshot the
 resolved guidance. Later edits do not change an active or historical workout.
 
 This Wave 1 package establishes catalog and chooser foundations. Wave 2 owns the
-reviewed metadata and instruction expansion from 27 to 135 canonical movements.
+reviewed metadata and instruction expansion from 27 to 134 canonical movements:
+107 distinct additions after reconciling the original 108-name intake's prone-row
+duplicate with the released chest-supported dumbbell row.
 The 216 product-selected YouTube links remain research candidates with
 `not_started` runtime status until the existing full-watch curation record makes
 an exact pair eligible for publication.

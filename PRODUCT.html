@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="dd30500c8006aa4eccf010e95040778a81e06a1d8e67f2e92878ae5d78545bc7">
+  <meta name="source-sha256" content="423710f2bc4964e1dad0d86fb06288a3b0e8cc03ba56ab205488e7c1e627459e">
   <title>Product · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -46,6 +46,10 @@
 <li>The starter example has Push, Pull, Legs, Upper, and Lower days. Its core work and walker or runner cardio demonstrate available features but are not mandatory in a personal routine.</li>
 <li>Authenticated routines use bounded flexible day, section, movement, and optional-cardio structures with arbitrary display names and immutable published revisions.</li>
 <li>The guest default supports dumbbells, bodyweight, and an ordinary bench. The barbell profile adds a barbell, plates, a rack, and a bench while retaining dumbbells and bodyweight.</li>
+<li>The Wave 2 catalog candidate contains 134 deterministic records: the released
+27-record prefix plus 107 reviewed additions. The original 108-name intake
+produced one duplicate, so <code>prone dumbbell row</code> remains an alias on
+<code>chest-supported-dumbbell-row</code> rather than a separate record.</li>
 <li>Equipment changes affect only the active program after a clear preview and confirmation. Compatible prescriptions survive; incompatible movement-specific targets are explained and cleared.</li>
 <li>Authenticated users can create and edit programs and custom exercises, resume workouts, log strength and cardio, review history and analytics, set preferences, and delete their account and data.</li>
 <li>Firebase Auth supports Google and email/password accounts. Password accounts must verify email before permanent mutations. Server code verifies secure HTTP-only sessions and ownership.</li>

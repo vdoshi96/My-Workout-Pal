@@ -15,7 +15,11 @@ The current release has several structural gaps that match the reported experien
 - The protected `/app` surface already renders the viewer name, verification state, account navigation, onboarding, and active program. The ordinary sign-in entry path does not send the user there.
 - The publication schema requires exactly five days in the fixed Push, Pull, Legs, Upper, and Lower order. It also requires a Core section and both Walker and Runner cardio templates on every day.
 - The editor can rename the five existing days and edit their movements, but it cannot add, remove, or reorder days. Its section constraints also prevent a fully personal routine.
-- The canonical catalog has 27 movements. Private custom exercises can store zero to two YouTube links, but a member cannot select a canonical movement and attach their own private guidance link from the chooser.
+- At this plan's baseline, the canonical catalog had 27 movements. The locally
+  verified Wave 2 candidate now has 134, while the approved-video subset remains
+  the original 27 canonical variations. Private custom exercises could store
+  zero to two YouTube links, but a member could not yet select a canonical
+  movement and attach private guidance from the chooser.
 - Public navigation calls progress **Sample**, while the progress preview repeats sample language in the route title, page title, banner, metrics, chart, and supporting copy.
 - The landing metadata, hero, example-route section, PWA description, and several member surfaces position the five-day routine as the main offer.
 - The animal illustration is warm and distinctive, but it appears only in the landing hero. Most product surfaces rely on dark atlas fields, stamps, uppercase headings, and ruled panels, which makes the companion feel formal and operational.

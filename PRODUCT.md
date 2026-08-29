@@ -33,6 +33,10 @@ Users browse on phones, tablets, and desktop browsers. Workout logging primarily
 - The starter example has Push, Pull, Legs, Upper, and Lower days. Its core work and walker or runner cardio demonstrate available features but are not mandatory in a personal routine.
 - Authenticated routines use bounded flexible day, section, movement, and optional-cardio structures with arbitrary display names and immutable published revisions.
 - The guest default supports dumbbells, bodyweight, and an ordinary bench. The barbell profile adds a barbell, plates, a rack, and a bench while retaining dumbbells and bodyweight.
+- The Wave 2 catalog candidate contains 134 deterministic records: the released
+  27-record prefix plus 107 reviewed additions. The original 108-name intake
+  produced one duplicate, so `prone dumbbell row` remains an alias on
+  `chest-supported-dumbbell-row` rather than a separate record.
 - Equipment changes affect only the active program after a clear preview and confirmation. Compatible prescriptions survive; incompatible movement-specific targets are explained and cleared.
 - Authenticated users can create and edit programs and custom exercises, resume workouts, log strength and cardio, review history and analytics, set preferences, and delete their account and data.
 - Firebase Auth supports Google and email/password accounts. Password accounts must verify email before permanent mutations. Server code verifies secure HTTP-only sessions and ownership.

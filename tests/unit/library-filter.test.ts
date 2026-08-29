@@ -39,7 +39,7 @@ describe("exercise library filtering", () => {
       ),
     ).toBe(true);
     expect(
-      listCatalogExercises({ profile: EQUIPMENT_PROFILES.dumbbells, query: "RDL" }).map(
+      listCatalogExercises({ profile: EQUIPMENT_PROFILES.dumbbells, query: "dumbbell RDL" }).map(
         (exercise) => exercise.slug,
       ),
     ).toEqual([
