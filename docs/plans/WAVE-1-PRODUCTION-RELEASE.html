@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="2d9c4ad2d2a0399dcc985ce175e0a0100c4716ac700000540ddd612de19122e1">
+  <title>Wave 1 production release plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 1 production release plan</h1>
+<h2>Outcome</h2>
+<p>Release application commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code> after production migrations <code>0006_program_cardio_display_order</code> and <code>0007_personal_guidance</code> pass separate schema-owner transactions and post-migration verification. Keep a private, checksum-verified, restore-tested pre-<code>0006</code> archive. Preserve the three existing production aliases, Firebase providers, Neon resource, baseline users, and retained deletion audit records.</p>
+<p>The deployed application source must remain the exact candidate commit. Store release documentation on <code>vishal/wave-1-production-release</code> so documentation closeout doesn&#39;t trigger a replacement application deployment from <code>main</code>.</p>
+<h2>Exact release identities</h2>
+<p>The release uses the following immutable inputs:</p>
+<table>
+<thead>
+<tr>
+<th>Identity</th>
+<th>Required value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Candidate commit</td>
+<td><code>a202a815ad3b7320bbc68b819303822ca4773b1d</code></td>
+</tr>
+<tr>
+<td>Candidate tree</td>
+<td><code>2f79527b017391aa7a49d2c48b96dd2e169ba784</code></td>
+</tr>
+<tr>
+<td>Candidate branch at intake</td>
+<td><code>origin/vishal/wave-1-integration</code></td>
+</tr>
+<tr>
+<td>Public <code>main</code> baseline</td>
+<td><code>4622f9e1b7783fd35cb6c23ae9396148c7c3357a</code></td>
+</tr>
+<tr>
+<td><code>0006</code> SHA-256</td>
+<td><code>e20555d7abccee6c620054bc62257b38dbaba2739ca5305e8daf6ca064eb56f5</code></td>
+</tr>
+<tr>
+<td><code>0007</code> SHA-256</td>
+<td><code>59dce2363f73c2c2a53ef9b4668d1ce57dbf575a8ef0759094ccb4c50eaea4e0</code></td>
+</tr>
+<tr>
+<td>Vercel project</td>
+<td><code>vdoshi96s-projects/my-workout-pal</code>, <code>prj_aHNqBtTx1irlbhNNvHTvynQkb0P9</code></td>
+</tr>
+<tr>
+<td>Firebase project</td>
+<td><code>my-workout-pal-92819</code></td>
+</tr>
+<tr>
+<td>Neon database and owner</td>
+<td><code>neondb</code>, <code>neondb_owner</code></td>
+</tr>
+</tbody></table>
+<p>Stop before any external write if a live identity differs from this table, if <code>main</code> no longer points to the baseline, or if the candidate is dirty, unpushed, or not a descendant of the baseline.</p>
+<h2>Recorded preflight</h2>
+<p>The read-only preflight completed at <code>2026-08-29T17:29:36Z</code> with the following results:</p>
+<ul>
+<li>GitHub <code>main</code> and <code>origin/main</code> point to the exact baseline. The remote candidate and local release source point to the exact candidate. The baseline is the candidate&#39;s merge base, and the candidate worktree was clean.</li>
+<li>Vercel deployment <code>dpl_HAdDiwWwqRQbs8y8SM3TTwid529j</code> is Ready from exact baseline source on <code>main</code>. The stable, project, and Git-main aliases all point to that deployment. The project remains Next.js on Node.js 24.x in <code>iad1</code>.</li>
+<li>Vercel Production has the expected Neon and Firebase variable names. Every pullable required value matches the ignored local operator environment. <code>FIREBASE_PRIVATE_KEY</code> remains Sensitive and can&#39;t be pulled; the local credential passed a live Firebase Admin call instead.</li>
+<li>Firebase has Email/Password and Google enabled. The Google client ID and secret are configured. The production, Firebase-default, and localhost domains remain authorized. The client and server project IDs match. Firebase contains one pre-existing identity.</li>
+<li>Neon reports PostgreSQL 18.6, database <code>neondb</code>, schema <code>public</code>, session and current role <code>neondb_owner</code>, 12 MB used, and one read-only transaction. The <code>public</code> and <code>drizzle</code> objects are owned by <code>neondb_owner</code>.</li>
+<li><code>drizzle.__drizzle_migrations</code> contains six records through exact <code>0005</code> hash <code>270adb8a10ec152412cf68b7545d784162a267e2345bb525986875ec4c13449c</code>. Neither Wave 1 schema shape exists.</li>
+<li>All inspected constraints are validated. Ten program and workout application triggers are enabled with state <code>O</code>, including <code>program_cardio_prescriptions_immutable_after_publish</code>.</li>
+<li>Starter counts are 6 equipment rows, 27 exercises, 44 compatibility rows, 54 aliases, 54 approved videos, 2 template revisions, 10 days, 26 sections, 60 prescriptions, and 20 template cardio rows.</li>
+<li>Owned-data counts are zero for profiles, programs, revisions, days, sections, prescriptions, cardio rows, custom exercises, custom videos, workout sessions, and workout snapshots. The database retains 57 completed account-deletion audit rows and one personal-record projection checkpoint.</li>
+</ul>
+<p>The release must repeat the read-only Git, deployment, migration, trigger, and aggregate data checks immediately before the first schema write.</p>
+<h2>Recovery point</h2>
+<p>Create the archive in <code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/</code> with a UTC timestamp and <code>mwp-wave1-pre-0006-</code> prefix. Use PostgreSQL custom format over the configured unpooled TLS connection, set mode <code>600</code>, and calculate SHA-256. Don&#39;t commit, upload, or inspect private rows.</p>
+<p>Restore the archive into a disposable local PostgreSQL database. If a server-version setting isn&#39;t accepted by the local restore target, remove only that setting from the archive workflow and record the compatibility adjustment. Verify the restored migration identities, schema-object totals, triggers, constraints, and privacy-safe row counts. Drop the disposable database after verification.</p>
+<p>The archive and successful restore rehearsal are mandatory. Stop before migration if either result is incomplete, if available storage is insufficient, or if the archive permissions differ from <code>600</code>.</p>
+<h2>Ordered schema release</h2>
+<p>Apply each migration with <code>psql</code> as <code>neondb_owner</code>, <code>ON_ERROR_STOP</code>, and one transaction. Record the matching Drizzle hash and journal timestamp in the same transaction as the schema change. Don&#39;t use the aggregate <code>db:migrate</code> command because it would apply both pending migrations without the required verification pause.</p>
+<p>For <code>0006</code>, verify the following facts before continuing:</p>
+<ul>
+<li>The seventh migration record has the exact <code>0006</code> hash and timestamp.</li>
+<li>Every existing cardio row has non-null <code>display_order</code> from 1 through 2.</li>
+<li>Owner, revision, day, and order are unique.</li>
+<li>The order backfill is Walker, then Runner, with the documented ID tie-break.</li>
+<li>The order check and unique index are present, validated, and owned by <code>neondb_owner</code>.</li>
+<li><code>program_cardio_prescriptions_immutable_after_publish</code> is enabled with state <code>O</code>.</li>
+</ul>
+<p>For <code>0007</code>, verify the following facts before continuing:</p>
+<ul>
+<li>The eighth migration record has the exact <code>0007</code> hash and timestamp.</li>
+<li>The enum, table, columns, owner-scoped foreign keys, checks, partial unique indexes, and read indexes match the candidate.</li>
+<li>Legacy <code>custom_exercise_videos</code> rows map exactly once into personal guidance. Don&#39;t seed any of the 216 candidate links.</li>
+<li>Every guidance row has one owner-scoped source, one of two bounded positions, and a valid kind/URL shape.</li>
+<li><code>workout_exercise_snapshots.guidance_snapshot</code> is non-null, bounded to two items, and preserves existing rows.</li>
+<li>Every <code>0006</code> invariant and the cardio immutability trigger remain intact.</li>
+</ul>
+<p>Stop before application release if either transaction, migration identity, owner, trigger, constraint, index, backfill, or aggregate data invariant is uncertain. The migrations have no down path.</p>
+<h2>Application release</h2>
+<p>After both schema gates pass, advance public <code>main</code> from the exact baseline to the exact candidate without a merge commit or replacement tree. Push only that commit. Update the primary local <code>main</code> only if the primary checkout is clean and can fast-forward safely.</p>
+<p>Let Vercel build the Git-connected production deployment from exact <code>main</code>. Verify Ready state, Git source SHA, project, environment, existing aliases, security headers, public and private cache boundaries, and route inventory. Don&#39;t add an alias, change a provider, or modify project configuration.</p>
+<h2>Hosted verification and cleanup</h2>
+<p>Replay the maintained public production matrix and the bounded hosted authentication suites. Then verify the Wave 1 member story with disposable production identities and owner-scoped data:</p>
+<ol>
+<li>Verify safe password and Google returns, visible identity and verification state, sign-out, revocation handling, and cleanup.</li>
+<li>Verify example and blank onboarding idempotency, arbitrary editor operations, the real chooser for add, replace, and seed-day, inline private movements, and guidance validation and replacement.</li>
+<li>Verify publish, reload, exact saved-day start, zero-cardio, one-cardio, authored order, active-session conflict, immutable guidance/program/history snapshots, equipment revision, personal Home states, and owned Progress.</li>
+<li>Verify missing and cross-owner resources fail safely without exposing ownership.</li>
+<li>Verify <code>/progress</code>, the permanent <code>/sample-progress</code> redirect, one sample disclosure, service-worker caching, supported offline behavior, security headers, and private no-store behavior.</li>
+<li>Reconcile database and Firebase counts, then remove only disposable identities and their owned rows. Preserve baseline identities and deletion audit records.</li>
+<li>Scan the exact deployment&#39;s runtime, function, security, and error logs. Recheck the earlier idle Neon WebSocket and CSRF boundary after warming a database-backed route.</li>
+</ol>
+<p>Retain only the production Wave 1 QA report, its HTML counterpart, and screenshots that materially prove the newest completed production run.</p>
+<h2>Recovery decision</h2>
+<p>If migration verification fails before application release, stop traffic promotion and restore the database only after confirming the archive identity, target, and impact. Verify the restored migration table, schema objects, triggers, constraints, and counts before serving the baseline application.</p>
+<p>If the application release fails after both migrations, don&#39;t promote a baseline application that can&#39;t write the Wave 1 schema safely. Prefer a compatible forward correction at the exact release source. Restore the database and baseline application together only when the reviewed recovery condition requires full pre-<code>0006</code> state.</p>
+<h2>Closeout</h2>
+<p>Record the exact main and deployed SHA, deployment ID and URL, aliases, migration hashes, archive path/mode/hash/restore result, test and browser totals, provider results, database before/after invariants, logs, data cleanup, and remaining limitations. Push release evidence only to <code>vishal/wave-1-production-release</code> unless an application correction must enter <code>main</code>.</p>
+<p>After successful hosted verification, remove clean completed Wave 1 source worktrees and their local branches when safe. Retain the unresolved <code>vishal/pre-wave1-primary-preservation</code> ref until its unique documentation content is reconciled. Don&#39;t delete remote provenance branches.</p>
+
+  </main>
+</body>
+</html>
