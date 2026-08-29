@@ -29,7 +29,7 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
   const selectedDay = program.days.find((day) => day.name.toLowerCase() === daySlug) ?? program.days[0]!;
 
   return (
-    <PublicShell current="sample">
+    <PublicShell current={null}>
       <section className="sample-runner-head contour-surface">
         <div>
           <Link

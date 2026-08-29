@@ -1,9 +1,9 @@
 // Generated from src/domain/pwa/cache-policy.ts. Run pnpm pwa:build after policy changes.
-const CACHE_NAME = "my-workout-pal-public-v3";
+const CACHE_NAME = "my-workout-pal-public-v4";
 const CACHE_PREFIX = "my-workout-pal-public-";
-const INSTALL_ASSETS = ["/","/offline","/apple-touch-icon.png","/contours.svg","/icon-192.png","/icon-512.png","/icon.svg","/illustrations/workout-pals-gym-768.webp","/illustrations/workout-pals-gym.webp"];
+const INSTALL_ASSETS = ["/","/offline","/progress","/apple-touch-icon.png","/contours.svg","/icon-192.png","/icon-512.png","/icon.svg","/illustrations/workout-pals-gym-768.webp","/illustrations/workout-pals-gym.webp"];
 const PUBLIC_ASSETS = new Set(["/apple-touch-icon.png","/contours.svg","/icon-192.png","/icon-512.png","/icon.svg","/illustrations/workout-pals-gym-768.webp","/illustrations/workout-pals-gym.webp"]);
-const PUBLIC_NAVIGATION_EXACT = new Set(["/","/library","/offline","/program","/sample-progress","/sample-workout"]);
+const PUBLIC_NAVIGATION_EXACT = new Set(["/","/library","/offline","/program","/progress","/sample-workout"]);
 const PUBLIC_NAVIGATION_PREFIXES = ["/library/","/program/"];
 const STATIC_DESTINATIONS = new Set(["font","image","script","style"]);
 

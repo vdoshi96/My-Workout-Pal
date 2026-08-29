@@ -18,7 +18,7 @@ function capturePageErrors(page: Page): string[] {
 
 test("guest previews both profiles and completes the public discovery route", async ({
   page,
-}) => {
+}, testInfo) => {
   test.setTimeout(60_000);
   const errors = capturePageErrors(page);
   await page.goto("/");
@@ -26,7 +26,7 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Your whole five-day plan. No account required.",
+      name: "A workout companion built around your routine.",
     }),
   ).toBeVisible();
   await expect(
@@ -37,8 +37,16 @@ test("guest previews both profiles and completes the public discovery route", as
   ).toHaveCount(0);
   await expect(page.getByText("Open to everyone")).toBeVisible();
   await expect(page.getByText("Sign in to make it yours")).toBeVisible();
+  if (testInfo.project.name === "chromium-desktop") {
+    const evidencePath = testInfo.outputPath("companion-landing-desktop.png");
+    await page.screenshot({ fullPage: true, path: evidencePath });
+    await testInfo.attach("companion-landing-desktop", {
+      contentType: "image/png",
+      path: evidencePath,
+    });
+  }
 
-  await page.getByRole("link", { name: "Browse all five days" }).click();
+  await page.getByRole("link", { name: "Explore the five-day example" }).click();
   await expect(page).toHaveURL(/\/program$/);
   await expect(page.getByText("Starter preview · not saved")).toBeVisible();
   for (const [index, name] of ["Push", "Pull", "Legs", "Upper", "Lower"].entries()) {
@@ -117,12 +125,14 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(page.getByText("Not your workout · never saved")).toBeVisible();
   await expect(page.getByText("Read only")).toBeVisible();
 
-  await page.goto("/sample-progress");
+  await page.goto("/progress");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Sample progress" }),
+    page.getByRole("heading", { level: 1, name: "Progress" }),
   ).toBeVisible();
-  await expect(page.getByText("Not your history · never saved")).toBeVisible();
-  await expect(page.getByLabel("Sample analytics")).toBeVisible();
+  await expect(page.getByText("Sample data · not your history", { exact: true })).toHaveCount(1);
+  await expect(page.getByLabel("Progress preview")).toBeVisible();
+  await page.goto("/sample-progress");
+  await expect(page).toHaveURL(/\/progress$/);
 
   await page.goto("/sign-in?returnTo=%2Fhistory&returnTo=%2Fapp");
   await expect(page.locator("#auth-heading")).toHaveText(
@@ -145,6 +155,8 @@ test("public account entry uses the protected member boundary from every public 
   await expect(landingAccountAction).toHaveAttribute("href", "/app");
   await landingAccountAction.click();
   await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp$/u);
+  await expect(page.locator("#auth-heading")).toHaveText(/^(Sign-in connection pending|Sign in)$/);
+  await page.waitForLoadState("networkidle");
 
   await page.goto("/program");
   await expect(page.getByText("Starter preview · not saved")).toBeVisible();
@@ -158,6 +170,8 @@ test("public account entry uses the protected member boundary from every public 
   await expect(dayAccountAction).toHaveAttribute("href", "/app");
   await dayAccountAction.click();
   await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp$/u);
+  await expect(page.locator("#auth-heading")).toHaveText(/^(Sign-in connection pending|Sign in)$/);
+  await page.waitForLoadState("networkidle");
 
   expect(errors).toEqual([]);
 });
@@ -175,7 +189,7 @@ const accessibilityRoutes = [
     name: "sample workout",
     path: "/sample-workout?day=push&equipment=dumbbells",
   },
-  { name: "sample analytics", path: "/sample-progress" },
+  { name: "progress preview", path: "/progress" },
   { name: "sign in", path: "/sign-in" },
 ] as const;
 
@@ -217,7 +231,7 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
 
   if ((page.viewportSize()?.width ?? 0) <= 430) {
     const primaryAction = await page
-      .getByRole("link", { name: "Browse all five days" })
+      .getByRole("link", { name: "Explore the five-day example" })
       .boundingBox();
     const fixedNavigation = await page.locator(".public-nav").boundingBox();
     expect(primaryAction).not.toBeNull();
@@ -236,7 +250,7 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Your whole five-day plan. No account required.",
+      name: "A workout companion built around your routine.",
     }),
   ).toBeVisible();
 

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "My Workout Pal",
     short_name: "Workout Pal",
-    description: "An equipment-aware five-day strength, core, and cardio route.",
+    description: "A customizable companion for planning routines, training with guidance, logging workouts, and reviewing progress.",
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -18,6 +18,7 @@ export default function manifest(): MetadataRoute.Manifest {
     shortcuts: [
       { name: "Program", short_name: "Program", url: "/program", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
       { name: "Exercise library", short_name: "Library", url: "/library", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
+      { name: "Progress", short_name: "Progress", url: "/progress", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
     ],
   };
 }

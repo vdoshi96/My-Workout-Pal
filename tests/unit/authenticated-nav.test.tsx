@@ -1,6 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
-import { authenticatedDestinationIsCurrent } from "@/components/layout/authenticated-nav";
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/app",
+}));
+
+import {
+  AuthenticatedNav,
+  authenticatedDestinationIsCurrent,
+} from "@/components/layout/authenticated-nav";
 
 describe("authenticated account navigation", () => {
   it("keeps the program destination scoped to account program routes", () => {
@@ -14,5 +22,15 @@ describe("authenticated account navigation", () => {
     expect(authenticatedDestinationIsCurrent("/app/history-extra", "/app/history")).toBe(false);
     expect(authenticatedDestinationIsCurrent("/app/settings", "/app/settings")).toBe(true);
     expect(authenticatedDestinationIsCurrent("/app/library/custom/new", "/app/library")).toBe(true);
+  });
+
+  it("names the private root Home while preserving personal destinations", () => {
+    const markup = renderToStaticMarkup(<AuthenticatedNav />);
+
+    expect(markup).toContain('href="/app"');
+    expect(markup).toContain(">Home<");
+    expect(markup).toContain(">History<");
+    expect(markup).toContain(">Progress<");
+    expect(markup).not.toContain(">Program<");
   });
 });

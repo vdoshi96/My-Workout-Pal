@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 
 const destinations = [
-  { href: "/app", label: "Program", icon: "map" },
+  { href: "/app", label: "Home", icon: "map" },
   { href: "/app/library", label: "Library", icon: "library" },
   { href: "/app/history", label: "History", icon: "history" },
   { href: "/app/progress", label: "Progress", icon: "progress" },

@@ -47,13 +47,13 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
           <span className="brand-mark" aria-hidden="true"><Icon name="map" /></span>
           <span>
             <h1>My Workout Pal</h1>
-            <small>Your equipment-aware training route</small>
+            <small>Five-day starter example</small>
           </span>
         </Link>
         <nav className="app-nav" aria-label="Primary">
           <Link aria-current="page" href="/program" prefetch={false}><Icon name="map" /><span>Program</span></Link>
           <Link href="/library" prefetch={false}><Icon name="library" /><span>Library</span></Link>
-          <Link href="/sample-progress" prefetch={false}><Icon name="sample" /><span>Sample</span></Link>
+          <Link href="/progress" prefetch={false}><Icon name="sample" /><span>Progress</span></Link>
           <Link href="/app" prefetch={false}><Icon name="sign-in" /><span>My workouts</span></Link>
         </nav>
         <Link className="account-link" href="/app" prefetch={false}>
@@ -151,7 +151,7 @@ export function ProgramExplorer({ dumbbellProgram, barbellProgram, initialProfil
               Open {selectedDay.name} day
               <Icon name="arrow-right" />
             </Link>
-            <p className="temporary-note">All five days, exercise guides, and both approved videos are open to guests. Sign in only to customize, track, or save.</p>
+            <p className="temporary-note">This five-day example, its exercise guides, and approved videos are open to guests. Sign in to build your own routine, track, or save.</p>
           </section>
         </section>
       </main>

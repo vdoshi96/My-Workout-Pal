@@ -24,7 +24,7 @@ export function AuthenticatedShell({
           <span aria-hidden="true" className="brand-mark"><Icon name="map" /></span>
           <span>
             <strong>My Workout Pal</strong>
-            <small>Saved training route</small>
+            <small>Your workout companion</small>
           </span>
         </Link>
         <div className="member-account-controls">

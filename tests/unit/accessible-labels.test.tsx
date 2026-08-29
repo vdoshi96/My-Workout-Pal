@@ -62,7 +62,7 @@ describe("visible labels remain in accessible names", () => {
     );
 
     expect(explorerMarkup).toContain("My Workout Pal");
-    expect(explorerMarkup).toContain("Your equipment-aware training route");
+    expect(explorerMarkup).toContain("Five-day starter example");
     for (const [number, day] of [
       [1, "Push"],
       [2, "Pull"],
@@ -72,8 +72,8 @@ describe("visible labels remain in accessible names", () => {
     ] as const) {
       expect(explorerMarkup).toContain(`<strong>${number}</strong><span>${day}</span>`);
     }
-    expect(publicMarkup).toContain("Training route atlas");
-    expect(authenticatedMarkup).toContain("Saved training route");
+    expect(publicMarkup).toContain("Your workout companion");
+    expect(authenticatedMarkup).toContain("Your workout companion");
     expect(authenticatedMarkup).toContain("Sign out");
   });
 
