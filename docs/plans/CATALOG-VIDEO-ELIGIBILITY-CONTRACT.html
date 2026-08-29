@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="495b1d4ec26864ac133e10cd914ebb686abf9a7b5f0434976ecd17b2a7e24a9b">
+  <title>Catalog video eligibility contract plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Catalog video eligibility contract plan</h1>
+<h2>Outcome</h2>
+<p>Let the canonical catalog grow with reviewed names-and-instructions records
+without fabricating or requiring approved videos for text-only additions.
+Preserve the released video boundary as exactly 27 declared canonical
+variations and 54 approved rows, with two reviewed videos for every declared
+variation. Do not encode a planned future catalog total in this contract.</p>
+<p>This prerequisite changes no category manifest, catalog schema, database schema,
+runtime seed row, approved video selection, production data, or deployment. It
+creates one explicit policy source for video-required variations and makes every
+default validator, curation target, database-row builder, and checker consume
+that source.</p>
+<h2>Ownership and source of truth</h2>
+<p>Add a small YouTube-domain policy module that explicitly lists the 27 released
+canonical slugs whose <code>canonical</code> variation requires an approved pair. The list
+is stable, reviewed, auditable, and independent of both the generated catalog
+membership and the approved seed rows that it validates.</p>
+<p>The contract has three separate sets:</p>
+<ul>
+<li>Canonical catalog membership comes from the eight generator-backed category
+manifests. A catalog record contains names, metadata, equipment, logging
+meaning, aliases, muscles, and exactly three instructions.</li>
+<li>Video-required membership comes from the explicit YouTube policy module. The
+default set remains 27 canonical variations until a separately reviewed
+curation change expands it.</li>
+<li>Approved video rows come from the checked-in schema-one seed manifest. The
+validator requires exactly two rows for every video-required variation and
+rejects rows outside the supplied required set.</li>
+</ul>
+<p>The manifest schema does not gain content-status or video-status fields. The
+catalog remains names-and-instructions data, while curation workflow state stays
+in the curation lane.</p>
+<h2>Navigation and presentation states</h2>
+<p>Public and member-library navigation continues to open the canonical exercise
+detail route. A canonical record with an approved pair shows one validated
+two-option player. A canonical record without an approved pair shows all written
+instructions, an explicit unavailable state, and no iframe or placeholder
+embed.</p>
+<p>The workout runner continues to prefer an approved catalog pair, then an
+immutable owner-guidance snapshot, then a truthful unavailable state. Missing
+media never blocks exercise selection, routine publication, workout logging, or
+history.</p>
+<p>No route, navigation destination, public cache boundary, or service-worker entry
+changes in this prerequisite.</p>
+<h2>Types and validation</h2>
+<p>Keep <code>RequiredVideoVariation</code> as the policy value shape. The explicit policy
+uses only stable canonical slugs and the durable <code>canonical</code> variation ID.
+Default requirement construction validates that every declared slug still
+exists in the runtime catalog, contains no duplicate key, and uses the expected
+variation.</p>
+<p>Production seed validation must fail closed for:</p>
+<ul>
+<li>A missing declared pair or any pair count other than two.</li>
+<li>A duplicate required mapping, video ID, or display order.</li>
+<li>An extra seed row outside the supplied required set.</li>
+<li>An unknown canonical slug or an unsupported equipment variation.</li>
+<li>An invalid video ID, order, title, channel, reviewer, or timestamp.</li>
+<li>A row that is pending, rejected, not fully watched, or contains forbidden
+candidate metadata.</li>
+</ul>
+<p>A caller-supplied catalog support set may contain text-only canonical records,
+but it cannot weaken or redefine the default 27-variation policy. Removing one
+of the required catalog records or approved pairs still fails.</p>
+<h2>Seed and persistence behavior</h2>
+<p>The database-neutral starter seed continues to construct one row for every
+canonical catalog record. The relational row builder validates approved videos
+against the catalog passed to that build and the independent video-required
+policy. It always runs validation, including for an empty approved-row input.</p>
+<p>For a synthetic text-only record, the row builder must create the catalog,
+equipment, and alias rows with stable identities and preserve its instructions.
+It must create no curated-video row for that record. The existing 27 required
+variations still create exactly 54 byte-stable approved rows.</p>
+<p>No migration is expected. If the implementation requires a schema change or
+production mutation, stop and report the unexpected dependency.</p>
+<h2>Authorization, privacy, and recovery</h2>
+<p>This change has no owner input, authentication, or authorization path. Existing
+server-derived Firebase ownership, personal-guidance isolation, and immutable
+workout snapshots remain unchanged.</p>
+<p>The explicit policy contains only public canonical slugs. It contains no URLs,
+provider credentials, private curation artifacts, reviewer identities, or owner
+data. Approved rows retain their existing bounded public fields and full-watch
+evidence.</p>
+<p>Validation errors remain deterministic and identify only stable catalog or
+variation keys. A failure stops seed construction or checking before a database
+write. Re-running after a corrected manifest produces the same rows and IDs.</p>
+<h2>Responsive behavior and accessibility</h2>
+<p>No layout or breakpoint behavior changes. Existing missing-video presentation
+must keep semantic headings, useful text, and no empty focusable player. The
+approved player keeps its existing keyboard, iframe-title, control, size,
+referrer, and privacy-enhanced embed requirements.</p>
+<p>Focused presentation checks cover the truthful unavailable state and confirm
+that instructions remain visible without an iframe. Existing browser coverage
+continues to cover phone and desktop exercise detail, member-library entry, and
+runner logging.</p>
+<h2>Test-driven implementation</h2>
+<p>Retain meaningful failed-before evidence from tests that express the uncoupled
+contract before production code changes:</p>
+<ol>
+<li>A synthetic text-only canonical row increases catalog rows without
+increasing required variations or approved rows.</li>
+<li>An expanded synthetic catalog still has 27 required variations and 54
+approved rows, without coupling the contract to a future total.</li>
+<li>Removing or corrupting one declared required pair fails validation and
+starter-row construction.</li>
+<li>Unknown catalog slugs, noncanonical equipment variations, extra rows, and
+unreviewed rows fail.</li>
+<li>Default YouTube targets cover the explicit video-required policy rather than
+every catalog record.</li>
+<li>Public missing-video presentation retains written instructions and mounts no
+iframe; runner presentation remains truthful and logging stays available.</li>
+</ol>
+<p>Update central count tests so catalog row count is derived independently from
+the explicit assertions that the video-required subset is 27 and approved rows
+are 54. Preserve released catalog order and metadata checks without freezing the
+total catalog at 27.</p>
+<h2>Verification and browser evidence</h2>
+<p>Run the following gates from the final branch, one large gate at a time:</p>
+<ul>
+<li>Focused catalog generator, metadata, filtering, starter seed and row,
+YouTube target, seed validation, seed manifest, presentation, repository, and
+bootstrap tests.</li>
+<li>Strict TypeScript and full ESLint.</li>
+<li>Full Vitest with exact file and assertion totals.</li>
+<li>Drizzle metadata, database bootstrap, and fixture checks.</li>
+<li><code>pnpm seed:check</code>, which must report 27 required variations with exact-two
+coverage.</li>
+<li>PWA generation/check and Markdown/HTML documentation parity.</li>
+<li>Next.js 16.3.2 Webpack production build and route-boundary verification.</li>
+<li>Focused production-mode browser evidence for instructions, approved media,
+truthful unavailable media, and a usable logging path without an iframe.</li>
+<li><code>git diff --check</code>, a category-manifest exclusion check, approved-seed hash
+comparison, and final clean-worktree audit.</li>
+</ul>
+<p>Record local evidence only. Do not claim hosted or production proof.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Canonical catalog membership and video-required membership have independent,
+explicit sources.</li>
+<li>The requirement set is not derived from approved rows, so removing a required
+pair fails closed.</li>
+<li>The existing reviewed subset remains exactly 27 canonical variations and the
+checked-in approved manifest remains exactly 54 rows.</li>
+<li>A catalog record outside the video-required set seeds and searches with
+instructions but receives no curated-video row or iframe.</li>
+<li>Catalog growth does not require more than the declared 27 pairs.</li>
+<li>Missing, duplicate, extra, unknown, unsupported-variation, pending,
+unreviewed, and incomplete rows remain rejected.</li>
+<li>The eight category manifests and all planned movement records remain
+untouched.</li>
+<li>No schema migration, production data mutation, curation approval, deployment,
+provider change, alias change, <code>main</code> merge, or sibling-worktree change occurs.</li>
+<li>The branch is committed and pushed as
+<code>vishal/catalog-video-eligibility-contract</code> with one exact handoff SHA.</li>
+</ul>
+
+  </main>
+</body>
+</html>

@@ -8,7 +8,7 @@ describe("database-neutral starter seed manifest", () => {
     const seed = buildStarterDatabaseSeed();
     const slugs = seed.exercises.map(({ slug }) => slug);
 
-    expect(slugs).toHaveLength(27);
+    expect(slugs).toHaveLength(Object.keys(CATALOG_EXERCISES).length);
     expect(new Set(slugs).size).toBe(slugs.length);
     expect(new Set(slugs)).toEqual(new Set(Object.keys(CATALOG_EXERCISES)));
     expect(seed.exerciseEquipment.every(({ exerciseSlug }) => slugs.includes(exerciseSlug))).toBe(

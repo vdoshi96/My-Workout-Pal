@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f8004ee1d50e44e41174aee421e84103d38eecdbd29e5e16597c0496df58d721">
+  <meta name="source-sha256" content="fc3a3a3acfed9b9cc46756b4bb57464015ffbc83b52d458b97a3f7aa85294768">
   <title>YouTube curation and video policy · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,11 +29,24 @@
   <main>
 <h1>YouTube curation and video policy</h1>
 <h2>Release invariant</h2>
-<p>Every seeded canonical exercise and equipment variation must have exactly two ordered, unique demonstrations that passed mechanical eligibility, human quality review, and a complete human viewing. A missing metadata check, incomplete official-or-authorized-browser discovery manifest, or incomplete watch review blocks production seeding. The application must not substitute arbitrary links.</p>
+<p>Every variation in the explicit app-video requirement policy must have exactly
+two ordered, unique demonstrations that passed mechanical eligibility, human
+quality review, and a complete human viewing. Catalog records outside that
+policy can seed with reviewed names and instructions but no app-approved video
+rows. A missing metadata check, incomplete official-or-authorized-browser
+discovery manifest, or incomplete watch review blocks video seeding. The
+application must not substitute arbitrary links.</p>
 <h2>Credential and quota boundary</h2>
 <p><code>YOUTUBE_API_KEY</code> is a server-side development and curation secret. It is never bundled into the application, printed in reports, committed, or copied into public QA evidence.</p>
 <p>Official YouTube documentation accessed August 26, 2026, assigns <code>search.list</code> a separate default bucket of 100 calls per day at one unit per call. <code>videos.list</code> costs one unit in the combined quota for other endpoints. The local checkpoint counts successful calls and estimates documented method units; the provider quota page remains authoritative for rejected, invalid, or external calls that did not become successful checkpoint progress.</p>
-<p>Without a target manifest, the command derives exactly one target with stable <code>variationId: &quot;canonical&quot;</code> from each of the 27 catalog records. Each target carries a movement stem, useful aliases, and only relevant barbell/dumbbell discriminator terms; bodyweight targets do not require a title to contain <code>bodyweight</code>. A private <code>--targets</code> manifest or <code>YOUTUBE_CURATION_TARGETS</code> path explicitly overrides this default, including an intentional empty array.</p>
+<p>Without a target manifest, the command derives exactly one target with stable
+<code>variationId: &quot;canonical&quot;</code> from each of the 27 variations in the explicit
+app-video requirement policy. Catalog growth does not expand this target set.
+Each target carries a movement stem, useful aliases, and only relevant
+barbell/dumbbell discriminator terms; bodyweight targets do not require a title
+to contain <code>bodyweight</code>. A private <code>--targets</code> manifest or
+<code>YOUTUBE_CURATION_TARGETS</code> path explicitly overrides this default, including an
+intentional empty array.</p>
 <p>The curation command stores resumable progress outside production data. It records completed official queries, durable per-query page counts, page tokens, hydrated IDs, rejection codes, quota estimates, review status, ranked eligible candidates, and proposed pairs. A separate ignored browser receipt records rendered query runs and exact card observations without mutating official query keys or search accounting. Input targets are deduplicated by canonical exercise plus variation, pending hydration IDs are deduplicated across targets, and the report emits one target entry per key. Discovered-candidate, review, and rejection maps use the scoped <code>canonicalExerciseSlug::variationId::videoId</code> key. A configurable request budget stops before the next API request would exceed its limit. Search and hydration request caps are independent within the run&#39;s total unit cap: reaching the search cap still permits low-cost metadata hydration for IDs already in the checkpoint. Re-running continues a query only when quota interrupted it before the configured total page cap. Reaching <code>maxPagesPerQuery</code> marks that official query complete so repeated runs cannot crawl deeper pages or starve later exercises. Existing IDs are checked before search quota is spent.</p>
 <h2>Discovery sequence</h2>
 <ol>
@@ -93,21 +106,33 @@
 </ul>
 <p>The seed does not store indefinite ranking scores or stale view counts as product truth.</p>
 <h2>Validation</h2>
-<p><code>pnpm seed:check</code> derives the required set from all 27 catalog records when <code>--required</code> is omitted: each record maps to the durable <code>variationId: &quot;canonical&quot;</code>. A supplied required manifest must contain unique keys, cover every default catalog mapping, and contain no unsupported or non-canonical mapping. The checker must reject any seed with a missing required mapping, count other than two, invalid ID syntax, duplicate ID within a variation or anywhere else in the production seed, wrong variation, missing approval, missing full-watch confirmation, duplicate order, or unsupported canonical exercise reference.</p>
+<p><code>pnpm seed:check</code> derives the required set from the 27 explicitly declared
+app-video variations when <code>--required</code> is omitted. Each declaration maps to the
+durable <code>variationId: &quot;canonical&quot;</code>. A supplied required manifest must contain
+unique keys, cover every default declared mapping, and contain no unsupported
+or noncanonical mapping. The checker rejects any seed with a missing required
+mapping, count other than two, invalid ID syntax, duplicate ID within a
+variation or anywhere else in the production seed, extra row, wrong variation,
+missing approval, missing full-watch confirmation, duplicate order, or
+unsupported canonical exercise reference.</p>
 <p>The checker also confirms that reused starter prescriptions point to the same canonical exercise and therefore reuse the same approved demonstrations.</p>
 <h2>Refresh and replacement</h2>
 <p>The typed <code>assessApprovedVideoPair</code> refresh helper checks seeded IDs with hydrated metadata and proposes action when a video becomes missing, private, restricted, removed, unembeddable, non-syndicated, or regionally unavailable. It does not mutate production.</p>
 <p>The application keeps the remaining approved video and direct YouTube fallback available. A refresh assessment checks both IDs and emits a replacement-required proposal when one or both are unavailable. It never mutates the approved seed. A replacement repeats discovery, mechanical checks, full human review, approval, seed validation, preview verification, and production release. Replacement lineage preserves which approved video was superseded and why.</p>
 <p>Checkpoint schema is versioned. State from the earlier unscoped schema is rejected with an actionable incompatibility message instead of being treated as target-specific state.</p>
 <h2>Local command scaffold</h2>
-<p>Run <code>pnpm youtube:curate</code> with an official <code>YOUTUBE_API_KEY</code> in ignored <code>.env.local</code> or the process environment. The package command loads <code>.env.local</code> when the file exists. Without <code>--targets</code> (or <code>YOUTUBE_CURATION_TARGETS</code>), the command invokes the typed workflow for the complete 27-record catalog-derived target set. A private target manifest explicitly overrides that set, including an intentional empty array. The command resumes from <code>.local/youtube-curation/checkpoint.json</code>, and writes the review proposal to <code>.local/youtube-curation/review-report.json</code>. The report includes query provenance, discovery status, mechanical rejection codes, view-count-ordered eligible candidates, proposed pairs, and quota-blocked state when a request budget stops progress. Set <code>YOUTUBE_CURATION_MAX_QUOTA_UNITS</code>, <code>YOUTUBE_CURATION_MAX_SEARCH_REQUESTS</code>, <code>YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS</code>, and <code>YOUTUBE_CURATION_MAX_PAGES_PER_QUERY</code> (or the matching command-line flags) to bound a run. The page value is a durable total cap for each query, not a per-run allowance. Use <code>--refresh-unavailable</code> to explicitly retry IDs previously omitted by <code>videos.list</code>.</p>
+<p>Run <code>pnpm youtube:curate</code> with an official <code>YOUTUBE_API_KEY</code> in ignored <code>.env.local</code> or the process environment. The package command loads <code>.env.local</code> when the file exists. Without <code>--targets</code> (or <code>YOUTUBE_CURATION_TARGETS</code>), the command invokes the typed workflow for the complete 27-variation policy-derived target set. A private target manifest explicitly overrides that set, including an intentional empty array. The command resumes from <code>.local/youtube-curation/checkpoint.json</code>, and writes the review proposal to <code>.local/youtube-curation/review-report.json</code>. The report includes query provenance, discovery status, mechanical rejection codes, view-count-ordered eligible candidates, proposed pairs, and quota-blocked state when a request budget stops progress. Set <code>YOUTUBE_CURATION_MAX_QUOTA_UNITS</code>, <code>YOUTUBE_CURATION_MAX_SEARCH_REQUESTS</code>, <code>YOUTUBE_CURATION_MAX_HYDRATE_REQUESTS</code>, and <code>YOUTUBE_CURATION_MAX_PAGES_PER_QUERY</code> (or the matching command-line flags) to bound a run. The page value is a durable total cap for each query, not a per-run allowance. Use <code>--refresh-unavailable</code> to explicitly retry IDs previously omitted by <code>videos.list</code>.</p>
 <p>For an authorized browser fallback, place schema-v2 <code>queryRuns</code> and <code>candidates</code> arrays in ignored <code>.local/youtube-curation/browser-candidates.json</code>, then run <code>pnpm youtube:import-browser</code>. Every exact deduplicated required query must contain one complete 15-card bounded window. The command writes <code>.local/youtube-curation/browser-imports.json</code> with mode <code>0600</code>, inserts new scoped IDs without official query keys, and hydrates pending IDs when the local API key is available. Use <code>--no-hydrate</code> for an import-only checkpoint or <code>--max-hydrate-requests</code> to bound provider checks. Missing or whitespace-empty input performs no new import, and a prior receipt can reconstruct checkpoint candidates after an interrupted receipt-first write. Reimport is idempotent.</p>
 <p>Direct navigation to <code>youtube-nocookie.com/embed/VIDEO_ID</code> is not valid playback evidence because it has no HTTP Referer and can fail with YouTube Error 153. Run <code>pnpm youtube:probe-embed -- --video VIDEO_ID</code> instead. The loopback-only HTTP page sends an explicit referrer policy and renders the privacy-enhanced, non-autoplay player at responsive 16:9 dimensions with visible controls and a direct fallback. It records nothing. After playback actually starts there and the operator verifies visible controls, keyboard operation, and the direct fallback, run <code>pnpm youtube:record-embed-verification</code> with the exact target, variation, video, verifier, and all five confirmation flags. That command is an assertion recorder, not a browser probe. It refuses incomplete evidence, an unknown scope, unhydrated or unavailable metadata, and writes only the scoped mode-<code>0600</code> <code>.local/youtube-curation/embed-verifications.json</code> record. The report derives verified syndication from that file at runtime; it does not overwrite provider metadata. Both API- and browser-discovered candidates require this scoped record before manual approval or <code>approved-for-seed</code>. All of these paths are ignored by Git and contain no production data.</p>
 <p><code>pnpm youtube:review</code> records full visual playback and requires <code>--instruction-evidence narration</code>, <code>captions</code>, or <code>visual</code> for approval. Use <code>narration</code> only when the reviewer actually heard understandable English narration, <code>captions</code> when visible English instructional captions were reviewed through the full relevant instruction, and <code>visual</code> only when the demonstration is unambiguous without relying on unheard audio. Approval still requires exact variation, concision, safety, material value, full watch, and the scoped embed record.</p>
 <p>If <code>YOUTUBE_API_KEY</code> is missing, the command exits before creating state or making a request and prints exactly:</p>
 <pre><code>Missing YOUTUBE_API_KEY; refusing to run YouTube curation.
 </code></pre>
-<p>Run <code>pnpm seed:check --seed SEED.json</code> to validate against the complete catalog-derived requirement, or add <code>--required REQUIRED.json</code> to validate a private override that still must cover the complete default set. Both paths use the typed domain seed validator, reject incomplete exact-two mappings, and never write production data.</p>
+<p>Run <code>pnpm seed:check --seed SEED.json</code> to validate against the complete explicit
+app-video requirement policy, or add <code>--required REQUIRED.json</code> to validate a
+private override that still covers the complete default set. Both paths use the
+typed domain seed validator, reject incomplete exact-two mappings, and never
+write production data.</p>
 <h2>Player requirements</h2>
 <ul>
 <li>Render one active iframe at a time and never autoplay.</li>
