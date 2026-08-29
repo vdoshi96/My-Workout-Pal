@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4c546edc7a19dd762fd295854a239b9ef7756bb997fe7832b16e507c39e2a8f8">
+  <meta name="source-sha256" content="551a99aef741b57dd796a777256ef4eb5fa8afeb34458fab9e883ee23bac44fe">
   <title>Wave 1 integration QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -73,6 +73,10 @@
 <tr>
 <td>Integration implementation</td>
 <td><code>000a038a9add854dfe59ad796f7b11033753e0d7</code></td>
+</tr>
+<tr>
+<td>Documentation and retained QA evidence</td>
+<td><code>ae44979880105d02771503637b8a2fa151e9bd05</code></td>
 </tr>
 </tbody></table>
 <p>The worktree began clean with detached <code>HEAD</code>, local <code>main</code>, and <code>origin/main</code> at the required base. Live <code>git rev-parse refs/remotes/origin/&lt;branch&gt;</code> returned each source SHA above. <code>git merge-base --is-ancestor BASE TIP</code> and <code>git merge-base --is-ancestor TIP HEAD</code> passed for all three sources. <code>git diff --check BASE..HEAD</code> and the final worktree diff check passed.</p>

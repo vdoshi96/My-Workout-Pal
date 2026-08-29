@@ -17,6 +17,7 @@
 | Library merge | `258758839aebd3c10d610c809f7e0e70231fd2b3` |
 | Home/copy merge | `ef6f806c683e1b2c1e3bf6c721fe1ce49f3f7bce` |
 | Integration implementation | `000a038a9add854dfe59ad796f7b11033753e0d7` |
+| Documentation and retained QA evidence | `ae44979880105d02771503637b8a2fa151e9bd05` |
 
 The worktree began clean with detached `HEAD`, local `main`, and `origin/main` at the required base. Live `git rev-parse refs/remotes/origin/<branch>` returned each source SHA above. `git merge-base --is-ancestor BASE TIP` and `git merge-base --is-ancestor TIP HEAD` passed for all three sources. `git diff --check BASE..HEAD` and the final worktree diff check passed.
 
