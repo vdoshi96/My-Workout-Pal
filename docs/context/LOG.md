@@ -54,6 +54,8 @@
   local branches after checking identical GitHub tips; their remote provenance
   branches and the durable recovery archive remain. The active release worktree
   and its local branch are the single self-removal item for the orchestrator.
+  The reviewed documentation closeout evidence commit is
+  `b8b8e2f85d4c7f1a6faa0b50910e9a651d9df20a`.
 
 ## 2026-08-29: Wave 1 production release
 

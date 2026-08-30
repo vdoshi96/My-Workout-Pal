@@ -27,7 +27,7 @@ remote provenance branches remain preserved.
 | Exact deployment source/state | `0ad06ef`; production; `READY` |
 | Exact deployment URL | `https://my-workout-jup04bi3o-vdoshi96s-projects.vercel.app` |
 | Existing aliases | `my-workout-pal-chi.vercel.app`; `my-workout-pal-vdoshi96s-projects.vercel.app`; `my-workout-pal-git-main-vdoshi96s-projects.vercel.app` |
-| Documentation evidence commit | Recorded in the final release handoff after this report is committed |
+| Documentation closeout evidence commit | `b8b8e2f85d4c7f1a6faa0b50910e9a651d9df20a` |
 
 The complete `301b618..0ad06ef` change is documentation-only: 14 Markdown and
 generated HTML paths, with no runtime, test, schema, migration, seed, script, or
@@ -174,7 +174,8 @@ screenshots were removed; no production screenshot is published. No retained
 artifact contains an email, raw UID, credential, token, cookie, private account
 detail, database connection, private provider URL, or candidate-video URL.
 
-The documentation closeout changes only documentation and generated HTML. Its
+Documentation closeout evidence commit `b8b8e2f85d4c7f1a6faa0b50910e9a651d9df20a`
+changes only documentation and generated HTML. Its
 Vercel build must be Ready, preserve the three aliases, and have an
 application/runtime tree byte-identical to `0ad06ef`; its exact Git and
 deployment identities are reported in the immutable final release handoff,

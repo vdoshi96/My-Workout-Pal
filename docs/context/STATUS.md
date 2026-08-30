@@ -87,8 +87,9 @@ archive likewise remains private, mode `600`, and outside the repository.
   `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` at exact source `0ad06ef`.
 - Release branch: `vishal/wave-2-production-release` contains initial plan
   checkpoint `7aa565a3be03a143dc8a8a31659e428700afbf0b` and execution checkpoint
-  `aa209617ac65c17336b1fcbc2b3c09e9ba1979e9`; its application/runtime tree is
-  byte-identical to `0ad06ef`.
+  `aa209617ac65c17336b1fcbc2b3c09e9ba1979e9`. Documentation closeout evidence
+  commit `b8b8e2f85d4c7f1a6faa0b50910e9a651d9df20a` is reviewed; its
+  application/runtime tree is byte-identical to `0ad06ef`.
 - Worktree cleanup: clean completed Strength, Core/conditioning,
   video-eligibility, and integration worktrees and local branches were removed
   after verifying identical GitHub tips. Their remote provenance branches

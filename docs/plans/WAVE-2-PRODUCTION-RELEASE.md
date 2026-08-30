@@ -300,6 +300,7 @@ the integration-only evidence set.
 | Fully verified application/content commit | `301b618b888613d95d69dffc5c42b6fb0dd26797` |
 | Release-plan checkpoint | `7aa565a3be03a143dc8a8a31659e428700afbf0b` |
 | In-progress execution checkpoint | `aa209617ac65c17336b1fcbc2b3c09e9ba1979e9` |
+| Documentation closeout evidence commit | `b8b8e2f85d4c7f1a6faa0b50910e9a651d9df20a` |
 | Production deployment | `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` |
 | Exact deployment URL | `https://my-workout-jup04bi3o-vdoshi96s-projects.vercel.app` |
 | Deployment source and state | exact `0ad06ef`; `READY`; production |
