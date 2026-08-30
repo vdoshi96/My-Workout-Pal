@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="48d868718429acf7489ea5e69154bc63ab11f542becdaabe0231d36380fdde5e">
+  <title>Design System: My Workout Pal · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<hr>
+<p>name: My Workout Pal
+description: A warm field-atlas workout companion for planning, training, and honest progress review.
+colors:
+  paper: &quot;#f3eee3&quot;
+  paper-deep: &quot;#e6e0d5&quot;
+  ink: &quot;#0b2f36&quot;
+  ink-soft: &quot;#34535a&quot;
+  coral: &quot;#b13b27&quot;
+  coral-strong: &quot;#9f321f&quot;
+  coral-on-ink: &quot;#ff9a82&quot;
+  on-coral: &quot;#fffaf0&quot;
+  lichen: &quot;#4d603a&quot;
+  lichen-light: &quot;#a8b185&quot;
+  on-lichen: &quot;#fffaf0&quot;
+  stone: &quot;#8d948e&quot;
+  rule: &quot;#a8aaa0&quot;
+  white: &quot;#fffaf0&quot;
+  danger: &quot;#a6352e&quot;
+  on-danger: &quot;#fffaf0&quot;
+  focus: &quot;#e74f32&quot;
+  companion-paper-edge: &quot;#806d4d&quot;
+typography:
+  display:
+    fontFamily: &quot;Barlow Condensed, sans-serif&quot;
+    fontSize: &quot;clamp(3.1rem, 13vw, 7.5rem)&quot;
+    lineHeight: &quot;.78&quot;
+    letterSpacing: &quot;-.04em&quot;
+  headline:
+    fontFamily: &quot;Barlow Condensed, sans-serif&quot;
+    fontSize: &quot;clamp(2rem, 5vw, 3.8rem)&quot;
+    lineHeight: &quot;.9&quot;
+    letterSpacing: &quot;-.035em&quot;
+  title:
+    fontFamily: &quot;Barlow Condensed, sans-serif&quot;
+    fontSize: &quot;clamp(1.55rem, 4vw, 2.2rem)&quot;
+    lineHeight: &quot;.95&quot;
+  body:
+    fontFamily: &quot;Source Sans 3 Variable, sans-serif&quot;
+    fontSize: &quot;1rem&quot;
+    lineHeight: &quot;1.5&quot;
+  label:
+    fontFamily: &quot;Barlow Condensed, sans-serif&quot;
+    fontSize: &quot;.77rem&quot;
+    letterSpacing: &quot;.05em&quot;
+  action:
+    fontFamily: &quot;Barlow Condensed, sans-serif&quot;
+    fontSize: &quot;1.3rem&quot;
+    fontWeight: 600
+    letterSpacing: &quot;.04em&quot;
+rounded:
+  none: &quot;0&quot;
+  circle: &quot;50%&quot;
+  media: &quot;.8rem&quot;
+spacing:
+  xs: &quot;.35rem&quot;
+  sm: &quot;.65rem&quot;
+  md: &quot;1rem&quot;
+  lg: &quot;1.5rem&quot;
+  xl: &quot;clamp(2rem, 7vw, 6rem)&quot;
+components:
+  primary-action:
+    backgroundColor: &quot;{colors.coral}&quot;
+    textColor: &quot;{colors.on-coral}&quot;
+    typography: &quot;{typography.action}&quot;
+    rounded: &quot;{rounded.none}&quot;
+    padding: &quot;.8rem 1rem&quot;
+    height: &quot;3.6rem&quot;
+  navigation:
+    backgroundColor: &quot;{colors.ink}&quot;
+    textColor: &quot;{colors.paper}&quot;
+    typography: &quot;{typography.label}&quot;
+    rounded: &quot;{rounded.none}&quot;
+    padding: &quot;.55rem .5rem&quot;
+    height: &quot;3.5rem&quot;
+  paper-card:
+    backgroundColor: &quot;{colors.white}&quot;
+    textColor: &quot;{colors.ink}&quot;
+    rounded: &quot;{rounded.none}&quot;
+    padding: &quot;clamp(1rem, 4vw, 2rem)&quot;
+  input-field:
+    backgroundColor: &quot;{colors.white}&quot;
+    textColor: &quot;{colors.ink}&quot;
+    rounded: &quot;{rounded.none}&quot;
+    padding: &quot;.7rem&quot;
+    height: &quot;3.4rem&quot;
+  status-stamp:
+    backgroundColor: &quot;{colors.paper}&quot;
+    textColor: &quot;{colors.coral-strong}&quot;
+    typography: &quot;{typography.label}&quot;
+    rounded: &quot;{rounded.none}&quot;
+    padding: &quot;.65rem .8rem&quot;
+  companion-slot:
+    backgroundColor: &quot;{colors.paper}&quot;
+    rounded: &quot;{rounded.none}&quot;
+    padding: &quot;var(--companion-safe-gap) 1rem&quot;
+    height: &quot;var(--companion-slot-block-mobile)&quot;
+width: &quot;100%&quot;
+</p>
+<hr>
+<h1>Design System: My Workout Pal</h1>
+<h2>Overview</h2>
+<p><strong>Creative North Star: &quot;The Field Notebook Companion&quot;</strong></p>
+<p>My Workout Pal is a warm field-atlas interface: mineral paper, deep blue-green ink, crisp route marks, and coral decisions make planning and logging feel grounded rather than gamified. The visual system keeps the route grammar from <code>docs/design/DIRECTION.md</code>—waypoints, ruled sheets, stamped states, and contour surfaces—while keeping the user&#39;s task and product truth ahead of decoration.</p>
+<p>The selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in a reserved quiet slot on each pilot surface. The guest landing hedgehog holds a blank notebook, the signed-in home fox prepares beside the personal next action, and the guest Progress raccoon reviews loose paper with three nonsemantic pigment dabs outside the chart and disclosure. The raccoon uses an intentionally opaque warm-paper card as a bounded surface treatment; it is source-faithful, not a transparent crop or a semantic status cue. The composite concept board remains evidence, not a shipping asset.</p>
+<p><strong>Key Characteristics:</strong></p>
+<ul>
+<li>Warm mineral paper and contour texture with restrained ruled dividers.</li>
+<li>Condensed display type for route labels and humanist sans serif for reading and entry.</li>
+<li>Coral action, lichen compatibility, and deep ink navigation with non-color semantics.</li>
+<li>One calm companion per pilot surface, outside the data and interaction plane.</li>
+</ul>
+<p><strong>The One Companion Rule.</strong> Each pilot surface may use one complete, purpose-built companion vignette as context; the image never carries account, workout, sample-data, progress, or completion meaning.</p>
+<h2>Colors</h2>
+<p>The palette is a field-atlas register: a quiet mineral ground, deep ink for structure, coral for forward action, lichen for compatible or preserved states, and stone rules for supporting information. Dark mode inverts the ground and ink roles while retaining the same semantic accents; forced colors removes decorative companions and relies on the semantic interface.</p>
+<h3>Primary</h3>
+<ul>
+<li><strong>Route Coral</strong> (#b13b27): the primary action and active route accent. Use it for the decisive action, selected waypoint, progress bar, and other explicitly active states.</li>
+<li><strong>Deep Coral</strong> (#9f321f): the stronger action and error-adjacent emphasis used on hover and compact state labels.</li>
+</ul>
+<h3>Secondary</h3>
+<ul>
+<li><strong>Lichen Green</strong> (#4d603a): the compatibility, preservation, and confirmed-state accent. It supports a decision; it is not a substitute for its text label.</li>
+</ul>
+<h3>Neutral</h3>
+<ul>
+<li><strong>Warm Mineral Paper</strong> (#f3eee3): the default reading ground and public canvas.</li>
+<li><strong>Deep Paper</strong> (#e6e0d5): the quieter alternate ground for charts, form groups, and tonal separation.</li>
+<li><strong>Deep Teal Ink</strong> (#0b2f36): navigation, dark information surfaces, core text, and route structure.</li>
+<li><strong>Soft Teal Ink</strong> (#34535a): secondary copy and supporting facts where the contrast contract allows it.</li>
+<li><strong>Stone Rule</strong> (#a8aaa0): one-pixel dividers, contours, and inactive structure.</li>
+<li><strong>Companion Edge Brown</strong> (#806d4d): the restrained edge color around the opaque Progress companion card.</li>
+<li><strong>Danger Red / Focus Orange</strong> (#a6352e / #e74f32): semantic failure and keyboard-focus colors, always paired with visible text or outline treatment.</li>
+</ul>
+<p><strong>The Semantic Contrast Rule.</strong> Color may reinforce a state, but ownership, verification, sample disclosure, save outcome, and failure must remain legible in words and structure.</p>
+<h2>Typography</h2>
+<p><strong>Display Font:</strong> Barlow Condensed (with a sans-serif fallback)</p>
+<p><strong>Body Font:</strong> Source Sans 3 Variable (with a sans-serif fallback)</p>
+<p><strong>Character:</strong> The display face is compact, declarative, and route-like; the body face gives instructions, facts, and data a calm reading rhythm. Display labels are uppercase in the built interface, while body copy remains sentence case for comprehension.</p>
+<h3>Hierarchy</h3>
+<ul>
+<li><strong>Display</strong> (condensed, <code>3.1rem–7.5rem</code>, <code>.78</code> line-height): large public and member route statements, sized responsively from the mobile landing scale through the desktop cap.</li>
+<li><strong>Headline</strong> (condensed, <code>2rem–3.8rem</code>, <code>.9</code> line-height): section headings such as Progress at a glance and current routine.</li>
+<li><strong>Title</strong> (condensed, <code>1.55rem–2.2rem</code>, <code>.95</code> line-height): day names, list titles, and compact records.</li>
+<li><strong>Body</strong> (regular, <code>1rem</code>, <code>1.5</code> line-height): explanatory copy, labels with context, forms, and data descriptions; keep long lines near the existing 52–58ch limits.</li>
+<li><strong>Label</strong> (condensed, <code>.77rem</code>, <code>.05em</code> tracking): navigation, route numbers, status labels, and short uppercase control text.</li>
+</ul>
+<p><strong>The Label/Reading Split Rule.</strong> Use the condensed face to scan a route or state; use the humanist face to explain what the state means and what the user can do next.</p>
+<h2>Layout</h2>
+<p>The system is mobile-first and never narrower than <code>320px</code>. Public and member frames cap at <code>94rem</code>; member content uses a <code>79rem</code> reading width. On phones, semantic content stacks, the primary action stays above the fixed bottom navigation, and a companion follows the primary copy in its own shallow slot. At desktop widths beginning at <code>64rem</code>, public and member headers move navigation into the horizontal header, the landing hero becomes a text-and-art split, and the personal or Progress companion occupies broad side whitespace rather than the data plane.</p>
+<p>Spacing follows a compact rhythm built from small control gaps, <code>1rem</code> reading intervals, <code>1.5rem</code> section gaps, and responsive <code>clamp()</code> padding. One-pixel rules and contour surfaces establish alignment without turning the product into a collection of floating cards. A failed or forced-color-hidden companion removes its slot with <code>display: none</code> and lets the host grid collapse; it never leaves a blank gap. The same placement component serves landing, member home, and Progress preview.</p>
+<h2>Elevation &amp; Depth</h2>
+<p>The interface is flat by default. Depth comes from the contrast between paper and deep ink, the lighter alternate paper ground, contour imagery, one-pixel rules, and occasional inset selection marks. A restrained ambient shadow is reserved for waypoints and transient notices; the Corner Companions art itself has no drop shadow, glow, or glass treatment. The Progress raccoon card&#39;s opaque warm-paper field is a material boundary, not an elevation effect.</p>
+<p><strong>The Tonal Layer Rule.</strong> Prefer paper, deep paper, ink, and rules to extra cards or shadows; add a shadow only when it clarifies a floating or selected interaction.</p>
+<h2>Shapes</h2>
+<p>Most product surfaces use square corners (<code>0</code>), thin rules, and clipped contour fields. Circular geometry is reserved for route numerals and the brand mark, where it signals a waypoint or identity anchor. Inputs, public/member sheets, status labels, action bars, and companion slots remain square. The embedded media player is the specialized rounded exception, not a template for general cards. Borders and dashed rules carry structure; rounded containers and decorative frames do not.</p>
+<h2>Components</h2>
+<p>Components are quiet field-sheet primitives: strong semantic labels, crisp edges, and enough padding for touch and keyboard use. The reusable companion slot is decorative and inert, while all product state remains in adjacent semantic markup.</p>
+<h3>Buttons</h3>
+<ul>
+<li><strong>Shape:</strong> Square, with the action height and padding from <code>primary-action</code>.</li>
+<li><strong>Primary:</strong> Coral fill, readable on-coral text, condensed uppercase label, and a full-width or fit-content layout according to the host task.</li>
+<li><strong>Hover / Focus:</strong> Hover deepens the coral; <code>:focus-visible</code> uses the high-contrast focus outline with an offset. Reduced motion removes transition timing.</li>
+<li><strong>Secondary / Ghost / Tertiary:</strong> Secondary links stay quieter and inherit the host field-sheet treatment; they never compete with the primary action.</li>
+</ul>
+<h3>Cards / Containers</h3>
+<ul>
+<li><strong>Corner Style:</strong> Square paper sheets and dark ink panels; no generic rounded card grid.</li>
+<li><strong>Background:</strong> Warm paper for reading, deep paper for secondary chart grounding, white paper for contained sheets, and deep ink for personal or action-priority panels.</li>
+<li><strong>Shadow Strategy:</strong> Follow the flat-by-default elevation rule; use borders and tonal separation first.</li>
+<li><strong>Border:</strong> One-pixel stone rules, with dashed rules for empty or provisional structure and a coral/lichen edge only when the state calls for it.</li>
+<li><strong>Internal Padding:</strong> Responsive <code>clamp()</code> padding, usually beginning at <code>1rem</code> and expanding toward <code>2rem</code> or more on broad surfaces.</li>
+</ul>
+<h3>Inputs / Fields</h3>
+<ul>
+<li><strong>Style:</strong> Square fields on paper or white-paper surfaces, one-pixel rule, ink text, and a minimum touch height of roughly <code>3.2–3.5rem</code>.</li>
+<li><strong>Focus:</strong> The shared three-pixel focus outline is visible and offset from the field; do not rely on a color-only border change.</li>
+<li><strong>Error / Disabled:</strong> Preserve the field and its label, pair danger or disabled styling with explanatory text, and keep retry or recovery controls reachable.</li>
+</ul>
+<h3>Navigation</h3>
+<p>Public navigation exposes Home, Library, Progress, and My workouts; member navigation exposes Home, Library, History, Progress, and Settings. Phone navigation is fixed to the bottom with generous targets and an active coral-on-ink cue. Desktop navigation becomes part of the horizontal header, while the account rail keeps identity, verification, and sign-out visible on member surfaces.</p>
+<h3>Corner Companion Slot</h3>
+<p>The shared placement component gives one complete production asset a bounded, responsive slot. It uses empty alternative text, <code>aria-hidden</code>, pointer-inert behavior, and an error path that hides the image and collapses the host grid. The landing and Progress assets are explicitly public-cache safe; both member-fox derivatives remain excluded. The landing hedgehog is eager because it is first-viewport atmosphere; the member fox and Progress raccoon are lazy. The raccoon is intentionally an opaque warm-paper card so its field stays source-faithful in both themes; forced colors hides the entire decorative slot, and reduced motion leaves it static.</p>
+<h2>Do&#39;s and Don&#39;ts</h2>
+<h3>Do:</h3>
+<ul>
+<li><strong>Do</strong> keep the field-atlas palette, condensed display silhouette, humanist reading copy, and ruled structure consistent across public and member surfaces.</li>
+<li><strong>Do</strong> keep adjacent text and controls authoritative: the neutral <code>Progress</code> title and <code>Sample data · not your history</code> disclosure must remain the truth for the guest preview.</li>
+<li><strong>Do</strong> use exactly one purpose-built, text-free animal vignette per pilot surface and keep it outside text, fields, charts, disclosures, errors, timers, controls, and navigation.</li>
+<li><strong>Do</strong> preserve the companion provenance sidecar next to every shipped WebP and keep public companion assets separate from authenticated HTML and data caches.</li>
+<li><strong>Do</strong> collapse decorative art without a layout gap on image failure or forced colors, and keep it static under reduced motion.</li>
+<li><strong>Do</strong> treat the selected Corner Companions board as directional evidence only; ship the three dedicated vignettes in <code>public/illustrations/companions/</code>.</li>
+</ul>
+<h3>Don&#39;t:</h3>
+<ul>
+<li><strong>Don&#39;t</strong> crop, extract, or reuse a character from the composite gym illustration or the Corner Companions board.</li>
+<li><strong>Don&#39;t</strong> put lettering, numbers, sample values, private data, logos, emoji, CSS art, or handmade SVG art inside a companion image.</li>
+<li><strong>Don&#39;t</strong> make a decorative animal the only signal for account identity, verification, saved activity, progress, completion, or failure.</li>
+<li><strong>Don&#39;t</strong> turn the guest Progress preview into a personal-history claim, or the personal home into a sample-data surface.</li>
+<li><strong>Don&#39;t</strong> let companion art cover account chrome, fixed navigation, controls, charts, disclosure, errors, timers, or the primary action.</li>
+<li><strong>Don&#39;t</strong> introduce generic floating dashboards, gratuitous rounded cards, photorealism, gradients, glass, or mascot-led promotion into this system.</li>
+</ul>
+
+  </main>
+</body>
+</html>

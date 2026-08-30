@@ -47,7 +47,16 @@ describe("PWA public-cache policy", () => {
       }),
     ).toBe(true);
     expect(PWA_INSTALL_ASSETS).toContain(
-      "/illustrations/workout-pals-gym-768.webp",
+      "/illustrations/companions/planning-hedgehog-512.webp",
+    );
+    expect(PWA_INSTALL_ASSETS).toContain(
+      "/illustrations/companions/reviewing-raccoon-512.webp",
+    );
+    expect(PWA_INSTALL_ASSETS).not.toContain(
+      "/illustrations/companions/preparing-fox.webp",
+    );
+    expect(PWA_INSTALL_ASSETS).not.toContain(
+      "/illustrations/companions/preparing-fox-512.webp",
     );
     expect(
       isCacheableStaticRequest({
@@ -62,9 +71,33 @@ describe("PWA public-cache policy", () => {
         appOrigin,
         destination: "image",
         method: "GET",
-        url: `${appOrigin}/illustrations/workout-pals-gym.webp`,
+        url: `${appOrigin}/illustrations/companions/planning-hedgehog.webp`,
       }),
     ).toBe(true);
+    expect(
+      isCacheableStaticRequest({
+        appOrigin,
+        destination: "image",
+        method: "GET",
+        url: `${appOrigin}/illustrations/companions/reviewing-raccoon.webp`,
+      }),
+    ).toBe(true);
+    expect(
+      isCacheableStaticRequest({
+        appOrigin,
+        destination: "image",
+        method: "GET",
+        url: `${appOrigin}/illustrations/companions/preparing-fox.webp`,
+      }),
+    ).toBe(false);
+    expect(
+      isCacheableStaticRequest({
+        appOrigin,
+        destination: "image",
+        method: "GET",
+        url: `${appOrigin}/illustrations/companions/preparing-fox-512.webp`,
+      }),
+    ).toBe(false);
 
     for (const request of [
       { destination: "image", method: "GET", url: `${appOrigin}/avatars/user.png` },

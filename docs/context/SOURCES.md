@@ -48,6 +48,36 @@ The dedicated implementation brief dated August 25, 2026, is the authoritative s
 - Direction: an original, fully hand-drawn golden-age theatrical-cartoon gym with expressive animal characters; no real person, copied character, text, logo, hotspot, or photographic element.
 - Publication: the optimized WebP and its prompt sidecar are project assets. Superseded generated candidates and private local source outputs are excluded.
 
+## Wave 3 companion vignettes
+
+- Selected visual evidence:
+  `.impeccable/mocks/companion-concepts/corner-companions-board.png`, its prompt,
+  and its JSON provenance. The board is not a runtime or shipping asset.
+- Planning hedgehog: `public/illustrations/companions/planning-hedgehog.webp`
+  (`79891bacacde49d7aeff0ad647d1e62a41fb68f56f5d7cbab937c58bfadbb126`)
+  plus its 512-pixel derivative
+  (`45995ea9cd380bb344dda92decbe45c00ff66285b6e5e32872b97115528da79b`).
+- Preparing fox: `public/illustrations/companions/preparing-fox.webp`
+  (`9812c7a337667f70388aa9b4820f81b4306140e2001998aa18bab30aa814cc33`)
+  plus its 512-pixel derivative
+  (`07816814dd9c0e94cfb3b2bfb324425f60b6789b16964780bc1e5f58974d1de3`).
+- Reviewing raccoon: purpose-built opaque warm-paper card at
+  `public/illustrations/companions/reviewing-raccoon.webp`
+  (`94721d121b53e2fa3cfb779e6dab1a8a0932cb5fb2827711ca6ed34634db65f6`)
+  plus its 512-pixel derivative
+  (`9f109d0315d72cf47032c539f023b6f4bfc81010f14a813a31be068223b49e72`).
+  The opaque field is the accepted bounded fallback after a lossy chroma-key
+  source and a baked-checkerboard rerender were rejected. A 768-pixel companion
+  derivative is not part of this responsive contract.
+- Generator: OpenAI built-in image generation on August 30, 2026. Exact prompts,
+  source hashes, transformations, rejected-candidate lineage, dimensions, and
+  shipping hashes are stored in the same-basename JSON sidecars and
+  `.impeccable/prompts/companions/`.
+- Publication constraints: all vignettes are generic, text-free, independent of
+  identity and workout data, and contain no real person, logo, copied character,
+  chart, semantic status cue, or private data. No character was cropped from the
+  concept board or composite gym hero.
+
 Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.
 
 ## Firebase email action codes

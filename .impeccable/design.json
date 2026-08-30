@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-30T22:33:43Z",
+  "title": "Design System: My Workout Pal",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Mineral Paper",
+        "canonical": "#f3eee3",
+        "tonalRamp": ["#282722", "#504e45", "#77746a", "#9d9a8d", "#c1bdb0", "#d8d3c7", "#e9e5da", "#f8f5ed"]
+      },
+      "paper-deep": {
+        "role": "neutral",
+        "displayName": "Deep Paper",
+        "canonical": "#e6e0d5",
+        "tonalRamp": ["#282621", "#4e4b43", "#747168", "#98958b", "#b9b5aa", "#cec9be", "#ded9cf", "#f1ede5"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Deep Teal Ink",
+        "canonical": "#0b2f36",
+        "tonalRamp": ["#06191c", "#09252a", "#0b2f36", "#1c474d", "#345d62", "#607d80", "#98abad", "#d7e0de"]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Soft Teal Ink",
+        "canonical": "#34535a",
+        "tonalRamp": ["#17272a", "#263c40", "#34535a", "#4d6a6f", "#6f878a", "#94a8a9", "#becaca", "#e4e9e7"]
+      },
+      "coral": {
+        "role": "primary",
+        "displayName": "Route Coral",
+        "canonical": "#b13b27",
+        "tonalRamp": ["#32140f", "#5a2118", "#7e2c20", "#9b3424", "#b13b27", "#c9634e", "#e49a88", "#f6d2c8"]
+      },
+      "coral-strong": {
+        "role": "primary",
+        "displayName": "Deep Coral",
+        "canonical": "#9f321f",
+        "tonalRamp": ["#2c110c", "#511b13", "#701f17", "#8b2a1b", "#9f321f", "#bf5c45", "#df927e", "#f4cdc2"]
+      },
+      "coral-on-ink": {
+        "role": "primary",
+        "displayName": "Ink Coral Highlight",
+        "canonical": "#ff9a82",
+        "tonalRamp": ["#4a1913", "#782c20", "#a64030", "#c75e49", "#e47d68", "#ff9a82", "#ffc0ae", "#ffe2d9"]
+      },
+      "on-coral": {
+        "role": "neutral",
+        "displayName": "Warm Action Text",
+        "canonical": "#fffaf0",
+        "tonalRamp": ["#292722", "#514e47", "#77736b", "#9d9990", "#c2bdb4", "#d9d4ca", "#ebe6dc", "#fffaf0"]
+      },
+      "lichen": {
+        "role": "secondary",
+        "displayName": "Lichen Green",
+        "canonical": "#4d603a",
+        "tonalRamp": ["#182013", "#29341d", "#3b4b2a", "#4d603a", "#68794e", "#87976d", "#adb998", "#dce3d1"]
+      },
+      "lichen-light": {
+        "role": "secondary",
+        "displayName": "Lichen Light",
+        "canonical": "#a8b185",
+        "tonalRamp": ["#25291d", "#444b32", "#626e4b", "#7f8c63", "#a8b185", "#bbc49f", "#d2d8c1", "#edf0e8"]
+      },
+      "on-lichen": {
+        "role": "neutral",
+        "displayName": "Lichen Action Text",
+        "canonical": "#fffaf0",
+        "tonalRamp": ["#292722", "#514e47", "#77736b", "#9d9990", "#c2bdb4", "#d9d4ca", "#ebe6dc", "#fffaf0"]
+      },
+      "stone": {
+        "role": "neutral",
+        "displayName": "Stone Support",
+        "canonical": "#8d948e",
+        "tonalRamp": ["#242826", "#414743", "#5f6762", "#737c76", "#8d948e", "#a8afa9", "#c5cac5", "#e5e8e4"]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Stone Rule",
+        "canonical": "#a8aaa0",
+        "tonalRamp": ["#2a2b28", "#4c4d48", "#6d6e68", "#898a82", "#a8aaa0", "#bfc0b9", "#d7d8d1", "#f0f0eb"]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "Contained Warm White",
+        "canonical": "#fffaf0",
+        "tonalRamp": ["#292722", "#514e47", "#77736b", "#9d9990", "#c2bdb4", "#d9d4ca", "#ebe6dc", "#fffaf0"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Failure Red",
+        "canonical": "#a6352e",
+        "tonalRamp": ["#2d100f", "#531d1b", "#742622", "#8f2e29", "#a6352e", "#c45c54", "#e0918b", "#f5ccc8"]
+      },
+      "on-danger": {
+        "role": "neutral",
+        "displayName": "Failure Text",
+        "canonical": "#fffaf0",
+        "tonalRamp": ["#292722", "#514e47", "#77736b", "#9d9990", "#c2bdb4", "#d9d4ca", "#ebe6dc", "#fffaf0"]
+      },
+      "focus": {
+        "role": "tertiary",
+        "displayName": "Focus Orange",
+        "canonical": "#e74f32",
+        "tonalRamp": ["#3c1009", "#711c10", "#9d291a", "#c13724", "#e74f32", "#ef7963", "#f6a696", "#fbd6ce"]
+      },
+      "companion-paper-edge": {
+        "role": "neutral",
+        "displayName": "Companion Edge Brown",
+        "canonical": "#806d4d",
+        "tonalRamp": ["#241a11", "#433321", "#604c31", "#806d4d", "#998667", "#b4a589", "#d2c8b7", "#eeeae1"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Route Display",
+        "purpose": "Large public and member statements, route numerals, and short declarations."
+      },
+      "headline": {
+        "displayName": "Section Headline",
+        "purpose": "Section titles that need strong scanning without competing with the hero."
+      },
+      "title": {
+        "displayName": "Compact Title",
+        "purpose": "Day names, list titles, and compact records."
+      },
+      "body": {
+        "displayName": "Reading Body",
+        "purpose": "Explanatory copy, forms, instructions, and data descriptions."
+      },
+      "label": {
+        "displayName": "Route Label",
+        "purpose": "Navigation, route numbers, status labels, and short control text."
+      },
+      "action": {
+        "displayName": "Primary Action",
+        "purpose": "The decisive next step, set larger than route labels and kept short."
+      }
+    },
+    "shadows": [
+      {
+        "name": "waypoint-ambient",
+        "value": "0 8px 22px color-mix(in srgb, var(--ink) 24%, transparent)",
+        "purpose": "Reserved for route waypoint controls so they remain legible over contour surfaces."
+      },
+      {
+        "name": "notice-ambient",
+        "value": "0 10px 28px color-mix(in srgb, var(--ink) 30%, transparent)",
+        "purpose": "Reserved for transient install or status notices that sit above the page."
+      }
+    ],
+    "motion": [
+      {
+        "name": "static-companion",
+        "value": "animation: none; transform: none",
+        "purpose": "Companion art is static by default and remains static in reduced motion."
+      },
+      {
+        "name": "reduced-motion-collapse",
+        "value": "transition-duration: .01ms; animation-duration: .01ms",
+        "purpose": "The global reduced-motion contract removes movement without removing state or content."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "max-width: 47.99rem",
+        "purpose": "Stack content, use fixed bottom navigation, and keep companion art in its shallow slot."
+      },
+      {
+        "name": "tablet",
+        "value": "min-width: 48rem",
+        "purpose": "Introduce two-column content grids where the surface supports them."
+      },
+      {
+        "name": "desktop",
+        "value": "min-width: 64rem",
+        "purpose": "Move navigation into the header and reserve broad side space for companion art."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "primary-action",
+      "description": "A coral, square-edged action for the next decisive task.",
+      "html": "<button class=\"ds-primary-action\" type=\"button\">START WORKOUT</button>",
+      "css": ".ds-primary-action { align-items: center; background: var(--coral); border: 0; color: var(--on-coral); cursor: pointer; display: inline-flex; font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; justify-content: space-between; letter-spacing: .04em; min-height: 3.6rem; padding: .8rem 1rem; text-transform: uppercase; } .ds-primary-action:hover { background: var(--coral-strong); } .ds-primary-action:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; } .ds-primary-action:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Paper Sheet",
+      "kind": "card",
+      "refersTo": "paper-card",
+      "description": "A square-edged contained sheet for a readable group of related facts or actions.",
+      "html": "<article class=\"ds-paper-card\"><span class=\"ds-label\">ROUTE NOTE</span><h2>Current routine</h2><p>Keep the next step visible and the explanation nearby.</p></article>",
+      "css": ".ds-paper-card { background: var(--white); border: 1px solid var(--rule); color: var(--ink); padding: clamp(1rem, 4vw, 2rem); } .ds-paper-card h2 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.8rem); line-height: .9; margin: .55rem 0 1rem; text-transform: uppercase; } .ds-paper-card p { color: var(--ink-soft); line-height: 1.5; margin: 0; max-width: 58ch; } .ds-label { color: var(--lichen); font-family: var(--font-display); letter-spacing: .05em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "A square field for a named, readable input with an explicit focus ring.",
+      "html": "<label class=\"ds-field\"><span>ROUTINE NAME</span><input aria-label=\"Routine name\" placeholder=\"Full body\" /></label>",
+      "css": ".ds-field { color: var(--ink); display: grid; gap: .35rem; } .ds-field > span { font-family: var(--font-display); letter-spacing: .04em; text-transform: uppercase; } .ds-field input { background: var(--white); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); min-height: 3.4rem; padding: .7rem; } .ds-field input:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; } .ds-field input::placeholder { color: var(--ink-soft); opacity: 1; }"
+    },
+    {
+      "name": "Responsive Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "A compact route navigation that is fixed on phones and inline in the desktop header.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Primary\"><a aria-current=\"page\" href=\"#home\">HOME</a><a href=\"#library\">LIBRARY</a><a href=\"#progress\">PROGRESS</a><a href=\"#account\">MY WORKOUTS</a></nav>",
+      "css": ".ds-nav { background: var(--ink); color: var(--paper); display: grid; grid-template-columns: repeat(4, 1fr); padding: .55rem max(.5rem, env(safe-area-inset-left)) calc(.55rem + env(safe-area-inset-bottom)) max(.5rem, env(safe-area-inset-right)); } .ds-nav a { align-items: center; display: flex; font-family: var(--font-display); font-size: .77rem; justify-content: center; letter-spacing: .05em; min-height: 3.5rem; padding: .35rem .2rem; text-decoration: none; text-transform: uppercase; } .ds-nav a:hover { color: var(--coral-on-ink); } .ds-nav a:focus-visible { outline: 3px solid var(--focus); outline-offset: -4px; } .ds-nav a[aria-current=\"page\"] { color: var(--coral-on-ink); }"
+    },
+    {
+      "name": "Status Stamp",
+      "kind": "chip",
+      "refersTo": "status-stamp",
+      "description": "A compact, text-led state stamp for visible compatibility or action context.",
+      "html": "<span class=\"ds-status-stamp\" role=\"status\">SAMPLE DATA · NOT YOUR HISTORY</span>",
+      "css": ".ds-status-stamp { border: 2px solid var(--coral); color: var(--coral-strong); display: inline-grid; font-family: var(--font-display); letter-spacing: .04em; padding: .65rem .8rem; text-transform: uppercase; } .ds-status-stamp:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }"
+    },
+    {
+      "name": "Corner Companion Slot",
+      "kind": "custom",
+      "refersTo": "companion-slot",
+      "description": "A decorative, inert, source-faithful animal vignette in a reserved slot outside the semantic data plane.",
+      "html": "<div class=\"ds-companion-slot\" aria-hidden=\"true\"><img alt=\"\" src=\"/illustrations/companions/reviewing-raccoon.webp\" /></div>",
+      "css": ".ds-companion-slot { align-items: center; display: grid; height: var(--companion-slot-block-mobile); justify-items: center; overflow: hidden; pointer-events: none; width: 100%; } .ds-companion-slot img { aspect-ratio: 1; block-size: 100%; border: 1px solid var(--companion-paper-edge); display: block; inline-size: auto; max-inline-size: 100%; object-fit: cover; } @media (forced-colors: active) { .ds-companion-slot { display: none; } } @media (prefers-reduced-motion: reduce) { .ds-companion-slot img { animation: none; transform: none; transition: none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Field Notebook Companion",
+    "overview": "My Workout Pal is a warm field-atlas interface: mineral paper, deep blue-green ink, crisp route marks, and coral decisions make planning and logging feel grounded rather than gamified. The visual system keeps the route grammar from `docs/design/DIRECTION.md`—waypoints, ruled sheets, stamped states, and contour surfaces—while keeping the user's task and product truth ahead of decoration.\n\nThe selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in a reserved quiet slot on each pilot surface. The guest landing hedgehog holds a blank notebook, the signed-in home fox prepares beside the personal next action, and the guest Progress raccoon reviews loose paper with three nonsemantic pigment dabs outside the chart and disclosure. The raccoon uses an intentionally opaque warm-paper card as a bounded surface treatment; it is source-faithful, not a transparent crop or a semantic status cue. The composite concept board remains evidence, not a shipping asset.",
+    "keyCharacteristics": [
+      "Warm mineral paper and contour texture with restrained ruled dividers.",
+      "Condensed display type for route labels and humanist sans serif for reading and entry.",
+      "Coral action, lichen compatibility, and deep ink navigation with non-color semantics.",
+      "One calm companion per pilot surface, outside the data and interaction plane."
+    ],
+    "rules": [
+      {
+        "name": "The One Companion Rule",
+        "body": "Each pilot surface may use one complete, purpose-built companion vignette as context; the image never carries account, workout, sample-data, progress, or completion meaning.",
+        "section": "overview"
+      },
+      {
+        "name": "The Semantic Contrast Rule",
+        "body": "Color may reinforce a state, but ownership, verification, sample disclosure, save outcome, and failure must remain legible in words and structure.",
+        "section": "colors"
+      },
+      {
+        "name": "The Label/Reading Split Rule",
+        "body": "Use the condensed face to scan a route or state; use the humanist face to explain what the state means and what the user can do next.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tonal Layer Rule",
+        "body": "Prefer paper, deep paper, ink, and rules to extra cards or shadows; add a shadow only when it clarifies a floating or selected interaction.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the field-atlas palette, condensed display silhouette, humanist reading copy, and ruled structure consistent across public and member surfaces.",
+      "Do keep adjacent text and controls authoritative: the neutral `Progress` title and `Sample data · not your history` disclosure must remain the truth for the guest preview.",
+      "Do use exactly one purpose-built, text-free animal vignette per pilot surface and keep it outside text, fields, charts, disclosures, errors, timers, controls, and navigation.",
+      "Do preserve the companion provenance sidecar next to every shipped WebP and keep public companion assets separate from authenticated HTML and data caches.",
+      "Do collapse decorative art without a layout gap on image failure or forced colors, and keep it static under reduced motion.",
+      "Do treat the selected Corner Companions board as directional evidence only; ship the three dedicated vignettes in `public/illustrations/companions/`."
+    ],
+    "donts": [
+      "Don't crop, extract, or reuse a character from the composite gym illustration or the Corner Companions board.",
+      "Don't put lettering, numbers, sample values, private data, logos, emoji, CSS art, or handmade SVG art inside a companion image.",
+      "Don't make a decorative animal the only signal for account identity, verification, saved activity, progress, completion, or failure.",
+      "Don't turn the guest Progress preview into a personal-history claim, or the personal home into a sample-data surface.",
+      "Don't let companion art cover account chrome, fixed navigation, controls, charts, disclosure, errors, timers, or the primary action.",
+      "Don't introduce generic floating dashboards, gratuitous rounded cards, photorealism, gradients, glass, or mascot-led promotion into this system."
+    ]
+  }
+}

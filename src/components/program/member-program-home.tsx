@@ -10,6 +10,7 @@ import {
   formatInsightVolume,
 } from "@/components/insights/training-insights-presenters";
 import { Icon } from "@/components/ui/icon";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
 
@@ -46,9 +47,12 @@ export function MemberProgramHome({
   const hasResumableWorkout = resumableWorkout !== null;
 
   return (
-    <section className="member-program" aria-labelledby="member-program-title">
+    <section
+      className={`member-program${hasResumableWorkout ? " member-program--resumable" : ""}`}
+      aria-labelledby="member-program-title"
+    >
       <header className="member-program-hero contour-surface">
-        <div>
+        <div className="member-program-copy">
           <span className="eyebrow">Your workout companion</span>
           <h1 id="member-program-title">Welcome back, {greetingName}</h1>
           <p>
@@ -71,6 +75,7 @@ export function MemberProgramHome({
             <Icon name="library" /> Manage private exercises
           </Link>
         </div>
+        <DecorativeCompanion variant="member-home" />
       </header>
 
       {!canMutate ? (

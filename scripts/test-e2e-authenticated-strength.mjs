@@ -30,6 +30,28 @@ const contourDestination = resolve(
   repositoryRoot,
   "tests/fixtures/authenticated-app/public/contours.svg",
 );
+const fixtureAssets = [
+  {
+    destination: resolve(
+      repositoryRoot,
+      "tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox-512.webp",
+    ),
+    source: resolve(
+      repositoryRoot,
+      "public/illustrations/companions/preparing-fox-512.webp",
+    ),
+  },
+  {
+    destination: resolve(
+      repositoryRoot,
+      "tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox.webp",
+    ),
+    source: resolve(
+      repositoryRoot,
+      "public/illustrations/companions/preparing-fox.webp",
+    ),
+  },
+];
 
 function availableLoopbackPort() {
   return new Promise((resolvePort, reject) => {
@@ -53,9 +75,18 @@ function availableLoopbackPort() {
 if (!statSync(contourSource).isFile() || statSync(contourSource).size === 0) {
   throw new Error("The authenticated fixture requires the maintained public/contours.svg asset.");
 }
+for (const asset of fixtureAssets) {
+  if (!statSync(asset.source).isFile() || statSync(asset.source).size === 0) {
+    throw new Error(`The authenticated fixture requires ${asset.source}.`);
+  }
+}
 
 mkdirSync(dirname(contourDestination), { recursive: true });
 copyFileSync(contourSource, contourDestination);
+for (const asset of fixtureAssets) {
+  mkdirSync(dirname(asset.destination), { recursive: true });
+  copyFileSync(asset.source, asset.destination);
+}
 
 const environment = Object.fromEntries(
   inheritedEnvironmentNames.flatMap((name) => {
@@ -98,4 +129,5 @@ try {
   }
 } finally {
   unlinkSync(contourDestination);
+  for (const asset of fixtureAssets) unlinkSync(asset.destination);
 }

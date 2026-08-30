@@ -16,6 +16,7 @@ import {
   HARNESS_VIEWER_HEADER,
   type HarnessScenario,
 } from "../fixtures/authenticated-app/server/harness-context";
+import { isSupersededCompanionImageRequest } from "./companion-request-policy";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
 
 type ActiveProgramIds = Readonly<{ id: string; revisionId: string }>;
@@ -140,7 +141,11 @@ async function openPage(
   });
   page.on("requestfailed", (request) => {
     const url = new URL(request.url());
-    if (url.hostname === "127.0.0.1" && !isSupersededNextFlightRequest(request)) {
+    if (
+      url.hostname === "127.0.0.1" &&
+      !isSupersededNextFlightRequest(request) &&
+      !isSupersededCompanionImageRequest(request)
+    ) {
       failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
       );
@@ -768,7 +773,11 @@ test("owned customization publishes once, preserves history, and derives private
   );
   await alice.page.getByRole("button", { name: "Clone and activate" }).click();
   expect((await cloneProgramResponse).status()).toBe(201);
-  await expect(alice.page.getByRole("heading", { name: "QA cloned route" })).toBeVisible();
+  await expect(
+    alice.page.getByText("QA cloned route · Revision 1 · Barbell + rack · 5 days", {
+      exact: true,
+    }),
+  ).toBeVisible();
   const collectionSummary = await readScopeSummary(alice.page);
   expect(collectionSummary.counts.programRoots).toBe(
     onboardingSummary.counts.programRoots + 2,

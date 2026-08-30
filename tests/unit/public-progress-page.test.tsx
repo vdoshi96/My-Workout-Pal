@@ -24,6 +24,14 @@ describe("public Progress preview", () => {
     expect(markup).not.toContain("Sample consistency");
     expect(markup).not.toContain("Sample cardio");
     expect(markup).not.toContain("Sample only");
+    expect(markup).toContain('data-companion-placement="progress-preview"');
+    expect(markup).toContain(
+      'src="/illustrations/companions/reviewing-raccoon.webp"',
+    );
+    expect(markup.indexOf('data-companion-placement="progress-preview"')).toBeLessThan(
+      markup.indexOf('class="sample-metrics"'),
+    );
+    expect(markup).not.toContain("See your progress");
   });
 
   it("redirects the previous sample URL to the canonical route", () => {

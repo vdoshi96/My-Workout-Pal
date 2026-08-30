@@ -9,7 +9,7 @@ describe("guest-first landing page", () => {
 
     expect(metadata.title).toBe("Your customizable workout companion");
     expect(metadata.description?.toLowerCase()).toContain("plan your own routine");
-    expect(markup).toContain("A workout companion built around your routine.");
+    expect(markup).toContain("Your workout. Your way.");
     expect(markup).toContain("Plan your days, use guidance while you train, log your work, and review progress");
     expect(markup).toContain("Explore the five-day example");
     expect(markup).toContain("Five-day starter example · not saved");
@@ -24,18 +24,18 @@ describe("guest-first landing page", () => {
     }
   });
 
-  it("uses the generated cartoon gym as descriptive artwork without hidden hotspots", () => {
+  it("uses a text-free planning companion as decorative artwork", () => {
     const markup = renderToStaticMarkup(<HomePage />);
 
-    expect(markup).toContain("A lively hand-drawn cartoon gym");
-    expect(markup).toContain("workout-pals-gym.webp");
-    expect(markup).toContain('src="/illustrations/workout-pals-gym.webp"');
+    expect(markup).toContain('data-companion-placement="landing"');
+    expect(markup).toContain('alt=""');
+    expect(markup).toContain('src="/illustrations/companions/planning-hedgehog.webp"');
     expect(markup).toContain(
-      'srcSet="/illustrations/workout-pals-gym-768.webp 768w, /illustrations/workout-pals-gym.webp 1536w"',
+      'srcSet="/illustrations/companions/planning-hedgehog-512.webp 512w, /illustrations/companions/planning-hedgehog.webp 1024w"',
     );
-    expect(markup).toContain('loading="lazy"');
-    expect(markup).not.toContain('fetchPriority="high"');
+    expect(markup).toContain('loading="eager"');
+    expect(markup).toContain('fetchPriority="high"');
     expect(markup).not.toContain("/_next/image?url=");
-    expect(markup).not.toContain("gym-hotspot");
+    expect(markup).not.toContain("MY PLAN");
   });
 });

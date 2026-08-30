@@ -28,6 +28,12 @@ async function readProfileProgramOrUndefined(database: Database, viewer: ViewerC
 export default async function HarnessMemberHomePage() {
   const context = harnessRequestContext(await headers());
   if (!context.viewer) return null;
+  if (context.scenario === "slow-member-home") {
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 1_500));
+  }
+  if (context.scenario === "fail-member-home") {
+    throw new Error("Synthetic personal-home read failure.");
+  }
   const { database } = await getHarnessDatabase(context.scope);
   const model = await readProfileProgramOrUndefined(database, context.viewer);
   if (!model?.activeProgram) {

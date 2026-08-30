@@ -26,15 +26,13 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "A workout companion built around your routine.",
+      name: "Your workout. Your way.",
     }),
   ).toBeVisible();
+  await expect(page.locator('[data-companion-placement="landing"]')).toBeVisible();
   await expect(
-    page.getByAltText(/A lively hand-drawn cartoon gym/),
-  ).toBeVisible();
-  await expect(
-    page.locator('link[rel="preload"][as="image"][href*="workout-pals-gym"]'),
-  ).toHaveCount(0);
+    page.locator('[data-companion-placement="landing"] img'),
+  ).toHaveAttribute("fetchpriority", "high");
   await expect(page.getByText("Open to everyone")).toBeVisible();
   await expect(page.getByText("Sign in to make it yours")).toBeVisible();
   if (testInfo.project.name === "chromium-desktop") {
@@ -250,7 +248,7 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "A workout companion built around your routine.",
+      name: "Your workout. Your way.",
     }),
   ).toBeVisible();
 

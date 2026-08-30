@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="49f254511d9afdcbc05cefbb8cab3f9a936aab85919ce4cc778b2600da758a64">
+  <meta name="source-sha256" content="c96f917cd15c4f6e2f9bdd94a6c356c7bfe92043fb68bb18927ed1604f679528">
   <title>Corner companions visual direction · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,11 +28,15 @@
 <body>
   <main>
 <h1>Corner companions visual direction</h1>
-<p><strong>Status:</strong> Selected production direction for the Wave 3 pilot. The board is design evidence, not a shipping asset or implemented interface.</p>
+<p><strong>Status:</strong> Implemented and locally verified for the bounded Wave 3 pilot on
+<code>vishal/pal-visual-pilot</code>. The board is design evidence, not a shipping asset.</p>
 <p>Corner Companions is the sole selected animal-surface direction for the guest landing page, signed-in home, and guest progress preview. Apply the same direction to phone and desktop layouts. Do not combine it with discarded concepts.</p>
 <h2>Decision record</h2>
 <p>The Wave 0 review compared three responsive image-based directions. On August 27, 2026, the user selected Corner Companions. The two alternatives were discarded, and their images, prompts, and direction-specific provenance are not retained on this branch.</p>
-<p>The selection establishes the visual target for a later pilot. It does not change components, styles, routes, authentication, persistence, deployment state, or publication authorization.</p>
+<p>The selection established the visual target for the bounded pilot. The
+implementation changes only presentation on the three approved surfaces and
+does not change authentication, persistence, deployment state, or publication
+authorization.</p>
 <h2>Selected board</h2>
 <p><img src="../../.impeccable/mocks/companion-concepts/corner-companions-board.png" alt="Corner Companions concept board showing the guest landing page, signed-in home, and guest progress preview on desktop and phone"></p>
 <p>Corner Companions gives each approved surface one larger contextual vignette in a reserved quiet area. The companion supports the task without becoming navigation, status, coaching, or a data signal.</p>
@@ -68,6 +72,27 @@
 <li>Replace <strong>See your progress</strong> with the neutral <strong>Progress</strong> title so the guest preview does not imply personal data.</li>
 <li>Remove generated lettering from the illustrated notebook. Production artwork must keep the notebook text-free.</li>
 <li>Keep visible account identity, verification state, and sign-out controls on every signed-in layout.</li>
+</ul>
+<h2>Pilot implementation record</h2>
+<ul>
+<li>One reusable decorative companion component owns the closed landing,
+member-home, and Progress-preview variants, responsive sources, empty-alt and
+hidden semantics, and failure collapse.</li>
+<li>Shared tokens reserve companion whitespace. Forced colors removes each slot
+without a gap, reduced motion keeps the art static, and pointer input passes
+through the decorative layer.</li>
+<li>Landing and Progress assets are explicit public-cache entries. The signed-in
+fox and both of its responsive files remain excluded from the public cache,
+along with all private HTML and data.</li>
+<li>The hedgehog and fox use transparent production rasters. The final raccoon is
+an intentionally bounded opaque warm-paper card after lossy chroma extraction
+and a baked-checkerboard rerender were rejected. Its text-free paper, neutral
+Progress title, and nonsemantic pigment dabs carry no personalized data or
+directional trend.</li>
+<li>Final same-state comparisons and privacy-safe browser evidence are retained in
+<code>docs/qa/latest/animal-surface-pilot/</code>. The fresh Impeccable finish review
+disposition is <code>ship</code>; the project-root design-QA result is passed.</li>
+<li>This record does not authorize broader rollout, merge, or deployment.</li>
 </ul>
 <h2>Pilot acceptance criteria</h2>
 <p>Before rollout, the pilot must meet the following requirements:</p>

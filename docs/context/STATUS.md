@@ -2,6 +2,29 @@
 
 ## Current phase
 
+The Wave 3 Animal Surface-System Pilot is implemented and locally verified on
+`vishal/pal-visual-pilot`, based on exact clean public/local `main`
+`298cb04b8b16ad6c3586ef74bc95df7301533472`. Its bounded scope is the guest
+landing page, signed-in personal home, and guest Progress preview. The selected
+Corner Companions board remains evidence only; three purpose-built production
+vignettes ship through one reusable decorative component and shared placement
+tokens. Landing and Progress artwork is public-cache eligible, while both fox
+derivatives and all authenticated HTML/data remain outside the public cache.
+
+The final Impeccable finish review disposition is `ship`, Product Design QA is
+passed, and the current privacy-safe evidence lives under
+`docs/qa/latest/animal-surface-pilot/`. The branch has not been merged,
+deployed, or rolled out. No provider, environment, billing, migration, seed,
+production-data, or sibling-worktree operation belongs to this pilot.
+
+Final local verification includes 123 Vitest files/839 tests; TypeScript,
+ESLint, Drizzle metadata and 34 schema tests, seed policy, service-worker parity,
+60-document HTML parity, Next.js 16.3.2 Webpack production build, and the
+44-entry production route boundary. The complete public matrix passed 56 cases
+with 12 intentional project skips. The complete synthetic authenticated matrix
+passed 47 cases with three intentional project skips across Chromium and
+WebKit phone, tablet, and desktop projects. No known pilot defect remains.
+
 Wave 2 application, data, and production QA are released. The application tree
 on GitHub and local `main` contains exact candidate
 `0ad06ef3821975d689015644be96f94f6b3b2dfa`.

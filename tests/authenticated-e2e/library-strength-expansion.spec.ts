@@ -6,6 +6,7 @@ import {
   HARNESS_SCOPE_HEADER,
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
+import { isSupersededCompanionImageRequest } from "./companion-request-policy";
 
 async function chooseCanonicalMovement(
   page: Page,
@@ -55,7 +56,11 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
   page.on("pageerror", (error) => consoleErrors.push(error.message));
   page.on("requestfailed", (request) => {
     const url = new URL(request.url());
-    if (url.hostname === "127.0.0.1" && !url.searchParams.has("_rsc")) {
+    if (
+      url.hostname === "127.0.0.1" &&
+      !url.searchParams.has("_rsc") &&
+      !isSupersededCompanionImageRequest(request)
+    ) {
       failedRequests.push(
         `${request.method()} ${url.pathname}: ${request.failure()?.errorText ?? "failed"}`,
       );

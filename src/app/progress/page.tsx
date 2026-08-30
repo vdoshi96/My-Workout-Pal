@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PublicShell } from "@/components/layout/public-shell";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = {
@@ -19,12 +20,13 @@ export default function ProgressPage() {
   return (
     <PublicShell current="progress">
       <section className="public-hero sample-hero contour-surface">
-        <div>
+        <div className="sample-hero-copy">
           <span className="eyebrow">Workout companion preview</span>
           <h1>Progress</h1>
           <p>See how completed workouts, personal records, and trends can read before you create an account.</p>
         </div>
         <div className="sample-warning"><strong>Sample data · not your history</strong></div>
+        <DecorativeCompanion variant="progress-preview" />
       </section>
 
       <section className="sample-metrics" aria-label="Progress preview">

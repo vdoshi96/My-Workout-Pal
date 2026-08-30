@@ -20,10 +20,15 @@ Use the following documents as the maintained project map:
   identities, durable recovery, ordered production seed, hosted verification,
   Google authentication, cleanup, and repository closeout.
 - `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.
+- `docs/plans/WAVE-3-ANIMAL-SURFACE-SYSTEM-PILOT.md`: bounded Corner Companions implementation for the guest landing, signed-in personal home, and guest Progress preview, including asset provenance, TDD, accessibility, responsive, cache, and visual-QA gates.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
 - `docs/plans/VERIFICATION.md`: automated and manual release matrix.
 - `docs/design/DIRECTION.md`: original visual world and interaction grammar.
+- `DESIGN.md`: current reusable design-system rules generated after the Wave 3
+  pilot's final correction.
+- `design-qa.md`: passed Product Design reference-to-build review for the bounded
+  Wave 3 pilot.
 - `docs/design/COMPANION-VISUAL-CONCEPTS.md`: selected Corner Companions responsive board, production guardrails, required corrections, and pilot acceptance criteria.
 - `docs/design/PROGRAM-OVERVIEW.md`: approved comp and implementation inventory.
 - `docs/reference/SUBSTITUTIONS.md`: equipment compatibility and program mutation rules.

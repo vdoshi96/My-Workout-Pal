@@ -316,6 +316,12 @@ describe("credential-free authenticated harness boundary", () => {
     );
     expect(runner).toContain("copyFileSync(contourSource, contourDestination)");
     expect(runner).toContain("unlinkSync(contourDestination)");
+    expect(runner).toContain('"public/illustrations/companions/preparing-fox.webp"');
+    expect(runner).toContain(
+      '"tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox.webp"',
+    );
+    expect(runner).toContain("copyFileSync(asset.source, asset.destination)");
+    expect(runner).toContain("unlinkSync(asset.destination)");
     expect(runner).not.toContain("...process.env");
     expect(runner).toContain("const inheritedEnvironmentNames");
     expect(runner).toContain(
