@@ -1,5 +1,48 @@
 # Project log
 
+## 2026-08-30: Wave 2 production execution awaiting Google gate
+
+- Created and checksummed the private mode-`600` PostgreSQL archive outside the
+  repository, then restored it into an isolated disposable database with
+  restore-only `--no-owner --no-acl` normalization. Complete schema, migration,
+  ownership, constraint, trigger, index, application-verifier, aggregate, and
+  all-table digest comparisons passed; the disposable database was dropped and
+  the durable archive was preserved.
+- Confirmed exact candidate `0ad06ef3821975d689015644be96f94f6b3b2dfa`
+  differs from fully verified application commit `301b618` only in Markdown and
+  generated HTML. There is no Wave 2 migration. The existing deterministic seed
+  ran before deployment, changed only 27/44/54 to 134/202/269 catalog, edge, and
+  alias counts, retained 54 byte-identical approved-video rows, and was an
+  all-table no-op on replay.
+- Advanced GitHub and local `main` to exact `0ad06ef`. Production deployment
+  `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` reached `READY` from that exact SHA on the
+  unchanged stable, project, and Git-main aliases.
+- Passed the checked-in released-catalog public/PWA lane at 23 passes and one
+  documented WebKit service-worker skip, a separate two-engine Wave 2 public
+  search/detail/unavailable-guidance lane, and a custom current-UI signed-in
+  Wave 2 journey on Chromium desktop and phone WebKit. The signed-in lane proved
+  new Strength, duration, and distance-duration selection; positive-distance
+  blocking; publish/reload/start/log/history; zero iframe or candidate-link
+  guidance; accessibility; foreign denial; safe returns and sign-out; and exact
+  cleanup. The older checked-in hosted wrappers stopped at their truthful
+  session boundaries and are not recorded as passes.
+- An earlier cleanup attempt hit a local Node/Neon WebSocket idle-pool crash and
+  left two exact task-created password identities. Aggregate-only detection and
+  authorized exact cleanup removed both without touching the existing Google
+  identity. Final state is one Google-only Firebase identity, zero disposable
+  identities, zero owner rows, 83 terminal completed deletion audits, and exact
+  direct global counts of 134 exercises, 202 edges, 269 aliases, and 54 approved
+  rows. No candidate video was approved or seeded.
+- Exact-deployment log filters found zero errors, warnings, or `5xx` responses.
+  A broader bounded sample contained only informational entries and no
+  cancellation requiring classification.
+- The remaining gate is ordinary real production Continue with Google. The
+  in-app browser's popup transport returned a generic network error, and no
+  externally connected Chrome session is available. No private identity detail
+  was recorded and no Google-owned application row was created. Final QA,
+  documentation merge, deployment verification, and worktree cleanup wait for
+  that bounded interactive gate.
+
 ## 2026-08-29: Wave 1 production release
 
 - Created the private mode-`600` pre-`0006` archive and passed an isolated

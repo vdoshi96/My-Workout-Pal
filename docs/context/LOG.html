@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="2344ff136bb7df9bd7fcf04935339f944621dba8aae42aae3220a3f4154af3da">
+  <meta name="source-sha256" content="d67f3589b41e5884c788f6e727bf2018e8ad2086f44c0e9dd11faf5848b79415">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,49 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-08-30: Wave 2 production execution awaiting Google gate</h2>
+<ul>
+<li>Created and checksummed the private mode-<code>600</code> PostgreSQL archive outside the
+repository, then restored it into an isolated disposable database with
+restore-only <code>--no-owner --no-acl</code> normalization. Complete schema, migration,
+ownership, constraint, trigger, index, application-verifier, aggregate, and
+all-table digest comparisons passed; the disposable database was dropped and
+the durable archive was preserved.</li>
+<li>Confirmed exact candidate <code>0ad06ef3821975d689015644be96f94f6b3b2dfa</code>
+differs from fully verified application commit <code>301b618</code> only in Markdown and
+generated HTML. There is no Wave 2 migration. The existing deterministic seed
+ran before deployment, changed only 27/44/54 to 134/202/269 catalog, edge, and
+alias counts, retained 54 byte-identical approved-video rows, and was an
+all-table no-op on replay.</li>
+<li>Advanced GitHub and local <code>main</code> to exact <code>0ad06ef</code>. Production deployment
+<code>dpl_DYxcb4ennqnstt8sFR2dkLXnomkn</code> reached <code>READY</code> from that exact SHA on the
+unchanged stable, project, and Git-main aliases.</li>
+<li>Passed the checked-in released-catalog public/PWA lane at 23 passes and one
+documented WebKit service-worker skip, a separate two-engine Wave 2 public
+search/detail/unavailable-guidance lane, and a custom current-UI signed-in
+Wave 2 journey on Chromium desktop and phone WebKit. The signed-in lane proved
+new Strength, duration, and distance-duration selection; positive-distance
+blocking; publish/reload/start/log/history; zero iframe or candidate-link
+guidance; accessibility; foreign denial; safe returns and sign-out; and exact
+cleanup. The older checked-in hosted wrappers stopped at their truthful
+session boundaries and are not recorded as passes.</li>
+<li>An earlier cleanup attempt hit a local Node/Neon WebSocket idle-pool crash and
+left two exact task-created password identities. Aggregate-only detection and
+authorized exact cleanup removed both without touching the existing Google
+identity. Final state is one Google-only Firebase identity, zero disposable
+identities, zero owner rows, 83 terminal completed deletion audits, and exact
+direct global counts of 134 exercises, 202 edges, 269 aliases, and 54 approved
+rows. No candidate video was approved or seeded.</li>
+<li>Exact-deployment log filters found zero errors, warnings, or <code>5xx</code> responses.
+A broader bounded sample contained only informational entries and no
+cancellation requiring classification.</li>
+<li>The remaining gate is ordinary real production Continue with Google. The
+in-app browser&#39;s popup transport returned a generic network error, and no
+externally connected Chrome session is available. No private identity detail
+was recorded and no Google-owned application row was created. Final QA,
+documentation merge, deployment verification, and worktree cleanup wait for
+that bounded interactive gate.</li>
+</ul>
 <h2>2026-08-29: Wave 1 production release</h2>
 <ul>
 <li>Created the private mode-<code>600</code> pre-<code>0006</code> archive and passed an isolated

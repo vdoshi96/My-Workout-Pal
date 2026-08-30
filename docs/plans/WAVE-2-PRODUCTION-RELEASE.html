@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="42a00df0f8cd5abe03d8d569c69ddeb8e4deb2181becbe80a17cc229fbac0cba">
+  <meta name="source-sha256" content="1ab915831cb695c43a2d686d0f053bdb01bca3df5ddba5620a6528d989be742d">
   <title>Wave 2 production release plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -338,6 +338,196 @@ replacement request, and successful final page are all explicit. Fail the
 release on an unexplained <code>5xx</code>, database failure, CSRF failure, authentication
 regression, disabled trigger, invalid constraint, leaked ownership, raw UID,
 secret, connection detail, or private account value.</p>
+<h2>Execution record — Google gate pending</h2>
+<p>The application and additive catalog data are live and their automated and
+disposable-owner gates are green. The production release is not yet closed:
+ordinary real-Google authentication still requires an externally connected
+Chrome session, and the final QA package, documentation closeout, and worktree
+cleanup must wait for that gate.</p>
+<h3>Exact release identity</h3>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Verified value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Application release commit</td>
+<td><code>0ad06ef3821975d689015644be96f94f6b3b2dfa</code></td>
+</tr>
+<tr>
+<td>Fully verified application/content commit</td>
+<td><code>301b618b888613d95d69dffc5c42b6fb0dd26797</code></td>
+</tr>
+<tr>
+<td>Release-plan checkpoint</td>
+<td><code>7aa565a3be03a143dc8a8a31659e428700afbf0b</code></td>
+</tr>
+<tr>
+<td>Production deployment</td>
+<td><code>dpl_DYxcb4ennqnstt8sFR2dkLXnomkn</code></td>
+</tr>
+<tr>
+<td>Exact deployment URL</td>
+<td><code>https://my-workout-jup04bi3o-vdoshi96s-projects.vercel.app</code></td>
+</tr>
+<tr>
+<td>Deployment source and state</td>
+<td>exact <code>0ad06ef</code>; <code>READY</code>; production</td>
+</tr>
+<tr>
+<td>Existing aliases</td>
+<td><code>my-workout-pal-chi.vercel.app</code>, <code>my-workout-pal-vdoshi96s-projects.vercel.app</code>, and <code>my-workout-pal-git-main-vdoshi96s-projects.vercel.app</code></td>
+</tr>
+</tbody></table>
+<p>GitHub <code>main</code> and local <code>main</code> were advanced to exact <code>0ad06ef</code>. The application
+deployment came from that SHA, and the existing three aliases remained attached
+without a provider, alias, environment, or billing mutation. The exact
+deployment hostname is protected by Vercel Authentication; its rejected public
+suite is not product evidence. Hosted product verification therefore used the
+stable production alias after independently confirming that it resolved to the
+same deployment.</p>
+<p>The complete <code>301b618..0ad06ef</code> diff contains only 14 Markdown and generated
+HTML documentation paths. There is no runtime, test, schema, migration, seed, or
+public-asset difference. Review also found no secret, private media, candidate
+runtime URL, or Wave 3 artwork. Historical application evidence remains
+attributed to <code>301b618</code>; only proportional documentation, database, PWA, and
+metadata checks are attributed to the documentation-only <code>0ad06ef</code> successor.</p>
+<h3>Recovery and database execution</h3>
+<p>Before production mutation, PostgreSQL 18.6 tooling created the private custom-
+format archive at
+<code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-wave2-preseed-2026-08-29-0ad06ef.dump</code>.
+The archive and its adjacent checksum file are mode <code>600</code>; the containing
+directory is mode <code>700</code>. The archive is 201,206 bytes with SHA-256
+<code>d196af1c16afe661774ca5e758e1d6e9123065a066411bde3cb0c7639c58364e</code>.
+<code>pg_restore --list</code> read 334 table, data, constraint, trigger, and index entries.
+An isolated disposable database accepted a single-transaction restore using the
+restore-only normalization <code>--no-owner --no-acl</code>; the archive was not modified.
+All-table digests, schema, migration, ownership, constraint, index, trigger, and
+application-verifier comparisons matched production. The disposable database
+was dropped and its absence confirmed. The archive and checksum remain private
+and preserved.</p>
+<p>The preflight found database and session ownership under <code>neondb_owner</code>; the
+<code>public</code> schema uses PostgreSQL&#39;s <code>pg_database_owner</code> proxy, while all 36 public
+tables and 12 functions are owned by <code>neondb_owner</code>. Eight migrations through
+<code>0007</code> were present, every constraint and index was valid, and all 17 user
+triggers were enabled in ordinary mode. Wave 2 had no migration to apply.</p>
+<p>The unchanged deterministic seed path ran from exact <code>0ad06ef</code> before the
+application deployment. The first transaction changed only the intended global
+graph, and the second transaction was an all-table no-op:</p>
+<table>
+<thead>
+<tr>
+<th>Global group</th>
+<th align="right">Before</th>
+<th align="right">First seed</th>
+<th align="right">Replay</th>
+<th align="right">Post-cleanup</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Catalog exercises</td>
+<td align="right">27</td>
+<td align="right">134</td>
+<td align="right">134</td>
+<td align="right">134</td>
+</tr>
+<tr>
+<td>Compatibility edges</td>
+<td align="right">44</td>
+<td align="right">202</td>
+<td align="right">202</td>
+<td align="right">202</td>
+</tr>
+<tr>
+<td>Search aliases</td>
+<td align="right">54</td>
+<td align="right">269</td>
+<td align="right">269</td>
+<td align="right">269</td>
+</tr>
+<tr>
+<td>Approved videos</td>
+<td align="right">54</td>
+<td align="right">54</td>
+<td align="right">54</td>
+<td align="right">54</td>
+</tr>
+</tbody></table>
+<p>The first seed added 107 catalog exercises, 158 compatibility edges, and 215
+aliases. It did not change another table. The 54 approved-video rows retained
+digest <code>20437f1bcc2378578d87f9eaa127b0828acafbcab2a06cdfa833cb0d2c1d77e1</code>
+through both seed runs and hosted QA. No selected candidate link was approved,
+embedded, or seeded. A separate direct post-cleanup query, not a hosted-wrapper
+digest, proved 134 exercises, 202 compatibility edges, 269 aliases, and 54
+approved rows. The final privacy-safe global digests are:</p>
+<ul>
+<li>Catalog exercises: <code>4edcf8a9b4dc626480dfc8688406ae176685a25c5f8a075b2d7c5a84023a315a</code>.</li>
+<li>Compatibility edges: <code>69543336cdb5e09994ed2c7fde4f611f74a8a4b08276d70250eb0057f7d96c8b</code>.</li>
+<li>Search aliases: <code>3410cf5dd590140cc7c622c959641688bc8ab824eb1c85908c8562a074fb2ac2</code>.</li>
+</ul>
+<p>After cleanup, every owner-scoped application table was empty; the one existing
+Google-only Firebase identity remained, and no disposable password identity
+remained. Cleanup advanced the retained deletion-audit count from 70 to 83;
+all 83 rows are terminal <code>completed</code> / <code>complete</code> records with a non-null
+completion timestamp. Template and personal-checkpoint baselines were unchanged.
+All 17 triggers remained enabled, and no constraint, index, migration, object
+owner, or schema owner drift was found.</p>
+<h3>Hosted verification completed</h3>
+<p>All hosted evidence below targets the stable alias after exact-deployment
+resolution to <code>dpl_DYxcb4ennqnstt8sFR2dkLXnomkn</code> at source <code>0ad06ef</code>.</p>
+<ul>
+<li>The checked-in public release and PWA suites passed 23 cases across Chromium
+desktop and phone WebKit, with one intentional WebKit service-worker
+capability skip. This is released-catalog regression evidence only.</li>
+<li>A separate bounded Wave 2 public supplement passed two of two engine cases. It
+searched by the <code>farmers walk</code> alias, opened Dumbbell farmer carry, proved its
+distance-and-duration meaning, exactly three cues, the truthful <code>Unavailable</code>
+state, zero iframes, no candidate URL in the DOM or observed network, no
+serious or critical app-owned Axe violation, and no horizontal overflow.</li>
+<li>A purpose-built current-UI hosted journey passed on Chromium desktop and phone
+WebKit. Two exact disposable verified password identities proved safe return,
+visible verified state, a blank metric routine, new Dumbbell curl, Flutter
+kick, and Dumbbell farmer carry selection, the positive-distance publication
+blocker, corrected publication, reload, start, logging, completion, immutable
+history, unavailable guidance with zero iframes and no candidate network
+request, foreign/missing-equivalent denial, responsive layout,
+accessibility, sign-out, and exact cleanup.</li>
+<li>Client mutations did not carry a Firebase UID. The second owner received the
+same <code>404</code>/<code>no-store</code> response for the first owner&#39;s workout as for a missing
+resource, with no database effect.</li>
+<li>The checked-in hosted authentication wrapper stopped at its truthful
+<code>unverified_session</code> boundary, and the checked-in deletion wrapper stopped at
+its truthful <code>alice_session</code> boundary after the required opt-in. Both cleaned
+up. They are recorded as failed wrappers, not passes and not proof of the
+custom Wave 2 journey.</li>
+</ul>
+<p>One earlier disposable journey attempt hit a local Node/Neon WebSocket idle-pool
+crash during cleanup and left two exact task-created password identities. An
+aggregate-only provider audit found them, and authorized exact cleanup removed
+both without touching the existing Google identity. The final serialized journey
+then passed, Firebase returned to one Google-only identity, every owner table
+returned to zero, and all task-owned temporary scripts and browser artifacts were
+removed. No screenshot is retained.</p>
+<p>The exact deployment&#39;s bounded Vercel log window returned zero <code>error</code> entries,
+zero <code>warning</code> entries, and zero <code>5xx</code> responses. A broader 1,000-entry sample
+contained only informational serverless and middleware records and reached its
+explicit limit. No cancellation appeared, so no browser cancellation was
+classified as benign.</p>
+<h3>Remaining gate</h3>
+<p>The production Continue with Google control was exercised in the Codex in-app
+browser. Its popup transport failed with a generic network error, and no popup
+tab was available. A separately connected external Chrome session is not
+currently available to automation. No private identity detail was recorded, no
+onboarding action was selected, and the direct database baseline remains empty.</p>
+<p>The next release action is bounded: connect external Chrome, exercise ordinary
+production Continue with Google, pause at any unexpected chooser, consent, or
+multifactor boundary, verify the safe <code>/app</code> return, generic verified identity
+visibility, and sign-out, and then directly reconfirm that no owner-scoped row
+was created. Only after that passes may the final production QA report replace
+<code>docs/qa/latest</code>, the documentation closeout merge, final deployment check, and
+completed Wave 2 worktree cleanup proceed.</p>
 <h2>Documentation and evidence closeout</h2>
 <p>Create one privacy-safe Wave 2 production QA report under <code>docs/qa/latest/</code> and
 generate its HTML counterpart. Update this plan into a release record, then

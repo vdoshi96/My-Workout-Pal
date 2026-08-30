@@ -2,55 +2,52 @@
 
 ## Current phase
 
-Wave 1 is released. GitHub `main`, local `main`, and Vercel production source
-are exact application commit `a202a815ad3b7320bbc68b819303822ca4773b1d`.
-Ready deployment `dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH` retains the stable,
-project, and Git-main production aliases. Migrations
-`0006_program_cardio_display_order.sql` and `0007_personal_guidance.sql` were
-restore-gated and applied in that order by `neondb_owner`; final verification
-found 36 public tables, 148 public indexes, zero invalid constraints, zero
-disabled user triggers, and the cardio immutability trigger enabled.
+Wave 2 application and data are live, but the production release remains open
+at the ordinary real-Google authentication gate. GitHub `main` and local `main`
+are exact application candidate `0ad06ef3821975d689015644be96f94f6b3b2dfa`.
+Production deployment `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` is `READY` from that
+exact SHA and retains the existing stable, project, and Git-main aliases without
+a provider, alias, environment, or billing change.
 
-Hosted production verification passed the maintained public and authenticated
-matrices, password recovery and revocation, real Google return,
-reauthentication, revocation, and sign-out, owner-isolation and deletion,
-reviewed media, native 200% zoom, and the complete Wave 1 editor, guidance,
-cardio, runner, history, Home, Progress, conflict, and equipment-revision
-replays. Production returned to its baseline: one existing Google identity, no
-disposable identity or owned application row, and all 70 retained deletion
-audits terminal and completed. The 216 candidate guidance links were not seeded.
+The deterministic production seed ran before the application deployment. It
+advanced only the global graph from 27 exercises, 44 compatibility edges, and
+54 aliases to 134 exercises, 202 edges, and 269 aliases. The second seed was an
+all-table no-op. The 54 already-reviewed approved-video rows stayed byte-
+identical, the eligibility boundary remains 27 canonical variations, and none
+of the 216 selected candidate links entered runtime data or markup. Wave 2 has
+no schema migration.
 
-Wave 1 was integrated and locally verified on
-`origin/vishal/wave-1-integration` from baseline
-`4622f9e1b7783fd35cb6c23ae9396148c7c3357a`. It contains the exact source tips
-in order: day builder `af43c950991de499b8e32a6fac5d58f19be44eed`, library and personal guidance
-`b54801b28d40eb106f38fea44ac1da71d468b199`, and personal home and copy
-`b1722b0e9bd1c0e5185f5bc40856667266c44d22`. Day chooser checkpoint
-`2436bac92ba3381e76646bf61210cd5fd4dae88f` and parallel library checkpoint
-`5255a5254fcde4c1b1558947bda64d47bad23743` have stable patch ID
-`33d2fbaf150856a6f0fa146b154bff6cc2d55cde` and the same four blobs.
-Implementation checkpoint `000a038a9add854dfe59ad796f7b11033753e0d7`
-completes the integration-owned product and schema seams; documentation/evidence
-checkpoint `ae44979880105d02771503637b8a2fa151e9bd05` records its local gate.
-The later production record is preserved at exact documentation commit
-`b364d1987a8190a6d8bb92e7a8d7a64f077c0843` on
-`origin/vishal/wave-1-production-release` and in Git history.
+The private pre-seed archive remains outside the repository at
+`/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-wave2-preseed-2026-08-29-0ad06ef.dump`.
+It and its checksum are mode `600`, its SHA-256 is
+`d196af1c16afe661774ca5e758e1d6e9123065a066411bde3cb0c7639c58364e`,
+and a PostgreSQL 18.6 isolated restore rehearsal passed with restore-only
+`--no-owner --no-acl` normalization. The disposable restore database was
+dropped; the durable archive was preserved.
 
-The integrated schema retains `0006_program_cardio_display_order.sql` before `0007_personal_guidance.sql`. Regenerated `0007` snapshot `30c8bbd1-d86e-463e-89ac-3586832e4370` has the exact `0006` snapshot as its predecessor and contains both cardio-order and personal-guidance state. Example and blank creation share the onboarding transaction, and the real editor uses the library adapter with no nested chooser. The complete local static, migration, build, route, authenticated-browser, and public-browser gate is preserved in Git history at Wave 1 evidence checkpoint `ae44979880105d02771503637b8a2fa151e9bd05`; its superseded report was removed from `docs/qa/latest/` under the newest-only evidence policy.
+Hosted production evidence against the identified deployment includes the
+released-catalog public/PWA regression at 23 passes and one documented WebKit
+service-worker skip, a separate two-engine Wave 2 public search/detail pass, and
+a purpose-built current-UI signed-in Wave 2 journey on Chromium desktop and
+phone WebKit. The latter proved a blank metric routine with new Strength,
+duration, and distance-duration movements; positive-distance blocking;
+publish, reload, start, log, complete, and immutable history; zero-iframe
+unavailable guidance; app-owned accessibility; safe return and sign-out; foreign
+resource denial; no client UID trust; and exact disposable cleanup. The older
+checked-in hosted wrappers stopped at their truthful session boundaries and are
+not counted as passes or Wave 2 evidence.
 
-Wave 2 is locally integrated and verified on
-`vishal/wave-2-catalog-integration` from exact public-main base
-`a202a815ad3b7320bbc68b819303822ca4773b1d`. The sole applied prerequisite is
-canonical checkpoint `7046a94bae41e90839b16d5329b58a1975600ee9`, followed by Strength content
-`bbd44ab`, Strength QA `5863659`, and Core/conditioning tip `ac5b1b5`.
-Patch-equivalent prerequisite commits `ad92476` and `1cc190a` were not applied.
-The candidate contains 134 catalog records: the released 27, 65 Strength
-additions, and 42 Core, conditioning, carry, and mobility additions. The
-approved-video boundary remains 27 canonical variations and 54 reviewed rows.
-This candidate is pushed only to its feature branch; it is not merged,
-migrated, deployed, production-seeded, or production-verified.
+Post-cleanup direct database queries independently prove 134 catalog exercises,
+202 compatibility edges, 269 aliases, 54 byte-identical approved-video rows,
+zero owner-scoped application rows, all 17 user triggers enabled, and no invalid
+constraint, invalid index, migration, or ownership drift. Firebase contains the
+one existing Google-only identity and no disposable password identity. Cleanup
+advanced the retained deletion audits from 70 to 83; all 83 are terminal
+completed records. Exact-deployment log filters returned zero errors, zero
+warnings, and zero `5xx` responses.
 
-The primary checkout is aligned with `origin/main` at the Wave 2 base. The newer
+The primary checkout is aligned with `origin/main` at exact Wave 2 application
+commit `0ad06ef`. The newer
 Grok research remains the product owner's approved 216-link selection for the
 original 108-name intake; none of those candidate links entered runtime data.
 Runtime video publication remains gated by the existing per-video full-watch
@@ -62,41 +59,50 @@ private mode-`600` Git bundle
 this record exposes no bundle contents. The restore-tested Wave 1 pre-`0006`
 archive likewise remains private, mode `600`, and outside the repository.
 
-## Active Wave 2 integration handoff
+## Active Wave 2 production release
 
-- Last completed: exact source integration, duplicate-prerequisite proof,
-  central contract reconciliation, 122 Vitest files/834 tests, 4 database
-  files/34 tests, Drizzle and seed checks, PWA parity, production build and
-  44-route boundary, both exact Wave 2 browser journeys on Chromium desktop and
-  WebKit phone, the maintained authenticated matrix at 42 passes/two intentional
-  skips, and the public matrix at 47 passes/one documented WebKit PWA skip.
-- In progress: review handoff only.
-- Next: obtain review and separate release authorization. Do not merge `main`,
-  mutate production data, migrate, deploy, change providers, or approve/seed a
-  candidate video from this integration task.
-- Known limitation: this is a local candidate with synthetic authenticated data
-  and a disposable local Postgres public-browser fixture. No hosted or
-  production claim is made.
-- Verification: exact catalog count/order/search, all supported logging kinds,
-  immutable publication/runner/history behavior, accessibility, zero iframes
-  for unavailable guidance, and both maintained browser matrices pass.
-- Important files: `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`,
-  `docs/qa/latest/WAVE-2-CATALOG-INTEGRATION-QA.md`,
-  `src/domain/exercises/catalog-manifests/`, and
-  `src/domain/youtube/video-requirements.ts`.
-- Open question: none within candidate scope; release remains a separate
-  authorization.
+- Last completed: durable recovery and restore rehearsal; structural database
+  preflight; exact additive seed and idempotency replay; `main` application
+  release; exact-deployment identification; public/PWA, bounded Wave 2 public,
+  disposable signed-in Wave 2, owner-isolation, cleanup, database invariant, and
+  log verification.
+- In progress: ordinary real production Continue with Google. The Codex in-app
+  browser reached the control but its popup transport failed with a generic
+  network error; no external Chrome connection is currently available.
+- Next: connect external Chrome, pause at any unexpected chooser, consent, or
+  multifactor boundary, verify safe `/app` return, generic verified identity,
+  sign-out, and zero owner rows. Then write the final QA package, merge the
+  documentation closeout, verify any resulting deployment, and remove completed
+  Wave 2 worktrees and local branches.
+- Stop boundary: do not claim Google, final release completion, or worktree
+  closeout before the interactive lane and its direct database recheck pass. Do
+  not migrate, alter providers or aliases, approve a candidate video, or delete
+  the durable recovery archive or remote provenance branches.
+- Attribution: the complete local application matrix belongs to
+  `301b618b888613d95d69dffc5c42b6fb0dd26797`; proportional docs-only checks
+  belong to `0ad06ef`; hosted evidence belongs only to deployment
+  `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` at exact source `0ad06ef`.
+- Release branch: `vishal/wave-2-production-release` contains initial plan
+  checkpoint `7aa565a3be03a143dc8a8a31659e428700afbf0b` and the in-progress execution
+  record; its application/runtime tree is byte-identical to `0ad06ef`.
+- Retained worktrees: the release, Wave 2 integration, Strength, Core and
+  conditioning, and video-eligibility worktrees remain clean until every release
+  gate is green. Their source branches remain as provenance after local cleanup.
+- Important files: `docs/plans/WAVE-2-PRODUCTION-RELEASE.md`,
+  `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`,
+  `docs/qa/latest/WAVE-2-CATALOG-INTEGRATION-QA.md`, and
+  `src/domain/exercises/catalog-manifests/`.
 
 ## What exists
 
 - A public GitHub repository at `vdoshi96/My-Workout-Pal`. Local `main` tracks `origin/main`, and Vercel production is connected to that branch.
 - A fully inspected private reference recording, with temporary inspection artifacts outside the repository.
-- The Wave 1 source on `main` includes verified flexible day editing and cardio order, one frozen chooser contract, generated catalog manifests, equipment-compatible canonical/private search, inline private movement creation inside the real editor, owner-scoped personal guidance, immutable guidance snapshots, example-or-blank onboarding, resumable-workout home state, and canonical public Progress navigation.
+- The production source on `main` retains verified Wave 1 flexible day editing and cardio order, one frozen chooser contract, generated catalog manifests, equipment-compatible canonical/private search, inline private movement creation inside the real editor, owner-scoped personal guidance, immutable guidance snapshots, example-or-blank onboarding, resumable-workout home state, and canonical public Progress navigation.
 - The initial product record and context documentation.
 - An authoritative workout-companion repositioning plan and the original
-  108-name expansion inventory. The Wave 2 candidate implements 107 distinct
-  additions after resolving one duplicate as an alias; the Grok link inventory
-  remains non-runtime research.
+  108-name expansion inventory. The released Wave 2 source implements 107
+  distinct additions after resolving one duplicate as an alias; the Grok link
+  inventory remains non-runtime research.
 - A strict Next.js 16.3.2 foundation with a distinct public companion welcome route at `/`, the approved route-atlas five-day example at `/program`, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout, disclosed Progress preview at `/progress`, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
 - Development and production select Webpack explicitly because `next.config.ts` defines a custom `webpack` function. An isolated Next.js 16.3.2 development start identified Webpack, reached ready, and served `/program` with `200`.
 - Pure starter-program, equipment-substitution, program-draft editing, library-filter, canonical exercise-metadata, safe authenticated-return, double-progression eligibility, and persisted-data analytics domains.

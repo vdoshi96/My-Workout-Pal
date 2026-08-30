@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="0b2f14ec758b4a3792ef34e421e3a3b49f5b0406b2dd4d3b2c75c72396b81242">
+  <meta name="source-sha256" content="ad46ca05220c1633fa1c7224fd236b461474ed1ab302b2f408203194a4882cb1">
   <title>Project wiki · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -44,6 +44,9 @@
 <li><code>docs/plans/WAVE-1-INTEGRATION.md</code>: Wave 1 source provenance, integration contracts, migration order, combined acceptance criteria, and release stop boundary.</li>
 <li><code>docs/plans/WAVE-1-PRODUCTION-RELEASE.md</code>: exact release identities, restore-tested recovery, ordered production migrations, hosted verification, and cleanup record.</li>
 <li><code>docs/plans/WAVE-2-CATALOG-INTEGRATION.md</code>: Wave 2 source provenance, duplicate reconciliation, 134-record catalog contract, stable approved-video subset, verification matrix, and local-only release stop.</li>
+<li><code>docs/plans/WAVE-2-PRODUCTION-RELEASE.md</code>: exact application and deployment
+identities, durable recovery, ordered production seed, hosted verification,
+cleanup, and the remaining Google and repository-closeout gates.</li>
 <li><code>docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md</code>: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.</li>
 <li><code>docs/plans/NEON-CSRF-RESILIENCE.md</code>: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.</li>
 <li><code>docs/plans/PROGRAM-COLLECTION.md</code>: owned-program creation, cloning, activation, authorization, recovery, and verification design.</li>
@@ -61,6 +64,20 @@ alias, and runtime publication still requires recorded full-watch review.</li>
 <li><code>docs/reference/DEPLOYMENT-RECOVERY.md</code>: environments, release checks, cost controls, and recovery.</li>
 </ul>
 <p>Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.</p>
+<h2>Wave 2 production status</h2>
+<p>Application candidate <code>0ad06ef3821975d689015644be96f94f6b3b2dfa</code> and its
+additive 134-exercise catalog are live on Ready production deployment
+<code>dpl_DYxcb4ennqnstt8sFR2dkLXnomkn</code>. Durable recovery, deterministic seed and
+replay, public and disposable-member hosted journeys, exact cleanup, direct
+database invariants, and exact-deployment log filters are green. The 54 reviewed
+approved-video rows remain byte-identical, and none of the 216 selected
+candidate links entered runtime data.</p>
+<p>This release is not closed. Ordinary real production Continue with Google still
+requires an externally connected Chrome session after the in-app popup
+transport failed. The final <code>docs/qa/latest</code> replacement, documentation closeout
+merge, any resulting deployment verification, and completed Wave 2 worktree
+cleanup wait for that gate. The production-release plan is the authoritative
+execution record.</p>
 <h2>Wave 1 released architecture</h2>
 <p>Released application commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>
 composes library selection with routine placement while preserving the source

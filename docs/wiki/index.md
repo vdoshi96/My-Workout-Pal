@@ -16,6 +16,9 @@ Use the following documents as the maintained project map:
 - `docs/plans/WAVE-1-INTEGRATION.md`: Wave 1 source provenance, integration contracts, migration order, combined acceptance criteria, and release stop boundary.
 - `docs/plans/WAVE-1-PRODUCTION-RELEASE.md`: exact release identities, restore-tested recovery, ordered production migrations, hosted verification, and cleanup record.
 - `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`: Wave 2 source provenance, duplicate reconciliation, 134-record catalog contract, stable approved-video subset, verification matrix, and local-only release stop.
+- `docs/plans/WAVE-2-PRODUCTION-RELEASE.md`: exact application and deployment
+  identities, durable recovery, ordered production seed, hosted verification,
+  cleanup, and the remaining Google and repository-closeout gates.
 - `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
@@ -33,6 +36,23 @@ Use the following documents as the maintained project map:
 - `docs/reference/DEPLOYMENT-RECOVERY.md`: environments, release checks, cost controls, and recovery.
 
 Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.
+
+## Wave 2 production status
+
+Application candidate `0ad06ef3821975d689015644be96f94f6b3b2dfa` and its
+additive 134-exercise catalog are live on Ready production deployment
+`dpl_DYxcb4ennqnstt8sFR2dkLXnomkn`. Durable recovery, deterministic seed and
+replay, public and disposable-member hosted journeys, exact cleanup, direct
+database invariants, and exact-deployment log filters are green. The 54 reviewed
+approved-video rows remain byte-identical, and none of the 216 selected
+candidate links entered runtime data.
+
+This release is not closed. Ordinary real production Continue with Google still
+requires an externally connected Chrome session after the in-app popup
+transport failed. The final `docs/qa/latest` replacement, documentation closeout
+merge, any resulting deployment verification, and completed Wave 2 worktree
+cleanup wait for that gate. The production-release plan is the authoritative
+execution record.
 
 ## Wave 1 released architecture
 
