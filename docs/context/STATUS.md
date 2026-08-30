@@ -2,9 +2,9 @@
 
 ## Current phase
 
-Wave 2 application and data are live, but the production release remains open
-at the ordinary real-Google authentication gate. GitHub `main` and local `main`
-are exact application candidate `0ad06ef3821975d689015644be96f94f6b3b2dfa`.
+Wave 2 application, data, and production QA are released. The application tree
+on GitHub and local `main` contains exact candidate
+`0ad06ef3821975d689015644be96f94f6b3b2dfa`.
 Production deployment `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` is `READY` from that
 exact SHA and retains the existing stable, project, and Git-main aliases without
 a provider, alias, environment, or billing change.
@@ -37,6 +37,14 @@ resource denial; no client UID trust; and exact disposable cleanup. The older
 checked-in hosted wrappers stopped at their truthful session boundaries and are
 not counted as passes or Wave 2 evidence.
 
+Ordinary production **Continue with Google** completed through connected Chrome
+without an account chooser, consent, MFA, CAPTCHA, or another owner-action
+boundary. It returned safely to bounded `/app`, showed a generic verified
+identity, and created no application data. After explicit action-time
+confirmation, the app's **Sign out** control returned to `/sign-in`; direct
+navigation to `/app` then returned to `/sign-in?returnTo=/app`, with no verified
+identity visible. No private identity detail was recorded.
+
 Post-cleanup direct database queries independently prove 134 catalog exercises,
 202 compatibility edges, 269 aliases, 54 byte-identical approved-video rows,
 zero owner-scoped application rows, all 17 user triggers enabled, and no invalid
@@ -46,8 +54,9 @@ advanced the retained deletion audits from 70 to 83; all 83 are terminal
 completed records. Exact-deployment log filters returned zero errors, zero
 warnings, and zero `5xx` responses.
 
-The primary checkout is aligned with `origin/main` at exact Wave 2 application
-commit `0ad06ef`. The newer
+The primary checkout and `origin/main` retain the exact Wave 2 application tree
+from `0ad06ef`; the later release-closeout commits are documentation-only. The
+newer
 Grok research remains the product owner's approved 216-link selection for the
 original 108-name intake; none of those candidate links entered runtime data.
 Runtime video publication remains gated by the existing per-video full-watch
@@ -59,38 +68,35 @@ private mode-`600` Git bundle
 this record exposes no bundle contents. The restore-tested Wave 1 pre-`0006`
 archive likewise remains private, mode `600`, and outside the repository.
 
-## Active Wave 2 production release
+## Wave 2 production release closeout
 
-- Last completed: durable recovery and restore rehearsal; structural database
-  preflight; exact additive seed and idempotency replay; `main` application
-  release; exact-deployment identification; public/PWA, bounded Wave 2 public,
-  disposable signed-in Wave 2, owner-isolation, cleanup, database invariant, and
-  log verification.
-- In progress: ordinary real production Continue with Google. The Codex in-app
-  browser reached the control but its popup transport failed with a generic
-  network error; no external Chrome connection is currently available.
-- Next: connect external Chrome, pause at any unexpected chooser, consent, or
-  multifactor boundary, verify safe `/app` return, generic verified identity,
-  sign-out, and zero owner rows. Then write the final QA package, merge the
-  documentation closeout, verify any resulting deployment, and remove completed
-  Wave 2 worktrees and local branches.
-- Stop boundary: do not claim Google, final release completion, or worktree
-  closeout before the interactive lane and its direct database recheck pass. Do
-  not migrate, alter providers or aliases, approve a candidate video, or delete
-  the durable recovery archive or remote provenance branches.
+- Completed: durable recovery and restore rehearsal; structural database
+  preflight; exact additive seed and idempotency replay; application release;
+  public/PWA, bounded Wave 2 public, disposable signed-in Wave 2, real Google,
+  owner-isolation, cleanup, direct database invariants, and exact-deployment
+  logs.
+- Final owner state: the expected single Google-provider Firebase identity, no
+  password identity, zero rows for the Google owner, and zero owner-scoped
+  application rows globally. All 83 deletion audits are terminal completed.
+- Boundaries preserved: no migration, provider, alias, environment, billing,
+  approved-video, candidate-video, or unrelated production change. The durable
+  recovery archive and remote provenance branches remain.
 - Attribution: the complete local application matrix belongs to
   `301b618b888613d95d69dffc5c42b6fb0dd26797`; proportional docs-only checks
   belong to `0ad06ef`; hosted evidence belongs only to deployment
   `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` at exact source `0ad06ef`.
 - Release branch: `vishal/wave-2-production-release` contains initial plan
-  checkpoint `7aa565a3be03a143dc8a8a31659e428700afbf0b` and the in-progress execution
-  record; its application/runtime tree is byte-identical to `0ad06ef`.
-- Retained worktrees: the release, Wave 2 integration, Strength, Core and
-  conditioning, and video-eligibility worktrees remain clean until every release
-  gate is green. Their source branches remain as provenance after local cleanup.
+  checkpoint `7aa565a3be03a143dc8a8a31659e428700afbf0b` and execution checkpoint
+  `aa209617ac65c17336b1fcbc2b3c09e9ba1979e9`; its application/runtime tree is
+  byte-identical to `0ad06ef`.
+- Worktree cleanup: clean completed Strength, Core/conditioning,
+  video-eligibility, and integration worktrees and local branches were removed
+  after verifying identical GitHub tips. Their remote provenance branches
+  remain. Only the active release worktree and checked-out local release branch
+  remain for the orchestrator because a running worktree cannot remove itself.
 - Important files: `docs/plans/WAVE-2-PRODUCTION-RELEASE.md`,
   `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`,
-  `docs/qa/latest/WAVE-2-CATALOG-INTEGRATION-QA.md`, and
+  `docs/qa/latest/WAVE-2-PRODUCTION-RELEASE-QA.md`, and
   `src/domain/exercises/catalog-manifests/`.
 
 ## What exists

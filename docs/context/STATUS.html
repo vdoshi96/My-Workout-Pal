@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="1af968cfdc63f61f7f0fa58e1d5f88bc30d289aca784b82f7fdd55cf05c9097c">
+  <meta name="source-sha256" content="2e520b8164077fcf81d02b08cc3f55a204886dfe6b0e44685a40721ab3da32ff">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,9 +29,9 @@
   <main>
 <h1>Project status</h1>
 <h2>Current phase</h2>
-<p>Wave 2 application and data are live, but the production release remains open
-at the ordinary real-Google authentication gate. GitHub <code>main</code> and local <code>main</code>
-are exact application candidate <code>0ad06ef3821975d689015644be96f94f6b3b2dfa</code>.
+<p>Wave 2 application, data, and production QA are released. The application tree
+on GitHub and local <code>main</code> contains exact candidate
+<code>0ad06ef3821975d689015644be96f94f6b3b2dfa</code>.
 Production deployment <code>dpl_DYxcb4ennqnstt8sFR2dkLXnomkn</code> is <code>READY</code> from that
 exact SHA and retains the existing stable, project, and Git-main aliases without
 a provider, alias, environment, or billing change.</p>
@@ -60,6 +60,13 @@ unavailable guidance; app-owned accessibility; safe return and sign-out; foreign
 resource denial; no client UID trust; and exact disposable cleanup. The older
 checked-in hosted wrappers stopped at their truthful session boundaries and are
 not counted as passes or Wave 2 evidence.</p>
+<p>Ordinary production <strong>Continue with Google</strong> completed through connected Chrome
+without an account chooser, consent, MFA, CAPTCHA, or another owner-action
+boundary. It returned safely to bounded <code>/app</code>, showed a generic verified
+identity, and created no application data. After explicit action-time
+confirmation, the app&#39;s <strong>Sign out</strong> control returned to <code>/sign-in</code>; direct
+navigation to <code>/app</code> then returned to <code>/sign-in?returnTo=/app</code>, with no verified
+identity visible. No private identity detail was recorded.</p>
 <p>Post-cleanup direct database queries independently prove 134 catalog exercises,
 202 compatibility edges, 269 aliases, 54 byte-identical approved-video rows,
 zero owner-scoped application rows, all 17 user triggers enabled, and no invalid
@@ -68,8 +75,9 @@ one existing Google-only identity and no disposable password identity. Cleanup
 advanced the retained deletion audits from 70 to 83; all 83 are terminal
 completed records. Exact-deployment log filters returned zero errors, zero
 warnings, and zero <code>5xx</code> responses.</p>
-<p>The primary checkout is aligned with <code>origin/main</code> at exact Wave 2 application
-commit <code>0ad06ef</code>. The newer
+<p>The primary checkout and <code>origin/main</code> retain the exact Wave 2 application tree
+from <code>0ad06ef</code>; the later release-closeout commits are documentation-only. The
+newer
 Grok research remains the product owner&#39;s approved 216-link selection for the
 original 108-name intake; none of those candidate links entered runtime data.
 Runtime video publication remains gated by the existing per-video full-watch
@@ -80,38 +88,35 @@ private mode-<code>600</code> Git bundle
 <code>/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-pre-wave1-preservation-4ad6dff.bundle</code>;
 this record exposes no bundle contents. The restore-tested Wave 1 pre-<code>0006</code>
 archive likewise remains private, mode <code>600</code>, and outside the repository.</p>
-<h2>Active Wave 2 production release</h2>
+<h2>Wave 2 production release closeout</h2>
 <ul>
-<li>Last completed: durable recovery and restore rehearsal; structural database
-preflight; exact additive seed and idempotency replay; <code>main</code> application
-release; exact-deployment identification; public/PWA, bounded Wave 2 public,
-disposable signed-in Wave 2, owner-isolation, cleanup, database invariant, and
-log verification.</li>
-<li>In progress: ordinary real production Continue with Google. The Codex in-app
-browser reached the control but its popup transport failed with a generic
-network error; no external Chrome connection is currently available.</li>
-<li>Next: connect external Chrome, pause at any unexpected chooser, consent, or
-multifactor boundary, verify safe <code>/app</code> return, generic verified identity,
-sign-out, and zero owner rows. Then write the final QA package, merge the
-documentation closeout, verify any resulting deployment, and remove completed
-Wave 2 worktrees and local branches.</li>
-<li>Stop boundary: do not claim Google, final release completion, or worktree
-closeout before the interactive lane and its direct database recheck pass. Do
-not migrate, alter providers or aliases, approve a candidate video, or delete
-the durable recovery archive or remote provenance branches.</li>
+<li>Completed: durable recovery and restore rehearsal; structural database
+preflight; exact additive seed and idempotency replay; application release;
+public/PWA, bounded Wave 2 public, disposable signed-in Wave 2, real Google,
+owner-isolation, cleanup, direct database invariants, and exact-deployment
+logs.</li>
+<li>Final owner state: the expected single Google-provider Firebase identity, no
+password identity, zero rows for the Google owner, and zero owner-scoped
+application rows globally. All 83 deletion audits are terminal completed.</li>
+<li>Boundaries preserved: no migration, provider, alias, environment, billing,
+approved-video, candidate-video, or unrelated production change. The durable
+recovery archive and remote provenance branches remain.</li>
 <li>Attribution: the complete local application matrix belongs to
 <code>301b618b888613d95d69dffc5c42b6fb0dd26797</code>; proportional docs-only checks
 belong to <code>0ad06ef</code>; hosted evidence belongs only to deployment
 <code>dpl_DYxcb4ennqnstt8sFR2dkLXnomkn</code> at exact source <code>0ad06ef</code>.</li>
 <li>Release branch: <code>vishal/wave-2-production-release</code> contains initial plan
-checkpoint <code>7aa565a3be03a143dc8a8a31659e428700afbf0b</code> and the in-progress execution
-record; its application/runtime tree is byte-identical to <code>0ad06ef</code>.</li>
-<li>Retained worktrees: the release, Wave 2 integration, Strength, Core and
-conditioning, and video-eligibility worktrees remain clean until every release
-gate is green. Their source branches remain as provenance after local cleanup.</li>
+checkpoint <code>7aa565a3be03a143dc8a8a31659e428700afbf0b</code> and execution checkpoint
+<code>aa209617ac65c17336b1fcbc2b3c09e9ba1979e9</code>; its application/runtime tree is
+byte-identical to <code>0ad06ef</code>.</li>
+<li>Worktree cleanup: clean completed Strength, Core/conditioning,
+video-eligibility, and integration worktrees and local branches were removed
+after verifying identical GitHub tips. Their remote provenance branches
+remain. Only the active release worktree and checked-out local release branch
+remain for the orchestrator because a running worktree cannot remove itself.</li>
 <li>Important files: <code>docs/plans/WAVE-2-PRODUCTION-RELEASE.md</code>,
 <code>docs/plans/WAVE-2-CATALOG-INTEGRATION.md</code>,
-<code>docs/qa/latest/WAVE-2-CATALOG-INTEGRATION-QA.md</code>, and
+<code>docs/qa/latest/WAVE-2-PRODUCTION-RELEASE-QA.md</code>, and
 <code>src/domain/exercises/catalog-manifests/</code>.</li>
 </ul>
 <h2>What exists</h2>

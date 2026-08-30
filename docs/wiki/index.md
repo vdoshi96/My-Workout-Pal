@@ -18,7 +18,7 @@ Use the following documents as the maintained project map:
 - `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`: Wave 2 source provenance, duplicate reconciliation, 134-record catalog contract, stable approved-video subset, verification matrix, and local-only release stop.
 - `docs/plans/WAVE-2-PRODUCTION-RELEASE.md`: exact application and deployment
   identities, durable recovery, ordered production seed, hosted verification,
-  cleanup, and the remaining Google and repository-closeout gates.
+  Google authentication, cleanup, and repository closeout.
 - `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
@@ -47,12 +47,20 @@ database invariants, and exact-deployment log filters are green. The 54 reviewed
 approved-video rows remain byte-identical, and none of the 216 selected
 candidate links entered runtime data.
 
-This release is not closed. Ordinary real production Continue with Google still
-requires an externally connected Chrome session after the in-app popup
-transport failed. The final `docs/qa/latest` replacement, documentation closeout
-merge, any resulting deployment verification, and completed Wave 2 worktree
-cleanup wait for that gate. The production-release plan is the authoritative
-execution record.
+Ordinary real production Continue with Google passed through connected Chrome,
+returned safely to bounded `/app`, showed generic verified identity state, and
+created no application data. Confirmed app sign-out returned to `/sign-in`, and
+a direct `/app` revisit proved session absence. The direct owner audit found
+zero rows for that Google identity and zero owner-scoped application rows
+globally.
+
+The final privacy-safe production QA report and generated HTML replace the
+integration-only report and six synthetic screenshots in `docs/qa/latest`.
+Clean completed Strength, Core/conditioning, video-eligibility, and integration
+worktrees and local branches were removed while their GitHub provenance refs
+remain. Only the active release worktree and checked-out local release branch
+remain as the orchestrator's self-removal item. The production-release plan is
+the authoritative execution record.
 
 ## Wave 1 released architecture
 

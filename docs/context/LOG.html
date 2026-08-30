@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d67f3589b41e5884c788f6e727bf2018e8ad2086f44c0e9dd11faf5848b79415">
+  <meta name="source-sha256" content="8d9e724721dd3de383ba9ec208372126d4cfeeb55e2088c76d1c86ac0d36dd4a">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,7 +28,7 @@
 <body>
   <main>
 <h1>Project log</h1>
-<h2>2026-08-30: Wave 2 production execution awaiting Google gate</h2>
+<h2>2026-08-30: Wave 2 production release</h2>
 <ul>
 <li>Created and checksummed the private mode-<code>600</code> PostgreSQL archive outside the
 repository, then restored it into an isolated disposable database with
@@ -64,12 +64,24 @@ rows. No candidate video was approved or seeded.</li>
 <li>Exact-deployment log filters found zero errors, warnings, or <code>5xx</code> responses.
 A broader bounded sample contained only informational entries and no
 cancellation requiring classification.</li>
-<li>The remaining gate is ordinary real production Continue with Google. The
-in-app browser&#39;s popup transport returned a generic network error, and no
-externally connected Chrome session is available. No private identity detail
-was recorded and no Google-owned application row was created. Final QA,
-documentation merge, deployment verification, and worktree cleanup wait for
-that bounded interactive gate.</li>
+<li>Completed ordinary real production Continue with Google through connected
+Chrome. It returned safely to bounded <code>/app</code>, showed a generic verified
+identity, and created no onboarding, profile, program, workout, or history
+data. After explicit action-time confirmation, app sign-out returned to
+<code>/sign-in</code>; direct <code>/app</code> navigation then returned to
+<code>/sign-in?returnTo=/app</code>, with no verified identity visible. No chooser,
+consent, MFA, CAPTCHA, or private identity recording occurred.</li>
+<li>A fresh privacy-safe direct Firebase/PostgreSQL audit proved the expected one
+Google-provider identity, zero password identities, zero application rows for
+the Google owner, zero owner-scoped rows globally, exact 134/202/269/54 global
+counts, 17 enabled triggers, and no invalid constraint, invalid index,
+migration, or ownership drift.</li>
+<li>Replaced the integration-only QA package and six synthetic screenshots with
+one privacy-safe production report and generated HTML. Removed clean completed
+Strength, Core/conditioning, video-eligibility, and integration worktrees and
+local branches after checking identical GitHub tips; their remote provenance
+branches and the durable recovery archive remain. The active release worktree
+and its local branch are the single self-removal item for the orchestrator.</li>
 </ul>
 <h2>2026-08-29: Wave 1 production release</h2>
 <ul>

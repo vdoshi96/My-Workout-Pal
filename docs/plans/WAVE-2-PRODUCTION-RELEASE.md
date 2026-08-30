@@ -284,13 +284,13 @@ release on an unexplained `5xx`, database failure, CSRF failure, authentication
 regression, disabled trigger, invalid constraint, leaked ownership, raw UID,
 secret, connection detail, or private account value.
 
-## Execution record — Google gate pending
+## Execution record — production release complete
 
-The application and additive catalog data are live and their automated and
-disposable-owner gates are green. The production release is not yet closed:
-ordinary real-Google authentication still requires an externally connected
-Chrome session, and the final QA package, documentation closeout, and worktree
-cleanup must wait for that gate.
+The application and additive catalog data are live. Durable recovery,
+transactional seed and replay, public and disposable-owner hosted journeys,
+ordinary real-Google authentication, exact cleanup, direct database invariants,
+and exact-deployment logs are green. The final privacy-safe QA package replaces
+the integration-only evidence set.
 
 ### Exact release identity
 
@@ -299,6 +299,7 @@ cleanup must wait for that gate.
 | Application release commit | `0ad06ef3821975d689015644be96f94f6b3b2dfa` |
 | Fully verified application/content commit | `301b618b888613d95d69dffc5c42b6fb0dd26797` |
 | Release-plan checkpoint | `7aa565a3be03a143dc8a8a31659e428700afbf0b` |
+| In-progress execution checkpoint | `aa209617ac65c17336b1fcbc2b3c09e9ba1979e9` |
 | Production deployment | `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` |
 | Exact deployment URL | `https://my-workout-jup04bi3o-vdoshi96s-projects.vercel.app` |
 | Deployment source and state | exact `0ad06ef`; `READY`; production |
@@ -321,7 +322,7 @@ metadata checks are attributed to the documentation-only `0ad06ef` successor.
 
 ### Recovery and database execution
 
-Before production mutation, PostgreSQL 18.6 tooling created the private custom-
+Before production mutation, PostgreSQL 18.6 client tooling created the private custom-
 format archive at
 `/Users/vishal/Library/Application Support/My Workout Pal/Backups/mwp-wave2-preseed-2026-08-29-0ad06ef.dump`.
 The archive and its adjacent checksum file are mode `600`; the containing
@@ -334,6 +335,9 @@ All-table digests, schema, migration, ownership, constraint, index, trigger, and
 application-verifier comparisons matched production. The disposable database
 was dropped and its absence confirmed. The archive and checksum remain private
 and preserved.
+
+The production server reported `18.6 (c5250a2)`, so the archive and rehearsal
+used matching-major tooling.
 
 The preflight found database and session ownership under `neondb_owner`; the
 `public` schema uses PostgreSQL's `pg_database_owner` proxy, while all 36 public
@@ -358,11 +362,21 @@ digest `20437f1bcc2378578d87f9eaa127b0828acafbcab2a06cdfa833cb0d2c1d77e1`
 through both seed runs and hosted QA. No selected candidate link was approved,
 embedded, or seeded. A separate direct post-cleanup query, not a hosted-wrapper
 digest, proved 134 exercises, 202 compatibility edges, 269 aliases, and 54
-approved rows. The final privacy-safe global digests are:
+approved rows. The release-time privacy-safe global digests are:
 
 - Catalog exercises: `4edcf8a9b4dc626480dfc8688406ae176685a25c5f8a075b2d7c5a84023a315a`.
 - Compatibility edges: `69543336cdb5e09994ed2c7fde4f611f74a8a4b08276d70250eb0057f7d96c8b`.
 - Search aliases: `3410cf5dd590140cc7c622c959641688bc8ab824eb1c85908c8562a074fb2ac2`.
+
+A fresh closeout query projected the exact seed-managed fields with explicit
+JSON-string-wrapping serialization. Its non-comparable but repeatable digests
+are catalog
+`d4cfe89191c1679673ecfa2bcf091e4727919ce4347133c3b9fbd5c4ef7dd676`,
+edges `5f73495e3822848082d7ff9bd15d3908b930ca3aae725ed1cd4e1fa3b9a31e46`,
+aliases `44c87b0aae261047ab3c6817575f3f592076f960bd601db58a7d76e6c3a086ed`,
+and approved videos
+`2e3c795e0363d834055d283f2e689b5df26fc2e3ef9d243ff1b3f1c1b51f1524`.
+These do not replace or compare against the release-time serialization.
 
 After cleanup, every owner-scoped application table was empty; the one existing
 Google-only Firebase identity remained, and no disposable password identity
@@ -416,29 +430,30 @@ contained only informational serverless and middleware records and reached its
 explicit limit. No cancellation appeared, so no browser cancellation was
 classified as benign.
 
-### Remaining gate
+### Ordinary real-Google gate completed
 
-The production Continue with Google control was exercised in the Codex in-app
-browser. Its popup transport failed with a generic network error, and no popup
-tab was available. A separately connected external Chrome session is not
-currently available to automation. No private identity detail was recorded, no
-onboarding action was selected, and the direct database baseline remains empty.
+Production **Continue with Google** was exercised through connected Chrome. It
+completed without an account chooser, consent, MFA, CAPTCHA, or another
+owner-action boundary and returned safely to bounded `/app`. The application
+showed a generic verified identity and the app sign-out control. No onboarding
+choice was submitted and no application data was created.
 
-The next release action is bounded: connect external Chrome, exercise ordinary
-production Continue with Google, pause at any unexpected chooser, consent, or
-multifactor boundary, verify the safe `/app` return, generic verified identity
-visibility, and sign-out, and then directly reconfirm that no owner-scoped row
-was created. Only after that passes may the final production QA report replace
-`docs/qa/latest`, the documentation closeout merge, final deployment check, and
-completed Wave 2 worktree cleanup proceed.
+After explicit action-time confirmation, the app's **Sign out** control cleared
+the secure session and local workout-draft namespace. Chrome returned to
+`/sign-in`; a direct `/app` navigation returned to
+`/sign-in?returnTo=/app`, with no verified identity visible. A direct
+privacy-safe Firebase/PostgreSQL query found the expected single Google-provider
+identity, no password identities, zero application rows for that exact owner,
+and zero owner-scoped application rows globally. No private identity detail was
+recorded or published.
 
 ## Documentation and evidence closeout
 
-Create one privacy-safe Wave 2 production QA report under `docs/qa/latest/` and
-generate its HTML counterpart. Update this plan into a release record, then
-update `docs/context/STATUS.md`, `docs/context/LOG.md`, and `docs/wiki/index.md`
-with exact verified facts. Regenerate every project-owned HTML counterpart and
-pass documentation parity.
+One privacy-safe Wave 2 production QA report now replaces the prior integration
+report and six synthetic screenshots under `docs/qa/latest/`. Its HTML
+counterpart, this plan, `docs/context/STATUS.md`, `docs/context/LOG.md`, and
+`docs/wiki/index.md` are regenerated from canonical Markdown and checked for
+parity. No production screenshot is retained.
 
 The report must record:
 
@@ -461,20 +476,19 @@ or candidate links.
 
 ## Repository closeout
 
-After every release and evidence gate is green:
+After all application and evidence gates passed, the clean completed Strength,
+Core/conditioning, video-eligibility, and integration worktrees and their local
+branches were removed. Exact GitHub tips were checked first, and the four remote
+provenance branches remain. The release branch is pushed and the reviewed
+documentation closeout is advanced into public and local `main`; any resulting
+documentation-only Vercel deployment is required to be Ready on the unchanged
+aliases with an application/runtime tree byte-identical to `0ad06ef`.
 
-1. Push the release branch.
-2. Merge the reviewed documentation closeout into `main`.
-3. Update local `main` to the identical final commit.
-4. Verify any resulting documentation-only production deployment.
-5. Remove completed Wave 2 worktrees and local branches only after ancestry and
-   clean-state checks.
-6. Keep remote provenance branches.
-7. Keep the durable recovery archive.
-8. Require every live checkout to be clean.
-
-If this release worktree can't remove itself, report that single cleanup item to
-the orchestrator. Do not use a destructive workaround.
+The durable recovery archive remains. This active release worktree and its
+checked-out local branch cannot safely remove themselves while the release task
+is running, so that single exact cleanup item is reported to the orchestrator
+instead of using a destructive workaround. Every retained live checkout must be
+clean.
 
 ## Acceptance criteria
 

@@ -1,6 +1,6 @@
 # Project log
 
-## 2026-08-30: Wave 2 production execution awaiting Google gate
+## 2026-08-30: Wave 2 production release
 
 - Created and checksummed the private mode-`600` PostgreSQL archive outside the
   repository, then restored it into an isolated disposable database with
@@ -36,12 +36,24 @@
 - Exact-deployment log filters found zero errors, warnings, or `5xx` responses.
   A broader bounded sample contained only informational entries and no
   cancellation requiring classification.
-- The remaining gate is ordinary real production Continue with Google. The
-  in-app browser's popup transport returned a generic network error, and no
-  externally connected Chrome session is available. No private identity detail
-  was recorded and no Google-owned application row was created. Final QA,
-  documentation merge, deployment verification, and worktree cleanup wait for
-  that bounded interactive gate.
+- Completed ordinary real production Continue with Google through connected
+  Chrome. It returned safely to bounded `/app`, showed a generic verified
+  identity, and created no onboarding, profile, program, workout, or history
+  data. After explicit action-time confirmation, app sign-out returned to
+  `/sign-in`; direct `/app` navigation then returned to
+  `/sign-in?returnTo=/app`, with no verified identity visible. No chooser,
+  consent, MFA, CAPTCHA, or private identity recording occurred.
+- A fresh privacy-safe direct Firebase/PostgreSQL audit proved the expected one
+  Google-provider identity, zero password identities, zero application rows for
+  the Google owner, zero owner-scoped rows globally, exact 134/202/269/54 global
+  counts, 17 enabled triggers, and no invalid constraint, invalid index,
+  migration, or ownership drift.
+- Replaced the integration-only QA package and six synthetic screenshots with
+  one privacy-safe production report and generated HTML. Removed clean completed
+  Strength, Core/conditioning, video-eligibility, and integration worktrees and
+  local branches after checking identical GitHub tips; their remote provenance
+  branches and the durable recovery archive remain. The active release worktree
+  and its local branch are the single self-removal item for the orchestrator.
 
 ## 2026-08-29: Wave 1 production release
 

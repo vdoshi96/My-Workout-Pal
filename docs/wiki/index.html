@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="ad46ca05220c1633fa1c7224fd236b461474ed1ab302b2f408203194a4882cb1">
+  <meta name="source-sha256" content="53771a897f26725d0b4712fbbe6d6ab72dfeb491af390e739d2d6043eb238c4f">
   <title>Project wiki · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -46,7 +46,7 @@
 <li><code>docs/plans/WAVE-2-CATALOG-INTEGRATION.md</code>: Wave 2 source provenance, duplicate reconciliation, 134-record catalog contract, stable approved-video subset, verification matrix, and local-only release stop.</li>
 <li><code>docs/plans/WAVE-2-PRODUCTION-RELEASE.md</code>: exact application and deployment
 identities, durable recovery, ordered production seed, hosted verification,
-cleanup, and the remaining Google and repository-closeout gates.</li>
+Google authentication, cleanup, and repository closeout.</li>
 <li><code>docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md</code>: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.</li>
 <li><code>docs/plans/NEON-CSRF-RESILIENCE.md</code>: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.</li>
 <li><code>docs/plans/PROGRAM-COLLECTION.md</code>: owned-program creation, cloning, activation, authorization, recovery, and verification design.</li>
@@ -72,12 +72,19 @@ replay, public and disposable-member hosted journeys, exact cleanup, direct
 database invariants, and exact-deployment log filters are green. The 54 reviewed
 approved-video rows remain byte-identical, and none of the 216 selected
 candidate links entered runtime data.</p>
-<p>This release is not closed. Ordinary real production Continue with Google still
-requires an externally connected Chrome session after the in-app popup
-transport failed. The final <code>docs/qa/latest</code> replacement, documentation closeout
-merge, any resulting deployment verification, and completed Wave 2 worktree
-cleanup wait for that gate. The production-release plan is the authoritative
-execution record.</p>
+<p>Ordinary real production Continue with Google passed through connected Chrome,
+returned safely to bounded <code>/app</code>, showed generic verified identity state, and
+created no application data. Confirmed app sign-out returned to <code>/sign-in</code>, and
+a direct <code>/app</code> revisit proved session absence. The direct owner audit found
+zero rows for that Google identity and zero owner-scoped application rows
+globally.</p>
+<p>The final privacy-safe production QA report and generated HTML replace the
+integration-only report and six synthetic screenshots in <code>docs/qa/latest</code>.
+Clean completed Strength, Core/conditioning, video-eligibility, and integration
+worktrees and local branches were removed while their GitHub provenance refs
+remain. Only the active release worktree and checked-out local release branch
+remain as the orchestrator&#39;s self-removal item. The production-release plan is
+the authoritative execution record.</p>
 <h2>Wave 1 released architecture</h2>
 <p>Released application commit <code>a202a815ad3b7320bbc68b819303822ca4773b1d</code>
 composes library selection with routine placement while preserving the source
