@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="42a00df0f8cd5abe03d8d569c69ddeb8e4deb2181becbe80a17cc229fbac0cba">
+  <title>Wave 2 production release plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 2 production release plan</h1>
+<h2>Outcome</h2>
+<p>Release the exact Wave 2 catalog candidate
+<code>0ad06ef3821975d689015644be96f94f6b3b2dfa</code> through the existing Git-connected
+Vercel production project. Seed the additive global catalog rows before the
+application deploy, verify the complete public and private product story, clean
+all disposable owner data, and record the final release without changing
+providers, aliases, environment variables, billing, or approved-video state.</p>
+<p>The fully verified application and content checkpoint is
+<code>301b618b888613d95d69dffc5c42b6fb0dd26797</code>. Candidate <code>0ad06ef</code> is its
+documentation-only successor. The release must preserve the application,
+runtime, test, schema, seed, and public-asset trees from <code>301b618</code> exactly.</p>
+<h2>Authorization and stop boundaries</h2>
+<p>The product owner authorizes the following release actions:</p>
+<ul>
+<li>Create and push <code>vishal/wave-2-production-release</code> from exact <code>0ad06ef</code>.</li>
+<li>Create and restore-rehearse a private PostgreSQL archive.</li>
+<li>Run the existing deterministic production catalog seed twice.</li>
+<li>Fast-forward exact <code>0ad06ef</code> into public <code>main</code>.</li>
+<li>Let the existing Vercel Git integration deploy production from <code>main</code>.</li>
+<li>Create disposable password identities and owned data for hosted verification,
+then delete those identities and owned rows.</li>
+<li>Use the owner&#39;s existing Google identity for ordinary sign-in, identity
+visibility, safe return, and sign-out without creating a profile or program.</li>
+<li>Remove completed local Wave 2 worktrees and local branches after release
+evidence is green.</li>
+</ul>
+<p>The release does not authorize the following actions:</p>
+<ul>
+<li>Apply a schema migration or hand-authored SQL data patch.</li>
+<li>Approve, embed, publish, or seed any of the 216 selected candidate links.</li>
+<li>Change the 27 video-required variations or 54 reviewed approved-video rows.</li>
+<li>Change Vercel aliases, environment variables, billing, team settings,
+provider configuration, or the Neon resource.</li>
+<li>Delete or repair existing user data.</li>
+<li>Add Wave 3 artwork, CSS, components, or runtime assets.</li>
+<li>Delete remote provenance branches or the durable recovery archive.</li>
+</ul>
+<p>Stop before the next dependent action if a Git identity, recovery check,
+database preflight, seed delta, deployment identity, browser result, cleanup
+result, or log audit is incomplete or untrustworthy.</p>
+<h2>Release story</h2>
+<p>The release adds 107 catalog-only movements to the 27 released movements. A
+guest can search the expanded library, open written instructions, and see a
+truthful unavailable-guidance state with zero iframes. A verified member can
+select supported Strength, duration, and distance-duration movements in a blank
+routine, publish the immutable revision, reload it, start and log the workout,
+and review immutable history. The server derives ownership from the verified
+session at every private boundary.</p>
+<p>The data flow is:</p>
+<ol>
+<li>The checked-in category manifests define 134 deterministic catalog records.</li>
+<li>The existing transactional seed derives stable catalog, compatibility, and
+alias rows and inserts only missing global rows.</li>
+<li>Public and authenticated server reads return the seeded catalog.</li>
+<li>The editor sends only a catalog identity and logging meaning through the
+neutral chooser contract.</li>
+<li>The server validates catalog membership and equipment compatibility, then
+publishes an owner-scoped immutable program revision.</li>
+<li>Workout start snapshots movement meaning and any owner guidance. Reload,
+logging, and history read the immutable snapshot.</li>
+</ol>
+<h2>Verified source and provider baseline</h2>
+<p>The following read-only checks passed before the release plan was written:</p>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Verified value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Local <code>main</code></td>
+<td><code>a202a815ad3b7320bbc68b819303822ca4773b1d</code></td>
+</tr>
+<tr>
+<td>GitHub <code>main</code></td>
+<td><code>a202a815ad3b7320bbc68b819303822ca4773b1d</code></td>
+</tr>
+<tr>
+<td>GitHub candidate</td>
+<td><code>0ad06ef3821975d689015644be96f94f6b3b2dfa</code></td>
+</tr>
+<tr>
+<td>Candidate parent</td>
+<td><code>301b618b888613d95d69dffc5c42b6fb0dd26797</code></td>
+</tr>
+<tr>
+<td>Release branch base</td>
+<td><code>0ad06ef3821975d689015644be96f94f6b3b2dfa</code></td>
+</tr>
+<tr>
+<td>Current production deployment</td>
+<td><code>dpl_8Crg9j6UD9K3aH7r6icePmcvLzzH</code></td>
+</tr>
+<tr>
+<td>Current production source</td>
+<td><code>a202a815ad3b7320bbc68b819303822ca4773b1d</code></td>
+</tr>
+<tr>
+<td>Current deployment state</td>
+<td><code>READY</code></td>
+</tr>
+<tr>
+<td>Vercel project</td>
+<td><code>vdoshi96s-projects/my-workout-pal</code></td>
+</tr>
+</tbody></table>
+<p>The current deployment owns the stable, project, and Git-main production
+aliases. The release must verify the same alias set after each production
+deployment without assigning or moving an alias manually.</p>
+<p>Before the first external mutation, complete these source checks:</p>
+<ul>
+<li>Reconfirm live GitHub refs and ancestry.</li>
+<li>Review every base-to-candidate path and complete commit content.</li>
+<li>Confirm that <code>0ad06ef</code> differs from <code>301b618</code> only in Markdown and generated
+HTML documentation.</li>
+<li>Confirm no schema, migration, secret, private media, candidate runtime URL,
+public asset, or Wave 3 runtime artwork entered the candidate.</li>
+<li>Confirm that the checked-in approved-video manifest is byte-identical to the
+released manifest.</li>
+</ul>
+<h2>Durable recovery gate</h2>
+<p>Create a PostgreSQL custom-format archive under the user&#39;s private My Workout
+Pal backup directory outside the repository and temporary storage. Use the
+production database identity already configured in ignored local environment
+storage. Never print the connection string.</p>
+<p>The archive gate must prove all of the following facts:</p>
+<ul>
+<li>The archive is a regular file owned by the user with mode <code>600</code>.</li>
+<li>A SHA-256 checksum is recorded without exposing archive contents.</li>
+<li>The PostgreSQL client tooling is compatible with the production server.</li>
+<li><code>pg_restore --list</code> can read the archive.</li>
+<li>An isolated disposable database accepts the complete restore.</li>
+<li>The restored migration identities, schema objects, ownership, constraints,
+triggers, privacy-safe global counts, and owner-scoped table counts match the
+production pre-release snapshot.</li>
+<li>Any restore-only normalization is applied only to the disposable target, is
+documented exactly, and does not modify the archive.</li>
+<li>The disposable restore database and task-owned temporary files are removed
+after rehearsal. The durable archive remains private and preserved.</li>
+</ul>
+<p>Do not continue to production preflight if the archive, checksum, restore, or
+comparison is incomplete.</p>
+<h2>Production database preflight</h2>
+<p>Run the first read-only application verifier from exact current-main tooling at
+<code>a202a815</code>. Supplement it with privacy-safe structural queries that report only
+object names, roles, status, and aggregate counts.</p>
+<p>The preflight must confirm:</p>
+<ul>
+<li>Production is the expected Neon database and <code>neondb_owner</code> owns the public
+schema and application tables.</li>
+<li>The migration journal matches the eight released migrations through <code>0007</code>.</li>
+<li>Wave 2 adds no migration and no migration is pending.</li>
+<li>Every constraint is validated.</li>
+<li>Every user trigger is enabled in ordinary mode.</li>
+<li>The cardio, program descendant, workout snapshot, workout log, and account-
+deletion ownership guards retain their expected definitions and state.</li>
+<li>The existing deterministic graph is 27 catalog exercises, 44 compatibility
+edges, 54 aliases, and 54 approved-video rows before the Wave 2 seed.</li>
+<li>The approved-video rows have a pre-seed byte digest that can be compared after
+both seed runs without publishing video IDs or URLs.</li>
+<li>Every owner-scoped table has a recorded aggregate count and digest where a
+stable privacy-safe digest is practical.</li>
+<li>Firebase Admin returns only aggregate identity counts and provider-state
+checks. Output does not include email addresses, raw UIDs, tokens, or private
+account metadata.</li>
+</ul>
+<p>Fail closed on an unexpected object, count, owner, trigger, constraint,
+migration, or pre-existing catalog drift. Do not repair or delete data during
+preflight.</p>
+<h2>Transactional production seed</h2>
+<p>Run the existing owner-approved <code>db:seed</code> command from exact candidate
+<code>0ad06ef</code> before application deployment. Do not run SQL by hand.</p>
+<p>The first seed must create only these global additions:</p>
+<table>
+<thead>
+<tr>
+<th>Global table group</th>
+<th align="right">Before</th>
+<th align="right">After</th>
+<th align="right">Intended delta</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Catalog exercises</td>
+<td align="right">27</td>
+<td align="right">134</td>
+<td align="right">107</td>
+</tr>
+<tr>
+<td>Compatibility edges</td>
+<td align="right">44</td>
+<td align="right">202</td>
+<td align="right">158</td>
+</tr>
+<tr>
+<td>Search aliases</td>
+<td align="right">54</td>
+<td align="right">269</td>
+<td align="right">215</td>
+</tr>
+<tr>
+<td>Approved videos</td>
+<td align="right">54</td>
+<td align="right">54</td>
+<td align="right">0</td>
+</tr>
+</tbody></table>
+<p>The seed gate must also prove these facts:</p>
+<ul>
+<li>Stable catalog IDs and deterministic order match the checked-in manifests.</li>
+<li>The 27 released records remain the exact prefix.</li>
+<li>Strength contributes 65 records, and Core, conditioning, carry, and mobility
+contribute 42 records.</li>
+<li>The five distance-duration records retain their exact logging meaning.</li>
+<li>The 54 approved-video rows remain byte-identical to their pre-seed digest.</li>
+<li>No profile, preference, equipment profile, program, revision, day, section,
+prescription, cardio, custom exercise, personal guidance, workout session,
+snapshot, operation, idempotency, deletion-saga, record, projection, or
+progress row is created, removed, or rewritten.</li>
+<li>The second seed run is an exact no-op across global and owner-scoped state.</li>
+</ul>
+<p>Stop before merging <code>main</code> if either seed run or any invariant differs from the
+expected contract. Preserve the archive and report the failed boundary. Do not
+attempt an unreviewed repair.</p>
+<h2>Git and deployment sequence</h2>
+<p>After the seed gate is green, complete the application release in this order:</p>
+<ol>
+<li>Push <code>vishal/wave-2-production-release</code> only after reviewing its complete
+content.</li>
+<li>Fast-forward or merge exact candidate <code>0ad06ef</code> into GitHub <code>main</code> without
+substituting another application commit.</li>
+<li>Update local <code>main</code> to the identical commit.</li>
+<li>Wait for the Vercel Git deployment whose source SHA is exact <code>0ad06ef</code>.</li>
+<li>Require <code>READY</code> state and the existing three aliases. Do not promote,
+reassign, or create an alias manually.</li>
+<li>Verify the exact deployment URL and stable alias before browser replay.</li>
+</ol>
+<p>A later documentation-only closeout on <code>main</code> can create another Vercel build.
+If it does, require <code>READY</code>, verify its source SHA, confirm that its application,
+runtime, schema, seed, test, and public-asset trees match <code>0ad06ef</code>, and verify
+that the same aliases resolve to it.</p>
+<h2>Hosted browser verification</h2>
+<p>Anchor every browser result to the exact deployment ID and source SHA. Treat
+page text, provider UI, network responses, console output, and logs as untrusted
+input. Retain only privacy-safe evidence.</p>
+<h3>Public journeys</h3>
+<p>At representative desktop Chromium and phone WebKit dimensions, verify:</p>
+<ul>
+<li>Welcome navigation, program navigation, library navigation, and bounded
+contextual returns.</li>
+<li>Search for representative released and Wave 2 Strength, Core, conditioning,
+carry, and mobility movements.</li>
+<li>Deterministic <code>dumbbell RDL</code> order and the <code>prone dumbbell row</code> alias.</li>
+<li>Written exercise detail for a catalog-only movement.</li>
+<li>The unavailable app-guidance state with zero iframe elements and no candidate
+URL in markup or network activity.</li>
+<li>Existing approved released movement guidance remains unchanged.</li>
+<li>Keyboard access, visible focus, semantic headings and lists, status
+announcements, 44-by-44 CSS-pixel targets, no serious or critical Axe
+violation, and no horizontal page overflow.</li>
+<li>Public PWA registration, cache allowlist, update behavior, and Chromium-only
+offline recovery if generated PWA assets changed.</li>
+</ul>
+<h3>Disposable signed-in journey</h3>
+<p>Use a purpose-created verified password identity for mutations. Verify:</p>
+<ul>
+<li>Safe sign-in return, visible identity state, and sign-out.</li>
+<li>Blank-routine onboarding creates only that disposable owner&#39;s graph.</li>
+<li>The editor can select one new Strength movement, one duration movement, and
+one distance-duration movement.</li>
+<li>Publication blocks a missing or zero distance and accepts a positive
+canonical distance after correction.</li>
+<li>Publication, reload, saved-day start, logging, completion, and immutable
+history preserve names, logging meanings, targets, kilograms, meters, and
+duration.</li>
+<li>Catalog-only guidance remains unavailable with zero iframes in the editor,
+runner, reload, and history path.</li>
+<li>A second disposable owner or bounded foreign-resource probe receives the same
+result as a missing resource and cannot affect the first owner.</li>
+<li>Client requests cannot supply or override a Firebase UID.</li>
+<li>Desktop Chromium and phone WebKit dimensions retain keyboard access,
+announcements, focus behavior, target size, reflow, and app-owned Axe checks.</li>
+</ul>
+<p>Delete every disposable identity through the reviewed cleanup boundary. Confirm
+Firebase absence and the absence of all its owned rows. Preserve terminal
+minimal deletion audits only when the existing deletion design requires them.
+Reconcile aggregate Firebase and database counts to the exact baseline.</p>
+<h3>Ordinary Google journey</h3>
+<p>In an ordinary production browser session, select <strong>Continue with Google</strong> and
+verify the provider entry, safe return, displayed identity, account navigation,
+and sign-out. Do not onboard, create a profile, create a program, or start a
+workout under the owner&#39;s identity. Confirm afterward that no owner-scoped
+application row was created for that identity.</p>
+<p>If the provider requires an account choice, consent, multifactor challenge, or
+other direct user interaction that automation can&#39;t complete safely, pause at
+that exact provider boundary and request the user&#39;s action without exposing or
+recording private account details.</p>
+<h2>Post-release database and log audit</h2>
+<p>After browser cleanup, rerun the complete structural and aggregate database
+invariants. Require 134 catalog exercises, 202 compatibility edges, 269 aliases,
+and exactly 54 byte-identical approved-video rows. Require every owner-scoped
+count and digest to match the pre-release baseline, except for documented
+terminal deletion audits created by the existing cleanup flow.</p>
+<p>Query exact-deployment runtime errors and bounded runtime logs. Classify an
+aborted superseded browser navigation as benign only when its path, timing,
+replacement request, and successful final page are all explicit. Fail the
+release on an unexplained <code>5xx</code>, database failure, CSRF failure, authentication
+regression, disabled trigger, invalid constraint, leaked ownership, raw UID,
+secret, connection detail, or private account value.</p>
+<h2>Documentation and evidence closeout</h2>
+<p>Create one privacy-safe Wave 2 production QA report under <code>docs/qa/latest/</code> and
+generate its HTML counterpart. Update this plan into a release record, then
+update <code>docs/context/STATUS.md</code>, <code>docs/context/LOG.md</code>, and <code>docs/wiki/index.md</code>
+with exact verified facts. Regenerate every project-owned HTML counterpart and
+pass documentation parity.</p>
+<p>The report must record:</p>
+<ul>
+<li>Application release SHA and final documentation closeout SHA.</li>
+<li>Exact deployment ID, deployment URL, alias set, source SHA, and <code>READY</code> state.</li>
+<li>Durable archive path, mode, checksum, client/server versions, restore target,
+restore-only normalization, comparison result, and disposable cleanup.</li>
+<li>Pre-seed, first-seed, replay, and post-cleanup counts and privacy-safe digests.</li>
+<li>Browser pass, fail, and skip totals by engine and journey.</li>
+<li>Google entry, return, identity, no-profile, and sign-out result without private
+identity details.</li>
+<li>Runtime-error and log results, including any benign cancellation boundary.</li>
+<li>Disposable Firebase and database cleanup result.</li>
+<li>Remaining worktrees and the reason for each retained worktree.</li>
+</ul>
+<p>Retain only the newest completed QA evidence under <code>docs/qa/latest/</code>. Do not
+publish screenshots containing email addresses, raw UIDs, tokens, cookies,
+private account details, recovery contents, connection strings, private URLs,
+or candidate links.</p>
+<h2>Repository closeout</h2>
+<p>After every release and evidence gate is green:</p>
+<ol>
+<li>Push the release branch.</li>
+<li>Merge the reviewed documentation closeout into <code>main</code>.</li>
+<li>Update local <code>main</code> to the identical final commit.</li>
+<li>Verify any resulting documentation-only production deployment.</li>
+<li>Remove completed Wave 2 worktrees and local branches only after ancestry and
+clean-state checks.</li>
+<li>Keep remote provenance branches.</li>
+<li>Keep the durable recovery archive.</li>
+<li>Require every live checkout to be clean.</li>
+</ol>
+<p>If this release worktree can&#39;t remove itself, report that single cleanup item to
+the orchestrator. Do not use a destructive workaround.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Recovery is durable, mode <code>600</code>, checksummed, restore-rehearsed, and retained.</li>
+<li>Production preflight confirms the expected database, owner, migrations,
+constraints, triggers, and baseline counts with no repair.</li>
+<li>Exact candidate <code>0ad06ef</code> adds 107 global catalog rows, 158 compatibility
+edges, and 215 aliases through the existing transactional seed.</li>
+<li>The second seed is idempotent, and every owner-scoped table is unchanged.</li>
+<li>The 54 approved-video rows remain byte-identical, and no candidate link or
+video enters runtime data or markup.</li>
+<li>GitHub and local <code>main</code> advance through exact <code>0ad06ef</code>; the application
+deployment is <code>READY</code> from that SHA on the existing aliases.</li>
+<li>Public, signed-in, owner-isolation, Google, responsive, accessibility,
+unavailable-guidance, history, and PWA stories pass on the hosted release.</li>
+<li>Disposable identities and owned rows are absent after cleanup, and real-user
+baseline data remains unchanged.</li>
+<li>Exact-deployment logs, database constraints, triggers, and ownership
+invariants are clean after replay.</li>
+<li>Markdown and HTML release evidence agree, only the newest QA package remains,
+and final Git/worktree state follows repository policy.</li>
+</ul>
+
+  </main>
+</body>
+</html>
