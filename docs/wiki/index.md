@@ -29,6 +29,9 @@ Use the following documents as the maintained project map:
 - `docs/plans/WAVE-4-COMPANION-INTEGRATION.md`: exact base and source lineage,
   single-merge integration method, fail-closed scope, bounded correction,
   verification matrix, and branch-only release-candidate closeout.
+- `docs/plans/WAVE-4-PRODUCTION-RELEASE.md`: exact release identities, recovery,
+  preview/main/production sequence, hosted proof, log audit, documentation, and
+  cleanup closeout.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
 - `docs/plans/VERIFICATION.md`: automated and manual release matrix.
@@ -38,8 +41,9 @@ Use the following documents as the maintained project map:
 - `design-qa.md`: Product Design reference-to-build review for the integrated
   Wave 4 companion candidate, including the equipment-review correction and
   native-zoom refresh limitation.
-- `docs/qa/latest/WAVE-4-COMPANION-INTEGRATION-QA.md`: newest coherent local
-  gate, browser, cache, asset, and independent-review evidence.
+- `docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md`: newest canonical production
+  deployment, browser, authentication, data, cache, log, limitation, and cleanup
+  evidence.
 - `docs/design/COMPANION-VISUAL-CONCEPTS.md`: selected Corner Companions responsive board, production guardrails, required corrections, and pilot acceptance criteria.
 - `docs/design/PROGRAM-OVERVIEW.md`: approved comp and implementation inventory.
 - `docs/reference/SUBSTITUTIONS.md`: equipment compatibility and program mutation rules.
@@ -53,32 +57,28 @@ Use the following documents as the maintained project map:
 
 Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.
 
-## Wave 4 companion integration status
+## Wave 4 production status
 
-Branch `vishal/companion-integration` starts from exact public `main`
-`298cb04b8b16ad6c3586ef74bc95df7301533472` and integrates reviewed rollout
-`709a977bbccc0333517e873955c0b3572e70bd9f` once, with reviewed pilot
-`b4499f3b953a5745039f1bca67da68e6e135c7c3` retained through ancestry rather
-than replayed. An independent audit found and closed equipment-review collapse,
-stale fixture-lock cleanup, and public-provenance gaps in one bounded correction
-batch. The complete public matrix is green. The exact-candidate authenticated
-matrix retained one isolated WebKit image cancellation and a later focused
-WebKit project retained one known navigation-timing timeout; both exact tests
-passed unchanged in isolation, and no harness policy was broadened.
+The complete pilot, rollout, integration, and release lineage is public on
+`main`. Application commit `de19b1c89c34235723158ad8858f6b46f4fcde72`
+is Ready as automatic production deployment
+`dpl_7836V51i4HzkkCcaG8Bz6QoZYE6z` on the unchanged alias set. The release ran
+no migration or seed and preserves the Wave 2 recovery archive and deployment.
 
-Only the cataloging-otter pair joins the pilot public assets in PWA cache v6.
-All owned variants, private routes, authenticated HTML, and private data remain
-excluded. Companion and landing-hero provenance stays under
-`docs/design/provenance/` rather than fetchable public JSON. The newest evidence
-is under `docs/qa/latest/wave-4-companion-integration/`, with canonical report
-`docs/qa/latest/WAVE-4-COMPANION-INTEGRATION-QA.md`.
+Public, responsive, accessibility, companion, PWA/offline, password lifecycle,
+two-owner authorization, database, and cleanup gates are green with the exact
+limitations recorded in the production report. The Playwright WebKit hosted-
+origin RSC cancellation is an engine/harness limitation. Native Chrome remained
+at restored 100% because the macOS control bridge could not establish 200%.
+Google stopped before identity selection at the owner-only account-choice/
+consent boundary. Immediate-abandon History detail is a documented pre-existing
+repository follow-up and did not widen this presentation release.
 
-The reviewed Wave 3 true-native 200% proof is retained. A current isolated
-rerun remained blocked by macOS desktop focus at device-pixel ratio 1, so the
-candidate makes no new native-zoom claim and relies on current focused
-equipment-review plus complete responsive/geometry evidence for the integration
-correction. This branch has not been merged, deployed, or applied to production
-data, providers, aliases, environment, or billing.
+Only hedgehog, raccoon, and otter pairs enter public cache v6. All owned
+variants, private routes, authenticated HTML, guidance, and private data remain
+excluded. The newest evidence is the paired
+`docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md` report; integration-only
+screenshots are superseded.
 
 ## Wave 2 production status
 

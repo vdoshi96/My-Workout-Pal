@@ -194,3 +194,26 @@ order. Logging kinds remain part of the record contract, including the five
 new `distance_duration` movements; storage keeps distance in meters and weight
 in kilograms. Published revisions, workout snapshots, and history continue to
 preserve the selected record's meaning without retroactive rewrites.
+
+## 2026-08-30: Release Wave 4 without widening its runtime scope
+
+Wave 4 ships the reviewed Corner Companions lineage as presentation, public
+assets, tests, and documentation only. Production application commit
+`de19b1c89c34235723158ad8858f6b46f4fcde72` contains no schema, migration,
+seed, API, repository, authentication implementation, or dependency change.
+The existing Wave 2 archive and Ready deployment remain the database and
+application recovery boundaries; no new dump, migration, or seed is justified.
+
+Hosted-test locators follow the current example/blank onboarding controls, and
+secure-cookie proof reads only response attributes without retaining a cookie
+value. The newer two-owner journey remains the authoritative ownership and
+cleanup gate. Durable terminal account-deletion jobs are audit/recovery state,
+not orphaned application data, so they remain terminal rather than being
+deleted to restore a counter.
+
+Production QA found that immediately abandoning a workout while every exercise
+is pending creates a History row whose detail read reports incomplete history.
+That behavior predates and lies outside the companion release. It remains an
+explicit follow-up; this release neither hides it nor changes repository
+semantics. Native 200% and Google owner-choice boundaries are also reported as
+capability/owner gates rather than replaced by simulated evidence.

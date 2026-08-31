@@ -65,6 +65,9 @@ describe("hosted authentication QA command", () => {
     expect(browserSource).toContain("parseHostedAuthQaActionLink");
     expect(browserSource).toContain("parseHostedAuthQaEmailVerificationResponse");
     expect(browserSource).toContain("parseHostedAuthQaPasswordResetResponse");
+    expect(browserSource).toContain('name: "Start with example"');
+    expect(browserSource).toContain('name: /Blank routine/u');
+    expect(browserSource).not.toContain('name: "Create my program"');
     expect(browserSource).not.toMatch(/console\.(?:log|error).*oob|process\.(?:stdout|stderr).*oob/iu);
   });
 });

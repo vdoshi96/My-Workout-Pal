@@ -106,7 +106,7 @@ components:
 
 My Workout Pal is a warm field-atlas interface: mineral paper, deep blue-green ink, crisp route marks, and coral decisions make planning and logging feel grounded rather than gamified. The visual system keeps the route grammar from `docs/design/DIRECTION.md`—waypoints, ruled sheets, stamped states, and contour surfaces—while keeping the user's task and product truth ahead of decoration.
 
-The selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in reserved quiet space, with a surface-specific asset and visibility contract. The approved pilot keeps the planning hedgehog on the guest landing, preparing fox on the signed-in personal home, and an opaque reviewing raccoon on the guest Progress preview. The reviewed Wave 3 rollout, now integrated into the Wave 4 candidate, adds the cataloging otter to public and member Library headings, the routine-drafting beaver to the owned editor, the history-archive tortoise to History list and detail, the settings-packing hare to a verified, identity-ready, clean, neutral Settings heading on tablet and desktop, and the workout-corner bear to a recovered, online, neutral runner overview at broad widths. The composite concept board remains evidence, not a shipping asset.
+The selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in reserved quiet space, with a surface-specific asset and visibility contract. The approved pilot keeps the planning hedgehog on the guest landing, preparing fox on the signed-in personal home, and an opaque reviewing raccoon on the guest Progress preview. The reviewed Wave 3 rollout, released through Wave 4 production, adds the cataloging otter to public and member Library headings, the routine-drafting beaver to the owned editor, the history-archive tortoise to History list and detail, the settings-packing hare to a verified, identity-ready, clean, neutral Settings heading on tablet and desktop, and the workout-corner bear to a recovered, online, neutral runner overview at broad widths. The composite concept board remains evidence, not a shipping asset.
 
 **Key Characteristics:**
 
@@ -220,7 +220,14 @@ The shared placement component gives one complete production asset a bounded, re
 | `settings` · settings-packing hare | Owned `/app/settings` heading whitespace, separate from verification, inputs, save/error, account, and deletion controls. | Tablet and desktop only (`>=48rem`) when verified, identity-ready, clean, and neutral. Both source sizes are owned/private and excluded. |
 | `workout` · workout-corner bear | Owned `/workout/[sessionId]` runner header only after recovery succeeds, online, and neutral. | Broad desktop only (`>=64rem`); phone, tablet, active logging, timer, guidance, pending, offline, recovery, error, and terminal states collapse it. Both source sizes are owned/private and excluded. |
 
-The provenance records use each WebP's basename under `docs/design/provenance/companions/`; they are private-safe and do not sit beside fetchable WebPs. The public companion directory contains WebPs only. The Wave 4 candidate keeps PWA cache v6: the pilot landing and Progress pairs remain public, and only the Library otter pair is added. All other owned/private companion assets, private routes, authenticated HTML, and owned data remain outside the public allowlist. The raccoon is intentionally an opaque warm-paper card so its field stays source-faithful in both themes.
+The provenance records use each WebP's basename under `docs/design/provenance/companions/`; they are private-safe and do not sit beside fetchable WebPs. The public companion directory contains WebPs only. Released Wave 4 keeps PWA cache v6: the pilot landing and Progress pairs remain public, and only the Library otter pair is added. All other owned/private companion assets, private routes, authenticated HTML, and owned data remain outside the public allowlist. The raccoon is intentionally an opaque warm-paper card so its field stays source-faithful in both themes.
+
+Production verification preserves the closed registry, decorative semantics,
+state collapse, strict non-overlap, responsive behavior, and cache classes.
+Native 200% was not re-proved in the available macOS control state; restored
+100% metrics and the maintained responsive matrix are recorded without being
+relabelled as native zoom. The immediate-abandon History-detail follow-up is a
+repository behavior and does not change this design-system contract.
 
 ## Do's and Don'ts
 

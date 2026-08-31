@@ -58,3 +58,13 @@ Switching equipment profiles redraws only affected path segments and moves subst
 Cartographic material can become decorative and reduce information density. Each surface must keep the user task, labels, controls, and status readable without the contours. No route motif can replace semantic structure or honest save feedback.
 
 The welcome illustration can also become visually incoherent if realistic architecture or animals are mixed with cartoon inserts. Its room, machinery, lighting, materials, and characters must remain visibly hand-drawn, while anatomy, grips, equipment contact, and walking paths stay plausible. Do not add hotspots, colored activity tiles, UI labels, or copied cartoon characters.
+
+## Wave 4 production record
+
+The selected Corner Companions system is released on the existing public
+field-atlas surfaces. Production verification keeps the vignettes decorative,
+pointer-inert, hidden from assistive technology, absent from forced colors,
+state-sensitive, and outside critical controls and private data. Only the
+landing hedgehog, Progress raccoon, and Library otter enter public cache v6.
+Exact deployment and limitation evidence is maintained in
+`docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md`.

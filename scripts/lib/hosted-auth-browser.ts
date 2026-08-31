@@ -386,7 +386,9 @@ async function runBrowserLifecycle(
     await page.waitForURL(`${config.origin}/app`);
     setStage("unverified_session");
     await expect(page.getByText("Email verification required", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Create my program" })).toBeDisabled();
+    await expect(page.getByText("Read-only account.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start with example" })).toBeDisabled();
+    await expect(page.getByRole("radio", { name: /Blank routine/u })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
     await assertSecureSessionCookie(context, config.origin);
     await assertAccessible(page);
@@ -493,7 +495,8 @@ async function runBrowserLifecycle(
     await page.waitForURL(`${config.origin}/app`, { timeout: 10_000 });
     setStage("verified_session_ui");
     await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Create my program" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Start with example" })).toBeEnabled();
+    await expect(page.getByRole("radio", { name: /Blank routine/u })).toBeEnabled();
     setStage("verified_session_cookie");
     await assertSecureSessionCookie(context, config.origin);
     setStage("verified_session_accessibility");

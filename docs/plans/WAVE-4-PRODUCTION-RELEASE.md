@@ -338,7 +338,22 @@ The release is complete only when all of these conditions are true:
 
 ## Execution record
 
-The preflight baseline in this plan is verified. Release execution, production
-browser proof, documentation closeout, final deployment reconciliation, and
-cleanup remain pending until their evidence is recorded in the canonical
-production report.
+The exact candidate preview remained Ready. Application release commit
+`de19b1c89c34235723158ad8858f6b46f4fcde72` was pushed to public `main` and
+became Ready automatic production deployment
+`dpl_7836V51i4HzkkCcaG8Bz6QoZYE6z` on the unchanged aliases. No migration,
+seed, provider, environment, billing, alias, or rollback mutation occurred.
+
+Public, responsive, accessibility, companion, Chromium offline, password,
+two-owner authorization, read-only database, and bounded log gates completed.
+The exact documented WebKit hosted-origin RSC cancellation is the only waived
+Playwright engine/harness blocker. Google stopped before identity selection at
+the unavoidable owner-only account-choice/consent boundary. Native 200% could
+not be established through the macOS control bridge; verified 100% was restored
+without an emulated substitute.
+
+QA also found the pre-existing immediate-abandon History-detail conflict and
+keeps it as a repository follow-up without widening this presentation release.
+The canonical production report contains the exact results and privacy-safe
+limitations. Final documentation deployment, Git reconciliation, proportional
+gates, and completed-worktree cleanup are the remaining closeout steps.

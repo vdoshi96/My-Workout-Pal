@@ -70,6 +70,16 @@ export type HostedDeletionQaStage =
   | "alice_deletion"
   | "alice_intact_after_bob"
   | "alice_session"
+  | "alice_session_cookie"
+  | "alice_session_cookie_http_only"
+  | "alice_session_cookie_path"
+  | "alice_session_cookie_present"
+  | "alice_session_cookie_same_site"
+  | "alice_session_cookie_secure"
+  | "alice_session_load"
+  | "alice_session_navigation"
+  | "alice_session_submit"
+  | "alice_session_verified_ui"
   | "assertions"
   | "assertions_alice_collectors"
   | "assertions_alice_mutations"
@@ -82,6 +92,16 @@ export type HostedDeletionQaStage =
   | "assertions_bob_response_failures"
   | "bob_deletion"
   | "bob_session"
+  | "bob_session_cookie"
+  | "bob_session_cookie_http_only"
+  | "bob_session_cookie_path"
+  | "bob_session_cookie_present"
+  | "bob_session_cookie_same_site"
+  | "bob_session_cookie_secure"
+  | "bob_session_load"
+  | "bob_session_navigation"
+  | "bob_session_submit"
+  | "bob_session_verified_ui"
   | "browser_launch"
   | "cleanup"
   | "database_baseline"
@@ -359,32 +379,59 @@ function attachFailureCollectors(page: Page, origin: string) {
   };
 }
 
-async function assertSecureSessionCookie(
-  context: BrowserContext,
-  origin: string,
-): Promise<void> {
-  const cookie = (await context.cookies(origin)).find(
-    (candidate) => candidate.name === sessionCookieName,
+function assertSecureSessionCookieHeader(
+  setCookieHeader: string | undefined,
+  setStage: (stage: HostedDeletionQaStage) => void,
+  stages: Readonly<{
+    httpOnly: HostedDeletionQaStage;
+    path: HostedDeletionQaStage;
+    present: HostedDeletionQaStage;
+    sameSite: HostedDeletionQaStage;
+    secure: HostedDeletionQaStage;
+  }>,
+): void {
+  setStage(stages.present);
+  assert.ok(setCookieHeader);
+  const [cookiePair = "", ...rawAttributes] = setCookieHeader.split(";");
+  assert.equal(cookiePair.startsWith(`${sessionCookieName}=`), true);
+  const attributes = new Set(
+    rawAttributes.map((attribute) => attribute.trim().toLowerCase()),
   );
-  assert.ok(cookie);
-  assert.equal(cookie.httpOnly, true);
-  assert.equal(cookie.secure, true);
-  assert.equal(cookie.sameSite, "Strict");
-  assert.equal(cookie.path, "/");
-  assert.ok(cookie.value.length > 100);
+  setStage(stages.httpOnly);
+  assert.equal(attributes.has("httponly"), true);
+  setStage(stages.secure);
+  assert.equal(attributes.has("secure"), true);
+  setStage(stages.sameSite);
+  assert.equal(attributes.has("samesite=strict"), true);
+  setStage(stages.path);
+  assert.equal(attributes.has("path=/"), true);
 }
 
 async function signIn(
   page: Page,
-  context: BrowserContext,
   config: HostedAuthQaConfig,
   identity: HostedAuthQaIdentity,
+  setStage: (stage: HostedDeletionQaStage) => void,
+  stages: Readonly<{
+    cookie: HostedDeletionQaStage;
+    cookieHttpOnly: HostedDeletionQaStage;
+    cookiePath: HostedDeletionQaStage;
+    cookiePresent: HostedDeletionQaStage;
+    cookieSameSite: HostedDeletionQaStage;
+    cookieSecure: HostedDeletionQaStage;
+    load: HostedDeletionQaStage;
+    navigation: HostedDeletionQaStage;
+    submit: HostedDeletionQaStage;
+    verifiedUi: HostedDeletionQaStage;
+  }>,
 ): Promise<void> {
+  setStage(stages.load);
   await page.goto(`${config.origin}/sign-in?returnTo=%2Fapp`);
   await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
   await page.getByLabel("Email").fill(identity.email);
   await page.getByLabel("Password").fill(identity.password);
-  const sessionResponse = page.waitForResponse((response) => {
+  setStage(stages.submit);
+  const sessionResponsePromise = page.waitForResponse((response) => {
     const url = new URL(response.url());
     return url.origin === config.origin &&
       url.pathname === "/api/auth/session" &&
@@ -393,10 +440,23 @@ async function signIn(
   const submit = page.getByRole("button", { name: "Sign in with email", exact: true });
   await submit.focus();
   await page.keyboard.press("Enter");
-  assert.equal((await sessionResponse).status(), 200);
+  const sessionResponse = await sessionResponsePromise;
+  assert.equal(sessionResponse.status(), 200);
+  setStage(stages.cookie);
+  const sessionHeaders = await sessionResponse.allHeaders();
+  assertSecureSessionCookieHeader(sessionHeaders["set-cookie"], setStage, {
+    httpOnly: stages.cookieHttpOnly,
+    path: stages.cookiePath,
+    present: stages.cookiePresent,
+    sameSite: stages.cookieSameSite,
+    secure: stages.cookieSecure,
+  });
+  setStage(stages.navigation);
   await page.waitForURL(`${config.origin}/app`);
-  await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
-  await assertSecureSessionCookie(context, config.origin);
+  setStage(stages.verifiedUi);
+  await expect(page.getByText("Verified account", { exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 type ActiveProgramIdentity = Readonly<{
@@ -436,7 +496,9 @@ async function onboard(
   config: HostedAuthQaConfig,
   profile: "dumbbells" | "barbell",
 ): Promise<ActiveProgramIdentity> {
-  await expect(page.getByRole("heading", { name: "Build your starter route" })).toBeVisible();
+  await expect(page.getByRole("heading", {
+    name: "Start with the example or start blank",
+  })).toBeVisible();
   if (profile === "barbell") {
     await page.getByRole("radio", { name: /Barbell \+ rack/u }).check();
   } else {
@@ -448,15 +510,18 @@ async function onboard(
       url.pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST";
   });
-  const create = page.getByRole("button", { name: "Create my program" });
+  const create = page.getByRole("button", { name: "Start with example" });
   await create.focus();
   await page.keyboard.press("Enter");
   const response = await responsePromise;
   assert.equal(response.status(), 201);
   const identity = activeProgramIdentity(await response.json());
-  await expect(page.getByRole("heading", { name: "Five-day starter route" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome back, Athlete" })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText(/Five-day starter route · Revision/u)).toBeVisible();
   await expect(page.getByText(
-    profile === "barbell" ? /Barbell \+ rack · five days/u : /Dumbbells · five days/u,
+    profile === "barbell" ? /Barbell \+ rack · 5 days/u : /Dumbbells · 5 days/u,
   )).toBeVisible();
   return identity;
 }
@@ -791,7 +856,7 @@ async function deleteVisibleAccount(
   assert.equal((await deletionResponse).status(), 200);
   await page.waitForURL(`${input.config.origin}/?account=deleted`);
   await expect(page.getByRole("heading", {
-    name: "Your whole five-day plan. No account required.",
+    name: "Your workout. Your way.",
   })).toBeVisible();
   assert.equal(
     (await context.cookies(input.config.origin)).some(
@@ -910,13 +975,39 @@ export async function executeHostedDeletionQa(
     const bobFailures = attachFailureCollectors(bobPage, config.origin);
 
     stage = "alice_session";
-    await signIn(alicePage, aliceContext, config, aliceIdentity);
+    await signIn(alicePage, config, aliceIdentity, (nextStage) => {
+      stage = nextStage;
+    }, {
+      cookie: "alice_session_cookie",
+      cookieHttpOnly: "alice_session_cookie_http_only",
+      cookiePath: "alice_session_cookie_path",
+      cookiePresent: "alice_session_cookie_present",
+      cookieSameSite: "alice_session_cookie_same_site",
+      cookieSecure: "alice_session_cookie_secure",
+      load: "alice_session_load",
+      navigation: "alice_session_navigation",
+      submit: "alice_session_submit",
+      verifiedUi: "alice_session_verified_ui",
+    });
     const aliceProgram = await onboard(alicePage, config, "dumbbells");
     stage = "alice_data_setup";
     const aliceResources = await createAliceResources(alicePage, aliceProgram);
 
     stage = "bob_session";
-    await signIn(bobPage, bobContext, config, bobIdentity);
+    await signIn(bobPage, config, bobIdentity, (nextStage) => {
+      stage = nextStage;
+    }, {
+      cookie: "bob_session_cookie",
+      cookieHttpOnly: "bob_session_cookie_http_only",
+      cookiePath: "bob_session_cookie_path",
+      cookiePresent: "bob_session_cookie_present",
+      cookieSameSite: "bob_session_cookie_same_site",
+      cookieSecure: "bob_session_cookie_secure",
+      load: "bob_session_load",
+      navigation: "bob_session_navigation",
+      submit: "bob_session_submit",
+      verifiedUi: "bob_session_verified_ui",
+    });
     const bobProgram = await onboard(bobPage, config, "barbell");
 
     const aliceBeforeForeign = await ownerPersistenceSnapshot(database, aliceUid);
@@ -955,7 +1046,8 @@ export async function executeHostedDeletionQa(
     stage = "alice_intact_after_bob";
     assert.deepEqual(await ownerPersistenceSnapshot(database, aliceUid), aliceBeforeForeign);
     await alicePage.reload();
-    await expect(alicePage.getByRole("heading", { name: "Five-day starter route" })).toBeVisible();
+    await expect(alicePage.getByRole("heading", { name: "Welcome back, Athlete" })).toBeVisible();
+    await expect(alicePage.getByText(/Five-day starter route · Revision/u)).toBeVisible();
     await assertAccessible(alicePage);
 
     stage = "alice_deletion";
@@ -966,8 +1058,12 @@ export async function executeHostedDeletionQa(
       identity: aliceIdentity,
     });
     stage = "public_return_evidence";
-    const hero = alicePage.locator('img[src="/illustrations/workout-pals-gym.webp"]');
+    const hero = alicePage.locator(
+      'img[src="/illustrations/companions/planning-hedgehog.webp"]',
+    );
     await expect(hero).toBeVisible();
+    await expect(hero).toHaveAttribute("alt", "");
+    await expect(hero).toHaveAttribute("aria-hidden", "true");
     await expect.poll(() => hero.evaluate((image: HTMLImageElement) => image.naturalWidth))
       .toBeGreaterThan(0);
     await alicePage.screenshot({ fullPage: false, path: evidencePaths.publicReturn });

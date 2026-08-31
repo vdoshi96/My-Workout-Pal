@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="627fa6f6be1516db2f4894ccbf362579d8f5689d74c07c498df6033974f51e81">
+  <meta name="source-sha256" content="5e248be635fe4daf0ffb5dff50fde5a86f4cc5a5113cf075ec7f173294e013df">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -139,6 +139,25 @@ order. Logging kinds remain part of the record contract, including the five
 new <code>distance_duration</code> movements; storage keeps distance in meters and weight
 in kilograms. Published revisions, workout snapshots, and history continue to
 preserve the selected record&#39;s meaning without retroactive rewrites.</p>
+<h2>2026-08-30: Release Wave 4 without widening its runtime scope</h2>
+<p>Wave 4 ships the reviewed Corner Companions lineage as presentation, public
+assets, tests, and documentation only. Production application commit
+<code>de19b1c89c34235723158ad8858f6b46f4fcde72</code> contains no schema, migration,
+seed, API, repository, authentication implementation, or dependency change.
+The existing Wave 2 archive and Ready deployment remain the database and
+application recovery boundaries; no new dump, migration, or seed is justified.</p>
+<p>Hosted-test locators follow the current example/blank onboarding controls, and
+secure-cookie proof reads only response attributes without retaining a cookie
+value. The newer two-owner journey remains the authoritative ownership and
+cleanup gate. Durable terminal account-deletion jobs are audit/recovery state,
+not orphaned application data, so they remain terminal rather than being
+deleted to restore a counter.</p>
+<p>Production QA found that immediately abandoning a workout while every exercise
+is pending creates a History row whose detail read reports incomplete history.
+That behavior predates and lies outside the companion release. It remains an
+explicit follow-up; this release neither hides it nor changes repository
+semantics. Native 200% and Google owner-choice boundaries are also reported as
+capability/owner gates rather than replaced by simulated evidence.</p>
 
   </main>
 </body>

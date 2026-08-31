@@ -2,76 +2,65 @@
 
 ## Current phase
 
-The Wave 4 companion release candidate is locally complete on
-`vishal/companion-integration`. It starts from exact public `main`
-`298cb04b8b16ad6c3586ef74bc95df7301533472` and integrates reviewed rollout
-`709a977bbccc0333517e873955c0b3572e70bd9f` exactly once. Reviewed pilot
-`b4499f3b953a5745039f1bca67da68e6e135c7c3` is an ancestor of the rollout, so
-it was not separately replayed. The pre-integration plan commit is
-`ddb32d4d90047d62167522d1ef360a42afa5ba1d`; the no-conflict rollout merge is
-`d962dfb59a51b7bb0cf57cda19ea611a0ec32fa7`.
+Wave 4 application release `de19b1c89c34235723158ad8858f6b46f4fcde72`
+is live on Ready Git-connected production deployment
+`dpl_7836V51i4HzkkCcaG8Bz6QoZYE6z`. The deployment retains the stable, project,
+and Git-main aliases without a preview promotion, manual redeploy, alias move,
+provider change, environment change, billing change, migration, or seed. Exact
+candidate `5c416d774fb53c3a4f5f5623ef1a202fca4b07ee`, integration merge
+`d962dfb59a51b7bb0cf57cda19ea611a0ec32fa7`, rollout
+`709a977bbccc0333517e873955c0b3572e70bd9f`, pilot
+`b4499f3b953a5745039f1bca67da68e6e135c7c3`, and base
+`298cb04b8b16ad6c3586ef74bc95df7301533472` remain in ancestry.
 
-An independent integration audit found three bounded issues: the routine
-beaver did not collapse while equipment review was open, a dead fixture owner
-could leave an exact staged asset behind, and the selected design-board
-sidecar retained local generation provenance. One correction batch lifted the
-equipment-review state to the editor, added failure- and concurrency-safe
-hash-and-inode-owned stale-lock recovery, and removed the private provenance
-fields. The fresh finish reviewer first returned `fix` on same-hash
-pre-existing-file preservation; the bounded correction added an owned hidden
-staging inode plus a negative regression, and independent re-review returned
-`ship` with no material blocker.
-Meaningful RED tests failed on the two behavior gaps before implementation and
-passed afterward. Fresh browser evidence proves the equipment-review collapse.
-The retained reviewer-approved Settings dirty-state and runner neutral-state
-predicates remain fail-closed.
+The exact candidate preview and application production deployment are Ready.
+Static, build, schema, seed-policy, public, responsive, accessibility, companion,
+and Chromium offline gates passed. Local exact-candidate Playwright completed
+90 passes and 42 intentional skips. Exact production completed 89 passes and 42
+intentional skips; one WebKit-tablet run stopped only at the hosted-origin RSC
+cancellation policy after the asserted navigation completed. Focused hosted
+auth/deletion tests pass 7/7 after their stale onboarding locators were updated
+to the current example/blank controls and secure-cookie proof moved to the
+server response headers.
 
-Final verification on the corrected candidate includes 127 Vitest files and
-862 passing tests; TypeScript; full ESLint; Drizzle metadata plus four
-schema/database suites; a read-only live database verification; the no-mutation
-seed policy check; service-worker v6 parity and live offline `/library`; 62
-canonical Markdown documents and generated HTML counterparts; the Next.js
-16.3.2 Webpack production build; the 44-entry production route boundary;
-Firebase Admin serverless compatibility; and the single resolved
-`jwks-rsa -> jose@4.15.9` edge. The complete public matrix passed 90 cases with
-42 intentional project/native-zoom skips across 132 cases. The corrected
-synthetic authenticated matrix completed 54 passes and 13 intentional skips
-across 68 cases, with one WebKit-phone cancellation of the same-origin
-`preparing-fox.webp` during Library Guidance. The exact failed test then passed
-1/1 unchanged. A subsequent complete WebKit-phone replay completed 21 passes
-and four intentional skips across 26 cases, with the known 120-second
-`framenavigated` timing timeout in the aborted-operation resilience case; that
-exact case then passed 1/1 unchanged in 3.9 seconds. The immediately preceding
-product-corrected candidate, before only the fixture-ownership hardening,
-passed the exact 22/4 WebKit-phone project. The source Wave 3 rollout's
-teardown-only `/contours.svg` cancellation remains historical evidence and did
-not recur. No timeout, cancellation exemption, or product assertion was
-weakened.
+The current password lifecycle passed with verification and recovery semantics,
+three expected session mutations, and exact cleanup. The newer two-owner
+production journey is authoritative for ownership: it passed 12 expected
+mutations, four foreign/missing equivalence probes, wrong-password refusal,
+both deletions, Firebase aggregate one before and after, unchanged global data,
+and zero ordinary owner-scoped rows. The deletion saga intentionally retains
+104 terminal audit rows, up from 83 before release QA; the 21 additions represent
+cleaned disposable identities and are all terminal, with no surviving Firebase
+identity or application data.
 
-Only the hedgehog, raccoon, and otter pairs are public-install assets. Runtime
-Chromium proof cached the public `/library` route and decoded otter while
-offline and proved owned routes plus the fox, beaver, tortoise, hare, and bear
-absent from public Cache Storage. Fetchable illustration directories contain
-no JSON provenance; private-safe prompt, dimensions, transformations, and
-SHA-256 records remain under `docs/design/provenance/`.
+Post-QA read-only database proof remains eight migrations through repository
+`0007`, 134 exercises, 202 equipment edges, 269 aliases, 54 approved videos, 27
+eligible variations, zero invalid constraints or indexes, 17 enabled ordinary
+triggers, zero nonterminal deletion jobs, and approved-video projection hash
+`e8c7a3be7a7cff96ce6963d8688fbfcae8dcd1ce28a969113bf0f4260ce2fd6c`.
+The Wave 2 recovery archive and application rollback deployment
+`dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` remain unchanged.
 
-The three reviewed Wave 3 true-native 200% Library/member Library/History
-captures remain the authoritative native evidence. A fresh integration rerun
-was attempted after verifying and terminating only an orphaned Playwright
-Chrome-for-Testing process; macOS desktop focus still left the isolated browser
-at device-pixel ratio 1. The current candidate therefore makes no fresh native-
-zoom claim. It retains the exact reviewed source proof and adds current
-equipment-review, responsive, geometry, focus, pointer, accessibility-tree,
-and overflow evidence. This limitation is documented rather than relabeled as
-CDP proof or hidden by a weaker metric.
+Only hedgehog, raccoon, and otter pairs enter public cache v6. Owned companions,
+private routes, authenticated HTML, guidance, and personal data remain excluded.
+Companions retain empty alternative text, `aria-hidden`, no accessible role or
+name, no focus or pointer target, and strict non-overlap/state-collapse proof.
 
-The final candidate contains no production schema, migration, seed, API,
-repository, authentication, dependency, or lockfile change. It has not been
-merged to `main` or deployed, and no provider, alias, environment, billing,
-production migration/seed/data/user, or sibling-worktree cleanup occurred.
-The newest coherent evidence lives only under
-`docs/qa/latest/wave-4-companion-integration/` with the canonical Wave 4 QA
-report.
+Two limitations are current. Native Chrome remained at verified restored 100%
+(DPR 2, 1512 CSS inner width, 1497 client/scroll width, visual viewport scale
+1); the macOS native control bridge could not establish 200%, so no CDP, CSS,
+viewport, or screenshot substitute is claimed. A disposable workout abandoned
+with every exercise pending produced a History row whose detail logged
+`Workout history is incomplete`; after the exercises were explicitly skipped,
+the detail state, read-only notice, companion, and Axe assertions passed. Wave 4
+does not change repository behavior, so immediate-abandon detail remains an
+explicit pre-existing product limitation.
+
+The newest privacy-safe evidence is the paired
+`docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md` report. Integration-only
+screenshots and reports are superseded. The documentation closeout changes no
+runtime/application file and will become the final exact `main` deployment
+after Git, Vercel, documentation, database-read, and cleanup reconciliation.
 
 Wave 2 application, data, and production QA are released. The application tree
 on GitHub and local `main` contains exact candidate
