@@ -16,7 +16,10 @@ import {
   effectiveWorkoutExerciseIds,
 } from "@/server/workout-route-model";
 import { getHarnessDatabase } from "../../../server/database";
-import { harnessRequestContext } from "../../../server/harness-context";
+import {
+  harnessRequestContext,
+  type HarnessScenario,
+} from "../../../server/harness-context";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -25,6 +28,7 @@ async function loadHarnessWorkout(
   scope: string,
   viewer: NonNullable<ReturnType<typeof harnessRequestContext>["viewer"]>,
   sessionId: string,
+  scenario: HarnessScenario,
 ) {
   const { database } = await getHarnessDatabase(scope);
   try {
@@ -34,10 +38,12 @@ async function loadHarnessWorkout(
       listCustomExercises(database, viewer),
     ]);
     const effectiveIds = effectiveWorkoutExerciseIds(resume.exerciseStates);
-    const curatedVideosByExerciseId = await listApprovedCuratedVideoPairsByExerciseIds(
-      database,
-      Object.values(effectiveIds),
-    ).catch(() => ({}));
+    const curatedVideosByExerciseId = scenario === "runner-neutral-overview"
+      ? {}
+      : await listApprovedCuratedVideoPairsByExerciseIds(
+          database,
+          Object.values(effectiveIds),
+        ).catch(() => ({}));
     return {
       curatedVideosByExerciseId,
       customExercises,
@@ -72,7 +78,12 @@ export default async function HarnessOwnedWorkoutPage({
     initialState,
     profileProgram,
     resume,
-  } = await loadHarnessWorkout(context.scope, context.viewer, sessionId);
+  } = await loadHarnessWorkout(
+    context.scope,
+    context.viewer,
+    sessionId,
+    context.scenario,
+  );
 
   return (
     <div className="owned-workout-route">

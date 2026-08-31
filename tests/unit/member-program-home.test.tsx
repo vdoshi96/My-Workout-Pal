@@ -128,6 +128,10 @@ describe("MemberProgramHome", () => {
     expect(markup).not.toContain("Sample");
     expect(markup).not.toContain("five days");
     expect(markup).not.toContain("walker or runner");
+    expect(markup).toContain('data-companion-placement="member-home"');
+    expect(markup).toContain(
+      'src="/illustrations/companions/preparing-fox.webp"',
+    );
   });
 
   it("makes resume dominant and removes competing start links", () => {
@@ -151,6 +155,7 @@ describe("MemberProgramHome", () => {
     expect(markup).toContain("Finish or abandon Trail before starting another day.");
     expect(markup).not.toContain("Open Mobility to start");
     expect(markup).toContain("Manage routines");
+    expect(markup).toContain('data-companion-placement="member-home"');
   });
 
   it("keeps an unverified routine readable without offering permanent workout actions", () => {
@@ -170,6 +175,7 @@ describe("MemberProgramHome", () => {
     expect(markup).toContain("Review Mobility");
     expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001"');
     expect(markup).not.toContain("Edit routine");
+    expect(markup).toContain('data-companion-placement="member-home"');
   });
 
   it("keeps an unverified resumable workout discoverable without enabling a new start", () => {

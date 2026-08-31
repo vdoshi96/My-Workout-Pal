@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, statSync, unlinkSync } from "node:fs";
 import { createServer } from "node:net";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
+
+import { stageAuthenticatedFixture } from "./lib/authenticated-fixture-staging.mjs";
 
 const repositoryRoot = resolve(process.cwd());
 const nextCli = resolve(repositoryRoot, "node_modules/next/dist/bin/next");
@@ -30,6 +31,48 @@ const contourDestination = resolve(
   repositoryRoot,
   "tests/fixtures/authenticated-app/public/contours.svg",
 );
+const rolloutFixtureCompanionNames = [
+  "cataloging-otter-512.webp",
+  "cataloging-otter.webp",
+  "history-archive-tortoise-512.webp",
+  "history-archive-tortoise.webp",
+  "routine-drafting-beaver-512.webp",
+  "routine-drafting-beaver.webp",
+  "settings-packing-hare-512.webp",
+  "settings-packing-hare.webp",
+  "workout-corner-bear-512.webp",
+  "workout-corner-bear.webp",
+];
+const fixtureAssets = [
+  {
+    destination: resolve(
+      repositoryRoot,
+      "tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox-512.webp",
+    ),
+    source: resolve(
+      repositoryRoot,
+      "public/illustrations/companions/preparing-fox-512.webp",
+    ),
+  },
+  {
+    destination: resolve(
+      repositoryRoot,
+      "tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox.webp",
+    ),
+    source: resolve(
+      repositoryRoot,
+      "public/illustrations/companions/preparing-fox.webp",
+    ),
+  },
+  ...rolloutFixtureCompanionNames.map((name) => ({
+    destination: resolve(
+      repositoryRoot,
+      "tests/fixtures/authenticated-app/public/illustrations/companions",
+      name,
+    ),
+    source: resolve(repositoryRoot, "public/illustrations/companions", name),
+  })),
+];
 
 function availableLoopbackPort() {
   return new Promise((resolvePort, reject) => {
@@ -50,13 +93,6 @@ function availableLoopbackPort() {
   });
 }
 
-if (!statSync(contourSource).isFile() || statSync(contourSource).size === 0) {
-  throw new Error("The authenticated fixture requires the maintained public/contours.svg asset.");
-}
-
-mkdirSync(dirname(contourDestination), { recursive: true });
-copyFileSync(contourSource, contourDestination);
-
 const environment = Object.fromEntries(
   inheritedEnvironmentNames.flatMap((name) => {
     const value = process.env[name];
@@ -70,6 +106,12 @@ Object.assign(environment, {
   NEXT_TELEMETRY_DISABLED: "1",
 });
 
+const releaseFixture = stageAuthenticatedFixture({
+  contourDestination,
+  contourSource,
+  fixtureAssets,
+  repositoryRoot,
+});
 try {
   const build = spawnSync(
     process.execPath,
@@ -97,5 +139,5 @@ try {
     if (result.status !== 0) process.exitCode = result.status ?? 1;
   }
 } finally {
-  unlinkSync(contourDestination);
+  releaseFixture();
 }

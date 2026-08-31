@@ -16,6 +16,11 @@ import {
   HARNESS_VIEWER_HEADER,
   type HarnessScenario,
 } from "../fixtures/authenticated-app/server/harness-context";
+import {
+  isSameOriginCompanionImageCancellation,
+  isSameOriginNavigationSupersedingCompanionRequest,
+  sameOriginNextFlightNavigationTarget,
+} from "./companion-request-policy";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
 
 type ActiveProgramIds = Readonly<{ id: string; revisionId: string }>;
@@ -115,6 +120,8 @@ async function openPage(
   close: () => Promise<void>;
   failedResponses: string[];
   failedRequests: string[];
+  markSameOriginNavigation: (url: string) => void;
+  navigateSameOrigin: (url: string) => ReturnType<Page["goto"]>;
   page: Page;
 }>> {
   const context = await createHarnessContext(browser, scope, viewer, testInfo, scenario);
@@ -122,6 +129,27 @@ async function openPage(
   const errors: string[] = [];
   const failedResponses: string[] = [];
   const failedRequests: string[] = [];
+  const navigationEvidence: Array<Readonly<{ observedAt: number; url: string }>> = [];
+  const pendingRequestFailures: Array<
+    Readonly<{ failedAt: number; label: string; request: Request }>
+  > = [];
+  const recordNavigationEvidence = (url: string) => {
+    navigationEvidence.push({ observedAt: Date.now(), url });
+  };
+  page.on("request", (request) => {
+    const nextFlightNavigationUrl = sameOriginNextFlightNavigationTarget(request);
+    if (nextFlightNavigationUrl) {
+      recordNavigationEvidence(nextFlightNavigationUrl);
+    }
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+      recordNavigationEvidence(request.url());
+    }
+  });
+  page.on("framenavigated", (frame) => {
+    if (frame === page.mainFrame()) {
+      recordNavigationEvidence(frame.url());
+    }
+  });
   page.on("console", (message) => {
     if (
       (message.type() === "error" || message.type() === "warning") &&
@@ -140,20 +168,58 @@ async function openPage(
   });
   page.on("requestfailed", (request) => {
     const url = new URL(request.url());
-    if (url.hostname === "127.0.0.1" && !isSupersededNextFlightRequest(request)) {
-      failedRequests.push(
-        `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
-      );
+    if (
+      url.hostname === "127.0.0.1" &&
+      !isSupersededNextFlightRequest(request)
+    ) {
+      pendingRequestFailures.push({
+        failedAt: Date.now(),
+        label: `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
+        request,
+      });
     }
   });
+  const markSameOriginNavigation = (url: string) => {
+    const currentUrl = new URL(page.url());
+    const targetUrl = new URL(url, currentUrl);
+    if (targetUrl.origin !== currentUrl.origin) {
+      throw new Error(`Refusing cross-origin harness navigation to ${targetUrl.origin}.`);
+    }
+    recordNavigationEvidence(targetUrl.href);
+  };
   return {
     close: async () => {
-      expect(errors).toEqual([]);
-      expect(failedRequests).toEqual([]);
-      await context.close();
+      for (const failure of pendingRequestFailures) {
+        const superseded =
+          isSameOriginCompanionImageCancellation(failure.request) &&
+          navigationEvidence.some(
+            (evidence) =>
+              Math.abs(evidence.observedAt - failure.failedAt) <= 1_000 &&
+              isSameOriginNavigationSupersedingCompanionRequest(
+                failure.request,
+                evidence.url,
+              ),
+          );
+        if (!superseded) failedRequests.push(failure.label);
+      }
+      try {
+        expect(errors).toEqual([]);
+        expect(failedRequests).toEqual([]);
+      } finally {
+        await context.close();
+      }
     },
     failedRequests,
     failedResponses,
+    navigateSameOrigin: (url) => {
+      // Record the explicit test-owned navigation synchronously. WebKit can
+      // report the superseded lazy image failure before its request event for
+      // the new document, so relying on event ordering makes the cancellation
+      // proof flaky even though the navigation is already in flight.
+      markSameOriginNavigation(url);
+      return page.goto(url);
+    },
+    markSameOriginNavigation,
     page,
   };
 }
@@ -768,7 +834,11 @@ test("owned customization publishes once, preserves history, and derives private
   );
   await alice.page.getByRole("button", { name: "Clone and activate" }).click();
   expect((await cloneProgramResponse).status()).toBe(201);
-  await expect(alice.page.getByRole("heading", { name: "QA cloned route" })).toBeVisible();
+  await expect(
+    alice.page.getByText("QA cloned route · Revision 1 · Barbell + rack · 5 days", {
+      exact: true,
+    }),
+  ).toBeVisible();
   const collectionSummary = await readScopeSummary(alice.page);
   expect(collectionSummary.counts.programRoots).toBe(
     onboardingSummary.counts.programRoots + 2,
@@ -1286,6 +1356,7 @@ test("an accepted runner save reconciles after an error response, replays once, 
   const pushDay = alice.page.getByRole("link", { name: /Push/ });
   await pushDay.focus();
   await expect(pushDay).toBeFocused();
+  alice.markSameOriginNavigation((await pushDay.getAttribute("href"))!);
   await pushDay.press("Enter");
   await expect(alice.page).toHaveURL(/\/app\/program\/push$/u);
   await expect(alice.page.getByRole("heading", { name: "Push" })).toBeVisible();
@@ -1421,7 +1492,7 @@ test("an accepted runner save reconciles after an error response, replays once, 
   expect(foreign).toMatchObject({ status: 404, body: { error: "not_found" } });
   expect(foreign.cacheControl).toContain("no-store");
 
-  const foreignRouteResponse = await bob.page.goto(`/workout/${sessionId}`);
+  const foreignRouteResponse = await bob.navigateSameOrigin(`/workout/${sessionId}`);
   expect(foreignRouteResponse).not.toBeNull();
   const foreignRouteBody = await foreignRouteResponse!.text();
   expect(foreignRouteBody).toContain(sessionId);
@@ -1431,7 +1502,7 @@ test("an accepted runner save reconciles after an error response, replays once, 
     status: foreignRouteResponse!.status(),
   };
   await expect(bob.page.getByText("This page could not be found.")).toBeVisible();
-  const missingRouteResponse = await bob.page.goto(`/workout/${unknownId}`);
+  const missingRouteResponse = await bob.navigateSameOrigin(`/workout/${unknownId}`);
   expect(missingRouteResponse).not.toBeNull();
   const missingRouteBody = await missingRouteResponse!.text();
   expect(missingRouteBody).toContain(unknownId);

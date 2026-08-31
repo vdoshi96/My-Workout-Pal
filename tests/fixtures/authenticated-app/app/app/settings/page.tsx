@@ -38,6 +38,7 @@ export default async function HarnessSettingsPage() {
           ? fixtureFirebasePublicConfig
           : null
       }
+      initialFirebaseIdentityState={{ status: "ready" }}
       initialPreferences={model.preferences}
       ownerUid={model.profile.firebaseUid}
       viewerProvider={context.viewer.provider}

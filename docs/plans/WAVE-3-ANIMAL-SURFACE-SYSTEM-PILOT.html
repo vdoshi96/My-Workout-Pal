@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="0383fdd9db7e0534a0664bf1b0850e672eca31f0d224950d605451704e9a3db1">
+  <title>Wave 3 animal surface-system pilot plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 3 animal surface-system pilot plan</h1>
+<h2>Outcome and boundary</h2>
+<p>Implement the selected Corner Companions direction on three surfaces only:</p>
+<ul>
+<li>Guest landing at <code>/</code>.</li>
+<li>Signed-in personal home at <code>/app</code> after an active routine exists.</li>
+<li>Guest Progress preview at <code>/progress</code>.</li>
+</ul>
+<p>The pilot starts from exact clean <code>main</code> commit
+<code>298cb04b8b16ad6c3586ef74bc95df7301533472</code> on branch
+<code>vishal/pal-visual-pilot</code>. It doesn&#39;t merge <code>main</code>, deploy, change providers,
+apply or add a migration, seed production, remove sibling worktrees, or begin a
+broader visual rollout.</p>
+<p>Preserve every Wave 2 route, account, routine, workout, guidance, analytics,
+service-worker, and authorization behavior. The animal system remains
+decorative and cannot communicate account state, saved state, workout state,
+sample-data meaning, progress, success, coaching, or navigation.</p>
+<h2>Visual source and production corrections</h2>
+<p>Use
+<code>.impeccable/mocks/companion-concepts/corner-companions-board.png</code> as the exact
+selected composition target. Its prompt and JSON sidecar define the approved
+golden-age theatrical cartoon language, warm mineral paper, deep teal-blue ink,
+coral action, lichen support, ruled structure, and restrained character scale.
+<code>docs/design/COMPANION-VISUAL-CONCEPTS.md</code> defines the production contract.</p>
+<p>The board is evidence only. Never ship it, crop it, or extract characters from
+it or from the composite gym hero. Generate three original, text-free
+production vignettes. Prefer transparent cutouts; an intentionally bounded,
+source-faithful warm-paper field is acceptable when true-alpha generation or
+edge extraction cannot meet the dual-background quality gate:</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Production vignette</th>
+<th>Required composition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Guest landing</td>
+<td>Planning hedgehog</td>
+<td>Full-body planning pose with a blank notebook and pencil; no lettering, logo, numbers, or progress signal</td>
+</tr>
+<tr>
+<td>Signed-in home</td>
+<td>Preparing fox</td>
+<td>Full-body seated preparation pose tying a shoe beside a bench and water bottle; no workout status or completion cue</td>
+</tr>
+<tr>
+<td>Guest Progress preview</td>
+<td>Reviewing raccoon</td>
+<td>Full-body calm review pose holding an unlabeled paper with nonsemantic marks only; no upward arrow, personalized data, numbers, or completion cue</td>
+</tr>
+</tbody></table>
+<p>Save the shipping assets under <code>public/illustrations/companions/</code> as WebP files.
+Give each file an exact prompt sidecar and embedded prompt
+provenance. Keep the generation source outside the repository after verified
+conversion. Do not add generated lettering, private data, real people, copied
+characters, emoji, CSS art, handmade SVG art, or text glyph substitutes.</p>
+<p>Production copy keeps the guest page title <strong>Progress</strong>, not <strong>See your
+progress</strong>. Every illustrated paper or notebook remains text-free.</p>
+<h2>Reusable component and tokens</h2>
+<p>Add one reusable decorative companion placement component rather than
+page-specific background images. The component owns:</p>
+<ul>
+<li>A closed surface-variant type for <code>landing</code>, <code>member-home</code>, and
+<code>progress-preview</code>.</li>
+<li>The public asset path, intrinsic dimensions, responsive <code>sizes</code>, and shared
+placement classes for each variant.</li>
+<li>Empty alternative text, <code>aria-hidden=&quot;true&quot;</code>, <code>draggable={false}</code>, and
+pointer-inert behavior.</li>
+<li>A client-side image-failure boundary that removes the entire reserved slot so
+a broken image leaves no icon, alternative text, or layout gap.</li>
+</ul>
+<p>Add shared companion tokens for the slot width, mobile height, desktop gutter,
+and safe spacing. Keep these tokens separate from route-specific content and
+reuse them across all three surfaces. The assets are ordinary static images,
+not backgrounds behind text or interactive controls.</p>
+<h2>Surface composition</h2>
+<h3>Guest landing</h3>
+<p>Recompose only the first viewport to match the selected board&#39;s hierarchy:</p>
+<ul>
+<li>Keep the existing public header, navigation destinations, protected account
+entry, and identity-neutral cache behavior.</li>
+<li>Lead with <strong>Your workout. Your way.</strong> and the truthful planning, guidance,
+logging, and progress promise.</li>
+<li>Keep the five-day starter example secondary and explicitly unsaved.</li>
+<li>Keep both existing account and public exploration paths available.</li>
+<li>Place the planning vignette in a reserved side slot on desktop and a
+dedicated content slot after the actions on phone.</li>
+</ul>
+<p>Prove this viewport before changing the later surfaces. Capture the browser at
+the board&#39;s 1,536 by 1,024 pixel size and at the board frame&#39;s 1,440 by 1,024
+CSS-pixel size. Save the required Impeccable checkpoint as
+<code>.impeccable/review/hero-repro.png</code> only after the visible hierarchy, scale,
+spacing, palette, and vignette placement hold against the selected board.</p>
+<h3>Signed-in personal home</h3>
+<p>Preserve the existing server-derived viewer, account rail, identity,
+verification state, sign-out, active-program read, resumable-workout priority,
+empty progress, routine actions, equipment control, and owner-only data.</p>
+<p>Place the preparation vignette inside the personal-home content plane only. On
+desktop, reserve whitespace beside the welcome and next-action region without
+entering the account rail. On phone, place the art in a dedicated slot after
+the personal action content and before the next semantic section. The art
+cannot cover routine links, progress totals, verification notices, resume
+actions, equipment controls, errors, or fixed navigation.</p>
+<p>Do not add the vignette to public HTML, the service-worker cache, onboarding,
+route loading, or route error markup. Those states remain semantic and compact.</p>
+<h3>Guest Progress preview</h3>
+<p>Preserve exactly one visible <strong>Sample data · not your history</strong> disclosure,
+ordinary metric labels, the history list, the accessible chart description,
+the sample-workout action, and canonical <code>/progress</code> navigation.</p>
+<p>Place the calm review vignette outside the disclosure, metrics, chart, and
+history data plane. Desktop uses reserved whitespace beside the introductory
+content. Phone uses a dedicated slot after the core preview content and before
+the action when enough space remains. The slot collapses without a gap when the
+image is hidden or fails.</p>
+<h2>State contract</h2>
+<p>The pilot must preserve the following truthful states:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Required behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Guest</td>
+<td>Public navigation and unsaved example remain available; no account or persistence claim</td>
+</tr>
+<tr>
+<td>Authenticated and verified</td>
+<td>Server-derived identity and sign-out remain visible; owned routine and next action remain primary</td>
+</tr>
+<tr>
+<td>Authenticated and unverified</td>
+<td>Read-only notice and verification requirement remain visible; permanent actions stay unavailable</td>
+</tr>
+<tr>
+<td>Empty progress</td>
+<td>No sample values enter the personal home; first completed workout remains the source of private progress</td>
+</tr>
+<tr>
+<td>Active workout</td>
+<td>Resume remains dominant; competing day-start links stay unavailable</td>
+</tr>
+<tr>
+<td>Loading or slow read</td>
+<td>Polite busy status describes the reads; decorative art doesn&#39;t delay or replace it</td>
+</tr>
+<tr>
+<td>Route failure</td>
+<td>Alert says personal data didn&#39;t load and no change was made; retry remains reachable</td>
+</tr>
+<tr>
+<td>Image failure</td>
+<td>The whole decorative slot collapses; all meaning, controls, disclosure, chart, and navigation remain</td>
+</tr>
+<tr>
+<td>Offline public route</td>
+<td>Landing and Progress HTML plus their exact public companion assets remain available from the public-only cache</td>
+</tr>
+</tbody></table>
+<h2>Persistence, authorization, caching, and privacy</h2>
+<p>This pilot adds no database type, API contract, mutation, browser-storage
+record, Firebase behavior, or private cache. Server-derived ownership remains
+unchanged.</p>
+<p>Precache only the landing and Progress vignettes as explicit public assets.
+Keep the signed-in-home vignette outside the service-worker allowlist so the
+worker never associates it with private route handling. All three rasters are
+generic, contain no identity or workout data, and remain independent from
+private HTML. <code>/app</code>, private APIs, and owned data remain <code>no-store</code> and outside
+the service worker.</p>
+<p>If a public companion asset is unavailable offline, the component collapses
+and the cached semantic route still works. If the service worker fails, normal
+network browsing remains unchanged.</p>
+<h2>Responsive, accessibility, and motion requirements</h2>
+<p>Verify widths of 320, 390, 430, 820, 1,280, and 1,440 CSS pixels, plus the
+1,536 by 1,024 board proof and 200% browser zoom. At every size:</p>
+<ul>
+<li>Keep text and actions above phone fixed navigation.</li>
+<li>Prevent horizontal overflow and overlap with account chrome, controls,
+charts, disclosures, errors, timers, and navigation.</li>
+<li>Let long names wrap without placing decorative art in their reading region.</li>
+<li>Keep the art secondary to the heading and primary action.</li>
+</ul>
+<p>Verify light and dark themes, forced colors, and reduced motion. In forced
+colors, hide the entire companion slot with <code>display: none</code> so no gap remains.
+Reduced motion keeps the static image unchanged and suppresses existing motion
+as before. Text contrast, focus indicators, and control targets remain at the
+released thresholds.</p>
+<p>Keyboard and screen-reader checks must prove that decorative images are absent
+from the accessibility tree and focus order. Pointer checks must prove that the
+slot can&#39;t intercept clicks or taps. The component must render <code>alt=&quot;&quot;</code>,
+<code>aria-hidden=&quot;true&quot;</code>, and pointer-inert CSS in every variant.</p>
+<h2>Test-driven implementation</h2>
+<p>Retain meaningful failed-before and passed-after evidence for:</p>
+<ul>
+<li>The closed companion asset and placement contract.</li>
+<li>Decorative semantics and pointer-inert markup.</li>
+<li>Image failure removing the full slot.</li>
+<li>Forced-colors and reduced-motion source policy.</li>
+<li>Landing composition and the text-free planning asset.</li>
+<li>Personal-home placement across ready, unverified, empty, and active-workout
+states without changing action truth.</li>
+<li>Neutral Progress copy, one sample disclosure, and art outside the data plane.</li>
+<li>Public-cache inclusion for landing and Progress assets and exclusion for the
+signed-in asset and private route.</li>
+<li>Authenticated fixture asset copying without broadening its environment or
+ownership behavior.</li>
+</ul>
+<p>Run focused RED tests before implementing the component or page changes.
+Record the exact failing assertions and exit status in the final QA report.
+After implementation, run the same files green before broader checks.</p>
+<h2>Browser and design evidence</h2>
+<p>Use the maintained production-mode Chromium and WebKit harnesses. Add a bounded
+pilot matrix that captures only privacy-safe public states and synthetic
+authenticated fixture states.</p>
+<p>The public evidence covers:</p>
+<ul>
+<li>Guest landing and Progress at every required width.</li>
+<li>200% zoom, dark mode, forced colors, reduced motion, keyboard, pointer, Axe,
+horizontal overflow, image failure, and Chromium offline replay.</li>
+<li>Exact no-overlap checks between the decorative slot and headings, actions,
+disclosure, metrics, chart, and fixed navigation.</li>
+</ul>
+<p>The authenticated evidence covers verified ready, unverified read-only, empty
+progress, active-workout, image-failure, and responsive home states in
+Chromium desktop and WebKit phone. It uses synthetic fixture owners only and
+retains no private identity or data.</p>
+<p>For Product Design QA, open the source board and each same-state browser
+capture, combine the reference and implementation in one side-by-side image,
+and evaluate typography, spacing, colors, image quality, copy, responsive
+translation, and accessibility. Keep the final project-root <code>design-qa.md</code> with
+<code>final result: passed</code> and retain the side-by-side evidence it cites.</p>
+<p>After the bounded two-round visual inspection, run the manual Impeccable
+detector once over changed UI targets. Then run the shipped finish reviewer in
+fresh context with the selected board, direction contract, detector findings,
+all required desktop and mobile captures, and the craft-floor reference. Apply
+only its bounded recapture, rebuild, or fix protocol. Run the shipped
+documenter after the last correction.</p>
+<h2>Complete verification and closeout</h2>
+<p>Before branch closeout, run:</p>
+<ul>
+<li>Focused and complete Vitest suites.</li>
+<li>Strict TypeScript and ESLint.</li>
+<li>Drizzle and seed checks to prove the visual pilot didn&#39;t change data
+contracts.</li>
+<li>Generated documentation and HTML parity.</li>
+<li>Generated service-worker parity and Chromium offline behavior.</li>
+<li>Supported Next.js 16.3.2 Webpack production build and route-boundary check.</li>
+<li>Maintained public Chromium/WebKit release matrix.</li>
+<li>Maintained authenticated Chromium/WebKit responsive matrix.</li>
+<li>Pilot-specific responsive and design evidence.</li>
+</ul>
+<p>Keep only the newest privacy-safe QA report and required comparison screenshots
+under the project&#39;s QA evidence boundary. Remove generated build, trace,
+Playwright report, and superseded screenshot artifacts after verification.</p>
+<p>Commit and push <code>vishal/pal-visual-pilot</code>. Leave its worktree clean and report
+the exact base, tip, asset paths, prompts and provenance, screenshots, test and
+browser results, finish-review verdict, design-QA result, and open risks. Stop
+before merge, deployment, provider changes, production data work, sibling
+worktree cleanup, or rollout.</p>
+<h2>Execution record</h2>
+<ul>
+<li>Base and branch preflight: exact clean public/local <code>main</code>
+<code>298cb04b8b16ad6c3586ef74bc95df7301533472</code>; branch
+<code>vishal/pal-visual-pilot</code> created at that commit.</li>
+<li>Impeccable context: ran exactly once against the selected board; reported the
+manual detector requirement, incumbent-world documentation gap, and available
+raster tools. Configured the explicitly selected <code>comp</code> build path.</li>
+<li>Focused RED: <code>node node_modules/vitest/vitest.mjs run tests/unit/decorative-companion.test.tsx tests/unit/landing-page.test.tsx tests/unit/public-progress-page.test.tsx tests/unit/member-program-home.test.tsx tests/unit/pwa-cache-policy.test.ts tests/unit/authenticated-harness-policy.test.ts --configLoader runner</code>
+exited 1 before component or surface implementation. The missing reusable
+component plus eight intended placement, public-cache, and authenticated
+fixture assertions failed; 31 pre-existing assertions remained green. A
+preceding <code>pnpm exec</code> attempt was a non-product package-manager refusal to
+purge the linked dependency tree and is not counted as RED evidence.</li>
+<li>Focused GREEN: after adding the closed three-variant component, surface
+placements, failure/forced-colors/reduced-motion policies, public-cache
+allowlist, and bounded fixture copy, the identical direct Vitest command
+exited 0 with 44 of 44 assertions passing. The generated service worker was
+refreshed from its canonical TypeScript policy immediately before the run.</li>
+<li>Final focused regression: the expanded seven-file suite passed 46 of 46
+assertions after adding route loading/error coverage and the authenticated
+harness state contract.</li>
+<li>Assets: three purpose-built, text-free vignettes and responsive 512-pixel
+derivatives ship with exact prompt/provenance sidecars. The final hashes are
+hedgehog <code>79891bacacde49d7aeff0ad647d1e62a41fb68f56f5d7cbab937c58bfadbb126</code>
+and <code>45995ea9cd380bb344dda92decbe45c00ff66285b6e5e32872b97115528da79b</code>,
+fox <code>9812c7a337667f70388aa9b4820f81b4306140e2001998aa18bab30aa814cc33</code>
+and <code>07816814dd9c0e94cfb3b2bfb324425f60b6789b16964780bc1e5f58974d1de3</code>,
+and raccoon <code>94721d121b53e2fa3cfb779e6dab1a8a0932cb5fb2827711ca6ed34634db65f6</code>
+and <code>9f109d0315d72cf47032c539f023b6f4bfc81010f14a813a31be068223b49e72</code>.
+There is no companion 768 derivative; the maintained responsive contract is
+1024 plus 512.</li>
+<li>Raccoon correction: the original purpose-built chroma source
+<code>51c0e243b2d7826e80bb016e111fd18b37dd07aaacea9607e281800917c9bdf8</code>
+produced a lossy alpha edge and was rejected. A requested alpha correction
+returned baked checkerboard pixels
+(<code>06d0ccb69dc828075047b8eb1580b883f3997ae3d18b346f6fca453dd6560e6e</code>)
+and was also rejected. The accepted source
+(<code>0059348d386d6c79a61d250dedbf69cc488180c213e22dd27744a62ac3bf122e</code>)
+is an opaque 1254-square warm-paper card, independently exported to 1024 and
+512 WebP. Direct light/dark inspection, sidecar hash/prompt validation, and
+the final reviewer found no magenta, matte, checkerboard, halo, crop, white
+band, text, chart, semantic trend, or private data.</li>
+<li>Board gate: the landing first viewport was proved before later surfaces at
+the board&#39;s 1536 by 1024 density and retained as
+<code>.impeccable/review/hero-repro.png</code>. The board approval sidecar is <code>true</code>, and
+the board remains an uncropped comparison input rather than a runtime asset.</li>
+<li>Browser matrix: the pilot covers public widths 320, 390, 430, 820, 1280, and
+1440 CSS pixels, actual 200% Chromium page scale, light/dark, forced colors,
+reduced motion, keyboard traversal, accessibility snapshots, pointer
+hit-testing, image failure, and Chromium public-offline replay. Strict
+geometry assertions cover all required semantic regions. The final public
+pilot/offline slice passed 12 cases with 12 intentional project-specific
+skips, and the complete maintained public release matrix passed 56 with 12
+intentional skips.</li>
+<li>Authenticated matrix: synthetic verified, unverified, empty, active-workout,
+image-failure, slow-read, and route-failure states passed. The final maintained
+six-project run finished with 47 passes, three intentional skips, and zero
+failures. The intentional skips are the Chromium-only slow/failure recovery,
+desktop-only 200% runner geometry, and desktop-only incompatible-equipment
+branch. Stale test expectations were narrowed to the new truthful welcome
+heading, exact navigation-cancelled fox requests, intentional-offline
+transport windows, and settled document metadata; cross-engine targeted
+retries passed before the final complete run.</li>
+<li>Infrastructure classification: an initial browser launch attempt failed
+before page execution because the sandbox denied macOS Chromium Mach-port
+registration; the authorized unchanged-source rerun passed. A complete
+public-matrix attempt without the ignored local environment failed only on
+database-backed exercise detail; restarting the identical build with the
+existing ignored <code>.env.local</code> produced the final green matrix. Full Vitest
+first reported one loopback <code>listen EPERM</code>; the authorized unchanged-source
+retry passed all 839 tests.</li>
+<li>Accessibility and privacy: companion images are empty-alt, <code>aria-hidden</code>,
+pointer-inert, outside focus order, hidden without a gap in forced colors,
+static in reduced motion, and failure-collapsible. The landing and Progress
+full/512 assets are public-cache allowlisted; both fox assets, authenticated
+HTML, and private data remain excluded.</li>
+<li>Review protocol: the manual detector ran exactly once. Its five findings are
+pre-existing runner/history side-tab styles outside this diff. The first
+finish review requested only bounded headline, active-phone clearance, and
+raccoon-edge corrections. The follow-up accepted the first two and requested
+the bounded opaque-card or true-alpha asset fix. The fresh final review
+disposition is <code>ship</code>, with no material fix or rebuild requested. Product
+Design <code>design-qa.md</code> records <code>Final result: passed.</code></li>
+<li>Documentation: the shipped Impeccable documenter ran after the last visual
+correction and produced root <code>DESIGN.md</code> plus <code>.impeccable/design.json</code>.
+<code>DESIGN.md</code>, <code>design-qa.md</code>, and all project-owned Markdown remain covered by
+the canonical HTML renderer.</li>
+<li>Complete gates: 123 Vitest files and 839 tests passed; TypeScript and ESLint
+passed; Drizzle metadata plus four files/34 schema tests passed; the exact-two
+seed policy passed; service-worker and documentation parity passed; the
+Next.js 16.3.2 Webpack production build passed; and the 44-entry App Router
+production boundary passed.</li>
+<li>Stop boundary: no merge, deployment, rollout, provider, environment, billing,
+migration, seed, production-data, or sibling-worktree operation was run.</li>
+</ul>
+
+  </main>
+</body>
+</html>

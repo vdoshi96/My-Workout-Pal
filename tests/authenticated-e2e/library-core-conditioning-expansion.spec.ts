@@ -16,6 +16,7 @@ import {
   HARNESS_SCOPE_HEADER,
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
+import { isSupersededCompanionImageRequest } from "./companion-request-policy";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
 
 type OpenHarnessPage = Readonly<{
@@ -125,7 +126,11 @@ async function openHarnessPage(
   });
   page.on("requestfailed", (request) => {
     const url = new URL(request.url());
-    if (url.hostname === "127.0.0.1" && !isSupersededNextFlightRequest(request)) {
+    if (
+      url.hostname === "127.0.0.1" &&
+      !isSupersededNextFlightRequest(request) &&
+      !isSupersededCompanionImageRequest(request)
+    ) {
       failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
       );

@@ -15,6 +15,10 @@ import {
   HARNESS_SCOPE_HEADER,
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
+import {
+  isSupersededCompanionImageRequest,
+  isSupersededSameOriginRouteChunkRequest,
+} from "./companion-request-policy";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
 
 type HarnessSummary = Readonly<{
@@ -130,7 +134,12 @@ async function openHarnessPage(
   });
   page.on("requestfailed", (request) => {
     const url = new URL(request.url());
-    if (url.hostname === "127.0.0.1" && !isSupersededNextFlightRequest(request)) {
+    if (
+      url.hostname === "127.0.0.1" &&
+      !isSupersededNextFlightRequest(request) &&
+      !isSupersededCompanionImageRequest(request) &&
+      !isSupersededSameOriginRouteChunkRequest(request)
+    ) {
       failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
       );
@@ -148,6 +157,7 @@ async function openHarnessPage(
 }
 
 async function assertAccessible(page: Page) {
+  await expect.poll(() => page.title()).not.toBe("");
   const results = await new AxeBuilder({ page })
     .exclude('iframe[src*="youtube-nocookie.com"]')
     .analyze();
@@ -292,8 +302,11 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   await alice.page.getByRole("button", { name: "Publish custom routine" }).click();
   expect((await createResponse).status()).toBe(201);
 
-  await expect(alice.page.getByRole("heading", { name: "Weekend route" })).toBeVisible();
-  await expect(alice.page.getByText("Revision 1 · Dumbbells · 1 day")).toBeVisible();
+  await expect(
+    alice.page.getByText("Weekend route · Revision 1 · Dumbbells · 1 day", {
+      exact: true,
+    }),
+  ).toBeVisible();
   await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(1);
   await expect(alice.page.getByText("1 movements · no cardio")).toBeVisible();
   const created = await readProfileProgram(alice.page);

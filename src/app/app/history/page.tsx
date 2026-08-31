@@ -6,6 +6,7 @@ import {
   formatInsightDistance,
   formatInsightDuration,
 } from "@/components/insights/training-insights-presenters";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 import { getDatabase } from "@/db/client";
 import { getCurrentViewer } from "@/server/auth/viewer";
@@ -67,13 +68,14 @@ export default async function TrainingHistoryPage({ searchParams }: PageProps) {
 
   return (
     <section className="insights-page" aria-labelledby="history-title">
-        <header className="insights-heading contour-surface">
+        <header className="insights-heading companion-heading contour-surface">
           <div>
             <span className="eyebrow">Immutable training archive</span>
             <h1 id="history-title">History</h1>
             <p>Completed and interrupted workouts exactly as they were saved. Later program edits never rewrite these snapshots.</p>
           </div>
           <Link className="insight-action" href="/app/progress">View progress <Icon name="arrow-right" /></Link>
+          {history.sessions.length > 0 ? <DecorativeCompanion variant="history" /> : null}
         </header>
 
         <form className="history-filter" method="get">

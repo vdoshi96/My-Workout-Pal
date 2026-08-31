@@ -17,6 +17,7 @@ import {
   HARNESS_VIEWER_HEADER,
   type HarnessScenario,
 } from "../fixtures/authenticated-app/server/harness-context";
+import { isSupersededCompanionImageRequest } from "./companion-request-policy";
 
 type SyntheticViewer = "alice" | "bob";
 type ResilienceControl = {
@@ -206,7 +207,8 @@ function monitorResiliencePage(page: Page, signals: ResilienceSignals): void {
       !isSupersededNextFlightRequest(request) &&
       // WebKit can cancel an in-flight local font when the test intentionally
       // replaces the document at the synthetic reauthentication boundary.
-      !isExpectedNavigationFontCancellation(request)
+      !isExpectedNavigationFontCancellation(request) &&
+      !isSupersededCompanionImageRequest(request)
     ) {
       signals.failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
@@ -551,10 +553,30 @@ test("a real aborted operation retries explicitly with the same key and no onlin
   harness.failedRequests.length = 0;
 
   harness.control.abortNextOperation = true;
-  await harness.page.reload();
+  // The recovery contract depends on a real browser reload and hydrated runner
+  // state, not on Playwright's WebKit reload lifecycle waiter. In a long
+  // WebKit project that waiter can remain pending at every readiness level.
+  // Trigger the native reload after this evaluation returns, observe the main
+  // frame commit directly, then let the product assertions prove hydration.
+  const reloadedUrl = harness.page.url();
+  const reloadCommitted = harness.page.waitForEvent("framenavigated", {
+    predicate: (frame) =>
+      frame === harness.page.mainFrame() && frame.url() === reloadedUrl,
+  });
+  await harness.page.evaluate(() => {
+    setTimeout(() => window.location.reload(), 0);
+  });
+  await reloadCommitted;
   await expect(
     harness.page.getByRole("heading", { name: "Offline queued" }),
   ).toBeVisible();
+  expect(
+    await harness.page.evaluate(
+      () =>
+        (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming)
+          ?.type,
+    ),
+  ).toBe("reload");
   if (testInfo.project.name === "chromium-desktop") {
     await attachRunnerRegionEvidence(
       harness.page.locator(
@@ -924,6 +946,10 @@ test("two tabs block a divergent set until the member chooses one original key",
   const savedResponse = first.waitForResponse((response) =>
     isOperationRequest(response.request()),
   );
+  // The offline portion may intentionally fail private Next chunk requests.
+  // All offline conflict behavior is asserted above; clear those expected
+  // transport failures before proving the restored online save is clean.
+  harness.signals.failedRequests.length = 0;
   await harness.context.setOffline(false);
   expect((await savedResponse).status()).toBe(200);
   await expect(
@@ -1166,6 +1192,7 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
   expect(harness.signals.operationRequests).toHaveLength(
     requestsBeforeCompletion + 1,
   );
+  await expect(first).toHaveTitle(/\S/u);
   await assertAccessible(first);
 
   await second.evaluate(() => {
@@ -1180,6 +1207,7 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
   await expect(
     second.getByRole("heading", { name: "Push", exact: true }),
   ).toBeVisible();
+  await expect(second).toHaveTitle(/\S/u);
   await assertAccessible(second);
   if (testInfo.project.name === "webkit-phone") {
     await attachRunnerEvidence(

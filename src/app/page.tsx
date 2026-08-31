@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PublicShell } from "@/components/layout/public-shell";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = {
@@ -11,15 +12,13 @@ export const metadata: Metadata = {
 };
 
 const starterDays = ["Push", "Pull", "Legs", "Upper", "Lower"] as const;
-const heroImageAlt = "A lively hand-drawn cartoon gym where animal workout pals run, lift dumbbells, stretch, drink water, and train together.";
-
 export default function HomePage() {
   return (
     <PublicShell current="home">
       <section className="landing-hero" aria-labelledby="landing-heading">
         <div className="landing-copy">
           <p className="landing-welcome">Welcome to My Workout Pal</p>
-          <h1 id="landing-heading">A workout companion built around your routine.</h1>
+          <h1 id="landing-heading">Your workout. Your way.</h1>
           <p className="landing-lede">
             Plan your days, use guidance while you train, log your work, and review progress
             in one personal place. Explore an unsaved starter example before deciding whether
@@ -39,24 +38,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <figure className="landing-scene">
-          {/* The explicit precached source keeps the illustration available offline.
-              Native rendering also avoids Next's inline style under the nonce CSP. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            alt={heroImageAlt}
-            decoding="async"
-            height={1024}
-            loading="lazy"
-            sizes="(max-width: 63.99rem) calc(100vw - 2rem), 55vw"
-            src="/illustrations/workout-pals-gym.webp"
-            srcSet="/illustrations/workout-pals-gym-768.webp 768w, /illustrations/workout-pals-gym.webp 1536w"
-            width={1536}
-          />
-          <figcaption>
-            Every workout pal has their own pace, equipment, and way into the week.
-          </figcaption>
-        </figure>
+        <DecorativeCompanion variant="landing" />
       </section>
 
       <section className="landing-route" aria-labelledby="starter-route-heading">

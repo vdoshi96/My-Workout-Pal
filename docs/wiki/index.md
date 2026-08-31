@@ -20,10 +20,20 @@ Use the following documents as the maintained project map:
   identities, durable recovery, ordered production seed, hosted verification,
   Google authentication, cleanup, and repository closeout.
 - `docs/plans/PERSONAL-HOME-AND-COMPANION-COPY.md`: Wave 1 public positioning, canonical Progress preview, personal signed-in home states, owner-scoped resume read, and verification plan.
+- `docs/plans/WAVE-3-ANIMAL-SURFACE-SYSTEM-PILOT.md`: bounded Corner Companions implementation for the guest landing, signed-in personal home, and guest Progress preview, including asset provenance, TDD, accessibility, responsive, cache, and visual-QA gates.
+- `docs/plans/WAVE-3-ANIMAL-SURFACE-SYSTEM-ROLLOUT.md`: branch-local
+  rollout of the approved companion system to public/member Library, the owned
+  routine editor, History list/detail, Settings, and the neutral runner
+  overview, including state collapse, cache/privacy, native zoom, and complete
+  browser evidence.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
 - `docs/plans/VERIFICATION.md`: automated and manual release matrix.
 - `docs/design/DIRECTION.md`: original visual world and interaction grammar.
+- `DESIGN.md`: current reusable design-system rules refreshed after the final
+  Wave 3 rollout correction.
+- `design-qa.md`: passed Product Design reference-to-build review for the
+  approved pilot and the complete Wave 3 rollout.
 - `docs/design/COMPANION-VISUAL-CONCEPTS.md`: selected Corner Companions responsive board, production guardrails, required corrections, and pilot acceptance criteria.
 - `docs/design/PROGRAM-OVERVIEW.md`: approved comp and implementation inventory.
 - `docs/reference/SUBSTITUTIONS.md`: equipment compatibility and program mutation rules.
@@ -36,6 +46,23 @@ Use the following documents as the maintained project map:
 - `docs/reference/DEPLOYMENT-RECOVERY.md`: environments, release checks, cost controls, and recovery.
 
 Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.
+
+## Wave 3 branch-local rollout status
+
+The approved Corner Companions pilot remains intact, and branch
+`vishal/pal-visual-rollout` extends the reusable component to public/member
+Library, the owned routine editor, History list/detail, Settings, and the
+neutral runner overview. The final fresh Impeccable reviewer disposition is
+`ship`. The newest privacy-safe screenshots and uncropped board comparisons
+live under `docs/qa/latest/animal-surface-rollout/`; the canonical local QA
+record is `docs/qa/latest/WAVE-3-ANIMAL-SURFACE-SYSTEM-ROLLOUT-QA.md`.
+
+Only the cataloging-otter pair enters the public cache for the genuinely public
+Library route. All owned variants, private routes, authenticated HTML, and
+private data remain excluded. Companion and landing-hero provenance is retained
+under `docs/design/provenance/` rather than anonymously fetchable public JSON.
+This work is branch-only: it has not been merged, deployed, or applied to
+production data, providers, aliases, environment, or billing.
 
 ## Wave 2 production status
 

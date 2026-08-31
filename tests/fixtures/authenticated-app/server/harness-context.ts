@@ -12,9 +12,12 @@ export type HarnessScenario =
   | "fail-next-save"
   | "firebase-client-missing"
   | "invalid"
+  | "fail-member-home"
   | "ready"
+  | "runner-neutral-overview"
   | "revoke-session"
   | "revoke-next-runner-operation"
+  | "slow-member-home"
   | "slow-onboard";
 
 export type HarnessRequestContext = Readonly<{
@@ -30,9 +33,12 @@ const scenarioValues = new Set<HarnessScenario>([
   "expire-next-runner-operation",
   "fail-next-save",
   "firebase-client-missing",
+  "fail-member-home",
   "ready",
+  "runner-neutral-overview",
   "revoke-session",
   "revoke-next-runner-operation",
+  "slow-member-home",
   "slow-onboard",
 ]);
 

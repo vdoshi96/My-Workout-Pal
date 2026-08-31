@@ -11,11 +11,11 @@ import type { ReactNode } from "react";
 import { PwaRegistration } from "@/components/pwa/pwa-registration";
 
 const designContract = `<!--
-THESIS: My Workout Pal is a customizable workout companion: guests can inspect a truthful starter example, while signed-in people shape routines, train with guidance, and review private progress without rewriting completed ground.
-OWN-WORLD: Warm mineral paper, deep blue-green ink, coral routes, lichen compatibility marks, hand-painted cartoon workout pals, contour geometry, waypoint controls, and ruled field sheets.
-STORY: A guest learns how the companion supports planning, guidance, logging, and progress, explores an unsaved five-day example, and signs in only when they choose to make a routine their own.
-FIRST VIEWPORT: A plain-language companion promise and starter-example action sit beside the established hand-drawn animal gym scene; personal account benefits remain secondary and explicit.
-FORM: Grounded direction 3, training route atlas with a cartoon welcome-world extension, seed ba529732.
+THESIS: My Workout Pal makes a personal workout feel approachable through one truthful next action and one quiet animal companion, never a mascot-led dashboard.
+OWN-WORLD: Warm mineral paper, deep teal ink, coral action, lichen support, ruled field structure, contour geometry, and original hand-painted cel animal vignettes in reserved whitespace.
+STORY: A guest understands the planning path, a member keeps the owned next move primary, and Progress remains a neutral disclosed preview.
+FIRST VIEWPORT: On the landing, Your workout. Your way. and the unsaved starter action lead on the left while a text-free planning hedgehog occupies a bounded right-side slot that translates below actions on phone.
+FORM: Selected Corner Companions extension over the route-atlas system, board key d787734c.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 -->`;
 
@@ -61,7 +61,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html data-scroll-behavior="smooth" lang="en">
       <body>
         <template
-          data-design-contract="ba529732"
+          data-design-contract="d787734c"
           // React cannot emit a bare comment as a body child, so the auditable contract
           // is preserved inside the body's first element and in its data attribute.
           dangerouslySetInnerHTML={{ __html: designContract }}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 import { getDatabase } from "@/db/client";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
@@ -49,13 +50,14 @@ export default async function MemberLibraryPage({ searchParams }: PageProps) {
 
   return (
     <section className="member-library" aria-labelledby="member-library-title">
-      <header className="member-library-heading contour-surface">
+      <header className="member-library-heading companion-heading contour-surface">
         <div>
           <span className="eyebrow">Your compatible field guide</span>
           <h1 id="member-library-title">Exercise library</h1>
           <p>Canonical movements and only your private exercises, filtered for {profile.label.toLocaleLowerCase("en-US")}.</p>
         </div>
         <Link className="primary-action" href="/app/library/custom/new">Create private exercise <Icon name="arrow-right" /></Link>
+        <DecorativeCompanion variant="library" />
       </header>
 
       <form className="member-library-search" method="get" role="search">

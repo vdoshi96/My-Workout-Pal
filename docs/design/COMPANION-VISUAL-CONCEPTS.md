@@ -1,6 +1,7 @@
 # Corner companions visual direction
 
-**Status:** Selected production direction for the Wave 3 pilot. The board is design evidence, not a shipping asset or implemented interface.
+**Status:** Implemented and locally verified for the bounded Wave 3 pilot on
+`vishal/pal-visual-pilot`. The board is design evidence, not a shipping asset.
 
 Corner Companions is the sole selected animal-surface direction for the guest landing page, signed-in home, and guest progress preview. Apply the same direction to phone and desktop layouts. Do not combine it with discarded concepts.
 
@@ -8,7 +9,10 @@ Corner Companions is the sole selected animal-surface direction for the guest la
 
 The Wave 0 review compared three responsive image-based directions. On August 27, 2026, the user selected Corner Companions. The two alternatives were discarded, and their images, prompts, and direction-specific provenance are not retained on this branch.
 
-The selection establishes the visual target for a later pilot. It does not change components, styles, routes, authentication, persistence, deployment state, or publication authorization.
+The selection established the visual target for the bounded pilot. The
+implementation changes only presentation on the three approved surfaces and
+does not change authentication, persistence, deployment state, or publication
+authorization.
 
 ## Selected board
 
@@ -51,6 +55,27 @@ The generated board is directional rather than pixel-accurate production copy:
 - Replace **See your progress** with the neutral **Progress** title so the guest preview does not imply personal data.
 - Remove generated lettering from the illustrated notebook. Production artwork must keep the notebook text-free.
 - Keep visible account identity, verification state, and sign-out controls on every signed-in layout.
+
+## Pilot implementation record
+
+- One reusable decorative companion component owns the closed landing,
+  member-home, and Progress-preview variants, responsive sources, empty-alt and
+  hidden semantics, and failure collapse.
+- Shared tokens reserve companion whitespace. Forced colors removes each slot
+  without a gap, reduced motion keeps the art static, and pointer input passes
+  through the decorative layer.
+- Landing and Progress assets are explicit public-cache entries. The signed-in
+  fox and both of its responsive files remain excluded from the public cache,
+  along with all private HTML and data.
+- The hedgehog and fox use transparent production rasters. The final raccoon is
+  an intentionally bounded opaque warm-paper card after lossy chroma extraction
+  and a baked-checkerboard rerender were rejected. Its text-free paper, neutral
+  Progress title, and nonsemantic pigment dabs carry no personalized data or
+  directional trend.
+- Final same-state comparisons and privacy-safe browser evidence are retained in
+  `docs/qa/latest/animal-surface-pilot/`. The fresh Impeccable finish review
+  disposition is `ship`; the project-root design-QA result is passed.
+- This record does not authorize broader rollout, merge, or deployment.
 
 ## Pilot acceptance criteria
 

@@ -6,7 +6,7 @@ import { marked } from "marked";
 
 const root = process.cwd();
 const checkOnly = process.argv.includes("--check");
-const roots = ["AGENTS.md", "PRODUCT.md", "README.md", "docs"];
+const roots = ["AGENTS.md", "DESIGN.md", "PRODUCT.md", "README.md", "design-qa.md", "docs"];
 
 async function markdownFiles(target) {
   const absolute = path.join(root, target);

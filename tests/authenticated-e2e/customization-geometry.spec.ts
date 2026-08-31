@@ -6,6 +6,7 @@ import {
   HARNESS_SCOPE_HEADER,
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
+import { isSupersededCompanionImageRequest } from "./companion-request-policy";
 
 async function assertAccessible(page: Page) {
   const results = await new AxeBuilder({ page }).analyze();
@@ -130,7 +131,11 @@ test("customization surfaces preserve geometry and media preferences", async ({
   });
   page.on("requestfailed", (request) => {
     const url = new URL(request.url());
-    if (url.hostname === "127.0.0.1" && !isSupersededNextFlightRequest(request)) {
+    if (
+      url.hostname === "127.0.0.1" &&
+      !isSupersededNextFlightRequest(request) &&
+      !isSupersededCompanionImageRequest(request)
+    ) {
       failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
       );

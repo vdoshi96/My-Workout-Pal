@@ -7,6 +7,7 @@ import {
   HARNESS_SCOPE_HEADER,
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
+import { isSupersededCompanionImageRequest } from "./companion-request-policy";
 
 function isSupersededNextFlightRequest(request: Request): boolean {
   const url = new URL(request.url());
@@ -66,7 +67,11 @@ test("full-page Settings fails closed until the browser Firebase identity is res
   });
   page.on("requestfailed", (request) => {
     const url = new URL(request.url());
-    if (url.hostname === "127.0.0.1" && !isSupersededNextFlightRequest(request)) {
+    if (
+      url.hostname === "127.0.0.1" &&
+      !isSupersededNextFlightRequest(request) &&
+      !isSupersededCompanionImageRequest(request)
+    ) {
       failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
       );
