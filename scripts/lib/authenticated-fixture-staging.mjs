@@ -1,9 +1,10 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
   closeSync,
   constants,
   copyFileSync,
   existsSync,
+  linkSync,
   mkdirSync,
   openSync,
   readFileSync,
@@ -12,7 +13,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 
 function harnessLockPath(repositoryRoot) {
   const repositoryKey = createHash("sha256")
@@ -20,6 +21,10 @@ function harnessLockPath(repositoryRoot) {
     .digest("hex")
     .slice(0, 16);
   return resolve(tmpdir(), `my-workout-pal-authenticated-${repositoryKey}.lock`);
+}
+
+function fileHash(path) {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
 function processIsAlive(pid) {
@@ -32,11 +37,58 @@ function processIsAlive(pid) {
   }
 }
 
-function acquireHarnessLock(repositoryRoot) {
+function lockMetadata(path) {
+  const raw = readFileSync(path, "utf8").trim();
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    const pid = Number.parseInt(raw, 10);
+    return Number.isInteger(pid) ? { pid } : {};
+  }
+}
+
+function removeOwnedStage(entry, expectedHash) {
+  if (
+    !entry ||
+    typeof entry !== "object" ||
+    typeof entry.destination !== "string" ||
+    typeof entry.stagingPath !== "string" ||
+    entry.hash !== expectedHash ||
+    dirname(entry.stagingPath) !== dirname(entry.destination) ||
+    !basename(entry.stagingPath).startsWith(".mwp-authenticated-stage-") ||
+    !existsSync(entry.stagingPath) ||
+    fileHash(entry.stagingPath) !== expectedHash
+  ) {
+    return;
+  }
+
+  if (existsSync(entry.destination)) {
+    const stagingStat = statSync(entry.stagingPath);
+    const destinationStat = statSync(entry.destination);
+    if (stagingStat.dev === destinationStat.dev && stagingStat.ino === destinationStat.ino) {
+      unlinkSync(entry.destination);
+    }
+  }
+  unlinkSync(entry.stagingPath);
+}
+
+function recoverStaleDestinations(metadata, plannedDestinations) {
+  if (metadata.schemaVersion !== 1 || !Array.isArray(metadata.staged)) return;
+  const plannedByDestination = new Map(
+    plannedDestinations.map((entry) => [entry.destination, entry.hash]),
+  );
+  for (const entry of metadata.staged) {
+    removeOwnedStage(entry, plannedByDestination.get(entry?.destination));
+  }
+}
+
+function acquireHarnessLock(repositoryRoot, plannedDestinations) {
   const lockPath = harnessLockPath(repositoryRoot);
+  let staged = [];
   const openLock = () => {
     const handle = openSync(lockPath, "wx");
-    writeFileSync(handle, `${process.pid}\n`);
+    writeFileSync(handle, `${JSON.stringify({ schemaVersion: 1, pid: process.pid, staged })}\n`);
     return handle;
   };
 
@@ -45,17 +97,29 @@ function acquireHarnessLock(repositoryRoot) {
     handle = openLock();
   } catch (error) {
     if (!error || typeof error !== "object" || error.code !== "EEXIST") throw error;
-    const existingPid = Number.parseInt(readFileSync(lockPath, "utf8").trim(), 10);
+    const metadata = lockMetadata(lockPath);
+    const existingPid = metadata.pid;
     if (Number.isInteger(existingPid) && existingPid > 0 && processIsAlive(existingPid)) {
       throw new Error("Another authenticated browser harness is already active for this worktree.");
     }
+    recoverStaleDestinations(metadata, plannedDestinations);
     unlinkSync(lockPath);
+    staged = [];
     handle = openLock();
   }
 
-  return () => {
-    closeSync(handle);
-    if (existsSync(lockPath)) unlinkSync(lockPath);
+  return {
+    recordStaged(entry) {
+      staged.push(entry);
+      writeFileSync(
+        lockPath,
+        `${JSON.stringify({ schemaVersion: 1, pid: process.pid, staged })}\n`,
+      );
+    },
+    release() {
+      closeSync(handle);
+      if (existsSync(lockPath)) unlinkSync(lockPath);
+    },
   };
 }
 
@@ -71,37 +135,55 @@ export function stageAuthenticatedFixture({
   fixtureAssets,
   repositoryRoot,
 }) {
-  const releaseLock = acquireHarnessLock(repositoryRoot);
-  const stagedDestinations = [];
+  requireReadableFile(contourSource, "contours asset");
+  for (const asset of fixtureAssets) {
+    requireReadableFile(asset.source, "companion asset");
+  }
+  const plannedAssets = [
+    { destination: contourDestination, source: contourSource },
+    ...fixtureAssets,
+  ];
+  const plannedDestinations = plannedAssets.map(({ destination, source }) => ({
+    destination,
+    hash: fileHash(source),
+  }));
+  const lock = acquireHarnessLock(repositoryRoot, plannedDestinations);
+  const stagedEntries = [];
 
   try {
-    requireReadableFile(contourSource, "contours asset");
-    for (const asset of fixtureAssets) {
-      requireReadableFile(asset.source, "companion asset");
-    }
-
-    const stage = (source, destination) => {
+    const stage = (source, destination, hash) => {
       mkdirSync(dirname(destination), { recursive: true });
-      copyFileSync(source, destination, constants.COPYFILE_EXCL);
-      stagedDestinations.push(destination);
+      const entry = {
+        destination,
+        hash,
+        stagingPath: resolve(
+          dirname(destination),
+          `.mwp-authenticated-stage-${randomUUID()}`,
+        ),
+      };
+      lock.recordStaged(entry);
+      stagedEntries.push(entry);
+      copyFileSync(source, entry.stagingPath, constants.COPYFILE_EXCL);
+      linkSync(entry.stagingPath, destination);
     };
-    stage(contourSource, contourDestination);
-    for (const asset of fixtureAssets) stage(asset.source, asset.destination);
-  } catch (error) {
-    for (const destination of stagedDestinations.reverse()) {
-      if (existsSync(destination)) unlinkSync(destination);
+    for (const [index, asset] of plannedAssets.entries()) {
+      stage(asset.source, asset.destination, plannedDestinations[index].hash);
     }
-    releaseLock();
+  } catch (error) {
+    for (const entry of stagedEntries.reverse()) {
+      removeOwnedStage(entry, entry.hash);
+    }
+    lock.release();
     throw error;
   }
 
   return () => {
     try {
-      for (const destination of stagedDestinations.reverse()) {
-        if (existsSync(destination)) unlinkSync(destination);
+      for (const entry of stagedEntries.reverse()) {
+        removeOwnedStage(entry, entry.hash);
       }
     } finally {
-      releaseLock();
+      lock.release();
     }
   };
 }

@@ -35,6 +35,7 @@ export function EquipmentProfileControl({
   disabled = false,
   draftDirty = false,
   onBusyChange,
+  onReviewChange,
   onSaved,
   placement = "settings",
   program,
@@ -43,6 +44,7 @@ export function EquipmentProfileControl({
   disabled?: boolean;
   draftDirty?: boolean;
   onBusyChange?: (busy: boolean) => void;
+  onReviewChange?: (open: boolean) => void;
   onSaved: (nextProgram: ActiveProgramReadModel) => void;
   placement?: "editor" | "settings";
   program: ActiveProgramReadModel;
@@ -72,15 +74,20 @@ export function EquipmentProfileControl({
     globalThis.requestAnimationFrame(() => reviewHeading.current?.focus());
   }, [reviewOpen, targetProfile]);
 
+  function updateReviewOpen(open: boolean) {
+    setReviewOpen(open);
+    onReviewChange?.(open);
+  }
+
   function chooseTarget(nextProfile: EquipmentProfileKind) {
     confirmationKey.current = undefined;
     setMessage("");
-    setReviewOpen(nextProfile !== program.equipmentProfileKind);
+    updateReviewOpen(nextProfile !== program.equipmentProfileKind);
     setTargetProfile(nextProfile);
   }
 
   function cancelReview() {
-    setReviewOpen(false);
+    updateReviewOpen(false);
     setMessage(draftDirty ? "Equipment preview closed. Your unpublished editor changes are intact." : "");
     queueMicrotask(() => profileButtons.current[targetProfile]?.focus());
   }
@@ -113,7 +120,7 @@ export function EquipmentProfileControl({
       const reconciliation = reconcileProgramRevisionMutation(program, response);
       confirmationKey.current = undefined;
       if (reconciliation.kind === "stored-inactive") {
-        setReviewOpen(false);
+        updateReviewOpen(false);
         setMessage(
           `${reconciliation.affectedProgramName}'s earlier equipment revision is stored, but ${reconciliation.activeProgramName} remains active. Review your program collection before opening an overview.`,
         );
@@ -122,7 +129,7 @@ export function EquipmentProfileControl({
       const nextProgram = reconciliation.program;
       onSaved(nextProgram);
       setTargetProfile(oppositeProfile(nextProgram.equipmentProfileKind));
-      setReviewOpen(false);
+      updateReviewOpen(false);
       setMessage(
         response.changeCount === 0
           ? `Saved revision ${nextProgram.revisionNumber}. No movement substitutions were required; existing workout history was not changed.`

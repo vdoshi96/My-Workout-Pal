@@ -250,6 +250,7 @@ export function ProgramEditor({
   const [sectionRemoval, setSectionRemoval] = useState<SectionRemoval | null>(null);
   const [dayRemoval, setDayRemoval] = useState<DayRemoval | null>(null);
   const [prescriptionRemoval, setPrescriptionRemoval] = useState<PrescriptionRemoval | null>(null);
+  const [equipmentReviewOpen, setEquipmentReviewOpen] = useState(false);
   const [pendingMeasurementKeys, setPendingMeasurementKeys] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -956,6 +957,7 @@ export function ProgramEditor({
     hasOpenReview:
       chooser !== null ||
       dayCreatorOpen ||
+      equipmentReviewOpen ||
       sectionRemoval !== null ||
       dayRemoval !== null ||
       prescriptionRemoval !== null,
@@ -989,6 +991,7 @@ export function ProgramEditor({
         disabled={busy}
         draftDirty={dirty}
         onBusyChange={setBusy}
+        onReviewChange={setEquipmentReviewOpen}
         onSaved={acceptEquipmentRevision}
         placement="editor"
         program={program}

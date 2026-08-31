@@ -2,48 +2,76 @@
 
 ## Current phase
 
-The Wave 3 Animal Surface-System Rollout is implemented and locally verified on
-`vishal/pal-visual-rollout`, starting from exact reviewed and pushed pilot tip
-`b4499f3b953a5745039f1bca67da68e6e135c7c3`. The approved guest landing,
-signed-in personal home, and guest Progress pilot remains intact. Five new
-purpose-built variants extend the reusable `DecorativeCompanion` system to
-public/member Library, the owned routine editor, History list/detail, Settings,
-and the neutral workout-runner overview.
+The Wave 4 companion release candidate is locally complete on
+`vishal/companion-integration`. It starts from exact public `main`
+`298cb04b8b16ad6c3586ef74bc95df7301533472` and integrates reviewed rollout
+`709a977bbccc0333517e873955c0b3572e70bd9f` exactly once. Reviewed pilot
+`b4499f3b953a5745039f1bca67da68e6e135c7c3` is an ancestor of the rollout, so
+it was not separately replayed. The pre-integration plan commit is
+`ddb32d4d90047d62167522d1ef360a42afa5ba1d`; the no-conflict rollout merge is
+`d962dfb59a51b7bb0cf57cda19ea611a0ec32fa7`.
 
-The final fresh Impeccable finish review disposition is `ship`, Product Design
-QA is passed, and the newest privacy-safe evidence lives only under
-`docs/qa/latest/animal-surface-rollout/` with the canonical Wave 3 QA report.
-That independent closeout review ran after fixture, request-policy, provenance,
-offline-cache, and native-zoom hardening; it accepted the isolated WebKit
-teardown cancellation as engine-only noise and found no material defect.
-The board remains uncropped evidence only. Settings art requires a verified,
-identity-ready, clean neutral state; runner art requires a recovered, online,
-neutral overview. Phone and every critical, dirty, active, recovery, offline,
-error, guidance, timer, pending, or terminal state gives all space to product
-content.
+An independent integration audit found three bounded issues: the routine
+beaver did not collapse while equipment review was open, a dead fixture owner
+could leave an exact staged asset behind, and the selected design-board
+sidecar retained local generation provenance. One correction batch lifted the
+equipment-review state to the editor, added failure- and concurrency-safe
+hash-and-inode-owned stale-lock recovery, and removed the private provenance
+fields. The fresh finish reviewer first returned `fix` on same-hash
+pre-existing-file preservation; the bounded correction added an owned hidden
+staging inode plus a negative regression, and independent re-review returned
+`ship` with no material blocker.
+Meaningful RED tests failed on the two behavior gaps before implementation and
+passed afterward. Fresh browser evidence proves the equipment-review collapse.
+The retained reviewer-approved Settings dirty-state and runner neutral-state
+predicates remain fail-closed.
 
-Final local verification includes 127 Vitest files/860 tests, a delta of four
-files and 21 tests from the reviewed pilot's 123-file/839-test baseline;
-TypeScript; full ESLint; Drizzle metadata and schema coverage; seed policy;
-service-worker parity and runtime offline `/library`; 61-document Markdown/HTML
-parity; the Next.js 16.3.2 Webpack production build; and the 44-entry production
-route boundary. The complete public matrix passes 90 cases with 42 intentional
-project/native-zoom skips across 132 cases. The time-boxed final synthetic
-authenticated matrix completed 54 passes and 13 intentional project/native-zoom
-skips across 68 cases, with one WebKit engine-only canceled `contours.svg`
-request during flexible-routine teardown and no failed product assertion. The
-immediately preceding complete WebKit phone project passed 22 cases with four
-intentional skips, including that routine and every rollout/resilience journey;
-the other five Chromium/WebKit phone, tablet, and desktop projects were green in
-the final matrix.
+Final verification on the corrected candidate includes 127 Vitest files and
+862 passing tests; TypeScript; full ESLint; Drizzle metadata plus four
+schema/database suites; a read-only live database verification; the no-mutation
+seed policy check; service-worker v6 parity and live offline `/library`; 62
+canonical Markdown documents and generated HTML counterparts; the Next.js
+16.3.2 Webpack production build; the 44-entry production route boundary;
+Firebase Admin serverless compatibility; and the single resolved
+`jwks-rsa -> jose@4.15.9` edge. The complete public matrix passed 90 cases with
+42 intentional project/native-zoom skips across 132 cases. The corrected
+synthetic authenticated matrix completed 54 passes and 13 intentional skips
+across 68 cases, with one WebKit-phone cancellation of the same-origin
+`preparing-fox.webp` during Library Guidance. The exact failed test then passed
+1/1 unchanged. A subsequent complete WebKit-phone replay completed 21 passes
+and four intentional skips across 26 cases, with the known 120-second
+`framenavigated` timing timeout in the aborted-operation resilience case; that
+exact case then passed 1/1 unchanged in 3.9 seconds. The immediately preceding
+product-corrected candidate, before only the fixture-ownership hardening,
+passed the exact 22/4 WebKit-phone project. The source Wave 3 rollout's
+teardown-only `/contours.svg` cancellation remains historical evidence and did
+not recur. No timeout, cancellation exemption, or product assertion was
+weakened.
 
-Only the cataloging-otter pair joins the public cache for public `/library`.
-The fox, beaver, tortoise, hare, bear, all owned routes, authenticated HTML, and
-private data remain excluded. Fetchable public illustration directories contain
-no JSON provenance; private-safe prompt, dimension, transformation, and SHA-256
-records live under `docs/design/provenance/`. The branch has not been merged or
-deployed, and no provider, alias, environment, billing, migration, production
-seed/data, sibling-worktree, or Wave 4 operation belongs to this rollout.
+Only the hedgehog, raccoon, and otter pairs are public-install assets. Runtime
+Chromium proof cached the public `/library` route and decoded otter while
+offline and proved owned routes plus the fox, beaver, tortoise, hare, and bear
+absent from public Cache Storage. Fetchable illustration directories contain
+no JSON provenance; private-safe prompt, dimensions, transformations, and
+SHA-256 records remain under `docs/design/provenance/`.
+
+The three reviewed Wave 3 true-native 200% Library/member Library/History
+captures remain the authoritative native evidence. A fresh integration rerun
+was attempted after verifying and terminating only an orphaned Playwright
+Chrome-for-Testing process; macOS desktop focus still left the isolated browser
+at device-pixel ratio 1. The current candidate therefore makes no fresh native-
+zoom claim. It retains the exact reviewed source proof and adds current
+equipment-review, responsive, geometry, focus, pointer, accessibility-tree,
+and overflow evidence. This limitation is documented rather than relabeled as
+CDP proof or hidden by a weaker metric.
+
+The final candidate contains no production schema, migration, seed, API,
+repository, authentication, dependency, or lockfile change. It has not been
+merged to `main` or deployed, and no provider, alias, environment, billing,
+production migration/seed/data/user, or sibling-worktree cleanup occurred.
+The newest coherent evidence lives only under
+`docs/qa/latest/wave-4-companion-integration/` with the canonical Wave 4 QA
+report.
 
 Wave 2 application, data, and production QA are released. The application tree
 on GitHub and local `main` contains exact candidate
@@ -140,8 +168,10 @@ archive likewise remains private, mode `600`, and outside the repository.
   remain for the orchestrator because a running worktree cannot remove itself.
 - Important files: `docs/plans/WAVE-2-PRODUCTION-RELEASE.md`,
   `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`,
-  `docs/qa/latest/WAVE-2-PRODUCTION-RELEASE-QA.md`, and
-  `src/domain/exercises/catalog-manifests/`.
+  `src/domain/exercises/catalog-manifests/`, and the historical Wave 2 QA
+  report at source commit `b8b8e2f85d4c7f1a6faa0b50910e9a651d9df20a`.
+  That report was intentionally removed from `docs/qa/latest/` when the newer
+  coherent evidence set replaced it.
 
 ## What exists
 

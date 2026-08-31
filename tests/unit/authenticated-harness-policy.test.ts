@@ -332,8 +332,11 @@ describe("credential-free authenticated harness boundary", () => {
     expect(runner).not.toContain("unlinkSync");
     expect(staging).toContain('openSync(lockPath, "wx")');
     expect(staging).toContain("constants.COPYFILE_EXCL");
-    expect(staging).toContain("stagedDestinations.push(destination)");
-    expect(staging).toContain("if (existsSync(destination)) unlinkSync(destination)");
+    expect(staging).toContain("stagedEntries.push(entry)");
+    expect(staging).toContain(".mwp-authenticated-stage-");
+    expect(staging).toContain("stagingStat.dev === destinationStat.dev");
+    expect(staging).toContain("stagingStat.ino === destinationStat.ino");
+    expect(staging).toContain("removeOwnedStage(entry, entry.hash)");
     expect(staging).toContain(
       "Another authenticated browser harness is already active for this worktree.",
     );

@@ -1,5 +1,7 @@
+import { createHash } from "node:crypto";
 import {
   existsSync,
+  linkSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -16,6 +18,18 @@ import { afterEach, describe, expect, it } from "vitest";
 import { stageAuthenticatedFixture } from "../../scripts/lib/authenticated-fixture-staging.mjs";
 
 const temporaryRoots: string[] = [];
+
+function harnessLockPath(repositoryRoot: string): string {
+  const repositoryKey = createHash("sha256")
+    .update(repositoryRoot)
+    .digest("hex")
+    .slice(0, 16);
+  return resolve(tmpdir(), `my-workout-pal-authenticated-${repositoryKey}.lock`);
+}
+
+function fileHash(path: string): string {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
 
 function fixturePaths() {
   const repositoryRoot = mkdtempSync(resolve(tmpdir(), "mwp-fixture-stage-"));
@@ -104,5 +118,101 @@ describe("authenticated fixture staging", () => {
       repositoryRoot: paths.repositoryRoot,
     });
     release();
+  });
+
+  it("recovers matching files left by a terminated lock owner", () => {
+    const paths = fixturePaths();
+    mkdirSync(resolve(paths.companionDestination, ".."), { recursive: true });
+    const contourStage = resolve(
+      paths.contourDestination,
+      "../.mwp-authenticated-stage-stale-contour",
+    );
+    const companionStage = resolve(
+      paths.companionDestination,
+      "../.mwp-authenticated-stage-stale-companion",
+    );
+    writeFileSync(contourStage, readFileSync(paths.contourSource));
+    writeFileSync(companionStage, readFileSync(paths.companionSource));
+    linkSync(contourStage, paths.contourDestination);
+    linkSync(companionStage, paths.companionDestination);
+    const lockPath = harnessLockPath(paths.repositoryRoot);
+    writeFileSync(
+      lockPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        pid: 2_147_483_647,
+        staged: [
+          {
+            destination: paths.contourDestination,
+            hash: fileHash(paths.contourSource),
+            stagingPath: contourStage,
+          },
+          {
+            destination: paths.companionDestination,
+            hash: fileHash(paths.companionSource),
+            stagingPath: companionStage,
+          },
+        ],
+      }),
+    );
+
+    const release = stageAuthenticatedFixture({
+      contourDestination: paths.contourDestination,
+      contourSource: paths.contourSource,
+      fixtureAssets: [
+        {
+          destination: paths.companionDestination,
+          source: paths.companionSource,
+        },
+      ],
+      repositoryRoot: paths.repositoryRoot,
+    });
+    expect(existsSync(paths.contourDestination)).toBe(true);
+    expect(existsSync(paths.companionDestination)).toBe(true);
+    release();
+    expect(existsSync(paths.contourDestination)).toBe(false);
+    expect(existsSync(paths.companionDestination)).toBe(false);
+  });
+
+  it("never deletes same-hash pre-existing files from an interrupted staging intent", () => {
+    const paths = fixturePaths();
+    mkdirSync(resolve(paths.companionDestination, ".."), { recursive: true });
+    writeFileSync(paths.contourDestination, readFileSync(paths.contourSource));
+    writeFileSync(paths.companionDestination, readFileSync(paths.companionSource));
+    const contourStage = resolve(
+      paths.contourDestination,
+      "../.mwp-authenticated-stage-interrupted-before-copy",
+    );
+    const lockPath = harnessLockPath(paths.repositoryRoot);
+    writeFileSync(
+      lockPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        pid: 2_147_483_647,
+        staged: [
+          {
+            destination: paths.contourDestination,
+            hash: fileHash(paths.contourSource),
+            stagingPath: contourStage,
+          },
+        ],
+      }),
+    );
+
+    expect(() =>
+      stageAuthenticatedFixture({
+        contourDestination: paths.contourDestination,
+        contourSource: paths.contourSource,
+        fixtureAssets: [
+          {
+            destination: paths.companionDestination,
+            source: paths.companionSource,
+          },
+        ],
+        repositoryRoot: paths.repositoryRoot,
+      }),
+    ).toThrow();
+    expect(readFileSync(paths.contourDestination, "utf8")).toBe("contours");
+    expect(readFileSync(paths.companionDestination, "utf8")).toBe("companion");
   });
 });

@@ -251,6 +251,16 @@ test("member rollout surfaces preserve product priority across the authenticated
     await expectNoOverflow(page);
     if (testInfo.project.name === "chromium-desktop" && width === 1440) {
       await capture(page, "routine-editor-chromium-desktop");
+      await page.locator(".member-equipment-options button[aria-controls]").click();
+      await expect(page.locator(".equipment-review")).toBeVisible();
+      await expect(
+        page.locator('[data-companion-placement="routine-editor"]'),
+      ).toBeHidden();
+      await capture(page, "routine-editor-equipment-review-chromium-desktop");
+      await page.getByRole("button", { name: "Cancel" }).click();
+      await expect(
+        page.locator('[data-companion-placement="routine-editor"]'),
+      ).toBeVisible();
     }
 
     await page.goto("/app/settings");

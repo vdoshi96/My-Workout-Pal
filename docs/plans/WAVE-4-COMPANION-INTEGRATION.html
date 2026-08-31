@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="90ff57d07a3a77004c64f53e664609129d5a540c22e9114e2d51e82ae01c342c">
+  <meta name="source-sha256" content="fce44acd601dbf5a7a7bca1b9a5dfbb9f5270a4fd432a77b36ee21ed5222f61b">
   <title>Wave 4 companion integration plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -310,18 +310,79 @@ source pairs, and correct public or owned cache class.</li>
 <li>Complete local gates report exact totals and intentional skips.</li>
 <li>The exact WebKit teardown exception remains bounded and the 22/4 focused
 replay remains green or is rerun and reported honestly.</li>
-<li>Current-run visual evidence confirms responsive, native-zoom, non-overlap,
-accessibility, focus, and pointer behavior with no material finding.</li>
+<li>Current-run visual evidence confirms responsive, non-overlap, accessibility,
+focus, and pointer behavior with no material finding. Reviewed source native-
+zoom proof is retained; any blocked current refresh is reported without
+substituting CDP page scale.</li>
 <li>Canonical Markdown and generated HTML are byte-consistent.</li>
 <li><code>docs/qa/latest/</code> contains one coherent Wave 4 integration evidence set.</li>
 <li>The branch is committed, pushed, clean, and byte-identical to its upstream;
 exact base and source commits are ancestors of the integration tip.</li>
 </ul>
 <h2>Closeout record</h2>
-<p>Update this section after verification with the exact integration tip,
-conflicts, asset hashes, cache classes, reviewer dispositions, gate totals,
-skips, engine-only exception, retained QA paths, local/upstream equality, and
-release blockers.</p>
+<p>The plan was committed on the exact base as
+<code>ddb32d4d90047d62167522d1ef360a42afa5ba1d</code>. Rollout
+<code>709a977bbccc0333517e873955c0b3572e70bd9f</code> was then merged once without
+conflicts at <code>d962dfb59a51b7bb0cf57cda19ea611a0ec32fa7</code>; pilot
+<code>b4499f3b953a5745039f1bca67da68e6e135c7c3</code> is present only through the
+rollout ancestry. The final pushed integration tip is the closeout commit that
+contains this record and is verified after push rather than self-referenced
+inside the commit.</p>
+<p>The integration audit found equipment-review visibility, dead-owner fixture
+cleanup, and board-sidecar provenance gaps. One bounded correction batch added
+RED-to-GREEN coverage, an explicit equipment-review callback and current
+browser proof, manifest/hash-safe stale-lock recovery, and private-safe board
+provenance. Fresh finish review identified a same-hash pre-existing-file risk
+in the first lock record. The bounded correction replaced it with a unique
+hidden staging inode and hash/directory/device/inode ownership proof; a negative
+regression passed and independent re-review returned <code>ship</code>. The audits found
+no schema, migration, seed, API, repository,
+authentication, dependency, or lockfile change.</p>
+<p>All 16 WebPs retained their reviewed SHA-256 hashes and 1024/512 dimensions.
+The hedgehog, raccoon, and otter pairs are public-install assets in PWA cache
+v6; the fox, beaver, tortoise, hare, and bear pairs are owned-only and absent
+from public Cache Storage with every owned route.</p>
+<p>Final corrected gates:</p>
+<ul>
+<li>TypeScript and full ESLint passed.</li>
+<li>Full Vitest passed 127 files and 862 tests.</li>
+<li>Drizzle metadata, four schema/database suites (34 tests), read-only live
+database verification, and no-mutation seed policy passed.</li>
+<li>Service-worker parity and live offline public <code>/library</code> passed.</li>
+<li>Documentation generation/check covered 62 canonical Markdown documents.</li>
+<li>Next.js 16.3.2 Webpack production build and 44-entry route boundary passed.</li>
+<li>Public matrix: 90 passed, 42 intentional skips, 132 total.</li>
+<li>Rollout public slice: 23 passed, 37 intentional skips, 60 total.</li>
+<li>Authenticated matrix: 54 passed, 13 intentional skips, one isolated
+WebKit-phone same-origin fox-image cancellation, 68 total; the exact failed
+test then passed 1/1 unchanged.</li>
+<li>Combined pilot/rollout authenticated slice: 13 passed, 11 intentional
+skips, 24 total; rollout-only slice: 8 passed, 10 intentional skips.</li>
+<li>Current complete WebKit-phone replay: 21 passed, four intentional skips, and
+one known 120-second navigation-timing timeout; the exact timed-out runner
+case then passed 1/1 unchanged in 3.9 seconds. The immediately preceding
+product-corrected candidate passed the exact 22/4 project before only the
+fixture-ownership hardening changed.</li>
+<li>Firebase serverless compatibility passed two tests; dependency inspection
+found one <code>jose</code> version, <code>jose@4.15.9</code>, through
+<code>firebase-admin -&gt; jwks-rsa</code>.</li>
+</ul>
+<p>The Wave 3 source run&#39;s exact teardown-only WebKit <code>/contours.svg</code> cancellation
+remains documented historical evidence and did not recur. The final isolated
+fox cancellation and navigation-timing timeout both passed exact focused
+replay. No timeout or cancellation policy changed. The reviewed source native
+200% Library/member Library/History captures remain retained. A current isolated
+rerun stayed at device-pixel ratio 1 because macOS desktop focus did not reach
+the Playwright browser, so no fresh native claim is made; current focused
+equipment-review and full responsive evidence cover the only integration UI
+fix.</p>
+<p>The newest coherent evidence is
+<code>docs/qa/latest/WAVE-4-COMPANION-INTEGRATION-QA.md</code> and
+<code>docs/qa/latest/wave-4-companion-integration/</code>. The fresh independent
+finish-review disposition is <code>ship</code>. Clean local/upstream equality is recorded
+after the final documentation pass and push. No product or security blocker is
+known; the native-proof refresh limitation remains explicit. Merge, deployment,
+production mutation, and sibling-worktree cleanup are excluded.</p>
 
   </main>
 </body>

@@ -87,7 +87,10 @@ Prove this viewport before changing the later surfaces. Capture the browser at
 the board's 1,536 by 1,024 pixel size and at the board frame's 1,440 by 1,024
 CSS-pixel size. Save the required Impeccable checkpoint as
 `.impeccable/review/hero-repro.png` only after the visible hierarchy, scale,
-spacing, palette, and vignette placement hold against the selected board.
+spacing, palette, and vignette placement hold against the selected board. That
+pilot checkpoint is historical at reviewed source
+`b4499f3b953a5745039f1bca67da68e6e135c7c3` and is not retained in the newest-
+only current QA directory.
 
 ### Signed-in personal home
 
@@ -299,8 +302,10 @@ worktree cleanup, or rollout.
   the final reviewer found no magenta, matte, checkerboard, halo, crop, white
   band, text, chart, semantic trend, or private data.
 - Board gate: the landing first viewport was proved before later surfaces at
-  the board's 1536 by 1024 density and retained as
-  `.impeccable/review/hero-repro.png`. The board approval sidecar is `true`, and
+  the board's 1536 by 1024 density and retained on reviewed pilot source
+  `b4499f3b953a5745039f1bca67da68e6e135c7c3` as the then-current
+  `.impeccable/review/hero-repro.png`. Newest-only retention later removed that
+  checkpoint from the current tree. The board approval sidecar is `true`, and
   the board remains an uncropped comparison input rather than a runtime asset.
 - Browser matrix: the pilot covers public widths 320, 390, 430, 820, 1280, and
   1440 CSS pixels, actual 200% Chromium page scale, light/dark, forced colors,

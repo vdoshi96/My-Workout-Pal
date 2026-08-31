@@ -52,7 +52,18 @@ The dedicated implementation brief dated August 25, 2026, is the authoritative s
   exact prompts, dimensions, transformations, and verified output SHA-256
   hashes without exposing private local generation state.
 
-## Wave 3 companion vignettes
+## Wave 3 companion vignettes and Wave 4 integration provenance
+
+- Public Wave 4 base: `298cb04b8b16ad6c3586ef74bc95df7301533472`.
+- Reviewed Wave 3 pilot: `b4499f3b953a5745039f1bca67da68e6e135c7c3`.
+- Reviewed Wave 3 rollout: `709a977bbccc0333517e873955c0b3572e70bd9f`;
+  the pilot is its ancestor and was not separately replayed.
+- Integration branch: `vishal/companion-integration`; canonical execution plan:
+  `docs/plans/WAVE-4-COMPANION-INTEGRATION.md`; no-conflict source merge:
+  `d962dfb59a51b7bb0cf57cda19ea611a0ec32fa7`.
+- The selected board sidecar records its approved role and prompt only. It does
+  not expose an absolute local source path, worktree path, task identifier, or
+  generator identifier.
 
 - Selected visual evidence:
   `.impeccable/mocks/companion-concepts/corner-companions-board.png`, its prompt,
@@ -107,10 +118,11 @@ The dedicated implementation brief dated August 25, 2026, is the authoritative s
   identity and workout data, and contain no real person, logo, copied character,
   chart, semantic status cue, or private data. No character was cropped from the
   concept board or composite gym hero.
-- Cache boundary: the existing pilot landing hedgehog and Progress raccoon pairs
-  remain public, and Wave 3 adds only the public Library otter pair. The fox,
-  beaver, tortoise, hare, bear, owned routes, authenticated HTML, and private
-  data remain excluded from the public cache.
+- Cache boundary: the integrated Wave 4 candidate keeps PWA cache v6. The
+  existing pilot landing hedgehog and Progress raccoon pairs remain public, and
+  the rollout adds only the public Library otter pair. The fox, beaver,
+  tortoise, hare, bear, owned routes, authenticated HTML, and private data
+  remain excluded from the public cache.
 
 Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.
 

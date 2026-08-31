@@ -72,9 +72,12 @@ The generated board is directional rather than pixel-accurate production copy:
   and a baked-checkerboard rerender were rejected. Its text-free paper, neutral
   Progress title, and nonsemantic pigment dabs carry no personalized data or
   directional trend.
-- Final same-state comparisons and privacy-safe browser evidence are retained in
-  `docs/qa/latest/animal-surface-pilot/`. The fresh Impeccable finish review
-  disposition is `ship`; the project-root design-QA result is passed.
+- Final same-state comparisons and privacy-safe browser evidence were retained
+  on the reviewed pilot source `b4499f3b953a5745039f1bca67da68e6e135c7c3`.
+  The pilot-only directory was intentionally removed when
+  `docs/qa/latest/` advanced to the newest coherent evidence set. The fresh
+  Impeccable finish-review disposition was `ship`; the pilot result remains
+  intentional history.
 - This record does not authorize broader rollout, merge, or deployment.
 
 ## Pilot acceptance criteria

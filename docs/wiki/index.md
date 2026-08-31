@@ -26,14 +26,20 @@ Use the following documents as the maintained project map:
   routine editor, History list/detail, Settings, and the neutral runner
   overview, including state collapse, cache/privacy, native zoom, and complete
   browser evidence.
+- `docs/plans/WAVE-4-COMPANION-INTEGRATION.md`: exact base and source lineage,
+  single-merge integration method, fail-closed scope, bounded correction,
+  verification matrix, and branch-only release-candidate closeout.
 - `docs/plans/NEON-CSRF-RESILIENCE.md`: idle Neon pool failure handling, privacy-safe diagnostics, regression coverage, and hosted release gate.
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
 - `docs/plans/VERIFICATION.md`: automated and manual release matrix.
 - `docs/design/DIRECTION.md`: original visual world and interaction grammar.
-- `DESIGN.md`: current reusable design-system rules refreshed after the final
-  Wave 3 rollout correction.
-- `design-qa.md`: passed Product Design reference-to-build review for the
-  approved pilot and the complete Wave 3 rollout.
+- `DESIGN.md`: current reusable design-system rules for the reviewed Wave 3
+  system as integrated into the Wave 4 candidate.
+- `design-qa.md`: Product Design reference-to-build review for the integrated
+  Wave 4 companion candidate, including the equipment-review correction and
+  native-zoom refresh limitation.
+- `docs/qa/latest/WAVE-4-COMPANION-INTEGRATION-QA.md`: newest coherent local
+  gate, browser, cache, asset, and independent-review evidence.
 - `docs/design/COMPANION-VISUAL-CONCEPTS.md`: selected Corner Companions responsive board, production guardrails, required corrections, and pilot acceptance criteria.
 - `docs/design/PROGRAM-OVERVIEW.md`: approved comp and implementation inventory.
 - `docs/reference/SUBSTITUTIONS.md`: equipment compatibility and program mutation rules.
@@ -47,22 +53,32 @@ Use the following documents as the maintained project map:
 
 Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.
 
-## Wave 3 branch-local rollout status
+## Wave 4 companion integration status
 
-The approved Corner Companions pilot remains intact, and branch
-`vishal/pal-visual-rollout` extends the reusable component to public/member
-Library, the owned routine editor, History list/detail, Settings, and the
-neutral runner overview. The final fresh Impeccable reviewer disposition is
-`ship`. The newest privacy-safe screenshots and uncropped board comparisons
-live under `docs/qa/latest/animal-surface-rollout/`; the canonical local QA
-record is `docs/qa/latest/WAVE-3-ANIMAL-SURFACE-SYSTEM-ROLLOUT-QA.md`.
+Branch `vishal/companion-integration` starts from exact public `main`
+`298cb04b8b16ad6c3586ef74bc95df7301533472` and integrates reviewed rollout
+`709a977bbccc0333517e873955c0b3572e70bd9f` once, with reviewed pilot
+`b4499f3b953a5745039f1bca67da68e6e135c7c3` retained through ancestry rather
+than replayed. An independent audit found and closed equipment-review collapse,
+stale fixture-lock cleanup, and public-provenance gaps in one bounded correction
+batch. The complete public matrix is green. The exact-candidate authenticated
+matrix retained one isolated WebKit image cancellation and a later focused
+WebKit project retained one known navigation-timing timeout; both exact tests
+passed unchanged in isolation, and no harness policy was broadened.
 
-Only the cataloging-otter pair enters the public cache for the genuinely public
-Library route. All owned variants, private routes, authenticated HTML, and
-private data remain excluded. Companion and landing-hero provenance is retained
-under `docs/design/provenance/` rather than anonymously fetchable public JSON.
-This work is branch-only: it has not been merged, deployed, or applied to
-production data, providers, aliases, environment, or billing.
+Only the cataloging-otter pair joins the pilot public assets in PWA cache v6.
+All owned variants, private routes, authenticated HTML, and private data remain
+excluded. Companion and landing-hero provenance stays under
+`docs/design/provenance/` rather than fetchable public JSON. The newest evidence
+is under `docs/qa/latest/wave-4-companion-integration/`, with canonical report
+`docs/qa/latest/WAVE-4-COMPANION-INTEGRATION-QA.md`.
+
+The reviewed Wave 3 true-native 200% proof is retained. A current isolated
+rerun remained blocked by macOS desktop focus at device-pixel ratio 1, so the
+candidate makes no new native-zoom claim and relies on current focused
+equipment-review plus complete responsive/geometry evidence for the integration
+correction. This branch has not been merged, deployed, or applied to production
+data, providers, aliases, environment, or billing.
 
 ## Wave 2 production status
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="40c3da4c79604c5f507ae47a02078595fefdf987a2094b4af2dc44a5ced32f13">
+  <meta name="source-sha256" content="3839cb64a93738c2fcc0fc7346c88fd01d1a9edf900d605842725932403bd6d8">
   <title>Design System: My Workout Pal · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -131,7 +131,7 @@ width: &quot;100%&quot;
 <h2>Overview</h2>
 <p><strong>Creative North Star: &quot;The Field Notebook Companion&quot;</strong></p>
 <p>My Workout Pal is a warm field-atlas interface: mineral paper, deep blue-green ink, crisp route marks, and coral decisions make planning and logging feel grounded rather than gamified. The visual system keeps the route grammar from <code>docs/design/DIRECTION.md</code>—waypoints, ruled sheets, stamped states, and contour surfaces—while keeping the user&#39;s task and product truth ahead of decoration.</p>
-<p>The selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in reserved quiet space, with a surface-specific asset and visibility contract. The approved pilot keeps the planning hedgehog on the guest landing, preparing fox on the signed-in personal home, and an opaque reviewing raccoon on the guest Progress preview. The Wave 3 rollout adds the cataloging otter to public and member Library headings, the routine-drafting beaver to the owned editor, the history-archive tortoise to History list and detail, the settings-packing hare to a verified, identity-ready, clean, neutral Settings heading on tablet and desktop, and the workout-corner bear to a recovered, online, neutral runner overview at broad widths. The composite concept board remains evidence, not a shipping asset.</p>
+<p>The selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in reserved quiet space, with a surface-specific asset and visibility contract. The approved pilot keeps the planning hedgehog on the guest landing, preparing fox on the signed-in personal home, and an opaque reviewing raccoon on the guest Progress preview. The reviewed Wave 3 rollout, now integrated into the Wave 4 candidate, adds the cataloging otter to public and member Library headings, the routine-drafting beaver to the owned editor, the history-archive tortoise to History list and detail, the settings-packing hare to a verified, identity-ready, clean, neutral Settings heading on tablet and desktop, and the workout-corner bear to a recovered, online, neutral runner overview at broad widths. The composite concept board remains evidence, not a shipping asset.</p>
 <p><strong>Key Characteristics:</strong></p>
 <ul>
 <li>Warm mineral paper and contour texture with restrained ruled dividers.</li>
@@ -176,7 +176,7 @@ width: &quot;100%&quot;
 </ul>
 <p><strong>The Label/Reading Split Rule.</strong> Use the condensed face to scan a route or state; use the humanist face to explain what the state means and what the user can do next.</p>
 <h2>Layout</h2>
-<p>The system is mobile-first and never narrower than <code>320px</code>. Public and member frames cap at <code>94rem</code>; member content uses a <code>79rem</code> reading width. On phones, semantic content stacks, the primary action stays above the fixed bottom navigation, and the pilot companions keep their own shallow contextual slots. Rollout Library, editor, History, and runner companions stay hidden below <code>64rem</code>; the Settings hare can use a measured tablet or desktop heading-side slot from <code>48rem</code> only in its verified, identity-ready, clean, neutral state. At desktop widths beginning at <code>64rem</code>, public and member headers move navigation into the horizontal header, the landing hero becomes a text-and-art split, and eligible rollout companions occupy broad side whitespace rather than the task or data plane.</p>
+<p>The system is mobile-first and never narrower than <code>320px</code>. Public and member frames cap at <code>94rem</code>; member content uses a <code>79rem</code> reading width. On phones, semantic content stacks, the primary action stays above the fixed bottom navigation, and the pilot companions keep their own shallow contextual slots. Integrated Library, editor, History, and runner companions stay hidden below <code>64rem</code>; the Settings hare can use a measured tablet or desktop heading-side slot from <code>48rem</code> only in its verified, identity-ready, clean, neutral state. At desktop widths beginning at <code>64rem</code>, public and member headers move navigation into the horizontal header, the landing hero becomes a text-and-art split, and eligible companions occupy broad side whitespace rather than the task or data plane.</p>
 <p>Spacing follows a compact rhythm built from small control gaps, <code>1rem</code> reading intervals, <code>1.5rem</code> section gaps, and responsive <code>clamp()</code> padding. Companion geometry uses the existing <code>--companion-slot-inline</code> (<code>clamp(17rem, 28vw, 30rem)</code>), <code>--companion-slot-block-mobile</code> (<code>clamp(6.5rem, 32vw, 12rem)</code>), <code>--companion-slot-block-desktop</code> (<code>clamp(23rem, 42vw, 36rem)</code>), and <code>--companion-safe-gap</code> (<code>clamp(1rem, 3vw, 2.5rem)</code>) tokens. One-pixel rules and contour surfaces establish alignment without turning the product into a collection of floating cards. A failed or forced-color-hidden companion removes its slot with <code>display: none</code> and lets the host grid collapse; it never leaves a blank gap. The same placement component serves all eight closed variants, while each host keeps its own safe-slot and state contract.</p>
 <h2>Elevation &amp; Depth</h2>
 <p>The interface is flat by default. Depth comes from the contrast between paper and deep ink, the lighter alternate paper ground, contour imagery, one-pixel rules, and occasional inset selection marks. A restrained ambient shadow is reserved for waypoints and transient notices; the Corner Companions art itself has no drop shadow, glow, or glass treatment. The Progress raccoon card&#39;s opaque warm-paper field is a material boundary, not an elevation effect.</p>
@@ -236,12 +236,12 @@ width: &quot;100%&quot;
 <tr>
 <td><code>library</code> · cataloging otter</td>
 <td>Guest <code>/library</code> and member <code>/app/library</code> headings, separate from equipment, search, create, and results.</td>
-<td>For the rollout additions, only <code>cataloging-otter.webp</code> and <code>cataloging-otter-512.webp</code> are public-cache allowlisted. The member route remains private HTML and data.</td>
+<td>Of the integrated additions, only <code>cataloging-otter.webp</code> and <code>cataloging-otter-512.webp</code> are public-cache allowlisted. The member route remains private HTML and data.</td>
 </tr>
 <tr>
 <td><code>routine-editor</code> · routine-drafting beaver</td>
 <td>Owned <code>/app/program/edit</code> heading whitespace, outside equipment review, topology, fields, validation, status, chooser, and removal review.</td>
-<td>Clean neutral desktop slot only; both source sizes are owned/private and excluded from the public cache.</td>
+<td>Clean neutral desktop slot only. Equipment-review visibility is lifted to the editor so opening the review collapses the slot immediately; both source sizes are owned/private and excluded from the public cache.</td>
 </tr>
 <tr>
 <td><code>history</code> · history-archive tortoise</td>
@@ -259,7 +259,7 @@ width: &quot;100%&quot;
 <td>Broad desktop only (<code>&gt;=64rem</code>); phone, tablet, active logging, timer, guidance, pending, offline, recovery, error, and terminal states collapse it. Both source sizes are owned/private and excluded.</td>
 </tr>
 </tbody></table>
-<p>The provenance records use each WebP&#39;s basename under <code>docs/design/provenance/companions/</code>; they are private-safe and do not sit beside fetchable WebPs. The public companion directory contains WebPs only. The public cache retains the pilot landing and Progress pairs and adds only the Library otter pair for this rollout. All other owned/private companion assets, private routes, authenticated HTML, and owned data remain outside the public allowlist. The raccoon is intentionally an opaque warm-paper card so its field stays source-faithful in both themes.</p>
+<p>The provenance records use each WebP&#39;s basename under <code>docs/design/provenance/companions/</code>; they are private-safe and do not sit beside fetchable WebPs. The public companion directory contains WebPs only. The Wave 4 candidate keeps PWA cache v6: the pilot landing and Progress pairs remain public, and only the Library otter pair is added. All other owned/private companion assets, private routes, authenticated HTML, and owned data remain outside the public allowlist. The raccoon is intentionally an opaque warm-paper card so its field stays source-faithful in both themes.</p>
 <h2>Do&#39;s and Don&#39;ts</h2>
 <h3>Do:</h3>
 <ul>

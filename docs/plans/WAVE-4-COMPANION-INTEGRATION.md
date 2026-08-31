@@ -270,8 +270,10 @@ release blockers.
 - Complete local gates report exact totals and intentional skips.
 - The exact WebKit teardown exception remains bounded and the 22/4 focused
   replay remains green or is rerun and reported honestly.
-- Current-run visual evidence confirms responsive, native-zoom, non-overlap,
-  accessibility, focus, and pointer behavior with no material finding.
+- Current-run visual evidence confirms responsive, non-overlap, accessibility,
+  focus, and pointer behavior with no material finding. Reviewed source native-
+  zoom proof is retained; any blocked current refresh is reported without
+  substituting CDP page scale.
 - Canonical Markdown and generated HTML are byte-consistent.
 - `docs/qa/latest/` contains one coherent Wave 4 integration evidence set.
 - The branch is committed, pushed, clean, and byte-identical to its upstream;
@@ -279,7 +281,70 @@ release blockers.
 
 ## Closeout record
 
-Update this section after verification with the exact integration tip,
-conflicts, asset hashes, cache classes, reviewer dispositions, gate totals,
-skips, engine-only exception, retained QA paths, local/upstream equality, and
-release blockers.
+The plan was committed on the exact base as
+`ddb32d4d90047d62167522d1ef360a42afa5ba1d`. Rollout
+`709a977bbccc0333517e873955c0b3572e70bd9f` was then merged once without
+conflicts at `d962dfb59a51b7bb0cf57cda19ea611a0ec32fa7`; pilot
+`b4499f3b953a5745039f1bca67da68e6e135c7c3` is present only through the
+rollout ancestry. The final pushed integration tip is the closeout commit that
+contains this record and is verified after push rather than self-referenced
+inside the commit.
+
+The integration audit found equipment-review visibility, dead-owner fixture
+cleanup, and board-sidecar provenance gaps. One bounded correction batch added
+RED-to-GREEN coverage, an explicit equipment-review callback and current
+browser proof, manifest/hash-safe stale-lock recovery, and private-safe board
+provenance. Fresh finish review identified a same-hash pre-existing-file risk
+in the first lock record. The bounded correction replaced it with a unique
+hidden staging inode and hash/directory/device/inode ownership proof; a negative
+regression passed and independent re-review returned `ship`. The audits found
+no schema, migration, seed, API, repository,
+authentication, dependency, or lockfile change.
+
+All 16 WebPs retained their reviewed SHA-256 hashes and 1024/512 dimensions.
+The hedgehog, raccoon, and otter pairs are public-install assets in PWA cache
+v6; the fox, beaver, tortoise, hare, and bear pairs are owned-only and absent
+from public Cache Storage with every owned route.
+
+Final corrected gates:
+
+- TypeScript and full ESLint passed.
+- Full Vitest passed 127 files and 862 tests.
+- Drizzle metadata, four schema/database suites (34 tests), read-only live
+  database verification, and no-mutation seed policy passed.
+- Service-worker parity and live offline public `/library` passed.
+- Documentation generation/check covered 62 canonical Markdown documents.
+- Next.js 16.3.2 Webpack production build and 44-entry route boundary passed.
+- Public matrix: 90 passed, 42 intentional skips, 132 total.
+- Rollout public slice: 23 passed, 37 intentional skips, 60 total.
+- Authenticated matrix: 54 passed, 13 intentional skips, one isolated
+  WebKit-phone same-origin fox-image cancellation, 68 total; the exact failed
+  test then passed 1/1 unchanged.
+- Combined pilot/rollout authenticated slice: 13 passed, 11 intentional
+  skips, 24 total; rollout-only slice: 8 passed, 10 intentional skips.
+- Current complete WebKit-phone replay: 21 passed, four intentional skips, and
+  one known 120-second navigation-timing timeout; the exact timed-out runner
+  case then passed 1/1 unchanged in 3.9 seconds. The immediately preceding
+  product-corrected candidate passed the exact 22/4 project before only the
+  fixture-ownership hardening changed.
+- Firebase serverless compatibility passed two tests; dependency inspection
+  found one `jose` version, `jose@4.15.9`, through
+  `firebase-admin -> jwks-rsa`.
+
+The Wave 3 source run's exact teardown-only WebKit `/contours.svg` cancellation
+remains documented historical evidence and did not recur. The final isolated
+fox cancellation and navigation-timing timeout both passed exact focused
+replay. No timeout or cancellation policy changed. The reviewed source native
+200% Library/member Library/History captures remain retained. A current isolated
+rerun stayed at device-pixel ratio 1 because macOS desktop focus did not reach
+the Playwright browser, so no fresh native claim is made; current focused
+equipment-review and full responsive evidence cover the only integration UI
+fix.
+
+The newest coherent evidence is
+`docs/qa/latest/WAVE-4-COMPANION-INTEGRATION-QA.md` and
+`docs/qa/latest/wave-4-companion-integration/`. The fresh independent
+finish-review disposition is `ship`. Clean local/upstream equality is recorded
+after the final documentation pass and push. No product or security blocker is
+known; the native-proof refresh limitation remains explicit. Merge, deployment,
+production mutation, and sibling-worktree cleanup are excluded.

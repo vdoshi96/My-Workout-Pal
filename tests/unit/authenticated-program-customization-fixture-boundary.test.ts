@@ -104,6 +104,11 @@ describe("authenticated customization fixture boundary", () => {
     expect(equipmentControl).toContain("aria-controls");
     expect(equipmentControl).toContain("aria-expanded");
     expect(equipmentControl).toContain("reviewHeading.current?.focus()");
+    expect(editor).toContain("equipmentReviewOpen");
+    expect(editor).toContain("onReviewChange={setEquipmentReviewOpen}");
+    expect(editor).toMatch(/hasOpenReview:[\s\S]*equipmentReviewOpen/u);
+    expect(equipmentControl).toContain("onReviewChange?: (open: boolean) => void");
+    expect(equipmentControl).toContain("onReviewChange?.(open)");
   });
 
   it("applies the complete checked-in migration inventory", () => {

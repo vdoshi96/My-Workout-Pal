@@ -1,13 +1,12 @@
 {
   "schemaVersion": 1,
   "title": "Corner companions",
-  "status": "selected production direction for the Wave 3 pilot; concept evidence, not implemented UI or a shipping asset",
+  "status": "selected production direction for the Wave 3 pilot and rollout; concept evidence, not a shipping asset",
   "approved": true,
   "generator": "OpenAI built-in image generation",
   "useCase": "ui-mockup",
   "createdAt": "2026-08-27T21:55:51Z",
   "promptFile": "corner-companions-board.prompt.txt",
-  "source": "/Users/vishal/.codex/generated_images/01a04528-1821-7561-897d-a50b1d720f76/exec-24a0bc03-7a81-4ef6-9d81-e97d34db7bda.png",
   "sha256": "d787734c6e204ceaf0b26352eadd752d590708c397db62238f5aa7f790e0ad74",
   "dimensions": { "width": 1536, "height": 1024 },
   "referenceInputs": [

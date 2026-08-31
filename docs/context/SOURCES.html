@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="8a19ee46c386b249d329727c9deff01d8794a859734cdcca499c277994b0f681">
+  <meta name="source-sha256" content="cb8fdf2a75026d8cb9c7af9b127bb7f0ec76c19cd56195fc50f44ba09e15725c">
   <title>Sources · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -77,65 +77,93 @@ contains no JSON provenance, local source path, or generation identifier.</li>
 exact prompts, dimensions, transformations, and verified output SHA-256
 hashes without exposing private local generation state.</li>
 </ul>
-<h2>Wave 3 companion vignettes</h2>
+<h2>Wave 3 companion vignettes and Wave 4 integration provenance</h2>
 <ul>
-<li>Selected visual evidence:
+<li><p>Public Wave 4 base: <code>298cb04b8b16ad6c3586ef74bc95df7301533472</code>.</p>
+</li>
+<li><p>Reviewed Wave 3 pilot: <code>b4499f3b953a5745039f1bca67da68e6e135c7c3</code>.</p>
+</li>
+<li><p>Reviewed Wave 3 rollout: <code>709a977bbccc0333517e873955c0b3572e70bd9f</code>;
+the pilot is its ancestor and was not separately replayed.</p>
+</li>
+<li><p>Integration branch: <code>vishal/companion-integration</code>; canonical execution plan:
+<code>docs/plans/WAVE-4-COMPANION-INTEGRATION.md</code>; no-conflict source merge:
+<code>d962dfb59a51b7bb0cf57cda19ea611a0ec32fa7</code>.</p>
+</li>
+<li><p>The selected board sidecar records its approved role and prompt only. It does
+not expose an absolute local source path, worktree path, task identifier, or
+generator identifier.</p>
+</li>
+<li><p>Selected visual evidence:
 <code>.impeccable/mocks/companion-concepts/corner-companions-board.png</code>, its prompt,
-and its JSON provenance. The board is not a runtime or shipping asset.</li>
-<li>Planning hedgehog: <code>public/illustrations/companions/planning-hedgehog.webp</code>
+and its JSON provenance. The board is not a runtime or shipping asset.</p>
+</li>
+<li><p>Planning hedgehog: <code>public/illustrations/companions/planning-hedgehog.webp</code>
 (<code>79891bacacde49d7aeff0ad647d1e62a41fb68f56f5d7cbab937c58bfadbb126</code>)
 plus its 512-pixel derivative
-(<code>45995ea9cd380bb344dda92decbe45c00ff66285b6e5e32872b97115528da79b</code>).</li>
-<li>Preparing fox: <code>public/illustrations/companions/preparing-fox.webp</code>
+(<code>45995ea9cd380bb344dda92decbe45c00ff66285b6e5e32872b97115528da79b</code>).</p>
+</li>
+<li><p>Preparing fox: <code>public/illustrations/companions/preparing-fox.webp</code>
 (<code>9812c7a337667f70388aa9b4820f81b4306140e2001998aa18bab30aa814cc33</code>)
 plus its 512-pixel derivative
-(<code>07816814dd9c0e94cfb3b2bfb324425f60b6789b16964780bc1e5f58974d1de3</code>).</li>
-<li>Reviewing raccoon: purpose-built opaque warm-paper card at
+(<code>07816814dd9c0e94cfb3b2bfb324425f60b6789b16964780bc1e5f58974d1de3</code>).</p>
+</li>
+<li><p>Reviewing raccoon: purpose-built opaque warm-paper card at
 <code>public/illustrations/companions/reviewing-raccoon.webp</code>
 (<code>94721d121b53e2fa3cfb779e6dab1a8a0932cb5fb2827711ca6ed34634db65f6</code>)
 plus its 512-pixel derivative
 (<code>9f109d0315d72cf47032c539f023b6f4bfc81010f14a813a31be068223b49e72</code>).
 The opaque field is the accepted bounded fallback after a lossy chroma-key
 source and a baked-checkerboard rerender were rejected. A 768-pixel companion
-derivative is not part of this responsive contract.</li>
-<li>Cataloging otter: <code>public/illustrations/companions/cataloging-otter.webp</code>
+derivative is not part of this responsive contract.</p>
+</li>
+<li><p>Cataloging otter: <code>public/illustrations/companions/cataloging-otter.webp</code>
 (<code>357289744bc3fef9a9f283ff9cfde03b5970ac717c87de666930d08f2e3a7b5c</code>)
 plus its 512-pixel derivative
-(<code>4b80975a2690060d59e455c95d5e75a0b2ea6dc3030730d5f45a6b2c7c44a2f6</code>).</li>
-<li>Routine-drafting beaver:
+(<code>4b80975a2690060d59e455c95d5e75a0b2ea6dc3030730d5f45a6b2c7c44a2f6</code>).</p>
+</li>
+<li><p>Routine-drafting beaver:
 <code>public/illustrations/companions/routine-drafting-beaver.webp</code>
 (<code>493df6e5ec6180547cb7683e3abfc22673652f3505902ed1189fdd9717b3279a</code>)
 plus its 512-pixel derivative
-(<code>994c5e7773ea3eb146fa5be63ccdb97f92c4e55d9f101eae7aca0fb3dc266c23</code>).</li>
-<li>History-archive tortoise:
+(<code>994c5e7773ea3eb146fa5be63ccdb97f92c4e55d9f101eae7aca0fb3dc266c23</code>).</p>
+</li>
+<li><p>History-archive tortoise:
 <code>public/illustrations/companions/history-archive-tortoise.webp</code>
 (<code>5b42fb35ca468dad01616c136d80f43781f4d6a28636989db06831b67ec5f6ea</code>)
 plus its 512-pixel derivative
-(<code>cc8455b894aa4b4181e77fdfa8b4f0579fcdb6d63fface888fd0df3bee6dbbed</code>).</li>
-<li>Settings-packing hare:
+(<code>cc8455b894aa4b4181e77fdfa8b4f0579fcdb6d63fface888fd0df3bee6dbbed</code>).</p>
+</li>
+<li><p>Settings-packing hare:
 <code>public/illustrations/companions/settings-packing-hare.webp</code>
 (<code>9d227008d9a4dd7e3dc5cc3d6c5f3fbd0cfea23bcd06fa90ca73dc85915ac0f8</code>)
 plus its 512-pixel derivative
-(<code>d90822b2e3e88855122e5891b94e61c69b3e89b4cf3a7fec20f62b3561b534db</code>).</li>
-<li>Workout-corner bear:
+(<code>d90822b2e3e88855122e5891b94e61c69b3e89b4cf3a7fec20f62b3561b534db</code>).</p>
+</li>
+<li><p>Workout-corner bear:
 <code>public/illustrations/companions/workout-corner-bear.webp</code>
 (<code>3eb28d8075a24a8b4f8275be747d5caefa9e5d16af71cff4314c3b4fe597ffcb</code>)
 plus its 512-pixel derivative
-(<code>aaecbf17e476b07c4dc4c01df5f99fddc9ab5360a2afd85b4b8f2061c571b5d5</code>).</li>
-<li>Generator: OpenAI built-in image generation on August 30, 2026. Exact prompts,
+(<code>aaecbf17e476b07c4dc4c01df5f99fddc9ab5360a2afd85b4b8f2061c571b5d5</code>).</p>
+</li>
+<li><p>Generator: OpenAI built-in image generation on August 30, 2026. Exact prompts,
 dimensions, transformations, and shipping hashes for all eight companion
 pairs are stored in private-safe same-basename records under
 <code>docs/design/provenance/companions/</code>. The public companion directory contains
 WebPs only; rejected candidates and private generator paths or identifiers do
-not ship.</li>
-<li>Publication constraints: all vignettes are generic, text-free, independent of
+not ship.</p>
+</li>
+<li><p>Publication constraints: all vignettes are generic, text-free, independent of
 identity and workout data, and contain no real person, logo, copied character,
 chart, semantic status cue, or private data. No character was cropped from the
-concept board or composite gym hero.</li>
-<li>Cache boundary: the existing pilot landing hedgehog and Progress raccoon pairs
-remain public, and Wave 3 adds only the public Library otter pair. The fox,
-beaver, tortoise, hare, bear, owned routes, authenticated HTML, and private
-data remain excluded from the public cache.</li>
+concept board or composite gym hero.</p>
+</li>
+<li><p>Cache boundary: the integrated Wave 4 candidate keeps PWA cache v6. The
+existing pilot landing hedgehog and Progress raccoon pairs remain public, and
+the rollout adds only the public Library otter pair. The fox, beaver,
+tortoise, hare, bear, owned routes, authenticated HTML, and private data
+remain excluded from the public cache.</p>
+</li>
 </ul>
 <p>Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.</p>
 <h2>Firebase email action codes</h2>
