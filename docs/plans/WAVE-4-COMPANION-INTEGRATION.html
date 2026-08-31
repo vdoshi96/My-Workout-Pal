@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="90ff57d07a3a77004c64f53e664609129d5a540c22e9114e2d51e82ae01c342c">
+  <title>Wave 4 companion integration plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 4 companion integration plan</h1>
+<h2>Outcome and release-candidate boundary</h2>
+<p>Integrate the reviewed Wave 3 Corner Companions rollout into the Wave 4 release
+candidate from exact public <code>main</code> commit
+<code>298cb04b8b16ad6c3586ef74bc95df7301533472</code>.</p>
+<p>The integration branch is <code>vishal/companion-integration</code>. The reviewed source
+lineage is linear:</p>
+<ol>
+<li>Wave 3 pilot <code>b4499f3b953a5745039f1bca67da68e6e135c7c3</code>.</li>
+<li>Wave 3 rollout <code>709a977bbccc0333517e873955c0b3572e70bd9f</code>.</li>
+</ol>
+<p>The pilot is an ancestor of the rollout. Integrate the rollout lineage exactly
+once as one source line. Do not cherry-pick, merge, or recreate the pilot as a
+separate patch. Treat Steps 1-5 of the Wave 4 chronology as released through
+Wave 2 on <code>main</code>; do not remerge historical authentication, routine, library,
+catalog, or guidance branches.</p>
+<p>This iteration stops at a clean pushed integration branch. It does not merge
+<code>main</code>, deploy, change an alias, provider, environment variable, billing
+setting, or production user, apply a migration, run a seed against a database,
+change production data, or remove the pilot or rollout worktree.</p>
+<h2>Verified preflight</h2>
+<ul>
+<li>The worktree began clean and detached at exact base
+<code>298cb04b8b16ad6c3586ef74bc95df7301533472</code>.</li>
+<li>A fresh <code>git ls-remote</code> query proved exact remote identities for <code>main</code>,
+<code>vishal/pal-visual-pilot</code>, and <code>vishal/pal-visual-rollout</code>.</li>
+<li><code>git merge-base --is-ancestor</code> proved both <code>main -&gt; pilot</code> and
+<code>pilot -&gt; rollout</code> ancestry.</li>
+<li>The rollout range contains exactly two commits: the pilot commit followed by
+the rollout commit.</li>
+<li>The rollout diff changes no production schema, migration, seed, API,
+repository, authentication implementation, dependency manifest, workspace
+resolution, or lockfile. Authentication-named changes are isolated to the
+production-component browser fixture and its tests.</li>
+<li>The rollout diff passes <code>git diff --check</code>.</li>
+<li>One tracked design-board sidecar exposes an absolute generated-image source
+path. Scrub that field during integration so public provenance contains no
+absolute local path or generator identifier.</li>
+</ul>
+<p>If the final integrated diff introduces any production schema, migration,
+seed, API, repository, or authentication change, stop and report the finding.
+Do not reinterpret that change as visual-only integration work.</p>
+<h2>Product and visual truth</h2>
+<p>Preserve the reviewer-approved Corner Companions system and its established
+field-atlas world:</p>
+<ul>
+<li>Warm mineral paper, deep teal ink, coral action, lichen support, stone rules,
+condensed display type, humanist reading type, and square field-sheet
+structure.</li>
+<li>One complete, purpose-built, text-free, static companion in reserved
+whitespace on an eligible surface.</li>
+<li>One closed <code>DecorativeCompanion</code> asset registry with explicit full-size and
+512-pixel sources, intrinsic dimensions, responsive source sets, loading
+policy, and failure collapse.</li>
+<li>Empty alternative text, assistive-technology hiding, disabled dragging, no
+focus target, and pointer-inert presentation.</li>
+<li>Complete removal in forced colors and unchanged static presentation under
+reduced motion.</li>
+<li>Content-first collapse whenever layout or application state needs the space.</li>
+</ul>
+<p>The assets never communicate navigation, coaching, save state, workout state,
+account identity, validation, progress, success, failure, private data, or
+sample-data meaning. Adjacent semantic content remains complete without them.</p>
+<h2>Asset registry, provenance, and cache classes</h2>
+<p>Retain the eight closed variants and their exact responsive WebP pairs:</p>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Asset role</th>
+<th>Cache class</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>landing</code></td>
+<td>Planning hedgehog</td>
+<td>Public install asset</td>
+</tr>
+<tr>
+<td><code>member-home</code></td>
+<td>Preparing fox</td>
+<td>Owned-only asset</td>
+</tr>
+<tr>
+<td><code>progress-preview</code></td>
+<td>Reviewing raccoon</td>
+<td>Public install asset</td>
+</tr>
+<tr>
+<td><code>library</code></td>
+<td>Cataloging otter</td>
+<td>Public install asset because <code>/library</code> uses it</td>
+</tr>
+<tr>
+<td><code>routine-editor</code></td>
+<td>Routine-drafting beaver</td>
+<td>Owned-only asset</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td>History-archive tortoise</td>
+<td>Owned-only asset</td>
+</tr>
+<tr>
+<td><code>settings</code></td>
+<td>Settings-packing hare</td>
+<td>Owned-only asset</td>
+</tr>
+<tr>
+<td><code>workout</code></td>
+<td>Workout-corner bear</td>
+<td>Owned-only asset</td>
+</tr>
+</tbody></table>
+<p>Keep the PWA cache at the reviewed v6 boundary. Public Cache Storage may contain
+only the explicit public routes, static framework assets, icons, contours, and
+the hedgehog, raccoon, and otter pairs. It must not contain owned routes,
+authenticated HTML or data, or the fox, beaver, tortoise, hare, or bear pairs.</p>
+<p>Keep runtime WebPs under <code>public/illustrations/companions/</code>. Keep prompt,
+transformation, dimension, and hash records under
+<code>docs/design/provenance/</code>. Fetchable public directories must contain no JSON.
+Every public provenance record and design sidecar must omit absolute local
+paths, worktree paths, temporary paths, task identifiers, and generator
+identifiers.</p>
+<h2>Navigation and surface placement</h2>
+<p>Preserve all released navigation and route ownership. Add no route and move no
+account, workout, history, settings, library, or program action.</p>
+<ul>
+<li>Public <code>/library</code>: keep the otter outside equipment, search, filter, and
+result controls. The route and decoded otter must remain usable offline.</li>
+<li>Member <code>/app/library</code>: reuse the otter only in broad heading whitespace.
+Member HTML, owned results, and private labels remain uncached.</li>
+<li><code>/app/program/edit</code>: show the beaver only in a clean, neutral, broad heading
+state outside equipment review, topology, fields, validation, save status,
+chooser state, and removal review.</li>
+<li><code>/app/history</code> and <code>/app/history/[sessionId]</code>: keep the tortoise outside
+filters, pagination, state labels, session facts, set/cardio rows, and notes.</li>
+<li><code>/app/settings</code>: show the hare only for a verified, identity-ready member
+with no unsaved value, save status, failure, or deletion review.</li>
+<li><code>/workout/[sessionId]</code>: show the bear only after recovery in an online,
+neutral, broad-width overview. Hide it for active logging, guidance, timers,
+pending or saved operations, notices, retry, offline, authentication,
+conflict, terminal, and navigation-protection states.</li>
+</ul>
+<p>At 320, 390, and 430 CSS pixels, semantic product content wins. At 820 pixels,
+art appears only when the reviewed surface contract reserves space. At 1,280
+and 1,440 pixels, strict geometry must prove that every visible asset and every
+protected product region both exist and do not overlap.</p>
+<h2>Types, state, persistence, and authorization</h2>
+<p>Retain the pure visibility predicates as the only new state model. They may
+consume presentation-safe booleans only. They must not accept a Firebase UID,
+program ID, session ID, private label, workout value, account value, or data
+record.</p>
+<p>This integration adds no persistence. It does not change database types,
+canonical units, schema, migrations, seeds, API request or response contracts,
+repositories, ownership predicates, Firebase behavior, browser-storage
+records, immutable workout or program revisions, analytics, guidance, or video
+approval.</p>
+<p>Server Components remain server-owned. The reusable companion stays a narrow
+Client Component only because image failure needs local state. Importing the
+leaf must not move route data reads or route modules into the client graph.</p>
+<h2>Failure and concurrency recovery</h2>
+<ul>
+<li>Image failure removes the complete decorative slot and its reserved track.
+The semantic route remains usable.</li>
+<li>Authenticated fixture staging copies only the exact maintained asset list.
+It uses a worktree-keyed exclusive lock, preserves pre-existing
+destinations, cleans only files created by the active attempt, and releases
+the lock after success, build failure, browser failure, or partial staging
+failure.</li>
+<li>Request cancellation exceptions require an allowlisted same-origin <code>GET</code>
+image or route resource, the exact cancellation class, and either detached
+or changed frame state or previously observed same-origin superseding
+main-frame navigation. Do not allow wildcard resources, cross-origin
+requests, mutation methods, generic navigation noise, or failures without
+bounded navigation evidence.</li>
+<li>Keep the documented WebKit <code>/contours.svg</code> cancellation as one exact
+teardown-only engine exception. Do not broaden the exemption or convert a
+product assertion failure into an engine note.</li>
+</ul>
+<h2>Accessibility and interaction</h2>
+<p>Verify that each visible companion has <code>alt=&quot;&quot;</code>, <code>aria-hidden=&quot;true&quot;</code>,
+<code>draggable=&quot;false&quot;</code>, no accessible name, no role, no focusable descendant, no
+focus-order position, and no pointer hit. Image failure and forced colors must
+remove both the image and reserved track.</p>
+<p>Verify keyboard navigation, visible focus, pointer targeting, safe-area
+clearance, text wrapping, touch targets, dark and light themes, reduced motion,
+forced colors, and no horizontal overflow. Automated checks and screenshot
+review may identify accessibility risks, but only DOM, focus, geometry, and
+browser evidence can support the implementation claims.</p>
+<p>True native 200% evidence for public Library, member Library, and History must
+prove a two-to-one device-pixel ratio, halved inner width,
+<code>visualViewport.scale === 1</code>, no horizontal overflow, and content-first art
+collapse. Keep CDP page-scale checks separate and do not relabel them as native
+zoom.</p>
+<h2>Integration method</h2>
+<ol>
+<li>Commit this plan on the exact base branch before source integration.</li>
+<li>Merge the rollout tip as one reviewed source line so both source commits
+become ancestors exactly once and the pilot is not separately replayed.</li>
+<li>Record conflicts or the absence of conflicts. Do not resolve a conflict by
+reintroducing a historical Wave 1 or Wave 2 branch.</li>
+<li>Audit the exact integrated diff against the forbidden production-change
+boundary and the public-provenance rule.</li>
+<li>Reconcile canonical Markdown first. Preserve historical Wave 3 pilot and
+rollout records while updating <code>STATUS</code>, <code>SOURCES</code>, the wiki, <code>DESIGN.md</code>,
+<code>design-qa.md</code>, this plan, and the Wave 4 QA report to integration truth.</li>
+<li>Regenerate same-content HTML with the canonical documentation generator.</li>
+<li>Retain only one coherent Wave 4 integration report and required screenshots
+under <code>docs/qa/latest/</code> after replacement evidence is verified.</li>
+</ol>
+<h2>Verification and browser evidence</h2>
+<p>Run one bounded review, fix, and rebuild cycle. Do not hide a real failure,
+weaken an assertion, or add a broad exception to make a matrix green.</p>
+<p>Run the following gates on the exact integrated candidate:</p>
+<ul>
+<li>Strict TypeScript.</li>
+<li>Full ESLint.</li>
+<li>All Vitest suites with exact file and test totals.</li>
+<li>Read-only Drizzle metadata and complete schema/database verification.</li>
+<li>Deterministic seed policy check without applying a seed.</li>
+<li>Generated PWA and service-worker parity.</li>
+<li>Live Chromium offline public Library proof, including decoded otter and
+Cache Storage exclusion for every owned route and owned-only companion.</li>
+<li>Canonical Markdown generation and HTML parity.</li>
+<li>Next.js 16.3.2 production Webpack build.</li>
+<li>Production route-boundary verification.</li>
+<li>Complete maintained public Chromium/WebKit matrix.</li>
+<li>Complete maintained authenticated Chromium/WebKit phone, tablet, and desktop
+matrix.</li>
+<li>Rollout-specific public matrix.</li>
+<li>Rollout-specific authenticated matrix.</li>
+<li>Firebase Admin serverless compatibility regression.</li>
+<li><code>pnpm why jose</code> with the resolved <code>jwks-rsa&gt;jose</code> boundary recorded.</li>
+<li>Git whitespace, generated-artifact, privacy, and exact-diff checks.</li>
+</ul>
+<p>The risk review must explicitly cover:</p>
+<ol>
+<li>Public <code>/library</code> route and otter offline-cache proof.</li>
+<li>Owned routes and private companion assets absent from public Cache Storage.</li>
+<li>Same-origin, method, cancellation-class, and navigation-evidence-bounded
+request cancellation.</li>
+<li>Failure- and concurrency-safe authenticated fixture staging.</li>
+<li>Settings dirty-state collapse.</li>
+<li>Runner neutral-state-only visibility.</li>
+<li>Overlap, accessibility-tree, focus, pointer, target, and overflow safety.</li>
+<li>True native 200% public Library, member Library, and History proof.</li>
+<li>The exact WebKit <code>/contours.svg</code> teardown cancellation and the focused
+WebKit phone replay of 22 passes and four intentional skips.</li>
+</ol>
+<p>Use the newest current-run screenshots as audit evidence. Open and inspect each
+retained image before accepting it. Tie UX and accessibility findings to the
+specific step or screenshot that proves them. Do not claim complete WCAG
+conformance from screenshots.</p>
+<h2>Independent reviews</h2>
+<p>After the integrated candidate is stable, run two independent bounded reviews:</p>
+<ul>
+<li>An integration audit with no permission to edit. It checks the exact diff,
+cache/privacy boundary, fixture staging, cancellation policy, state
+predicates, native zoom, accessibility and interaction evidence, forbidden
+production changes, documentation truth, and QA retention.</li>
+<li>A fresh finish review with no inherited implementation narrative. It inspects
+the current-run screenshots, comparison evidence, changed UI, and test
+results, then returns one disposition: <code>fix</code>, <code>recapture</code>, <code>rebuild</code>, or
+<code>ship</code>.</li>
+</ul>
+<p>Apply at most one coherent correction batch when a material issue is found,
+then rebuild and rerun affected gates once. Record unresolved failures as
+release blockers.</p>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Exact base, source tips, remote tips, and linear ancestry are proved.</li>
+<li>The rollout lineage is integrated once, with no separate pilot duplication.</li>
+<li>The final diff contains no forbidden production change.</li>
+<li>All eight assets retain verified hashes, closed registry entries, responsive
+source pairs, and correct public or owned cache class.</li>
+<li>Public provenance exposes no absolute local path or generator identifier.</li>
+<li>Settings and runner visibility remain fail-closed.</li>
+<li>Public offline Library and private-cache exclusion pass live browser proof.</li>
+<li>Fixture staging and cancellation policies pass focused and complete tests.</li>
+<li>Complete local gates report exact totals and intentional skips.</li>
+<li>The exact WebKit teardown exception remains bounded and the 22/4 focused
+replay remains green or is rerun and reported honestly.</li>
+<li>Current-run visual evidence confirms responsive, native-zoom, non-overlap,
+accessibility, focus, and pointer behavior with no material finding.</li>
+<li>Canonical Markdown and generated HTML are byte-consistent.</li>
+<li><code>docs/qa/latest/</code> contains one coherent Wave 4 integration evidence set.</li>
+<li>The branch is committed, pushed, clean, and byte-identical to its upstream;
+exact base and source commits are ancestors of the integration tip.</li>
+</ul>
+<h2>Closeout record</h2>
+<p>Update this section after verification with the exact integration tip,
+conflicts, asset hashes, cache classes, reviewer dispositions, gate totals,
+skips, engine-only exception, retained QA paths, local/upstream equality, and
+release blockers.</p>
+
+  </main>
+</body>
+</html>
