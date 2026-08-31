@@ -553,10 +553,30 @@ test("a real aborted operation retries explicitly with the same key and no onlin
   harness.failedRequests.length = 0;
 
   harness.control.abortNextOperation = true;
-  await harness.page.reload();
+  // The recovery contract depends on a real browser reload and hydrated runner
+  // state, not on Playwright's WebKit reload lifecycle waiter. In a long
+  // WebKit project that waiter can remain pending at every readiness level.
+  // Trigger the native reload after this evaluation returns, observe the main
+  // frame commit directly, then let the product assertions prove hydration.
+  const reloadedUrl = harness.page.url();
+  const reloadCommitted = harness.page.waitForEvent("framenavigated", {
+    predicate: (frame) =>
+      frame === harness.page.mainFrame() && frame.url() === reloadedUrl,
+  });
+  await harness.page.evaluate(() => {
+    setTimeout(() => window.location.reload(), 0);
+  });
+  await reloadCommitted;
   await expect(
     harness.page.getByRole("heading", { name: "Offline queued" }),
   ).toBeVisible();
+  expect(
+    await harness.page.evaluate(
+      () =>
+        (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming)
+          ?.type,
+    ),
+  ).toBe("reload");
   if (testInfo.project.name === "chromium-desktop") {
     await attachRunnerRegionEvidence(
       harness.page.locator(

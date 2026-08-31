@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="2df1da55b098a50a0b38147adf1d5410c7fa5d9c64aca4849db19da5a94b878d">
+  <title>Wave 3 animal surface-system rollout plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Wave 3 animal surface-system rollout plan</h1>
+<h2>Outcome and branch boundary</h2>
+<p>Roll the approved Corner Companions surface system from the verified pilot into
+the remaining maintained product surfaces:</p>
+<ul>
+<li>Guest and member exercise Library where the layout has safe reserved space.</li>
+<li>The owned routine editor.</li>
+<li>History and immutable workout detail.</li>
+<li>Settings.</li>
+<li>The owned workout route and active runner at unconstrained widths and states.</li>
+</ul>
+<p>The rollout branch is <code>vishal/pal-visual-rollout</code>. It starts from exact approved
+pilot tip <code>b4499f3b953a5745039f1bca67da68e6e135c7c3</code>, which is also the exact tip
+of <code>origin/vishal/pal-visual-pilot</code>. The pilot finish-review disposition is
+<code>ship</code>, and this rollout must preserve every pilot surface and asset without
+regression.</p>
+<p>This iteration does not merge <code>main</code>, deploy, change a provider, alias,
+environment variable, or billing setting, apply or add a production migration,
+seed production, change production data, remove a sibling worktree, or begin
+Wave 4 integration or release work.</p>
+<h2>Product and visual truth</h2>
+<p>The sole visual direction is the approved Corner Companions board at
+<code>.impeccable/mocks/companion-concepts/corner-companions-board.png</code>, together
+with the passed pilot captures and the generated system record in <code>DESIGN.md</code>.
+The board remains uncropped design evidence and never becomes a runtime asset.</p>
+<p>The rollout is an extension of the established field-atlas world, not another
+identity round. Preserve the following system:</p>
+<ul>
+<li>Warm mineral paper, deep teal ink, coral action, lichen support, stone rules,
+condensed display type, humanist reading type, and square field-sheet
+components.</li>
+<li>One complete, purpose-built, text-free, static animal vignette in reserved
+whitespace on an eligible surface.</li>
+<li>A single reusable <code>DecorativeCompanion</code> component, closed variant registry,
+shared tokens, explicit asset paths, intrinsic dimensions, responsive
+sources, and one failure-collapse boundary.</li>
+<li>Empty alternative text, assistive-technology hiding, no focus target, disabled
+dragging, and pointer-inert presentation.</li>
+<li>Complete removal in forced colors, unchanged static presentation in reduced
+motion, and content-first collapse on constrained states.</li>
+<li>Explicit public-cache inclusion only for assets that a public route uses.
+Authenticated HTML, owned data, and owned-only assets remain outside the
+service-worker cache.</li>
+</ul>
+<p>The animal never becomes navigation, coaching, status, validation, progress,
+save feedback, error recovery, account identity, or data. Adjacent semantic
+content always carries the complete product meaning.</p>
+<h2>Surface placement contract</h2>
+<p>The following table defines the maximum rollout. Browser evidence may require a
+smaller visible boundary when a surface lacks safe space, but it cannot move art
+into the task or data plane.</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Placement</th>
+<th>Required collapse</th>
+<th>Cache class</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Guest Library <code>/library</code></td>
+<td>A quiet slot in the introductory field above the tools, separate from equipment and search controls</td>
+<td>Collapse below the measured tablet threshold, in no-result recovery when the slot would displace search, on image failure, and in forced colors</td>
+<td>Public route asset; explicit public-cache allowlist</td>
+</tr>
+<tr>
+<td>Member Library <code>/app/library</code></td>
+<td>Introductory field beside the title at broad widths, never beside private result labels or the create/search controls</td>
+<td>Collapse on phone and narrow tablet, for loading or route failure, on image failure, and in forced colors</td>
+<td>Reuse the public Library asset only if it is contextually correct; no member HTML or data cache</td>
+</tr>
+<tr>
+<td>Routine editor <code>/app/program/edit</code></td>
+<td>Broad hero whitespace only, outside equipment review, the day outline, topology controls, fields, validation, publish status, removal review, and chooser</td>
+<td>Collapse below desktop, while a destructive review is open, while saving, after validation failure, during failed or reconciliation status, on image failure, and in forced colors</td>
+<td>Owned-only asset or a contextually correct existing pilot asset; no public-cache addition</td>
+</tr>
+<tr>
+<td>History <code>/app/history</code></td>
+<td>Introductory whitespace outside filter controls and immutable session rows</td>
+<td>Collapse below desktop, in empty/filter-empty/loading/failure states when content needs the space, on image failure, and in forced colors</td>
+<td>Owned-only asset; no public-cache addition</td>
+</tr>
+<tr>
+<td>History detail <code>/app/history/[sessionId]</code></td>
+<td>Reuse the History visual only when broad heading whitespace remains outside saved state and log data</td>
+<td>Collapse whenever the header, state label, or detail content would compete; never place art inside exercise, set, cardio, or note records</td>
+<td>Owned-only asset; no public-cache addition</td>
+</tr>
+<tr>
+<td>Settings <code>/app/settings</code></td>
+<td>Introductory whitespace above preferences and separate from all account controls</td>
+<td>Collapse below desktop, while saving or failed, for unverified restrictions, whenever deletion review is open, on image failure, and in forced colors</td>
+<td>Owned-only asset; no public-cache addition</td>
+</tr>
+<tr>
+<td>Workout <code>/workout/[sessionId]</code></td>
+<td>Broad runner-header whitespace only after device/server recovery succeeds</td>
+<td>Collapse at phone and tablet widths and whenever recovery, verification, pending, saved, failed, retry, conflict, offline, auth, timer, terminal, or navigation-protection state needs priority</td>
+<td>Owned-only asset; no public-cache addition</td>
+</tr>
+</tbody></table>
+<p>At 320, 390, and 430 CSS pixels, product content wins and rollout art may be
+absent. At 820 CSS pixels, each surface must prove that a visible companion has
+real reserved space; otherwise it collapses. At 1,280 and 1,440 CSS pixels, the
+art may appear only when strict non-overlap checks pass.</p>
+<h2>Asset inventory and production</h2>
+<p>Before generation, measure the final slot at each visible breakpoint and run an
+independent asset-manifest review. Reuse pilot art only when the action and
+composition fit the new surface without implying product state:</p>
+<ul>
+<li>The planning hedgehog remains landing-only unless a fresh side-by-side
+comparison proves that its blank notebook is a faithful routine-editor
+planning context and that the measured hero slot can use the full uncropped
+composition. The audit hypothesis alone is not permission to reuse it.</li>
+<li>The preparing fox remains tied to preparation. Do not reuse it where tying a
+shoe would misrepresent history, settings, or an active runner.</li>
+<li>The reviewing raccoon remains tied to a disclosed guest preview. Do not reuse
+its marked paper where the marks could be mistaken for private history or
+member analytics.</li>
+</ul>
+<p>Generate purpose-built assets for every remaining row whose existing art fails
+that contextual test. Candidate production briefs are:</p>
+<table>
+<thead>
+<tr>
+<th>Asset role</th>
+<th>Subject and action</th>
+<th>Semantic exclusions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Library</td>
+<td>A friendly animal calmly browsing a blank field guide or unmarked index cards, with usable side whitespace</td>
+<td>No lettering, search term, filter, category badge, recommendation, approval mark, or navigation cue</td>
+</tr>
+<tr>
+<td>History</td>
+<td>A calm animal filing a closed blank folder beside a small archive box</td>
+<td>No dates, session facts, completion mark, trend, chart, personal record, or success signal</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td>A calm animal arranging a plain towel and closed water bottle beside a gym tote</td>
+<td>No toggle, account icon, gear icon, identity, provider mark, warning, deletion cue, or validation state</td>
+</tr>
+<tr>
+<td>Workout</td>
+<td>A calm animal standing aside with a plain towel and closed bottle, ready but not instructing</td>
+<td>No exercise demonstration, timer, coaching gesture, weight, repetition, saved state, finish cue, warning, or celebration</td>
+</tr>
+</tbody></table>
+<p>Settings and workout are named rollout outcomes, not optional omissions. Give
+each a purpose-built, noncritical desktop/tablet heading or whitespace slot and
+test the slot before considering an exception. The Settings slot must remain
+outside verification, input, save/error, and deletion controls. The workout
+slot may appear only in a safe stable overview/header state and must disappear
+on phones and during active logging, timers, guidance, recovery, offline,
+error, reconciliation, retry, and terminal states. If measured evidence proves
+that even those slots are unsafe, record a surface-specific exception with the
+failed measurements and require the fresh finish reviewer to judge whether the
+rollout still satisfies this plan; do not silently omit either surface.</p>
+<p>Every generated image must use the original hand-inked golden-age theatrical
+cartoon language and the approved palette. It must contain one complete
+uncropped character, no text, no logo, no copied character, no real person, no
+private data, no chart, and no semantic UI symbol. Prefer genuine transparency.
+An opaque bounded paper field is acceptable only after direct light/dark review
+proves that transparency or edge extraction cannot meet the quality gate.</p>
+<p>Save shipping WebP files and 512-pixel responsive derivatives under
+<code>public/illustrations/companions/</code>. Preserve the exact generation prompt in a
+private-safe same-basename JSON record under
+<code>docs/design/provenance/companions/</code> and in the rollout asset inventory. Record
+the safe transformation description, final dimensions, and final SHA-256, but
+do not publish absolute local paths or generator identifiers. Fetchable public
+asset directories contain WebPs only. Reject and remove baked checkerboards,
+halos, color-key fringes, cropped limbs or props, lettering, data-like marks,
+and abandoned variants.</p>
+<h2>Component, types, and styling</h2>
+<p>Extend the closed <code>COMPANION_ASSETS</code> registry rather than adding a second
+component or page-specific background CSS. Each new variant defines its source,
+responsive source set, intrinsic dimensions, loading priority, fetch priority,
+and <code>sizes</code> contract.</p>
+<p>The component retains one client boundary because image failure uses local
+state. Server pages stay Server Components. Existing client surfaces import the
+same leaf component without moving data reads or whole routes into the client
+bundle.</p>
+<p>Add shared rollout tokens for broad-slot width, safe gap, and compact collapse.
+Host selectors may place a variant, but they cannot redefine image semantics,
+failure behavior, or a page-specific background image. Host <code>:has([hidden])</code>
+and forced-color rules must collapse the relevant grid track without a blank
+gap. No CSS art, emoji, inline illustration, handmade SVG animal, rasterized UI
+text, gradient decoration, glow, glass, or shadow belongs to the rollout.</p>
+<h2>State, persistence, and authorization</h2>
+<p>This rollout changes presentation only. It adds no database type, schema,
+migration, API request or response, mutation, Firebase behavior, browser-storage
+record, ownership key, workout operation, analytics calculation, unit
+conversion, guidance record, exercise-video rule, or program revision behavior.</p>
+<p>Preserve the following state authority:</p>
+<ul>
+<li>Search and filter inputs remain the Library authority.</li>
+<li>Routine controls, validation summary, saved/failed/retry feedback, equipment
+review, publication status, and destructive dialogs remain the editor
+authority.</li>
+<li>Immutable session rows and workout-detail snapshots remain the History
+authority.</li>
+<li>Native fields, text save status, sign-out, reauthentication, and deletion
+review remain the Settings authority.</li>
+<li>Recovery, progress, operation state, offline/auth notices, timers, logging
+fields, conflict resolution, retry controls, and terminal actions remain the
+runner authority.</li>
+</ul>
+<p>The component may render only after the existing server-derived owner boundary
+has selected a member surface. It never accepts or renders a Firebase UID,
+program ID, session ID, private label, workout value, or account state.</p>
+<h2>Public cache and privacy</h2>
+<p>Add only the final Library asset and its 512-pixel derivative to the public
+install/static allowlists because <code>/library</code> truly references them. Do not add
+editor, History, Settings, or workout assets. Keep <code>/app</code>, <code>/workout</code>, private
+APIs, authenticated HTML, member navigation, owned results, history, settings,
+runner data, and arbitrary images outside the service worker.</p>
+<p>The generated service worker must stay byte-identical to the canonical cache
+policy. Offline browser evidence must prove that cached public Library HTML and
+its explicit art work without a network, while the member Library, History,
+Settings, workout route, and owned-only art remain absent from the public cache.
+If a public art request fails, the cached Library stays usable and the slot
+collapses.</p>
+<h2>Responsive, accessibility, and interaction requirements</h2>
+<p>Verify 320, 390, 430, 820, 1,280, and 1,440 CSS-pixel widths, plus both Chrome
+DevTools Protocol page scale and true native 200% browser zoom/reflow. Extend
+the retained headed native-zoom record from the pilot to Library and History;
+do not label a halved CSS viewport or CDP page scale as native zoom proof.
+Compare against the same-state reference density used by the pilot.
+At every size:</p>
+<ul>
+<li>Reject horizontal document overflow.</li>
+<li>Keep headings, search, filters, inputs, topology controls, destructive review,
+immutable data, account controls, guidance players, timers, logging controls,
+notices, terminal state, and fixed navigation outside the companion box.</li>
+<li>Fail strict geometry assertions when either participant is missing instead of
+treating absence as non-overlap.</li>
+<li>Let long names and status text wrap without entering the art slot.</li>
+<li>Keep all interactive targets and fixed navigation above safe-area boundaries.</li>
+</ul>
+<p>Verify light and dark themes, forced colors, reduced motion, keyboard, pointer,
+and screen-reader semantics. Every companion must have <code>alt=&quot;&quot;</code>,
+<code>aria-hidden=&quot;true&quot;</code>, <code>draggable=&quot;false&quot;</code>, no focusable descendant, and
+<code>pointer-events: none</code>. Accessibility-tree snapshots, focus traversal, and
+pointer hit-testing must prove that the asset has no accessible name, focus
+position, role, or click target. Image failure and forced colors remove both the
+image and reserved track.</p>
+<h2>Test-driven implementation</h2>
+<p>Retain a meaningful failed-before checkpoint before component, route, cache,
+fixture, or CSS implementation. The focused RED contract must cover:</p>
+<ul>
+<li>The expanded closed variant registry and exact asset paths.</li>
+<li>Decorative, pointer, focus, and accessible-name semantics for every variant.</li>
+<li>Required route/component placements and explicit forbidden placements.</li>
+<li>Content-first collapse policies for phone, state-critical editor/Settings,
+and runner states.</li>
+<li>Public-cache inclusion for only the Library asset and exclusion for every
+owned-only asset and private route.</li>
+<li>Authenticated fixture parity without broadening scenario or owner headers.</li>
+<li>Exact authenticated fixture copies for only the new asset filenames that its
+maintained member routes render, plus exact canceled-image allowlist entries.
+Do not use a broad companion-directory copy or wildcard request exception.</li>
+<li>Image-failure, forced-color, reduced-motion, and host-grid collapse source
+policy.</li>
+</ul>
+<p>Run the exact focused command before implementation and preserve the failing
+assertion names and exit status in the final QA record. After implementation,
+run the identical command GREEN before broader checks. Expand existing tests
+where they own the contract instead of creating duplicate policy suites.</p>
+<h2>Browser and design evidence</h2>
+<p>Extend the production-mode pilot harnesses with a rollout-specific matrix.
+Public coverage includes guest Library complete, search-result, no-result,
+image-failure, forced-colors, reduced-motion, dark, keyboard, pointer,
+accessibility, offline, and 200% zoom states.</p>
+<p>Authenticated synthetic coverage includes member Library complete/no-result,
+editor clean/dirty/validation/saving/failure/removal-review, History
+empty/populated/filter-empty/detail, Settings loaded/unverified/saving/saved/
+failed/deletion-review, and workout recovery/ready/pending/saved/failed/retry/
+offline/auth/conflict/timer/terminal states. Companion visibility is asserted
+only where the contract permits it; every critical state proves collapse.</p>
+<p>For every visible companion, pair strict non-overlap checks with protected
+selectors from the maintained surface: Library search/filter/results and create
+control; editor equipment/topology/fields/errors/status/dialogs; History
+filter/rows/detail state/archive data; Settings inputs/status/account/deletion;
+and runner identity/progress/notices/guidance/timer/logging/retry/footer. Also
+assert no accessible name or role, no focus-order entry, and no pointer hit.</p>
+<p>Run Chromium and WebKit phone, tablet, and desktop projects. Capture valid,
+privacy-safe rollout evidence at 390, 820, and 1,440 CSS pixels, plus any
+additional 320, 430, 1,280, and 200% proof required by the rollout matrix. Open
+every retained image and reject blank, stale, half-loaded, wrong-state, or
+misnamed captures.</p>
+<p>For Product Design QA, combine the uncropped selected board or passed pilot
+reference with each same-state rollout capture in one comparison image. Evaluate
+typography, spacing, tokens, image quality, content, states, responsiveness,
+accessibility, and prohibited semantic competition. Update project-root
+<code>design-qa.md</code> only after the latest comparison has no actionable P0, P1, or P2
+finding and records <code>final result: passed</code>.</p>
+<p>After the bounded implementation inspection, run the Impeccable manual detector
+exactly once over changed UI targets. Fix mechanical findings in one batch and
+pass all remaining findings to a fresh finish reviewer with no inherited
+conversation context. Follow only its bounded <code>recapture</code>, <code>rebuild</code>, <code>fix</code>, or
+<code>ship</code> disposition. Run the shipped Impeccable documenter after the final
+correction and update <code>DESIGN.md</code>, its sidecar, and the rollout surface record
+to describe shipped ground truth.</p>
+<h2>Complete verification</h2>
+<p>Run the following gates after focused GREEN and visual review:</p>
+<ul>
+<li>Focused and full Vitest.</li>
+<li>Strict TypeScript.</li>
+<li>Full ESLint.</li>
+<li>Drizzle metadata and complete schema tests.</li>
+<li>Deterministic seed policy checks without applying a seed.</li>
+<li>Generated service-worker parity and Chromium public-offline behavior.</li>
+<li>Generated Markdown/HTML documentation parity.</li>
+<li>Next.js 16.3.2 Webpack production build.</li>
+<li>Production route-boundary check.</li>
+<li>Complete maintained public Chromium/WebKit matrix.</li>
+<li>Complete maintained authenticated Chromium/WebKit phone, tablet, and desktop
+matrix.</li>
+<li>Rollout-specific public and authenticated browser evidence.</li>
+</ul>
+<p>Report every complete gate as a rollout delta from the reviewed pilot baseline
+of 123 Vitest files and 839 tests. A changed total is not itself a regression,
+but the report must separate newly added coverage from any removed or skipped
+pilot coverage.</p>
+<p>Run only one production build or browser matrix at a time. Measure task-owned
+artifact directories and available disk space around large gates. After the
+replacement evidence passes, retain only the newest privacy-safe Wave 3 report
+and required desktop/mobile captures. Remove superseded generated evidence,
+<code>.next</code>, authenticated fixture build output, Playwright reports, traces, and
+test results without touching unrelated caches or sibling worktrees.</p>
+<h2>Documentation and closeout</h2>
+<p>Update the plan execution record, <code>docs/context/STATUS.md</code>,
+<code>docs/context/SOURCES.md</code>, <code>docs/wiki/index.md</code>, <code>DESIGN.md</code>, <code>design-qa.md</code>, and
+their generated HTML counterparts with verified rollout facts. Preserve the
+pilot record as intentional history and distinguish pilot proof from rollout
+proof.</p>
+<p>Commit and push <code>vishal/pal-visual-rollout</code>. Leave the worktree clean and report
+the exact base and tip, asset files and SHA-256 values, prompts and provenance,
+reviewer disposition, test commands and results, retained screenshots,
+public-cache inclusion, owned/private exclusion, privacy proof, and open risks.
+Stop before merge, deployment, production data, provider, environment, billing,
+sibling-worktree, or Wave 4 work.</p>
+<h2>Execution record</h2>
+<ul>
+<li>Base preflight: clean detached checkout at exact pilot tip
+<code>b4499f3b953a5745039f1bca67da68e6e135c7c3</code>; local and remote pilot refs
+resolve to the same SHA.</li>
+<li>Branch preflight: <code>vishal/pal-visual-rollout</code> created at the exact pilot tip.</li>
+<li>Required instructions: repository and global <code>AGENTS.md</code>, project context,
+local Next.js 16.3.2 Server/Client Component, CSS, image, and error guides,
+Impeccable, Product Design image-to-code and design-QA, image generation,
+Playwright, and technical-writing instructions read before implementation.</li>
+<li>Impeccable context: the established world, comp build path, manual-detector
+boundary, available <code>cwebp</code>, <code>sips</code>, and <code>ffmpeg</code> converters, and stale
+generated design sidecar were identified. The final documenter owns the
+sidecar refresh after the last rollout correction.</li>
+<li>Product Design context: no saved Product Design user-context file exists, so
+the approved repository board, passed pilot captures, tokens, components, and
+current source are the visual authority.</li>
+<li>TDD RED: <code>node node_modules/vitest/vitest.mjs run tests/unit/decorative-companion.test.tsx tests/unit/animal-surface-rollout.test.ts --configLoader runner</code> failed before
+implementation because the five rollout variants, shared state predicates,
+route placements, collapse CSS, and Library cache entries did not yet exist.
+The retained console evidence showed the absent closed-registry keys, missing
+<code>@/domain/companions/visibility</code>, and missing rollout collapse selector.</li>
+<li>TDD GREEN: the closed registry now contains <code>library</code>, <code>routine-editor</code>,
+<code>history</code>, <code>settings</code>, and <code>workout</code>; shared pure predicates own Settings,
+editor, and runner eligibility; and focused unit, component, cache, staging,
+cancellation, provenance, and documentation-policy coverage passes before the
+complete suite.</li>
+<li>Asset result: five original full/512 pairs ship—cataloging otter, routine-
+drafting beaver, history-archive tortoise, settings-packing hare, and workout-
+corner bear. Exact prompts, dimensions, safe transformations, and hashes live
+under <code>docs/design/provenance/companions/</code>. Rejected checkerboard, obscured-
+foot, and wrong-subject candidates were not retained.</li>
+<li>Implementation result: public/member Library, owned editor, History
+list/detail, Settings, and runner all use <code>DecorativeCompanion</code>; no page-
+specific animal background CSS was introduced. Settings now collapses on any
+unsaved preference edit. Runner remains visible only in a recovered, online,
+neutral broad-width overview and collapses for every constrained or critical
+state.</li>
+<li>Semantic result: explicit protected selectors across all rollout surfaces
+require non-overlapping bounding boxes. Empty alternative text,
+<code>aria-hidden</code>, no accessible name, no focus target, disabled dragging, and
+pointer hit-testing keep every companion outside product meaning and input.</li>
+<li>Fixture result: authenticated staging copies only the exact 12 required
+assets behind a SHA-keyed lock, preserves pre-existing destinations, and
+cleans only attempt-created files after success or partial failure. Request
+cancellation exemptions require an allowlisted same-origin GET image, the
+exact cancellation class, and a changed/detached frame or already-observed
+same-origin superseding main-frame navigation.</li>
+<li>Cache/privacy result: only the cataloging-otter full/512 pair joins the public
+cache for public <code>/library</code>. Runtime offline proof decodes the otter after an
+offline reload and confirms all fox, beaver, tortoise, hare, bear, owned
+routes, authenticated HTML, and private data remain absent. All fetchable
+public illustration directories are free of provenance JSON; companion and
+hero records were moved to <code>docs/design/provenance/</code> and scrubbed of private
+local paths and generator identifiers.</li>
+<li>Responsive result: automated browser coverage spans 320, 390, 430, 820, 1280,
+and 1440 CSS pixels in maintained Chromium/WebKit phone, tablet, and desktop
+projects. CDP page scale remains explicitly separate from true headed native
+200% proof for public Library, member Library, and History.</li>
+<li>Visual review: the manual Impeccable detector ran exactly once. Its broad
+output identified only pre-existing monolithic-CSS and design-scale
+advisories outside the rollout block. The fresh finish reviewer requested one
+bounded Settings dirty-state correction, accepted the refreshed desktop,
+phone, and uncropped comparison evidence, confirmed every integration-audit
+item, and issued final disposition <code>ship</code> with no material finding.</li>
+<li>Documentation result: the final documenter refreshed <code>DESIGN.md</code> and
+<code>.impeccable/design.json</code> after the last correction. <code>design-qa.md</code>, context,
+sources, wiki, this execution record, and the newest Wave 3 QA report have
+generated HTML parity. Superseded pilot/Wave 2 evidence was removed from
+<code>docs/qa/latest/</code>; only the coherent rollout report and 23 privacy-safe
+captures/comparisons remain.</li>
+<li>Verification result: 127 Vitest files/860 tests pass, a delta of four files
+and 21 tests from the pilot baseline. TypeScript, full ESLint, Drizzle/schema,
+seed, service-worker, documentation, production Webpack build, and the
+44-entry production route boundary pass. The complete public matrix is 90
+passed/42 intentional skips across 132 cases. The time-boxed final
+authenticated matrix completed 54 passes/13 intentional skips across 68
+cases plus one engine-only WebKit cancellation of <code>contours.svg</code> during
+teardown with no failed product assertion. Immediately before it, the full
+WebKit phone project passed 22/4, including the same routine and every
+rollout/resilience journey; the other five projects were green in the final
+matrix.</li>
+<li>Independent closeout result: a fresh reviewer inspected the retained capture
+set and all eight integration-audit verdicts after the final hardening. It
+accepted the isolated WebKit teardown cancellation as engine-only noise,
+found no material product or security defect, and retained <code>ship</code>.</li>
+<li>Boundary result: no merge, deployment, provider, alias, environment, billing,
+migration, production seed/data, sibling-worktree, or Wave 4 action occurred.</li>
+</ul>
+
+  </main>
+</body>
+</html>

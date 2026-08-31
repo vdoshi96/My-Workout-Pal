@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-30T22:33:43Z",
+  "generatedAt": "2026-08-31T00:58:27Z",
   "title": "Design System: My Workout Pal",
   "extensions": {
     "colorMeta": {
@@ -167,17 +167,17 @@
       {
         "name": "phone",
         "value": "max-width: 47.99rem",
-        "purpose": "Stack content, use fixed bottom navigation, and keep companion art in its shallow slot."
+        "purpose": "Stack content, use fixed bottom navigation, and collapse rollout Library, editor, History, Settings, and runner slots."
       },
       {
         "name": "tablet",
         "value": "min-width: 48rem",
-        "purpose": "Introduce two-column content grids where the surface supports them."
+        "purpose": "Introduce two-column content grids and permit the guarded Settings slot while rollout Library, editor, History, and runner art stays collapsed."
       },
       {
         "name": "desktop",
         "value": "min-width: 64rem",
-        "purpose": "Move navigation into the header and reserve broad side space for companion art."
+        "purpose": "Move navigation into the header and reserve broad heading-side space for eligible companion art outside task and data planes."
       }
     ]
   },
@@ -226,24 +226,24 @@
       "name": "Corner Companion Slot",
       "kind": "custom",
       "refersTo": "companion-slot",
-      "description": "A decorative, inert, source-faithful animal vignette in a reserved slot outside the semantic data plane.",
-      "html": "<div class=\"ds-companion-slot\" aria-hidden=\"true\"><img alt=\"\" src=\"/illustrations/companions/reviewing-raccoon.webp\" /></div>",
-      "css": ".ds-companion-slot { align-items: center; display: grid; height: var(--companion-slot-block-mobile); justify-items: center; overflow: hidden; pointer-events: none; width: 100%; } .ds-companion-slot img { aspect-ratio: 1; block-size: 100%; border: 1px solid var(--companion-paper-edge); display: block; inline-size: auto; max-inline-size: 100%; object-fit: cover; } @media (forced-colors: active) { .ds-companion-slot { display: none; } } @media (prefers-reduced-motion: reduce) { .ds-companion-slot img { animation: none; transform: none; transition: none; } }"
+      "description": "A decorative, inert, source-faithful animal vignette from the closed eight-variant registry in a reserved slot outside the semantic data plane.",
+      "html": "<div class=\"ds-companion-slot\" aria-hidden=\"true\"><img alt=\"\" aria-hidden=\"true\" decoding=\"async\" draggable=\"false\" src=\"/illustrations/companions/cataloging-otter.webp\" /></div>",
+      "css": ".ds-companion-slot { align-items: center; background: var(--paper); display: grid; height: var(--companion-slot-block-mobile); justify-items: center; overflow: hidden; pointer-events: none; width: 100%; } .ds-companion-slot[hidden] { display: none; } .ds-companion-slot img { aspect-ratio: 1; block-size: 100%; display: block; inline-size: 100%; max-inline-size: var(--companion-slot-inline); object-fit: contain; pointer-events: none; } @media (forced-colors: active) { .ds-companion-slot { display: none; } } @media (prefers-reduced-motion: reduce) { .ds-companion-slot img { animation: none; transform: none; transition: none; } }"
     }
   ],
   "narrative": {
     "northStar": "The Field Notebook Companion",
-    "overview": "My Workout Pal is a warm field-atlas interface: mineral paper, deep blue-green ink, crisp route marks, and coral decisions make planning and logging feel grounded rather than gamified. The visual system keeps the route grammar from `docs/design/DIRECTION.md`—waypoints, ruled sheets, stamped states, and contour surfaces—while keeping the user's task and product truth ahead of decoration.\n\nThe selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in a reserved quiet slot on each pilot surface. The guest landing hedgehog holds a blank notebook, the signed-in home fox prepares beside the personal next action, and the guest Progress raccoon reviews loose paper with three nonsemantic pigment dabs outside the chart and disclosure. The raccoon uses an intentionally opaque warm-paper card as a bounded surface treatment; it is source-faithful, not a transparent crop or a semantic status cue. The composite concept board remains evidence, not a shipping asset.",
+    "overview": "My Workout Pal is a warm field-atlas interface: mineral paper, deep blue-green ink, crisp route marks, and coral decisions make planning and logging feel grounded rather than gamified. The visual system keeps the route grammar from `docs/design/DIRECTION.md`—waypoints, ruled sheets, stamped states, and contour surfaces—while keeping the user's task and product truth ahead of decoration.\n\nThe selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in reserved quiet space, with a surface-specific asset and visibility contract. The approved pilot keeps the planning hedgehog on the guest landing, preparing fox on the signed-in personal home, and an opaque reviewing raccoon on the guest Progress preview. The Wave 3 rollout adds the cataloging otter to public and member Library headings, the routine-drafting beaver to the owned editor, the history-archive tortoise to History list and detail, the settings-packing hare to a verified, identity-ready, clean, neutral Settings heading on tablet and desktop, and the workout-corner bear to a recovered, online, neutral runner overview at broad widths. The composite concept board remains evidence, not a shipping asset.",
     "keyCharacteristics": [
       "Warm mineral paper and contour texture with restrained ruled dividers.",
       "Condensed display type for route labels and humanist sans serif for reading and entry.",
       "Coral action, lichen compatibility, and deep ink navigation with non-color semantics.",
-      "One calm companion per pilot surface, outside the data and interaction plane."
+      "Contextual companions vary by surface while staying outside the data and interaction plane."
     ],
     "rules": [
       {
         "name": "The One Companion Rule",
-        "body": "Each pilot surface may use one complete, purpose-built companion vignette as context; the image never carries account, workout, sample-data, progress, or completion meaning.",
+        "body": "Each eligible surface may use one complete, purpose-built companion vignette as context; the image never carries account, workout, sample-data, progress, or completion meaning.",
         "section": "overview"
       },
       {
@@ -265,10 +265,11 @@
     "dos": [
       "Do keep the field-atlas palette, condensed display silhouette, humanist reading copy, and ruled structure consistent across public and member surfaces.",
       "Do keep adjacent text and controls authoritative: the neutral `Progress` title and `Sample data · not your history` disclosure must remain the truth for the guest preview.",
-      "Do use exactly one purpose-built, text-free animal vignette per pilot surface and keep it outside text, fields, charts, disclosures, errors, timers, controls, and navigation.",
-      "Do preserve the companion provenance sidecar next to every shipped WebP and keep public companion assets separate from authenticated HTML and data caches.",
+      "Do use exactly one purpose-built, text-free animal vignette per eligible surface, apply its surface-specific state contract, and keep it outside text, fields, charts, disclosures, errors, timers, controls, and navigation.",
+      "Do preserve each WebP's same-basename provenance record under `docs/design/provenance/companions/`; keep the public companion directory free of JSON sidecars and keep public assets separate from authenticated HTML and data caches.",
       "Do collapse decorative art without a layout gap on image failure or forced colors, and keep it static under reduced motion.",
-      "Do treat the selected Corner Companions board as directional evidence only; ship the three dedicated vignettes in `public/illustrations/companions/`."
+      "Do treat the selected Corner Companions board as directional evidence only; use the eight purpose-built variants registered by `DecorativeCompanion` in `public/illustrations/companions/`.",
+      "Do keep Settings and runner visibility exceptions local to those surfaces and their verified state predicates."
     ],
     "donts": [
       "Don't crop, extract, or reuse a character from the composite gym illustration or the Corner Companions board.",
@@ -276,6 +277,7 @@
       "Don't make a decorative animal the only signal for account identity, verification, saved activity, progress, completion, or failure.",
       "Don't turn the guest Progress preview into a personal-history claim, or the personal home into a sample-data surface.",
       "Don't let companion art cover account chrome, fixed navigation, controls, charts, disclosure, errors, timers, or the primary action.",
+      "Don't copy Library's public-cache eligibility to owned/private companions or private routes.",
       "Don't introduce generic floating dashboards, gratuitous rounded cards, photorealism, gradients, glass, or mascot-led promotion into this system."
     ]
   }

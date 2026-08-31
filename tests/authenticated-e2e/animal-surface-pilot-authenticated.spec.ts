@@ -122,6 +122,7 @@ async function expectMemberCompanion(page: Page) {
 }
 
 async function assertAccessible(page: Page) {
+  await expect.poll(() => page.title()).not.toBe("");
   const results = await new AxeBuilder({ page }).analyze();
   expect(
     results.violations.filter(({ impact }) =>

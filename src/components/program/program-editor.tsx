@@ -9,6 +9,7 @@ import { MovementChooserAdapter } from "@/components/exercises/movement-chooser"
 import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
 import { parseProgramPublishResponse } from "@/components/program/program-mutation-response";
 import { reconcileProgramRevisionMutation } from "@/components/program/program-revision-reconciliation";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import {
   addProgramPrescription,
   addProgramCardio,
@@ -54,6 +55,7 @@ import {
   type MovementChooserRequest,
   type MovementSelection,
 } from "@/domain/exercises/movement-chooser-contract";
+import { canShowRoutineEditorCompanion } from "@/domain/companions/visibility";
 import {
   programPublishRequestSchema,
   type ProgramPublishInput,
@@ -946,10 +948,23 @@ export function ProgramEditor({
     ? draft.days[sectionRemoval.dayIndex]?.sections[sectionRemoval.sectionIndex]
     : undefined;
   const removingSectionLabel = removingSection?.title.trim() || "program section";
+  const showRoutineEditorCompanion = canShowRoutineEditorCompanion({
+    busy,
+    canMutate,
+    dirty,
+    hasErrors: errors.length > 0,
+    hasOpenReview:
+      chooser !== null ||
+      dayCreatorOpen ||
+      sectionRemoval !== null ||
+      dayRemoval !== null ||
+      prescriptionRemoval !== null,
+    hasStatusMessage: message.trim().length > 0,
+  });
 
   return (
     <section className="program-editor-page" aria-labelledby="program-editor-title">
-      <header className="program-editor-hero contour-surface">
+      <header className="program-editor-hero companion-heading contour-surface">
         <div>
           <span className="eyebrow">Unpublished draft · base revision {program.revisionNumber}</span>
           <h1 id="program-editor-title">Edit your route</h1>
@@ -958,6 +973,9 @@ export function ProgramEditor({
         <Link className="secondary-action" href="/app">
           Back to program
         </Link>
+        {showRoutineEditorCompanion ? (
+          <DecorativeCompanion variant="routine-editor" />
+        ) : null}
       </header>
 
       {!canMutate ? (

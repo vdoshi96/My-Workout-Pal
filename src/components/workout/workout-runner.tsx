@@ -53,6 +53,8 @@ import {
 import { CuratedVideoPlayer } from "@/components/video/curated-video-player";
 import type { CuratedVideoPair } from "@/domain/youtube/embed";
 import { PersonalGuidancePanel } from "@/components/workout/personal-guidance-panel";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
+import { canShowWorkoutCompanion } from "@/domain/companions/visibility";
 
 export type RunnerNavigationProtection = Readonly<{
   blocked: boolean;
@@ -1009,6 +1011,35 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const hasLoggedCurrentExercise = currentExercise.sets.some(
     ({ id }) => state.loggedSets[id] !== undefined,
   );
+  const showWorkoutCompanion = canShowWorkoutCompanion({
+    hasActiveLogging:
+      progressValue > 0 ||
+      state.dirtySetIds.length > 0 ||
+      state.dirtyCardio ||
+      state.dirtyNoteExerciseIds.length > 0 ||
+      state.loggedCardio !== undefined ||
+      state.operations.length > 0 ||
+      Object.values(skipReasons).some((reason) => reason.trim().length > 0) ||
+      substitutionExerciseId !== undefined,
+    hasBlockingNotice:
+      adapterError !== undefined ||
+      actionError !== undefined ||
+      state.sync.errorMessage !== undefined ||
+      state.auth !== "valid" ||
+      failedOperations.length > 0 ||
+      localTabConflictGroups.length > 0 ||
+      substitutionBusy,
+    hasGuidance:
+      currentCuratedVideos !== undefined || currentPersonalGuidance.length > 0,
+    hasPendingOperation: state.operations.some(
+      ({ status }) => status === "pending",
+    ),
+    online: state.connectivity === "online",
+    recoveryReady:
+      connectivityInitialized && !isRestoring && stateMatchesSnapshot,
+    terminal: closed,
+    timerActive: timerView.status !== "idle",
+  });
   const operationByKey = useMemo(
     () =>
       new Map(
@@ -1394,7 +1425,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       <a className="skip-link" href="#runner-active-panel">
         Skip to active set
       </a>
-      <header className="runner-header">
+      <header className="runner-header companion-heading">
         <div>
           <span className="runner-eyebrow">Active workout</span>
           <h1 id="runner-title">{props.title ?? state.snapshot.dayName}</h1>
@@ -1404,6 +1435,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           </p>
         </div>
         <span className="runner-stamp">{formatRunnerStatus(state.status)}</span>
+        {showWorkoutCompanion ? <DecorativeCompanion variant="workout" /> : null}
       </header>
 
       <section

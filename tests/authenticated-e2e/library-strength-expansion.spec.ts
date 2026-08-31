@@ -42,6 +42,7 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
   const scope = `library-strength-${testInfo.project.name}`;
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
+  let plannedSameOriginNavigationUrl: string | undefined;
 
   page.on("console", (message) => {
     if (
@@ -59,7 +60,10 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
     if (
       url.hostname === "127.0.0.1" &&
       !url.searchParams.has("_rsc") &&
-      !isSupersededCompanionImageRequest(request)
+      !isSupersededCompanionImageRequest(
+        request,
+        plannedSameOriginNavigationUrl,
+      )
     ) {
       failedRequests.push(
         `${request.method()} ${url.pathname}: ${request.failure()?.errorText ?? "failed"}`,
@@ -87,7 +91,12 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
   expect((await onboarding).status()).toBe(201);
   await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
 
-  await page.goto("/app/program/edit");
+  plannedSameOriginNavigationUrl = new URL("/app/program/edit", page.url()).href;
+  try {
+    await page.goto(plannedSameOriginNavigationUrl);
+  } finally {
+    plannedSameOriginNavigationUrl = undefined;
+  }
   const strengthSection = page
     .locator("fieldset.program-editor-section")
     .filter({ has: page.getByLabel("Section name for strength") })
@@ -128,10 +137,15 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
   const savedDayLink = page.getByRole("link", { name: "Open saved day" });
   const savedDayHref = await savedDayLink.getAttribute("href");
   if (!savedDayHref) throw new Error("The published day link is missing its destination.");
-  await Promise.all([
-    page.waitForURL((url) => url.pathname === savedDayHref),
-    savedDayLink.click(),
-  ]);
+  plannedSameOriginNavigationUrl = new URL(savedDayHref, page.url()).href;
+  try {
+    await Promise.all([
+      page.waitForURL((url) => url.pathname === savedDayHref),
+      savedDayLink.click(),
+    ]);
+  } finally {
+    plannedSameOriginNavigationUrl = undefined;
+  }
   await page.reload();
   await expect(page.getByText("Dumbbell floor press", { exact: true })).toBeVisible();
   const savedWallSit = page

@@ -14,6 +14,7 @@ export type HarnessScenario =
   | "invalid"
   | "fail-member-home"
   | "ready"
+  | "runner-neutral-overview"
   | "revoke-session"
   | "revoke-next-runner-operation"
   | "slow-member-home"
@@ -34,6 +35,7 @@ const scenarioValues = new Set<HarnessScenario>([
   "firebase-client-missing",
   "fail-member-home",
   "ready",
+  "runner-neutral-overview",
   "revoke-session",
   "revoke-next-runner-operation",
   "slow-member-home",

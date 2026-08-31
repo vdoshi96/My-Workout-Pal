@@ -288,6 +288,13 @@ describe("credential-free authenticated harness boundary", () => {
       resolve(repositoryRoot, "scripts/test-e2e-authenticated.mjs"),
       "utf8",
     );
+    const staging = readFileSync(
+      resolve(
+        repositoryRoot,
+        "scripts/lib/authenticated-fixture-staging.mjs",
+      ),
+      "utf8",
+    );
 
     expect(playwrightConfig).toContain(
       "next start tests/fixtures/authenticated-app -H 127.0.0.1",
@@ -314,14 +321,22 @@ describe("credential-free authenticated harness boundary", () => {
     expect(runner).toContain(
       '"tests/fixtures/authenticated-app/public/contours.svg"',
     );
-    expect(runner).toContain("copyFileSync(contourSource, contourDestination)");
-    expect(runner).toContain("unlinkSync(contourDestination)");
+    expect(runner).toContain("stageAuthenticatedFixture({");
+    expect(runner).toContain("const releaseFixture =");
+    expect(runner).toContain("releaseFixture();");
     expect(runner).toContain('"public/illustrations/companions/preparing-fox.webp"');
     expect(runner).toContain(
       '"tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox.webp"',
     );
-    expect(runner).toContain("copyFileSync(asset.source, asset.destination)");
-    expect(runner).toContain("unlinkSync(asset.destination)");
+    expect(runner).not.toContain("copyFileSync");
+    expect(runner).not.toContain("unlinkSync");
+    expect(staging).toContain('openSync(lockPath, "wx")');
+    expect(staging).toContain("constants.COPYFILE_EXCL");
+    expect(staging).toContain("stagedDestinations.push(destination)");
+    expect(staging).toContain("if (existsSync(destination)) unlinkSync(destination)");
+    expect(staging).toContain(
+      "Another authenticated browser harness is already active for this worktree.",
+    );
     expect(runner).not.toContain("...process.env");
     expect(runner).toContain("const inheritedEnvironmentNames");
     expect(runner).toContain(

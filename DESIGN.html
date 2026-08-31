@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="48d868718429acf7489ea5e69154bc63ab11f542becdaabe0231d36380fdde5e">
+  <meta name="source-sha256" content="40c3da4c79604c5f507ae47a02078595fefdf987a2094b4af2dc44a5ced32f13">
   <title>Design System: My Workout Pal · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -131,15 +131,15 @@ width: &quot;100%&quot;
 <h2>Overview</h2>
 <p><strong>Creative North Star: &quot;The Field Notebook Companion&quot;</strong></p>
 <p>My Workout Pal is a warm field-atlas interface: mineral paper, deep blue-green ink, crisp route marks, and coral decisions make planning and logging feel grounded rather than gamified. The visual system keeps the route grammar from <code>docs/design/DIRECTION.md</code>—waypoints, ruled sheets, stamped states, and contour surfaces—while keeping the user&#39;s task and product truth ahead of decoration.</p>
-<p>The selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in a reserved quiet slot on each pilot surface. The guest landing hedgehog holds a blank notebook, the signed-in home fox prepares beside the personal next action, and the guest Progress raccoon reviews loose paper with three nonsemantic pigment dabs outside the chart and disclosure. The raccoon uses an intentionally opaque warm-paper card as a bounded surface treatment; it is source-faithful, not a transparent crop or a semantic status cue. The composite concept board remains evidence, not a shipping asset.</p>
+<p>The selected Corner Companions direction extends that world with one purpose-built, text-free animal vignette in reserved quiet space, with a surface-specific asset and visibility contract. The approved pilot keeps the planning hedgehog on the guest landing, preparing fox on the signed-in personal home, and an opaque reviewing raccoon on the guest Progress preview. The Wave 3 rollout adds the cataloging otter to public and member Library headings, the routine-drafting beaver to the owned editor, the history-archive tortoise to History list and detail, the settings-packing hare to a verified, identity-ready, clean, neutral Settings heading on tablet and desktop, and the workout-corner bear to a recovered, online, neutral runner overview at broad widths. The composite concept board remains evidence, not a shipping asset.</p>
 <p><strong>Key Characteristics:</strong></p>
 <ul>
 <li>Warm mineral paper and contour texture with restrained ruled dividers.</li>
 <li>Condensed display type for route labels and humanist sans serif for reading and entry.</li>
 <li>Coral action, lichen compatibility, and deep ink navigation with non-color semantics.</li>
-<li>One calm companion per pilot surface, outside the data and interaction plane.</li>
+<li>Contextual companions vary by surface while staying outside the data and interaction plane.</li>
 </ul>
-<p><strong>The One Companion Rule.</strong> Each pilot surface may use one complete, purpose-built companion vignette as context; the image never carries account, workout, sample-data, progress, or completion meaning.</p>
+<p><strong>The One Companion Rule.</strong> Each eligible surface may use one complete, purpose-built companion vignette as context; the image never carries account, workout, sample-data, progress, or completion meaning.</p>
 <h2>Colors</h2>
 <p>The palette is a field-atlas register: a quiet mineral ground, deep ink for structure, coral for forward action, lichen for compatible or preserved states, and stone rules for supporting information. Dark mode inverts the ground and ink roles while retaining the same semantic accents; forced colors removes decorative companions and relies on the semantic interface.</p>
 <h3>Primary</h3>
@@ -176,15 +176,15 @@ width: &quot;100%&quot;
 </ul>
 <p><strong>The Label/Reading Split Rule.</strong> Use the condensed face to scan a route or state; use the humanist face to explain what the state means and what the user can do next.</p>
 <h2>Layout</h2>
-<p>The system is mobile-first and never narrower than <code>320px</code>. Public and member frames cap at <code>94rem</code>; member content uses a <code>79rem</code> reading width. On phones, semantic content stacks, the primary action stays above the fixed bottom navigation, and a companion follows the primary copy in its own shallow slot. At desktop widths beginning at <code>64rem</code>, public and member headers move navigation into the horizontal header, the landing hero becomes a text-and-art split, and the personal or Progress companion occupies broad side whitespace rather than the data plane.</p>
-<p>Spacing follows a compact rhythm built from small control gaps, <code>1rem</code> reading intervals, <code>1.5rem</code> section gaps, and responsive <code>clamp()</code> padding. One-pixel rules and contour surfaces establish alignment without turning the product into a collection of floating cards. A failed or forced-color-hidden companion removes its slot with <code>display: none</code> and lets the host grid collapse; it never leaves a blank gap. The same placement component serves landing, member home, and Progress preview.</p>
+<p>The system is mobile-first and never narrower than <code>320px</code>. Public and member frames cap at <code>94rem</code>; member content uses a <code>79rem</code> reading width. On phones, semantic content stacks, the primary action stays above the fixed bottom navigation, and the pilot companions keep their own shallow contextual slots. Rollout Library, editor, History, and runner companions stay hidden below <code>64rem</code>; the Settings hare can use a measured tablet or desktop heading-side slot from <code>48rem</code> only in its verified, identity-ready, clean, neutral state. At desktop widths beginning at <code>64rem</code>, public and member headers move navigation into the horizontal header, the landing hero becomes a text-and-art split, and eligible rollout companions occupy broad side whitespace rather than the task or data plane.</p>
+<p>Spacing follows a compact rhythm built from small control gaps, <code>1rem</code> reading intervals, <code>1.5rem</code> section gaps, and responsive <code>clamp()</code> padding. Companion geometry uses the existing <code>--companion-slot-inline</code> (<code>clamp(17rem, 28vw, 30rem)</code>), <code>--companion-slot-block-mobile</code> (<code>clamp(6.5rem, 32vw, 12rem)</code>), <code>--companion-slot-block-desktop</code> (<code>clamp(23rem, 42vw, 36rem)</code>), and <code>--companion-safe-gap</code> (<code>clamp(1rem, 3vw, 2.5rem)</code>) tokens. One-pixel rules and contour surfaces establish alignment without turning the product into a collection of floating cards. A failed or forced-color-hidden companion removes its slot with <code>display: none</code> and lets the host grid collapse; it never leaves a blank gap. The same placement component serves all eight closed variants, while each host keeps its own safe-slot and state contract.</p>
 <h2>Elevation &amp; Depth</h2>
 <p>The interface is flat by default. Depth comes from the contrast between paper and deep ink, the lighter alternate paper ground, contour imagery, one-pixel rules, and occasional inset selection marks. A restrained ambient shadow is reserved for waypoints and transient notices; the Corner Companions art itself has no drop shadow, glow, or glass treatment. The Progress raccoon card&#39;s opaque warm-paper field is a material boundary, not an elevation effect.</p>
 <p><strong>The Tonal Layer Rule.</strong> Prefer paper, deep paper, ink, and rules to extra cards or shadows; add a shadow only when it clarifies a floating or selected interaction.</p>
 <h2>Shapes</h2>
 <p>Most product surfaces use square corners (<code>0</code>), thin rules, and clipped contour fields. Circular geometry is reserved for route numerals and the brand mark, where it signals a waypoint or identity anchor. Inputs, public/member sheets, status labels, action bars, and companion slots remain square. The embedded media player is the specialized rounded exception, not a template for general cards. Borders and dashed rules carry structure; rounded containers and decorative frames do not.</p>
 <h2>Components</h2>
-<p>Components are quiet field-sheet primitives: strong semantic labels, crisp edges, and enough padding for touch and keyboard use. The reusable companion slot is decorative and inert, while all product state remains in adjacent semantic markup.</p>
+<p>Components are quiet field-sheet primitives: strong semantic labels, crisp edges, and enough padding for touch and keyboard use. The reusable companion slot is decorative and inert, while all product state remains in adjacent semantic markup. Surface-specific visibility exceptions stay with their host surface and never become a global permission for placement or caching.</p>
 <h3>Buttons</h3>
 <ul>
 <li><strong>Shape:</strong> Square, with the action height and padding from <code>primary-action</code>.</li>
@@ -209,16 +209,67 @@ width: &quot;100%&quot;
 <h3>Navigation</h3>
 <p>Public navigation exposes Home, Library, Progress, and My workouts; member navigation exposes Home, Library, History, Progress, and Settings. Phone navigation is fixed to the bottom with generous targets and an active coral-on-ink cue. Desktop navigation becomes part of the horizontal header, while the account rail keeps identity, verification, and sign-out visible on member surfaces.</p>
 <h3>Corner Companion Slot</h3>
-<p>The shared placement component gives one complete production asset a bounded, responsive slot. It uses empty alternative text, <code>aria-hidden</code>, pointer-inert behavior, and an error path that hides the image and collapses the host grid. The landing and Progress assets are explicitly public-cache safe; both member-fox derivatives remain excluded. The landing hedgehog is eager because it is first-viewport atmosphere; the member fox and Progress raccoon are lazy. The raccoon is intentionally an opaque warm-paper card so its field stays source-faithful in both themes; forced colors hides the entire decorative slot, and reduced motion leaves it static.</p>
+<p>The shared placement component gives one complete production asset a bounded, responsive slot. The closed registry contains eight explicit 1024-pixel and 512-pixel source pairs: <code>landing</code> (planning hedgehog), <code>member-home</code> (preparing fox), <code>progress-preview</code> (reviewing raccoon), <code>library</code> (cataloging otter), <code>routine-editor</code> (routine-drafting beaver), <code>history</code> (history-archive tortoise), <code>settings</code> (settings-packing hare), and <code>workout</code> (workout-corner bear). Each image uses empty alternative text, <code>aria-hidden=&quot;true&quot;</code>, no focusable descendant or accessible name, <code>draggable=&quot;false&quot;</code>, and a pointer-inert slot. Image failure sets the host slot to hidden; host <code>:has(...[hidden])</code> rules collapse its grid track, forced colors removes the decorative slot, and reduced motion leaves the art static.</p>
+<table>
+<thead>
+<tr>
+<th>Variant and asset</th>
+<th>Context and safe slot</th>
+<th>Visibility and cache boundary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>landing</code> · planning hedgehog</td>
+<td>Guest <code>/</code> landing, with eager first-viewport atmosphere.</td>
+<td>Pilot public asset; the public cache retains both source sizes.</td>
+</tr>
+<tr>
+<td><code>member-home</code> · preparing fox</td>
+<td>Signed-in <code>/app</code> personal home, beside the personal next action; resumable phone state keeps the action first.</td>
+<td>Owned member asset; both source sizes stay outside the public cache.</td>
+</tr>
+<tr>
+<td><code>progress-preview</code> · reviewing raccoon</td>
+<td>Guest <code>/progress</code>, outside metrics, chart, disclosure, action, and navigation.</td>
+<td>Pilot public asset; its opaque warm-paper field uses <code>companion-paper-edge</code>, and both source sizes remain public-cache eligible.</td>
+</tr>
+<tr>
+<td><code>library</code> · cataloging otter</td>
+<td>Guest <code>/library</code> and member <code>/app/library</code> headings, separate from equipment, search, create, and results.</td>
+<td>For the rollout additions, only <code>cataloging-otter.webp</code> and <code>cataloging-otter-512.webp</code> are public-cache allowlisted. The member route remains private HTML and data.</td>
+</tr>
+<tr>
+<td><code>routine-editor</code> · routine-drafting beaver</td>
+<td>Owned <code>/app/program/edit</code> heading whitespace, outside equipment review, topology, fields, validation, status, chooser, and removal review.</td>
+<td>Clean neutral desktop slot only; both source sizes are owned/private and excluded from the public cache.</td>
+</tr>
+<tr>
+<td><code>history</code> · history-archive tortoise</td>
+<td>Owned <code>/app/history</code> list and <code>/app/history/[sessionId]</code> detail heading whitespace, outside immutable records.</td>
+<td>Populated broad heading only; empty, filter-empty, and critical states collapse it. Both source sizes are owned/private and excluded.</td>
+</tr>
+<tr>
+<td><code>settings</code> · settings-packing hare</td>
+<td>Owned <code>/app/settings</code> heading whitespace, separate from verification, inputs, save/error, account, and deletion controls.</td>
+<td>Tablet and desktop only (<code>&gt;=48rem</code>) when verified, identity-ready, clean, and neutral. Both source sizes are owned/private and excluded.</td>
+</tr>
+<tr>
+<td><code>workout</code> · workout-corner bear</td>
+<td>Owned <code>/workout/[sessionId]</code> runner header only after recovery succeeds, online, and neutral.</td>
+<td>Broad desktop only (<code>&gt;=64rem</code>); phone, tablet, active logging, timer, guidance, pending, offline, recovery, error, and terminal states collapse it. Both source sizes are owned/private and excluded.</td>
+</tr>
+</tbody></table>
+<p>The provenance records use each WebP&#39;s basename under <code>docs/design/provenance/companions/</code>; they are private-safe and do not sit beside fetchable WebPs. The public companion directory contains WebPs only. The public cache retains the pilot landing and Progress pairs and adds only the Library otter pair for this rollout. All other owned/private companion assets, private routes, authenticated HTML, and owned data remain outside the public allowlist. The raccoon is intentionally an opaque warm-paper card so its field stays source-faithful in both themes.</p>
 <h2>Do&#39;s and Don&#39;ts</h2>
 <h3>Do:</h3>
 <ul>
 <li><strong>Do</strong> keep the field-atlas palette, condensed display silhouette, humanist reading copy, and ruled structure consistent across public and member surfaces.</li>
 <li><strong>Do</strong> keep adjacent text and controls authoritative: the neutral <code>Progress</code> title and <code>Sample data · not your history</code> disclosure must remain the truth for the guest preview.</li>
-<li><strong>Do</strong> use exactly one purpose-built, text-free animal vignette per pilot surface and keep it outside text, fields, charts, disclosures, errors, timers, controls, and navigation.</li>
-<li><strong>Do</strong> preserve the companion provenance sidecar next to every shipped WebP and keep public companion assets separate from authenticated HTML and data caches.</li>
+<li><strong>Do</strong> use exactly one purpose-built, text-free animal vignette per eligible surface, apply its surface-specific state contract, and keep it outside text, fields, charts, disclosures, errors, timers, controls, and navigation.</li>
+<li><strong>Do</strong> preserve each WebP&#39;s same-basename provenance record under <code>docs/design/provenance/companions/</code>; keep the public companion directory free of JSON sidecars and keep public assets separate from authenticated HTML and data caches.</li>
 <li><strong>Do</strong> collapse decorative art without a layout gap on image failure or forced colors, and keep it static under reduced motion.</li>
-<li><strong>Do</strong> treat the selected Corner Companions board as directional evidence only; ship the three dedicated vignettes in <code>public/illustrations/companions/</code>.</li>
+<li><strong>Do</strong> treat the selected Corner Companions board as directional evidence only; use the eight purpose-built variants registered by <code>DecorativeCompanion</code> in <code>public/illustrations/companions/</code>.</li>
+<li><strong>Do</strong> keep Settings and runner visibility exceptions local to those surfaces and their verified state predicates.</li>
 </ul>
 <h3>Don&#39;t:</h3>
 <ul>
@@ -227,6 +278,7 @@ width: &quot;100%&quot;
 <li><strong>Don&#39;t</strong> make a decorative animal the only signal for account identity, verification, saved activity, progress, completion, or failure.</li>
 <li><strong>Don&#39;t</strong> turn the guest Progress preview into a personal-history claim, or the personal home into a sample-data surface.</li>
 <li><strong>Don&#39;t</strong> let companion art cover account chrome, fixed navigation, controls, charts, disclosure, errors, timers, or the primary action.</li>
+<li><strong>Don&#39;t</strong> copy Library&#39;s public-cache eligibility to owned/private companions or private routes.</li>
 <li><strong>Don&#39;t</strong> introduce generic floating dashboards, gratuitous rounded cards, photorealism, gradients, glass, or mascot-led promotion into this system.</li>
 </ul>
 

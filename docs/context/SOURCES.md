@@ -43,10 +43,14 @@ The dedicated implementation brief dated August 25, 2026, is the authoritative s
 ## Generated landing illustration
 
 - Runtime assets: `public/illustrations/workout-pals-gym.webp` plus the source-faithful 768-pixel responsive derivative `public/illustrations/workout-pals-gym-768.webp`.
-- Prompt and derivative provenance: the same-basename JSON sidecar beside each WebP.
+- Prompt and derivative provenance: private-safe same-basename records under
+  `docs/design/provenance/illustrations/`. The fetchable public directory
+  contains no JSON provenance, local source path, or generation identifier.
 - Generator: OpenAI built-in image generation on August 26, 2026.
 - Direction: an original, fully hand-drawn golden-age theatrical-cartoon gym with expressive animal characters; no real person, copied character, text, logo, hotspot, or photographic element.
-- Publication: the optimized WebP and its prompt sidecar are project assets. Superseded generated candidates and private local source outputs are excluded.
+- Publication: only the optimized WebPs are public assets. Their records retain
+  exact prompts, dimensions, transformations, and verified output SHA-256
+  hashes without exposing private local generation state.
 
 ## Wave 3 companion vignettes
 
@@ -69,14 +73,44 @@ The dedicated implementation brief dated August 25, 2026, is the authoritative s
   The opaque field is the accepted bounded fallback after a lossy chroma-key
   source and a baked-checkerboard rerender were rejected. A 768-pixel companion
   derivative is not part of this responsive contract.
+- Cataloging otter: `public/illustrations/companions/cataloging-otter.webp`
+  (`357289744bc3fef9a9f283ff9cfde03b5970ac717c87de666930d08f2e3a7b5c`)
+  plus its 512-pixel derivative
+  (`4b80975a2690060d59e455c95d5e75a0b2ea6dc3030730d5f45a6b2c7c44a2f6`).
+- Routine-drafting beaver:
+  `public/illustrations/companions/routine-drafting-beaver.webp`
+  (`493df6e5ec6180547cb7683e3abfc22673652f3505902ed1189fdd9717b3279a`)
+  plus its 512-pixel derivative
+  (`994c5e7773ea3eb146fa5be63ccdb97f92c4e55d9f101eae7aca0fb3dc266c23`).
+- History-archive tortoise:
+  `public/illustrations/companions/history-archive-tortoise.webp`
+  (`5b42fb35ca468dad01616c136d80f43781f4d6a28636989db06831b67ec5f6ea`)
+  plus its 512-pixel derivative
+  (`cc8455b894aa4b4181e77fdfa8b4f0579fcdb6d63fface888fd0df3bee6dbbed`).
+- Settings-packing hare:
+  `public/illustrations/companions/settings-packing-hare.webp`
+  (`9d227008d9a4dd7e3dc5cc3d6c5f3fbd0cfea23bcd06fa90ca73dc85915ac0f8`)
+  plus its 512-pixel derivative
+  (`d90822b2e3e88855122e5891b94e61c69b3e89b4cf3a7fec20f62b3561b534db`).
+- Workout-corner bear:
+  `public/illustrations/companions/workout-corner-bear.webp`
+  (`3eb28d8075a24a8b4f8275be747d5caefa9e5d16af71cff4314c3b4fe597ffcb`)
+  plus its 512-pixel derivative
+  (`aaecbf17e476b07c4dc4c01df5f99fddc9ab5360a2afd85b4b8f2061c571b5d5`).
 - Generator: OpenAI built-in image generation on August 30, 2026. Exact prompts,
-  source hashes, transformations, rejected-candidate lineage, dimensions, and
-  shipping hashes are stored in the same-basename JSON sidecars and
-  `.impeccable/prompts/companions/`.
+  dimensions, transformations, and shipping hashes for all eight companion
+  pairs are stored in private-safe same-basename records under
+  `docs/design/provenance/companions/`. The public companion directory contains
+  WebPs only; rejected candidates and private generator paths or identifiers do
+  not ship.
 - Publication constraints: all vignettes are generic, text-free, independent of
   identity and workout data, and contain no real person, logo, copied character,
   chart, semantic status cue, or private data. No character was cropped from the
   concept board or composite gym hero.
+- Cache boundary: the existing pilot landing hedgehog and Progress raccoon pairs
+  remain public, and Wave 3 adds only the public Library otter pair. The fox,
+  beaver, tortoise, hare, bear, owned routes, authenticated HTML, and private
+  data remain excluded from the public cache.
 
 Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.
 

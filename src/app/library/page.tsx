@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PublicShell } from "@/components/layout/public-shell";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { listCatalogExercises } from "@/domain/exercises/library";
@@ -30,13 +31,14 @@ export default async function LibraryPage({ searchParams }: PageProps) {
 
   return (
     <PublicShell current="library">
-      <section className="public-hero contour-surface">
+      <section className="public-hero public-library-hero companion-heading contour-surface">
         <div>
           <span className="eyebrow">Canonical field guide</span>
           <h1>Exercise library</h1>
           <p>Search the seeded movements, then filter out anything your current route cannot perform.</p>
         </div>
         <div className="guest-stamp">Guest browsing · not saved</div>
+        <DecorativeCompanion variant="library" />
       </section>
 
       <section className="library-tools" aria-labelledby="library-tools-heading">

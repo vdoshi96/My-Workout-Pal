@@ -35,6 +35,14 @@ export default defineConfig({
       name: "chromium-desktop",
       use: { browserName: "chromium", viewport: { width: 1440, height: 1000 } },
     },
+    {
+      name: "webkit-tablet",
+      use: { browserName: "webkit", viewport: { width: 820, height: 1180 } },
+    },
+    {
+      name: "webkit-desktop",
+      use: { browserName: "webkit", viewport: { width: 1440, height: 1000 } },
+    },
   ],
   ...(externalBaseURL
     ? {}

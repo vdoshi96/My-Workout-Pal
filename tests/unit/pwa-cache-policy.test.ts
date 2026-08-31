@@ -52,18 +52,40 @@ describe("PWA public-cache policy", () => {
     expect(PWA_INSTALL_ASSETS).toContain(
       "/illustrations/companions/reviewing-raccoon-512.webp",
     );
-    expect(PWA_INSTALL_ASSETS).not.toContain(
-      "/illustrations/companions/preparing-fox.webp",
+    expect(PWA_INSTALL_ASSETS).toContain(
+      "/illustrations/companions/cataloging-otter.webp",
     );
-    expect(PWA_INSTALL_ASSETS).not.toContain(
-      "/illustrations/companions/preparing-fox-512.webp",
+    expect(PWA_INSTALL_ASSETS).toContain(
+      "/illustrations/companions/cataloging-otter-512.webp",
     );
+    for (const privateAsset of [
+      "history-archive-tortoise",
+      "preparing-fox",
+      "routine-drafting-beaver",
+      "settings-packing-hare",
+      "workout-corner-bear",
+    ]) {
+      expect(PWA_INSTALL_ASSETS).not.toContain(
+        `/illustrations/companions/${privateAsset}.webp` as never,
+      );
+      expect(PWA_INSTALL_ASSETS).not.toContain(
+        `/illustrations/companions/${privateAsset}-512.webp` as never,
+      );
+    }
     expect(
       isCacheableStaticRequest({
         appOrigin,
         destination: "image",
         method: "GET",
         url: `${appOrigin}/icon.svg`,
+      }),
+    ).toBe(true);
+    expect(
+      isCacheableStaticRequest({
+        appOrigin,
+        destination: "image",
+        method: "GET",
+        url: `${appOrigin}/illustrations/companions/cataloging-otter.webp`,
       }),
     ).toBe(true);
     expect(
@@ -90,6 +112,21 @@ describe("PWA public-cache policy", () => {
         url: `${appOrigin}/illustrations/companions/preparing-fox.webp`,
       }),
     ).toBe(false);
+    for (const privateAsset of [
+      "history-archive-tortoise",
+      "routine-drafting-beaver",
+      "settings-packing-hare",
+      "workout-corner-bear",
+    ]) {
+      expect(
+        isCacheableStaticRequest({
+          appOrigin,
+          destination: "image",
+          method: "GET",
+          url: `${appOrigin}/illustrations/companions/${privateAsset}.webp`,
+        }),
+      ).toBe(false);
+    }
     expect(
       isCacheableStaticRequest({
         appOrigin,

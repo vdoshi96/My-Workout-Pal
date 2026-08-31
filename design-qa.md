@@ -1,124 +1,149 @@
-# Wave 3 animal surface-system pilot design QA
+# Wave 3 animal surface-system design QA
 
 ## Result
 
-**Final result: passed.**
+**Final result: passed. Fresh Impeccable disposition: `ship`.**
 
-The bounded Corner Companions pilot is visually ready on the guest landing,
-signed-in personal home, and guest Progress preview. The implementation keeps
-the board's hierarchy, restrained animal scale, warm mineral paper, deep-teal
-ink, coral action, lichen support, ruled structure, and condensed display
-silhouette while preserving the released product's truthful states and
-interactions.
+The approved Corner Companions pilot remains intact on the guest landing,
+signed-in personal home, and guest Progress preview. The Wave 3 rollout extends
+the same reusable, comp-first system to public/member Library, the owned routine
+editor, History list/detail, Settings, and the workout runner without turning an
+animal into navigation, coaching, status, validation, or data.
 
-This result is branch-local. It does not approve a merge, deployment, rollout,
-provider change, or production-data operation.
+This result is branch-local. It does not approve a merge, deployment, Wave 4,
+provider or alias change, environment or billing change, migration, seed, or
+production-data operation.
 
 ## Reference and build evidence
 
-The sole selected reference is
-[`corner-companions-board.png`](.impeccable/mocks/companion-concepts/corner-companions-board.png),
-with its recorded prompt and provenance. The board is evidence only and is not
-a shipping asset.
+The sole selected visual reference is the complete, uncropped
+[`corner-companions-board.png`](.impeccable/mocks/companion-concepts/corner-companions-board.png).
+It remains evidence only and is not a runtime asset. The rollout comparison
+images place that full board beside the final production-browser surface:
 
-The final same-input comparisons pair the full, uncropped board with the latest
-production browser capture:
+- [Public Library desktop](docs/qa/latest/animal-surface-rollout/comparisons/public-library-1440x1000-light-reference-comparison.png)
+- [Member Library desktop](docs/qa/latest/animal-surface-rollout/comparisons/member-library-chromium-desktop-reference-comparison.png)
+- [Routine editor desktop](docs/qa/latest/animal-surface-rollout/comparisons/routine-editor-chromium-desktop-reference-comparison.png)
+- [History list desktop](docs/qa/latest/animal-surface-rollout/comparisons/history-list-chromium-desktop-reference-comparison.png)
+- [Settings desktop](docs/qa/latest/animal-surface-rollout/comparisons/settings-chromium-desktop-reference-comparison.png)
+- [Neutral runner desktop](docs/qa/latest/animal-surface-rollout/comparisons/runner-neutral-chromium-desktop-reference-comparison.png)
 
-- [Landing desktop, 1536 by 1024 comparison](docs/qa/latest/animal-surface-pilot/landing-board-comparison-1536x1024.png)
-- [Landing phone, 390 by 844 comparison](docs/qa/latest/animal-surface-pilot/landing-mobile-board-comparison-390x844.png)
-- [Personal home desktop, 1536 by 1024 comparison](docs/qa/latest/animal-surface-pilot/member-board-comparison-1536x1024.png)
-- [Personal home phone, 390 by 844 comparison](docs/qa/latest/animal-surface-pilot/member-mobile-board-comparison-390x844.png)
-- [Progress desktop, 1536 by 1024 comparison](docs/qa/latest/animal-surface-pilot/progress-board-comparison-1536x1024.png)
-- [Progress phone, 390 by 844 comparison](docs/qa/latest/animal-surface-pilot/progress-mobile-board-comparison-390x844.png)
-
-Additional accepted state evidence includes:
-
-- [Progress dark and reduced motion](docs/qa/latest/animal-surface-pilot/progress-preview-1280x1024-dark-reduced.png)
-- [Verified personal home](docs/qa/latest/animal-surface-pilot/member-home-ready-chromium-desktop.png)
-- [Unverified personal home](docs/qa/latest/animal-surface-pilot/member-home-unverified-webkit-phone.png)
-- [Active workout on phone WebKit](docs/qa/latest/animal-surface-pilot/member-home-active-webkit-phone.png)
-- [Actual 200% page-scale landing](docs/qa/latest/animal-surface-pilot/landing-1280x1024-page-scale-200.png)
+The implementation preserves the board's restrained animal scale, warm mineral
+paper, deep-teal ink, coral action, lichen support, ruled structure, contour
+surfaces, and condensed display silhouette. Every new asset is complete and
+purpose-built; neither the board nor the composite landing hero was cropped.
 
 ## Surface assessment
 
-| Surface | Fidelity and adaptation | Disposition |
+| Surface | Adaptation and product-priority boundary | Disposition |
 | --- | --- | --- |
-| Guest landing | The first viewport preserves the board's two-line `YOUR WORKOUT.` / `YOUR WAY.` grouping, product promise, action priority, open whitespace, and planning hedgehog placement. The full board was compared at its 1536 by 1024 dimensions before later surfaces were built. | Pass |
-| Signed-in personal home | The fox occupies reserved content whitespace without entering the account rail, identity, verification notice, routine, equipment, progress, or action regions. Active phone state suppresses the art so Resume remains primary and clears fixed navigation. | Pass |
-| Guest Progress preview | The production title remains neutral `Progress`, exactly one sample-data disclosure remains visible, and the raccoon stays outside metrics, history, chart, disclosure, action, and navigation. The intentionally opaque warm-paper card works as a bounded editorial vignette in light and dark themes. | Pass |
+| Public/member Library | The otter occupies reserved heading whitespace and remains separate from equipment, search, filters, create actions, results, and private member data. | Pass |
+| Owned routine editor | The beaver appears only in a clean neutral desktop heading slot, outside equipment review, topology controls, fields, validation, status, chooser, and removal review. Dirty or critical states remove it. | Pass |
+| History list/detail | The tortoise remains outside filters, pagination, session facts, sets, cardio, notes, and immutable history data. Phone layouts collapse the art. | Pass |
+| Settings | The hare uses a stable heading-side slot only when the member is verified, browser identity is ready, preferences are clean, and no save/error/deletion state is active. Any unsaved units, timezone, or reduced-motion change removes it before save. | Pass |
+| Workout runner | The bear appears only in a recovered, online, neutral overview at broad widths. Phone, active logging, timer, guidance, pending, offline, recovery, blocking/error, and terminal states all remove it. | Pass |
+| Pilot surfaces | Landing hedgehog, personal-home fox, and guest-Progress raccoon retain their approved placements, state truth, responsive behavior, and cache boundaries. | Pass |
 
-The mobile translation preserves content priority rather than shrinking the
-desktop composition mechanically. Companion slots move after the semantic lead
-content, remain secondary to the primary action, and collapse completely when
-hidden.
+The phone translation gives all space to semantic content and fixed navigation.
+At 820 pixels, only a measured safe slot may remain; Library, editor, History,
+and runner stay collapsed while Settings may render only under its complete
+neutral-state predicate. At desktop widths, art occupies whitespace rather than
+the task or data plane.
 
 ## Asset quality and provenance
 
-All three shipping vignettes are purpose-built raster assets with text-free
-prompts and JSON sidecars under `public/illustrations/companions/`. No character
-was cropped from the concept board or composite hero. The board, generated
-lettering, personal data, charts, and semantic status cues do not ship in the
-art.
+The rollout ships five new original concepts and their 512-pixel derivatives:
+cataloging otter, routine-drafting beaver, history-archive tortoise,
+settings-packing hare, and workout-corner bear. Final alpha, edges, transparent
+margins, light/dark composites, dimensions, exact prompts, and SHA-256 hashes
+passed asset QA. Rejected candidates—checkerboard exports, an obscured-foot
+hare, and a wrong-subject beaver—do not ship.
 
-The hedgehog and fox use clean transparency. The final raccoon uses an
-intentional opaque warm-paper square after a lossy chroma-key candidate and a
-baked-checkerboard rerender were rejected. Direct light and dark inspection
-shows the complete character with no magenta fringe, gray matte, checkerboard,
-halo, crop, or white band. Its 1024 and 512 WebP files match their sidecar
-hashes and prompt exactly. A 768 derivative is not part of this scoped
-responsive asset contract.
+Fetchable public directories contain WebPs only. Private-safe same-basename
+records under `docs/design/provenance/companions/` and
+`docs/design/provenance/illustrations/` retain exact prompts, dimensions,
+transformations, and verified output hashes without absolute local paths or
+generation identifiers.
 
-## Responsive and state review
+## Responsive, zoom, and state review
 
-The maintained browser evidence covers 320, 390, 430, 820, 1280, and 1440
-CSS-pixel widths, plus the 1536 by 1024 reference density and actual 200%
-browser page scale. Chromium covers all six required widths; WebKit covers the
-maintained phone widths, with the signed-in fixture exercising the complete
-responsive project matrix.
+Maintained browser coverage exercises 320, 390, 430, 820, 1280, and 1440 CSS
+pixels in Chromium and WebKit phone, tablet, and desktop projects. Light, dark,
+reduced-motion, forced-color, image-failure, slow/failure/retry, offline, active,
+recovery, and terminal conditions preserve product truth and collapse art when
+space or state becomes critical.
 
-Guest, verified, unverified, empty, active-workout, slow-read, route-failure,
-and image-failure states retain their released product truth. No companion
-overlaps account chrome, controls, disclosure, metrics, history, charts,
-errors, timers, or fixed navigation. Strict bounding-box assertions fail when
-required participants are absent rather than silently passing.
+CDP page-scale simulation is recorded separately from true native 200% browser
+zoom. Headed native proof covers public Library, member Library, and History:
+
+- [Public Library native 200%](docs/qa/latest/animal-surface-rollout/public-library-native-200-chromium.png)
+- [Member Library native 200%](docs/qa/latest/animal-surface-rollout/member-library-native-200-chromium.png)
+- [History native 200%](docs/qa/latest/animal-surface-rollout/history-list-native-200-chromium.png)
+
+Each native record proves a two-to-one device-pixel ratio, a halved inner width,
+`visualViewport.scale === 1`, no horizontal overflow, and collapsed art. This is
+real reflow evidence rather than a CDP screenshot-scale approximation.
 
 ## Accessibility, interaction, and resilience
 
-Decorative images have empty alternative text, `aria-hidden="true"`, no focus
-target, disabled dragging, and pointer-inert slots. Keyboard traversal,
-accessibility snapshots, pointer hit-testing, and automated accessibility checks
-confirm that the art cannot become navigation or consume input. Forced-colors
-mode removes the entire slot without a layout gap; reduced-motion mode leaves
-the static art unchanged.
+All companion images use empty alternative text, `aria-hidden="true"`, no
+accessible name, no focus target, disabled dragging, and pointer-inert slots.
+Strict protected-selector geometry checks fail if either participant is missing
+and prove non-overlap with fields, filters, reviews, data, guidance, timers,
+logging controls, notices, and navigation. Keyboard traversal, accessibility
+snapshots, pointer hit-testing, and automated accessibility checks confirm that
+art cannot consume or label an interaction.
 
-Image-failure tests remove the complete reserved slot while preserving every
-meaningful heading, disclosure, metric, action, and navigation target. Public
-landing and Progress assets participate in the explicit offline allowlist;
-both fox derivatives and all authenticated HTML/data remain outside the public
-cache.
+Image failure and forced colors remove the complete slot without a residual gap.
+Reduced motion leaves the static art unchanged. The authenticated harness copies
+only exact required assets under a SHA-keyed, lock-protected staging boundary
+with partial-failure cleanup and preservation of pre-existing destinations.
+WebKit cancellation allowances require an allowlisted same-origin GET image,
+the exact cancellation failure class, and demonstrable superseding navigation.
+
+## Cache and privacy assessment
+
+For Wave 3, only `cataloging-otter.webp` and
+`cataloging-otter-512.webp` enter the public cache because public `/library`
+uses them. Runtime offline evidence opens `/library`, verifies both otter
+variants and the route in cache, then reloads the page offline. The fox, beaver,
+tortoise, hare, bear, owned routes, authenticated HTML, and private data are
+explicitly absent. Pilot public-cache eligibility remains unchanged.
 
 ## Review history
 
-1. The initial finish review requested three bounded corrections: remove the
-   raccoon's chroma contamination, restore the board-faithful two-line landing
-   headline, and keep the active phone resume card above fixed navigation. It
-   did not request a rebuild.
-2. The headline and active-mobile fixes passed. A CSS blend fallback for the
-   contaminated raccoon was rejected because its edge remained visible.
-3. A requested true-alpha rerender returned baked checkerboard pixels and was
-   rejected as an asset-generation/export failure, not a product failure.
-4. The final purpose-built opaque warm-paper card, responsive derivative,
-   provenance, and new light/dark captures passed the fresh Impeccable finish
-   review with disposition `ship`; no material fix or rebuild remains.
-
-The Impeccable manual detector was run once after visual iteration. Its five
-warnings belong to pre-existing runner/history side-tab styles outside this
-pilot's diff and do not identify a pilot regression.
+1. The implementation extended the pilot semantic tests, added state predicates
+   and exact protected-selector assertions, and generated only purpose-built
+   assets where reuse was not contextually faithful.
+2. The Impeccable manual detector ran exactly once after implementation. Its
+   broad warnings described pre-existing monolithic CSS and design-scale
+   advisories; it found no new mechanical rollout defect.
+3. The fresh finish reviewer found one bounded Settings issue: art remained
+   eligible after an unsaved preference edit. The rollout added a clean/dirty
+   predicate, a unit assertion, and a pre-save browser assertion, then refreshed
+   desktop/phone evidence and the full-board comparison.
+4. The bounded re-review closed that finding, confirmed every integration-audit
+   item, and issued final disposition `ship`. The detector was not rerun.
+5. The Impeccable documenter then refreshed `DESIGN.md` and
+   `.impeccable/design.json` from the final corrected implementation.
+6. Closeout hardening added failure/concurrency-safe fixture staging, private-safe
+   provenance placement, runtime offline `/library` proof, and narrow WebKit
+   cancellation evidence. The time-boxed final authenticated matrix had one
+   engine-only canceled `contours.svg` request during teardown and no failed
+   product assertion; the immediately preceding complete WebKit phone project
+   passed 22/4, including the same routine and all rollout/resilience journeys.
+7. A fresh independent closeout review then validated every retained capture,
+   all eight integration-audit verdicts, and the isolated WebKit teardown note.
+   It found no product, visual, accessibility, cache, privacy, or ownership
+   defect and retained final disposition `ship`.
 
 ## Open risks and boundary
 
-No known material visual defect remains in the bounded pilot. The opaque
-raccoon field is an intentional adaptation rather than transparent cutout art;
-future asset-system work should preserve this provenance instead of attempting
-another lossy color key. Broader animal-surface rollout remains explicitly out
-of scope and unapproved.
+No known material visual defect remains. The public service worker continues to
+make public artwork fetchable offline by design; provenance records therefore
+stay outside public directories. Settings and runner art intentionally has a
+narrow eligibility window, and content wins whenever future state or layout
+changes make the reserved slot unsafe.
+
+The branch is ready to push for review only. Merge, deployment, production
+mutation, sibling-worktree cleanup, and Wave 4 integration remain out of scope.

@@ -7,6 +7,7 @@ import {
   formatInsightWeight,
 } from "@/components/insights/training-insights-presenters";
 import { formatCardioPace } from "@/components/workout/workout-runner-presenters";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import type {
@@ -89,7 +90,7 @@ export function TrainingHistoryDetail({
 }>) {
   return (
     <article className="insights-page history-detail" aria-labelledby="history-detail-title">
-      <header className="insights-heading contour-surface">
+      <header className="insights-heading companion-heading contour-surface">
         <div>
           <Link className="back-link" href="/app/history">
             <Icon name="arrow-left" /> Back to history
@@ -103,6 +104,7 @@ export function TrainingHistoryDetail({
             {formatInsightDuration(session.durationSeconds)}
           </p>
         </div>
+        <DecorativeCompanion variant="history" />
       </header>
 
       <aside className="archive-notice">

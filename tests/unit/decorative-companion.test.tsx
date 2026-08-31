@@ -14,6 +14,11 @@ describe("DecorativeCompanion", () => {
       "landing",
       "member-home",
       "progress-preview",
+      "library",
+      "routine-editor",
+      "history",
+      "settings",
+      "workout",
     ]);
     expect(COMPANION_ASSETS).toMatchObject({
       landing: {
@@ -30,6 +35,31 @@ describe("DecorativeCompanion", () => {
         src: "/illustrations/companions/reviewing-raccoon.webp",
         srcSet:
           "/illustrations/companions/reviewing-raccoon-512.webp 512w, /illustrations/companions/reviewing-raccoon.webp 1024w",
+      },
+      library: {
+        src: "/illustrations/companions/cataloging-otter.webp",
+        srcSet:
+          "/illustrations/companions/cataloging-otter-512.webp 512w, /illustrations/companions/cataloging-otter.webp 1024w",
+      },
+      "routine-editor": {
+        src: "/illustrations/companions/routine-drafting-beaver.webp",
+        srcSet:
+          "/illustrations/companions/routine-drafting-beaver-512.webp 512w, /illustrations/companions/routine-drafting-beaver.webp 1024w",
+      },
+      history: {
+        src: "/illustrations/companions/history-archive-tortoise.webp",
+        srcSet:
+          "/illustrations/companions/history-archive-tortoise-512.webp 512w, /illustrations/companions/history-archive-tortoise.webp 1024w",
+      },
+      settings: {
+        src: "/illustrations/companions/settings-packing-hare.webp",
+        srcSet:
+          "/illustrations/companions/settings-packing-hare-512.webp 512w, /illustrations/companions/settings-packing-hare.webp 1024w",
+      },
+      workout: {
+        src: "/illustrations/companions/workout-corner-bear.webp",
+        srcSet:
+          "/illustrations/companions/workout-corner-bear-512.webp 512w, /illustrations/companions/workout-corner-bear.webp 1024w",
       },
     });
   });
@@ -73,6 +103,9 @@ describe("DecorativeCompanion", () => {
       /\.landing-hero:has\(\.decorative-companion\[hidden\]\), \.member-program-hero:has\(\.decorative-companion\[hidden\]\), \.sample-hero:has\(\.decorative-companion\[hidden\]\)\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u,
     );
     expect(styles).toMatch(
+      /\.companion-heading:has\(\.decorative-companion\[hidden\]\)\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u,
+    );
+    expect(styles).toMatch(
       /\.decorative-companion\s*\{[^}]*grid-template-rows:\s*minmax\(0, 1fr\);/u,
     );
     expect(styles).toMatch(
@@ -86,6 +119,9 @@ describe("DecorativeCompanion", () => {
     );
     expect(styles).toMatch(
       /@media \(max-width: 47\.99rem\)[\s\S]*?\.member-program--resumable \.decorative-companion--member-home\s*\{[^}]*display:\s*none;/u,
+    );
+    expect(styles).toMatch(
+      /@media \(max-width: 63\.99rem\)[\s\S]*?\.decorative-companion--routine-editor,[\s\S]*?\.decorative-companion--workout\s*\{[^}]*display:\s*none;/u,
     );
   });
 });

@@ -1,4 +1,4 @@
-export const PWA_CACHE_NAME = "my-workout-pal-public-v5";
+export const PWA_CACHE_NAME = "my-workout-pal-public-v6";
 
 export const PWA_INSTALL_ASSETS = Object.freeze([
   "/",
@@ -11,6 +11,8 @@ export const PWA_INSTALL_ASSETS = Object.freeze([
   "/icon.svg",
   "/illustrations/companions/planning-hedgehog-512.webp",
   "/illustrations/companions/planning-hedgehog.webp",
+  "/illustrations/companions/cataloging-otter-512.webp",
+  "/illustrations/companions/cataloging-otter.webp",
   "/illustrations/companions/reviewing-raccoon-512.webp",
   "/illustrations/companions/reviewing-raccoon.webp",
 ] as const);
@@ -23,6 +25,8 @@ export const PWA_PUBLIC_ASSETS = Object.freeze([
   "/icon.svg",
   "/illustrations/companions/planning-hedgehog-512.webp",
   "/illustrations/companions/planning-hedgehog.webp",
+  "/illustrations/companions/cataloging-otter-512.webp",
+  "/illustrations/companions/cataloging-otter.webp",
   "/illustrations/companions/reviewing-raccoon-512.webp",
   "/illustrations/companions/reviewing-raccoon.webp",
 ] as const);

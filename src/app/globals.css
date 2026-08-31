@@ -1192,3 +1192,81 @@ svg { display: block; height: 1.4em; width: 1.4em; }
   .progress-timeline > ol > li { align-items: center; grid-template-columns: 9rem minmax(8rem, .65fr) minmax(16rem, 1fr) auto; }
   .progress-row-heading { align-items: start; display: grid; gap: .1rem; }
 }
+
+/* Wave 3 Corner Companions stay inside reserved, noncritical heading space. */
+.companion-heading { min-width: 0; }
+.companion-heading > .decorative-companion { align-self: stretch; block-size: clamp(10rem, 18vw, 16rem); margin: 0; }
+.companion-heading:has(.decorative-companion[hidden]) { grid-template-columns: minmax(0, 1fr); }
+
+@media (max-width: 47.99rem) {
+  .decorative-companion--library,
+  .decorative-companion--routine-editor,
+  .decorative-companion--history,
+  .decorative-companion--settings,
+  .decorative-companion--workout { display: none; }
+}
+
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .decorative-companion--library,
+  .decorative-companion--routine-editor,
+  .decorative-companion--history,
+  .decorative-companion--workout { display: none; }
+  .member-settings-heading.companion-heading {
+    align-items: end;
+    display: grid;
+    gap: var(--companion-safe-gap);
+    grid-template-columns: minmax(0, 1fr) minmax(10rem, 13rem);
+  }
+}
+
+@media (min-width: 64rem) {
+  .public-library-hero.companion-heading {
+    grid-template-columns: minmax(0, 1fr) auto minmax(12rem, 16rem);
+  }
+  .public-library-hero .decorative-companion--library {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .member-library-heading.companion-heading,
+  .program-editor-hero.companion-heading,
+  .insights-heading.companion-heading,
+  .member-settings-heading.companion-heading {
+    align-items: end;
+    gap: var(--companion-safe-gap);
+    grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem);
+  }
+  .member-library-heading.companion-heading > div:first-child,
+  .program-editor-hero.companion-heading > div:first-child,
+  .insights-heading.companion-heading > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .member-library-heading.companion-heading > .primary-action,
+  .program-editor-hero.companion-heading > .secondary-action,
+  .insights-heading.companion-heading > .insight-action {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .member-library-heading .decorative-companion--library,
+  .program-editor-hero .decorative-companion--routine-editor,
+  .insights-heading .decorative-companion--history {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .history-detail .insights-heading .decorative-companion--history {
+    grid-row: 1;
+  }
+  .runner-header.companion-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(11rem, 15rem);
+  }
+  .runner-header .decorative-companion--workout {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+@media (forced-colors: active) {
+  .companion-heading { grid-template-columns: minmax(0, 1fr); }
+  .companion-heading > * { grid-column: 1; grid-row: auto; }
+}

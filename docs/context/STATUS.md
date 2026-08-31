@@ -2,28 +2,48 @@
 
 ## Current phase
 
-The Wave 3 Animal Surface-System Pilot is implemented and locally verified on
-`vishal/pal-visual-pilot`, based on exact clean public/local `main`
-`298cb04b8b16ad6c3586ef74bc95df7301533472`. Its bounded scope is the guest
-landing page, signed-in personal home, and guest Progress preview. The selected
-Corner Companions board remains evidence only; three purpose-built production
-vignettes ship through one reusable decorative component and shared placement
-tokens. Landing and Progress artwork is public-cache eligible, while both fox
-derivatives and all authenticated HTML/data remain outside the public cache.
+The Wave 3 Animal Surface-System Rollout is implemented and locally verified on
+`vishal/pal-visual-rollout`, starting from exact reviewed and pushed pilot tip
+`b4499f3b953a5745039f1bca67da68e6e135c7c3`. The approved guest landing,
+signed-in personal home, and guest Progress pilot remains intact. Five new
+purpose-built variants extend the reusable `DecorativeCompanion` system to
+public/member Library, the owned routine editor, History list/detail, Settings,
+and the neutral workout-runner overview.
 
-The final Impeccable finish review disposition is `ship`, Product Design QA is
-passed, and the current privacy-safe evidence lives under
-`docs/qa/latest/animal-surface-pilot/`. The branch has not been merged,
-deployed, or rolled out. No provider, environment, billing, migration, seed,
-production-data, or sibling-worktree operation belongs to this pilot.
+The final fresh Impeccable finish review disposition is `ship`, Product Design
+QA is passed, and the newest privacy-safe evidence lives only under
+`docs/qa/latest/animal-surface-rollout/` with the canonical Wave 3 QA report.
+That independent closeout review ran after fixture, request-policy, provenance,
+offline-cache, and native-zoom hardening; it accepted the isolated WebKit
+teardown cancellation as engine-only noise and found no material defect.
+The board remains uncropped evidence only. Settings art requires a verified,
+identity-ready, clean neutral state; runner art requires a recovered, online,
+neutral overview. Phone and every critical, dirty, active, recovery, offline,
+error, guidance, timer, pending, or terminal state gives all space to product
+content.
 
-Final local verification includes 123 Vitest files/839 tests; TypeScript,
-ESLint, Drizzle metadata and 34 schema tests, seed policy, service-worker parity,
-60-document HTML parity, Next.js 16.3.2 Webpack production build, and the
-44-entry production route boundary. The complete public matrix passed 56 cases
-with 12 intentional project skips. The complete synthetic authenticated matrix
-passed 47 cases with three intentional project skips across Chromium and
-WebKit phone, tablet, and desktop projects. No known pilot defect remains.
+Final local verification includes 127 Vitest files/860 tests, a delta of four
+files and 21 tests from the reviewed pilot's 123-file/839-test baseline;
+TypeScript; full ESLint; Drizzle metadata and schema coverage; seed policy;
+service-worker parity and runtime offline `/library`; 61-document Markdown/HTML
+parity; the Next.js 16.3.2 Webpack production build; and the 44-entry production
+route boundary. The complete public matrix passes 90 cases with 42 intentional
+project/native-zoom skips across 132 cases. The time-boxed final synthetic
+authenticated matrix completed 54 passes and 13 intentional project/native-zoom
+skips across 68 cases, with one WebKit engine-only canceled `contours.svg`
+request during flexible-routine teardown and no failed product assertion. The
+immediately preceding complete WebKit phone project passed 22 cases with four
+intentional skips, including that routine and every rollout/resilience journey;
+the other five Chromium/WebKit phone, tablet, and desktop projects were green in
+the final matrix.
+
+Only the cataloging-otter pair joins the public cache for public `/library`.
+The fox, beaver, tortoise, hare, bear, all owned routes, authenticated HTML, and
+private data remain excluded. Fetchable public illustration directories contain
+no JSON provenance; private-safe prompt, dimension, transformation, and SHA-256
+records live under `docs/design/provenance/`. The branch has not been merged or
+deployed, and no provider, alias, environment, billing, migration, production
+seed/data, sibling-worktree, or Wave 4 operation belongs to this rollout.
 
 Wave 2 application, data, and production QA are released. The application tree
 on GitHub and local `main` contains exact candidate
@@ -191,7 +211,7 @@ archive likewise remains private, mode `600`, and outside the repository.
 - A reproducible `test:e2e:release` command builds once, starts an isolated local production server, and exercises the public guest route in Chromium phone, tablet, and desktop plus WebKit phone. The current `public-release.spec.ts` matrix passes all 40 cases. Eight public surfaces per project have no serious or critical Axe violation, and the matrix also covers the complete guest route, exact-origin back links, both equipment profiles, keyboard skip navigation, reduced motion, dark mode, phone targets, and overflow. Chromium-only PWA installation and offline recovery remain covered by the separate capability-scoped release path.
 - Production response security is transport-aware: HTTPS retains HSTS and `upgrade-insecure-requests`, while HTTP production-mode verification retains the strict nonce CSP without forcing unavailable TLS. The public palette now uses explicit foreground tokens that pass the automated contrast gate in both color schemes.
 - Native visible content now supplies the brand and starter-waypoint accessible names. A retained red-to-green component test and deployed Lighthouse replay clear the serious label-in-name mismatch without changing visible copy or navigation. The five-route mobile/desktop Lighthouse matrix scores 97–100 performance and 100 accessibility/best practices; public 640-pixel reflow-equivalent and forced-colors inspection finds no horizontal overflow or offscreen action.
-- The guest welcome page now states the access boundary directly: every starter day, exercise guide, approved demonstration pair, sample workout, and sample analytic is public; an account is needed only to customize, save, track, recover, or inspect personal data. Its original high-angle gym illustration is a cohesive hand-drawn cartoon world populated only by expressive animal characters. It is atmospheric rather than interactive; the rejected hotspot experiment is not part of the product. The exact built-in image-generation prompt is retained beside the optimized WebP.
+- The guest welcome page now states the access boundary directly: every starter day, exercise guide, approved demonstration pair, sample workout, and sample analytic is public; an account is needed only to customize, save, track, recover, or inspect personal data. Its original high-angle gym illustration is a cohesive hand-drawn cartoon world populated only by expressive animal characters. It is atmospheric rather than interactive; the rejected hotspot experiment is not part of the product. The exact built-in image-generation prompt and verified output hashes are retained in private-safe records under `docs/design/provenance/illustrations/`, outside the fetchable public directory.
 
 ## Release completion record
 

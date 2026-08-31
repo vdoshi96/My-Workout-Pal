@@ -28,8 +28,10 @@ import { privateApiMutation, PrivateApiClientError } from "@/client/private-api"
 import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
 import { performSessionSignOut } from "@/client/session-sign-out";
 import { FirebaseClientIdentityStatus } from "@/components/settings/firebase-client-identity-status";
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 import { parsePreferencesMutationResponse } from "@/components/settings/preferences-response";
+import { canShowSettingsCompanion } from "@/domain/companions/visibility";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import type {
   PreferencesReadModel,
@@ -48,6 +50,7 @@ export function SettingsForm({
   canMutate,
   equipmentProfileKind,
   firebaseConfig,
+  initialFirebaseIdentityState = { status: "loading" },
   initialPreferences,
   ownerUid,
   viewerProvider,
@@ -55,6 +58,7 @@ export function SettingsForm({
   canMutate: boolean;
   equipmentProfileKind: EquipmentProfileKind;
   firebaseConfig: FirebasePublicConfig | null;
+  initialFirebaseIdentityState?: FirebaseClientIdentityState;
   initialPreferences: PreferencesReadModel;
   ownerUid: string;
   viewerProvider: ViewerProvider;
@@ -74,7 +78,7 @@ export function SettingsForm({
   const [deletionFinished, setDeletionFinished] = useState(false);
   const [firebaseIdentityAttempt, setFirebaseIdentityAttempt] = useState(0);
   const [firebaseIdentityState, setFirebaseIdentityState] =
-    useState<FirebaseClientIdentityState>({ status: "loading" });
+    useState<FirebaseClientIdentityState>(initialFirebaseIdentityState);
   const deleteDialog = useRef<HTMLDialogElement>(null);
   const deleteHeading = useRef<HTMLHeadingElement>(null);
   const deleteKey = useRef<string | undefined>(undefined);
@@ -82,6 +86,20 @@ export function SettingsForm({
   const providerSupported = viewerProvider === "google" || viewerProvider === "password";
   const shouldResolveFirebaseIdentity = canMutate && firebaseConfig !== null && providerSupported;
   const deletionAvailable = shouldResolveFirebaseIdentity && firebaseIdentityState.status === "ready";
+  const hasUnsubmittedInput =
+    unitSystem !== preferences.unitSystem ||
+    timezone !== preferences.timezone ||
+    reducedMotion !== preferences.reducedMotion;
+  const showSettingsCompanion = canShowSettingsCompanion({
+    busy,
+    deleteBusy,
+    hasDeletionReview: deletionReviewOpen || deletionFinished,
+    hasStatusMessage:
+      message.trim().length > 0 || deleteMessage.trim().length > 0,
+    hasUnsubmittedInput,
+    identityReady: firebaseIdentityState.status === "ready",
+    verified: canMutate,
+  });
 
   useEffect(() => {
     if (!shouldResolveFirebaseIdentity || !firebaseConfig) return;
@@ -335,10 +353,13 @@ export function SettingsForm({
 
   return (
     <section className="member-settings" aria-labelledby="settings-title">
-      <header className="member-settings-heading contour-surface">
-        <span className="eyebrow">Private account preferences</span>
-        <h1 id="settings-title">Settings</h1>
-        <p>Units change entry and presentation only. Persisted loads and distances keep their canonical meaning.</p>
+      <header className="member-settings-heading companion-heading contour-surface">
+        <div>
+          <span className="eyebrow">Private account preferences</span>
+          <h1 id="settings-title">Settings</h1>
+          <p>Units change entry and presentation only. Persisted loads and distances keep their canonical meaning.</p>
+        </div>
+        {showSettingsCompanion ? <DecorativeCompanion variant="settings" /> : null}
       </header>
 
       {!canMutate ? (

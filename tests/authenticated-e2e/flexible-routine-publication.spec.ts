@@ -15,7 +15,10 @@ import {
   HARNESS_SCOPE_HEADER,
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
-import { isSupersededCompanionImageRequest } from "./companion-request-policy";
+import {
+  isSupersededCompanionImageRequest,
+  isSupersededSameOriginRouteChunkRequest,
+} from "./companion-request-policy";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
 
 type HarnessSummary = Readonly<{
@@ -134,7 +137,8 @@ async function openHarnessPage(
     if (
       url.hostname === "127.0.0.1" &&
       !isSupersededNextFlightRequest(request) &&
-      !isSupersededCompanionImageRequest(request)
+      !isSupersededCompanionImageRequest(request) &&
+      !isSupersededSameOriginRouteChunkRequest(request)
     ) {
       failedRequests.push(
         `${request.method()} ${url.pathname} ${request.failure()?.errorText ?? "unknown request failure"}`,
@@ -153,6 +157,7 @@ async function openHarnessPage(
 }
 
 async function assertAccessible(page: Page) {
+  await expect.poll(() => page.title()).not.toBe("");
   const results = await new AxeBuilder({ page })
     .exclude('iframe[src*="youtube-nocookie.com"]')
     .analyze();
