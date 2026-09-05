@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="2cf7a3329947d4a6a3fe6113a52a5de10a208a150b562753f793dfb2cb08bdbd">
+  <meta name="source-sha256" content="a73999f16eeab038a5f5b8efbe2f734521619a6697dfcb41cc56a788e96aab08">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,8 +29,9 @@
   <main>
 <h1>Project status</h1>
 <h2>Member atmosphere and Library: September 5, 2026</h2>
-<p>The active redesign branch is <code>vishal/member-gym-design</code>. It exposes Library in the four-destination member navigation, including before routine setup, and extends the bright illustrated gym across member surfaces with six characters in seven task-specific scenes. Today has visible browser-local companion selection; Off hides all companions. Training data, ownership, recovery, and video approvals retain their existing contracts.</p>
-<p>Local verification passed the full 868-test suite, focused tests for the added pre-setup Library behavior, typecheck, lint, database checks, seed/PWA checks, and the production build. Reviewer-requested dark-theme verification and production closeout are in progress. See <code>docs/plans/MEMBER-ATMOSPHERE.md</code>. The canonical checkout is the only worktree; no unresolved worktree remains.</p>
+<p>The redesign merged through <a href="https://github.com/vdoshi96/My-Workout-Pal/pull/6">PR #6</a>. Application commit <code>368997d465e6ffac5a45f3f9646b3589fb6fa023</code> is verified on Ready deployment <code>dpl_DdwYMTT4tqL6g2boJ7JYokES4vZa</code>, serving <a href="https://my-workout-pal-chi.vercel.app">the stable site</a>. Library is a primary member destination, including before routine setup. Six characters in seven contextual scenes extend the illustrated gym across the application. Today exposes browser-local companion selection; Off hides the whole cast.</p>
+<p>Verification passed the full 868-test suite, final focused tests including pre-setup Library, typecheck, lint, database/seed/PWA checks, production build, local Chromium desktop and WebKit phone journeys, and dark-theme accessibility checks. Production passed public desktop/phone checks and the authenticated Library, routine, workout recovery, completion, Progress, and ownership journey. Both disposable accounts were removed; Firebase returned to its one pre-existing identity, owner rows were cleared, and the shared persistence digest was unchanged. See <code>docs/qa/latest/MEMBER-ATMOSPHERE-QA.md</code> for evidence and limits.</p>
+<p>The closeout changes only documentation, evidence, and the QA script&#39;s rendered-page wait and redacted diagnostics; application source remains the tested release. The canonical checkout is the only worktree; no unresolved worktree remains.</p>
 <h2>Quiet Set implementation: September 4–5, 2026 (historical release)</h2>
 <p>The redesign and rest-durability correction merged through PRs #3 and #4. Verified application commit <code>59f376ed55b8687d0548bd03f444bed335791166</code> is Ready on deployment <code>dpl_3upAjSUwahbkdZewr2VDyHwEc2WD</code>, serving <a href="https://my-workout-pal-chi.vercel.app">the stable site</a>. The canonical checkout is the only MWP worktree; no unresolved worktree remains. Documentation-only closeout preserves this tested application source.</p>
 <p>Implemented behavior is described in <code>docs/plans/QUIET-SET-IMPLEMENTATION.md</code>. Classic 2D cartoon Pip/Mica and bright gym environments replace the rejected artwork. Verification passed 867 tests, the local member resilience matrix, live public desktop/phone checks, and the real hosted account/workout/Progress/ownership journey. Timer pause/extend now checkpoints locally before waiting for a slow remote save. Both disposable accounts were cleaned up and shared catalog state stayed unchanged. The latest <a href="https://github.com/vdoshi96/My-Workout-Pal/blob/9bfc163/docs/qa/latest/QUIET-SET-QA.html">release QA at its recorded source</a> records exact evidence and limits.</p>

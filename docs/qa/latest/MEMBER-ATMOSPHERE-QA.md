@@ -32,7 +32,20 @@ The local captures use synthetic data and a visible fixture banner. Fixed phone 
 
 ## Production verification
 
-Pending deployment. The recorded rollback baseline is Ready deployment `dpl_7dkBB16HW6GHWtUTgjQSthLv2c37`. Release completion requires the stable production alias, authenticated browser journey, exact disposable-account cleanup, and unchanged global persistence digest. Local evidence does not establish these hosted results.
+Application commit `368997d465e6ffac5a45f3f9646b3589fb6fa023` deployed as `dpl_DdwYMTT4tqL6g2boJ7JYokES4vZa` and was Ready with the stable production alias when checked. The recorded rollback baseline is `dpl_7dkBB16HW6GHWtUTgjQSthLv2c37`. The closeout updates documentation, evidence, and the QA script only; it preserves the tested application source.
+
+Production Chromium checks passed Library before setup, blank setup, routine save, desktop and phone scene rendering on Today/Routine/Library/Progress/Settings, Start visibility, set logging, paused-rest reload recovery, completion, Progress, persisted Off, and foreign-owner/missing-session equivalence. Checked surfaces had no horizontal overflow, application page errors, or accessibility violations. [Hosted result](member-atmosphere/hosted/result.json) confirms both disposable identities were cleaned up, their owner rows were removed, deletion jobs were terminal or absent, Firebase count returned from one to one, and the shared persistence digest stayed unchanged.
+
+Public Chromium desktop and WebKit phone checks passed on the stable origin with zero accessibility violations and page errors. An initial WebKit run reported an RSC navigation cancellation; an unchanged retry passed without a waiver. The first hosted completion capture showed the streamed loading screen. Adding an explicit visible-heading wait let the complete journey pass on the unchanged deployed application.
+
+The hosted YouTube frame, production-origin parameter, and external fallback were verified. Playback could not be established in this automated run; this release makes no new playback or human-viewing claim. Local WebKit covers authenticated phone and dark-theme behavior; hosted authenticated evidence uses Chromium at both viewport sizes.
+
+| Production surface | Desktop | Phone |
+| --- | --- | --- |
+| Today | [Capture](member-atmosphere/hosted/app-desktop.png) | [Capture](member-atmosphere/hosted/app-phone.png) |
+| Library | [Capture](member-atmosphere/hosted/app-library-desktop.png) | [Capture](member-atmosphere/hosted/app-library-phone.png) |
+| Settings | [Capture](member-atmosphere/hosted/app-settings-desktop.png) | [Capture](member-atmosphere/hosted/app-settings-phone.png) |
+| Completed Progress | — | [Capture](member-atmosphere/hosted/progress-phone.png) |
 
 ## Evidence retention
 

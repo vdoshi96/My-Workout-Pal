@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="780d001ac6647f5226ad0998349cd422051b179bb315884197358d4ac99c0312">
+  <meta name="source-sha256" content="03930a8be296311207202b61aa925bd56edec06356002dd05d98fdc32da30904">
   <title>Member atmosphere release QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -74,7 +74,39 @@
 </tr>
 </tbody></table>
 <h2>Production verification</h2>
-<p>Pending deployment. The recorded rollback baseline is Ready deployment <code>dpl_7dkBB16HW6GHWtUTgjQSthLv2c37</code>. Release completion requires the stable production alias, authenticated browser journey, exact disposable-account cleanup, and unchanged global persistence digest. Local evidence does not establish these hosted results.</p>
+<p>Application commit <code>368997d465e6ffac5a45f3f9646b3589fb6fa023</code> deployed as <code>dpl_DdwYMTT4tqL6g2boJ7JYokES4vZa</code> and was Ready with the stable production alias when checked. The recorded rollback baseline is <code>dpl_7dkBB16HW6GHWtUTgjQSthLv2c37</code>. The closeout updates documentation, evidence, and the QA script only; it preserves the tested application source.</p>
+<p>Production Chromium checks passed Library before setup, blank setup, routine save, desktop and phone scene rendering on Today/Routine/Library/Progress/Settings, Start visibility, set logging, paused-rest reload recovery, completion, Progress, persisted Off, and foreign-owner/missing-session equivalence. Checked surfaces had no horizontal overflow, application page errors, or accessibility violations. <a href="member-atmosphere/hosted/result.json">Hosted result</a> confirms both disposable identities were cleaned up, their owner rows were removed, deletion jobs were terminal or absent, Firebase count returned from one to one, and the shared persistence digest stayed unchanged.</p>
+<p>Public Chromium desktop and WebKit phone checks passed on the stable origin with zero accessibility violations and page errors. An initial WebKit run reported an RSC navigation cancellation; an unchanged retry passed without a waiver. The first hosted completion capture showed the streamed loading screen. Adding an explicit visible-heading wait let the complete journey pass on the unchanged deployed application.</p>
+<p>The hosted YouTube frame, production-origin parameter, and external fallback were verified. Playback could not be established in this automated run; this release makes no new playback or human-viewing claim. Local WebKit covers authenticated phone and dark-theme behavior; hosted authenticated evidence uses Chromium at both viewport sizes.</p>
+<table>
+<thead>
+<tr>
+<th>Production surface</th>
+<th>Desktop</th>
+<th>Phone</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Today</td>
+<td><a href="member-atmosphere/hosted/app-desktop.png">Capture</a></td>
+<td><a href="member-atmosphere/hosted/app-phone.png">Capture</a></td>
+</tr>
+<tr>
+<td>Library</td>
+<td><a href="member-atmosphere/hosted/app-library-desktop.png">Capture</a></td>
+<td><a href="member-atmosphere/hosted/app-library-phone.png">Capture</a></td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><a href="member-atmosphere/hosted/app-settings-desktop.png">Capture</a></td>
+<td><a href="member-atmosphere/hosted/app-settings-phone.png">Capture</a></td>
+</tr>
+<tr>
+<td>Completed Progress</td>
+<td>—</td>
+<td><a href="member-atmosphere/hosted/progress-phone.png">Capture</a></td>
+</tr>
+</tbody></table>
 <h2>Evidence retention</h2>
 <p>This report replaces the previous completed Quiet Set QA set. The previous report and read-only video inventory remain available in <a href="https://github.com/vdoshi96/My-Workout-Pal/tree/9bfc163/docs/qa/latest">their Git snapshot</a>. Video inventory was not modified or reapproved in this iteration. Asset provenance resides beside each public WebP.</p>
 

@@ -1,0 +1,12 @@
+{
+  "applicationCommit": "368997d465e6ffac5a45f3f9646b3589fb6fa023",
+  "pullRequest": "https://github.com/vdoshi96/My-Workout-Pal/pull/6",
+  "verifiedProductionDeployment": "dpl_DdwYMTT4tqL6g2boJ7JYokES4vZa",
+  "deploymentUrl": "https://my-workout-fuqy7tiug-vdoshi96s-projects.vercel.app",
+  "stableOrigin": "https://my-workout-pal-chi.vercel.app",
+  "deploymentState": "READY",
+  "rollbackDeployment": "dpl_7dkBB16HW6GHWtUTgjQSthLv2c37",
+  "hostedResult": "hosted/result.json",
+  "publicResult": "public-hosted/public-result.json",
+  "closeoutScope": "Documentation, evidence, and QA script only; no application source change."
+}

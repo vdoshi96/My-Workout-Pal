@@ -115,9 +115,12 @@ try {
   await page.getByRole("button",{name:"Complete workout",exact:true}).click();
   await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+$/);
   await page.goto(`${config.origin}/app/progress`);
+  stage="completion: Progress rendering";
   await expect(page.locator(".progress-totals")).toContainText("10");
   await expect(page.getByText("Volume",{exact:true})).toHaveCount(0);
+  await expect(page.locator(".member-main h1")).toBeVisible();
   await page.screenshot({path:`${evidenceDir}/progress-phone.png`,fullPage:true});
+  stage="completion: Progress accessibility";
   expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   stage="settings";
   await page.goto(`${config.origin}/app/settings`);
@@ -141,12 +144,10 @@ try {
   passed=true;
 } catch (error) {
   failure=`Hosted check failed at ${stage}.`;
-  if(stage.startsWith("reload")) {
-    diagnostic = error instanceof Error ? error.message : "Unknown assertion failure";
-    for(const identity of identities) for(const value of [identity.email,identity.password,identity.recoveredPassword]) diagnostic=diagnostic.replaceAll(value,"[redacted]");
-    diagnostic=diagnostic.slice(0,2000);
-    if(new URL(page.url()).pathname.startsWith("/workout/"))await page.screenshot({path:`${evidenceDir}/failure.png`});
-  }
+  diagnostic = error instanceof Error ? error.message : "Unknown assertion failure";
+  for(const identity of identities) for(const value of [identity.email,identity.password,identity.recoveredPassword]) diagnostic=diagnostic.replaceAll(value,"[redacted]");
+  diagnostic=diagnostic.slice(0,2000);
+  if(new URL(page.url()).pathname.startsWith("/workout/"))await page.screenshot({path:`${evidenceDir}/failure.png`});
 }
 finally {
   await context.close(); await browser.close();

@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-09-05T04:03:24.467Z",
+  "origin": "https://my-workout-pal-chi.vercel.app",
+  "passed": true,
+  "stage": "foreign owner read",
+  "cleanupConfirmed": true,
+  "globalStateUnchanged": true,
+  "firebaseCountBefore": 1,
+  "firebaseCountAfter": 1,
+  "playback": "YouTube playback could not be established; origin, frame, and external fallback verified"
+}
