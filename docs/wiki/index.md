@@ -2,6 +2,9 @@
 
 Use the following documents as the maintained project map:
 
+- [Comparative product report and full redesign recommendation](../reviews/COMPANION-COMPARISON.md): September 4 public/synthetic evidence, video inventory, original artwork, and interactive concept.
+- [Comparison report plan](../plans/COMPANION-COMPARISON.md): evidence boundaries and report acceptance.
+
 - `PRODUCT.md`: durable product truth.
 - `docs/qa/latest/FIRST-PRINCIPLES-QA.md`: newest local simplification evidence.
 - `docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md`: deletion rationale and interrupted History correction.
@@ -82,15 +85,17 @@ excluded. The historical release evidence is in the
 [Wave 4 production QA at its release commit](https://github.com/vdoshi96/My-Workout-Pal/blob/76503a46e1233283131099c4240f822ef457560a/docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md) report; integration-only
 screenshots are superseded.
 
-## Wave 2 production status
+## Wave 2 production status (historical)
 
 Application candidate `0ad06ef3821975d689015644be96f94f6b3b2dfa` and its
 additive 134-exercise catalog are live on Ready production deployment
 `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn`. Durable recovery, deterministic seed and
 replay, public and disposable-member hosted journeys, exact cleanup, direct
-database invariants, and exact-deployment log filters are green. The 54 reviewed
-approved-video rows remain byte-identical, and none of the 216 selected
-candidate links entered runtime data.
+database invariants, and exact-deployment log filters are green. At that release checkpoint, the 54 reviewed
+approved-video rows remained byte-identical, and none of the 216 selected
+candidate links entered runtime data. The September 4 comparative report
+observes expanded public rendering on both live apps; historical counts do not
+describe that later hosted state.
 
 Ordinary real production Continue with Google passed through connected Chrome,
 returned safely to bounded `/app`, showed generic verified identity state, and
