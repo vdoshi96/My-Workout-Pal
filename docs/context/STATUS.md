@@ -1,5 +1,30 @@
 # Project status
 
+## Comparative report: September 4, 2026
+
+The [MWP/Trainpal comparative report](../reviews/COMPANION-COMPARISON.md)
+contains live public and isolated synthetic member evidence, a full UI redesign
+recommendation, original companion/background artwork, and an interactive
+simulation. No application behavior, account, production data, video approval,
+or seed changed. The focused audit is not exhaustive application QA.
+
+Both live origins render primary videos and two demonstration-title tabs for
+all 134 catalog movements. The MWP source seed still contains 54 mappings for
+27 movements; Trainpal's contains 268 mappings for 134 movements. Historical
+release database counts below remain historical evidence, not current hosted
+coverage. No private database identity or exact deployed SHA was established.
+
+The report records open corrections for unsupported progression copy,
+contradictory saved-state labels, and video provenance claims. These require a
+separately scoped application/policy change; the report does not silently alter
+those contracts. Trainpal's setup submission defect was reproduced locally,
+not in a real production account. See the report for evidence and limits.
+
+The report branch is `vishal/companion-comparison-report`; its temporary worktree
+is removed during Git closeout after the branch merges. No other unresolved
+MWP worktree was found. The existing simplification QA remains the newest
+implementation QA; report evidence is maintained with the comparative review.
+
 ## Simplification review: September 4, 2026
 
 The first-principles review removes an unused load-progression evaluator,
@@ -11,8 +36,8 @@ completed session still fail closed. No data migration or backfill is needed.
 Verification passed: 859 tests across the full run and the unchanged loopback
 retry, 34 database checks, typecheck, lint, build, route/seed/PWA checks,
 64-document parity, and local Chromium phone/desktop History inspection.
-Git closeout uses `vishal/first-principles-simplification`; the canonical
-checkout is the only worktree, with no unresolved worktrees. See
+That iteration closed out through `vishal/first-principles-simplification`,
+leaving only the canonical checkout at that checkpoint. See
 `docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md` for scope and acceptance criteria.
 Verification is recorded in `docs/qa/latest/FIRST-PRINCIPLES-QA.md`.
 The dated release records below describe their original verification boundaries.

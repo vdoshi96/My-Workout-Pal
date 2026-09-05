@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="a1884b47cec5580ae4efcaaaae1ed1a577dfa214d8d4ce806381c252974121e0">
+  <meta name="source-sha256" content="b17f4777b9c3942ca4388cada190a628e29a3892ce211bafa55eec04d34932ee">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,26 @@
 <body>
   <main>
 <h1>Project status</h1>
+<h2>Comparative report: September 4, 2026</h2>
+<p>The <a href="../reviews/COMPANION-COMPARISON.html">MWP/Trainpal comparative report</a>
+contains live public and isolated synthetic member evidence, a full UI redesign
+recommendation, original companion/background artwork, and an interactive
+simulation. No application behavior, account, production data, video approval,
+or seed changed. The focused audit is not exhaustive application QA.</p>
+<p>Both live origins render primary videos and two demonstration-title tabs for
+all 134 catalog movements. The MWP source seed still contains 54 mappings for
+27 movements; Trainpal&#39;s contains 268 mappings for 134 movements. Historical
+release database counts below remain historical evidence, not current hosted
+coverage. No private database identity or exact deployed SHA was established.</p>
+<p>The report records open corrections for unsupported progression copy,
+contradictory saved-state labels, and video provenance claims. These require a
+separately scoped application/policy change; the report does not silently alter
+those contracts. Trainpal&#39;s setup submission defect was reproduced locally,
+not in a real production account. See the report for evidence and limits.</p>
+<p>The report branch is <code>vishal/companion-comparison-report</code>; its temporary worktree
+is removed during Git closeout after the branch merges. No other unresolved
+MWP worktree was found. The existing simplification QA remains the newest
+implementation QA; report evidence is maintained with the comparative review.</p>
 <h2>Simplification review: September 4, 2026</h2>
 <p>The first-principles review removes an unused load-progression evaluator,
 its isolated tests, an unused runner barrel, and 13 unused runner aliases.
@@ -37,8 +57,8 @@ completed session still fail closed. No data migration or backfill is needed.</p
 <p>Verification passed: 859 tests across the full run and the unchanged loopback
 retry, 34 database checks, typecheck, lint, build, route/seed/PWA checks,
 64-document parity, and local Chromium phone/desktop History inspection.
-Git closeout uses <code>vishal/first-principles-simplification</code>; the canonical
-checkout is the only worktree, with no unresolved worktrees. See
+That iteration closed out through <code>vishal/first-principles-simplification</code>,
+leaving only the canonical checkout at that checkpoint. See
 <code>docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md</code> for scope and acceptance criteria.
 Verification is recorded in <code>docs/qa/latest/FIRST-PRINCIPLES-QA.md</code>.
 The dated release records below describe their original verification boundaries.</p>
