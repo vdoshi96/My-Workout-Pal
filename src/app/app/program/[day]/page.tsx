@@ -1,3 +1,4 @@
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -20,13 +21,14 @@ export default async function MemberDayPage({ params }: Readonly<{ params: Promi
 
   return (
     <section className="member-day" aria-labelledby="member-day-title">
-      <header className="member-day-heading contour-surface">
+      <header className="member-day-heading contour-surface companion-heading">
         <Link className="back-link" href="/app"><Icon name="arrow-left" /> Program</Link>
         <span className="eyebrow">Day {day.dayNumber} · revision {program.revisionNumber}</span>
         <h1 id="member-day-title">{day.displayName}</h1>
         <p>{day.prescriptions.length} movements · {day.cardio.length === 0
           ? "no cardio finish"
           : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}</p>
+        <DecorativeCompanion variant="workout" />
       </header>
       <div className="member-day-layout">
         <div>

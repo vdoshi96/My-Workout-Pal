@@ -1,10 +1,25 @@
-export const PWA_CACHE_NAME = "my-workout-pal-public-v7";
+export const PWA_CACHE_NAME = "my-workout-pal-public-v8";
 
 export const PWA_INSTALL_ASSETS = Object.freeze([
   "/",
   "/offline",
   "/progress",
   "/illustrations/quiet-set/dawn-studio.webp",
+  "/illustrations/quiet-set/pip-studio.webp",
+  "/illustrations/quiet-set/otter-study.webp",
+  "/illustrations/quiet-set/otter-study-phone.webp",
+  "/illustrations/quiet-set/beaver-plan.webp",
+  "/illustrations/quiet-set/beaver-plan-phone.webp",
+  "/illustrations/quiet-set/tortoise-review.webp",
+  "/illustrations/quiet-set/tortoise-review-phone.webp",
+  "/illustrations/quiet-set/hare-prepare.webp",
+  "/illustrations/quiet-set/hare-prepare-phone.webp",
+  "/illustrations/quiet-set/pip-recover.webp",
+  "/illustrations/quiet-set/pip-recover-phone.webp",
+
+  "/illustrations/quiet-set/pip-studio-phone.webp",
+  "/illustrations/quiet-set/mica-studio.webp",
+  "/illustrations/quiet-set/mica-studio-phone.webp",
   "/illustrations/quiet-set/dawn-studio-phone.webp",
   "/illustrations/quiet-set/evening-studio.webp",
   "/illustrations/quiet-set/pip-ready.webp",
@@ -29,6 +44,21 @@ export const PWA_INSTALL_ASSETS = Object.freeze([
 
 export const PWA_PUBLIC_ASSETS = Object.freeze([
   "/illustrations/quiet-set/dawn-studio.webp",
+  "/illustrations/quiet-set/pip-studio.webp",
+  "/illustrations/quiet-set/otter-study.webp",
+  "/illustrations/quiet-set/otter-study-phone.webp",
+  "/illustrations/quiet-set/beaver-plan.webp",
+  "/illustrations/quiet-set/beaver-plan-phone.webp",
+  "/illustrations/quiet-set/tortoise-review.webp",
+  "/illustrations/quiet-set/tortoise-review-phone.webp",
+  "/illustrations/quiet-set/hare-prepare.webp",
+  "/illustrations/quiet-set/hare-prepare-phone.webp",
+  "/illustrations/quiet-set/pip-recover.webp",
+  "/illustrations/quiet-set/pip-recover-phone.webp",
+
+  "/illustrations/quiet-set/pip-studio-phone.webp",
+  "/illustrations/quiet-set/mica-studio.webp",
+  "/illustrations/quiet-set/mica-studio-phone.webp",
   "/illustrations/quiet-set/dawn-studio-phone.webp",
   "/illustrations/quiet-set/evening-studio.webp",
   "/illustrations/quiet-set/pip-ready.webp",

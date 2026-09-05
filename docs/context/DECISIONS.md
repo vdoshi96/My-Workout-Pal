@@ -239,3 +239,9 @@ a conflict. This read correction requires no historical writes or schema change.
 - Preserve the full-human-watch rule for new publication. Support one surviving legacy demo at runtime, annotate ambiguous variants, and maintain an explicit read-only inventory. Metadata availability never creates approval.
 - The user rejected the first naturalistic character and dark studio images. The replacement world uses expressive original classic cel-animation characters and a bright, clearly equipped gym. Art stays decorative, optional, bounded, and absent from active logging. Ready poses also serve neutral empty states; browser-local character preference contains no personal training data.
 - The report's five-person novice study requires actual participants. Automated browser evidence does not stand in for that study or physical-device testing.
+
+## September 5, 2026: Make Library primary and give each task a contextual scene
+
+The member shell exposes Today, Routine, Library, and Progress. Library owns its nested routes and stays searchable before setup with an explicitly labeled default equipment scope. Settings remains a utility; the runner route bar also links to Library.
+
+Seven integrated illustrations with six original cartoon characters replace isolated portrait plates in active placements. Page headers reserve scene space; forms and logging controls retain readable surfaces. Browser-local Pip/Mica choice applies to Today, and Off hides the entire cast. Public-only service-worker cache v8 includes the scene files; private routes and owner data remain excluded.

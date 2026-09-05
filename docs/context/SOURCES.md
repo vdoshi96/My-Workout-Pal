@@ -153,3 +153,10 @@ Accessed August 27, 2026:
 - [Next.js server external packages](https://nextjs.org/docs/app/api-reference/config/next-config-js/serverExternalPackages): explains that dependencies may use native Node.js `require`, and lists `firebase-admin` among automatically externalized packages.
 
 The project keeps Firebase Admin as the trusted server verifier, constrains only the incompatible transitive edge, and retains a fail-first CommonJS loading regression. Revisit and remove the override only after a newer upstream graph passes the same local and Vercel preview boundary.
+
+## September 5, 2026: Member illustration system
+
+- [Anthropic frontend-design skill](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md): subject-specific design direction and restrained composition. Read and applied for this iteration; no global installation.
+- [Atlassian product illustration guidance](https://atlassian.design/guidelines/brand/illustrations/): contextual scale and avoiding visual overload.
+- [GitLab illustration principles](https://design.gitlab.com/brand-design/visual-design-brand-illustrations): consistent visual storytelling paired with readable copy.
+- Seven original integrated cartoon scenes are optimized under `public/illustrations/quiet-set/`, with exact generation prompts and source references in JSON sidecars. The old standalone plates remain as source references; active decorative placement uses the contextual scenes.

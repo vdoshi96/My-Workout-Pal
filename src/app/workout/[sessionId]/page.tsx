@@ -84,6 +84,7 @@ export default async function OwnedWorkoutPage({
       <header className="owned-workout-route-bar">
         <Link href="/app">Back to Today</Link>
         <span>{resume.session.dayName}</span>
+        <Link href="/app/library" prefetch={false}>Library</Link>
       </header>
       <main>
         {viewer.eligibleForPermanentMutations ? (

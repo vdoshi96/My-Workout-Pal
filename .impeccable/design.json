@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-05T02:42:55.807891+00:00",
+  "generatedAt": "2026-09-05T03:52:30.416477+00:00",
   "title": "Design system: My Workout Pal",
   "extensions": {
     "colorMeta": {
@@ -61,7 +61,7 @@
         ]
       },
       "coral": {
-        "displayName": "Coral",
+        "displayName": "Forest action",
         "role": "primary",
         "tonalRamp": [
           "oklch(15.00% 0.0576 164.20)",
@@ -75,7 +75,7 @@
         ]
       },
       "coral-strong": {
-        "displayName": "Coral strong",
+        "displayName": "Forest hover",
         "role": "primary",
         "tonalRamp": [
           "oklch(15.00% 0.0479 174.01)",
@@ -448,7 +448,52 @@
       },
       "display": {
         "displayName": "Georgia display",
-        "purpose": "Final serif display choice for the welcome, trial completion, routine day headings, and inherited headings. The frontmatter records the desktop welcome treatment; phone welcome size is 2.75rem and other placements use host-specific scales."
+        "purpose": "Welcome display in Georgia. The welcome-heading-phone role records the phone override; other headings keep host-specific family and size rules."
+      },
+      "page-heading": {
+        "purpose": "Shared public and member h1 size; hosts can override it."
+      },
+      "section-heading": {
+        "purpose": "Shared h2 size; hosts can override it."
+      },
+      "subsection-heading": {
+        "purpose": "Shared h3 size."
+      },
+      "today-heading": {
+        "purpose": "Today greeting in the integrated scene."
+      },
+      "today-heading-phone": {
+        "purpose": "Today greeting at phone widths."
+      },
+      "welcome-heading-phone": {
+        "purpose": "Public welcome at phone widths."
+      },
+      "routine-heading-phone": {
+        "purpose": "Routine day heading at phone widths."
+      },
+      "compact-label": {
+        "purpose": "Compact workout tab metadata and phone account identity."
+      },
+      "supporting-label": {
+        "purpose": "Workout context labels and phone companion explanation."
+      },
+      "field-label": {
+        "purpose": "Form labels and compact controls."
+      },
+      "summary-copy": {
+        "purpose": "Member program summary base treatment."
+      },
+      "welcome-copy-phone": {
+        "purpose": "Public welcome supporting copy on phones."
+      },
+      "welcome-copy": {
+        "purpose": "Public welcome supporting copy."
+      },
+      "training-day-choice": {
+        "purpose": "Today training-day selection."
+      },
+      "progress-value": {
+        "purpose": "Tabular member totals."
       }
     },
     "shadows": [
@@ -456,6 +501,26 @@
         "name": "transient-notice",
         "value": "0 10px 28px color-mix(in srgb, var(--ink) 30%, transparent)",
         "purpose": "Inherited transient PWA notice only."
+      },
+      {
+        "name": "header",
+        "value": "0 6px 24px #183f3508",
+        "purpose": "Separate the member header from the page."
+      },
+      {
+        "name": "start-resume",
+        "value": "0 14px 38px #183f3514",
+        "purpose": "Lift Today task surfaces against the illustrated scene."
+      },
+      {
+        "name": "library-search",
+        "value": "0 10px 32px #183f350a",
+        "purpose": "Separate the Library search surface."
+      },
+      {
+        "name": "phone-navigation",
+        "value": "0 -6px 24px #183f3510",
+        "purpose": "Separate fixed phone navigation from scrollable content."
       }
     ],
     "motion": [
@@ -469,10 +534,6 @@
       {
         "name": "phone",
         "value": "700px"
-      },
-      {
-        "name": "today-companion",
-        "value": "900px"
       },
       {
         "name": "member-desktop",
@@ -513,9 +574,9 @@
       "name": "Member navigation",
       "kind": "nav",
       "refersTo": "navigation-active",
-      "description": "Three member destinations with a semantic current state.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Main\"><a href=\"#today\" aria-current=\"page\">Today</a><a href=\"#routine\">Routine</a><a href=\"#progress\">Progress</a></nav>",
-      "css": ".ds-nav{display:flex;gap:8px;background:var(--white,#fffdf7);}.ds-nav a{font-family:\"Source Sans 3 Variable\",sans-serif;font-size:1rem;display:flex;align-items:center;min-height:48px;padding:12px 20px;border-radius:10px;color:var(--ink,#183f35);font-size:.85rem;font-weight:600;text-decoration:none;}.ds-nav a[aria-current]{background:var(--paper-deep,#e8ecdf);}.ds-nav a:focus-visible{outline:3px solid var(--focus,#916314);outline-offset:4px;}"
+      "description": "Four member destinations with a semantic current state and direct Library access.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main\"><a href=\"#today\" aria-current=\"page\">Today</a><a href=\"#routine\">Routine</a><a href=\"#library\">Library</a><a href=\"#progress\">Progress</a></nav>",
+      "css": ".ds-nav{display:flex;gap:6px;background:var(--white,#fffdf7);}.ds-nav a{font-family:\"Source Sans 3 Variable\",sans-serif;font-size:1rem;display:flex;align-items:center;min-height:48px;padding:12px 16px;border-radius:10px;color:var(--ink,#183f35);font-size:.85rem;font-weight:600;text-decoration:none;}.ds-nav a[aria-current]{background:var(--ink,#183f35);color:var(--paper,#f6f3e9);}.ds-nav a:focus-visible{outline:3px solid var(--focus,#916314);outline-offset:4px;}"
     },
     {
       "name": "Entry panel",
@@ -531,16 +592,31 @@
       "description": "Native disclosure keeps reference secondary.",
       "html": "<details class=\"ds-disclosure\"><summary>Technique and videos</summary><p>Movement guidance stays beside the workout.</p></details>",
       "css": ".ds-disclosure{font-family:\"Source Sans 3 Variable\",sans-serif;font-size:1rem;color:var(--ink,#183f35);border-top:1px solid var(--rule,#a8b6a3);padding:12px 0;}.ds-disclosure summary{font-weight:600;min-height:36px;cursor:pointer;}.ds-disclosure summary:focus-visible{outline:3px solid var(--focus,#916314);outline-offset:4px;}"
+    },
+    {
+      "name": "Member task surface",
+      "kind": "card",
+      "refersTo": "task-surface",
+      "description": "Readable rounded surface for Library, Settings, and member summaries.",
+      "html": "<section class=\"ds-surface\"><h2>Progress at a glance</h2><p>Completed work remains separate from your next workout.</p></section>",
+      "css": ".ds-surface{font-family:\"Source Sans 3 Variable\",sans-serif;background:var(--white,#fffdf7);color:var(--ink,#183f35);border-radius:14px;padding:24px;}.ds-surface h2{font-size:clamp(1.45rem,3vw,2.1rem);font-weight:400;line-height:1.12;letter-spacing:-.025em;margin:0 0 16px;}.ds-surface p{font-size:1rem;line-height:1.5;margin:0;}"
+    },
+    {
+      "name": "Selected equipment",
+      "kind": "button",
+      "description": "Selection uses a complete outline and a semantic pressed state.",
+      "html": "<button class=\"ds-equipment\" aria-pressed=\"true\">Dumbbells</button>",
+      "css": ".ds-equipment{font-family:\"Source Sans 3 Variable\",sans-serif;font-size:1rem;display:flex;align-items:center;gap:.85rem;min-height:5rem;padding:.8rem 1rem;text-align:left;cursor:pointer;background:var(--white,#fffdf7);color:var(--ink,#183f35);border:2px solid var(--lichen,#3b6146);box-shadow:none;}.ds-equipment:focus-visible{outline:3px solid var(--focus,#916314);outline-offset:4px;}"
     }
   ],
   "narrative": {
     "northStar": "Quiet Set",
-    "overview": "My Workout Pal gives a workout a clear next action, readable training numbers, and optional original cartoon company. Cream surfaces, forest ink, sage fields, and generous task space connect the public welcome to planning, logging, and progress review.\n\nPip the stoat and Mica the kingfisher use expressive classic 2D theatrical-cartoon drawing. The user's September 4, 2026 correction names the Looney Tunes / Tom and Jerry tradition as a style reference and rejects naturalistic animals and gloomy environments. The bright illustrated gym and both original characters follow that correction; reference characters and branding are not assets.",
+    "overview": "My Workout Pal places clear workout actions and readable training numbers in a bright illustrated gym. Cream surfaces, forest ink, sage fields, and optional original cartoon company connect the public welcome to planning, logging, and progress review.\n\nSix original characters use expressive classic 2D theatrical-cartoon drawing, consistent outlines, cel shading, daylight, wood floors, and teal equipment. The user's September 4, 2026 correction names the Looney Tunes / Tom and Jerry tradition as a style reference and rejects naturalistic animals and gloomy environments. The bright illustrated gym and original cast follow that correction; reference characters and branding are not assets.",
     "keyCharacteristics": [
       "Cream and forest surfaces with sage separation and visible focus.",
       "Humanist sans-serif controls and readable, tabular training values.",
-      "Rounded task panels, flat lists, and native disclosures.",
-      "Decorative cartoon company that yields to the workout."
+      "Rounded task surfaces with selective soft shadows, ruled lists, and native disclosures.",
+      "Full gym scenes blended into page headings, with smaller compositions on phones."
     ],
     "rules": [
       {
@@ -562,7 +638,7 @@
     "dos": [
       "**Do** keep training actions, numbers, and save feedback ahead of decoration.",
       "**Do** use the cream, forest, and sage palette with labeled state changes.",
-      "**Do** preserve original cartoon Pip/Mica artwork, browser-local choice, and Off.",
+      "**Do** preserve the contextual cast, Pip/Mica welcome choice, browser-local preference, and global Off.",
       "**Do** keep the five-day map an optional example rather than a personal-routine constraint.",
       "**Do** verify the actual host, breakpoint, theme, and critical state before adding art."
     ],
@@ -570,8 +646,8 @@
       "**Don't** reintroduce naturalistic animals or gloomy gym imagery.",
       "**Don't** restore the retired atlas palette, condensed labels, or uppercase kickers as shared member styling.",
       "**Don't** label pending work saved or imply automatic load progression.",
-      "**Don't** treat cream-backed character plates as transparent artwork.",
-      "**Don't** infer production readiness, full workflow coverage, or user design approval from the captured finish fixes."
+      "**Don't** crop the contextual cast into separate portrait cards or treat opaque scenes as transparent artwork.",
+      "**Don't** infer production readiness, full workflow coverage, or user design approval from this visual specification."
     ]
   }
 }

@@ -21,6 +21,10 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
   page.on("request", request => { if(request.method() === "POST" && request.url().includes("/profile-program/onboard")) onboardPosts++; });
   try {
     await page.goto("/app");
+    await page.getByRole("link", {name:"Library",exact:true}).click();
+    await expect(page).toHaveURL(/\/app\/library$/);
+    await expect(page.getByRole("heading",{name:"Exercise library",exact:true})).toBeVisible();
+    await page.getByRole("link",{name:"Set up your routine",exact:true}).click();
     await page.getByRole("radio", { name:/Blank routine/ }).check();
     await page.getByRole("button", {name:"Continue"}).click();
     await expect(page.getByText("Step 2 of 3", {exact:false})).toBeVisible();
@@ -56,6 +60,19 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     await expect(start).toBeInViewport();
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({path:info.outputPath("today.png"), fullPage:true});
+    await page.getByRole("link", {name:"Library", exact:true}).click();
+    await expect(page).toHaveURL(/\/app\/library$/);
+    await expect(page.getByRole("link", {name:"Library",exact:true})).toHaveAttribute("aria-current","page");
+    await expect(page.getByRole("link", {name:"Routine",exact:true})).not.toHaveAttribute("aria-current","page");
+    await expect(page.locator("[data-companion-placement=library] img")).toHaveAttribute("src",/otter-study/);
+    await page.screenshot({path:info.outputPath("library.png"),fullPage:true});
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+    await page.getByRole("link", {name:"Today",exact:true}).click();
+    await page.getByLabel("Your companion").selectOption("mica");
+    await expect(page.locator("[data-companion-placement=member-home] img")).toHaveAttribute("src",/mica-studio/);
+    await page.screenshot({path:info.outputPath("today-mica.png"),fullPage:true});
+    await page.getByLabel("Your companion").selectOption("pip");
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await start.click();
     await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/);
     await expect(page.getByLabel("Repetitions", {exact:true})).toBeInViewport();
@@ -84,7 +101,16 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
     await page.goto("/app/settings");
     await page.getByLabel("Your companion").selectOption("mica");
-    await expect(page.locator("[data-companion-placement=settings] img")).toHaveAttribute("src", /mica-ready/);
+    await expect(page.locator("[data-companion-placement=settings] img")).toHaveAttribute("src", /hare-prepare/);
+    await page.screenshot({path:info.outputPath("settings.png"),fullPage:true});
+    await page.emulateMedia({colorScheme:"dark"});
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+    await page.reload();
+    await expect(page.getByLabel("Your companion")).toHaveValue("mica");
+    await page.screenshot({path:info.outputPath("settings-dark.png"),fullPage:true});
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+    await page.emulateMedia({colorScheme:"light"});
     await page.getByLabel("Your companion").selectOption("off");
     await expect(page.locator("[data-companion-placement=settings]")).toHaveCount(0);
     await page.reload();

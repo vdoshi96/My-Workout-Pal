@@ -1,0 +1,14 @@
+{
+  "prompt": "Create one integrated wide 3:2 background illustration for this gym website by combining these original assets. Preserve the bright classic hand-painted cel animation gym in image 1, and place Pip the tan cartoon stoat from image 2 naturally standing on the gym floor in the RIGHTMOST third, smiling welcomingly, at believable scale near bench. His feet cast a soft contact shadow onto floor, consistent warm daylight. No character plate, no rectangle, no checkerboard. Left TWO THIRDS remain an uncluttered warm pale cream gym wall #f6f3e9 softly lit, with floor visible at bottom; equipment windows plants and Pip grouped on rightmost third. Gym needs depth and place, calm and bright. Pip should be prominent and entirely visible including feet and head, about half image height, his real cartoon style maintained not realistic. Horizontal landscape website background, no text or interface. No vignette; wallpaper can fade naturally into page cream at left and bottom.",
+  "source": "Original image_gen output, September 5, 2026",
+  "references": [
+    "dawn-studio.webp",
+    "pip-ready.webp"
+  ],
+  "derivative": {
+    "width": 1200,
+    "format": "webp",
+    "quality": 84
+  },
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

@@ -29,6 +29,13 @@ for(const [name,engine,viewport] of [['desktop',chromium,{width:1440,height:1000
   await page.reload();
   await expect(page.getByRole('button',{name:'Log set & rest',exact:true})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  for(const route of ['/library?q=push-up','/library/push-up','/progress','/sign-in']) {
+    await page.goto(`${origin}${route}`);
+    await expect(page.locator('h1')).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    expect((await new AxeBuilder({page}).exclude('iframe').analyze()).violations).toEqual([]);
+    await page.screenshot({path:`${dir}/${name}-${route.split('?')[0].replaceAll('/','-').slice(1)}.png`});
+  }
   expect(errors).toEqual([]);
   results.push({name,origin,trial:true,refreshDiscards:true,axeViolations:0,consoleErrors:0});
  } finally {await context.close();await browser.close();}

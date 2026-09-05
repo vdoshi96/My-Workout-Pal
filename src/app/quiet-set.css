@@ -289,3 +289,154 @@ input[type=checkbox],input[type=radio] {accent-color:var(--coral);}
 .quiet-equipment-art {display:block; width:64px; height:58px; flex:none;}
 .member-equipment-options .quiet-equipment-art {width:56px; height:50px;}
 .history-state svg {height:18px; width:18px; vertical-align:middle; margin-right:6px;}
+
+/* The illustrated training space. Scene art is integrated at page level;
+   semantic controls always sit on a readable material. */
+.member-frame, .owned-workout-route {
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--paper) 82%, transparent), var(--paper) 720px), url('/illustrations/quiet-set/dawn-studio.webp') center top / 1600px auto no-repeat;
+  min-height:100dvh;
+}
+.member-header {background:var(--white); box-shadow:0 6px 24px #183f3508; border:0; position:relative; z-index:5;}
+.member-nav {grid-template-columns:repeat(4,minmax(0,1fr));}
+.member-nav a[aria-current=page] {background:var(--ink); color:var(--paper);}
+.member-main {isolation:isolate;}
+.member-frame .member-main {max-width:1320px;}
+.member-main > section, .member-main > div {min-width:0;}
+.member-frame :is(.member-library,.insights-page,.member-settings,.program-editor-page,.member-onboarding) {background:transparent;}
+/* One open composition per page header. The scene's empty wall is faded into
+   the page; there is no portrait border, shadow, or separate image card. */
+.member-frame :is(.companion-heading,.member-program-hero),
+.public-frame :is(.companion-heading,.sample-hero) {
+  position:relative; isolation:isolate; display:flex; flex-wrap:wrap; align-content:center; align-items:center;
+  min-height:280px; padding:32px 40% 32px 0; gap:16px; border:0; background:transparent;
+}
+.member-frame :is(.companion-heading,.member-program-hero) > div:first-child {flex:1 1 100%; grid-column:auto; grid-row:auto;}
+.member-frame :is(.companion-heading,.member-program-hero) h1 {margin:0 0 14px;}
+.member-frame .companion-heading > :is(a,.quiet-routine-tools) {position:relative; grid-column:auto; grid-row:auto;}
+:is(.member-frame,.public-frame) .decorative-companion {
+  display:block; position:absolute; inset:0 0 0 auto; width:65%; height:100%; block-size:auto;
+  min-height:0; margin:0; padding:0; overflow:hidden; z-index:-1; pointer-events:none;
+  border:0; background:transparent; mask-image:linear-gradient(to right,transparent 0%,#000 24%),linear-gradient(to bottom,#000 75%,transparent 100%); mask-composite:intersect;
+}
+:is(.member-frame,.public-frame) .decorative-companion img {
+  width:100%; height:100%; max-width:none; max-height:none; inline-size:100%; block-size:100%;
+  object-fit:cover; object-position:right 65%; aspect-ratio:auto; border:0; border-radius:0;
+}
+:is(.member-frame,.public-frame) .decorative-companion[hidden] {display:none;}
+.member-frame .companion-heading:not(:has(.decorative-companion)),
+.member-frame .companion-heading:has(.decorative-companion[hidden]) {min-height:0; padding-right:0;}
+.member-today-scene {position:relative; isolation:isolate; padding:32px 0 24px;}
+.member-today-scene .member-program-hero {position:static; min-height:0; padding:0; width:54%; margin-bottom:24px;}
+.member-today-scene .member-program-copy h1 {font-size:clamp(2.1rem,3.7vw,3.3rem); max-width:20ch;}
+.member-today-scene .decorative-companion {width:70%; height:100%; max-height:650px;}
+.member-today-scene .decorative-companion img {object-position:right center;}
+.member-today-scene .quiet-today-start {width:49%; max-width:none; margin:0; background:var(--white); border:0; box-shadow:0 14px 38px #183f3514; padding:24px;}
+.member-today-scene .member-resume-card {width:52%; display:block; background:var(--white); box-shadow:0 14px 38px #183f3514;}
+.member-today-scene .member-resume-card .primary-action {margin-top:16px;}
+.companion-switcher {width:49%; padding:20px 0 0; display:grid; grid-template-columns:1fr auto; column-gap:16px; align-items:center;}
+.member-frame .companion-switcher h2 {font:600 1rem/1.4 var(--font-body); margin:0;}
+.companion-switcher p {grid-column:1; margin:4px 0 0; font-size:.85rem; max-width:32ch; color:var(--ink-soft);}
+.companion-switcher label {position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);}
+.companion-switcher select {grid-column:2; grid-row:1/3; max-width:165px; font-size:.9rem;}
+.member-week {border-top:1px solid var(--rule); margin-top:16px;}
+.member-day-grid {background:var(--white); border:0; border-radius:14px; overflow:hidden;}
+.member-day-grid li>a {padding:22px;}
+.member-day-grid li>a:hover {background:var(--paper-deep);}
+.member-library-search, .onboarding-form, .settings-form, .program-editor-outline,
+.progress-timeline, .records-grid>li, .history-list>li, .member-empty-sheet {
+  background:var(--white); border-radius:14px;
+}
+.member-library-search {padding:24px; border:0; box-shadow:0 10px 32px #183f350a;}
+.member-library-list {background:var(--white); border-radius:14px; overflow:hidden;}
+.member-library-list>li {background:transparent;}
+.member-library-results {padding-top:24px;}
+.member-onboarding {max-width:1000px;}
+.onboarding-form {padding:28px;}
+.program-editor-outline {padding:20px;}
+.member-home-progress, .progress-totals {background:var(--white); border-radius:14px; padding:24px;}
+.owned-workout-route > main {max-width:1200px; margin:auto; padding:24px;}
+.owned-workout-route .runner-main {background:var(--white); border-radius:14px; padding:24px;}
+.owned-workout-route .runner-outline {background:var(--white);}
+.owned-workout-route .runner-header {position:relative; isolation:isolate; padding-right:150px; min-height:95px;}
+.owned-workout-route .runner-header .decorative-companion {display:block; position:absolute; inset:0 0 0 auto; width:150px; height:95px; overflow:hidden; margin:0; pointer-events:none; mask-image:linear-gradient(to right,transparent,#000 35%);}
+.owned-workout-route .runner-header .decorative-companion img {width:100%; height:100%; object-fit:cover; object-position:right; border:0; border-radius:0;}
+@media(min-width:960px) {
+  .member-nav {gap:6px;}
+  .member-nav a {padding:12px 16px;}
+  .member-header .brand small {display:none;}
+  .member-header .member-identity {max-width:150px; overflow-wrap:anywhere;}
+}
+@media(max-width:959px) {
+  .member-frame .member-main {padding:20px 24px 110px;}
+  .member-header {display:flex; justify-content:space-between; flex-wrap:wrap;}
+  .member-nav {position:fixed; bottom:0; inset-inline:0; display:grid; padding:8px 12px max(8px,env(safe-area-inset-bottom)); box-shadow:0 -6px 24px #183f3510;}
+  .member-nav a {flex-direction:column; justify-content:center; gap:4px;}
+}
+@media(max-width:700px) {
+  .member-frame .member-main {padding:8px 16px 100px;}
+  .member-frame :is(.companion-heading,.member-program-hero), .public-frame :is(.companion-heading,.sample-hero) {min-height:210px; padding:24px 32% 24px 0; gap:12px;}
+  .member-frame .companion-heading h1 {font-size:2rem;}
+  .member-frame .companion-heading p {font-size:.9rem; line-height:1.4;}
+  :is(.member-frame,.public-frame) .decorative-companion {width:62%;}
+  :is(.member-frame,.public-frame) .decorative-companion img {object-position:76% center;}
+  .member-frame .companion-heading > :is(a,.quiet-routine-tools) {flex-basis:100%; font-size:.85rem;}
+  .member-today-scene {padding:16px 0 0;}
+  .member-today-scene .member-program-hero {width:100%; min-height:180px; padding:0 30% 16px 0; margin:0;}
+  .member-today-scene .member-program-copy h1 {font-size:1.85rem;}
+  .member-today-scene .member-program-copy p {font-size:.85rem;}
+  .member-today-scene .decorative-companion {height:200px; width:66%;}
+  .member-today-scene .decorative-companion img {object-position:76% center;}
+  .member-today-scene .quiet-today-start, .member-today-scene .member-resume-card {width:100%; padding:20px; margin:0;}
+  .companion-switcher {width:100%; padding:16px 0 0;}
+  .companion-switcher p {font-size:.8rem;}
+  .companion-switcher select {max-width:145px;}
+  .onboarding-form {padding:20px;}
+  .member-library-search {padding:20px;}
+  .member-day-grid li>a {padding:18px;}
+  .owned-workout-route > main {padding:16px;}
+  .owned-workout-route .runner-main {padding:12px;}
+}
+@media(prefers-color-scheme:dark) {
+  .member-frame,.owned-workout-route {background-image:linear-gradient(to bottom,#142a23df,var(--paper) 720px),url('/illustrations/quiet-set/evening-studio.webp');}
+  .decorative-companion img {filter:brightness(.72) saturate(.7);}
+}
+@media(forced-colors:active) {
+  .member-frame,.owned-workout-route {background:Canvas;}
+  .member-frame :is(.companion-heading,.member-program-hero) {min-height:0; padding-right:0;}
+  .member-nav a[aria-current=page] {border:2px solid Highlight;}
+}
+/* Keep the illustration behind the complete task surface, including controls. */
+.member-frame:has(.decorative-companion) {background:var(--paper);}
+.member-today-scene .member-program-hero {isolation:auto;}
+.member-today-scene > :not(.member-program-hero) {position:relative; z-index:1;}
+:is(.member-frame,.public-frame) .decorative-companion {
+  mask-image:linear-gradient(to right,transparent,#000 30%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 8%,#000 80%,transparent); mask-composite:intersect;
+}
+.member-frame .companion-heading > :not(.decorative-companion) {position:relative; z-index:1;}
+.member-frame .companion-heading {padding-right:42%;}
+.member-frame .companion-heading > .decorative-companion {width:58%;}
+.member-frame .member-day-heading {display:block;}
+.member-frame .member-day-heading h1 {margin-top:16px;}
+.progress-timeline {padding:24px;}
+.owned-workout-route .runner-outline {align-self:start;}
+@media(max-width:700px) {
+  .member-frame .companion-heading {padding-right:38%; min-height:220px;}
+  .member-frame .companion-heading > .decorative-companion {width:54%; max-height:260px;}
+  .member-frame .companion-heading > .decorative-companion img {object-position:72% center;}
+  .member-frame .companion-heading > div:first-child {min-width:0; width:100%;}
+  .member-frame .companion-heading p {max-width:100%;}
+  .member-frame .companion-heading :is(.primary-action,.insight-action) {width:fit-content; min-width:0; padding:10px;}
+  .progress-totals {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px;}
+  .progress-totals>div {min-width:0; padding:0;}
+  .progress-timeline {padding:20px;}
+  .member-today-scene .companion-switcher p {max-width:28ch;}
+}
+
+.settings-form .settings-check strong {color:var(--ink);}
+.member-equipment-options button[aria-pressed="true"] {box-shadow:none; border:2px solid var(--lichen);}
+.member-frame {color:var(--ink);}
+.member-frame :is(.member-settings-heading,.quiet-companion-preference,.settings-form,.settings-account) {color:var(--ink);}
+.member-frame .settings-form {padding:24px;}
+.member-frame .settings-form :is(label,h2,h3,strong) {color:var(--ink);}
+@media(max-width:700px) {.member-frame .settings-form {padding:20px;}}
+.member-frame :is(h1,h2,h3) {color:var(--ink);}

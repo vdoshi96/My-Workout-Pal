@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4228eee7f4690ed7df55bfcbb57f3d191c866b9b19ae461a17f2a91e4a5f4f56">
+  <meta name="source-sha256" content="20ac062fa03e15e19789fb9bd85125a1ecb8adb8bd288524c460933084b6025d">
   <title>Design system: My Workout Pal · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,7 +29,7 @@
   <main>
 <hr>
 <p>name: My Workout Pal — Quiet Set
-description: A clear workout companion with cream and forest surfaces and original cartoon company.
+description: A bright illustrated gym with readable cream and forest task surfaces and original cartoon company.
 colors:
   paper: &quot;#f6f3e9&quot;
   paper-deep: &quot;#e8ecdf&quot;
@@ -84,6 +84,47 @@ typography:
     fontSize: &quot;.85rem&quot;
     fontWeight: 600
     letterSpacing: &quot;0&quot;
+  page-heading:
+    fontSize: &quot;clamp(2rem, 5vw, 3.8rem)&quot;
+    fontWeight: 400
+    lineHeight: &quot;1.12&quot;
+    letterSpacing: &quot;-.025em&quot;
+  section-heading:
+    fontSize: &quot;clamp(1.45rem, 3vw, 2.1rem)&quot;
+    fontWeight: 400
+    lineHeight: &quot;1.12&quot;
+    letterSpacing: &quot;-.025em&quot;
+  subsection-heading:
+    fontSize: &quot;1.35rem&quot;
+    lineHeight: &quot;1.12&quot;
+    letterSpacing: &quot;-.025em&quot;
+  today-heading:
+    fontSize: &quot;clamp(2.1rem, 3.7vw, 3.3rem)&quot;
+    fontWeight: 400
+    lineHeight: &quot;1.12&quot;
+  today-heading-phone:
+    fontSize: &quot;1.85rem&quot;
+  welcome-heading-phone:
+    fontSize: &quot;2.75rem&quot;
+  routine-heading-phone:
+    fontSize: &quot;1.6rem&quot;
+  compact-label:
+    fontSize: &quot;.75rem&quot;
+  supporting-label:
+    fontSize: &quot;.8rem&quot;
+  field-label:
+    fontSize: &quot;.9rem&quot;
+  summary-copy:
+    fontSize: &quot;.95rem&quot;
+  welcome-copy-phone:
+    fontSize: &quot;1.05rem&quot;
+  welcome-copy:
+    fontSize: &quot;1.2rem&quot;
+  training-day-choice:
+    fontSize: &quot;1.3rem&quot;
+  progress-value:
+    fontSize: &quot;2.2rem&quot;
+    fontWeight: 600
   training-title:
     fontFamily: &quot;Source Sans 3 Variable, sans-serif&quot;
     fontSize: &quot;clamp(1.45rem, 3.5vw, 2rem)&quot;
@@ -94,11 +135,12 @@ typography:
     fontSize: &quot;1.7rem&quot;
     fontWeight: 600
 rounded:
+  phase: &quot;6px&quot;
   set-tab: &quot;8px&quot;
   field: &quot;10px&quot;
   panel: &quot;12px&quot;
+  surface: &quot;14px&quot;
   feature: &quot;16px&quot;
-  companion: &quot;20px&quot;
 spacing:
   compact: &quot;8px&quot;
   control: &quot;12px&quot;
@@ -129,9 +171,14 @@ components:
     textColor: &quot;{colors.ink}&quot;
     rounded: &quot;{rounded.panel}&quot;
     padding: &quot;16px&quot;
-  navigation-active:
-    backgroundColor: &quot;{colors.paper-deep}&quot;
+  task-surface:
+    backgroundColor: &quot;{colors.white}&quot;
     textColor: &quot;{colors.ink}&quot;
+    rounded: &quot;{rounded.surface}&quot;
+    padding: &quot;24px&quot;
+  navigation-active:
+    backgroundColor: &quot;{colors.ink}&quot;
+    textColor: &quot;{colors.paper}&quot;
     typography: &quot;{typography.navigation}&quot;
 rounded: &quot;{rounded.field}&quot;
 </p>
@@ -139,16 +186,16 @@ rounded: &quot;{rounded.field}&quot;
 <h1>Design system: My Workout Pal</h1>
 <h2>Overview</h2>
 <p><strong>Creative North Star: &quot;Quiet Set&quot;</strong></p>
-<p>My Workout Pal gives a workout a clear next action, readable training numbers, and optional original cartoon company. Cream surfaces, forest ink, sage fields, and generous task space connect the public welcome to planning, logging, and progress review.</p>
-<p>Pip the stoat and Mica the kingfisher use expressive classic 2D theatrical-cartoon drawing. The user&#39;s September 4, 2026 correction names the Looney Tunes / Tom and Jerry tradition as a style reference and rejects naturalistic animals and gloomy environments. The bright illustrated gym and both original characters follow that correction; reference characters and branding are not assets.</p>
+<p>My Workout Pal places clear workout actions and readable training numbers in a bright illustrated gym. Cream surfaces, forest ink, sage fields, and optional original cartoon company connect the public welcome to planning, logging, and progress review.</p>
+<p>Six original characters use expressive classic 2D theatrical-cartoon drawing, consistent outlines, cel shading, daylight, wood floors, and teal equipment. The user&#39;s September 4, 2026 correction names the Looney Tunes / Tom and Jerry tradition as a style reference and rejects naturalistic animals and gloomy environments. The bright illustrated gym and original cast follow that correction; reference characters and branding are not assets.</p>
 <p><strong>Key Characteristics:</strong></p>
 <ul>
 <li>Cream and forest surfaces with sage separation and visible focus.</li>
 <li>Humanist sans-serif controls and readable, tabular training values.</li>
-<li>Rounded task panels, flat lists, and native disclosures.</li>
-<li>Decorative cartoon company that yields to the workout.</li>
+<li>Rounded task surfaces with selective soft shadows, ruled lists, and native disclosures.</li>
+<li>Full gym scenes blended into page headings, with smaller compositions on phones.</li>
 </ul>
-<p>This record describes the verified application build from <code>src/app/quiet-set.css</code>, its inherited <code>src/app/globals.css</code> rules, and the affected components. Production verification and its limits are recorded in <code>docs/qa/latest/QUIET-SET-QA.md</code>. The finish review cleared four final corrections on captured surfaces only. Missing FORM seed and quality-bar process evidence is not retrospective user approval.</p>
+<p>This record describes the application source in <code>src/app/quiet-set.css</code>, its inherited <code>src/app/globals.css</code> rules, and the affected components. The final CSS cascade is authoritative when earlier rules remain overridden. Release evidence and its limits belong in <code>docs/qa/latest/</code>; this design specification does not assert production verification or user approval.</p>
 <p>The historical public program map remains an optional five-day example at <code>/program</code>. Its waypoint composition does not define the member experience or this visual system. Earlier atlas and Corner Companions briefs remain historical references under <code>.impeccable/surfaces/</code>.</p>
 <h2>Colors</h2>
 <p>Forest supplies text and forward actions; warm paper and sage organize content without relying on dark dashboard panels.</p>
@@ -169,26 +216,30 @@ rounded: &quot;{rounded.field}&quot;
 <li><strong>Forest ink</strong>, <strong>soft ink</strong>, and <strong>sage rules</strong> establish text hierarchy and boundaries.</li>
 <li><strong>Danger</strong> is reserved for actual errors and destructive context, with a written explanation.</li>
 </ul>
-<p>Dark tokens record the values applied through <code>prefers-color-scheme: dark</code>; the source keeps the same variable names inside that media query. The welcome artwork uses a theme-specific picture source, while its copy plate deliberately keeps the light cream and forest pairing. This is not evidence of a manually selectable theme.</p>
+<p>Dark tokens record the values applied through <code>prefers-color-scheme: dark</code>; the source keeps the same variable names inside that media query. The welcome artwork uses a theme-specific picture source, while its copy plate deliberately keeps the light cream and forest pairing. Member background environments use an evening source in dark mode; companion scenes reduce brightness and saturation. Settings headings, form labels, preference text, and account sections explicitly inherit the theme ink. The theme follows the system preference.</p>
 <p><strong>The state-in-words rule.</strong> Selection, ownership, pending saves, confirmed saves, and failure remain understandable without color.</p>
 <h2>Typography</h2>
 <p>Source Sans 3 Variable is the loaded body font and the working face for navigation, labels, buttons, instructions, and training values. Controls use sentence case and normal tracking. Training inputs and totals use tabular numerals.</p>
 <p>Georgia is the final display choice, with Times New Roman and serif fallbacks. It appears in the welcome, trial completion, routine day headings, and inherited headings. The frontmatter display role records the desktop welcome treatment; phones override its size to <code>2.75rem</code>. Other display placements retain their host-specific size and line height. Barlow Condensed remains imported in the layout but is superseded by the display variable override.</p>
-<p>Shared public and member headings use balanced wrapping, modest negative tracking, and responsive sizes. The runner title uses the <code>training-title</code> role; data entry uses <code>training-value</code>. Supporting labels are quieter without replacing visible labels with placeholders. Long explanatory passages use the observed 65-character measure where the host supports it.</p>
+<p>Shared public and member headings use balanced wrapping, modest negative tracking, and the page, section, and subsection roles. Today uses its own heading scale and phone override. The runner title uses <code>training-title</code>; data entry uses <code>training-value</code>, and progress totals use <code>progress-value</code>. Supporting labels remain visible. Long explanations use a 65-character measure where the host supports it.</p>
+<p>The smaller frontmatter roles record observed labels and supporting copy, rather than an evenly spaced mathematical type scale. Host-specific overrides take precedence. Earlier Today base rules retain a <code>clamp(1.8rem, 4vw, 2.6rem)</code> heading and a <code>1.75rem</code> phone size in CSS, but the scene heading overrides both. Those dormant values are not recommended tokens. Black stops in an artwork mask control opacity; they are not an additional interface color.</p>
 <h2>Layout</h2>
-<p>Member navigation has three destinations: Today, Routine, and Progress. It stays fixed at the phone edge with safe-area padding, then joins the header at <code>960px</code>. Member content is bounded to <code>1240px</code> at that breakpoint. Phone content uses <code>20px 16px 100px</code> padding, leaving room for navigation.</p>
-<p>The logger precedes guidance in document order. Below <code>960px</code>, the outline follows the logger; broader screens place it beside a main column capped at <code>720px</code>. The runner is bounded to <code>1100px</code>. The disposable trial has a <code>540px</code> width cap. Native disclosures let reference material remain reachable without displacing active entry.</p>
-<p>At <code>700px</code> and narrower, the welcome puts copy before a full-width, uncropped-flow picture. Its desktop layout places a cream copy plate over the bright gym. Routine movement titles occupy the full phone content width before their action groups. Long names wrap; actions wrap independently.</p>
-<p>Spacing uses the frontmatter&#39;s repeated control, inset, section, and broad intervals. A Today panel has a <code>640px</code> cap. The Today companion appears in its <code>140px</code> heading slot from <code>900px</code>; other companion hosts retain narrower eligibility rules. Do not infer that every route can display art at that breakpoint.</p>
+<p>Member navigation has four destinations: Today, Routine, Library, and Progress. Below <code>960px</code>, it is a fixed four-column bottom bar with safe-area padding. At <code>960px</code>, it joins the header as a horizontal row. Member content is capped at <code>1320px</code>; desktop padding is <code>32px</code>. Tablet padding is <code>20px 24px 110px</code>; phones at <code>700px</code> and narrower use <code>8px 16px 100px</code>.</p>
+<p>Page headings combine readable copy with a full illustrated scene. On larger member screens, the heading reserves 42% for art, with the scene occupying 58% and a <code>280px</code> minimum height. Phones keep the art: a <code>220px</code> heading reserves 38%, and its scene uses 54% width with a <code>260px</code> height cap. Off or failed-image states collapse ordinary member heading reservations where the host&#39;s selectors apply.</p>
+<p>Today has a larger composition. The greeting uses 54% of the desktop width; the Start panel and companion selector use 49%, while Resume uses 52%. Its scene uses 70% width with a <code>650px</code> height cap. Phones place a <code>200px</code> scene alongside the greeting, followed by full-width Start or Resume and companion choice. The task surface stays above the artwork in the stacking order.</p>
+<p>The logger precedes guidance in document order. Below <code>960px</code>, the outline follows the logger; broader screens place it beside a main column capped at <code>720px</code>. The runner is bounded to <code>1100px</code> inside a route container capped at <code>1200px</code>. Its header reserves a compact <code>150px × 95px</code> scene outside the logger. The disposable trial has a <code>540px</code> width cap. Native disclosures keep reference material reachable without displacing active entry.</p>
+<p>At <code>700px</code> and narrower, the public welcome puts copy before a full-width picture in document flow. Its desktop layout places a cream copy plate over the bright gym. Routine movement titles occupy the full phone content width before their action groups; long names and actions wrap independently.</p>
+<p>Spacing uses the repeated control, inset, section, and broad intervals in the frontmatter. Library search and general task surfaces use <code>24px</code> padding, with selected phone surfaces reducing to <code>20px</code>. The workout entry surface uses <code>12px</code> on phones.</p>
 <p><strong>The task-first rule.</strong> Current movement, targets, and entry controls precede reference and decorative content.</p>
 <h2>Elevation &amp; Depth</h2>
-<p>The shared task surfaces are flat. One-pixel rules, cream-to-sage layering, and white-paper entry panels provide separation. Actions explicitly have no shadow. Inherited transient PWA notices retain a soft shadow; that exception is not a template for permanent panels. Illustrated environments provide visual depth without adding interactive layers.</p>
+<p>Depth combines illustrated environments, cream-to-sage layering, white-paper task surfaces, and selective soft shadows. Start and Resume use <code>0 14px 38px #183f3514</code>; Library search uses <code>0 10px 32px #183f350a</code>. The header uses <code>0 6px 24px #183f3508</code>, and the phone navigation uses <code>0 -6px 24px #183f3510</code>. Actions have no shadow; field boundaries and ruled lists stay explicit.</p>
+<p>Member pages with a companion use a plain paper canvas behind the blended scene. Other member pages and the owned workout route retain a faded gym environment that resolves to paper by <code>720px</code>. Scene edges fade through intersecting horizontal and vertical alpha masks. The image itself has no portrait border, rounded plate, or shadow. The artwork adds atmosphere without creating an interactive layer.</p>
 <p>Color transitions on primary actions and save status use <code>180ms ease-out</code> only when reduced motion is not requested. Companion images remain static. Forced colors removes gym and companion imagery and uses semantic system colors for the welcome.</p>
 <h2>Shapes</h2>
-<p>Rounded controls and contained task panels use the frontmatter&#39;s field and panel radii. Featured start and rest surfaces use broader corners; the cream-backed character plates have rounded image corners. Lists and section dividers remain flat and ruled. Circular brand marks and historical map waypoints are specialized shapes, not a requirement for training controls.</p>
+<p>Fields and active navigation use <code>10px</code> corners; shared buttons and entry panels use <code>12px</code>. Member task surfaces, library lists, and day lists use <code>14px</code>. Start and Resume use <code>16px</code>, set tabs use <code>8px</code>, and the compact workout phase marker uses <code>6px</code>. Integrated scene images have square source bounds with masked edges, so they do not use a portrait radius. Circular brand marks and historical map waypoints remain specialized shapes.</p>
 <h2>Components</h2>
 <h3>Buttons</h3>
-<p>Primary actions use forest fill, cream text, and a semibold sans-serif label. Secondary actions use a rule border. Shared actions, buttons, and selects have at least <code>48px</code> height; disabled buttons use reduced opacity and a noninteractive cursor. Keyboard focus uses a <code>3px</code> outline with <code>4px</code> offset. No control depends on hover to expose its label.</p>
+<p>Primary actions use forest fill, cream text, and a semibold sans-serif label. Secondary actions use a rule border. Shared actions, buttons, and selects have at least <code>48px</code> height; equipment choices retain an <code>80px</code> minimum; disabled buttons use reduced opacity and a noninteractive cursor. Keyboard focus uses a <code>3px</code> outline with <code>4px</code> offset. No control depends on hover to expose its label.</p>
 <h3>Inputs and entry panels</h3>
 <p>Fields use white paper, an ink label, and a thin rule. The runner groups entry in a rounded fieldset; its numeric fields have at least <code>56px</code> height. Trial entry increases that minimum to <code>64px</code>. Keep the action and actual save feedback adjacent to the data they affect.</p>
 <h3>Set tabs and rest</h3>
@@ -196,18 +247,20 @@ rounded: &quot;{rounded.field}&quot;
 <h3>Disclosures and routine controls</h3>
 <p>Technique, workout outline, equipment, and add-section details use native <code>details</code> and <code>summary</code> behavior. Optional-cardio absence is neutral supporting text. Routine save status follows the routine title and distinguishes saved, unsaved, saving, and failed states. Removal undo belongs to the unsaved draft; visual reassurance must not imply a published change.</p>
 <h3>Navigation</h3>
-<p>The member active destination uses a sage background with <code>aria-current</code>. Settings is a contextual utility. Public navigation remains a distinct four-link block for Program, Library, Progress, and My workouts. Do not copy that public example navigation into the member shell.</p>
+<p>The member active destination uses theme ink as its fill and paper as its text color, plus <code>aria-current</code>. Library selects its own nested routes; Routine does not select Library. History and records select Progress. Library stays available before setup, with a labeled dumbbell, bodyweight, and bench scope and a routine setup action. Settings is a contextual utility. Public navigation remains a distinct four-link block for Program, Library, Progress, and My workouts. Do not copy that public example navigation into the member shell.</p>
+<h3>Equipment and Settings</h3>
+<p>Selected equipment uses a complete <code>2px</code> lichen outline and <code>aria-pressed</code>, with no side stripe or selection shadow. Settings keeps text on the theme ink and contains forms on the shared rounded surface. The browser-local companion preference remains separate from account and training settings.</p>
 <h3>Cartoon companions and environments</h3>
-<p>The shared decorative registry retains surface keys but selects Pip or Mica from browser-local preference <code>mwp:companion:v1</code>; missing or unsupported values fall back to Pip. Off removes the illustration. The preference is not an account setting and does not change workout data.</p>
-<p>Ready also serves neutral placements; history and public progress use the complete pose, and the workout registry maps to resting. CSS hides the runner, routine-editor, and Settings header art in the redesigned surfaces. Host eligibility remains authoritative; a registry entry does not prove visible runtime placement.</p>
-<p>Each character export is a cream-backed <code>320 × 320</code> WebP, not a transparent cutout. The family contains eight prompt-bearing source images and 10 optimized public exports: six character poses and two gym environments at two widths each. Preserve asset provenance when replacing them. Decorative images have empty alternative text, hidden semantics, reserved dimensions, no dragging, and no pointer interaction; image failure hides the slot. The public gym picture is also decorative. Equipment illustrations are original SVG components for dumbbell, barbell, bench, mat, shoe, towel, timer, and distance marker.</p>
+<p>Seven integrated gym scenes contain six original characters. Today and the landing registry select Pip the stoat or Mica the kingfisher. Library uses an otter studying guidance; Routine uses a beaver planning; Progress and History use a tortoise reviewing; Settings uses a hare preparing equipment. Workout and day surfaces use Pip recovering. These placements are contextual company, not claims about achievements or saved state.</p>
+<p>The preference is <code>pip | mica | off</code> in browser-local storage under <code>mwp:companion:v1</code>. Missing, unsupported, or unreadable values fall back to Pip. Today exposes the compact choice; Settings exposes the full choice. Off hides every companion, including contextual characters; it does not remove the separate gym background or alter workout data. Preference changes update mounted companion components, and storage events synchronize other tabs.</p>
+<p>Each scene has a <code>1200 × 800</code> WebP and a 600-pixel-wide phone derivative. These are opaque environment illustrations blended with CSS masks, not transparent cutouts or square character portraits. Keep the optimized exports and their prompt/reference provenance together. The earlier public gym environments remain separate assets. Decorative images have empty alternative text, hidden semantics, reserved dimensions, no dragging, and no pointer interaction; image failure hides the slot. Public gym pictures are also decorative. Equipment illustrations are original SVG components for dumbbell, barbell, bench, mat, shoe, towel, timer, and distance marker.</p>
 <p><strong>The optional-company rule.</strong> Cartoon art never communicates technique, saved data, account state, or an outcome; the semantic interface carries those meanings.</p>
 <h2>Do&#39;s and Don&#39;ts</h2>
 <h3>Do:</h3>
 <ul>
 <li><strong>Do</strong> keep training actions, numbers, and save feedback ahead of decoration.</li>
 <li><strong>Do</strong> use the cream, forest, and sage palette with labeled state changes.</li>
-<li><strong>Do</strong> preserve original cartoon Pip/Mica artwork, browser-local choice, and Off.</li>
+<li><strong>Do</strong> preserve the contextual cast, Pip/Mica welcome choice, browser-local preference, and global Off.</li>
 <li><strong>Do</strong> keep the five-day map an optional example rather than a personal-routine constraint.</li>
 <li><strong>Do</strong> verify the actual host, breakpoint, theme, and critical state before adding art.</li>
 </ul>
@@ -216,8 +269,8 @@ rounded: &quot;{rounded.field}&quot;
 <li><strong>Don&#39;t</strong> reintroduce naturalistic animals or gloomy gym imagery.</li>
 <li><strong>Don&#39;t</strong> restore the retired atlas palette, condensed labels, or uppercase kickers as shared member styling.</li>
 <li><strong>Don&#39;t</strong> label pending work saved or imply automatic load progression.</li>
-<li><strong>Don&#39;t</strong> treat cream-backed character plates as transparent artwork.</li>
-<li><strong>Don&#39;t</strong> infer production readiness, full workflow coverage, or user design approval from the captured finish fixes.</li>
+<li><strong>Don&#39;t</strong> crop the contextual cast into separate portrait cards or treat opaque scenes as transparent artwork.</li>
+<li><strong>Don&#39;t</strong> infer production readiness, full workflow coverage, or user design approval from this visual specification.</li>
 </ul>
 
   </main>

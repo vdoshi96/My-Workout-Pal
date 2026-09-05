@@ -1,0 +1,50 @@
+{
+  "fullSuite": {
+    "files": 126,
+    "passed": 868
+  },
+  "focusedFinal": {
+    "files": 6,
+    "passed": 24,
+    "includesAddedPreSetupLibraryTest": true
+  },
+  "meaningfulRed": [
+    "Library selected Routine and had no primary link: 2 failures before implementation",
+    "Pre-setup Library redirected to setup: 1 failure before correction"
+  ],
+  "localMemberBrowser": {
+    "passed": 6,
+    "engines": [
+      "Chromium desktop",
+      "WebKit phone"
+    ],
+    "themeTests": [
+      "live dark switch",
+      "fresh dark load"
+    ],
+    "axeViolations": 0
+  },
+  "localPublicBrowser": {
+    "engines": [
+      "Chromium desktop",
+      "WebKit phone"
+    ],
+    "pages": [
+      "welcome",
+      "trial",
+      "library search",
+      "movement detail",
+      "progress",
+      "sign in"
+    ],
+    "axeViolations": 0
+  },
+  "typecheck": "pass",
+  "lint": "pass",
+  "databaseChecks": 34,
+  "seedPolicy": "pass",
+  "pwa": "pass, v8",
+  "build": "pass",
+  "productionBoundary": 45,
+  "privateDataUsed": false
+}

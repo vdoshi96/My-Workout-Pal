@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { Icon } from "@/components/ui/icon";
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
@@ -45,13 +44,13 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
     searchParams,
     loadLibrary(context.scope, context.viewer),
   ]);
-  if (!data?.profileProgram.activeProgram) redirect("/app");
+  const hasRoutine = Boolean(data?.profileProgram.activeProgram);
 
   const query = normalizedMemberLibraryQuery(q);
-  const profileKind = data.profileProgram.equipment.profileKind;
+  const profileKind = data?.profileProgram.equipment.profileKind ?? "dumbbells";
   const profile = EQUIPMENT_PROFILES[profileKind];
   const catalogExercises = listCatalogExercises({ profile, query });
-  const customExercises = listOwnedCustomExercises(data.customExercises, { profile, query });
+  const customExercises = listOwnedCustomExercises(data?.customExercises ?? [], { profile, query });
   const resultCount = catalogExercises.length + customExercises.length;
 
   return (
@@ -60,9 +59,9 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
         <div>
           <span className="eyebrow">Your compatible field guide</span>
           <h1 id="member-library-title">Exercise library</h1>
-          <p>Canonical movements and only your private exercises, filtered for {profile.label.toLocaleLowerCase("en-US")}.</p>
+          <p>{hasRoutine ? `Movement guides and your private exercises, filtered for ${profile.label.toLocaleLowerCase("en-US")}.` : "Browse dumbbell, bodyweight, and bench movements. Set up your routine to choose your equipment."}</p>
         </div>
-        <Link className="primary-action" href="/app/library/custom/new">Create private exercise <Icon name="arrow-right" /></Link>
+        {hasRoutine ? <Link className="primary-action" href="/app/library/custom/new">Create private exercise <Icon name="arrow-right" /></Link> : <Link className="primary-action" href="/app">Set up your routine <Icon name="arrow-right" /></Link>}
         <DecorativeCompanion variant="library" />
       </header>
 
@@ -79,7 +78,7 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
           />
           <button type="submit">Search</button>
         </div>
-        <p>{resultCount} compatible result{resultCount === 1 ? "" : "s"}. Change equipment from the Program screen.</p>
+        <p>{resultCount} compatible result{resultCount === 1 ? "" : "s"}. {hasRoutine ? "Change equipment in Routine." : "Choose equipment when you set up your routine."}</p>
       </form>
 
       {resultCount === 0 ? (
@@ -112,7 +111,7 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
 
           <section aria-labelledby="catalog-results-title">
             <div className="section-heading">
-              <div><span className="eyebrow">Canonical</span><h2 id="catalog-results-title">Seeded movements</h2></div>
+              <div><span className="eyebrow">Canonical</span><h2 id="catalog-results-title">Movement guides</h2></div>
               {query ? <Link href="/app/library">Clear search</Link> : null}
             </div>
             {catalogExercises.length === 0 ? (
@@ -123,7 +122,7 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
                   <li key={exercise.slug}>
                     <Link href={`/library/${exercise.slug}?equipment=${profileKind}`} prefetch={false}>
                       <span><strong>{exercise.name}</strong><small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.join(" + ")}</small></span>
-                      <span>Canonical</span><Icon name="chevron-right" />
+                      <span>Guide</span><Icon name="chevron-right" />
                     </Link>
                   </li>
                 ))}

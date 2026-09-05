@@ -26,7 +26,7 @@ describe("public Progress preview", () => {
     expect(markup).not.toContain("Sample only");
     expect(markup).toContain('data-companion-placement="progress-preview"');
     expect(markup).toContain(
-      'src="/illustrations/quiet-set/pip-complete.webp"',
+      'src="/illustrations/quiet-set/tortoise-review.webp"',
     );
     expect(markup.indexOf('data-companion-placement="progress-preview"')).toBeLessThan(
       markup.indexOf('class="sample-metrics"'),

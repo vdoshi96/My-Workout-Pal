@@ -1,0 +1,14 @@
+{
+  "prompt": "Original My Workout Pal website illustration in the exact bright classic theatrical 2D cartoon and cel-painted background style of references. WIDE 3:2 landscape. Warm cream gym walls, sunlit wood floor, teal furniture, warm soft daylight, simplified bold ink lines. Left 55% calm pale cream wall and floor empty for webpage copy; original expressive animal and room details on RIGHT 45%, full body visible, about half image height. Physically integrate animal with surroundings, contact shadows, same perspective. Not a portrait or card, no white rectangle, no checkerboard, no text UI or letters. A lively soft gray HARE with tall ears and ochre headband bends slightly forward packing a folded teal towel into a teal gym duffel on a wood changing-room bench. Open tasteful teal lockers and trainers beside bench, light through high windows, preparation corner, attentive warm smile.",
+  "source": "Original image_gen output, September 5, 2026",
+  "references": [
+    "dawn-studio.webp",
+    "pip-ready.webp"
+  ],
+  "derivative": {
+    "width": 1200,
+    "format": "webp",
+    "quality": 84
+  },
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

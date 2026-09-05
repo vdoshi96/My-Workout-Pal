@@ -95,6 +95,7 @@ export default async function HarnessOwnedWorkoutPage({
         <span>
           {resume.session.dayName}
         </span>
+        <Link href="/app/library" prefetch={false}>Library</Link>
       </header>
       <main>
         {context.viewer.eligibleForPermanentMutations ? (

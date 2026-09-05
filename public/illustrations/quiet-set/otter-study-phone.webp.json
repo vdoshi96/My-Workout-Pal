@@ -1,0 +1,14 @@
+{
+  "prompt": "Original illustration for My Workout Pal, in the exact bright classic 2D cel-animation style of the references. WIDE LANDSCAPE 3:2 image. A cohesive gym room with warm wood floor, cream walls, teal furniture, sunny windows and tasteful plants. Scene perspective, lighting and contact shadows physically integrate character. No isolated portrait, rectangle, checkerboard, UI, text or letters. Left 55% mostly calm pale warm cream negative space for webpage content. Character and context props grouped on right 45%, fully visible at about half image height. Different expressive original animal, same ink line weight and simplified hand-painted shading as Pip and Mica. A curious expressive chestnut river OTTER in teal gym shorts is sitting on a low teal bench, leaning forward studying an open illustrated exercise guide, one paw turns a page. Small neatly organized equipment shelf and rolled mats behind; movement study nook, quiet concentration, engaged friendly face.",
+  "source": "Original image_gen output, September 5, 2026",
+  "references": [
+    "dawn-studio.webp",
+    "pip-ready.webp"
+  ],
+  "derivative": {
+    "width": 600,
+    "format": "webp",
+    "quality": 84
+  },
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

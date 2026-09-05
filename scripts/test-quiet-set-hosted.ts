@@ -15,7 +15,7 @@ const identities = [createHostedAuthQaIdentity(), createHostedAuthQaIdentity()];
 const uids: (string | undefined)[] = [];
 const countBefore = await firebaseUserCount(auth);
 const digestBefore = await globalPersistenceDigest(database);
-const evidenceDir = "docs/qa/latest/quiet-set/hosted";
+const evidenceDir = "docs/qa/latest/member-atmosphere/hosted";
 await mkdir(evidenceDir,{recursive:true});
 const browser = await chromium.launch();
 const context = await browser.newContext({viewport:{width:390,height:844},reducedMotion:"reduce"});
@@ -37,6 +37,10 @@ try {
   await page.getByLabel("Password",{exact:true}).fill(identities[0]!.password);
   await page.getByRole("button",{name:"Sign in with email",exact:true}).click();
   await expect(page).toHaveURL(`${config.origin}/app`);
+  stage="Library before setup";
+  await page.getByRole("link",{name:"Library",exact:true}).click();
+  await expect(page).toHaveURL(`${config.origin}/app/library`);
+  await page.getByRole("link",{name:"Set up your routine",exact:true}).click();
   stage="blank setup";
   let posts=0;
   page.on("request",r=>{if(r.method()==="POST"&&r.url().includes("/profile-program/onboard"))posts++;});
@@ -59,6 +63,21 @@ try {
   await page.getByRole("link",{name:"Today",exact:true}).click();
   await expect(page.getByRole("button",{name:"Start workout",exact:true})).toBeInViewport();
   await page.screenshot({path:`${evidenceDir}/today-phone.png`});
+  stage="member surface matrix";
+  for (const [size,viewport] of [["desktop",{width:1440,height:1000}],["phone",{width:390,height:844}]] as const) {
+    await page.setViewportSize(viewport);
+    for(const [route,scene] of [["/app","pip-studio"],["/app/program/edit","beaver-plan"],["/app/library?q=push-up","otter-study"],["/app/progress","tortoise-review"],["/app/settings","hare-prepare"]]) {
+      await page.goto(`${config.origin}${route}`);
+      await expect(page.locator(".member-main")).toBeVisible();
+      await expect(page.locator(".member-main .decorative-companion img")).toHaveAttribute("src",new RegExp(scene!));
+      await expect(page.locator(".member-main .decorative-companion img")).toBeVisible();
+      await expect.poll(()=>page.locator(".member-main .decorative-companion img").evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+      expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+      await page.screenshot({path:`${evidenceDir}/${route!.split("?")[0]!.replaceAll("/","-").slice(1)}-${size}.png`});
+    }
+  }
+  await page.goto(`${config.origin}/app`);
   stage="start and log";
   await page.getByRole("button",{name:"Start workout",exact:true}).click();
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/);

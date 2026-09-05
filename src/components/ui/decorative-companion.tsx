@@ -3,19 +3,19 @@
 import { useState } from "react";
 import { useCompanionChoice } from "./companion-preference";
 
-function companionAsset(pose: "ready" | "resting" | "complete") {
-  return Object.freeze({ fetchPriority: "auto" as const, height: 320, loading: "lazy" as const,
-    sizes: "(max-width: 900px) 160px, 240px", src: `/illustrations/quiet-set/pip-${pose}.webp`, width: 320 });
+function companionAsset(scene: string) {
+  return Object.freeze({ fetchPriority: "auto" as const, height: 800, loading: "lazy" as const,
+    sizes: "(max-width: 700px) 600px, 1200px", src: `/illustrations/quiet-set/${scene}.webp`, width: 1200 });
 }
 export const COMPANION_ASSETS = Object.freeze({
-  landing: companionAsset("ready"),
-  "member-home": companionAsset("ready"),
-  "progress-preview": companionAsset("complete"),
-  library: companionAsset("ready"),
-  "routine-editor": companionAsset("ready"),
-  history: companionAsset("complete"),
-  settings: companionAsset("ready"),
-  workout: companionAsset("resting"),
+  landing: companionAsset("pip-studio"),
+  "member-home": companionAsset("pip-studio"),
+  "progress-preview": companionAsset("tortoise-review"),
+  library: companionAsset("otter-study"),
+  "routine-editor": companionAsset("beaver-plan"),
+  history: companionAsset("tortoise-review"),
+  settings: companionAsset("hare-prepare"),
+  workout: companionAsset("pip-recover"),
 });
 
 export type DecorativeCompanionVariant = keyof typeof COMPANION_ASSETS;
@@ -25,8 +25,10 @@ export function DecorativeCompanion({
 }: Readonly<{ variant: DecorativeCompanionVariant }>) {
   const [visible, setVisible] = useState(true);
   const choice = useCompanionChoice();
-  const pose = variant === "workout" ? "resting" : variant === "history" || variant === "progress-preview" ? "complete" : "ready";
-  const asset = { ...COMPANION_ASSETS[variant], src: `/illustrations/quiet-set/${`${choice}-${pose}`}.webp`, srcSet: undefined, width: 320, height: 320 };
+  const source = variant === "member-home" || variant === "landing"
+    ? `/illustrations/quiet-set/${choice}-studio.webp`
+    : COMPANION_ASSETS[variant].src;
+  const asset = { ...COMPANION_ASSETS[variant], src: source, srcSet: `${source.replace(".webp", "-phone.webp")} 600w, ${source} 1200w` };
   if (choice === "off") return null;
 
   return (

@@ -1,0 +1,14 @@
+{
+  "prompt": "Create an integrated wide 3:2 website background illustration for My Workout Pal. Preserve the bright classic cel animation gym of image 1, place Mica the teal/orange cartoon kingfisher of image 2 naturally standing in the RIGHTMOST third on the gym floor near bench waving welcomingly, feet cast contact shadow on wood, consistent daylight. Keep his cartoon design exact. Entire character visible head to feet about half image height, no character plate, white rectangle, or checkerboard. Left TWO THIRDS an uncluttered pale warm cream gym wall #f6f3e9 softly lit with floor at bottom. Equipment and tall windows and leafy plants on right third; depth and place without visual clutter. Calm bright inviting workout environment. Wide landscape, no text no interface no vignette; left and bottom should be pale so wallpaper can fade into cream webpage.",
+  "source": "Original image_gen output, September 5, 2026",
+  "references": [
+    "dawn-studio.webp",
+    "mica-ready.webp"
+  ],
+  "derivative": {
+    "width": 1200,
+    "format": "webp",
+    "quality": 84
+  },
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}
