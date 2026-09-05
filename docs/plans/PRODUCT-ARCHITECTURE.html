@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="6ed327fb9c807095fca2e4a91fe6d3eb60f53f1ed57a2bfe248d07e9a02dee19">
+  <meta name="source-sha256" content="26797b5ae13068638b3928c1183d8d665b0737ca29e635b2f4b2829725874ffe">
   <title>Product and architecture plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -80,13 +80,13 @@
 <li>A session state is <code>draft</code>, <code>active</code>, <code>completing</code>, <code>completed</code>, or <code>abandoned</code>.</li>
 <li>Only one resumable active session per user and program revision is allowed unless the user explicitly abandons or completes it.</li>
 <li>Every client mutation has an idempotency key unique within the user and session.</li>
-<li>Warm-up sets never count toward progression, volume, or personal records.</li>
+<li>Warm-up sets never count toward volume or personal records.</li>
 <li>Work-set logs preserve canonical kilograms, repetitions, duration, distance, form rating when supplied, note snapshot, timestamp, and client idempotency key.</li>
 <li>Completion requires all locally acknowledged operations to be durably accepted or explicitly retried. A failed save cannot be presented as complete.</li>
 </ul>
 <h3>Progression and analytics</h3>
 <ul>
-<li>Double progression suggests a load increase only when every work set reaches the repetition-range top and the user records appropriate form. The product never chooses a load.</li>
+<li>Progress views describe recorded training. The product does not generate load-increase suggestions or choose a load.</li>
 <li>Volume is the sum of <code>weightKg * repetitions</code> across qualifying work sets. Bodyweight work is excluded from external-load volume unless a logged added load exists.</li>
 <li>Epley estimated one-repetition maximum is <code>weightKg * (1 + repetitions / 30)</code> for positive weight and repetitions. It is not calculated for duration, distance, warm-up, or bodyweight-only sets.</li>
 <li>A personal record compares canonical values within the same exercise variation and record type (<code>max_weight</code>, <code>estimated_1rm</code>, <code>volume</code>, <code>max_repetitions</code>, <code>distance</code>, or <code>duration</code>). An equal best is a tie, not a new higher record.</li>

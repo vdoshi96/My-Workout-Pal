@@ -116,6 +116,7 @@ export function TrainingHistoryDetail({
         {session.exercises.map((exercise) => {
           const target = prescriptionTarget(exercise, unitSystem);
           const range = prescriptionRange(exercise);
+          const status = exercise.status === "pending" ? "unfinished" : exercise.status;
           return (
           <li key={exercise.id}>
             <header>
@@ -123,7 +124,7 @@ export function TrainingHistoryDetail({
               <div>
                 <strong>{exercise.displayName}</strong>
                 <small>
-                  {exercise.sectionTitle ?? exercise.sectionKind} · {exercise.status}
+                  {exercise.sectionTitle ?? exercise.sectionKind} · {status}
                 </small>
               </div>
             </header>
@@ -178,7 +179,7 @@ export function TrainingHistoryDetail({
             ) : null}
             {exercise.sets.length === 0 ? (
               <p className="history-no-sets">
-                No sets were logged for this {exercise.status} movement.
+                No sets were logged for this {status} movement.
               </p>
             ) : (
               <ol className="history-sets">

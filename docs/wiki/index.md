@@ -3,6 +3,8 @@
 Use the following documents as the maintained project map:
 
 - `PRODUCT.md`: durable product truth.
+- `docs/qa/latest/FIRST-PRINCIPLES-QA.md`: newest local simplification evidence.
+- `docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md`: deletion rationale and interrupted History correction.
 - `docs/context/PROJECT.md`: scope, workflows, stack, and boundaries.
 - `docs/context/STATUS.md`: verified state, active work, and blockers.
 - `docs/context/DECISIONS.md`: architecture and product decisions with rationale.
@@ -41,7 +43,7 @@ Use the following documents as the maintained project map:
 - `design-qa.md`: Product Design reference-to-build review for the integrated
   Wave 4 companion candidate, including the equipment-review correction and
   native-zoom refresh limitation.
-- `docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md`: newest canonical production
+- [Wave 4 production QA at its release commit](https://github.com/vdoshi96/My-Workout-Pal/blob/76503a46e1233283131099c4240f822ef457560a/docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md): historical production
   deployment, browser, authentication, data, cache, log, limitation, and cleanup
   evidence.
 - `docs/design/COMPANION-VISUAL-CONCEPTS.md`: selected Corner Companions responsive board, production guardrails, required corrections, and pilot acceptance criteria.
@@ -71,13 +73,13 @@ limitations recorded in the production report. The Playwright WebKit hosted-
 origin RSC cancellation is an engine/harness limitation. Native Chrome remained
 at restored 100% because the macOS control bridge could not establish 200%.
 Google stopped before identity selection at the owner-only account-choice/
-consent boundary. Immediate-abandon History detail is a documented pre-existing
-repository follow-up and did not widen this presentation release.
+consent boundary. Immediate-abandon History detail was a pre-existing limitation at that release;
+the September 4 correction and local verification are linked in the current QA report.
 
 Only hedgehog, raccoon, and otter pairs enter public cache v6. All owned
 variants, private routes, authenticated HTML, guidance, and private data remain
-excluded. The newest evidence is the paired
-`docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md` report; integration-only
+excluded. The historical release evidence is in the
+[Wave 4 production QA at its release commit](https://github.com/vdoshi96/My-Workout-Pal/blob/76503a46e1233283131099c4240f822ef457560a/docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md) report; integration-only
 screenshots are superseded.
 
 ## Wave 2 production status
@@ -101,8 +103,8 @@ The final privacy-safe production QA report and generated HTML replace the
 integration-only report and six synthetic screenshots in `docs/qa/latest`.
 Clean completed Strength, Core/conditioning, video-eligibility, and integration
 worktrees and local branches were removed while their GitHub provenance refs
-remain. Only the active release worktree and checked-out local release branch
-remain as the orchestrator's self-removal item. The production-release plan is
+remain. The release worktree and checked-out release branch were subsequently removed;
+the September 4 audit finds only the canonical checkout. The production-release plan is
 the authoritative execution record.
 
 ## Wave 1 released architecture

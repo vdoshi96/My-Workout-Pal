@@ -119,6 +119,26 @@ const historySession: TrainingSessionDetail = {
 };
 
 describe("shared persisted training-insight views", () => {
+  it.each([false, true])("labels unfinished interrupted movements honestly (saved set: %s)", (hasSets) => {
+    const exercise = historySession.exercises[0]!;
+    const markup = renderToStaticMarkup(
+      <TrainingHistoryDetail
+        session={{
+          ...historySession, state: "abandoned", completedExerciseCount: 0,
+          exercises: [{ ...exercise, status: "pending", sets: hasSets ? exercise.sets : [] }],
+        }}
+        timezone="UTC"
+        unitSystem="metric"
+      />,
+    );
+    expect(markup).toContain("Interrupted workout");
+    expect(markup).toContain("Read-only snapshot.");
+    expect(markup).toContain("Pull strength · unfinished");
+    expect(markup).not.toContain("pending");
+    if (hasSets) expect(markup).toContain("10 bodyweight reps");
+    else expect(markup).toContain("No sets were logged for this unfinished movement.");
+  });
+
   it("renders tied records with owned source links and selected display units", () => {
     const markup = renderToStaticMarkup(
       <PersonalRecordsView

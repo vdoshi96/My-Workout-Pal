@@ -39,6 +39,7 @@ import {
   rebuildPersonalRecordProjections,
 } from "@/server/repositories/workout-repository";
 import { replacePersonalGuidance } from "@/server/repositories/personal-guidance";
+import { loadTrainingSession } from "@/server/repositories/training-insights";
 
 const migrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
 const accountDeletionMigrationUrl = new URL("../../drizzle/0001_account_deletion_saga.sql", import.meta.url);
@@ -638,6 +639,76 @@ describe("owner-scoped workout repository", () => {
       },
     });
     await expect(repository.findResumable(viewer(fixture.ownerUid))).resolves.toBeUndefined();
+  });
+
+  it.each([false, true])("reads an abandoned workout with unfinished exercises (saved set: %s)", async (saveSet) => {
+    const { database } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(database);
+    const owner = viewer(fixture.ownerUid);
+    const started = await repository.startOrResume(owner, {
+      programId: fixture.programId,
+      dayId: fixture.dayId,
+      idempotencyKey: "start-unfinished-history",
+    });
+    const sessionId = started.model.session.id;
+    const exercise = started.model.snapshot.exercises.find(({ loggingKind }) => loggingKind === "weight_reps")!;
+    if (saveSet) {
+      const set = exercise.sets.find(({ phase }) => phase === "work")!;
+      await repository.submitOperation(owner, {
+        sessionId,
+        idempotencyKey: "unfinished-history-set",
+        kind: "save_set",
+        expectedVersion: started.model.exerciseStates.find(({ snapshotId }) => snapshotId === exercise.id)!.version,
+        payload: {
+          kind: "save_set", exerciseId: exercise.id, setId: set.id,
+          phase: set.phase,
+          measurement: { kind: "weight_reps", weightKg: 20, repetitions: 8 },
+        },
+      });
+    }
+    await repository.submitOperation(owner, {
+      sessionId,
+      idempotencyKey: "abandon-unfinished-history",
+      kind: "abandon_session",
+      payload: { kind: "abandon_session", sessionId, reason: "Training interrupted" },
+    });
+    const detail = await loadTrainingSession(database, owner, sessionId);
+    expect(detail.state).toBe("abandoned");
+    expect(detail.completedExerciseCount).toBe(0);
+    expect(detail.exercises).toHaveLength(started.model.snapshot.exercises.length);
+    expect(detail.exercises.every(({ status }) => status === "pending")).toBe(true);
+    const saved = detail.exercises.find(({ id }) => id === exercise.id)!;
+    expect(saved.sets).toHaveLength(saveSet ? 1 : 0);
+    if (saveSet) expect(saved.sets[0]).toMatchObject({ weightKg: 20, repetitions: 8 });
+    expect(await loadTrainingSession(database, owner, sessionId)).toEqual(detail);
+    await expect(loadTrainingSession(database, viewer(fixture.otherUid), sessionId))
+      .rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it.each(["missing", "pending"] as const)("rejects corrupt history with %s exercise state", async (state) => {
+    const { database, raw } = await openDatabase();
+    const fixture = await createFixture(database);
+    const repository = createWorkoutRepository(database);
+    const owner = viewer(fixture.ownerUid);
+    const started = await repository.startOrResume(owner, {
+      programId: fixture.programId, dayId: fixture.dayId,
+      idempotencyKey: "start-corrupt-history",
+    });
+    const sessionId = started.model.session.id;
+    // Construct corruption directly; ordinary completion rejects pending work.
+    if (state === "missing") {
+      await raw.query("DELETE FROM workout_exercise_states WHERE session_id = $1", [sessionId]);
+    }
+    await raw.query(
+      `UPDATE workout_sessions SET state = $2::session_state,
+        completed_at = CASE WHEN $2 = 'completed' THEN now() ELSE NULL END,
+        abandoned_at = CASE WHEN $2 = 'abandoned' THEN now() ELSE NULL END
+        WHERE id = $1`,
+      [sessionId, state === "missing" ? "abandoned" : "completed"],
+    );
+    await expect(loadTrainingSession(database, owner, sessionId))
+      .rejects.toMatchObject({ code: "conflict" });
   });
 
   it("maps malformed resource UUIDs to stable errors before typed database predicates", async () => {

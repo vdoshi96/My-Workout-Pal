@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b16bb5bd8993bea57a433b40762be083963b77bf8d8947cda97b73d1c2a8ee5b">
+  <meta name="source-sha256" content="a4278ee1bd61bf169698fc1db023cda445d453000f6239e6a0c35931a2708418">
   <title>Workout runner component plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -104,7 +104,7 @@ notes, and operations satisfy the domain rules.</li>
 <p>The component treats the snapshot as immutable. It displays canonical values
 in kilograms, meters, and seconds and performs presentation formatting only at
 the boundary. Warm-up measurements keep their <code>isWarmup</code> marker and never
-become work-set progression input. Every reducer operation carries an
+count toward work-set volume or personal records. Every reducer operation carries an
 idempotency key and source revision. Local drafts remain recoverable when a
 submit fails, the browser goes offline, or authentication expires.</p>
 <p>The injected storage adapter persists the state before submission. A submitter

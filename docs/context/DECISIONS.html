@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="5e248be635fe4daf0ffb5dff50fde5a86f4cc5a5113cf075ec7f173294e013df">
+  <meta name="source-sha256" content="d33f51f39ec129e940cc2796ac694795908d71ac1df0dfb47fb5a75756ed73e8">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -158,6 +158,14 @@ That behavior predates and lies outside the companion release. It remains an
 explicit follow-up; this release neither hides it nor changes repository
 semantics. Native 200% and Google owner-choice boundaries are also reported as
 capability/owner gates rather than replaced by simulated evidence.</p>
+<h2>2026-09-04: Remove unused progression logic and accept unfinished History</h2>
+<p>The progression evaluator had no application caller. Remove it and its isolated
+tests instead of maintaining an undelivered suggestion feature. Runner aliases
+with no callers and the unused barrel also have no compatibility consumer.</p>
+<p>Abandoning a workout does not complete or skip each exercise. History preserves
+that pending state and presents it as unfinished, with any saved sets intact.
+Only completed sessions require terminal exercise states; missing state remains
+a conflict. This read correction requires no historical writes or schema change.</p>
 
   </main>
 </body>

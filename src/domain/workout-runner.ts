@@ -146,7 +146,6 @@ export type WorkoutSnapshot = Readonly<{
   cardioOptions: readonly CardioSnapshot[];
 }>;
 export type ActiveWorkoutSnapshot = WorkoutSnapshot;
-export type ActiveSessionSnapshot = WorkoutSnapshot;
 
 export type WeightRepsDraft = Readonly<{
   kind: "weight_reps";
@@ -351,7 +350,6 @@ export type ActiveWorkoutState = Readonly<{
   nextOperationSequence: number;
   lastUpdatedAt: number;
 }>;
-export type RunnerState = ActiveWorkoutState;
 
 export type RunnerAction =
   | Readonly<{ type: "navigate_exercise"; index: number }>
@@ -969,8 +967,6 @@ export function createWorkoutSnapshot(
     cardioOptions,
   });
 }
-
-export const createActiveWorkoutSnapshot = createWorkoutSnapshot;
 
 export function createSetDraft(kind: MeasurementKind): SetDraft {
   assertKind(kind, "kind");
@@ -2559,9 +2555,6 @@ export function mergeRunnerStorageRecords(
   });
 }
 
-export const mergeRunnerStorage = mergeRunnerStorageRecords;
-export const mergeRunnerRecords = mergeRunnerStorageRecords;
-
 function queueOperation(
   state: ActiveWorkoutState,
   kind: RunnerOperationKind,
@@ -2992,8 +2985,6 @@ export function createRunnerState(
   };
   return withUpdated(state, { sync: syncForState(state) }, now);
 }
-
-export const createRunner = createRunnerState;
 
 export function getActiveSetDisplay(state: ActiveWorkoutState): Readonly<{
   exerciseId: string;
@@ -3759,8 +3750,6 @@ export function runnerReducer(
   return state;
 }
 
-export const reduceRunner = runnerReducer;
-
 export function isNavigationBlocked(state: ActiveWorkoutState): boolean {
   if (state.status === "completed" || state.status === "abandoned")
     return false;
@@ -3797,10 +3786,6 @@ export function navigationProtectionReason(
     return "A workout save is still pending.";
   return undefined;
 }
-
-export const shouldBlockNavigation = isNavigationBlocked;
-export const shouldProtectNavigation = isNavigationBlocked;
-export const getSetDisplayData = getActiveSetDisplay;
 
 export function runnerStorageKey(ownerUid: string, sessionId: string): string {
   assertString(ownerUid, "ownerUid");
@@ -4052,9 +4037,6 @@ export async function loadRunnerState(
   return deepFreeze(hydrated);
 }
 
-export const restoreRunnerState = loadRunnerState;
-export type RunnerDraftStorage = RunnerStorage;
-
 export async function clearRunnerState(
   storage: RunnerStorage,
   ownerUid: string,
@@ -4246,8 +4228,6 @@ export async function syncRunnerOperations(
 
   return state;
 }
-
-export const syncPendingOperations = syncRunnerOperations;
 
 export function getPendingOperations(
   state: ActiveWorkoutState,
