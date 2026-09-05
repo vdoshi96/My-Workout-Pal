@@ -966,7 +966,7 @@ export function ProgramEditor({
       sectionRemoval !== null ||
       dayRemoval !== null ||
       prescriptionRemoval !== null,
-    hasStatusMessage: message.trim().length > 0,
+    hasStatusMessage: saveFailed,
   });
 
   return (

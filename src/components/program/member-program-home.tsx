@@ -10,6 +10,7 @@ import {
   formatInsightVolume,
 } from "@/components/insights/training-insights-presenters";
 import { Icon } from "@/components/ui/icon";
+import { CompanionPreference } from "@/components/ui/companion-preference";
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
@@ -55,6 +56,7 @@ export function MemberProgramHome({
       className={`member-program${hasResumableWorkout ? " member-program--resumable" : ""}`}
       aria-labelledby="member-program-title"
     >
+      <div className="member-today-scene">
       <header className="member-program-hero contour-surface">
         <div className="member-program-copy">
 
@@ -110,6 +112,9 @@ export function MemberProgramHome({
         <StartWorkoutControl dayId={selectedDay.id} programId={program.id} eligible={canMutate} />
         <Link href={`/app/program/${selectedDay.dayKey}`} prefetch={false}>Review this day</Link>
       </section> : null}
+
+      <CompanionPreference compact />
+      </div>
 
       <section className="member-week" aria-labelledby="member-week-title">
         <div className="section-heading">

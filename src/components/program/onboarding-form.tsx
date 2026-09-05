@@ -1,5 +1,6 @@
 "use client";
 
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
@@ -88,9 +89,10 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
 
   return (
     <section className="member-onboarding" aria-labelledby="onboarding-title">
-      <header className="member-onboarding-copy">
+      <header className="member-onboarding-copy companion-heading">
         <h1 id="onboarding-title">Make room for your routine.</h1>
         <p>Choose a starting point. Make it yours as you go.</p>
+        <DecorativeCompanion variant="member-home" />
       </header>
       {!canMutate ? <p role="status">Verify your email and sign in again before saving a routine.</p> : null}
       <form className="onboarding-form" onSubmit={(event) => void submit(event)}>

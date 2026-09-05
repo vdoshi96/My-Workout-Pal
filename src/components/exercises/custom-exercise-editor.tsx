@@ -1,5 +1,6 @@
 "use client";
 
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -174,13 +175,14 @@ export function CustomExerciseEditor({
 
   return (
     <section className="custom-editor" aria-labelledby="custom-exercise-title">
-      <header className="member-page-heading">
+      <header className="member-page-heading companion-heading">
         <div>
           <span className="eyebrow">Private exercise</span>
           <h1 id="custom-exercise-title">{mode === "create" ? "Create a movement" : "Edit movement"}</h1>
           <p>Choose one durable logging meaning. A referenced movement must be cloned before that meaning can change.</p>
         </div>
         <Link className="back-link" href="/app/library/custom"><Icon name="arrow-left" /> Custom library</Link>
+        <DecorativeCompanion variant="library" />
       </header>
 
       {!canMutate ? (

@@ -1,3 +1,4 @@
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import Link from "next/link";
 
 import {
@@ -18,7 +19,7 @@ export function PersonalRecordsView({
 }>) {
   return (
     <section className="insights-page" aria-labelledby="records-title">
-      <header className="insights-heading contour-surface">
+      <header className="insights-heading contour-surface companion-heading">
         <div>
           <Link className="back-link" href="/app/progress" prefetch={false}>
             <Icon name="arrow-left" /> Back to progress
@@ -30,6 +31,7 @@ export function PersonalRecordsView({
             choosing one source.
           </p>
         </div>
+        <DecorativeCompanion variant="history" />
       </header>
 
       {records.length === 0 ? (

@@ -8,12 +8,13 @@ import { Icon } from "@/components/ui/icon";
 const destinations = [
   { href: "/app", label: "Today", icon: "dumbbell" },
   { href: "/app/program/edit", label: "Routine", icon: "map" },
+  { href: "/app/library", label: "Library", icon: "library" },
   { href: "/app/progress", label: "Progress", icon: "progress" },
 ] as const;
 
 export function authenticatedDestinationIsCurrent(pathname: string, href: string): boolean {
   if (href === "/app") return pathname === href || pathname.startsWith("/workout/");
-  if (href === "/app/program/edit") return pathname.startsWith("/app/program") || pathname.startsWith("/app/library");
+  if (href === "/app/program/edit") return pathname === "/app/program" || pathname.startsWith("/app/program/");
   if (href === "/app/progress") return ["/app/progress", "/app/history", "/app/prs"].some((path) => pathname === path || pathname.startsWith(`${path}/`));
   return pathname === href || pathname.startsWith(`${href}/`);
 }

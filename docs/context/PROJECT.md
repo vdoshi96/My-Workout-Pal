@@ -15,7 +15,7 @@ My Workout Pal is a customizable workout companion that connects planning, in-wo
 - Register or sign in with Google or email and password.
 - Land in an unmistakably private account after sign-in and see identity, account state, and sign-out controls.
 - Verify a password account before permanent mutations.
-- Navigate with Today, Routine, and Progress, with Settings as a utility.
+- Navigate with Today, Routine, Library, and Progress, with Settings as a utility.
 - Start from the example or a genuinely empty setup draft; add, rename, reorder, or remove days; edit movements, optional sections, and optional cardio; and create private exercises.
 - Attach owner-only guidance links without modifying the public catalog.
 - Confirm equipment substitutions on the active program.

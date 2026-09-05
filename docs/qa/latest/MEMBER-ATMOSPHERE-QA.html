@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="780d001ac6647f5226ad0998349cd422051b179bb315884197358d4ac99c0312">
+  <title>Member atmosphere release QA · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Member atmosphere release QA</h1>
+<h2>Scope</h2>
+<p>September 5, 2026. Direct Library access, including before routine setup; four primary member destinations; seven contextual scenes with six original cartoon characters; integrated phone and desktop backgrounds; browser-local Today companion choice and global Off. No migration, seed, video approval, provider change, or workout-domain change is part of this release.</p>
+<h2>Local verification</h2>
+<p>The full suite passed 868 tests across 126 files. The final focused run passed 24 tests across six files, including the added pre-setup Library case. Navigation tests first failed for the missing link and incorrect selected destination. The pre-setup Library test first failed on the setup redirect. All pass after their corrections.</p>
+<p>Typecheck, lint, 34 database checks, seed-policy checks, public service-worker v8 verification, production build, and the 45-entry production route boundary passed. Documentation and HTML parity are generated together.</p>
+<p>The local authenticated matrix passed six journeys on Chromium desktop and WebKit phone. It covered empty setup, direct Library before and after setup, private routine save and undo, Today selection, Start visibility, strength/duration/distance logging, paused-rest reload recovery, completion, Progress, browser-local companion choice, and global Off. Settings passed accessibility scans after live dark switching and after a fresh dark load. External video content was stubbed in the isolated local harness; no playback claim comes from that run.</p>
+<p>Public Chromium desktop and WebKit phone checks passed welcome, disposable practice and refresh discard, Library search, movement detail, Progress preview, and sign-in. App-owned accessibility scans reported zero violations and checked surfaces had no horizontal overflow or page errors.</p>
+<h2>Design review</h2>
+<p>The independent Impeccable review accepted contextual activities, integrated scene treatment, direct Library navigation, Today action hierarchy, and restrained runner imagery. Its requested fixes addressed WebKit theme-switch foregrounds, authoritative documentation, and the selected-equipment side stripe. The verdict pass scored all three fixes resolved and returned <code>ship</code> for those reviewed corrections.</p>
+<h2>Browser evidence</h2>
+<p>The local captures use synthetic data and a visible fixture banner. Fixed phone navigation appears at the viewport boundary in full-page captures.</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Desktop</th>
+<th>Phone</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Today</td>
+<td><a href="member-atmosphere/local/chromium-desktop-today.png">Capture</a></td>
+<td><a href="member-atmosphere/local/webkit-phone-today.png">Capture</a></td>
+</tr>
+<tr>
+<td>Routine</td>
+<td><a href="member-atmosphere/local/chromium-desktop-routine.png">Capture</a></td>
+<td><a href="member-atmosphere/local/webkit-phone-routine.png">Capture</a></td>
+</tr>
+<tr>
+<td>Library</td>
+<td><a href="member-atmosphere/local/chromium-desktop-library.png">Capture</a></td>
+<td><a href="member-atmosphere/local/webkit-phone-library.png">Capture</a></td>
+</tr>
+<tr>
+<td>Progress</td>
+<td><a href="member-atmosphere/local/chromium-desktop-progress.png">Capture</a></td>
+<td><a href="member-atmosphere/local/webkit-phone-progress.png">Capture</a></td>
+</tr>
+<tr>
+<td>Settings, dark</td>
+<td><a href="member-atmosphere/local/chromium-desktop-settings-dark.png">Capture</a></td>
+<td><a href="member-atmosphere/local/webkit-phone-settings-dark.png">Capture</a></td>
+</tr>
+</tbody></table>
+<h2>Production verification</h2>
+<p>Pending deployment. The recorded rollback baseline is Ready deployment <code>dpl_7dkBB16HW6GHWtUTgjQSthLv2c37</code>. Release completion requires the stable production alias, authenticated browser journey, exact disposable-account cleanup, and unchanged global persistence digest. Local evidence does not establish these hosted results.</p>
+<h2>Evidence retention</h2>
+<p>This report replaces the previous completed Quiet Set QA set. The previous report and read-only video inventory remain available in <a href="https://github.com/vdoshi96/My-Workout-Pal/tree/9bfc163/docs/qa/latest">their Git snapshot</a>. Video inventory was not modified or reapproved in this iteration. Asset provenance resides beside each public WebP.</p>
+
+  </main>
+</body>
+</html>

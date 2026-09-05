@@ -1,10 +1,16 @@
 # Project status
 
-## Quiet Set implementation: September 4–5, 2026
+## Member atmosphere and Library: September 5, 2026
+
+The active redesign branch is `vishal/member-gym-design`. It exposes Library in the four-destination member navigation, including before routine setup, and extends the bright illustrated gym across member surfaces with six characters in seven task-specific scenes. Today has visible browser-local companion selection; Off hides all companions. Training data, ownership, recovery, and video approvals retain their existing contracts.
+
+Local verification passed the full 868-test suite, focused tests for the added pre-setup Library behavior, typecheck, lint, database checks, seed/PWA checks, and the production build. Reviewer-requested dark-theme verification and production closeout are in progress. See `docs/plans/MEMBER-ATMOSPHERE.md`. The canonical checkout is the only worktree; no unresolved worktree remains.
+
+## Quiet Set implementation: September 4–5, 2026 (historical release)
 
 The redesign and rest-durability correction merged through PRs #3 and #4. Verified application commit `59f376ed55b8687d0548bd03f444bed335791166` is Ready on deployment `dpl_3upAjSUwahbkdZewr2VDyHwEc2WD`, serving [the stable site](https://my-workout-pal-chi.vercel.app). The canonical checkout is the only MWP worktree; no unresolved worktree remains. Documentation-only closeout preserves this tested application source.
 
-Implemented behavior is described in `docs/plans/QUIET-SET-IMPLEMENTATION.md`. Classic 2D cartoon Pip/Mica and bright gym environments replace the rejected artwork. Verification passed 867 tests, the local member resilience matrix, live public desktop/phone checks, and the real hosted account/workout/Progress/ownership journey. Timer pause/extend now checkpoints locally before waiting for a slow remote save. Both disposable accounts were cleaned up and shared catalog state stayed unchanged. The latest [release QA](../qa/latest/QUIET-SET-QA.md) records exact evidence and limits.
+Implemented behavior is described in `docs/plans/QUIET-SET-IMPLEMENTATION.md`. Classic 2D cartoon Pip/Mica and bright gym environments replace the rejected artwork. Verification passed 867 tests, the local member resilience matrix, live public desktop/phone checks, and the real hosted account/workout/Progress/ownership journey. Timer pause/extend now checkpoints locally before waiting for a slow remote save. Both disposable accounts were cleaned up and shared catalog state stayed unchanged. The latest [release QA at its recorded source](https://github.com/vdoshi96/My-Workout-Pal/blob/9bfc163/docs/qa/latest/QUIET-SET-QA.md) records exact evidence and limits.
 
 Read-only production reconciliation on September 5 found exactly 268 video mappings, matching the inventory with no missing or extra entries. All returned oEmbed metadata. All 134 public guides rendered the expected primary mapping. Both existing Push-up demos played in a normal browser on the production origin; this is selected playback evidence, not full human viewing of the catalog. No migration, seed, or video approval changed.
 

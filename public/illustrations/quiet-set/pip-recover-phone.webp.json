@@ -1,0 +1,14 @@
+{
+  "prompt": "My Workout Pal original wide landscape 3:2 bright classic theatrical cel-animation gym scene, exact original Pip tan stoat with black tail tip and teal wristbands from reference, now seated relaxed on a teal gym bench in RIGHT third, elbows on knees, drinking water from teal bottle with towel around shoulders. Distinct RESTING pose, no waving. Bright warm daylight in calm gym recovery corner, leafy plant, wooden floor, cream wall, window, contact shadows and consistent perspective. Left 60% mostly empty pale cream wall, scene and character right, full body visible. No text, no isolated portrait, no rectangle, no checkerboard. Contextual small website illustration, same line weight as reference.",
+  "source": "Original image_gen output, September 5, 2026",
+  "references": [
+    "dawn-studio.webp",
+    "pip-ready.webp"
+  ],
+  "derivative": {
+    "width": 600,
+    "format": "webp",
+    "quality": 84
+  },
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

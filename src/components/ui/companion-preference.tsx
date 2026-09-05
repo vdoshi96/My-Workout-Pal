@@ -22,11 +22,11 @@ function snapshot(): CompanionChoice {
 export function useCompanionChoice(): CompanionChoice {
   return useSyncExternalStore(subscribe, snapshot, () => "pip");
 }
-export function CompanionPreference() {
+export function CompanionPreference({ compact = false }: { compact?: boolean }) {
   const choice = useCompanionChoice();
-  return <section className="quiet-companion-preference" aria-labelledby="companion-preference-title">
-    <h2 id="companion-preference-title">A little company</h2>
-    <p>Optional illustrations, saved on this browser. They never change your workout.</p>
+  return <section className={`quiet-companion-preference${compact ? " companion-switcher" : ""}`} aria-labelledby="companion-preference-title">
+    <h2 id="companion-preference-title">{compact ? "Your training companion" : "A little company"}</h2>
+    <p>{compact ? "Choose your welcome. The rest of the crew joins you around the gym." : "Choose Pip or Mica for Today. The library, planner, progress, and settings have their own companions. Off hides the whole crew. Saved on this browser only."}</p>
     <label htmlFor="companion-choice">Your companion</label>
     <select id="companion-choice" value={choice} onChange={(event) => {
       try { localStorage.setItem(key, event.target.value); } catch { return; }

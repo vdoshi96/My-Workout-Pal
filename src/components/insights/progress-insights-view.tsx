@@ -1,3 +1,4 @@
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import Link from "next/link";
 
 import {
@@ -17,7 +18,7 @@ export function ProgressInsightsView({
 
   return (
     <section className="insights-page" aria-labelledby="progress-title">
-      <header className="insights-heading contour-surface">
+      <header className="insights-heading contour-surface companion-heading">
         <div>
 
           <h1 id="progress-title">Progress</h1>
@@ -26,6 +27,7 @@ export function ProgressInsightsView({
         <Link className="insight-action" href="/app/prs">
           Personal records <Icon name="arrow-right" />
         </Link>
+        <DecorativeCompanion variant="history" />
       </header>
 
       <dl className="progress-totals">

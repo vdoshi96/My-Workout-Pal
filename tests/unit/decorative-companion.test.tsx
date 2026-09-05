@@ -21,9 +21,9 @@ describe("DecorativeCompanion", () => {
       "workout",
     ]);
     for (const asset of Object.values(COMPANION_ASSETS)) {
-      expect(asset.src).toMatch(/^\/illustrations\/quiet-set\/pip-(ready|resting|complete)\.webp$/);
-      expect(asset.width).toBe(320);
-      expect(asset.height).toBe(320);
+      expect(asset.src).toMatch(/^\/illustrations\/quiet-set\/(pip-studio|tortoise-review|otter-study|beaver-plan|hare-prepare|pip-recover)\.webp$/);
+      expect(asset.width).toBe(1200);
+      expect(asset.height).toBe(800);
     }
   });
 

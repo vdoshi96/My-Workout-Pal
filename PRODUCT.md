@@ -48,13 +48,13 @@ Users browse on phones, tablets, and desktop browsers. Workout logging primarily
 
 ## Current interaction contract
 
-The main member navigation is Today, Routine, and Progress. Settings and movement guidance stay contextual. Today prioritizes Start or Resume. The runner shows the current movement, targets, and entry controls before expandable guidance. Log set & rest queues one intended set and starts its configured deadline; repeating the unchanged action preserves its identity and deadline. Next set and Next exercise are explicit. Pending, confirmed, and failed saves stay distinguishable.
+The main member navigation is Today, Routine, Library, and Progress. Settings remains a utility. Library is directly accessible before and after routine setup. Before setup it shows the explicitly labeled dumbbell, bodyweight, and bench catalog. Today prioritizes Start or Resume. The runner shows the current movement, targets, and entry controls before expandable guidance. Log set & rest queues one intended set and starts its configured deadline; repeating the unchanged action preserves its identity and deadline. Next set and Next exercise are explicit. Pending, confirmed, and failed saves stay distinguishable.
 
 The public Try one set experience is disposable and requires no account. Refresh discards it. An empty setup draft has no placeholder movement and makes no creation request until the member selects a real movement and explicitly saves. It is held in the current page, not persisted across reload. Routine edits preserve immutable published revisions and workout snapshots. Movement removal can be undone while that removal remains the most recent draft change; publication still requires valid content.
 
 Progress includes completed work sets and repetitions. Bodyweight training does not require added load. Irrelevant zero load, duration, and distance totals are omitted. The application does not automatically prescribe load progression.
 
-Companion illustrations are optional Pip or Mica choices, with an Off setting saved to this browser only. The user's September 4 art correction requires expressive classic 2D theatrical cartoon characters and a bright modern gym. Naturalistic animals and gloomy studio art were rejected.
+Six original characters form a contextual cast: Pip and Mica welcome users, an otter studies guidance, a beaver plans routines, a tortoise reviews training, and a hare prepares equipment. Pip also has a seated recovery pose. The browser-local preference chooses Pip or Mica for Today; Off hides the cast throughout the site. The user's September 4 art correction requires expressive classic 2D theatrical cartoon characters and a bright modern gym. Naturalistic animals and gloomy studio art were rejected.
 
 New public demonstration publication retains full human viewing and approval. A surviving valid legacy demonstration remains available if its alternate is missing. Database approval flags are not independent viewing evidence. The read-only maintenance inventory separates metadata checks from playback, visual inspection, human viewing, and editorial approval.
 

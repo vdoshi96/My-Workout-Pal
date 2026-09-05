@@ -1,0 +1,14 @@
+{
+  "prompt": "Original My Workout Pal website illustration in the exact bright classic theatrical 2D cartoon and cel-painted background style of references. WIDE 3:2 landscape. Warm cream gym walls, sunlit wood floor, teal furniture, warm soft daylight, simplified bold ink lines. Left 55% calm pale cream wall and floor empty for webpage copy; original expressive animal and room details on RIGHT 45%, full body visible, about half image height. Physically integrate animal with surroundings, contact shadows, same perspective. Not a portrait or card, no white rectangle, no checkerboard, no text UI or letters. A sage-green friendly TORTOISE with amber shell and round spectacles seated at a small teal gym desk looking thoughtfully at an open blank workout journal, pencil resting in hand, no trophies or celebration. Window and leafy plant beside desk, book cubby and folded towel nearby. Reflective review pose with quiet satisfaction, bright recovery lounge.",
+  "source": "Original image_gen output, September 5, 2026",
+  "references": [
+    "dawn-studio.webp",
+    "pip-ready.webp"
+  ],
+  "derivative": {
+    "width": 1200,
+    "format": "webp",
+    "quality": 84
+  },
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

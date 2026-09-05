@@ -1,5 +1,6 @@
 "use client";
 
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -311,7 +312,7 @@ export function ProgramCollection({
       className="program-collection member-page"
       aria-labelledby="program-collection-title"
     >
-      <header className="member-page-heading">
+      <header className="member-page-heading companion-heading">
         <div>
           <span className="eyebrow">Owned programs</span>
           <h1 id="program-collection-title">Your routes</h1>
@@ -324,6 +325,7 @@ export function ProgramCollection({
         <Link className="secondary-action" href="/app">
           <Icon name="arrow-left" /> Active overview
         </Link>
+        <DecorativeCompanion variant="routine-editor" />
       </header>
 
       {!canMutate ? (

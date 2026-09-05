@@ -1,3 +1,4 @@
+import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -54,7 +55,7 @@ export default async function ExercisePage({ params, searchParams }: PageProps) 
 
   return (
     <PublicShell current="library">
-      <header className="exercise-hero contour-surface">
+      <header className="exercise-hero contour-surface companion-heading">
         <Link className="back-link" href={returnContext.href}>
           <Icon name="arrow-left" /> {returnContext.label}
         </Link>
@@ -67,6 +68,7 @@ export default async function ExercisePage({ params, searchParams }: PageProps) 
             {compatible ? `Fits your ${EQUIPMENT_PROFILES[profile].label} profile` : `Needs ${exercise.requiredEquipment.join(" + ")}`}
           </span>
         </div>
+        <DecorativeCompanion variant="library" />
       </header>
 
       <div className="exercise-grid">

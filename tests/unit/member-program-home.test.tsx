@@ -131,7 +131,7 @@ describe("MemberProgramHome", () => {
     expect(markup).not.toContain("walker or runner");
     expect(markup).toContain('data-companion-placement="member-home"');
     expect(markup).toContain(
-      'src="/illustrations/quiet-set/pip-ready.webp"',
+      'src="/illustrations/quiet-set/pip-studio.webp"',
     );
   });
 

@@ -17,6 +17,12 @@ describe("authenticated account navigation", () => {
     expect(authenticatedDestinationIsCurrent("/app/history", "/app")).toBe(false);
   });
 
+  it("keeps Library independent from Routine", () => {
+    expect(authenticatedDestinationIsCurrent("/app/library", "/app/program/edit")).toBe(false);
+    expect(authenticatedDestinationIsCurrent("/app/library/custom/new", "/app/program/edit")).toBe(false);
+    expect(authenticatedDestinationIsCurrent("/app/library-extra", "/app/library")).toBe(false);
+  });
+
   it("selects nested destination routes without matching sibling prefixes", () => {
     expect(authenticatedDestinationIsCurrent("/app/history/session-a", "/app/history")).toBe(true);
     expect(authenticatedDestinationIsCurrent("/app/history-extra", "/app/history")).toBe(false);
@@ -24,13 +30,15 @@ describe("authenticated account navigation", () => {
     expect(authenticatedDestinationIsCurrent("/app/library/custom/new", "/app/library")).toBe(true);
   });
 
-  it("names Today, Routine, and Progress as the three primary destinations", () => {
+  it("exposes Library as a fourth primary destination", () => {
     const markup = renderToStaticMarkup(<AuthenticatedNav />);
 
     expect(markup).toContain('href="/app"');
     expect(markup).toContain(">Today<");
     expect(markup).toContain(">Routine<");
     expect(markup).toContain(">Progress<");
+    expect(markup).toContain('href="/app/library"');
+    expect(markup).toContain(">Library<");
     expect(markup).not.toContain(">Program<");
   });
 });
