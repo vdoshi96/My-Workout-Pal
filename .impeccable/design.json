@@ -481,7 +481,7 @@
     ],
     "notes": [
       "Tonal ramps are synthesized display metadata, not additional application tokens.",
-      "The local build is documented; production verification remains pending."
+      "The application build and production verification are documented in docs/qa/latest/QUIET-SET-QA.md."
     ]
   },
   "components": [

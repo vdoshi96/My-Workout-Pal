@@ -4,7 +4,11 @@
 
 The September 4–5 implementation follows the companion comparison and the user's subsequent art correction. Original cartoon Pip/Mica and bright gym environments replace the rejected naturalistic artwork. Today, setup, routine editing, workout logging, rest, Progress, video presentation, and the public trial use the new interface.
 
-The first production release is commit `271795b425354e292238715b6ab966cb74ab2832`, deployment `dpl_Hs3P7gV1v1eopwSUj36z7FBKbnPz`. The live public trial and all 134 rendered public guides passed. Hosted member QA exposed a pause/extend checkpoint waiting behind a slow network save. Both disposable accounts were removed and shared catalog state stayed unchanged. A focused durability correction and repeat hosted verification are in progress; this record does not yet certify the member release.
+The verified application release is commit `59f376ed55b8687d0548bd03f444bed335791166`, deployment `dpl_3upAjSUwahbkdZewr2VDyHwEc2WD`, Ready on [the stable live site](https://my-workout-pal-chi.vercel.app). PRs #3 and #4 contain the redesign and durability correction. Documentation-only closeout commits preserve this tested application source.
+
+Live verification passed the public trial, all 134 rendered exercise guides, and a real authenticated workout from blank setup through saved completion and Progress. Rest pause/extension survives reload. A second disposable account received the same response for foreign and missing workout IDs. Both test accounts and their owned data were removed; the Firebase aggregate returned from one to one, and shared catalog state stayed unchanged. The bounded post-run deployment error-log query returned zero entries.
+
+The first hosted run exposed a local timer checkpoint waiting behind a slow network save. The correction passed a meaningful regression test and the repeated live journey. The earlier failure is resolved; the successful result replaces its generated evidence.
 
 ## Automated evidence
 
@@ -24,7 +28,7 @@ The first production release is commit `271795b425354e292238715b6ab966cb74ab2832
 
 The matrix covers zero setup POSTs before the final save; an actually empty draft; removal and undo; one-set publication; first-viewport Start and logging controls at 390 × 844; 10 unloaded push-ups; a 30-second hold; a 500-meter effort; rest pause/extension; reload; saved-set editing; completion; useful Progress totals; and persisted companion selection/off.
 
-Runner resilience checks cover aborted requests with stable keys, expired/revoked authentication, two offline tabs, conflicting edits, stale confirmations, and durable completion. The tests use isolated PGlite data and loopback-only synthetic identities. Hosted authentication is a separate release gate.
+Runner resilience checks cover aborted requests with stable keys, expired/revoked authentication, two offline tabs, conflicting edits, stale confirmations, and durable completion. The tests use isolated PGlite data and loopback-only synthetic identities. The separate real hosted authentication gate passed; its result is retained in `quiet-set/hosted/result.json`.
 
 ## Red and green
 
@@ -44,8 +48,10 @@ The independent Impeccable finish review returned four material fixes. The verdi
 - Demos and the workout outline use native disclosure controls. Their content remains secondary to logging and available to keyboard users.
 - The existing full-human-watch publication policy remains in force. Runtime can retain one valid existing demonstration; metadata checks and legacy database flags cannot approve new media. Variant notes identify the report's ambiguous examples.
 - No real-participant usability study, physical-device certification, or native browser-menu 200% zoom run was completed in this iteration. Browser viewport/reflow evidence is scoped accordingly.
-- No claim covers playback of all 268 videos. Selected-origin playback is recorded separately after hosted QA.
+- The automated player probe was inconclusive. A normal Codex in-app browser subsequently played both existing Push-up demos on the stable production origin: primary `IODxDxX7oi4` advanced to 13 seconds and alternate `exVWa1ZNUzM` to 20 seconds. Titles, provider attribution, origin-aware frames, and direct YouTube links were present. This verifies selected playback, not all 268 videos or full human viewing.
+
+The read-only weekly video-evidence workflow passed [GitHub Actions run 33940066352](https://github.com/vdoshi96/My-Workout-Pal/actions/runs/33940066352). It checks metadata and inventory integrity; it never approves videos.
 
 ## Evidence locations
 
-Final screenshots and machine-readable public/member results are retained in the adjacent `quiet-set/` directory after hosted verification. The comparison report remains a dated audit and retains its historical evidence. Current behavior is documented in `docs/plans/QUIET-SET-IMPLEMENTATION.md`, `PRODUCT.md`, and `DESIGN.md`.
+Final screenshots and machine-readable public/member results are retained in the adjacent `quiet-set/` directory. Hosted Today and runner captures are production evidence; the retained Progress captures are from the isolated local member test. A hosted Progress screenshot caught a transient loading frame and was discarded rather than presented as rendered Progress proof. Hosted functional assertions independently verified the persisted totals. The comparison report remains a dated audit and retains its historical evidence. Current behavior is documented in `docs/plans/QUIET-SET-IMPLEMENTATION.md`, `PRODUCT.md`, and `DESIGN.md`.

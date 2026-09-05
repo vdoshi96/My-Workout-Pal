@@ -42,8 +42,7 @@ Use the following documents as the maintained project map:
 - `docs/plans/PROGRAM-COLLECTION.md`: owned-program creation, cloning, activation, authorization, recovery, and verification design.
 - `docs/plans/VERIFICATION.md`: automated and manual release matrix.
 - `docs/design/DIRECTION.md`: original visual world and interaction grammar.
-- `DESIGN.md`: current reusable design-system rules for the reviewed Wave 3
-  system as integrated into the Wave 4 candidate.
+- `DESIGN.md`: current Quiet Set design-system rules, cartoon artwork, bright gym scenes, and implemented interaction states.
 - `design-qa.md`: Product Design reference-to-build review for the integrated
   Wave 4 companion candidate, including the equipment-review correction and
   native-zoom refresh limitation.
@@ -63,7 +62,9 @@ Use the following documents as the maintained project map:
 
 Markdown files are canonical. Generated HTML counterparts support portable review and must remain in parity.
 
-## Wave 4 production status
+## Wave 4 production status (historical)
+
+The following describes the earlier Wave 4 release; current production evidence is in `docs/qa/latest/QUIET-SET-QA.md`.
 
 The complete pilot, rollout, integration, and release lineage is public on
 `main`. Application commit `de19b1c89c34235723158ad8858f6b46f4fcde72`

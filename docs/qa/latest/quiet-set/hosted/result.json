@@ -1,12 +1,11 @@
 {
-  "checkedAt": "2026-09-05T02:53:00.096Z",
+  "checkedAt": "2026-09-05T03:03:53.159Z",
   "origin": "https://my-workout-pal-chi.vercel.app",
-  "passed": false,
-  "stage": "reload: paused timer",
+  "passed": true,
+  "stage": "foreign owner read",
   "cleanupConfirmed": true,
   "globalStateUnchanged": true,
   "firebaseCountBefore": 1,
   "firebaseCountAfter": 1,
-  "playback": "not verified",
-  "failure": "Hosted check failed at reload: paused timer."
+  "playback": "YouTube playback could not be established; origin, frame, and external fallback verified"
 }

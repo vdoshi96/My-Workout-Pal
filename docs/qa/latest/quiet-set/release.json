@@ -1,0 +1,28 @@
+{
+  "applicationCommit": "59f376ed55b8687d0548bd03f444bed335791166",
+  "deploymentId": "dpl_3upAjSUwahbkdZewr2VDyHwEc2WD",
+  "readyState": "READY",
+  "origin": "https://my-workout-pal-chi.vercel.app",
+  "hostedCheckedAt": "2026-09-05T03:03:53.159Z",
+  "hostedPassed": true,
+  "disposableAccountCleanupConfirmed": true,
+  "globalStateUnchanged": true,
+  "publicGuidesPassed": 134,
+  "runtimeErrorEntries": 0,
+  "runtimeLogScope": "Post-hosted-QA query, deployment-scoped, preceding 15 minutes, limit 100",
+  "videoWorkflowRun": 33940066352,
+  "selectedPlayback": {
+    "browser": "Codex in-app browser",
+    "route": "/library/push-up",
+    "primary": {
+      "id": "IODxDxX7oi4",
+      "elapsedSecondsObserved": 13
+    },
+    "alternate": {
+      "id": "exVWa1ZNUzM",
+      "elapsedSecondsObserved": 20
+    },
+    "scope": "Observed elapsed-time advancement; not full human viewing or entire catalog playback"
+  },
+  "documentationCloseout": "Subsequent documentation-only commits preserve this tested application source"
+}
