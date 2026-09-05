@@ -28,6 +28,9 @@ import { privateApiMutation, PrivateApiClientError } from "@/client/private-api"
 import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
 import { performSessionSignOut } from "@/client/session-sign-out";
 import { FirebaseClientIdentityStatus } from "@/components/settings/firebase-client-identity-status";
+import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
+import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
+import { CompanionPreference } from "@/components/ui/companion-preference";
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 import { parsePreferencesMutationResponse } from "@/components/settings/preferences-response";
@@ -48,6 +51,7 @@ function errorMessage(error: unknown, fallback: string): string {
 
 export function SettingsForm({
   canMutate,
+  activeProgram,
   equipmentProfileKind,
   firebaseConfig,
   initialFirebaseIdentityState = { status: "loading" },
@@ -56,6 +60,7 @@ export function SettingsForm({
   viewerProvider,
 }: Readonly<{
   canMutate: boolean;
+  activeProgram?: ActiveProgramReadModel;
   equipmentProfileKind: EquipmentProfileKind;
   firebaseConfig: FirebasePublicConfig | null;
   initialFirebaseIdentityState?: FirebaseClientIdentityState;
@@ -64,6 +69,7 @@ export function SettingsForm({
   viewerProvider: ViewerProvider;
 }>) {
   const router = useRouter();
+  const [equipmentProgram, setEquipmentProgram] = useState(activeProgram);
   const [preferences, setPreferences] = useState(initialPreferences);
   const [unitSystem, setUnitSystem] = useState(initialPreferences.unitSystem);
   const [timezone, setTimezone] = useState(initialPreferences.timezone);
@@ -357,7 +363,7 @@ export function SettingsForm({
         <div>
           <span className="eyebrow">Private account preferences</span>
           <h1 id="settings-title">Settings</h1>
-          <p>Units change entry and presentation only. Persisted loads and distances keep their canonical meaning.</p>
+          <p>Make the app comfortable for you.</p>
         </div>
         {showSettingsCompanion ? <DecorativeCompanion variant="settings" /> : null}
       </header>
@@ -366,6 +372,7 @@ export function SettingsForm({
         <aside className="member-inline-notice" role="status">Verify your email and sign in again before saving permanent preference changes.</aside>
       ) : null}
 
+      <CompanionPreference />
       <form className="settings-form" onSubmit={(event) => void save(event)}>
         <section aria-labelledby="units-title">
           <span className="eyebrow">Presentation</span>
@@ -384,7 +391,7 @@ export function SettingsForm({
             <option value="metric">Kilograms and kilometers</option>
           </select>
 
-          <label htmlFor="settings-timezone">IANA time zone</label>
+          <label htmlFor="settings-timezone">Time zone</label>
           <input
             disabled={!canMutate || busy}
             id="settings-timezone"
@@ -414,14 +421,14 @@ export function SettingsForm({
           <button className="primary-action" disabled={!canMutate || busy} type="submit">{busy ? "Working…" : "Save preferences"}<Icon name="arrow-right" /></button>
         </section>
 
-        <section aria-labelledby="equipment-settings-title">
-          <span className="eyebrow">Program-specific</span>
+        {!equipmentProgram ? <section aria-labelledby="equipment-settings-title">
           <h2 id="equipment-settings-title">Equipment</h2>
-          <p><strong>{EQUIPMENT_PROFILES[equipmentProfileKind].label}</strong> is active. Equipment confirmation belongs on the Program screen because it creates and explains a new immutable program revision.</p>
-          <Link className="secondary-action" href="/app">Review equipment change <Icon name="arrow-right" /></Link>
-        </section>
+          <p>{EQUIPMENT_PROFILES[equipmentProfileKind].label} is active.</p>
+          <Link className="secondary-action" href="/app/program/edit#program-editor-equipment-title">Review equipment change <Icon name="arrow-right" /></Link>
+        </section> : null}
       </form>
 
+      {equipmentProgram ? <EquipmentProfileControl canMutate={canMutate} disabled={busy || deleteBusy} program={equipmentProgram} onSaved={setEquipmentProgram} /> : null}
       <section className="settings-account" aria-labelledby="account-settings-title">
         <span className="eyebrow">Account</span>
         <h2 id="account-settings-title">Session and data</h2>

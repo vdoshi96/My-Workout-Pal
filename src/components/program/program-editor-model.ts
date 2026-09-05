@@ -933,9 +933,6 @@ export function removeProgramPrescription<T extends ProgramPublishInput>(
 ): T {
   const next = structuredClone(input) as T;
   const section = sectionAt(next, dayIndex, sectionIndex);
-  if (section.prescriptions.length <= 1) {
-    throw new RangeError("The last movement in a section cannot be removed.");
-  }
   if (!section.prescriptions[prescriptionIndex]) {
     throw new RangeError("The requested program movement is unavailable.");
   }

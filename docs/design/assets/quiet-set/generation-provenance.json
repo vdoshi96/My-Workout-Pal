@@ -1,0 +1,39 @@
+{
+  "createdAt": "2026-09-05",
+  "generator": "image_gen.imagegen",
+  "sources": [
+    {
+      "name": "pip-ready",
+      "source": "exec-19895951-100a-4740-8800-ef54df42cce7.png"
+    },
+    {
+      "name": "mica-ready",
+      "source": "exec-7052450e-6fe8-4696-8480-69b6279e0a97.png"
+    },
+    {
+      "name": "dawn-studio",
+      "source": "exec-67c34ad4-1979-4236-844c-2fa95c5e0112.png"
+    },
+    {
+      "name": "pip-resting",
+      "source": "exec-bbb188b0-ad1a-45bc-b6eb-d4566b70d80a.png"
+    },
+    {
+      "name": "pip-complete",
+      "source": "exec-ced247ff-4d8f-4941-a7c2-d7d1b52b1afb.png"
+    },
+    {
+      "name": "mica-resting",
+      "source": "exec-7e5d3a8a-1d20-4704-8ab3-c5b8e4a51674.png"
+    },
+    {
+      "name": "mica-complete",
+      "source": "exec-9671c8c3-bb6f-4d09-8c90-e33bb6fa4f62.png"
+    },
+    {
+      "name": "evening-studio",
+      "source": "exec-bae38170-8f1e-4bc7-a44e-52e2d3392cc3.png"
+    }
+  ],
+  "notes": "Original classic cel-animation cartoon artwork, replacing rejected naturalistic characters and gloomy rooms; exact final generation or edit prompts accompany each master. Character outputs use opaque porcelain plates after transparency produced painted checkerboards. Ready poses also serve neutral empty states. No technique instruction is inferred."
+}

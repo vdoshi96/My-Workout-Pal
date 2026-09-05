@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="423710f2bc4964e1dad0d86fb06288a3b0e8cc03ba56ab205488e7c1e627459e">
+  <meta name="source-sha256" content="be4d7fdcd507bc6f17d7b610ededbbeeb63cccb2e9063ac17cb483d72ac5d880">
   <title>Product · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -59,6 +59,12 @@ produced one duplicate, so <code>prone dumbbell row</code> remains an alias on
 <li>The product provides training organization and tracking. It does not provide medical advice, diagnose conditions, or guarantee outcomes.</li>
 <li>No paid service, plan upgrade, Marketplace product, or material limit increase can be enabled without explicit user approval.</li>
 </ul>
+<h2>Current interaction contract</h2>
+<p>The main member navigation is Today, Routine, and Progress. Settings and movement guidance stay contextual. Today prioritizes Start or Resume. The runner shows the current movement, targets, and entry controls before expandable guidance. Log set &amp; rest queues one intended set and starts its configured deadline; repeating the unchanged action preserves its identity and deadline. Next set and Next exercise are explicit. Pending, confirmed, and failed saves stay distinguishable.</p>
+<p>The public Try one set experience is disposable and requires no account. Refresh discards it. An empty setup draft has no placeholder movement and makes no creation request until the member selects a real movement and explicitly saves. It is held in the current page, not persisted across reload. Routine edits preserve immutable published revisions and workout snapshots. Movement removal can be undone while that removal remains the most recent draft change; publication still requires valid content.</p>
+<p>Progress includes completed work sets and repetitions. Bodyweight training does not require added load. Irrelevant zero load, duration, and distance totals are omitted. The application does not automatically prescribe load progression.</p>
+<p>Companion illustrations are optional Pip or Mica choices, with an Off setting saved to this browser only. The user&#39;s September 4 art correction requires expressive classic 2D theatrical cartoon characters and a bright modern gym. Naturalistic animals and gloomy studio art were rejected.</p>
+<p>New public demonstration publication retains full human viewing and approval. A surviving valid legacy demonstration remains available if its alternate is missing. Database approval flags are not independent viewing evidence. The read-only maintenance inventory separates metadata checks from playback, visual inspection, human viewing, and editorial approval.</p>
 <h2>Brand commitments</h2>
 <p>The product name is <strong>My Workout Pal</strong>. The identity, architecture, copy, and assets must be original and must not reuse the reference recording&#39;s FITTRACK name or visual system.</p>
 <h2>Evidence on hand</h2>
@@ -70,7 +76,7 @@ produced one duplicate, so <code>prone dumbbell row</code> remains an alias on
 <li>Treat the five-day starter as an editable example, never as the product boundary.</li>
 <li>Adapt the active plan without altering completed history.</li>
 <li>Keep the runner operable under interruption and constrained attention.</li>
-<li>Explain progression without prescribing unverified loads or making health claims.</li>
+<li>Keep targets editable without promising automatic progression or making health claims.</li>
 <li>Prefer approved, relevant instruction over content volume or popularity.</li>
 </ul>
 <h2>Accessibility and inclusion</h2>

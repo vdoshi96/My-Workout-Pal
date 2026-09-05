@@ -1,0 +1,26 @@
+name: Video evidence checks
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 1'
+  pull_request:
+    paths:
+      - 'docs/video-evidence/inventory.json'
+      - 'scripts/check-video-evidence.mjs'
+permissions:
+  contents: read
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node scripts/check-video-evidence.mjs --output video-evidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: video-evidence
+          path: video-evidence.json
+          retention-days: 7

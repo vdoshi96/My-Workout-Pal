@@ -118,7 +118,7 @@ export default async function DayPage({ params, searchParams }: PageProps) {
             <div><Icon name="run" /><strong>Runner</strong><span>20 minutes</span></div>
           </div>
           <Link className="primary-action" href={`/sample-workout?day=${day}&equipment=${profile}`}>
-            Try sample workout
+            View example workout record
             <Icon name="arrow-right" />
           </Link>
           <p className="temporary-note">Sample activity stays in this tab and is not saved to an account.</p>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import { parseEquipmentChangeResponse } from "@/components/program/program-mutation-response";
 import { reconcileProgramRevisionMutation } from "@/components/program/program-revision-reconciliation";
+import { EquipmentIllustration } from "@/components/ui/equipment-illustration";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { previewOwnedEquipmentChange } from "@/domain/programs/owned-equipment-preview";
@@ -154,7 +155,7 @@ export function EquipmentProfileControl({
         <span className="eyebrow">{placement === "editor" ? "Editor settings" : "Program settings"}</span>
         <h2 id={headingId}>Equipment profile</h2>
         <p>
-          Preview the exact active-program changes. Confirmation creates a new revision; completed and in-progress workout snapshots keep their original meaning.
+          Preview the movements that would change before confirming. Past and in-progress workouts stay as they were.
         </p>
       </header>
       <div aria-label="Equipment profile" className="member-equipment-options" role="group">
@@ -173,7 +174,7 @@ export function EquipmentProfileControl({
             }}
             type="button"
           >
-            <Icon name="dumbbell" />
+            <EquipmentIllustration kind={profile === "barbell" ? "barbell" : "dumbbell"} />
             <span>
               <strong>{EQUIPMENT_PROFILES[profile].label}</strong>
               <small>{profile === program.equipmentProfileKind ? "Current" : "Review change"}</small>

@@ -37,7 +37,7 @@ export function StartWorkoutControl({
   const [state, setState] = useState<StartState>("ready");
   const [message, setMessage] = useState(
     eligible
-      ? "A duplicate start safely resumes the existing workout."
+      ? "Your workout will be saved to this account."
       : "Verify your email, then sign in again before starting a saved workout.",
   );
   const controller = useMemo(
@@ -75,7 +75,7 @@ export function StartWorkoutControl({
         onClick={() => void handleStart()}
         type="button"
       >
-        {state === "opening" ? "Opening workout…" : "Start or resume workout"}
+        {state === "opening" ? "Opening workout…" : "Start workout"}
       </button>
       <p aria-live="polite" id="workout-start-status" role="status">
         {message}

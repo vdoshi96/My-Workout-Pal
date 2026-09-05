@@ -20,48 +20,11 @@ describe("DecorativeCompanion", () => {
       "settings",
       "workout",
     ]);
-    expect(COMPANION_ASSETS).toMatchObject({
-      landing: {
-        src: "/illustrations/companions/planning-hedgehog.webp",
-        srcSet:
-          "/illustrations/companions/planning-hedgehog-512.webp 512w, /illustrations/companions/planning-hedgehog.webp 1024w",
-      },
-      "member-home": {
-        src: "/illustrations/companions/preparing-fox.webp",
-        srcSet:
-          "/illustrations/companions/preparing-fox-512.webp 512w, /illustrations/companions/preparing-fox.webp 1024w",
-      },
-      "progress-preview": {
-        src: "/illustrations/companions/reviewing-raccoon.webp",
-        srcSet:
-          "/illustrations/companions/reviewing-raccoon-512.webp 512w, /illustrations/companions/reviewing-raccoon.webp 1024w",
-      },
-      library: {
-        src: "/illustrations/companions/cataloging-otter.webp",
-        srcSet:
-          "/illustrations/companions/cataloging-otter-512.webp 512w, /illustrations/companions/cataloging-otter.webp 1024w",
-      },
-      "routine-editor": {
-        src: "/illustrations/companions/routine-drafting-beaver.webp",
-        srcSet:
-          "/illustrations/companions/routine-drafting-beaver-512.webp 512w, /illustrations/companions/routine-drafting-beaver.webp 1024w",
-      },
-      history: {
-        src: "/illustrations/companions/history-archive-tortoise.webp",
-        srcSet:
-          "/illustrations/companions/history-archive-tortoise-512.webp 512w, /illustrations/companions/history-archive-tortoise.webp 1024w",
-      },
-      settings: {
-        src: "/illustrations/companions/settings-packing-hare.webp",
-        srcSet:
-          "/illustrations/companions/settings-packing-hare-512.webp 512w, /illustrations/companions/settings-packing-hare.webp 1024w",
-      },
-      workout: {
-        src: "/illustrations/companions/workout-corner-bear.webp",
-        srcSet:
-          "/illustrations/companions/workout-corner-bear-512.webp 512w, /illustrations/companions/workout-corner-bear.webp 1024w",
-      },
-    });
+    for (const asset of Object.values(COMPANION_ASSETS)) {
+      expect(asset.src).toMatch(/^\/illustrations\/quiet-set\/pip-(ready|resting|complete)\.webp$/);
+      expect(asset.width).toBe(320);
+      expect(asset.height).toBe(320);
+    }
   });
 
   it.each(Object.keys(COMPANION_ASSETS) as (keyof typeof COMPANION_ASSETS)[])(

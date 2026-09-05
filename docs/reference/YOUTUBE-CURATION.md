@@ -10,6 +10,16 @@ rows. A missing metadata check, incomplete official-or-authorized-browser
 discovery manifest, or incomplete watch review blocks video seeding. The
 application must not substitute arbitrary links.
 
+## Runtime availability and evidence maintenance
+
+The September 4 comparison exposed overstated legacy viewing provenance. Stored approval fields remain legacy records, not proof that a human watched every video. This implementation creates no new approval, performs no seed, and does not rewrite video rows. Newly published demonstrations still obey the release invariant above.
+
+Runtime presentation can retain one valid approved legacy record when the other record is absent. The player uses Watch demo, Another demo, Open on YouTube, and Report a problem. Origin is derived from the current page. Variant notes distinguish one-dumbbell cleans, the snatch catch variations, optional load for Russian twists, and the unusually high/heavy rack-pull reference. These notes do not certify suitability.
+
+`docs/video-evidence/inventory.json` records the 268 known mappings without manufacturing full-viewing evidence. `node scripts/check-video-evidence.mjs --metadata` checks ID uniqueness and current oEmbed metadata. `node --env-file-if-exists=.env.local --import tsx scripts/check-video-inventory.ts` reconciles that inventory against the configured database read-only. The weekly GitHub workflow runs metadata checks and retains its exceptions; it never changes publication state. A metadata failure is a review signal, not grounds for an automatic replacement.
+
+Keep evidence separate: metadata availability, origin/browser-specific playback, equipment and variation observations, sampled visual review, actual full human viewing, and editorial approval. Only record a tier when it happened. The Report a problem link opens a prefilled public GitHub issue; the member decides whether to submit and is told not to include private workout information.
+
 ## Credential and quota boundary
 
 `YOUTUBE_API_KEY` is a server-side development and curation secret. It is never bundled into the application, printed in reports, committed, or copied into public QA evidence.

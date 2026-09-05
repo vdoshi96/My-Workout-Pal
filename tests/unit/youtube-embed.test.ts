@@ -4,6 +4,7 @@ import {
   buildYouTubeEmbedUrl,
   buildYouTubeWatchUrl,
   createCuratedVideoPair,
+  createAvailableCuratedVideos,
 } from "@/domain/youtube/embed";
 import type { CuratedVideoSeed } from "@/domain/youtube/types";
 
@@ -30,6 +31,15 @@ function video(
 }
 
 describe("YouTube embed presentation", () => {
+  it("keeps a valid single legacy demo without weakening new pair publication", () => {
+    expect(createAvailableCuratedVideos([video("AbCdEfGhI01", 1)])).toHaveLength(1);
+    expect(() => createAvailableCuratedVideos([video("AbCdEfGhI01", 1, {fullWatchConfirmed:false})])).toThrow();
+    expect(() => createCuratedVideoPair([video("AbCdEfGhI01", 1)])).toThrow();
+  });
+  it("binds embeds to the supplied HTTP page origin", () => {
+    expect(new URL(buildYouTubeEmbedUrl("AbCdEfGhI01", "https://my-workout-pal-chi.vercel.app/path")).searchParams.get("origin")).toBe("https://my-workout-pal-chi.vercel.app");
+    expect(new URL(buildYouTubeEmbedUrl("AbCdEfGhI01", "file:///tmp/a")).searchParams.has("origin")).toBe(false);
+  });
   it("builds a non-autoplay privacy-enhanced player URL with usable controls", () => {
     const url = new URL(buildYouTubeEmbedUrl("AbCdEfGhI01"));
 

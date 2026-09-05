@@ -51,6 +51,8 @@ const progress: ProgressInsightsReadModel = {
   scope: { maxSessions: 180, sessionCount: 1, truncated: false },
   totals: {
     abandonedSessions: 1,
+    completedWorkSets: 3,
+    repetitions: 32,
     completedSessions: 1,
     distanceMeters: 1609.344,
     durationSeconds: 1200,
@@ -164,9 +166,9 @@ describe("shared persisted training-insight views", () => {
     expect(markup).toContain("1 mi");
     expect(markup).toContain("Logged distance");
     expect(markup).not.toContain("Cardio distance");
-    expect(markup).toContain("Abandoned");
-    expect(markup).toContain("resumable workouts return through the runner");
-    expect(markup).toContain("1 interrupted workout is excluded");
+    expect(markup).toContain("Interrupted sessions remain in History");
+    expect(markup).toContain("Work sets");
+    expect(markup).toContain("Repetitions");
     expect(markup).toContain("Timeline includes all 1 completed workout");
     expect(markup).toContain("/app/history/10000000-0000-4000-8000-000000000001");
     expect(markup).toContain("Open saved workout 1 of 2 from Aug 26");

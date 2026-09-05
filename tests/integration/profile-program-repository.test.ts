@@ -413,11 +413,13 @@ describe("profile and active-program repository", () => {
       equipmentProfileKind: "barbell",
       idempotencyKey: "onboarding-blank",
       mode: "blank",
+      firstExerciseSlug: "push-up",
     });
     const replay = await repository.onboard(viewer("member-blank"), {
       equipmentProfileKind: "barbell",
       idempotencyKey: "onboarding-blank",
       mode: "blank",
+      firstExerciseSlug: "push-up",
     });
 
     expect(replay).toEqual(first);
@@ -434,7 +436,7 @@ describe("profile and active-program repository", () => {
       status: "published",
     });
     expect(first.activeProgram?.days[0]?.prescriptions).toHaveLength(1);
-    expect(first.activeProgram?.days[0]?.prescriptions[0]?.exercise.slug).toBe("dead-bug");
+    expect(first.activeProgram?.days[0]?.prescriptions[0]?.exercise.slug).toBe("push-up");
 
     await expect(
       repository.onboard(viewer("member-blank"), {
@@ -471,6 +473,7 @@ describe("profile and active-program repository", () => {
       equipmentProfileKind: "barbell",
       idempotencyKey: "onboarding-blank",
       mode: "blank",
+      firstExerciseSlug: "push-up",
     });
     expect(foreign.profile.firebaseUid).toBe("member-blank-other");
     expect(foreign.activeProgram?.id).not.toBe(first.activeProgram?.id);

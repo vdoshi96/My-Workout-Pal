@@ -923,10 +923,10 @@ describe("program editor request model", () => {
       0,
       "Exercise 1",
     );
-    expect(() => removeProgramPrescription(oneRow, 0, 0, 0, {
+    expect(removeProgramPrescription(oneRow, 0, 0, 0, {
       ...oneRowReview,
       confirmed: true,
-    })).toThrow(/last movement/i);
+    }).days[0]!.sections[0]!.prescriptions).toHaveLength(0);
 
     const review = reviewProgramPrescriptionRemoval(draft, 0, 0, 1, "Exercise 2");
     expect(() => removeProgramPrescription(draft, 0, 0, 1, review)).toThrow(/confirm/i);

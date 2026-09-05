@@ -13,7 +13,7 @@ import {
 describe("authenticated account navigation", () => {
   it("keeps the program destination scoped to account program routes", () => {
     expect(authenticatedDestinationIsCurrent("/app", "/app")).toBe(true);
-    expect(authenticatedDestinationIsCurrent("/app/program/push", "/app")).toBe(true);
+    expect(authenticatedDestinationIsCurrent("/app/program/push", "/app/program/edit")).toBe(true);
     expect(authenticatedDestinationIsCurrent("/app/history", "/app")).toBe(false);
   });
 
@@ -24,12 +24,12 @@ describe("authenticated account navigation", () => {
     expect(authenticatedDestinationIsCurrent("/app/library/custom/new", "/app/library")).toBe(true);
   });
 
-  it("names the private root Home while preserving personal destinations", () => {
+  it("names Today, Routine, and Progress as the three primary destinations", () => {
     const markup = renderToStaticMarkup(<AuthenticatedNav />);
 
     expect(markup).toContain('href="/app"');
-    expect(markup).toContain(">Home<");
-    expect(markup).toContain(">History<");
+    expect(markup).toContain(">Today<");
+    expect(markup).toContain(">Routine<");
     expect(markup).toContain(">Progress<");
     expect(markup).not.toContain(">Program<");
   });

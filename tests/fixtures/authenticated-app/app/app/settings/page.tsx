@@ -31,6 +31,7 @@ export default async function HarnessSettingsPage() {
 
   return (
     <SettingsForm
+      activeProgram={model.activeProgram}
       canMutate={context.viewer.eligibleForPermanentMutations}
       equipmentProfileKind={model.equipment.profileKind}
       firebaseConfig={

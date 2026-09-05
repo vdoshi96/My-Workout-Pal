@@ -21,11 +21,13 @@ export const onboardingRequestSchema = z
     equipmentProfileKind: profileKindSchema,
     idempotencyKey: idempotencyKeySchema,
     mode: z.enum(["example", "blank"]),
+    firstExerciseSlug: z.string().trim().min(1).max(120).optional(),
     reducedMotion: z.boolean().default(false),
     timezone: z.string().trim().min(1).max(64).default("UTC"),
     unitSystem: z.enum(["metric", "imperial"]).default("metric"),
   })
-  .strict();
+  .strict()
+  .refine((input) => input.mode !== "blank" || Boolean(input.firstExerciseSlug), { message: "Add your first movement before saving a routine.", path: ["firstExerciseSlug"] });
 
 export const equipmentChangeRequestSchema = z
   .object({

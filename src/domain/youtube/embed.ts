@@ -1,9 +1,11 @@
 import { normalizeYouTubeVideoId } from "@/domain/youtube/normalization";
 import type { CuratedVideoSeed } from "@/domain/youtube/types";
 
+export type CuratedVideos = readonly [CuratedVideoSeed, ...CuratedVideoSeed[]];
+
 export type CuratedVideoPair = readonly [CuratedVideoSeed, CuratedVideoSeed];
 
-export function buildYouTubeEmbedUrl(videoId: string): string {
+export function buildYouTubeEmbedUrl(videoId: string, pageOrigin?: string): string {
   const normalizedVideoId = normalizeYouTubeVideoId(videoId);
   const url = new URL(
     `/embed/${normalizedVideoId}`,
@@ -13,6 +15,12 @@ export function buildYouTubeEmbedUrl(videoId: string): string {
   url.searchParams.set("controls", "1");
   url.searchParams.set("playsinline", "1");
   url.searchParams.set("rel", "0");
+  if (pageOrigin) {
+    try {
+      const origin = new URL(pageOrigin);
+      if (origin.protocol === "https:" || origin.protocol === "http:") url.searchParams.set("origin", origin.origin);
+    } catch { /* An absent/invalid origin does not remove the external fallback. */ }
+  }
   return url.toString();
 }
 
@@ -82,4 +90,14 @@ export function createCuratedVideoPair(
     Object.freeze(ordered[0]),
     Object.freeze(ordered[1]),
   ]) as CuratedVideoPair;
+}
+
+/** Runtime availability is independent of the stricter publication pair contract. */
+export function createAvailableCuratedVideos(videos: readonly CuratedVideoSeed[]): CuratedVideos {
+  if (videos.length !== 1) return createCuratedVideoPair(videos);
+  const video = videos[0]!;
+  if (video.approvalState !== "approved" || !video.fullWatchConfirmed || !video.reviewer.trim() ||
+      Number.isNaN(Date.parse(video.reviewedAt)) || !video.title.trim() || !video.channelTitle.trim() ||
+      (video.displayOrder !== 1 && video.displayOrder !== 2)) throw new Error("The demonstration record is incomplete.");
+  return Object.freeze([Object.freeze({...video, videoId: normalizeYouTubeVideoId(video.videoId)})]);
 }

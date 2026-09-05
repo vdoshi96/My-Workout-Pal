@@ -93,7 +93,7 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
             <div><dt>Save state</dt><dd>Pending → saved, or failed with explicit retry.</dd></div>
             <div><dt>Interruption</dt><dd>Refresh and reconnection resume one idempotent session.</dd></div>
             <div><dt>Rest</dt><dd>90 seconds for compounds; 60 for accessory and core work.</dd></div>
-            <div><dt>Progression</dt><dd>Suggest load only after every work set reaches the range top with appropriate form.</dd></div>
+            <div><dt>Next workout</dt><dd>Review your saved work and choose your own targets. Automatic load suggestions are not part of the runner.</dd></div>
           </dl>
           <section className="sample-cardio-log">
             <h3>Cardio snapshot</h3>

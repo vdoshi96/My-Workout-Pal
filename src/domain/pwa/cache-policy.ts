@@ -1,9 +1,19 @@
-export const PWA_CACHE_NAME = "my-workout-pal-public-v6";
+export const PWA_CACHE_NAME = "my-workout-pal-public-v7";
 
 export const PWA_INSTALL_ASSETS = Object.freeze([
   "/",
   "/offline",
   "/progress",
+  "/illustrations/quiet-set/dawn-studio.webp",
+  "/illustrations/quiet-set/dawn-studio-phone.webp",
+  "/illustrations/quiet-set/evening-studio.webp",
+  "/illustrations/quiet-set/pip-ready.webp",
+  "/illustrations/quiet-set/pip-resting.webp",
+  "/illustrations/quiet-set/pip-complete.webp",
+  "/illustrations/quiet-set/mica-ready.webp",
+  "/illustrations/quiet-set/mica-resting.webp",
+  "/illustrations/quiet-set/mica-complete.webp",
+  "/illustrations/quiet-set/evening-studio-phone.webp",
   "/apple-touch-icon.png",
   "/contours.svg",
   "/icon-192.png",
@@ -18,6 +28,16 @@ export const PWA_INSTALL_ASSETS = Object.freeze([
 ] as const);
 
 export const PWA_PUBLIC_ASSETS = Object.freeze([
+  "/illustrations/quiet-set/dawn-studio.webp",
+  "/illustrations/quiet-set/dawn-studio-phone.webp",
+  "/illustrations/quiet-set/evening-studio.webp",
+  "/illustrations/quiet-set/pip-ready.webp",
+  "/illustrations/quiet-set/pip-resting.webp",
+  "/illustrations/quiet-set/pip-complete.webp",
+  "/illustrations/quiet-set/mica-ready.webp",
+  "/illustrations/quiet-set/mica-resting.webp",
+  "/illustrations/quiet-set/mica-complete.webp",
+  "/illustrations/quiet-set/evening-studio-phone.webp",
   "/apple-touch-icon.png",
   "/contours.svg",
   "/icon-192.png",
@@ -38,6 +58,7 @@ const publicNavigationExact = new Set([
   "/program",
   "/progress",
   "/sample-workout",
+  "/try",
 ]);
 const publicNavigationPrefixes = ["/library/", "/program/"] as const;
 const staticDestinations = new Set(["font", "image", "script", "style"]);

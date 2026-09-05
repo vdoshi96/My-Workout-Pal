@@ -5,7 +5,11 @@ primary_target: "src/app/app/library/page.tsx"
 related_targets: ["src/app/library/page.tsx","src/components/program/program-editor.tsx","src/app/app/history/page.tsx","src/components/insights/training-history-detail.tsx","src/components/settings/settings-form.tsx","src/components/workout/workout-runner.tsx"]
 ---
 
-# Wave 3 animal surface-system rollout brief
+# Historical Wave 3 animal surface-system rollout brief
+
+## Authority
+
+This brief preserves the earlier Corner Companions rollout and its review questions as history. It does not govern Quiet Set. Root `DESIGN.md` and `docs/plans/QUIET-SET-IMPLEMENTATION.md` define the cream/forest system, original cartoon Pip/Mica, browser-local Off choice, and actual host eligibility. The former per-surface animals, transparent exports, placement matrix, and cache inventory below are historical.
 
 ## Scope and mode
 

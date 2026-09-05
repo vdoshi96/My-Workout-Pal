@@ -91,9 +91,9 @@ export default async function HarnessOwnedWorkoutPage({
         Skip to active workout
       </a>
       <header className="owned-workout-route-bar">
-        <Link href="/app">Exit to program</Link>
+        <Link href="/app">Back to Today</Link>
         <span>
-          {resume.session.dayName} · revision {resume.session.programRevisionId.slice(0, 8)}
+          {resume.session.dayName}
         </span>
       </header>
       <main>

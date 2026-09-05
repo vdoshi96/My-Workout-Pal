@@ -471,6 +471,8 @@ describe("training insights repository", () => {
     expect(progress.totals).toMatchObject({
       abandonedSessions: 1,
       completedSessions: 2,
+      completedWorkSets: 3,
+      repetitions: 32,
       distanceMeters: 3218.688,
       durationSeconds: 2400,
       volumeKg: 910,

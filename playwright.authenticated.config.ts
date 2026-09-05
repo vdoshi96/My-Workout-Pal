@@ -7,7 +7,7 @@ if (!portValue || !Number.isInteger(port) || port < 1024 || port > 65_535) {
 }
 const baseURL = `http://127.0.0.1:${port}`;
 const journeyAndGeometry =
-  /(?:onboarding|customization-geometry|firebase-auth-hydration|flexible-routine-publication|library-guidance|library-strength-expansion|library-core-conditioning-expansion|runner-resilience|animal-surface-pilot-authenticated|animal-surface-rollout-authenticated)\.spec\.ts/u;
+  /(?:quiet-set|onboarding|customization-geometry|firebase-auth-hydration|flexible-routine-publication|library-guidance|library-strength-expansion|library-core-conditioning-expansion|runner-resilience|animal-surface-pilot-authenticated|animal-surface-rollout-authenticated)\.spec\.ts/u;
 const geometryOnly = /(?:customization-geometry|animal-surface-rollout-authenticated)\.spec\.ts/u;
 
 export default defineConfig({
@@ -20,6 +20,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   use: {
     baseURL,
+    contextOptions: { reducedMotion: "reduce" },
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
     video: "off",

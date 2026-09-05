@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
+import { StartWorkoutControl } from "@/components/workout/start-workout-control";
 import {
   formatInsightDistance,
   formatInsightDuration,
@@ -16,6 +16,8 @@ import type { ActiveProgramReadModel } from "@/server/repositories/profile-progr
 
 export type MemberHomeProgressSummary = Readonly<{
   completedSessions: number;
+  completedWorkSets?: number;
+  repetitions?: number;
   distanceMeters: number;
   durationSeconds: number;
   unitSystem: "imperial" | "metric";
@@ -41,7 +43,9 @@ export function MemberProgramHome({
   progress: MemberHomeProgressSummary;
   resumableWorkout: MemberHomeResumableWorkout | null;
 }>) {
-  const [program, setProgram] = useState(initialProgram);
+  const [program] = useState(initialProgram);
+  const [selectedDayId, setSelectedDayId] = useState(program.days[0]!.id);
+  const selectedDay = program.days.find((day) => day.id === selectedDayId) ?? program.days[0]!;
   const dayCountLabel = `${program.days.length} ${program.days.length === 1 ? "day" : "days"}`;
   const greetingName = displayName.trim() || "there";
   const hasResumableWorkout = resumableWorkout !== null;
@@ -53,27 +57,11 @@ export function MemberProgramHome({
     >
       <header className="member-program-hero contour-surface">
         <div className="member-program-copy">
-          <span className="eyebrow">Your workout companion</span>
-          <h1 id="member-program-title">Welcome back, {greetingName}</h1>
+
+          <h1 id="member-program-title">Ready when you are, {greetingName}.</h1>
           <p>
-            {program.name} · Revision {program.revisionNumber} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label} · {dayCountLabel}
+            {program.name} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label} · {dayCountLabel}
           </p>
-        </div>
-        <div className="member-program-actions">
-          <Link className="secondary-action" href="/app/programs">
-            <Icon name="map" /> Manage routines
-          </Link>
-          {canMutate ? (
-            <Link className="secondary-action" href="/app/program/edit">
-              <Icon name="settings" /> Edit routine
-            </Link>
-          ) : null}
-          <Link className="secondary-action" href="/app/library">
-            <Icon name="library" /> Library
-          </Link>
-          <Link className="secondary-action" href="/app/library/custom">
-            <Icon name="library" /> Manage private exercises
-          </Link>
         </div>
         <DecorativeCompanion variant="member-home" />
       </header>
@@ -114,7 +102,62 @@ export function MemberProgramHome({
         </section>
       ) : null}
 
-      <section className="member-home-progress" aria-labelledby="member-home-progress-title">
+      {!hasResumableWorkout ? <section className="quiet-today-start" aria-labelledby="today-start-title">
+        <h2 id="today-start-title">Your next workout</h2>
+        <label htmlFor="today-day">Training day</label>
+        <select id="today-day" value={selectedDayId} onChange={(event) => setSelectedDayId(event.target.value)}>{program.days.map((day) => <option key={day.id} value={day.id}>{day.displayName}</option>)}</select>
+        <p>{selectedDay.prescriptions.length} {selectedDay.prescriptions.length === 1 ? "movement" : "movements"} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label}</p>
+        <StartWorkoutControl dayId={selectedDay.id} programId={program.id} eligible={canMutate} />
+        <Link href={`/app/program/${selectedDay.dayKey}`} prefetch={false}>Review this day</Link>
+      </section> : null}
+
+      <section className="member-week" aria-labelledby="member-week-title">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Current route</span>
+            <h2 id="member-week-title">
+              {hasResumableWorkout ? "Your routine" : "Choose a training day"}
+            </h2>
+          </div>
+          <span>{dayCountLabel}</span>
+        </div>
+        <ol className="member-day-grid">
+          {program.days.map((day) => (
+            <li key={day.id}>
+              {!hasResumableWorkout ? (
+                <Link
+                  href={`/app/program/${day.dayKey}`}
+                  prefetch={false}
+                >
+                  <span>{String(day.dayNumber).padStart(2, "0")}</span>
+                  <strong>{day.displayName}</strong>
+                  <small>
+                    {day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"} · {day.cardio.length === 0
+                      ? "no cardio"
+                      : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
+                  </small>
+                  <small className="member-day-action-label">
+                    {canMutate ? `Open ${day.displayName} to start` : `Review ${day.displayName}`}
+                  </small>
+                  <Icon name="chevron-right" />
+                </Link>
+              ) : (
+                <div className="member-day-unavailable">
+                  <span>{String(day.dayNumber).padStart(2, "0")}</span>
+                  <strong>{day.displayName}</strong>
+                  <small>
+                    {day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"} · {day.cardio.length === 0
+                      ? "no cardio"
+                      : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
+                  </small>
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {progress.completedSessions > 0 ? <section className="member-home-progress" aria-labelledby="member-home-progress-title">
         <header className="section-heading">
           <div>
             <span className="eyebrow">Your saved activity</span>
@@ -133,64 +176,15 @@ export function MemberProgramHome({
         ) : (
           <dl className="member-home-totals">
             <div><dt>Completed</dt><dd>{progress.completedSessions}</dd></div>
-            <div><dt>Volume</dt><dd>{formatInsightVolume(progress.volumeKg, progress.unitSystem)}</dd></div>
-            <div><dt>Duration</dt><dd>{formatInsightDuration(progress.durationSeconds)}</dd></div>
-            <div><dt>Distance</dt><dd>{formatInsightDistance(progress.distanceMeters, progress.unitSystem)}</dd></div>
+            <div><dt>Work sets</dt><dd>{progress.completedWorkSets ?? 0}</dd></div>
+            <div><dt>Repetitions</dt><dd>{progress.repetitions ?? 0}</dd></div>
+            {progress.volumeKg > 0 ? <div><dt>Volume</dt><dd>{formatInsightVolume(progress.volumeKg, progress.unitSystem)}</dd></div> : null}
+            {progress.durationSeconds > 0 ? <div><dt>Duration</dt><dd>{formatInsightDuration(progress.durationSeconds)}</dd></div> : null}
+            {progress.distanceMeters > 0 ? <div><dt>Distance</dt><dd>{formatInsightDistance(progress.distanceMeters, progress.unitSystem)}</dd></div> : null}
           </dl>
         )}
-      </section>
+      </section> : null}
 
-      <section className="member-week" aria-labelledby="member-week-title">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">Current route</span>
-            <h2 id="member-week-title">
-              {hasResumableWorkout ? "Your routine" : "Choose a training day"}
-            </h2>
-          </div>
-          <span>{program.days.length} days</span>
-        </div>
-        <ol className="member-day-grid">
-          {program.days.map((day) => (
-            <li key={day.id}>
-              {!hasResumableWorkout ? (
-                <Link
-                  href={`/app/program/${day.dayKey}`}
-                  prefetch={false}
-                >
-                  <span>{String(day.dayNumber).padStart(2, "0")}</span>
-                  <strong>{day.displayName}</strong>
-                  <small>
-                    {day.prescriptions.length} movements · {day.cardio.length === 0
-                      ? "no cardio"
-                      : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
-                  </small>
-                  <small className="member-day-action-label">
-                    {canMutate ? `Open ${day.displayName} to start` : `Review ${day.displayName}`}
-                  </small>
-                  <Icon name="chevron-right" />
-                </Link>
-              ) : (
-                <div className="member-day-unavailable">
-                  <span>{String(day.dayNumber).padStart(2, "0")}</span>
-                  <strong>{day.displayName}</strong>
-                  <small>
-                    {day.prescriptions.length} movements · {day.cardio.length === 0
-                      ? "no cardio"
-                      : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
-                  </small>
-                </div>
-              )}
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <EquipmentProfileControl
-        canMutate={canMutate}
-        onSaved={(nextProgram) => setProgram(nextProgram)}
-        program={program}
-      />
     </section>
   );
 }

@@ -1,0 +1,27 @@
+{
+  "unitIntegration": {
+    "files": 126,
+    "passed": 866
+  },
+  "memberMatrix": {
+    "passed": 19,
+    "skipped": 1,
+    "skipReason": "WebKit phone CSS zoom case; desktop case passed"
+  },
+  "finalMemberTargetAndCaptureCases": {
+    "passed": 6
+  },
+  "postReviewFocusedUnit": {
+    "passed": 28
+  },
+  "typecheck": "passed",
+  "lint": "passed",
+  "build": "passed",
+  "routeBoundaryEntries": 45,
+  "seedRequiredVariations": 27,
+  "databaseSchema": "passed",
+  "pwaParity": "passed",
+  "reviewFixesResolved": 4,
+  "reviewDisposition": "ship",
+  "scope": "Local automated and captured evidence; hosted results separate"
+}

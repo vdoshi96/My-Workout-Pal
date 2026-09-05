@@ -39,6 +39,7 @@ export default async function SettingsPage() {
   if (!data?.model.activeProgram) redirect("/app");
   return (
     <SettingsForm
+      activeProgram={data.model.activeProgram}
       canMutate={data.viewer.eligibleForPermanentMutations}
       equipmentProfileKind={data.model.equipment.profileKind}
       firebaseConfig={firebasePublicConfig()}

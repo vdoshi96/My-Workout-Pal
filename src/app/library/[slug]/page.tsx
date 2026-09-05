@@ -64,7 +64,7 @@ export default async function ExercisePage({ params, searchParams }: PageProps) 
             <h1>{exercise.name}</h1>
           </div>
           <span className={compatible ? "compatibility-ok" : "compatibility-miss"}>
-            {compatible ? `Compatible with ${EQUIPMENT_PROFILES[profile].label}` : `Needs ${exercise.requiredEquipment.join(" + ")}`}
+            {compatible ? `Fits your ${EQUIPMENT_PROFILES[profile].label} profile` : `Needs ${exercise.requiredEquipment.join(" + ")}`}
           </span>
         </div>
       </header>
@@ -79,7 +79,7 @@ export default async function ExercisePage({ params, searchParams }: PageProps) 
             <div><dt>Equipment</dt><dd>{exercise.requiredEquipment.join(", ")}</dd></div>
             <div><dt>Primary muscles</dt><dd>{exercise.primaryMuscles.join(", ")}</dd></div>
           </dl>
-          <h3 className="field-note-heading">Route cues</h3>
+          <h3 className="field-note-heading">Movement cues</h3>
           <ol className="exercise-cues">
             {exercise.instructions.map((instruction) => <li key={instruction}>{instruction}</li>)}
           </ol>

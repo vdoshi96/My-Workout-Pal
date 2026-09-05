@@ -5,17 +5,21 @@ primary_target: "src/app/program/page.tsx"
 related_targets: ["src/app/page.tsx", "src/app/app/page.tsx"]
 ---
 
-# Program overview surface brief
+# Public example surface brief and historical atlas comp
+
+## Authority
+
+Root `DESIGN.md` governs the Quiet Set visual system. The public `/program` map remains an optional five-day example; its atlas composition is not the member-world contract. The comp inventory and unresolved checks below preserve the original design reference and are not measured implementation tokens or an open mandate to restore its palette or typography.
 
 ## Scope and mode
 
-The primary target is the public program overview at `src/app/program/page.tsx`. The distinct welcome route at `src/app/page.tsx` persuades through a cohesive cartoon-gym scene and directs visitors here; the authenticated active-program surface remains at `src/app/app/page.tsx`. Visitor mode is **Operate** on the program route and **Persuade through proof** on the welcome route.
+The primary target is the public program overview at `src/app/program/page.tsx`. The distinct welcome route at `src/app/page.tsx` uses a bright cartoon gym, prioritizes the disposable Try one set experience, and offers this example as a secondary path; the authenticated active-program surface remains at `src/app/app/page.tsx`. Visitor mode is **Operate** on the program route and **Persuade through proof** on the welcome route.
 
 ## Audience, job, and action
 
 A guest needs to understand the five-day program, verify that their equipment works, and inspect every day and exercise without registering. An authenticated user needs to resume or open the active program. The public primary action is **Open Push day** for the selected route waypoint; authenticated resume remains on the separate account surface.
 
-## Chosen composition
+## Historical chosen composition
 
 The approved comp is `.impeccable/mocks/route-atlas-map.png`. Approval was delegated by the user through the end-to-end ownership brief. It was selected because the map makes equipment rerouting visible while the lower route sheet keeps the immediate operating task clear.
 
@@ -32,7 +36,7 @@ The equipment profile control reroutes only affected waypoints. The old path bec
 - Desktop uses a bounded atlas spread with route and prescription panes. It does not enlarge the phone map into empty space.
 - Reduced-motion mode swaps routes without drawing animation.
 
-## Comp inventory
+## Historical comp inventory
 
 The implementation inventory follows the approved comp. Sampled colors are descriptive starting points and remain subject to contrast verification.
 
@@ -53,7 +57,7 @@ The implementation inventory follows the approved comp. Sampled colors are descr
 
 Do not copy generated mountain, tree, lake, shoe, compass, or exercise pictograms. Do not treat the generated weekday labels, sample duration, or summit badge as product facts. Core UI text, controls, focus behavior, semantics, and responsive structure are implemented from the product plans.
 
-## Unresolved implementation checks
+## Historical implementation questions
 
 - Confirm that contour density survives light and dark mode without reducing contrast.
 - Compare available condensed fonts against the comp before selecting one.

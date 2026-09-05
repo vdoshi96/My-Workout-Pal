@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="fc3a3a3acfed9b9cc46756b4bb57464015ffbc83b52d458b97a3f7aa85294768">
+  <meta name="source-sha256" content="9e7e5c695b902e6bb6163ca15a76bb923896abe8b803bbeb8fd9c6c3ce5d2381">
   <title>YouTube curation and video policy · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -36,6 +36,11 @@ policy can seed with reviewed names and instructions but no app-approved video
 rows. A missing metadata check, incomplete official-or-authorized-browser
 discovery manifest, or incomplete watch review blocks video seeding. The
 application must not substitute arbitrary links.</p>
+<h2>Runtime availability and evidence maintenance</h2>
+<p>The September 4 comparison exposed overstated legacy viewing provenance. Stored approval fields remain legacy records, not proof that a human watched every video. This implementation creates no new approval, performs no seed, and does not rewrite video rows. Newly published demonstrations still obey the release invariant above.</p>
+<p>Runtime presentation can retain one valid approved legacy record when the other record is absent. The player uses Watch demo, Another demo, Open on YouTube, and Report a problem. Origin is derived from the current page. Variant notes distinguish one-dumbbell cleans, the snatch catch variations, optional load for Russian twists, and the unusually high/heavy rack-pull reference. These notes do not certify suitability.</p>
+<p><code>docs/video-evidence/inventory.json</code> records the 268 known mappings without manufacturing full-viewing evidence. <code>node scripts/check-video-evidence.mjs --metadata</code> checks ID uniqueness and current oEmbed metadata. <code>node --env-file-if-exists=.env.local --import tsx scripts/check-video-inventory.ts</code> reconciles that inventory against the configured database read-only. The weekly GitHub workflow runs metadata checks and retains its exceptions; it never changes publication state. A metadata failure is a review signal, not grounds for an automatic replacement.</p>
+<p>Keep evidence separate: metadata availability, origin/browser-specific playback, equipment and variation observations, sampled visual review, actual full human viewing, and editorial approval. Only record a tier when it happened. The Report a problem link opens a prefilled public GitHub issue; the member decides whether to submit and is told not to include private workout information.</p>
 <h2>Credential and quota boundary</h2>
 <p><code>YOUTUBE_API_KEY</code> is a server-side development and curation secret. It is never bundled into the application, printed in reports, committed, or copied into public QA evidence.</p>
 <p>Official YouTube documentation accessed August 26, 2026, assigns <code>search.list</code> a separate default bucket of 100 calls per day at one unit per call. <code>videos.list</code> costs one unit in the combined quota for other endpoints. The local checkpoint counts successful calls and estimates documented method units; the provider quota page remains authoritative for rejected, invalid, or external calls that did not become successful checkpoint progress.</p>

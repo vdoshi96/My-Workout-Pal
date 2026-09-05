@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b17f4777b9c3942ca4388cada190a628e29a3892ce211bafa55eec04d34932ee">
+  <meta name="source-sha256" content="f2982793a11ed36ab4e0ff358b5496aa99dfac15e5820c8b93acdbdf6b2d489a">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,11 @@
 <body>
   <main>
 <h1>Project status</h1>
+<h2>Quiet Set implementation: September 4–5, 2026</h2>
+<p>Implementation is on <code>vishal/quiet-set-redesign</code>, based on <code>db5fec1</code>. The user authorized implementation, production publication, and live verification. The canonical checkout is the only MWP worktree; no completed temporary worktree remains.</p>
+<p>Implemented behavior is described in <code>docs/plans/QUIET-SET-IMPLEMENTATION.md</code>. The user rejected the first naturalistic animals and gloomy studio imagery; the replacement uses classic 2D cartoon Pip/Mica and a bright gym. Production release verification is in progress; the earlier deployment remains the rollback baseline until the new Git-connected release is verified.</p>
+<p>Read-only production reconciliation on September 5 found exactly 268 video mappings, matching the 268-item inventory with no missing or extra entries. All 268 returned oEmbed metadata. These checks do not establish full human viewing. No migration, seed, or video approval change is part of this iteration.</p>
+<p>Baseline Ready deployment: <code>dpl_7uMzcLir7Q5yD8z8CSFowEzec5Ee</code>, with stable origin <code>https://my-workout-pal-chi.vercel.app</code>. The release record will identify the final verified Git SHA and deployment. The dated records below describe earlier work and are not current application behavior or current production inventory.</p>
 <h2>Comparative report: September 4, 2026</h2>
 <p>The <a href="../reviews/COMPANION-COMPARISON.html">MWP/Trainpal comparative report</a>
 contains live public and isolated synthetic member evidence, a full UI redesign
@@ -40,14 +45,10 @@ all 134 catalog movements. The MWP source seed still contains 54 mappings for
 release database counts below remain historical evidence, not current hosted
 coverage. No private database identity or exact deployed SHA was established.</p>
 <p>The report records open corrections for unsupported progression copy,
-contradictory saved-state labels, and video provenance claims. These require a
-separately scoped application/policy change; the report does not silently alter
-those contracts. Trainpal&#39;s setup submission defect was reproduced locally,
+contradictory saved-state labels, and video provenance claims. The Quiet Set implementation above addresses the application corrections while retaining truthful video-policy boundaries. The report itself did not alter those contracts. Trainpal&#39;s setup submission defect was reproduced locally,
 not in a real production account. See the report for evidence and limits.</p>
-<p>The report branch is <code>vishal/companion-comparison-report</code>; its temporary worktree
-is removed during Git closeout after the branch merges. No other unresolved
-MWP worktree was found. The existing simplification QA remains the newest
-implementation QA; report evidence is maintained with the comparative review.</p>
+<p>The report branch <code>vishal/companion-comparison-report</code> was merged and its temporary worktree removed. No other unresolved
+MWP worktree was found. The simplification QA describes its earlier iteration; report evidence is maintained with the comparative review.</p>
 <h2>Simplification review: September 4, 2026</h2>
 <p>The first-principles review removes an unused load-progression evaluator,
 its isolated tests, an unused runner barrel, and 13 unused runner aliases.
@@ -60,7 +61,7 @@ retry, 34 database checks, typecheck, lint, build, route/seed/PWA checks,
 That iteration closed out through <code>vishal/first-principles-simplification</code>,
 leaving only the canonical checkout at that checkpoint. See
 <code>docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md</code> for scope and acceptance criteria.
-Verification is recorded in <code>docs/qa/latest/FIRST-PRINCIPLES-QA.md</code>.
+Its historical verification is retained in <a href="https://github.com/vdoshi96/My-Workout-Pal/blob/db5fec1/docs/qa/latest/FIRST-PRINCIPLES-QA.html">the pre-redesign Git snapshot</a>.
 The dated release records below describe their original verification boundaries.</p>
 <h2>Wave 4 release record</h2>
 <p>Wave 4 application release <code>de19b1c89c34235723158ad8858f6b46f4fcde72</code>

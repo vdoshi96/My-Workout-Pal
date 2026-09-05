@@ -50,6 +50,8 @@ export default async function HarnessMemberHomePage() {
       initialProgram={model.activeProgram}
       progress={{
         completedSessions: progress.totals.completedSessions,
+        completedWorkSets: progress.totals.completedWorkSets,
+        repetitions: progress.totals.repetitions,
         distanceMeters: progress.totals.distanceMeters,
         durationSeconds: progress.totals.durationSeconds,
         unitSystem: progress.preferences.unitSystem,

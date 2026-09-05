@@ -51,7 +51,7 @@ import {
   type RunnerStatusPresentation,
 } from "@/components/workout/workout-runner-presenters";
 import { CuratedVideoPlayer } from "@/components/video/curated-video-player";
-import type { CuratedVideoPair } from "@/domain/youtube/embed";
+import type { CuratedVideos } from "@/domain/youtube/embed";
 import { PersonalGuidancePanel } from "@/components/workout/personal-guidance-panel";
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { canShowWorkoutCompanion } from "@/domain/companions/visibility";
@@ -290,7 +290,7 @@ export type WorkoutRunnerProps = RunnerInput &
       | readonly ExerciseSubstitution[]
       | Promise<readonly ExerciseSubstitution[]>;
     effectiveExerciseIdBySnapshot?: Readonly<Record<string, string>>;
-    curatedVideosByExerciseId?: Readonly<Record<string, CuratedVideoPair>>;
+    curatedVideosByExerciseId?: Readonly<Record<string, CuratedVideos>>;
     title?: string;
     className?: string;
   }>;
@@ -1175,7 +1175,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           />
           <Field
             id={`${prefix}-added-weight`}
-            label={`Added weight (${unitSystem === "imperial" ? "lb" : "kg"})`}
+            label={`Added weight, optional (${unitSystem === "imperial" ? "lb" : "kg"})`}
             step="0.01"
             value={displayInputValue(
               draft.addedWeightKg,
@@ -1427,44 +1427,13 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       </a>
       <header className="runner-header companion-heading">
         <div>
-          <span className="runner-eyebrow">Active workout</span>
+
           <h1 id="runner-title">{props.title ?? state.snapshot.dayName}</h1>
-          <p>
-            Follow the preserved prescription, log what happened, and leave with
-            an honest session state.
-          </p>
+
         </div>
         <span className="runner-stamp">{formatRunnerStatus(state.status)}</span>
         {showWorkoutCompanion ? <DecorativeCompanion variant="workout" /> : null}
       </header>
-
-      <section
-        className="runner-identity"
-        aria-label="Workout snapshot identity"
-      >
-        <dl>
-          <div>
-            <dt>Day</dt>
-            <dd>
-              {state.snapshot.dayName}
-              <small>{state.snapshot.dayId}</small>
-            </dd>
-          </div>
-          <div>
-            <dt>Program revision</dt>
-            <dd>
-              <code>{state.snapshot.programRevisionId}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>Session</dt>
-            <dd>
-              <code>{state.snapshot.sessionId}</code>
-            </dd>
-          </div>
-        </dl>
-        <p>Snapshot identity stays fixed while the active log changes.</p>
-      </section>
 
       <section className="runner-progress" aria-label="Workout progress">
         <div className="runner-progress-heading">
@@ -1557,13 +1526,13 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       </p>
 
       <div className="runner-layout">
-        <aside
+        <details
           className="runner-outline"
           aria-labelledby="runner-outline-heading"
         >
+          <summary>Workout outline</summary>
           <div className="runner-section-heading">
             <div>
-              <span className="runner-eyebrow">Session route</span>
               <h2 id="runner-outline-heading">Workout outline</h2>
             </div>
             <span>{state.snapshot.exercises.length} moves</span>
@@ -1606,7 +1575,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               );
             })}
           </ol>
-        </aside>
+        </details>
 
         <div className="runner-main" id="runner-active-panel">
           <section
@@ -1615,19 +1584,13 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           >
             <header className="runner-active-heading">
               <div>
-                <span className="runner-eyebrow">{currentExerciseSectionLabel}</span>
+                <span className="sr-only">{currentExerciseSectionLabel}</span>
                 <span className="runner-eyebrow">
                   Exercise {state.currentExerciseIndex + 1} of{" "}
                   {state.snapshot.exercises.length}
                 </span>
                 <h2 id="runner-active-heading">{currentExerciseName}</h2>
-                <p>
-                  {currentExercise.loggingKind.replace("_", " ")} ·{" "}
-                  {currentExercise.sets.length} prescribed sets
-                </p>
-                {state.snapshot.cardioOptions.length === 0 ? (
-                  <p className="runner-muted">No cardio segment is configured for this session.</p>
-                ) : null}
+
               </div>
               <span
                 className={classNames(
@@ -1641,46 +1604,6 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               </span>
             </header>
 
-            {props.curatedVideosByExerciseId ? (
-              <section
-                aria-labelledby="runner-technique-heading"
-                className="runner-technique"
-              >
-                <div className="runner-section-heading">
-                  <div>
-                    <span className="runner-eyebrow">
-                      {currentCuratedVideos
-                        ? "Two-source technique check"
-                        : currentPersonalGuidance.length > 0
-                          ? "Personal technique reference"
-                          : "Technique check"}
-                    </span>
-                    <h3 id="runner-technique-heading">
-                      {currentCuratedVideos
-                        ? "Technique demonstrations"
-                        : "Technique guidance"}
-                    </h3>
-                  </div>
-                  <span>
-                    {currentCuratedVideos
-                      ? "Approved pair"
-                      : currentPersonalGuidance.length > 0
-                        ? "Your links"
-                        : "Unavailable"}
-                  </span>
-                </div>
-                {currentCuratedVideos ? (
-                  <CuratedVideoPlayer videos={currentCuratedVideos} />
-                ) : currentPersonalGuidance.length > 0 ? (
-                  <PersonalGuidancePanel links={currentPersonalGuidance} />
-                ) : (
-                  <p className="runner-empty">
-                    No approved catalog pair is available for this movement.
-                    Workout logging remains available.
-                  </p>
-                )}
-              </section>
-            ) : null}
 
             <div
               className="runner-set-tabs"
@@ -1745,13 +1668,13 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   className="runner-button runner-button--primary"
                   onClick={() =>
                     apply(
-                      { type: "save_set", setId: activeSet.setId },
+                      { type: "log_set_and_rest", setId: activeSet.setId },
                       `${activeSet.isWarmup ? "Warm-up" : "Work"} set queued for saving.`,
                     )
                   }
                   type="button"
                 >
-                  Save set
+                  {state.loggedSets[activeSet.setId] ? "Update set & rest" : "Log set & rest"}
                 </button>
                 {state.loggedSets[activeSet.setId] ? (
                   <span
@@ -1769,6 +1692,16 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               </div>
             </fieldset>
 
+            {state.loggedSets[activeSet.setId] && !state.completedExerciseIds.includes(currentExercise.id) ? <div className="quiet-runner-forward">
+              <button type="button" className="runner-button runner-button--primary" disabled={closed || state.dirtySetIds.includes(activeSet.setId)} onClick={() => apply(
+                state.currentSetIndex < currentExercise.sets.length - 1
+                  ? { type: "next_set", setId: activeSet.setId }
+                  : { type: "complete_exercise_and_next", exerciseId: currentExercise.id },
+                state.currentSetIndex < currentExercise.sets.length - 1 ? "Next set ready." : "Movement complete."
+              )}>{state.currentSetIndex < currentExercise.sets.length - 1 ? "Next set" : state.currentExerciseIndex < state.snapshot.exercises.length - 1 ? "Next exercise" : "Complete exercise"}</button>
+              <p>You can edit a logged set by selecting its row.</p>
+            </div> : null}
+
             <section
               className="runner-rest"
               aria-labelledby="runner-rest-heading"
@@ -1784,6 +1717,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 {formatRestTimer(timerView.remainingSeconds)}
               </strong>
               <div className="runner-inline-actions">
+                {timerView.status !== "idle" ? <button type="button" className="runner-button" disabled={closed} onClick={() => apply({type: "extend_rest", seconds: 30}, "30 seconds added.")}>Add 30 seconds</button> : null}
                 {timerView.status === "running" ? (
                   <button
                     className="runner-button"
@@ -1835,6 +1769,44 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 ) : null}
               </div>
             </section>
+            {props.curatedVideosByExerciseId ? (
+              <details className="runner-technique"><summary>Watch demo and technique guidance</summary>
+                <div className="runner-section-heading">
+                  <div>
+                    <span className="runner-eyebrow">
+                      {currentCuratedVideos
+                        ? "Movement reference"
+                        : currentPersonalGuidance.length > 0
+                          ? "Personal technique reference"
+                          : "Technique check"}
+                    </span>
+                    <h3 id="runner-technique-heading">
+                      {currentCuratedVideos
+                        ? "Technique demonstrations"
+                        : "Technique guidance"}
+                    </h3>
+                  </div>
+                  <span>
+                    {currentCuratedVideos
+                      ? "Demo"
+                      : currentPersonalGuidance.length > 0
+                        ? "Your links"
+                        : "Unavailable"}
+                  </span>
+                </div>
+                {currentCuratedVideos ? (
+                  <CuratedVideoPlayer videos={currentCuratedVideos} />
+                ) : currentPersonalGuidance.length > 0 ? (
+                  <PersonalGuidancePanel links={currentPersonalGuidance} />
+                ) : (
+                  <p className="runner-empty">
+                    No demonstration is available for this movement.
+                    Workout logging remains available.
+                  </p>
+                )}
+              </details>
+            ) : null}
+
           </section>
 
           <section
@@ -2234,7 +2206,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           </button>
           <button
             className="runner-button runner-button--primary"
-            disabled={closed || state.status === "completing"}
+            disabled={closed || state.status === "completing" || state.operations.some(({ status }) => status === "pending")}
             onClick={() =>
               apply(
                 { type: "complete_session" },

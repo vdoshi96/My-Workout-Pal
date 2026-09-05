@@ -170,6 +170,8 @@ export type ProgressInsightsReadModel = Readonly<{
   totals: Readonly<{
     abandonedSessions: number;
     completedSessions: number;
+    completedWorkSets: number;
+    repetitions: number;
     distanceMeters: number;
     durationSeconds: number;
     volumeKg: number;
@@ -759,6 +761,30 @@ export async function loadProgressInsights(
           AND sl.set_kind = 'work'
       ) AS volume_kg,
       (
+        SELECT count(*)::float8
+        FROM set_logs AS sl
+        INNER JOIN workout_sessions AS ws
+          ON ws.owner_firebase_uid = sl.owner_firebase_uid AND ws.id = sl.session_id
+        INNER JOIN workout_exercise_states AS wes
+          ON wes.owner_firebase_uid = sl.owner_firebase_uid
+         AND wes.session_id = sl.session_id AND wes.snapshot_id = sl.snapshot_id
+         AND wes.status = 'completed'
+        WHERE sl.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'completed' AND sl.set_kind = 'work'
+      ) AS completed_work_sets,
+      (
+        SELECT COALESCE(sum(sl.repetitions), 0)::float8
+        FROM set_logs AS sl
+        INNER JOIN workout_sessions AS ws
+          ON ws.owner_firebase_uid = sl.owner_firebase_uid AND ws.id = sl.session_id
+        INNER JOIN workout_exercise_states AS wes
+          ON wes.owner_firebase_uid = sl.owner_firebase_uid
+         AND wes.session_id = sl.session_id AND wes.snapshot_id = sl.snapshot_id
+         AND wes.status = 'completed'
+        WHERE sl.owner_firebase_uid = ${viewer.uid}
+          AND ws.state = 'completed' AND sl.set_kind = 'work'
+      ) AS repetitions,
+      (
         SELECT COALESCE(sum(COALESCE(sl.duration_seconds, 0)), 0)::float8
         FROM set_logs AS sl
         INNER JOIN workout_sessions AS ws
@@ -942,6 +968,8 @@ export async function loadProgressInsights(
     totals: {
       abandonedSessions: aggregateNumber("abandoned_sessions"),
       completedSessions: completedSessionCount,
+      completedWorkSets: aggregateNumber("completed_work_sets"),
+      repetitions: aggregateNumber("repetitions"),
       distanceMeters: aggregateNumber("set_distance_meters") + aggregateNumber("cardio_distance_meters"),
       durationSeconds: aggregateNumber("set_duration_seconds") + aggregateNumber("cardio_duration_seconds"),
       volumeKg: aggregateNumber("volume_kg"),

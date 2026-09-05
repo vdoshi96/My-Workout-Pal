@@ -49,7 +49,7 @@ import { AuthPolicyError } from "@/server/auth/policy";
 export const STARTER_TEMPLATE_KEY = "five-day-starter-route" as const;
 export const STARTER_PROGRAM_KEY = STARTER_TEMPLATE_KEY;
 export const BLANK_PROGRAM_KEY = "blank-routine" as const;
-const BLANK_INITIAL_EXERCISE_SLUG = "dead-bug" as const;
+
 
 export const REPOSITORY_NOT_FOUND_MESSAGE = "The requested resource was not found.";
 
@@ -102,6 +102,7 @@ export type OnboardingInput = Readonly<{
   reducedMotion?: boolean;
   idempotencyKey?: string;
   mode?: OnboardingMode;
+  firstExerciseSlug?: string | undefined;
 }>;
 
 export type EquipmentChangeInput = Readonly<{
@@ -158,6 +159,7 @@ type NormalizedOnboardingInput = Readonly<{
   reducedMotion: boolean;
   idempotencyKey: string | undefined;
   mode: OnboardingMode;
+  firstExerciseSlug: string | undefined;
 }>;
 
 type NormalizedEquipmentChangeInput = Readonly<{
@@ -395,6 +397,7 @@ const onboardingSchema = z
     reducedMotion: z.boolean().optional(),
     idempotencyKey: z.string().trim().min(1).max(180).optional(),
     mode: z.enum(["example", "blank"]).optional(),
+    firstExerciseSlug: z.string().trim().min(1).max(120).optional(),
   })
   .strict();
 const equipmentChangeSchema = z
@@ -486,6 +489,9 @@ function parseOnboardingInput(input: OnboardingInput): NormalizedOnboardingInput
   const result = onboardingSchema.safeParse(input);
   if (!result.success) throw new RepositoryValidationError("The onboarding data is invalid.");
   const parsed = result.data;
+  if (parsed.mode === "blank" && !parsed.firstExerciseSlug) {
+    throw new RepositoryValidationError("Add your first movement before saving a routine.");
+  }
   const timezone = validTimezone(parsed.timezone ?? "UTC");
   return {
     equipmentProfileKind: parseEquipmentProfileKind(
@@ -497,6 +503,7 @@ function parseOnboardingInput(input: OnboardingInput): NormalizedOnboardingInput
     reducedMotion: parsed.reducedMotion ?? false,
     idempotencyKey: parsed.idempotencyKey,
     mode: parsed.mode ?? "example",
+    firstExerciseSlug: parsed.firstExerciseSlug,
   };
 }
 
@@ -2586,6 +2593,7 @@ export function createProfileProgramRepository(
     const requestHash = stableRequestHash("onboarding", {
       equipmentProfileKind: normalized.equipmentProfileKind,
       mode: normalized.mode,
+      firstExerciseSlug: normalized.firstExerciseSlug,
       unitSystem: normalized.unitSystem,
       timezone: normalized.timezone,
       reducedMotion: normalized.reducedMotion,
@@ -2681,7 +2689,7 @@ export function createProfileProgramRepository(
       } else {
         const exercise = await loadCompatibleCatalogExerciseBySlug(
           tx,
-          BLANK_INITIAL_EXERCISE_SLUG,
+          normalized.firstExerciseSlug!,
           normalized.equipmentProfileKind,
         );
         const programId = scopedUuid("user-program", viewer.uid, BLANK_PROGRAM_KEY);

@@ -3,6 +3,7 @@ import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
 import "@fontsource-variable/source-sans-3";
 import "./globals.css";
+import "./quiet-set.css";
 
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
@@ -12,10 +13,10 @@ import { PwaRegistration } from "@/components/pwa/pwa-registration";
 
 const designContract = `<!--
 THESIS: My Workout Pal makes a personal workout feel approachable through one truthful next action and one quiet animal companion, never a mascot-led dashboard.
-OWN-WORLD: Warm mineral paper, deep teal ink, coral action, lichen support, ruled field structure, contour geometry, and original hand-painted cel animal vignettes in reserved whitespace.
-STORY: A guest understands the planning path, a member keeps the owned next move primary, and Progress remains a neutral disclosed preview.
-FIRST VIEWPORT: On the landing, Your workout. Your way. and the unsaved starter action lead on the left while a text-free planning hedgehog occupies a bounded right-side slot that translates below actions on phone.
-FORM: Selected Corner Companions extension over the route-atlas system, board key d787734c.
+OWN-WORLD: Quiet Set. Porcelain, forest, sage and ochre. Bright cel-animated gym with expressive original cartoon Pip the stoat and Mica the kingfisher, generous task space and readable training numbers.
+STORY: Try one disposable set; create a personal routine; start or resume; log and rest; review actual work.
+FIRST VIEWPORT: Today starts the next workout. The active workout puts current movement, target, and entry before reference material.
+FORM: Quiet Set comparison report, September 4, 2026. Existing immutable training data and recovery remain authoritative.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 -->`;
 
@@ -46,8 +47,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   colorScheme: "light dark",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3eee3" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b252b" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f3e9" },
+    { media: "(prefers-color-scheme: dark)", color: "#142a23" },
   ],
   viewportFit: "cover",
 };
@@ -61,7 +62,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html data-scroll-behavior="smooth" lang="en">
       <body>
         <template
-          data-design-contract="d787734c"
+          data-design-contract="quiet-set"
           // React cannot emit a bare comment as a body child, so the auditable contract
           // is preserved inside the body's first element and in its data attribute.
           dangerouslySetInnerHTML={{ __html: designContract }}
