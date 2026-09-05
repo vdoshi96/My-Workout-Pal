@@ -2,9 +2,11 @@
 
 ## Member atmosphere and Library: September 5, 2026
 
-The active redesign branch is `vishal/member-gym-design`. It exposes Library in the four-destination member navigation, including before routine setup, and extends the bright illustrated gym across member surfaces with six characters in seven task-specific scenes. Today has visible browser-local companion selection; Off hides all companions. Training data, ownership, recovery, and video approvals retain their existing contracts.
+The redesign merged through [PR #6](https://github.com/vdoshi96/My-Workout-Pal/pull/6). Application commit `368997d465e6ffac5a45f3f9646b3589fb6fa023` is verified on Ready deployment `dpl_DdwYMTT4tqL6g2boJ7JYokES4vZa`, serving [the stable site](https://my-workout-pal-chi.vercel.app). Library is a primary member destination, including before routine setup. Six characters in seven contextual scenes extend the illustrated gym across the application. Today exposes browser-local companion selection; Off hides the whole cast.
 
-Local verification passed the full 868-test suite, focused tests for the added pre-setup Library behavior, typecheck, lint, database checks, seed/PWA checks, and the production build. Reviewer-requested dark-theme verification and production closeout are in progress. See `docs/plans/MEMBER-ATMOSPHERE.md`. The canonical checkout is the only worktree; no unresolved worktree remains.
+Verification passed the full 868-test suite, final focused tests including pre-setup Library, typecheck, lint, database/seed/PWA checks, production build, local Chromium desktop and WebKit phone journeys, and dark-theme accessibility checks. Production passed public desktop/phone checks and the authenticated Library, routine, workout recovery, completion, Progress, and ownership journey. Both disposable accounts were removed; Firebase returned to its one pre-existing identity, owner rows were cleared, and the shared persistence digest was unchanged. See `docs/qa/latest/MEMBER-ATMOSPHERE-QA.md` for evidence and limits.
+
+The closeout changes only documentation, evidence, and the QA script's rendered-page wait and redacted diagnostics; application source remains the tested release. The canonical checkout is the only worktree; no unresolved worktree remains.
 
 ## Quiet Set implementation: September 4–5, 2026 (historical release)
 
