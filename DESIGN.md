@@ -124,7 +124,7 @@ Pip the stoat and Mica the kingfisher use expressive classic 2D theatrical-carto
 - Rounded task panels, flat lists, and native disclosures.
 - Decorative cartoon company that yields to the workout.
 
-This record describes the local build from `src/app/quiet-set.css`, its inherited `src/app/globals.css` rules, and the affected components. Production verification remains pending in `docs/qa/latest/QUIET-SET-QA.md`. The finish review cleared four final corrections on captured surfaces only. Missing FORM seed and quality-bar process evidence is not retrospective user approval.
+This record describes the verified application build from `src/app/quiet-set.css`, its inherited `src/app/globals.css` rules, and the affected components. Production verification and its limits are recorded in `docs/qa/latest/QUIET-SET-QA.md`. The finish review cleared four final corrections on captured surfaces only. Missing FORM seed and quality-bar process evidence is not retrospective user approval.
 
 The historical public program map remains an optional five-day example at `/program`. Its waypoint composition does not define the member experience or this visual system. Earlier atlas and Corner Companions briefs remain historical references under `.impeccable/surfaces/`.
 

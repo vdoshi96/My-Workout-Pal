@@ -2,13 +2,13 @@
 
 ## Quiet Set implementation: September 4–5, 2026
 
-The redesign merged through PR #3 at `271795b425354e292238715b6ab966cb74ab2832` and deployment `dpl_Hs3P7gV1v1eopwSUj36z7FBKbnPz`. Hosted verification and a rest-checkpoint correction are active on `vishal/quiet-set-release-qa`. The canonical checkout is the only MWP worktree.
+The redesign and rest-durability correction merged through PRs #3 and #4. Verified application commit `59f376ed55b8687d0548bd03f444bed335791166` is Ready on deployment `dpl_3upAjSUwahbkdZewr2VDyHwEc2WD`, serving [the stable site](https://my-workout-pal-chi.vercel.app). The canonical checkout is the only MWP worktree; no unresolved worktree remains. Documentation-only closeout preserves this tested application source.
 
-Implemented behavior is described in `docs/plans/QUIET-SET-IMPLEMENTATION.md`. The replacement uses classic 2D cartoon Pip/Mica and a bright gym. Live public checks pass. Hosted member QA found that timer pause/extend could wait behind a slow remote save; local durability is being corrected before the member release is certified. Temporary accounts were cleaned up. The earlier deployment remains the rollback baseline.
+Implemented behavior is described in `docs/plans/QUIET-SET-IMPLEMENTATION.md`. Classic 2D cartoon Pip/Mica and bright gym environments replace the rejected artwork. Verification passed 867 tests, the local member resilience matrix, live public desktop/phone checks, and the real hosted account/workout/Progress/ownership journey. Timer pause/extend now checkpoints locally before waiting for a slow remote save. Both disposable accounts were cleaned up and shared catalog state stayed unchanged. The latest [release QA](../qa/latest/QUIET-SET-QA.md) records exact evidence and limits.
 
-Read-only production reconciliation on September 5 found exactly 268 video mappings, matching the 268-item inventory with no missing or extra entries. All 268 returned oEmbed metadata. These checks do not establish full human viewing. No migration, seed, or video approval change is part of this iteration.
+Read-only production reconciliation on September 5 found exactly 268 video mappings, matching the inventory with no missing or extra entries. All returned oEmbed metadata. All 134 public guides rendered the expected primary mapping. Both existing Push-up demos played in a normal browser on the production origin; this is selected playback evidence, not full human viewing of the catalog. No migration, seed, or video approval changed.
 
-Baseline Ready deployment: `dpl_7uMzcLir7Q5yD8z8CSFowEzec5Ee`, with stable origin `https://my-workout-pal-chi.vercel.app`. The release record will identify the final verified Git SHA and deployment. The dated records below describe earlier work and are not current application behavior or current production inventory.
+Rollback baseline: `dpl_7uMzcLir7Q5yD8z8CSFowEzec5Ee`. The dated records below describe earlier releases and are not current application behavior or current production inventory.
 
 ## Comparative report: September 4, 2026
 
