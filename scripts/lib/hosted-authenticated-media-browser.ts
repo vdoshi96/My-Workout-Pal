@@ -135,7 +135,7 @@ function isUserNotFound(error: unknown): boolean {
   return providerCode(error) === "auth/user-not-found";
 }
 
-async function firebaseUserCount(auth: Auth): Promise<number> {
+export async function firebaseUserCount(auth: Auth): Promise<number> {
   let total = 0;
   let pageToken: string | undefined;
   let pages = 0;
@@ -149,7 +149,7 @@ async function firebaseUserCount(auth: Auth): Promise<number> {
   return total;
 }
 
-async function identityIsAbsent(auth: Auth, uid: string): Promise<boolean> {
+export async function identityIsAbsent(auth: Auth, uid: string): Promise<boolean> {
   try {
     await auth.getUser(uid);
     return false;
@@ -167,7 +167,7 @@ function rowsDigest(groups: readonly (readonly unknown[])[]): string {
     .digest("hex");
 }
 
-async function globalPersistenceDigest(database: Database): Promise<string> {
+export async function globalPersistenceDigest(database: Database): Promise<string> {
   return rowsDigest(await Promise.all([
     database.select().from(catalogEquipment),
     database.select().from(catalogExercises),
@@ -177,7 +177,7 @@ async function globalPersistenceDigest(database: Database): Promise<string> {
   ]));
 }
 
-async function ownerRowCount(database: Database, ownerUid: string): Promise<number> {
+export async function ownerRowCount(database: Database, ownerUid: string): Promise<number> {
   const groups = await Promise.all([
     database.select().from(userProfiles).where(eq(userProfiles.firebaseUid, ownerUid)),
     database.select().from(userPreferences).where(eq(userPreferences.ownerFirebaseUid, ownerUid)),
@@ -205,7 +205,7 @@ async function ownerRowCount(database: Database, ownerUid: string): Promise<numb
   return groups.reduce((total, rows) => total + rows.length, 0);
 }
 
-async function deletionJobIsTerminalOrAbsent(
+export async function deletionJobIsTerminalOrAbsent(
   database: Database,
   ownerUid: string,
 ): Promise<boolean> {
@@ -239,7 +239,7 @@ function cleanupViewer(
   };
 }
 
-async function exactIdentityCleanup(
+export async function exactIdentityCleanup(
   auth: Auth,
   database: Database,
   identity: HostedAuthQaIdentity,

@@ -96,7 +96,7 @@ export function TrainingHistoryDetail({
             <Icon name="arrow-left" /> Back to history
           </Link>
           <span className={`history-state history-state--${session.state}`}>
-            {session.state === "completed" ? "Completed workout" : "Interrupted workout"}
+            {session.state === "completed" ? <><Icon name="leaf" /> Completed workout</> : "Interrupted workout"}
           </span>
           <h1 id="history-detail-title">{session.dayName}</h1>
           <p>

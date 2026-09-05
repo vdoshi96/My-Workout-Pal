@@ -73,7 +73,7 @@ describe("curated video persistence and reads", () => {
       .resolves.toMatchObject({ rows: [{ count: 54 }] });
   }, 15_000);
 
-  it("returns only an exact ordered approved pair and omits an incomplete mapping", async () => {
+  it("keeps the surviving existing demonstration when an alternate is unavailable", async () => {
     const { raw, database } = await openDatabase();
     const rows = buildStarterDatabaseRows(undefined, completeRequiredSeed());
     await seedStarterDatabase(database, rows);
@@ -89,7 +89,7 @@ describe("curated video persistence and reads", () => {
     expect(pairsById[benchExerciseId]?.map(({ videoId }) => videoId)).toEqual(pair?.map(({ videoId }) => videoId));
 
     await raw.exec(`DELETE FROM curated_videos WHERE exercise_id = '${benchExerciseId}' AND display_order = 2;`);
-    await expect(getApprovedCuratedVideoPairBySlug(database, "dumbbell-bench-press")).resolves.toBeUndefined();
+    await expect(getApprovedCuratedVideoPairBySlug(database, "dumbbell-bench-press")).resolves.toHaveLength(1);
   }, 15_000);
 
   it("detects published metadata drift instead of silently overwriting it", async () => {

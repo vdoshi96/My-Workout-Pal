@@ -3,8 +3,8 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import { catalogExercises, curatedVideos } from "@/db/schema";
 import {
-  createCuratedVideoPair,
-  type CuratedVideoPair,
+  createAvailableCuratedVideos,
+  type CuratedVideos,
 } from "@/domain/youtube/embed";
 import { DEFAULT_YOUTUBE_VARIATION_ID } from "@/domain/youtube/targets";
 import type { CuratedVideoSeed } from "@/domain/youtube/types";
@@ -47,7 +47,7 @@ function toSeed(row: ApprovedVideoRow): CuratedVideoSeed | undefined {
 
 function groupExactPairs(
   rows: readonly ApprovedVideoRow[],
-): Readonly<Record<string, CuratedVideoPair>> {
+): Readonly<Record<string, CuratedVideos>> {
   const grouped = new Map<string, CuratedVideoSeed[]>();
   for (const row of rows) {
     const seed = toSeed(row);
@@ -56,12 +56,12 @@ function groupExactPairs(
     group.push(seed);
     grouped.set(row.exerciseId, group);
   }
-  const pairs: Record<string, CuratedVideoPair> = {};
+  const pairs: Record<string, CuratedVideos> = {};
   for (const [exerciseId, videos] of grouped) {
     try {
-      pairs[exerciseId] = createCuratedVideoPair(videos);
+      pairs[exerciseId] = createAvailableCuratedVideos(videos);
     } catch {
-      // A partial or drifted database mapping is unavailable, never a partial player.
+      // Invalid records remain unavailable; one valid existing demo remains useful.
     }
   }
   return pairs;
@@ -88,7 +88,7 @@ function selectApprovedRows(database: Database) {
 export async function listApprovedCuratedVideoPairsByExerciseIds(
   database: Database,
   exerciseIds: readonly string[],
-): Promise<Readonly<Record<string, CuratedVideoPair>>> {
+): Promise<Readonly<Record<string, CuratedVideos>>> {
   const uniqueIds = [...new Set(exerciseIds)];
   if (uniqueIds.length === 0) return {};
   const rows = await selectApprovedRows(database)
@@ -104,7 +104,7 @@ export async function listApprovedCuratedVideoPairsByExerciseIds(
 export async function getApprovedCuratedVideoPairBySlug(
   database: Database,
   canonicalExerciseSlug: string,
-): Promise<CuratedVideoPair | undefined> {
+): Promise<CuratedVideos | undefined> {
   const rows = await selectApprovedRows(database)
     .where(and(
       eq(catalogExercises.slug, canonicalExerciseSlug),

@@ -59,7 +59,7 @@ describe("text-only canonical presentation", () => {
 
     expect(result).toEqual(textOnlyExercise);
     expect(markup).toContain("Move under control.");
-    expect(markup).toContain("Curated demos unavailable");
+    expect(markup).toContain("No demonstration is available");
     expect(markup).not.toContain("<iframe");
   });
 });

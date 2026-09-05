@@ -6,7 +6,8 @@ Use the following documents as the maintained project map:
 - [Comparison report plan](../plans/COMPANION-COMPARISON.md): evidence boundaries and report acceptance.
 
 - `PRODUCT.md`: durable product truth.
-- `docs/qa/latest/FIRST-PRINCIPLES-QA.md`: newest local simplification evidence.
+- `docs/qa/latest/QUIET-SET-QA.md`: current redesign and release verification.
+- `docs/plans/QUIET-SET-IMPLEMENTATION.md`: implemented report contracts and user-directed cartoon art.
 - `docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md`: deletion rationale and interrupted History correction.
 - `docs/context/PROJECT.md`: scope, workflows, stack, and boundaries.
 - `docs/context/STATUS.md`: verified state, active work, and blockers.

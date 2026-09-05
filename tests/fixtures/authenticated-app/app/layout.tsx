@@ -3,6 +3,7 @@ import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
 import "@fontsource-variable/source-sans-3";
 import "../../../../src/app/globals.css";
+import "../../../../src/app/quiet-set.css";
 
 import type { Metadata } from "next";
 import type { ReactNode } from "react";

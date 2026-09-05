@@ -1,111 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-
 import { PublicShell } from "@/components/layout/public-shell";
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = {
-  title: "Your customizable workout companion",
-  description:
-    "Plan your own routine with a workout companion for guidance, logging, history, and progress. Explore the five-day starter example without an account.",
+  title: "A little space for your next set",
+  description: "Build a routine, log your sets, rest, and return. Try My Workout Pal without an account.",
 };
-
-const starterDays = ["Push", "Pull", "Legs", "Upper", "Lower"] as const;
 export default function HomePage() {
-  return (
-    <PublicShell current="home">
-      <section className="landing-hero" aria-labelledby="landing-heading">
-        <div className="landing-copy">
-          <p className="landing-welcome">Welcome to My Workout Pal</p>
-          <h1 id="landing-heading">Your workout. Your way.</h1>
-          <p className="landing-lede">
-            Plan your days, use guidance while you train, log your work, and review progress
-            in one personal place. Explore an unsaved starter example before deciding whether
-            you want an account.
-          </p>
-          <div className="landing-actions">
-            <Link className="primary-action" href="/program">
-              Explore the five-day example
-              <Icon name="arrow-right" />
-            </Link>
-            <Link className="landing-text-link" href="#account-choice">
-              Why would I sign in?
-            </Link>
-          </div>
-          <p className="landing-assurance">
-            Five-day starter example · not saved
-          </p>
-        </div>
-
-        <DecorativeCompanion variant="landing" />
-      </section>
-
-      <section className="landing-route" aria-labelledby="starter-route-heading">
-        <div>
-          <p className="landing-section-number" aria-hidden="true">01</p>
-          <h2 id="starter-route-heading">One example, ready to inspect</h2>
-          <p>
-            This five-day starter shows strength, core, and walker or runner cardio. It is
-            not a promise about the routine you must use; signed-in routines can follow
-            the days and movements that fit you.
-          </p>
-        </div>
-        <ol aria-label="Five starter workout days">
-          {starterDays.map((day, index) => (
-            <li key={day}>
-              <Link
-                href={`/program/${day.toLowerCase()}?equipment=dumbbells`}
-                prefetch={false}
-              >
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>{day}</strong>
-                <Icon name="chevron-right" />
-              </Link>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="landing-choice" id="account-choice" aria-labelledby="account-choice-heading">
-        <header>
-          <p className="landing-section-number" aria-hidden="true">02</p>
-          <h2 id="account-choice-heading">Explore first. Build your own when you’re ready.</h2>
-          <p>
-            Signing in is optional for exploring the example. It is required only when
-            your companion needs to remember a routine, workout, or preference that belongs to you.
-          </p>
-        </header>
-
-        <div className="landing-choice-grid">
-          <section aria-labelledby="guest-capabilities-heading">
-            <h3 id="guest-capabilities-heading">Open to everyone</h3>
-            <ul>
-              <li>A five-day starter example in both equipment profiles</li>
-              <li>Every exercise instruction and both approved videos</li>
-              <li>The searchable exercise library</li>
-              <li>A read-only sample workout and a disclosed Progress preview</li>
-            </ul>
-            <Link href="/program">Explore the starter example <Icon name="arrow-right" /></Link>
-          </section>
-
-          <section aria-labelledby="account-capabilities-heading">
-            <h3 id="account-capabilities-heading">Sign in to make it yours</h3>
-            <ul>
-              <li>Shape routine days, movements, targets, notes, and rest periods</li>
-              <li>Add, replace, or create exercises and routines</li>
-              <li>Track workouts and resume interrupted sessions</li>
-              <li>Keep history, records, preferences, and personal analytics</li>
-            </ul>
-            <Link href="/app" prefetch={false}>
-              Open my workouts <Icon name="arrow-right" />
-            </Link>
-            <Link href="/progress" prefetch={false}>
-              Preview Progress <Icon name="arrow-right" />
-            </Link>
-          </section>
-        </div>
-      </section>
-    </PublicShell>
-  );
+  return <PublicShell current="home">
+    <section className="quiet-welcome" aria-labelledby="landing-heading">
+      <div className="quiet-welcome-copy">
+        <h1 id="landing-heading">A little space<br />for your next set.</h1>
+        <p>Your routine, a clear next step, and a place to keep the work you put in.</p>
+        <Link className="primary-action" href="/try">Try one set <Icon name="arrow-right" /></Link>
+        <span className="quiet-welcome-note">No account needed. Practice stays temporary.</span>
+        <Link className="quiet-welcome-secondary" href="/app" prefetch={false}>Create my routine</Link>
+      </div>
+      {/* Plain image preserves the exact public offline asset and nonce CSP. */}
+      <picture className="quiet-studio"><source media="(prefers-color-scheme: dark)" srcSet="/illustrations/quiet-set/evening-studio-phone.webp 600w, /illustrations/quiet-set/evening-studio.webp 1200w" sizes="(max-width: 700px) 100vw, 75vw" />
+      <img src="/illustrations/quiet-set/dawn-studio.webp" srcSet="/illustrations/quiet-set/dawn-studio-phone.webp 600w, /illustrations/quiet-set/dawn-studio.webp 1200w" sizes="(max-width: 700px) 100vw, 75vw" width="1200" height="800" alt="" aria-hidden="true" fetchPriority="high" /></picture>
+    </section>
+    <section className="quiet-welcome-path" aria-labelledby="welcome-path-title">
+      <div><h2 id="welcome-path-title">Make it yours.<br />Take it one set at a time.</h2><p>Choose your movements and targets. Log what happened, take your rest, and pick up where you left off.</p></div>
+      <ol><li><strong>Build your routine</strong><span>Start empty or adapt the five-day example.</span></li><li><strong>Train at your pace</strong><span>Keep guidance nearby and your next set in reach.</span></li><li><strong>See the work add up</strong><span>Review your actual sets, reps, and saved sessions.</span></li></ol>
+    </section>
+    <section className="quiet-example" aria-labelledby="example-title"><div><h2 id="example-title">A starting point, if you want one.</h2><p>Explore Push, Pull, Legs, Upper, and Lower. Keep what fits and change the rest.</p></div><Link className="secondary-action" href="/program">Explore the five-day example <Icon name="arrow-right" /></Link></section>
+  </PublicShell>;
 }

@@ -1,5 +1,7 @@
 # Wave 4 production design QA
 
+Historical release record. The current Quiet Set redesign and cartoon art verification are recorded in [Quiet Set QA](docs/qa/latest/QUIET-SET-QA.md). The Wave 4 identities and findings below remain evidence of that earlier release.
+
 ## Result
 
 The reviewed Corner Companions system is released on public production from

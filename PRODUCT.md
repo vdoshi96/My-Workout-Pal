@@ -46,6 +46,18 @@ Users browse on phones, tablets, and desktop browsers. Workout logging primarily
 - The product provides training organization and tracking. It does not provide medical advice, diagnose conditions, or guarantee outcomes.
 - No paid service, plan upgrade, Marketplace product, or material limit increase can be enabled without explicit user approval.
 
+## Current interaction contract
+
+The main member navigation is Today, Routine, and Progress. Settings and movement guidance stay contextual. Today prioritizes Start or Resume. The runner shows the current movement, targets, and entry controls before expandable guidance. Log set & rest queues one intended set and starts its configured deadline; repeating the unchanged action preserves its identity and deadline. Next set and Next exercise are explicit. Pending, confirmed, and failed saves stay distinguishable.
+
+The public Try one set experience is disposable and requires no account. Refresh discards it. An empty setup draft has no placeholder movement and makes no creation request until the member selects a real movement and explicitly saves. It is held in the current page, not persisted across reload. Routine edits preserve immutable published revisions and workout snapshots. Movement removal can be undone while that removal remains the most recent draft change; publication still requires valid content.
+
+Progress includes completed work sets and repetitions. Bodyweight training does not require added load. Irrelevant zero load, duration, and distance totals are omitted. The application does not automatically prescribe load progression.
+
+Companion illustrations are optional Pip or Mica choices, with an Off setting saved to this browser only. The user's September 4 art correction requires expressive classic 2D theatrical cartoon characters and a bright modern gym. Naturalistic animals and gloomy studio art were rejected.
+
+New public demonstration publication retains full human viewing and approval. A surviving valid legacy demonstration remains available if its alternate is missing. Database approval flags are not independent viewing evidence. The read-only maintenance inventory separates metadata checks from playback, visual inspection, human viewing, and editorial approval.
+
 ## Brand commitments
 
 The product name is **My Workout Pal**. The identity, architecture, copy, and assets must be original and must not reuse the reference recording's FITTRACK name or visual system.
@@ -61,7 +73,7 @@ The private 96.52-second narrated reference recording demonstrates the desired w
 - Treat the five-day starter as an editable example, never as the product boundary.
 - Adapt the active plan without altering completed history.
 - Keep the runner operable under interruption and constrained attention.
-- Explain progression without prescribing unverified loads or making health claims.
+- Keep targets editable without promising automatic progression or making health claims.
 - Prefer approved, relevant instruction over content volume or popularity.
 
 ## Accessibility and inclusion

@@ -356,6 +356,10 @@ export type RunnerAction =
   | Readonly<{ type: "navigate_set"; index: number }>
   | Readonly<{ type: "update_set_draft"; setId: string; draft: SetDraft }>
   | Readonly<{ type: "save_set"; setId: string; now?: number }>
+  | Readonly<{ type: "log_set_and_rest"; setId: string; now?: number }>
+  | Readonly<{ type: "next_set"; setId: string; now?: number }>
+  | Readonly<{ type: "complete_exercise_and_next"; exerciseId: string; now?: number }>
+  | Readonly<{ type: "extend_rest"; seconds: number; now?: number }>
   | Readonly<{ type: "select_cardio"; mode: CardioMode; now?: number }>
   | Readonly<{ type: "update_cardio_draft"; draft: CardioDraft; now?: number }>
   | Readonly<{ type: "save_cardio"; now?: number }>
@@ -3236,6 +3240,41 @@ export function runnerReducer(
   if (action.type === "set_auth") {
     const next = { ...state, auth: action.auth, lastUpdatedAt: at };
     return { ...next, sync: syncForState(next) };
+  }
+  if (action.type === "next_set") {
+    assertMutable(state);
+    if (getActiveSetDisplay(state).setId !== action.setId) return state;
+    if (!state.loggedSets[action.setId] || state.dirtySetIds.includes(action.setId)) {
+      throw new RunnerTransitionError("invalid_draft", "Log this set before moving to the next set.");
+    }
+    const next = runnerReducer(state, { type: "navigate_set", index: state.currentSetIndex + 1 });
+    return withUpdated(next, { restTimer: undefined }, at);
+  }
+  if (action.type === "complete_exercise_and_next") {
+    assertMutable(state);
+    if (state.snapshot.exercises[state.currentExerciseIndex]?.id !== action.exerciseId) return state;
+    const completed = state.completedExerciseIds.includes(action.exerciseId) ? state :
+      runnerReducer(state, { type: "complete_exercise", exerciseId: action.exerciseId, now: at });
+    const next = runnerReducer(completed, { type: "navigate_exercise", index: state.currentExerciseIndex + 1 });
+    return withUpdated(next, { restTimer: undefined }, at);
+  }
+  if (action.type === "log_set_and_rest") {
+    assertMutable(state);
+    const { set } = setAt(state, action.setId);
+    // A second activation/retry of an unchanged entry must not restart rest.
+    if (state.loggedSets[action.setId] && !state.dirtySetIds.includes(action.setId)) return state;
+    const saved = runnerReducer(state, { type: "save_set", setId: action.setId, now: at });
+    return withUpdated(saved, { restTimer: {
+      startedAt: at, endsAt: at + set.target.restSeconds * 1000, pausedAt: undefined,
+    } }, at);
+  }
+  if (action.type === "extend_rest") {
+    assertMutable(state);
+    assertFiniteNonnegative(action.seconds, "additional rest seconds");
+    if (!state.restTimer) return state;
+    return withUpdated(state, { restTimer: { ...state.restTimer,
+      endsAt: Math.max(state.restTimer.endsAt, state.restTimer.pausedAt ?? at) + action.seconds * 1000,
+    } }, at);
   }
   if (action.type === "start_rest") {
     assertMutable(state);

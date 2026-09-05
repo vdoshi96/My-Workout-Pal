@@ -6,7 +6,7 @@ My Workout Pal is a customizable workout companion that connects planning, in-wo
 
 ## Confirmed workflows
 
-- Enter through a distinct public welcome page that explains the workout-companion promise.
+- Enter through a bright public welcome and practice one disposable set without an account.
 - Explore the five-day starter example without an account.
 - Preview dumbbell-only and barbell-enabled equipment profiles.
 - Inspect reviewed instructions for every published movement and approved demonstrations where available.
@@ -15,11 +15,12 @@ My Workout Pal is a customizable workout companion that connects planning, in-wo
 - Register or sign in with Google or email and password.
 - Land in an unmistakably private account after sign-in and see identity, account state, and sign-out controls.
 - Verify a password account before permanent mutations.
-- Start from the example or a blank routine; add, rename, reorder, or remove days; edit movements, optional sections, and optional cardio; and create private exercises.
+- Navigate with Today, Routine, and Progress, with Settings as a utility.
+- Start from the example or a genuinely empty setup draft; add, rename, reorder, or remove days; edit movements, optional sections, and optional cardio; and create private exercises.
 - Attach owner-only guidance links without modifying the public catalog.
 - Confirm equipment substitutions on the active program.
-- Start, complete, interrupt, and resume strength and cardio workouts.
-- Review history, personal records, and progress analytics.
+- Start, log a set with configured rest, move explicitly to the next set or movement, complete, interrupt, and resume strength and cardio workouts.
+- Review history, personal records, completed work sets, repetitions, and relevant load/cardio metrics.
 - Change units and preferences, sign out, recover access, and delete account data.
 
 ## Stack and boundaries

@@ -102,7 +102,7 @@ describe("approved curated video publication", () => {
     );
     expect(available).not.toContain("web-share");
     expect(available).not.toContain("Manual review pending");
-    expect(unavailable).toContain("Curated demos unavailable");
+    expect(unavailable).toContain("No demonstration is available");
     expect(unavailable).not.toContain("required YouTube API credential");
   });
 
@@ -147,7 +147,7 @@ describe("approved curated video publication", () => {
 
     expect(markup).toContain("Technique demonstrations");
     expect(markup).toContain("youtube-nocookie.com/embed/AbCdEfGhI01");
-    expect(markup).toContain("Save set");
+    expect(markup).toContain("Log set &amp; rest");
   });
 
   it("keeps synthetic text-only instructions visible without a public or private iframe", () => {
@@ -213,10 +213,10 @@ describe("approved curated video publication", () => {
     );
 
     expect(publicMarkup).toContain("Move under control.");
-    expect(publicMarkup).toContain("Curated demos unavailable");
+    expect(publicMarkup).toContain("No demonstration is available");
     expect(publicMarkup).not.toContain("<iframe");
-    expect(privateMarkup).toContain("No approved catalog pair is available");
-    expect(privateMarkup).toContain("Save set");
+    expect(privateMarkup).toContain("No demonstration is available");
+    expect(privateMarkup).toContain("Log set &amp; rest");
     expect(privateMarkup).not.toContain("<iframe");
   });
 });

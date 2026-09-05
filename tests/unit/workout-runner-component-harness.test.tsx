@@ -116,9 +116,10 @@ describe("WorkoutRunner injected boundary harness", () => {
         unitSystem="metric"
       />,
     );
-    expect(markup).toContain("Snapshot identity stays fixed");
+    expect(markup).not.toContain("Snapshot identity stays fixed");
+    expect(markup).toContain("Update set &amp; rest");
     expect(markup).toContain("Strength route");
-    expect(markup).toContain("No cardio segment is configured for this session.");
+    expect(markup).not.toContain("No cardio segment is configured for this session.");
     expect(markup).toContain('value="20"');
     expect(markup).toContain("20 kg · 8–12 reps");
     expect(markup).toContain("Saved");

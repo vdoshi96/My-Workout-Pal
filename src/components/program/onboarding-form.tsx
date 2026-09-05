@@ -1,15 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import { parseOnboardingResponse } from "@/components/program/program-mutation-response";
+import { EquipmentIllustration } from "@/components/ui/equipment-illustration";
 import { Icon } from "@/components/ui/icon";
-import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
-import { getCatalogExercise } from "@/domain/exercises/catalog";
-import { createStarterProgram } from "@/domain/programs/starter";
-import { previewEquipmentChange } from "@/domain/programs/substitutions";
+import { EQUIPMENT_PROFILES, supportsEquipment, type EquipmentProfileKind } from "@/domain/equipment";
+import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
 
 type OnboardingMode = "example" | "blank";
 
@@ -28,23 +26,25 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
   const [mode, setMode] = useState<OnboardingMode>("example");
   const [equipmentProfileKind, setEquipmentProfileKind] = useState<EquipmentProfileKind>("dumbbells");
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("imperial");
-  const [timezone, setTimezone] = useState("UTC");
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+  const [reducedMotion, setReducedMotion] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const saveKey = useRef<string | undefined>(undefined);
 
-  const preview = useMemo(() => {
-    const sourceKind = equipmentProfileKind === "dumbbells" ? "barbell" : "dumbbells";
-    return previewEquipmentChange(
-      createStarterProgram(EQUIPMENT_PROFILES[sourceKind]),
-      EQUIPMENT_PROFILES[equipmentProfileKind],
-    );
-  }, [equipmentProfileKind]);
+  const [step, setStep] = useState(0);
+  const [firstExerciseSlug, setFirstExerciseSlug] = useState("");
+  const [search, setSearch] = useState("");
+  const submitLock = useRef(false);
+  const choices = Object.values(CATALOG_EXERCISES).filter((exercise) =>
+    supportsEquipment(EQUIPMENT_PROFILES[equipmentProfileKind], exercise.requiredEquipment) &&
+    `${exercise.name} ${exercise.aliases.join(" ")}`.toLowerCase().includes(search.toLowerCase()));
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canMutate || busy) return;
+    if (!canMutate || busy || submitLock.current || step !== 2) return;
+    if (mode === "blank" && !firstExerciseSlug) { setMessage("Add your first movement before saving."); return; }
+    submitLock.current = true;
     const idempotencyKey = saveKey.current ?? operationKey();
     saveKey.current = idempotencyKey;
     setBusy(true);
@@ -59,6 +59,7 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
             equipmentProfileKind,
             idempotencyKey,
             mode,
+            ...(mode === "blank" ? { firstExerciseSlug } : {}),
             reducedMotion,
             timezone,
             unitSystem,
@@ -81,155 +82,57 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
       setMessage(failedMessage(error));
     } finally {
       setBusy(false);
+      submitLock.current = false;
     }
   }
 
   return (
     <section className="member-onboarding" aria-labelledby="onboarding-title">
-      <header className="member-onboarding-copy contour-surface">
-        <span className="eyebrow">Private setup · step 1 of 1</span>
-        <h1 id="onboarding-title">Start with the example or start blank</h1>
-        <p>
-          Choose a starting point, equipment, and presentation preferences. Both choices create
-          one private, editable routine owned by your account.
-        </p>
+      <header className="member-onboarding-copy">
+        <h1 id="onboarding-title">Make room for your routine.</h1>
+        <p>Choose a starting point. Make it yours as you go.</p>
       </header>
-
-      {!canMutate ? (
-        <aside className="member-inline-notice" role="status">
-          Verify your email and sign in again before creating permanent fitness data. Public previews remain available.
-        </aside>
-      ) : null}
-
+      {!canMutate ? <p role="status">Verify your email and sign in again before saving a routine.</p> : null}
       <form className="onboarding-form" onSubmit={(event) => void submit(event)}>
-        <fieldset disabled={!canMutate || busy}>
-          <legend>Starting point</legend>
+        <p className="quiet-step">Step {step + 1} of 3 · {step === 0 ? "Your routine" : step === 1 ? "Your preferences" : "Equipment and review"}</p>
+        {step === 0 ? <fieldset disabled={!canMutate || busy}>
+          <legend>Where would you like to start?</legend>
           <div className="onboarding-profile-grid">
-            <label>
-              <input
-                checked={mode === "example"}
-                name="onboarding-mode"
-                onChange={() => {
-                  saveKey.current = undefined;
-                  setMode("example");
-                  setMessage("");
-                }}
-                type="radio"
-              />
-              <span>
-                <strong>Example routine</strong>
-                <small>A complete five-day routine you can immediately review and edit.</small>
-              </span>
-            </label>
-            <label>
-              <input
-                checked={mode === "blank"}
-                name="onboarding-mode"
-                onChange={() => {
-                  saveKey.current = undefined;
-                  setMode("blank");
-                  setMessage("");
-                }}
-                type="radio"
-              />
-              <span>
-                <strong>Blank routine</strong>
-                <small>One valid Day 1 with a replaceable movement, ready for the routine editor.</small>
-              </span>
-            </label>
+            {(["example", "blank"] as const).map((choice) => <label key={choice}>
+              <input type="radio" name="onboarding-mode" checked={mode === choice} onChange={() => {setMode(choice); saveKey.current = undefined;}} />
+              <span><strong>{choice === "example" ? "Example routine" : "Blank routine"}</strong><small>{choice === "example" ? "Five editable days, with movements and targets ready to explore." : "An empty draft. Add your first movement before anything is saved."}</small></span>
+            </label>)}
           </div>
-        </fieldset>
-
-        <fieldset disabled={!canMutate || busy}>
-          <legend>Equipment profile</legend>
-          <div className="onboarding-profile-grid">
-            {(Object.keys(EQUIPMENT_PROFILES) as EquipmentProfileKind[]).map((profile) => (
-              <label key={profile}>
-                <input
-                  checked={equipmentProfileKind === profile}
-                  name="equipment-profile"
-                  onChange={() => {
-                    saveKey.current = undefined;
-                    setEquipmentProfileKind(profile);
-                    setMessage("");
-                  }}
-                  type="radio"
-                />
-                <span>
-                  <Icon name="dumbbell" />
-                  <strong>{EQUIPMENT_PROFILES[profile].label}</strong>
-                  <small>{EQUIPMENT_PROFILES[profile].description}</small>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        {mode === "example" ? (
-          <section className="onboarding-preview" aria-labelledby="onboarding-preview-title">
-            <h2 id="onboarding-preview-title">What changes in this profile</h2>
-            <p>{preview.changes.length} day-specific substitutions compared with the other starter profile. Push and Legs keep their dumbbell movements.</p>
-            <ul>
-              {preview.changes.map((change) => (
-                <li key={`${change.day}:${change.order}`}>
-                  <span>{change.day}</span>
-                  <strong>{getCatalogExercise(change.fromSlug).name} → {getCatalogExercise(change.toSlug).name}</strong>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : (
-          <section className="onboarding-preview" aria-labelledby="onboarding-preview-title">
-            <h2 id="onboarding-preview-title">A truthful blank starting point</h2>
-            <p>
-              Publication requires a movement, so blank saves only Day 1, Main work, and one
-              compatible placeholder movement. The editor opens next so you can replace it,
-              rename the topology, add days, or add cardio without creating another routine.
-            </p>
-          </section>
-        )}
-
-        <div className="onboarding-preferences">
+        </fieldset> : null}
+        {step === 1 ? <fieldset disabled={!canMutate || busy} className="onboarding-preferences">
+          <legend>Your preferences</legend>
           <label htmlFor="onboarding-units">Display units</label>
-          <select
-            disabled={!canMutate || busy}
-            id="onboarding-units"
-            onChange={(event) => setUnitSystem(event.target.value === "metric" ? "metric" : "imperial")}
-            value={unitSystem}
-          >
-            <option value="imperial">Pounds and miles</option>
-            <option value="metric">Kilograms and kilometers</option>
-          </select>
-
-          <label htmlFor="onboarding-timezone">Time zone</label>
-          <input
-            disabled={!canMutate || busy}
-            id="onboarding-timezone"
-            maxLength={64}
-            onChange={(event) => {
-              setTimezone(event.target.value);
-            }}
-            required
-            spellCheck={false}
-            value={timezone}
-          />
-          <small>Use an IANA time zone such as America/Chicago so workout dates remain stable.</small>
-
-          <label className="onboarding-check">
-            <input
-              checked={reducedMotion}
-              disabled={!canMutate || busy}
-              onChange={(event) => setReducedMotion(event.target.checked)}
-              type="checkbox"
-            />
-            <span><strong>Reduce interface motion</strong><small>Timers and save status still use clear text.</small></span>
-          </label>
-        </div>
-
+          <select id="onboarding-units" value={unitSystem} onChange={(event) => {setUnitSystem(event.target.value === "metric" ? "metric" : "imperial"); saveKey.current = undefined;}}><option value="imperial">Pounds and miles</option><option value="metric">Kilograms and kilometers</option></select>
+          <details><summary>Time zone and motion</summary>
+            <label htmlFor="onboarding-timezone">Time zone</label>
+            <input id="onboarding-timezone" value={timezone} required maxLength={64} onChange={(event) => {setTimezone(event.target.value); saveKey.current = undefined;}} />
+            <label className="onboarding-check"><input type="checkbox" checked={reducedMotion} onChange={(event) => {setReducedMotion(event.target.checked); saveKey.current = undefined;}} />Reduce interface motion</label>
+          </details>
+        </fieldset> : null}
+        {step === 2 ? <fieldset disabled={!canMutate || busy}>
+          <legend>Equipment</legend>
+          <div className="onboarding-profile-grid">{(Object.keys(EQUIPMENT_PROFILES) as EquipmentProfileKind[]).map((profile) => <label key={profile}>
+            <input type="radio" name="equipment-profile" checked={equipmentProfileKind === profile} onChange={() => {setEquipmentProfileKind(profile); setFirstExerciseSlug(""); saveKey.current = undefined;}} />
+            <span><EquipmentIllustration kind={profile === "barbell" ? "barbell" : "dumbbell"} /><strong>{EQUIPMENT_PROFILES[profile].label}</strong><small>{EQUIPMENT_PROFILES[profile].description}</small></span>
+          </label>)}</div>
+          {mode === "blank" ? <section className="quiet-empty-draft" aria-labelledby="first-movement-title">
+            <h2 id="first-movement-title">{firstExerciseSlug ? "Your first movement" : "Add your first movement"}</h2>
+            <p>{firstExerciseSlug ? "Day 1 · You can edit its sets and targets after saving." : "Day 1 is empty. This draft has not been saved."}</p>
+            {firstExerciseSlug ? <div className="quiet-selected-movement"><strong>{CATALOG_EXERCISES[firstExerciseSlug]?.name}</strong><button type="button" onClick={() => {setFirstExerciseSlug(""); saveKey.current = undefined;}}>Remove movement</button></div> : <>
+              <label htmlFor="first-movement-search">Search movements</label><input id="first-movement-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Try push-up or dumbbell row" />
+              <ul className="quiet-movement-results">{choices.slice(0, 12).map((exercise) => <li key={exercise.slug}><button type="button" onClick={() => {setFirstExerciseSlug(exercise.slug); saveKey.current = undefined;}}><strong>{exercise.name}</strong><span>{exercise.requiredEquipment.join(", ")}</span><Icon name="plus" /></button></li>)}</ul>
+              {choices.length === 0 ? <p>No matching movements for this equipment. Try another search.</p> : null}
+            </>}
+          </section> : <p>Creates five editable days using {EQUIPMENT_PROFILES[equipmentProfileKind].label.toLowerCase()}. Review any substitutions in your routine before training.</p>}
+        </fieldset> : null}
         <div className="onboarding-submit">
-          <button className="primary-action" disabled={!canMutate || busy} type="submit">
-            {busy ? "Creating…" : mode === "example" ? "Start with example" : "Start blank"}<Icon name="arrow-right" />
-          </button>
+          {step > 0 ? <button key="back" type="button" className="secondary-action" disabled={busy} onClick={() => setStep(step - 1)}>Back</button> : null}
+          {step < 2 ? <button key={`continue-${step}`} className="primary-action" disabled={!canMutate || busy} type="button" onClick={(event) => {event.preventDefault(); setStep(step + 1);}}>Continue <Icon name="arrow-right" /></button> : <button key="create-routine" className="primary-action" disabled={!canMutate || busy || (mode === "blank" && !firstExerciseSlug)} type="submit">{busy ? "Creating…" : "Save routine"}<Icon name="check" /></button>}
           <p aria-live="polite" role="status">{message}</p>
         </div>
       </form>

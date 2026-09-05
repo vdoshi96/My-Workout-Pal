@@ -1,19 +1,25 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import type { KeyboardEvent } from "react";
 
 import {
   buildYouTubeEmbedUrl,
   buildYouTubeWatchUrl,
-  type CuratedVideoPair,
+  type CuratedVideos,
 } from "@/domain/youtube/embed";
+
+import { VIDEO_VARIANT_NOTES } from "@/domain/youtube/variant-notes";
+
+const subscribeToOrigin = () => () => {};
 
 export function CuratedVideoPlayer({
   videos,
-}: Readonly<{ videos: CuratedVideoPair }>) {
+}: Readonly<{ videos: CuratedVideos }>) {
   const [activeVideoId, setActiveVideoId] = useState(videos[0].videoId);
   const playerId = useId();
+  const origin = useSyncExternalStore<string | undefined>(subscribeToOrigin, () => window.location.origin, () => undefined);
+  const [problemOpen, setProblemOpen] = useState(false);
   const activeVideo =
     videos.find(({ videoId }) => videoId === activeVideoId) ?? videos[0];
 
@@ -39,7 +45,7 @@ export function CuratedVideoPlayer({
   return (
     <div className="curated-player">
       <div
-        aria-label="Choose a curated demonstration"
+        aria-label="Choose a demonstration"
         aria-orientation="horizontal"
         className="curated-player-tabs"
         role="tablist"
@@ -58,7 +64,7 @@ export function CuratedVideoPlayer({
               tabIndex={selected ? 0 : -1}
               type="button"
             >
-              <span>Demo {video.displayOrder}</span>
+              <span>{index === 0 ? "Watch demo" : "Another demo"}</span>
               <strong>{video.title}</strong>
               <small>{video.channelTitle}</small>
             </button>
@@ -78,7 +84,7 @@ export function CuratedVideoPlayer({
             allowFullScreen
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            src={buildYouTubeEmbedUrl(activeVideo.videoId)}
+            src={buildYouTubeEmbedUrl(activeVideo.videoId, origin)}
             title={`${activeVideo.title} — ${activeVideo.channelTitle}`}
           />
         </div>
@@ -92,9 +98,12 @@ export function CuratedVideoPlayer({
             rel="noopener"
             target="_blank"
           >
-            Open this demo on YouTube
+            Open on YouTube
           </a>
         </div>
+        {VIDEO_VARIANT_NOTES[activeVideo.videoId] ? <p className="video-variant-note">{VIDEO_VARIANT_NOTES[activeVideo.videoId]}</p> : null}
+        <button type="button" className="quiet-text-button" onClick={() => setProblemOpen(!problemOpen)} aria-expanded={problemOpen}>Report a problem</button>
+        {problemOpen ? <div className="video-problem-help"><p>If playback fails, try the other demonstration or open YouTube. Written instructions remain available.</p><a href={`https://github.com/vdoshi96/My-Workout-Pal/issues/new?title=${encodeURIComponent(`Video problem: ${activeVideo.canonicalExerciseSlug}`)}&body=${encodeURIComponent(`Video ID: ${activeVideo.videoId}\nMovement: ${activeVideo.canonicalExerciseSlug}\nProblem (omit account or workout details): `)}`} target="_blank" rel="noopener noreferrer">Open a public problem report</a><p>Opens GitHub. Review the report before submitting; do not include private workout information.</p></div> : null}
       </section>
     </div>
   );

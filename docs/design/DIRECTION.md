@@ -1,5 +1,8 @@
 # Visual direction
 
+Current direction: Quiet Set, with the user's September 4 correction to expressive classic 2D cartoons and a bright gym. See `DESIGN.md` and `docs/plans/QUIET-SET-IMPLEMENTATION.md` for the implementation. The route-atlas material below records the earlier design decision and is retained as history.
+
+
 > **Next visual phase:** Preserve the established colors, typography, and original animal world while applying the selected Corner Companions direction from `docs/design/COMPANION-VISUAL-CONCEPTS.md`. The route atlas remains an example and workout-state motif rather than the product's universal frame. Production porting begins only in the bounded Wave 3 pilot.
 
 ## Training route atlas

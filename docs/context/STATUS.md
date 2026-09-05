@@ -1,5 +1,15 @@
 # Project status
 
+## Quiet Set implementation: September 4–5, 2026
+
+Implementation is on `vishal/quiet-set-redesign`, based on `db5fec1`. The user authorized implementation, production publication, and live verification. The canonical checkout is the only MWP worktree; no completed temporary worktree remains.
+
+Implemented behavior is described in `docs/plans/QUIET-SET-IMPLEMENTATION.md`. The user rejected the first naturalistic animals and gloomy studio imagery; the replacement uses classic 2D cartoon Pip/Mica and a bright gym. Production release verification is in progress; the earlier deployment remains the rollback baseline until the new Git-connected release is verified.
+
+Read-only production reconciliation on September 5 found exactly 268 video mappings, matching the 268-item inventory with no missing or extra entries. All 268 returned oEmbed metadata. These checks do not establish full human viewing. No migration, seed, or video approval change is part of this iteration.
+
+Baseline Ready deployment: `dpl_7uMzcLir7Q5yD8z8CSFowEzec5Ee`, with stable origin `https://my-workout-pal-chi.vercel.app`. The release record will identify the final verified Git SHA and deployment. The dated records below describe earlier work and are not current application behavior or current production inventory.
+
 ## Comparative report: September 4, 2026
 
 The [MWP/Trainpal comparative report](../reviews/COMPANION-COMPARISON.md)
@@ -15,15 +25,11 @@ release database counts below remain historical evidence, not current hosted
 coverage. No private database identity or exact deployed SHA was established.
 
 The report records open corrections for unsupported progression copy,
-contradictory saved-state labels, and video provenance claims. These require a
-separately scoped application/policy change; the report does not silently alter
-those contracts. Trainpal's setup submission defect was reproduced locally,
+contradictory saved-state labels, and video provenance claims. The Quiet Set implementation above addresses the application corrections while retaining truthful video-policy boundaries. The report itself did not alter those contracts. Trainpal's setup submission defect was reproduced locally,
 not in a real production account. See the report for evidence and limits.
 
-The report branch is `vishal/companion-comparison-report`; its temporary worktree
-is removed during Git closeout after the branch merges. No other unresolved
-MWP worktree was found. The existing simplification QA remains the newest
-implementation QA; report evidence is maintained with the comparative review.
+The report branch `vishal/companion-comparison-report` was merged and its temporary worktree removed. No other unresolved
+MWP worktree was found. The simplification QA describes its earlier iteration; report evidence is maintained with the comparative review.
 
 ## Simplification review: September 4, 2026
 
@@ -39,7 +45,7 @@ retry, 34 database checks, typecheck, lint, build, route/seed/PWA checks,
 That iteration closed out through `vishal/first-principles-simplification`,
 leaving only the canonical checkout at that checkpoint. See
 `docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md` for scope and acceptance criteria.
-Verification is recorded in `docs/qa/latest/FIRST-PRINCIPLES-QA.md`.
+Its historical verification is retained in [the pre-redesign Git snapshot](https://github.com/vdoshi96/My-Workout-Pal/blob/db5fec1/docs/qa/latest/FIRST-PRINCIPLES-QA.md).
 The dated release records below describe their original verification boundaries.
 
 ## Wave 4 release record

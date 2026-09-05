@@ -1,89 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useCompanionChoice } from "./companion-preference";
 
+function companionAsset(pose: "ready" | "resting" | "complete") {
+  return Object.freeze({ fetchPriority: "auto" as const, height: 320, loading: "lazy" as const,
+    sizes: "(max-width: 900px) 160px, 240px", src: `/illustrations/quiet-set/pip-${pose}.webp`, width: 320 });
+}
 export const COMPANION_ASSETS = Object.freeze({
-  landing: {
-    fetchPriority: "high",
-    height: 1024,
-    loading: "eager",
-    sizes: "(max-width: 63.99rem) min(76vw, 24rem), min(34vw, 30rem)",
-    src: "/illustrations/companions/planning-hedgehog.webp",
-    srcSet:
-      "/illustrations/companions/planning-hedgehog-512.webp 512w, /illustrations/companions/planning-hedgehog.webp 1024w",
-    width: 1024,
-  },
-  "member-home": {
-    fetchPriority: "auto",
-    height: 1024,
-    loading: "lazy",
-    sizes: "(max-width: 59.99rem) min(76vw, 22rem), min(24vw, 22rem)",
-    src: "/illustrations/companions/preparing-fox.webp",
-    srcSet:
-      "/illustrations/companions/preparing-fox-512.webp 512w, /illustrations/companions/preparing-fox.webp 1024w",
-    width: 1024,
-  },
-  "progress-preview": {
-    fetchPriority: "auto",
-    height: 1024,
-    loading: "lazy",
-    sizes: "(max-width: 47.99rem) min(76vw, 21rem), min(24vw, 21rem)",
-    src: "/illustrations/companions/reviewing-raccoon.webp",
-    srcSet:
-      "/illustrations/companions/reviewing-raccoon-512.webp 512w, /illustrations/companions/reviewing-raccoon.webp 1024w",
-    width: 1024,
-  },
-  library: {
-    fetchPriority: "auto",
-    height: 1024,
-    loading: "lazy",
-    sizes: "(max-width: 63.99rem) 1px, min(16vw, 18rem)",
-    src: "/illustrations/companions/cataloging-otter.webp",
-    srcSet:
-      "/illustrations/companions/cataloging-otter-512.webp 512w, /illustrations/companions/cataloging-otter.webp 1024w",
-    width: 1024,
-  },
-  "routine-editor": {
-    fetchPriority: "auto",
-    height: 1024,
-    loading: "lazy",
-    sizes: "(max-width: 63.99rem) 1px, min(15vw, 17rem)",
-    src: "/illustrations/companions/routine-drafting-beaver.webp",
-    srcSet:
-      "/illustrations/companions/routine-drafting-beaver-512.webp 512w, /illustrations/companions/routine-drafting-beaver.webp 1024w",
-    width: 1024,
-  },
-  history: {
-    fetchPriority: "auto",
-    height: 1024,
-    loading: "lazy",
-    sizes: "(max-width: 63.99rem) 1px, min(14vw, 16rem)",
-    src: "/illustrations/companions/history-archive-tortoise.webp",
-    srcSet:
-      "/illustrations/companions/history-archive-tortoise-512.webp 512w, /illustrations/companions/history-archive-tortoise.webp 1024w",
-    width: 1024,
-  },
-  settings: {
-    fetchPriority: "auto",
-    height: 1024,
-    loading: "lazy",
-    sizes: "(max-width: 47.99rem) 1px, min(14vw, 16rem)",
-    src: "/illustrations/companions/settings-packing-hare.webp",
-    srcSet:
-      "/illustrations/companions/settings-packing-hare-512.webp 512w, /illustrations/companions/settings-packing-hare.webp 1024w",
-    width: 1024,
-  },
-  workout: {
-    fetchPriority: "auto",
-    height: 1024,
-    loading: "lazy",
-    sizes: "(max-width: 63.99rem) 1px, min(13vw, 15rem)",
-    src: "/illustrations/companions/workout-corner-bear.webp",
-    srcSet:
-      "/illustrations/companions/workout-corner-bear-512.webp 512w, /illustrations/companions/workout-corner-bear.webp 1024w",
-    width: 1024,
-  },
-} as const);
+  landing: companionAsset("ready"),
+  "member-home": companionAsset("ready"),
+  "progress-preview": companionAsset("complete"),
+  library: companionAsset("ready"),
+  "routine-editor": companionAsset("ready"),
+  history: companionAsset("complete"),
+  settings: companionAsset("ready"),
+  workout: companionAsset("resting"),
+});
 
 export type DecorativeCompanionVariant = keyof typeof COMPANION_ASSETS;
 
@@ -91,7 +24,10 @@ export function DecorativeCompanion({
   variant,
 }: Readonly<{ variant: DecorativeCompanionVariant }>) {
   const [visible, setVisible] = useState(true);
-  const asset = COMPANION_ASSETS[variant];
+  const choice = useCompanionChoice();
+  const pose = variant === "workout" ? "resting" : variant === "history" || variant === "progress-preview" ? "complete" : "ready";
+  const asset = { ...COMPANION_ASSETS[variant], src: `/illustrations/quiet-set/${`${choice}-${pose}`}.webp`, srcSet: undefined, width: 320, height: 320 };
+  if (choice === "off") return null;
 
   return (
     <div

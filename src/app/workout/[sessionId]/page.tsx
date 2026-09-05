@@ -82,8 +82,8 @@ export default async function OwnedWorkoutPage({
     <div className="owned-workout-route">
       <a className="skip-link" href="#runner-title">Skip to active workout</a>
       <header className="owned-workout-route-bar">
-        <Link href="/app">Exit to program</Link>
-        <span>{resume.session.dayName} · revision {resume.session.programRevisionId.slice(0, 8)}</span>
+        <Link href="/app">Back to Today</Link>
+        <span>{resume.session.dayName}</span>
       </header>
       <main>
         {viewer.eligibleForPermanentMutations ? (

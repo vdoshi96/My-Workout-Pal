@@ -385,3 +385,8 @@ describe("profile program API contract", () => {
     });
   });
 });
+
+
+it("rejects publishing an empty blank routine", () => {
+  expect(onboardingRequestSchema.safeParse({mode: "blank", equipmentProfileKind: "dumbbells", idempotencyKey: "empty-blank"}).success).toBe(false);
+});

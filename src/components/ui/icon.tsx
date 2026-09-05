@@ -1,6 +1,12 @@
 import type { SVGProps } from "react";
 
 type IconName =
+  | "plus"
+  | "edit"
+  | "play"
+  | "pause"
+  | "undo"
+  | "leaf"
   | "arrow-left"
   | "arrow-right"
   | "check"
@@ -28,6 +34,12 @@ export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGEle
     ...props,
   };
 
+  if (name === "plus") return <svg {...common}><path d="M12 5v14M5 12h14" /></svg>;
+  if (name === "edit") return <svg {...common}><path d="m4 16 12-12 4 4-12 12H4Z M14 6l4 4" /></svg>;
+  if (name === "play") return <svg {...common}><path d="m8 4 12 8-12 8Z" /></svg>;
+  if (name === "pause") return <svg {...common}><path d="M8 5v14M16 5v14" /></svg>;
+  if (name === "undo") return <svg {...common}><path d="m8 4-5 5 5 5M3 9h10a6 6 0 0 1 0 12" /></svg>;
+  if (name === "leaf") return <svg {...common}><path d="M5 19C-1 6 12 3 21 3c0 11-3 18-14 16M4 21 16 9" /></svg>;
   if (name === "dumbbell") {
     return <svg {...common}><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" /></svg>;
   }

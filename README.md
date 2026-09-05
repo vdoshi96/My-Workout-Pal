@@ -1,6 +1,6 @@
 # My Workout Pal
 
-My Workout Pal is an equipment-aware, installable workout planner and tracker. Guests can inspect the complete five-day starter program and sample analytics. Authenticated users can adapt programs, complete interruption-safe workouts, and review persisted history and progress.
+My Workout Pal is an equipment-aware, installable workout planner and tracker. Guests can try a disposable practice set or inspect the five-day example. Members build routines, log interruption-safe workouts, and review actual sets, reps, and progress through Today, Routine, and Progress.
 
 The application is under active implementation. See `docs/context/STATUS.md` for verified state and blockers.
 

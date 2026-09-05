@@ -228,3 +228,14 @@ Abandoning a workout does not complete or skip each exercise. History preserves
 that pending state and presents it as unfinished, with any saved sets intact.
 Only completed sessions require terminal exercise states; missing state remains
 a conflict. This read correction requires no historical writes or schema change.
+
+
+## September 4, 2026: Quiet Set implementation
+
+- Keep the product identity and existing recovery engine. Replace management-first hierarchy with Today, Routine, and Progress, a direct Start/Resume action, and a logger before expandable guidance.
+- Hold blank setup in page state until a real compatible catalog movement is selected. No fake published movement and no schema migration. Publication validates the first real routine; reload discards an unsaved setup draft.
+- Combine logging and rest in one reducer action while reusing stable operation IDs. Duplicate unchanged activation preserves the deadline. Forward navigation validates the intended set or exercise identity; final completion waits for pending saves.
+- Count work sets and reps directly from completed owned session/exercise records. Preserve canonical kilograms and meters and immutable snapshots.
+- Preserve the full-human-watch rule for new publication. Support one surviving legacy demo at runtime, annotate ambiguous variants, and maintain an explicit read-only inventory. Metadata availability never creates approval.
+- The user rejected the first naturalistic character and dark studio images. The replacement world uses expressive original classic cel-animation characters and a bright, clearly equipped gym. Art stays decorative, optional, bounded, and absent from active logging. Ready poses also serve neutral empty states; browser-local character preference contains no personal training data.
+- The report's five-person novice study requires actual participants. Automated browser evidence does not stand in for that study or physical-device testing.

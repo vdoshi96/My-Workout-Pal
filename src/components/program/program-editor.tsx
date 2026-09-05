@@ -234,10 +234,12 @@ export function ProgramEditor({
   const [draft, setDraft] = useState<ProgramEditorDraft>(() =>
     programEditorDraftFromReadModel(initialProgram, operationKey()),
   );
+  const [undoDraft, setUndoDraft] = useState<{ before: ProgramEditorDraft; after: ProgramEditorDraft } | null>(null);
   const [baseline, setBaseline] = useState(() => JSON.stringify(draft));
   const [selectedDayKey, setSelectedDayKey] = useState(initialProgram.days[0]?.dayKey ?? "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [saveFailed, setSaveFailed] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [chooser, setChooser] = useState<ExerciseChooser | null>(null);
   const [dayCreatorOpen, setDayCreatorOpen] = useState(false);
@@ -873,6 +875,7 @@ export function ProgramEditor({
         ? document.getElementById(`program-prescription-${focusPrescription.prescriptionKey}`)
         : null;
       setDraft(next);
+      setUndoDraft({ before: draft, after: next });
       setMessage(
         `${prescriptionRemoval.review.exerciseName} removed from this unpublished draft.`,
       );
@@ -911,7 +914,8 @@ export function ProgramEditor({
     }
     setErrors([]);
     setBusy(true);
-    setMessage("Publishing one new immutable revision…");
+    setSaveFailed(false);
+    setMessage("Saving your routine…");
     try {
       const raw = await privateApiMutation<unknown>(
         "/api/app/program/publish",
@@ -934,11 +938,12 @@ export function ProgramEditor({
       localPrescriptionIdsRef.current.clear();
       setBaseline(JSON.stringify(nextDraft));
       setMessage(
-        `Published revision ${nextProgram.revisionNumber}. Earlier program revisions and workout snapshots were not changed.`,
+        "Routine saved. Past workouts stay as they were.",
       );
       queueMicrotask(() => statusRef.current?.focus());
       router.refresh();
     } catch (error) {
+      setSaveFailed(true);
       setMessage(publishFailure(error));
     } finally {
       setBusy(false);
@@ -968,13 +973,15 @@ export function ProgramEditor({
     <section className="program-editor-page" aria-labelledby="program-editor-title">
       <header className="program-editor-hero companion-heading contour-surface">
         <div>
-          <span className="eyebrow">Unpublished draft · base revision {program.revisionNumber}</span>
-          <h1 id="program-editor-title">Edit your route</h1>
-          <p>Publish creates one new revision. Existing workout snapshots keep their original targets, exercises, and equipment meaning.</p>
+          <h1 id="program-editor-title">Your routine</h1>
+          <p className="quiet-save-state" role="status">{busy ? "Saving…" : saveFailed ? "Save failed" : dirty ? "Unsaved changes" : "Saved"}</p>
+          <p>Changes apply to future workouts. A workout already started keeps its original movements and targets.</p>
         </div>
+        <nav className="quiet-routine-tools" aria-label="Routine tools"><Link className="secondary-action" href="/app/programs">Manage routines</Link>
+        <Link className="secondary-action" href="/app/library">Browse movements</Link>
         <Link className="secondary-action" href="/app">
-          Back to program
-        </Link>
+          Back to Today
+        </Link></nav>
         {showRoutineEditorCompanion ? (
           <DecorativeCompanion variant="routine-editor" />
         ) : null}
@@ -986,6 +993,7 @@ export function ProgramEditor({
         </div>
       ) : null}
 
+      <details className="quiet-equipment-details"><summary>Equipment and substitutions</summary>
       <EquipmentProfileControl
         canMutate={canMutate}
         disabled={busy}
@@ -996,11 +1004,12 @@ export function ProgramEditor({
         placement="editor"
         program={program}
       />
+      </details>
 
       <div className="program-editor-layout">
         <aside className="program-editor-outline" aria-label="Program days">
           <label className="program-editor-field">
-            <span>Program name</span>
+            <span>Routine name</span>
             <input
               disabled={busy}
               maxLength={80}
@@ -1189,7 +1198,7 @@ export function ProgramEditor({
                             >Replace</button>
                             <button
                               aria-label={`Remove ${movementLabel}`}
-                              disabled={section.prescriptions.length <= 1}
+                              disabled={busy}
                               onClick={(event) => openPrescriptionRemoval(
                                 selectedDay,
                                 sectionIndex,
@@ -1240,8 +1249,7 @@ export function ProgramEditor({
               );
             })}
 
-            <section className="program-editor-add-section" aria-labelledby="program-editor-add-section-title">
-              <h3 id="program-editor-add-section-title">Add a section</h3>
+            <details className="program-editor-add-section"><summary>Add a section</summary>
               <p>Sections can share a classification and start empty. Add a movement before publishing, or remove an empty section after review.</p>
               <div>
                 {PROGRAM_SECTION_KINDS.map((kind) => (
@@ -1253,7 +1261,7 @@ export function ProgramEditor({
                   >Add {kind} section</button>
                 ))}
               </div>
-            </section>
+            </details>
 
             <fieldset className="program-editor-section program-editor-cardio" disabled={busy}>
               <legend>Optional cardio</legend>
@@ -1320,10 +1328,11 @@ export function ProgramEditor({
           ) : null}
           <footer className="program-editor-footer">
             <div>
-              <strong>{dirty ? "Unpublished changes" : "Draft matches the active revision"}</strong>
-              <p>Targets stay canonical in kilograms, metres, and seconds per kilometre; your preference changes labels and display values only.</p>
+              <strong>{dirty ? "Unsaved changes" : "Saved"}</strong>
+              <p>Save when your routine is ready. You can keep editing afterward.</p>
             </div>
             <div className="program-editor-footer-actions">
+              {undoDraft && undoDraft.after === draft ? <button type="button" className="secondary-action" disabled={busy} onClick={() => {setDraft(undoDraft.before); setUndoDraft(null); setMessage("Movement restored to your draft.");}}>Undo removal</button> : null}
               {!dirty ? (
                 <Link
                   className="secondary-action"
@@ -1332,7 +1341,7 @@ export function ProgramEditor({
                 >Open saved day</Link>
               ) : null}
               <button className="primary-action" disabled={!canMutate || busy || !dirty} onClick={() => void publish()} type="button">
-                {busy ? "Publishing…" : "Publish new revision"}<Icon name="arrow-right" />
+                {busy ? "Saving…" : "Save routine"}<Icon name="arrow-right" />
               </button>
             </div>
           </footer>

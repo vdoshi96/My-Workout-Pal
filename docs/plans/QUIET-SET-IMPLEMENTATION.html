@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="34fc9c6b89a353f56856151cf584dab16eba070200cace2ae10316589ee8f9d3">
+  <title>Quiet Set implementation and release · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Quiet Set implementation and release</h1>
+<h2>Outcome and scope</h2>
+<p>Implement the September 4 companion comparison in My Workout Pal. Keep the product name, immutable training data, server ownership, and recovery engine. Replace the route-atlas presentation with porcelain, forest, sage, readable training numbers, and bounded Pip/Mica artwork. The user corrected the art direction during implementation: use expressive classic 2D theatrical cartoons in the Looney Tunes / Tom and Jerry tradition and a bright modern gym. Replace the rejected naturalistic animals and gloomy studio imagery throughout the asset family. The comparison remains a dated audit, not current product authority.</p>
+<h2>Recommendation contracts</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Implementation</th>
+<th>Acceptance</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Setup</td>
+<td>Separate navigation from final creation; detect time zone; retain input on error.</td>
+<td>Continue cannot submit; final action is idempotent.</td>
+</tr>
+<tr>
+<td>Empty routine</td>
+<td>Keep an empty unpublished draft until actual movement selection.</td>
+<td>No placeholder in a published routine; publication validates real content.</td>
+</tr>
+<tr>
+<td>Navigation</td>
+<td>Today, Routine, Progress; contextual Library and Settings utilities.</td>
+<td>Start/resume takes priority; preserved URLs and return context.</td>
+</tr>
+<tr>
+<td>Trial</td>
+<td>Disposable guest set/rest interaction.</td>
+<td>No server account writes; explicit reset and unsaved disclosure.</td>
+</tr>
+<tr>
+<td>Runner</td>
+<td>Current movement and inputs first; combined log/rest; explicit next set/movement.</td>
+<td>First phone viewport contains logger; duplicate/retry cannot double-advance; recovery intact.</td>
+</tr>
+<tr>
+<td>Routine</td>
+<td>Plain save labels, contextual chooser, undo before save.</td>
+<td>Saved, unsaved, saving, and failed states reflect actual persistence.</td>
+</tr>
+<tr>
+<td>Progress</td>
+<td>Completed work sets and reps; omit irrelevant zero metrics.</td>
+<td>Ten bodyweight reps remain meaningful without invented load or duration.</td>
+</tr>
+<tr>
+<td>Video truth</td>
+<td>Reconcile inventory; modest labels, origin-aware embeds, single-demo fallback, problem reporting, variant notes.</td>
+<td>Never infer human viewing from metadata or blanket approval fields; no blind reseed.</td>
+</tr>
+<tr>
+<td>Visual system</td>
+<td>Complete shared tokens, responsive surfaces, original environments, Pip/Mica, equipment and functional icons.</td>
+<td>Reserved image dimensions, bounded assets, keyboard/focus/reflow/contrast, reduced motion and forced colors.</td>
+</tr>
+<tr>
+<td>Maintenance</td>
+<td>Repeatable metadata/duplicate/availability checks and targeted exceptions.</td>
+<td>Read-only evidence checks never manufacture approval or silently mutate video data.</td>
+</tr>
+</tbody></table>
+<p>Trainpal-specific defects are regression examples for the MWP implementation, not authorization to deploy another project. MWP already preserves unfinished History. The existing full-human-watch publication boundary remains binding: runtime presentation may support a single available demo, but this iteration cannot manufacture viewing evidence or publish unreviewed candidates. Any proposed policy relaxation must preserve truthful provenance.</p>
+<h2>Data and failure behavior</h2>
+<p>Weight remains kilograms and distance meters. Firebase UID comes only from server verification. Existing published routines and session snapshots remain immutable. New draft types must be bounded and owner-scoped; use the smallest compatible storage extension necessary after inspecting the existing draft contract. No migration or seed runs merely for a visual change. Reconcile live video inventory without changing other applications&#39; shared data.</p>
+<p>Runner operations retain stable identities, pending/server-confirmed/error distinctions, local inputs, queue order, and deadline-based timers. A combined log/rest transition must use one domain action and reuse existing operation persistence. Completion waits for confirmation. Active-session edits retain their original snapshot. Account deletion and authorization contracts remain unchanged.</p>
+<h2>Navigation, accessibility, and privacy</h2>
+<p>Keep existing routes usable. Contextual guide/chooser cancellation returns to the initiating routine position. Settings holds equipment, units, guidance, appearance, and account controls. Phone primary controls are at least 48 pixels and must not cover inputs or keyboard space. Desktop constrains the logger; zoom reflows to one column. Decorative artwork never communicates technique or save state, receives no focus, and is absent in forced colors and the active entry panel. Public caching excludes private data, guidance, and authenticated pages.</p>
+<h2>Verification and release</h2>
+<p>Write failing domain tests before changing transformations. Run focused tests, then typecheck, lint, full unit/integration and database checks, seed policy, PWA parity, docs generation/check, production build, and route boundary. Exercise public and isolated member journeys on phone/desktop and Chromium/WebKit: trial, setup, empty routine, add/replace/cancel, weighted/bodyweight/timed/distance logging, rest, reload, offline/retry, interruption, history, progress, and settings. Retain concise red/green and browser evidence in <code>docs/qa/latest/</code> after replacement succeeds.</p>
+<p>Push the feature branch, merge to main, synchronize local main, verify the exact Git-connected Vercel deployment and live origin, then run hosted public and disposable member checks with cleanup. Inspect deployment errors. Record actual limitations rather than claiming exhaustive physical-device or novice-user evidence. No real-participant study can be completed without participants; user authorization permits best-effort implementation with browser evidence and this explicit remaining research limitation.</p>
+<p>Rollback uses the previous Ready deployment; immutable compatibility avoids historical rewrites. If a migration is necessary, document preflight and recovery before applying it. Keep the canonical checkout only; record any unresolved worktree. Update current docs and HTML counterparts together using <code>pnpm docs:build</code> and <code>pnpm docs:check</code>.</p>
+<h2>Implementation decisions</h2>
+<p>Blank setup uses page-local draft state and asks for an actual compatible movement before the explicit final save. Refresh discards this unsaved setup. The existing routine editor can retain an empty draft after removal and undo that removal before saving; publication still requires valid training content. No database extension or migration is needed.</p>
+<p>The runner combines logging and rest in one domain transition and retains stable operation keys. Next set and Next exercise remain explicit actions. Complete workout waits for pending saves. Native disclosures keep demonstrations and the outline accessible below or beside the logger. Progress adds actual work-set and repetition totals without inventing load or elapsed exercise time.</p>
+<p>Companion preference is a versioned browser-local choice, including Off. Ready artwork also serves neutral states. Eight prompt-bearing cartoon masters produce ten optimized WebP assets; cream-backed character plates replace unreliable transparency. A shared vector component defines dumbbell, barbell, bench, mat, shoe, towel, timer, and distance-marker illustrations.</p>
+<p>The canonical 268-item video inventory is reconciled read-only with production. Weekly metadata checks report exceptions; separate fields preserve the difference between metadata, playback, sampled review, full viewing, and editorial approval. Existing publication approval requirements remain unchanged.</p>
+<p>See <code>docs/qa/latest/QUIET-SET-QA.md</code> for actual validation and release status.</p>
+
+  </main>
+</body>
+</html>

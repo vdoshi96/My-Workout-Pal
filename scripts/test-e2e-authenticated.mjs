@@ -45,6 +45,7 @@ const rolloutFixtureCompanionNames = [
   "workout-corner-bear.webp",
 ];
 const fixtureAssets = [
+  ...["dawn-studio", "dawn-studio-phone", "evening-studio", "pip-ready", "pip-resting", "pip-complete", "mica-ready", "mica-resting", "mica-complete", "evening-studio-phone"].map((name) => ({source: resolve(repositoryRoot, `public/illustrations/quiet-set/${name}.webp`), destination: resolve(repositoryRoot, `tests/fixtures/authenticated-app/public/illustrations/quiet-set/${name}.webp`)})),
   {
     destination: resolve(
       repositoryRoot,

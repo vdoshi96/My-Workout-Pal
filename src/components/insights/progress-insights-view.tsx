@@ -19,13 +19,9 @@ export function ProgressInsightsView({
     <section className="insights-page" aria-labelledby="progress-title">
       <header className="insights-heading contour-surface">
         <div>
-          <span className="eyebrow">Saved training signals</span>
+
           <h1 id="progress-title">Progress</h1>
-          <p>
-            Completed workouts only, grouped in {progress.preferences.timezone}. Abandoned
-            workouts stay visible in History; resumable workouts return through the runner.
-            Neither inflates these totals.
-          </p>
+          <p>Your completed work, grouped by day. Interrupted sessions remain in History.</p>
         </div>
         <Link className="insight-action" href="/app/prs">
           Personal records <Icon name="arrow-right" />
@@ -37,30 +33,12 @@ export function ProgressInsightsView({
           <dt>Completed workouts</dt>
           <dd>{progress.totals.completedSessions}</dd>
         </div>
-        <div>
-          <dt>Training volume</dt>
-          <dd>{formatInsightVolume(progress.totals.volumeKg, unitSystem)}</dd>
-        </div>
-        <div>
-          <dt>Logged duration</dt>
-          <dd>{formatInsightDuration(progress.totals.durationSeconds)}</dd>
-        </div>
-        <div>
-          <dt>Logged distance</dt>
-          <dd>{formatInsightDistance(progress.totals.distanceMeters, unitSystem)}</dd>
-        </div>
+        <div><dt>Work sets</dt><dd>{progress.totals.completedWorkSets}</dd></div>
+        <div><dt>Repetitions</dt><dd>{progress.totals.repetitions}</dd></div>
+        {progress.totals.volumeKg > 0 ? <div><dt>Added-load volume</dt><dd>{formatInsightVolume(progress.totals.volumeKg, unitSystem)}</dd></div> : null}
+        {progress.totals.durationSeconds > 0 ? <div><dt>Logged exercise duration</dt><dd>{formatInsightDuration(progress.totals.durationSeconds)}</dd></div> : null}
+        {progress.totals.distanceMeters > 0 ? <div><dt>Logged distance</dt><dd>{formatInsightDistance(progress.totals.distanceMeters, unitSystem)}</dd></div> : null}
       </dl>
-
-      <aside className="progress-integrity">
-        <strong>
-          {progress.projection.state === "persisted"
-            ? "Saved rollups detected."
-            : "Calculated from saved logs."}
-        </strong>{" "}
-        The chart below is rebuilt from your completed set and cardio logs.{" "}
-        {progress.totals.abandonedSessions} interrupted workout
-        {progress.totals.abandonedSessions === 1 ? " is" : "s are"} excluded.
-      </aside>
 
       {progress.series.length === 0 ? (
         <div className="member-empty-sheet">
@@ -105,27 +83,27 @@ export function ProgressInsightsView({
                       {point.sessionCount} workout{point.sessionCount === 1 ? "" : "s"}
                     </span>
                   </div>
-                  <meter
+                  {volume > 0 ? <meter
                     aria-label={`${formatProgressDate(point.date)} training volume: ${formatInsightVolume(volume, unitSystem)}`}
                     className="progress-bar"
                     max={maximumVolume > 0 ? maximumVolume : 1}
                     value={volume}
                   >
                     {formatInsightVolume(volume, unitSystem)}
-                  </meter>
+                  </meter> : null}
                   <dl>
-                    <div>
+                    {volume > 0 ? <div>
                       <dt>Volume</dt>
                       <dd>{formatInsightVolume(volume, unitSystem)}</dd>
-                    </div>
-                    <div>
+                    </div> : null}
+                    {(point.durationSeconds ?? 0) > 0 ? <div>
                       <dt>Duration</dt>
                       <dd>{formatInsightDuration(point.durationSeconds ?? undefined)}</dd>
-                    </div>
-                    <div>
+                    </div> : null}
+                    {(point.distanceMeters ?? 0) > 0 ? <div>
                       <dt>Distance</dt>
                       <dd>{formatInsightDistance(point.distanceMeters ?? 0, unitSystem)}</dd>
-                    </div>
+                    </div> : null}
                   </dl>
                   <div className="progress-sources">
                     {point.sourceIds.map((sessionId, sourceIndex) => (

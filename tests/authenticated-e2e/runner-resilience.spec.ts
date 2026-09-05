@@ -287,7 +287,9 @@ async function onboardAndOpenPush(page: Page): Promise<string> {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start with example" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
   expect((await onboard).status()).toBe(201);
   await page.getByRole("link", { name: /Push/ }).click();
   const start = page.waitForResponse(
@@ -295,7 +297,7 @@ async function onboardAndOpenPush(page: Page): Promise<string> {
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start or resume workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   expect((await start).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -309,7 +311,7 @@ async function onboardAndOpenPush(page: Page): Promise<string> {
 async function enterFirstSet(page: Page, weight = "25"): Promise<void> {
   await page.getByLabel("Weight (lb)").fill(weight);
   await page.getByLabel("Repetitions").fill("12");
-  await page.getByRole("button", { name: "Save set" }).click();
+  await page.getByRole("button", { name: /^(Log|Update) set & rest$/ }).click();
 }
 
 function operationKey(request: Request): string {
@@ -442,7 +444,7 @@ async function saveWeightSet(
   const response = page.waitForResponse((candidate) =>
     isOperationRequest(candidate.request()),
   );
-  await page.getByRole("button", { name: "Save set" }).click();
+  await page.getByRole("button", { name: /^(Log|Update) set & rest$/ }).click();
   expect((await response).status()).toBe(200);
 }
 
@@ -463,6 +465,7 @@ async function preparePushCompletion(page: Page): Promise<void> {
     await saveWeightSet(page, "25");
   }
   await submitRunnerAction(page, "Complete exercise");
+  await page.locator(".runner-outline > summary").click();
 
   for (const exerciseName of [
     "Seated dumbbell shoulder press",
@@ -854,10 +857,10 @@ test("two tabs block a divergent set until the member chooses one original key",
   await second.getByLabel("Repetitions").fill("12");
   await Promise.all([
     first
-      .getByRole("button", { name: "Save set" })
+      .getByRole("button", { name: /^(Log|Update) set & rest$/ })
       .evaluate((button: HTMLButtonElement) => button.click()),
     second
-      .getByRole("button", { name: "Save set" })
+      .getByRole("button", { name: /^(Log|Update) set & rest$/ })
       .evaluate((button: HTMLButtonElement) => button.click()),
   ]);
   await expect
@@ -1083,7 +1086,7 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
       if (savedExists) {
         const save = [
           ...document.querySelectorAll<HTMLButtonElement>("button"),
-        ].find((button) => button.textContent?.trim() === "Save set");
+        ].find((button) => /^(Log|Update) set & rest$/.test(button.textContent?.trim() ?? ""));
         if (!save)
           throw new Error("The stale tab save control is unavailable.");
         const weight = document.querySelector<HTMLInputElement>(

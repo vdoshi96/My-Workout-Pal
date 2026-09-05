@@ -1815,3 +1815,44 @@ describe("session completion", () => {
     expect(state.status).toBe("abandoned");
   });
 });
+
+describe("Quiet Set log and rest", () => {
+  it("queues one intended set and preserves its rest deadline on a duplicate activation", () => {
+    let state = createRunnerState(createWorkoutSnapshot(snapshotInput), { now: 1000 });
+    state = runnerReducer(state, { type: "update_set_draft", setId: "row-warmup-1", draft: { kind: "weight_reps", weightKg: 20, repetitions: 10 } });
+    const logged = runnerReducer(state, { type: "log_set_and_rest", setId: "row-warmup-1", now: 2000 });
+    expect(logged.loggedSets["row-warmup-1"]).toBeDefined();
+    expect(logged.restTimer?.endsAt).toBe(47000);
+    expect(logged.currentSetIndex).toBe(0);
+    const replay = runnerReducer(logged, { type: "log_set_and_rest", setId: "row-warmup-1", now: 4000 });
+    expect(replay).toBe(logged);
+    expect(replay.operations).toHaveLength(1);
+  });
+  it("does not start rest when validation fails", () => {
+    const state = createRunnerState(createWorkoutSnapshot(snapshotInput), { now: 1000 });
+    expect(() => runnerReducer(state, { type: "log_set_and_rest", setId: "row-warmup-1", now: 2000 })).toThrow();
+    expect(state.restTimer).toBeUndefined();
+  });
+});
+
+
+describe("Quiet Set forward controls", () => {
+  it("requires a logged set and advances an intended set at most once", () => {
+    let state = makeState();
+    expect(() => runnerReducer(state, { type: "next_set", setId: "row-warmup-1" })).toThrow();
+    state = runnerReducer(state, { type: "update_set_draft", setId: "row-warmup-1", draft: { kind: "weight_reps", weightKg: 20, repetitions: 10 } });
+    state = runnerReducer(state, { type: "log_set_and_rest", setId: "row-warmup-1", now: 2000 });
+    const next = runnerReducer(state, { type: "next_set", setId: "row-warmup-1", now: 3000 });
+    expect(next.currentSetIndex).toBe(1);
+    expect(next.restTimer).toBeUndefined();
+    expect(runnerReducer(next, { type: "next_set", setId: "row-warmup-1" })).toBe(next);
+  });
+  it("extends a suspended timer without counting paused time", () => {
+    let state = runnerReducer(makeState(), {type:"start_rest", seconds:30, now:1000});
+    state = runnerReducer(state, {type:"pause_rest", now:11000});
+    state = runnerReducer(state, {type:"extend_rest", seconds:30, now:51000});
+    expect(getRestTimerView(state, 51000).remainingSeconds).toBe(50);
+    state = runnerReducer(state, {type:"resume_rest", now:61000});
+    expect(getRestTimerView(state, 71000).remainingSeconds).toBe(40);
+  });
+});

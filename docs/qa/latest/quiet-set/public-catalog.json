@@ -1,0 +1,679 @@
+{
+  "checkedAt": "2026-09-05T02:42:52.819Z",
+  "origin": "http://localhost:3108",
+  "checked": 134,
+  "passed": true,
+  "results": [
+    {
+      "slug": "dumbbell-bench-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "seated-dumbbell-shoulder-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "incline-dumbbell-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "overhead-dumbbell-triceps-extension",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dead-bug",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "front-plank",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-bent-over-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "one-arm-dumbbell-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-pullover",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-curl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "bird-dog",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "side-plank",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "chest-supported-dumbbell-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "goblet-squat",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-romanian-deadlift",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "reverse-lunge",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "standing-calf-raise",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "plank-shoulder-tap",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "reverse-crunch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-bench-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "bicycle-crunch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "hollow-hold",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-back-squat",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-romanian-deadlift",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "bulgarian-split-squat",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-hip-thrust",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-hip-thrust",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "push-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "incline-push-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "decline-push-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "close-grip-push-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "diamond-push-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-floor-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-squeeze-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-chest-fly",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "incline-dumbbell-fly",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "incline-barbell-bench-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "close-grip-barbell-bench-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-floor-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "pendlay-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "underhand-barbell-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-renegade-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-reverse-fly",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-rear-delt-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-shrug",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-shrug",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "inverted-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-dead-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-rack-pull",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-high-pull",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "standing-dumbbell-shoulder-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "arnold-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-lateral-raise",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "leaning-dumbbell-lateral-raise",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-front-raise",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-overhead-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-push-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-z-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-upright-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-upright-row",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "hammer-curl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "cross-body-hammer-curl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "incline-dumbbell-curl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "concentration-curl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-curl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "reverse-barbell-curl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "lying-dumbbell-triceps-extension",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-skull-crusher",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-triceps-kickback",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "bench-dip",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "close-grip-dumbbell-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-jm-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-front-squat",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "zercher-squat",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "sumo-goblet-squat",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-split-squat",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "forward-lunge",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "walking-lunge",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "lateral-lunge",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-step-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "lateral-step-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "single-leg-dumbbell-romanian-deadlift",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-stiff-leg-deadlift",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "conventional-barbell-deadlift",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "sumo-barbell-deadlift",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "barbell-good-morning",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "bodyweight-glute-bridge",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "single-leg-glute-bridge",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "frog-pump",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "seated-dumbbell-calf-raise",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "single-leg-calf-raise",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "wall-sit",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "crunch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "sit-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "heel-tap",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "toe-touch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "lying-leg-raise",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "bent-knee-leg-raise",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "flutter-kick",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "scissor-kick",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "mountain-climber",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "cross-body-mountain-climber",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "russian-twist",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "v-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "tuck-up",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "superman-hold",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "bear-plank",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "plank-up-down",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "side-plank-reach-through",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dead-bug-heel-tap",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "burpee",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "squat-thrust",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "jumping-jack",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "high-knees",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "skater-hop",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-thruster",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-clean",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-clean-and-press",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-snatch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-farmer-carry",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-suitcase-carry",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "dumbbell-front-rack-carry",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "bear-crawl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "reverse-bear-crawl",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "cat-cow",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "childs-pose",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "half-kneeling-thoracic-rotation",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "kneeling-hip-flexor-stretch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "seated-hamstring-stretch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "ninety-ninety-hip-switch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "figure-four-stretch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "standing-calf-stretch",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "shoulder-wall-slide",
+      "status": 200,
+      "primaryMatches": true
+    },
+    {
+      "slug": "prone-cobra",
+      "status": 200,
+      "primaryMatches": true
+    }
+  ],
+  "limits": "Rendered public markup and primary mapping only. No playback or full viewing is inferred."
+}
