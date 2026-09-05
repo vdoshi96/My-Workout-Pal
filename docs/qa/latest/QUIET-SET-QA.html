@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="9a754948ea4d8aecf02147a563591809b5904bfe5a062820c8ab8b6601c711a4">
+  <meta name="source-sha256" content="c018d1e19560a67d7f0ef513d824257e28dbb6f2e9ddf23c16d9e685ff6d1242">
   <title>Quiet Set release verification · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -30,7 +30,7 @@
 <h1>Quiet Set release verification</h1>
 <h2>Scope</h2>
 <p>The September 4–5 implementation follows the companion comparison and the user&#39;s subsequent art correction. Original cartoon Pip/Mica and bright gym environments replace the rejected naturalistic artwork. Today, setup, routine editing, workout logging, rest, Progress, video presentation, and the public trial use the new interface.</p>
-<p>Production publication and hosted verification are pending. This record currently establishes local release readiness only. The final deployment identity and hosted results will be added after publication.</p>
+<p>The first production release is commit <code>271795b425354e292238715b6ab966cb74ab2832</code>, deployment <code>dpl_Hs3P7gV1v1eopwSUj36z7FBKbnPz</code>. The live public trial and all 134 rendered public guides passed. Hosted member QA exposed a pause/extend checkpoint waiting behind a slow network save. Both disposable accounts were removed and shared catalog state stayed unchanged. A focused durability correction and repeat hosted verification are in progress; this record does not yet certify the member release.</p>
 <h2>Automated evidence</h2>
 <table>
 <thead>
@@ -41,7 +41,7 @@
 </thead>
 <tbody><tr>
 <td>Full unit and integration suite</td>
-<td>126 files, 866 tests passed.</td>
+<td>126 files, 867 tests passed after the hosted durability correction.</td>
 </tr>
 <tr>
 <td>Runner and member browser matrix</td>
@@ -87,8 +87,9 @@
 <p>The matrix covers zero setup POSTs before the final save; an actually empty draft; removal and undo; one-set publication; first-viewport Start and logging controls at 390 × 844; 10 unloaded push-ups; a 30-second hold; a 500-meter effort; rest pause/extension; reload; saved-set editing; completion; useful Progress totals; and persisted companion selection/off.</p>
 <p>Runner resilience checks cover aborted requests with stable keys, expired/revoked authentication, two offline tabs, conflicting edits, stale confirmations, and durable completion. The tests use isolated PGlite data and loopback-only synthetic identities. Hosted authentication is a separate release gate.</p>
 <h2>Red and green</h2>
+<p>Hosted QA supplied a further meaningful red: while a network request was held open, the latest paused/extended timer was absent from local storage. The correction checkpoints local state before waiting for serialized remote synchronization. Its focused suite passed 44 tests, including late-acknowledgment preservation. The repeated resilience browser matrix passed 19 cases with its one intentional skip.</p>
 <p>Before implementation, two meaningful runner tests failed: combined logging did not start rest, and the new combined action did not enforce validation. The same initial run also encountered a loopback permission error; that infrastructure error is not counted as domain red evidence.</p>
-<p>Two further tests failed before implementation: removing the final movement threw instead of retaining an empty draft, and Progress omitted expected completed work sets and repetitions. Their focused green run passed 27 tests. The final full suite passed all 866 tests.</p>
+<p>Two further tests failed before implementation: removing the final movement threw instead of retaining an empty draft, and Progress omitted expected completed work sets and repetitions. Their focused green run passed 27 tests. The initial full suite passed 866 tests; the post-correction suite passed 867.</p>
 <p>The browser pass exposed completion racing pending operations. Complete workout now waits for pending saves. Visual inspection also caught inherited low-contrast Progress totals and a wrapping mobile example link; corrected captures supersede those images. Automated accessibility results alone are not treated as visual proof.</p>
 <h2>Deliberate choices and limits</h2>
 <p>The independent Impeccable finish review returned four material fixes. The verdict pass scored all four resolved: phone movement/action layout, neutral optional-cardio text, save status below the heading, and serif trial-completion typography. Its disposition is <strong>ship</strong>, scoped to those fixes and supplied screenshots. Formal FORM-seed and separate quality-card process evidence were unavailable; no retrospective approval is inferred.</p>

@@ -80,6 +80,7 @@ export type RunnerPersistenceTaskContext = Readonly<{
 export type RunnerPersistenceQueue = Readonly<{
   enqueue: (
     task: (context: RunnerPersistenceTaskContext) => Promise<void>,
+    checkpoint?: () => Promise<unknown>,
   ) => RunnerPersistenceHandle;
 }>;
 
@@ -91,8 +92,8 @@ export type RunnerPersistenceHandle = Readonly<{
 }>;
 
 /**
- * Serializes local persistence and remote sync work while making superseded
- * React effects unable to publish stale results back into the active state.
+ * Serializes sync work while optional device checkpoints start immediately.
+ * Superseded React effects cannot publish stale results into active state.
  * The injected submitter cannot be cancelled, so an in-flight request is
  * allowed to settle; its result is ignored when a newer revision is current.
  */
@@ -101,12 +102,17 @@ export function createRunnerPersistenceQueue(): RunnerPersistenceQueue {
   let revision = 0;
 
   return {
-    enqueue(task) {
+    enqueue(task, checkpoint) {
       const taskRevision = ++revision;
       let cancelled = false;
       const isLatest = () => taskRevision === revision;
       const isCurrent = () => !cancelled && isLatest();
+      // Device durability must not wait behind a remote request. Storage
+      // transactions merge revisions atomically, including late server acks.
+      const durable = Promise.resolve().then(() => checkpoint?.());
+      void durable.catch(() => undefined);
       const promise = tail.then(async () => {
+        await durable;
         // A superseded queued revision must not write stale state. Cleanup
         // alone does not skip the latest revision: it still gets its durable
         // local write, while the task can use isCancelled to avoid UI adoption
@@ -841,6 +847,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           setState((current) => (current === state ? next : current));
         }
       },
+      () => persistRunnerState(props.storage, state),
     );
     void handle.promise.catch((error: unknown) => {
       if (handle.isCurrent()) setAdapterError(errorMessage(error));

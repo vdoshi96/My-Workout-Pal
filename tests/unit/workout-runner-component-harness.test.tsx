@@ -56,6 +56,30 @@ const snapshotInput: RunnerSnapshotInput = {
 };
 
 describe("WorkoutRunner injected boundary harness", () => {
+  it("checkpoints paused and extended rest before a slow remote save finishes", async () => {
+    const storage = createInMemoryRunnerStorage();
+    let state = createRunnerState(createWorkoutSnapshot(snapshotInput), {now:1000});
+    state = runnerReducer(state, {type:"update_set_draft",setId:"press-work-1",draft:{kind:"weight_reps",weightKg:20,repetitions:10}});
+    const logged = runnerReducer(state,{type:"log_set_and_rest",setId:"press-work-1",now:3000});
+    let release!: () => void;
+    let started!: () => void;
+    const waiting = new Promise<void>(resolve=>{release=resolve;});
+    const didStart = new Promise<void>(resolve=>{started=resolve;});
+    const queue = createRunnerPersistenceQueue();
+    const first = queue.enqueue(async ({isLatest})=>{
+      await runRunnerPersistenceCycle(logged,{storage,submitter:async()=>{started();await waiting;return {status:"saved"};}},isLatest);
+    });
+    await didStart;
+    const paused=runnerReducer(logged,{type:"pause_rest",now:4000});
+    const extended=runnerReducer(paused,{type:"extend_rest",seconds:30,now:5000});
+    const second=queue.enqueue(async()=>{},()=>persistRunnerState(storage,extended));
+    second.cancel();
+    try {
+      await expect.poll(async()=>(await storage.load("runner:owner-harness:session-harness"))?.state.restTimer?.pausedAt,{timeout:200}).toBe(paused.restTimer?.pausedAt);
+      expect((await storage.load("runner:owner-harness:session-harness"))?.state.restTimer?.endsAt).toBe(extended.restTimer?.endsAt);
+    } finally {release();await Promise.all([first.promise,second.promise]);}
+    expect((await storage.load("runner:owner-harness:session-harness"))?.state.restTimer).toEqual(extended.restTimer);
+  });
   it("does not re-adopt a semantically identical committed state", () => {
     const initial = createRunnerState(createWorkoutSnapshot(snapshotInput), {
       now: 900,

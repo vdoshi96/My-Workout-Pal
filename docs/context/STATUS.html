@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="f2982793a11ed36ab4e0ff358b5496aa99dfac15e5820c8b93acdbdf6b2d489a">
+  <meta name="source-sha256" content="3c9f92b6270d917b081719a5d22dfa840ca4d0a986fe3ef1ab2d61b8a58ce1f3">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -29,8 +29,8 @@
   <main>
 <h1>Project status</h1>
 <h2>Quiet Set implementation: September 4–5, 2026</h2>
-<p>Implementation is on <code>vishal/quiet-set-redesign</code>, based on <code>db5fec1</code>. The user authorized implementation, production publication, and live verification. The canonical checkout is the only MWP worktree; no completed temporary worktree remains.</p>
-<p>Implemented behavior is described in <code>docs/plans/QUIET-SET-IMPLEMENTATION.md</code>. The user rejected the first naturalistic animals and gloomy studio imagery; the replacement uses classic 2D cartoon Pip/Mica and a bright gym. Production release verification is in progress; the earlier deployment remains the rollback baseline until the new Git-connected release is verified.</p>
+<p>The redesign merged through PR #3 at <code>271795b425354e292238715b6ab966cb74ab2832</code> and deployment <code>dpl_Hs3P7gV1v1eopwSUj36z7FBKbnPz</code>. Hosted verification and a rest-checkpoint correction are active on <code>vishal/quiet-set-release-qa</code>. The canonical checkout is the only MWP worktree.</p>
+<p>Implemented behavior is described in <code>docs/plans/QUIET-SET-IMPLEMENTATION.md</code>. The replacement uses classic 2D cartoon Pip/Mica and a bright gym. Live public checks pass. Hosted member QA found that timer pause/extend could wait behind a slow remote save; local durability is being corrected before the member release is certified. Temporary accounts were cleaned up. The earlier deployment remains the rollback baseline.</p>
 <p>Read-only production reconciliation on September 5 found exactly 268 video mappings, matching the 268-item inventory with no missing or extra entries. All 268 returned oEmbed metadata. These checks do not establish full human viewing. No migration, seed, or video approval change is part of this iteration.</p>
 <p>Baseline Ready deployment: <code>dpl_7uMzcLir7Q5yD8z8CSFowEzec5Ee</code>, with stable origin <code>https://my-workout-pal-chi.vercel.app</code>. The release record will identify the final verified Git SHA and deployment. The dated records below describe earlier work and are not current application behavior or current production inventory.</p>
 <h2>Comparative report: September 4, 2026</h2>

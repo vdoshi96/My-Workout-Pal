@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="34fc9c6b89a353f56856151cf584dab16eba070200cace2ae10316589ee8f9d3">
+  <meta name="source-sha256" content="0fde64d7d61fbabaa73af32da6831a163146302a2f2e39571dffe6f121c5666f">
   <title>Quiet Set implementation and release · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -101,6 +101,7 @@
 <p>Push the feature branch, merge to main, synchronize local main, verify the exact Git-connected Vercel deployment and live origin, then run hosted public and disposable member checks with cleanup. Inspect deployment errors. Record actual limitations rather than claiming exhaustive physical-device or novice-user evidence. No real-participant study can be completed without participants; user authorization permits best-effort implementation with browser evidence and this explicit remaining research limitation.</p>
 <p>Rollback uses the previous Ready deployment; immutable compatibility avoids historical rewrites. If a migration is necessary, document preflight and recovery before applying it. Keep the canonical checkout only; record any unresolved worktree. Update current docs and HTML counterparts together using <code>pnpm docs:build</code> and <code>pnpm docs:check</code>.</p>
 <h2>Implementation decisions</h2>
+<p>Hosted QA found that pause/extend actions could wait behind a slow remote set-save request before reaching local storage. Correct this with an immediate durable checkpoint independent of the serialized remote queue. Preserve stable operation identities, cancellation guards, atomic storage merging, and late-acknowledgment reconciliation. Add a failing test that holds the first network request open, pauses and extends rest, and reads the checkpoint before releasing the request; confirm late acknowledgment cannot overwrite it. Repeat the local resilience matrix and the real hosted flow before release closeout.</p>
 <p>Blank setup uses page-local draft state and asks for an actual compatible movement before the explicit final save. Refresh discards this unsaved setup. The existing routine editor can retain an empty draft after removal and undo that removal before saving; publication still requires valid training content. No database extension or migration is needed.</p>
 <p>The runner combines logging and rest in one domain transition and retains stable operation keys. Next set and Next exercise remain explicit actions. Complete workout waits for pending saves. Native disclosures keep demonstrations and the outline accessible below or beside the logger. Progress adds actual work-set and repetition totals without inventing load or elapsed exercise time.</p>
 <p>Companion preference is a versioned browser-local choice, including Off. Ready artwork also serves neutral states. Eight prompt-bearing cartoon masters produce ten optimized WebP assets; cream-backed character plates replace unreliable transparency. A shared vector component defines dumbbell, barbell, bench, mat, shoe, towel, timer, and distance-marker illustrations.</p>

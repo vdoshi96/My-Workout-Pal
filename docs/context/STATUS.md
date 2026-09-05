@@ -2,9 +2,9 @@
 
 ## Quiet Set implementation: September 4–5, 2026
 
-Implementation is on `vishal/quiet-set-redesign`, based on `db5fec1`. The user authorized implementation, production publication, and live verification. The canonical checkout is the only MWP worktree; no completed temporary worktree remains.
+The redesign merged through PR #3 at `271795b425354e292238715b6ab966cb74ab2832` and deployment `dpl_Hs3P7gV1v1eopwSUj36z7FBKbnPz`. Hosted verification and a rest-checkpoint correction are active on `vishal/quiet-set-release-qa`. The canonical checkout is the only MWP worktree.
 
-Implemented behavior is described in `docs/plans/QUIET-SET-IMPLEMENTATION.md`. The user rejected the first naturalistic animals and gloomy studio imagery; the replacement uses classic 2D cartoon Pip/Mica and a bright gym. Production release verification is in progress; the earlier deployment remains the rollback baseline until the new Git-connected release is verified.
+Implemented behavior is described in `docs/plans/QUIET-SET-IMPLEMENTATION.md`. The replacement uses classic 2D cartoon Pip/Mica and a bright gym. Live public checks pass. Hosted member QA found that timer pause/extend could wait behind a slow remote save; local durability is being corrected before the member release is certified. Temporary accounts were cleaned up. The earlier deployment remains the rollback baseline.
 
 Read-only production reconciliation on September 5 found exactly 268 video mappings, matching the 268-item inventory with no missing or extra entries. All 268 returned oEmbed metadata. These checks do not establish full human viewing. No migration, seed, or video approval change is part of this iteration.
 
