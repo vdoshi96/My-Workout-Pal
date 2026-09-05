@@ -67,4 +67,4 @@ pointer-inert, hidden from assistive technology, absent from forced colors,
 state-sensitive, and outside critical controls and private data. Only the
 landing hedgehog, Progress raccoon, and Library otter enter public cache v6.
 Exact deployment and limitation evidence is maintained in
-`docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md`.
+[Wave 4 production QA at its release commit](https://github.com/vdoshi96/My-Workout-Pal/blob/76503a46e1233283131099c4240f822ef457560a/docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md).

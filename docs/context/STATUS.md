@@ -1,6 +1,23 @@
 # Project status
 
-## Current phase
+## Simplification review: September 4, 2026
+
+The first-principles review removes an unused load-progression evaluator,
+its isolated tests, an unused runner barrel, and 13 unused runner aliases.
+Interrupted History accepts stored pending exercises and labels them unfinished,
+including when no sets were logged. Missing state and pending exercises in a
+completed session still fail closed. No data migration or backfill is needed.
+
+Verification passed: 859 tests across the full run and the unchanged loopback
+retry, 34 database checks, typecheck, lint, build, route/seed/PWA checks,
+64-document parity, and local Chromium phone/desktop History inspection.
+Git closeout uses `vishal/first-principles-simplification`; the canonical
+checkout is the only worktree, with no unresolved worktrees. See
+`docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md` for scope and acceptance criteria.
+Verification is recorded in `docs/qa/latest/FIRST-PRINCIPLES-QA.md`.
+The dated release records below describe their original verification boundaries.
+
+## Wave 4 release record
 
 Wave 4 application release `de19b1c89c34235723158ad8858f6b46f4fcde72`
 is live on Ready Git-connected production deployment
@@ -46,21 +63,20 @@ private routes, authenticated HTML, guidance, and personal data remain excluded.
 Companions retain empty alternative text, `aria-hidden`, no accessible role or
 name, no focus or pointer target, and strict non-overlap/state-collapse proof.
 
-Two limitations are current. Native Chrome remained at verified restored 100%
+Two limitations were recorded at the Wave 4 release. Native Chrome remained at verified restored 100%
 (DPR 2, 1512 CSS inner width, 1497 client/scroll width, visual viewport scale
 1); the macOS native control bridge could not establish 200%, so no CDP, CSS,
 viewport, or screenshot substitute is claimed. A disposable workout abandoned
 with every exercise pending produced a History row whose detail logged
 `Workout history is incomplete`; after the exercises were explicitly skipped,
 the detail state, read-only notice, companion, and Axe assertions passed. Wave 4
-does not change repository behavior, so immediate-abandon detail remains an
-explicit pre-existing product limitation.
+does not change repository behavior, so immediate-abandon detail was an
+explicit pre-existing product limitation, corrected by the September 4 review.
 
-The newest privacy-safe evidence is the paired
-`docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md` report. Integration-only
-screenshots and reports are superseded. The documentation closeout changes no
-runtime/application file and will become the final exact `main` deployment
-after Git, Vercel, documentation, database-read, and cleanup reconciliation.
+The Wave 4 release evidence is preserved in the
+[Wave 4 production QA at its release commit](https://github.com/vdoshi96/My-Workout-Pal/blob/76503a46e1233283131099c4240f822ef457560a/docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md) report. Integration-only
+screenshots and reports were superseded by that release report. Its
+documentation-only closeout is retained at commit `76503a4`.
 
 Wave 2 application, data, and production QA are released. The application tree
 on GitHub and local `main` contains exact candidate
@@ -153,8 +169,8 @@ archive likewise remains private, mode `600`, and outside the repository.
 - Worktree cleanup: clean completed Strength, Core/conditioning,
   video-eligibility, and integration worktrees and local branches were removed
   after verifying identical GitHub tips. Their remote provenance branches
-  remain. Only the active release worktree and checked-out local release branch
-  remain for the orchestrator because a running worktree cannot remove itself.
+  remain. The release worktree and local release branch were subsequently removed;
+  the September 4 audit finds only the canonical checkout.
 - Important files: `docs/plans/WAVE-2-PRODUCTION-RELEASE.md`,
   `docs/plans/WAVE-2-CATALOG-INTEGRATION.md`,
   `src/domain/exercises/catalog-manifests/`, and the historical Wave 2 QA
@@ -174,7 +190,7 @@ archive likewise remains private, mode `600`, and outside the repository.
   inventory remains non-runtime research.
 - A strict Next.js 16.3.2 foundation with a distinct public companion welcome route at `/`, the approved route-atlas five-day example at `/program`, five day details, searchable compatibility-filtered library, exercise detail, read-only sample workout, disclosed Progress preview at `/progress`, truthful auth gate, offline fallback, self-hosted fonts, PWA manifest, service worker, and original icon assets.
 - Development and production select Webpack explicitly because `next.config.ts` defines a custom `webpack` function. An isolated Next.js 16.3.2 development start identified Webpack, reached ready, and served `/program` with `200`.
-- Pure starter-program, equipment-substitution, program-draft editing, library-filter, canonical exercise-metadata, safe authenticated-return, double-progression eligibility, and persisted-data analytics domains.
+- Pure starter-program, equipment-substitution, program-draft editing, library-filter, canonical exercise-metadata, safe authenticated-return, and persisted-data analytics domains.
 - A verified baseline commit, `168f2a5`, from which bounded analytics, YouTube, and database worktrees were created.
 - Firebase web sign-in, registration, verification email, recovery, and Google UI paths are implemented behind configuration detection. Spark project `my-workout-pal-92819` has the My Workout Pal Web app, Email/Password and Google providers, the reviewed public name and support email, and authorized localhost, Firebase-default, and production domains. The signed-in console account is an Owner. All seven client/Admin variables remain in ignored `.env.local`; Firebase Admin `listUsers` succeeds. After explicit authorization, the six non-private Firebase config and identity values are also present in Vercel Production, Preview, and Development, while the Admin private key is Hidden/Sensitive in Production and Preview and intentionally absent from Vercel Development because that scope rejects sensitive variables. Admin session creation uses revocation-aware token verification, recent-auth enforcement, same-origin double-submit CSRF, and secure HTTP-only cookies. No secret value is printed or committed.
 - A request-memoized viewer context is derived only from the revocation-aware Firebase Admin session result. It normalizes provider and display claims, keeps unverified password identities read-only, and never accepts a client-provided ownership key.
@@ -197,10 +213,10 @@ archive likewise remains private, mode `600`, and outside the repository.
 - The complete bounded Drizzle schema is integrated: 31 user, catalog, template, program, immutable workout, idempotency, personal-record, progress-summary, projection-maintenance, and account-deletion tables plus composite ownership constraints and publication/history guards.
 - The account-deletion migration removes the deletion job's restrictive profile foreign key, adds bounded saga phase/idempotency metadata and completion invariants, and refuses a non-empty legacy job table. The owner-scoped repository deletes every owned graph in an explicit transaction, preserves other owners and global rows, rolls back on a late failure, moves the durable job to the Firebase phase, and resumes after the profile is gone. A transaction-local owner-matched exception permits only deletion of otherwise immutable program/workout history during that transaction. Migration `0001_account_deletion_saga` is applied to Neon.
 - Authentication return targets are normalized to bounded same-origin paths and reject protocol-relative, encoded-control, auth-loop, and external destinations. Public exercise-detail origins use a separate bounded contract that accepts only `/program`, one of the five public day routes, a normalized filtered `/library`, a normalized `/sample-workout`, or canonical `/progress`; the old `/sample-progress` alias normalizes to `/progress`, and unknown origins fall back to the public library.
-- Double progression can only suggest considering a load increase after the exact number of weight-and-repetition work sets all reach the range top with form explicitly marked appropriate. It ignores warm-ups and never emits a load or increment.
+- The app records training and displays progress; it does not generate load-increase suggestions. The unused evaluator was removed in the September 4 simplification review.
 - The service worker is generated from a tested public-cache policy. It caches only the public welcome, program, library, sample workout, canonical Progress preview, hashed Next static output, and explicit app artwork—including the optimized cartoon gym hero; the compatibility alias, authentication, APIs, owned-data routes, arbitrary images, cross-origin assets, and non-GET requests remain outside the cache.
 - The global PWA client captures the browser install event only when supported, hides the offer in standalone mode, supports keyboard dismissal for the current tab session, distinguishes first installation from a replacement service worker, and offers a user-controlled reload when an update is ready. Service-worker registration failure leaves ordinary browsing intact. Install, update, and offline notices share a phone-safe stack above account/public navigation.
-- An isolated production-mode authenticated QA fixture lives outside `src/app`. It starts on a runner-selected exact-loopback port, passes only an allowlisted credential-free child environment, applies migrations `0000` through `0004` plus the starter seed to in-memory PGlite, and renders production member components for bounded synthetic Alice and Bob viewers. The released 6-case Chromium-desktop/WebKit-phone runner slice preserves the onboarding checks and proves a real owner-scoped Push runner: a keyboard-saved 25-pound set is committed before a deliberate `500`, duplicate replay returns honestly, reload reconciles exactly once, the remaining sets/skips/cardio complete, immutable history retains the cardio note, and Bob receives API and rendered-route results indistinguishable from an unknown session.
+- An isolated production-mode authenticated QA fixture lives outside `src/app`. It starts on a runner-selected exact-loopback port, passes only an allowlisted credential-free child environment, applies migrations `0000` through `0007` plus the starter seed to in-memory PGlite, and renders production member components for bounded synthetic Alice and Bob viewers. The released 6-case Chromium-desktop/WebKit-phone runner slice preserves the onboarding checks and proves a real owner-scoped Push runner: a keyboard-saved 25-pound set is committed before a deliberate `500`, duplicate replay returns honestly, reload reconciles exactly once, the remaining sets/skips/cardio complete, immutable history retains the cardio note, and Bob receives API and rendered-route results indistinguishable from an unknown session.
 - Exact customization source `036c31779e179cba6c8e582848998493069aefb4` extends that fixture with owned program create/clone/activate, custom movement creation, mandatory-Core section editing, canonical metric/imperial target input, accepted-then-error publication reconciliation, editor-origin equipment preview/confirmation, incompatible custom-equipment refusal, immutable Pull history, preferences, persisted personal records, and source-derived progress. `pnpm test:e2e:authenticated` passes 17 cases with one intentional project-specific skip across six Chromium/WebKit phone/tablet/desktop projects. Permission-correct `pnpm verify` passes 86 files and 593 tests, Drizzle metadata plus 4 files/34 migration assertions, exact-two seed validation, PWA/docs/build, and the 41-route production boundary. The public production-mode matrix passes 43 cases with one documented WebKit PWA skip. Row-count scope evidence proves write multiplicity only; canonical equality remains proved by server read models and repository assertions. Documentation checkpoint `a605bcb75dc60abe4870e65648813f2e7d27119e`, serverless-runtime checkpoint `73a3541a459997debddb2fa6e60cee5b989b7d48`, and Neon closeout `d53188fb75a5fae979737ee4f5551f29849bb552` are integrated through production runtime merge `85edf7c7589e0f421e523a753ea1edf3143dd65a`.
 - The initial customization preview and the prior production deployment exposed `ERR_REQUIRE_ESM` before private-route authentication because CommonJS `jwks-rsa` loaded ESM-only `jose` 6 through Firebase Admin. Retained fail-first coverage reproduces that boundary with native `require(esm)` disabled. A pnpm 11 workspace override constrains only `jwks-rsa>jose` to `4.15.9`; the complete corrected gate passes strict types, full lint, 87 files/595 tests, Drizzle metadata plus 4 migration files/34 assertions, exact-two seed and PWA checks, 33-document parity, the Webpack build, and the 41-route production boundary. Authenticated fixture evidence repeats 17 passes/1 intentional engine-scoped skip across six projects, and the public matrix repeats 43 passes/1 documented WebKit PWA skip. Corrected preview `dpl_XcumcD1qmTqbUMHcP52Y7jfuJVYZ` and production `dpl_ARPQwdUqjUa9uvNpLTsv56TvVVEG` return the bounded unauthenticated `/app` redirect, retain private no-store and security headers, have successful GitHub status, and have no post-replay error log.
 - Neon now has all five migrations through additive `0004_personal_record_projection_checkpoint`. Read-only preflight found 0 completed sessions, 0 personal-record rows, and no checkpoint table; post-migration inspection found the table and one completed v2 checkpoint with a cleared cursor. Dry run, apply, and immediate apply replay each reported 0 sessions, candidates, insertions, updates, deletions, or changes. The deterministic starter verifier still reports 6 equipment rows, 27 exercises, 54 approved videos, and both complete five-day revisions.

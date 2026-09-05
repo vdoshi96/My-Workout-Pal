@@ -128,7 +128,7 @@ export type TrainingSessionExercise = Readonly<{
   setCount: number;
   setKind: "warmup" | "work" | undefined;
   sets: readonly TrainingSetView[];
-  status: "completed" | "skipped";
+  status: "completed" | "pending" | "skipped";
   substitutionReason: string | undefined;
   targetDistanceMeters: number | undefined;
   targetWeightKg: number | undefined;
@@ -474,7 +474,7 @@ export async function loadTrainingSession(
   }
   const exercises: TrainingSessionExercise[] = snapshots.map((snapshot) => {
     const state = stateBySnapshot.get(snapshot.id);
-    if (!state || state.status === "pending") {
+    if (!state || (session.state === "completed" && state.status === "pending")) {
       throw new TrainingInsightsRepositoryError(
         "conflict",
         "Workout history is incomplete.",

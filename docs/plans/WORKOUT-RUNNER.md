@@ -85,7 +85,7 @@ Render the following state groups with text labels, not color alone:
 The component treats the snapshot as immutable. It displays canonical values
 in kilograms, meters, and seconds and performs presentation formatting only at
 the boundary. Warm-up measurements keep their `isWarmup` marker and never
-become work-set progression input. Every reducer operation carries an
+count toward work-set volume or personal records. Every reducer operation carries an
 idempotency key and source revision. Local drafts remain recoverable when a
 submit fails, the browser goes offline, or authentication expires.
 

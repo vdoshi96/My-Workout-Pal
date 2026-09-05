@@ -279,7 +279,7 @@ raw logs.
 
 After the application deployment passes, create one canonical paired report:
 
-- `docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md`
+- [Wave 4 production QA at its release commit](https://github.com/vdoshi96/My-Workout-Pal/blob/76503a46e1233283131099c4240f822ef457560a/docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md)
 - `docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.html`
 
 Update `docs/context/STATUS.md`, `docs/context/SOURCES.md`,

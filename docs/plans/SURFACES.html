@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="353cd125dab12fbee20ee414b8248f11dc0d6efa076ae367ecadc5324c673b26">
+  <meta name="source-sha256" content="34298890042fb0d37c9e06c3495f57a57ec53189422452dbf547336ee9184689">
   <title>Surface implementation plans · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -92,7 +92,7 @@
 <p><strong>Domain and persistence:</strong> The runner reads an immutable workout snapshot. <code>SetDraft</code> and <code>CardioDraft</code> validate by logging kind. Each operation receives an idempotency key and persists to IndexedDB before network submission. Server results reconcile by operation key and source revision.</p>
 <p><strong>Authorization and privacy:</strong> Every session and snapshot read is owner-scoped. Cross-user IDs return not found. Auth expiry retains local draft under the original UID but blocks sync until the same identity reauthenticates. Sign-out clears visible private state.</p>
 <p><strong>Device and accessibility behavior:</strong> Phone keeps the current exercise, set controls, save status, and next action within reach. Tablet and desktop can show workout outline and active entry together. Numeric input does not prevent hardware keyboard entry. Timers have text state and controlled live announcements.</p>
-<p><strong>Acceptance, tests, and evidence:</strong> TDD covers all logging kinds, warm-up exclusion, progression suggestion, idempotency, duplicate submit, interruption, ordering, substitution, conflict, completion, and ownership. Playwright personally replays a full representative workout in Chromium and WebKit, including refresh, back, tab-close simulation, offline queue, slow save, failure retry, expired auth, duplicate completion, and resume on phone, tablet, and desktop.</p>
+<p><strong>Acceptance, tests, and evidence:</strong> TDD covers all logging kinds, warm-up exclusion, idempotency, duplicate submit, interruption, ordering, substitution, conflict, completion, and ownership. Playwright personally replays a full representative workout in Chromium and WebKit, including refresh, back, tab-close simulation, offline queue, slow save, failure retry, expired auth, duplicate completion, and resume on phone, tablet, and desktop.</p>
 <p>See <a href="WORKOUT-RUNNER.html"><code>docs/plans/WORKOUT-RUNNER.md</code></a> for the reusable
 <code>WorkoutRunner</code> client contract, injected storage and submitter boundaries,
 presentation helpers, accessibility behavior, and acceptance matrix.</p>

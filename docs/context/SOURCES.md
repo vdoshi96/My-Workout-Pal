@@ -129,7 +129,7 @@ The dedicated implementation brief dated August 25, 2026, is the authoritative s
   aliases. Exact candidate preview `dpl_348br8EQdnW2QJXVEhQhHDrSVY5j`
   remained Ready from `5c416d774fb53c3a4f5f5623ef1a202fca4b07ee`.
 - Production proof and limitations are canonical in
-  `docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md`. The Wave 2 Ready deployment
+  [Wave 4 production QA at its release commit](https://github.com/vdoshi96/My-Workout-Pal/blob/76503a46e1233283131099c4240f822ef457560a/docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.md). The Wave 2 Ready deployment
   `dpl_DYxcb4ennqnstt8sFR2dkLXnomkn` remains the application rollback point.
 
 Keep primary policy and platform links current when a dependency, curation rule, or deployment capability changes. Record the access date and the decision each source supports.

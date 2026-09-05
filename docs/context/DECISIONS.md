@@ -217,3 +217,14 @@ That behavior predates and lies outside the companion release. It remains an
 explicit follow-up; this release neither hides it nor changes repository
 semantics. Native 200% and Google owner-choice boundaries are also reported as
 capability/owner gates rather than replaced by simulated evidence.
+
+## 2026-09-04: Remove unused progression logic and accept unfinished History
+
+The progression evaluator had no application caller. Remove it and its isolated
+tests instead of maintaining an undelivered suggestion feature. Runner aliases
+with no callers and the unused barrel also have no compatibility consumer.
+
+Abandoning a workout does not complete or skip each exercise. History preserves
+that pending state and presents it as unfinished, with any saved sets intact.
+Only completed sessions require terminal exercise states; missing state remains
+a conflict. This read correction requires no historical writes or schema change.

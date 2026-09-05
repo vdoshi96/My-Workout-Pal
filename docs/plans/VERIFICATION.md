@@ -24,7 +24,7 @@ Keep the newest completed run under `docs/qa/latest/`. A concise Markdown note a
 
 - `pnpm typecheck` with strict TypeScript and no ignored errors.
 - `pnpm lint` with Next.js, React, accessibility, import, and project rules.
-- `pnpm test:unit` for calculations, conversions, progression, equipment compatibility, substitutions, revision rules, YouTube normalization and ranking, and state reducers.
+- `pnpm test:unit` for calculations, conversions, equipment compatibility, substitutions, revision rules, YouTube normalization and ranking, and state reducers.
 - `pnpm test:integration` for repositories, migrations, auth session helpers, CSRF, ownership, idempotency, deletion saga, and curation persistence.
 - `pnpm db:check` for empty migration, upgrade migration, constraints, rollback policy, and generated-schema drift.
 - `pnpm seed:check` for exact starter days, defaults, aliases, compatibility, and exactly two approved videos per required canonical variation.

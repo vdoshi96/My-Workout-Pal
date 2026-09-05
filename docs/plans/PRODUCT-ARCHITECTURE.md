@@ -64,13 +64,13 @@ Server Actions handle same-origin form and editor mutations. Route handlers hand
 - A session state is `draft`, `active`, `completing`, `completed`, or `abandoned`.
 - Only one resumable active session per user and program revision is allowed unless the user explicitly abandons or completes it.
 - Every client mutation has an idempotency key unique within the user and session.
-- Warm-up sets never count toward progression, volume, or personal records.
+- Warm-up sets never count toward volume or personal records.
 - Work-set logs preserve canonical kilograms, repetitions, duration, distance, form rating when supplied, note snapshot, timestamp, and client idempotency key.
 - Completion requires all locally acknowledged operations to be durably accepted or explicitly retried. A failed save cannot be presented as complete.
 
 ### Progression and analytics
 
-- Double progression suggests a load increase only when every work set reaches the repetition-range top and the user records appropriate form. The product never chooses a load.
+- Progress views describe recorded training. The product does not generate load-increase suggestions or choose a load.
 - Volume is the sum of `weightKg * repetitions` across qualifying work sets. Bodyweight work is excluded from external-load volume unless a logged added load exists.
 - Epley estimated one-repetition maximum is `weightKg * (1 + repetitions / 30)` for positive weight and repetitions. It is not calculated for duration, distance, warm-up, or bodyweight-only sets.
 - A personal record compares canonical values within the same exercise variation and record type (`max_weight`, `estimated_1rm`, `volume`, `max_repetitions`, `distance`, or `duration`). An equal best is a tie, not a new higher record.

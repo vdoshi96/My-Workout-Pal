@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="779f83222154bd4b86291755ba8548db8ca85032355aa76925c3c380386b2f62">
+  <title>First-principles simplification verification · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>First-principles simplification verification</h1>
+<p>Date: September 4, 2026. Base: <code>76503a46e1233283131099c4240f822ef457560a</code>.
+Scope: local implementation and verification; hosted production behavior is not
+established by this report.</p>
+<h2>Changes and rationale</h2>
+<p>Delete the unused progression evaluator, its nine isolated tests, the unused
+runner barrel, and 13 unused runner aliases. Search found no application caller
+for the evaluator and no source, test, or script consumer for the deleted
+aliases. Preserve the repository&#39;s used snapshot alias.</p>
+<p>Interrupted History can contain unfinished exercises. Read pending state as
+stored and show <strong>unfinished</strong> with any saved sets. Keep completed-session and
+missing-state integrity checks. No writes, migration, or backfill are needed.
+The offline queue, ownership checks, immutable snapshots, and reviewed visual
+system remain because they address concrete product needs.</p>
+<h2>Regression evidence</h2>
+<p>Before implementation, both real-repository start/abandon/History cases failed
+with <code>Workout history is incomplete.</code>: immediate abandonment and abandonment
+after a saved set. Both corruption guards passed. Two rendering cases failed
+because the view displayed pending instead of unfinished.</p>
+<p>After implementation, the focused repository, insights, and rendering suites
+passed 38 tests. They prove saved measurements, unchanged repeated reads,
+foreign-owner denial, unfinished empty movements, and retained corruption
+checks. These tests use local PGlite with all eight actual migrations.</p>
+<h2>Static and build checks</h2>
+<ul>
+<li>Full Vitest run: 858 passes and one sandbox <code>listen EPERM</code> on the unchanged
+localhost embed-probe test. Its permission-correct unchanged replay passed
+all three tests. Effective result: all 859 tests pass across 126 files.</li>
+<li>TypeScript, ESLint, production build, and the 44-entry route boundary pass.</li>
+<li>Drizzle schema check and 34 database/bootstrap tests pass.</li>
+<li>Seed-policy check confirms 27 required variations and 54 approved videos.</li>
+<li>Generated public service worker check passes.</li>
+<li>Generated Markdown/HTML parity passes for all 64 documents; diff review passes.</li>
+</ul>
+<h2>Browser evidence</h2>
+<p>The local production-mode Chromium replay passed: create an example routine,
+open Push, start a workout, abandon it immediately, follow the automatic
+History handoff, and reload its detail. All six movements remain unfinished,
+with no invented sets and a read-only snapshot notice.</p>
+<p>At 390- and 1,440-pixel viewport widths, document scroll width equals viewport
+width and Axe reports zero violations in the main content. Both screenshots
+were visually inspected. Saved-set abandonment is covered by the real-repository
+and rendering regressions, not a separate browser replay.</p>
+<p>Evidence: <a href="unfinished-history-phone.png">phone</a> and
+<a href="unfinished-history-desktop.png">desktop</a>.</p>
+<p>The fixture uses synthetic owners, local PGlite, real repositories and
+components, and no live provider credentials. Development mode entered a
+file-watcher rebuild loop, so the accepted replay uses a production build.
+Initial fixture headers caused third-party media CORS errors; scoping those
+headers to localhost corrected the harness setup. Media playback is outside
+this History check. No live account or production database was changed.</p>
+<h2>Historical evidence</h2>
+<p>The <a href="https://github.com/vdoshi96/My-Workout-Pal/blob/76503a46e1233283131099c4240f822ef457560a/docs/qa/latest/WAVE-4-PRODUCTION-RELEASE-QA.html">Wave 4 production report</a>
+remains in Git history. Its hosted release claims apply to that source, not this
+local correction. This report replaces its generated copies in docs/qa/latest.</p>
+
+  </main>
+</body>
+</html>
