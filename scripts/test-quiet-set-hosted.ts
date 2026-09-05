@@ -28,6 +28,7 @@ let passed=false;
 let cleanupConfirmed=false;
 let playback="not verified";
 let failure:string|undefined;
+let diagnostic:string|undefined;
 try {
   for(const identity of identities) uids.push((await auth.createUser({email:identity.email,password:identity.password,emailVerified:true,displayName:"Quiet Set QA"})).uid);
   stage="sign in";
@@ -74,7 +75,9 @@ try {
   await page.getByRole("button",{name:"Add 30 seconds",exact:true}).click();
   stage="reload recovery";
   await page.reload();
+  stage="reload: saved repetitions";
   await expect(page.getByLabel("Repetitions",{exact:true})).toHaveValue("10");
+  stage="reload: paused timer";
   await expect(page.getByRole("button",{name:"Resume",exact:true})).toBeVisible();
   stage="video and fallback";
   await page.getByText("Watch demo and technique guidance",{exact:true}).click();
@@ -117,7 +120,15 @@ try {
   } finally {await other.close();}
   expect(errors).toEqual([]);
   passed=true;
-} catch {failure=`Hosted check failed at ${stage}; details withheld to protect credentials.`;}
+} catch (error) {
+  failure=`Hosted check failed at ${stage}.`;
+  if(stage.startsWith("reload")) {
+    diagnostic = error instanceof Error ? error.message : "Unknown assertion failure";
+    for(const identity of identities) for(const value of [identity.email,identity.password,identity.recoveredPassword]) diagnostic=diagnostic.replaceAll(value,"[redacted]");
+    diagnostic=diagnostic.slice(0,2000);
+    if(new URL(page.url()).pathname.startsWith("/workout/"))await page.screenshot({path:`${evidenceDir}/failure.png`});
+  }
+}
 finally {
   await context.close(); await browser.close();
   for(let i=0;i<identities.length;i++) uids[i]=await exactIdentityCleanup(auth,database,identities[i]!,uids[i]);
@@ -127,4 +138,5 @@ finally {
 const result={checkedAt:new Date().toISOString(),origin:config.origin,passed,stage,cleanupConfirmed,globalStateUnchanged:await globalPersistenceDigest(database)===digestBefore,firebaseCountBefore:countBefore,firebaseCountAfter:await firebaseUserCount(auth),playback,...(failure?{failure}:{})};
 await writeFile(`${evidenceDir}/result.json`,JSON.stringify(result,null,2)+"\n");
 console.log(JSON.stringify(result));
+if(diagnostic)console.log(diagnostic);
 if(!passed||!cleanupConfirmed)process.exitCode=1;

@@ -5,6 +5,16 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
   const scope = `quiet-${info.project.name}-${Date.now()}`;
   await context.setExtraHTTPHeaders({"x-mwp-harness-viewer":"alice", "x-mwp-harness-scope":scope, "x-mwp-harness-scenario":"ready"});
   await context.route(/youtube-nocookie\.com/, route => route.fulfill({ status:200, contentType:"text/html", body:"<!doctype html><title>External demo omitted in local QA</title>" }));
+  // Chromium exercises forced in-flight cancellation. WebKit's normal reload
+  // path is covered without its synthetic routed-request CORS diagnostic.
+  let delayFirstSave = info.project.name === "chromium-desktop";
+  await context.route(/\/api\/app\/workouts\/[^/]+\/operations$/, async route => {
+    if(delayFirstSave) {
+      delayFirstSave = false;
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+    await route.continue().catch(() => undefined);
+  });
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   let onboardPosts = 0;

@@ -1,7 +1,7 @@
 {
   "unitIntegration": {
     "files": 126,
-    "passed": 866
+    "passed": 867
   },
   "memberMatrix": {
     "passed": 19,
@@ -23,5 +23,11 @@
   "pwaParity": "passed",
   "reviewFixesResolved": 4,
   "reviewDisposition": "ship",
-  "scope": "Local automated and captured evidence; hosted results separate"
+  "scope": "Local automated and captured evidence; hosted results separate",
+  "durabilityRegression": {
+    "red": "Paused/extended rest absent before a held server request completed",
+    "focusedGreen": 44,
+    "fullSuiteGreen": 867,
+    "lateAcknowledgmentPreservesTimer": true
+  }
 }

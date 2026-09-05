@@ -4,13 +4,13 @@
 
 The September 4–5 implementation follows the companion comparison and the user's subsequent art correction. Original cartoon Pip/Mica and bright gym environments replace the rejected naturalistic artwork. Today, setup, routine editing, workout logging, rest, Progress, video presentation, and the public trial use the new interface.
 
-Production publication and hosted verification are pending. This record currently establishes local release readiness only. The final deployment identity and hosted results will be added after publication.
+The first production release is commit `271795b425354e292238715b6ab966cb74ab2832`, deployment `dpl_Hs3P7gV1v1eopwSUj36z7FBKbnPz`. The live public trial and all 134 rendered public guides passed. Hosted member QA exposed a pause/extend checkpoint waiting behind a slow network save. Both disposable accounts were removed and shared catalog state stayed unchanged. A focused durability correction and repeat hosted verification are in progress; this record does not yet certify the member release.
 
 ## Automated evidence
 
 | Check | Observed result |
 | --- | --- |
-| Full unit and integration suite | 126 files, 866 tests passed. |
+| Full unit and integration suite | 126 files, 867 tests passed after the hosted durability correction. |
 | Runner and member browser matrix | 19 passed; one intentionally skipped WebKit phone CSS-zoom case. Desktop Chromium covers that geometry check. |
 | Final member captures and target-specific cases | Six passed across Chromium desktop and WebKit phone. |
 | Public welcome and trial | Chromium desktop and WebKit phone passed, zero axe violations and zero page errors on the checked surfaces. |
@@ -28,9 +28,11 @@ Runner resilience checks cover aborted requests with stable keys, expired/revoke
 
 ## Red and green
 
+Hosted QA supplied a further meaningful red: while a network request was held open, the latest paused/extended timer was absent from local storage. The correction checkpoints local state before waiting for serialized remote synchronization. Its focused suite passed 44 tests, including late-acknowledgment preservation. The repeated resilience browser matrix passed 19 cases with its one intentional skip.
+
 Before implementation, two meaningful runner tests failed: combined logging did not start rest, and the new combined action did not enforce validation. The same initial run also encountered a loopback permission error; that infrastructure error is not counted as domain red evidence.
 
-Two further tests failed before implementation: removing the final movement threw instead of retaining an empty draft, and Progress omitted expected completed work sets and repetitions. Their focused green run passed 27 tests. The final full suite passed all 866 tests.
+Two further tests failed before implementation: removing the final movement threw instead of retaining an empty draft, and Progress omitted expected completed work sets and repetitions. Their focused green run passed 27 tests. The initial full suite passed 866 tests; the post-correction suite passed 867.
 
 The browser pass exposed completion racing pending operations. Complete workout now waits for pending saves. Visual inspection also caught inherited low-contrast Progress totals and a wrapping mobile example link; corrected captures supersede those images. Automated accessibility results alone are not treated as visual proof.
 

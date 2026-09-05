@@ -41,6 +41,8 @@ Rollback uses the previous Ready deployment; immutable compatibility avoids hist
 
 ## Implementation decisions
 
+Hosted QA found that pause/extend actions could wait behind a slow remote set-save request before reaching local storage. Correct this with an immediate durable checkpoint independent of the serialized remote queue. Preserve stable operation identities, cancellation guards, atomic storage merging, and late-acknowledgment reconciliation. Add a failing test that holds the first network request open, pauses and extends rest, and reads the checkpoint before releasing the request; confirm late acknowledgment cannot overwrite it. Repeat the local resilience matrix and the real hosted flow before release closeout.
+
 Blank setup uses page-local draft state and asks for an actual compatible movement before the explicit final save. Refresh discards this unsaved setup. The existing routine editor can retain an empty draft after removal and undo that removal before saving; publication still requires valid training content. No database extension or migration is needed.
 
 The runner combines logging and rest in one domain transition and retains stable operation keys. Next set and Next exercise remain explicit actions. Complete workout waits for pending saves. Native disclosures keep demonstrations and the outline accessible below or beside the logger. Progress adds actual work-set and repetition totals without inventing load or elapsed exercise time.
