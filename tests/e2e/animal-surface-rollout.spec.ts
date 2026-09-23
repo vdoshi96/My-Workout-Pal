@@ -70,8 +70,8 @@ async function assertPublicLibrary(page: Page, width: number) {
   await expect(placement).toHaveCount(1);
   await expectSemanticSilence(placement);
 
-  if (width < 1024) {
-    await expect(placement).toBeHidden();
+  if (width <= 700) {
+    await expect(placement).toBeVisible();
   } else {
     await expect(placement).toBeVisible();
     await expect
@@ -84,7 +84,7 @@ async function assertPublicLibrary(page: Page, width: number) {
       ".public-header",
       ".public-nav",
       ".public-library-hero > div:first-child",
-      ".guest-stamp",
+      ".public-library-hero p",
       ".library-tools",
       ".profile-links",
       ".library-search",

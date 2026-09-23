@@ -102,13 +102,13 @@ async function headingWordLines(heading: Locator) {
 async function openLanding(page: Page) {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Your workout. Your way." }),
+    page.getByRole("heading", { level: 1, name: "A little space for your next set." }),
   ).toBeVisible();
   const placement = await expectCompanionSemantics(page, "landing");
   if ((await page.viewportSize())!.width >= 1024) {
-    await expectNoHorizontalOverlap(page.locator(".landing-copy"), placement);
+    await expectNoHorizontalOverlap(page.locator(".quiet-welcome-copy"), placement);
   } else {
-    await expectNoIntersection(page.locator(".landing-copy"), placement);
+    await expectNoIntersection(page.locator(".quiet-welcome-copy"), placement);
   }
 }
 
@@ -122,7 +122,7 @@ test("landing first viewport reproduces the selected board hierarchy", async ({
   await page.setViewportSize({ height: 1024, width: 1536 });
   await openLanding(page);
   const lines = await headingWordLines(
-    page.getByRole("heading", { level: 1, name: "Your workout. Your way." }),
+    page.getByRole("heading", { level: 1, name: "A little space for your next set." }),
   );
   const [yourLine, workoutLine, secondYourLine, wayLine] = lines;
   expect(yourLine).toBeDefined();
@@ -145,8 +145,8 @@ test("landing first viewport reproduces the selected board hierarchy", async ({
 
 const publicPilotSurfaces = [
   {
-    copy: ".landing-copy",
-    heading: "Your workout. Your way.",
+    copy: ".quiet-welcome-copy",
+    heading: "A little space for your next set.",
     path: "/",
     variant: "landing",
   },
@@ -185,10 +185,10 @@ test("public pilot surfaces stay decorative, bounded, and truthful across requir
       await expectNoIntersection(placement, page.locator(".public-header"));
       await expectNoIntersection(placement, page.locator(".public-nav"));
       if (surface.path === "/") {
-        await expectNoIntersection(placement, page.locator(".landing-actions"));
+        await expectNoIntersection(placement, page.locator(".quiet-welcome-copy"));
       } else {
         await expect(
-          page.getByText("Sample data · not your history", { exact: true }),
+          page.getByText("Example data", { exact: true }),
         ).toHaveCount(1);
         await expectNoIntersection(placement, page.locator(".sample-warning"));
         await expectNoIntersection(placement, page.locator(".sample-metrics"));
@@ -320,7 +320,7 @@ test("forced colors, image failure, and 200 percent zoom collapse decoration saf
   await expect.poll(() => page.evaluate(() => window.visualViewport?.scale ?? 1)).toBe(2);
   await expectNoIntersection(
     page.locator('[data-companion-placement="landing"]'),
-    page.locator(".landing-actions"),
+    page.locator(".quiet-welcome-copy"),
   );
   await expectNoIntersection(
     page.locator('[data-companion-placement="landing"]'),
@@ -346,7 +346,7 @@ test("forced colors, image failure, and 200 percent zoom collapse decoration saf
   ).toBeLessThanOrEqual(1);
   await expectNoIntersection(
     page.locator('[data-companion-placement="landing"]'),
-    page.locator(".landing-actions"),
+    page.locator(".quiet-welcome-copy"),
   );
   await expectNoIntersection(
     page.locator('[data-companion-placement="landing"]'),
