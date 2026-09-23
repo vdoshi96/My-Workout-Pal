@@ -300,7 +300,10 @@ describe("time zone choices (plan A13)", () => {
   it("offers sorted unique IANA zones and keeps an unlisted saved value", () => {
     const options = timeZoneOptions("Mars/Olympus_Mons");
     expect(options).toContain("America/Chicago");
-    expect(options).toContain("Asia/Kolkata");
+    expect(options).toContain("UTC");
+    expect(options).toEqual(expect.arrayContaining(Intl.supportedValuesOf("timeZone")));
+    expect(timeZoneOptions("Asia/Kolkata")).toContain("Asia/Kolkata");
+    expect(timeZoneOptions("America/Chicago")).toContain("America/Chicago");
     expect(options).toContain("Mars/Olympus_Mons");
     expect(new Set(options).size).toBe(options.length);
     const withoutSaved = options.filter((zone) => zone !== "Mars/Olympus_Mons");

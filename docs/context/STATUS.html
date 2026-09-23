@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="2d08ca4a5de597e75ff2c1003f305740dc5936cdb0676d5f1f03bdb726891653">
+  <meta name="source-sha256" content="956ba1d9bc0a97516968c90178aa1de9f128f87945c5f1f3ebac8126a27a6baf">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,9 @@
 <body>
   <main>
 <h1>Project status</h1>
+<h2>Production-grade time-zone contract corrected: September 22, 2026</h2>
+<p>The owner-requested correction removes the time-zone contract conflict on <code>vishal/production-grade-audit</code>. Local Node 24.19.0 / ICU 78.3 resolves the default zone to <code>America/Chicago</code>. <code>Asia/Calcutta</code> is one entry in the global supported-zone list, not the selected local zone. The acceptance block retains the Chicago requirement, requires UTC and all runtime-supported zones, and checks that saved Chicago and Kolkata values remain available. Section 3.3 documents this bounded acceptance correction.</p>
+<p>Application source and account preferences are unchanged. The broader production-grade implementation remains pending, and the full contracts file still depends on helpers that have not been implemented. See <a href="../qa/latest/PRODUCTION-GRADE-QA.html">the time-zone correction and historical blocked report</a> for verification limits. The canonical checkout is the only worktree and remains active for that unfinished audit. Main must not receive this audit branch until its implementation and required gates are complete; this correction does not authorize releasing the unfinished audit. The correction is committed locally. Automatic approval review blocked the push to the verified owner&#39;s public GitHub repository because it requires explicit approval for publishing the branch contents. Remote publication is pending that approval; main and production are unchanged.</p>
 <h2>Production-grade audit: September 22, 2026 (plan ready, not implemented)</h2>
 <p>A whole-application audit of workflows, UI, UX, and copy is recorded in <code>docs/plans/PRODUCTION-GRADE-AUDIT.md</code>. At the owner&#39;s request, implementation was stopped after the audit and handed off. The build contract is <code>docs/plans/PRODUCTION-GRADE-IMPLEMENTATION.md</code>. Durable quality rules were added to <code>AGENTS.md</code>.</p>
 <p>Branch <code>vishal/production-grade-audit</code> contains the plans and four acceptance test files: <code>tests/unit/production-audit-copy.test.ts</code>, <code>tests/unit/production-audit-contracts.test.ts</code>, <code>tests/authenticated-e2e/production-audit.spec.ts</code>, and <code>tests/e2e/production-audit-public.spec.ts</code>. They fail by design until the plan is implemented, so <code>pnpm typecheck</code> and <code>pnpm verify</code> fail on this branch until then. The branch also moves 24 illustration provenance sidecars from <code>public/illustrations/quiet-set/</code> to <code>docs/design/provenance/quiet-set/</code>. This fixes the one pre-existing unit failure, which was caused by those files being publicly served. Application source is unchanged. Nothing is deployed. The canonical checkout is the only worktree.</p>

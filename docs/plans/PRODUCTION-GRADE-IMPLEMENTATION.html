@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="820cd5138ad0644a950947e0d7dde6223739c74cde8bb233d0b9f4e69f7cdfa7">
+  <meta name="source-sha256" content="67202005216ac806e4fa2c840f2ceb76981ba8ba54d0b1d56a46256872c5b266">
   <title>Production-grade implementation plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -71,7 +71,7 @@
 </tbody></table>
 <ol>
 <li>Do not create test files. Do not add <code>it</code>, <code>test</code>, or <code>describe</code> blocks anywhere. Do not add snapshot files.</li>
-<li>Do not edit the four acceptance files. If you believe one is wrong, stop and say which assertion and why in the report; do not work around it.</li>
+<li>Do not edit the four acceptance files. If you believe one is wrong, stop and say which assertion and why in the report; do not work around it. The September 22 owner-requested time-zone correction is recorded below; it does not authorize other acceptance changes.</li>
 <li>Never use <code>.skip</code>, <code>.only</code>, <code>.todo</code>, <code>test.fixme</code>, raised timeouts, or retries to get green.</li>
 <li>You may edit an existing (pre-audit) test only when all three hold: it fails after your change; the failing assertion checks copy, a label, a role, a route, a control, or a behavior that this plan explicitly changes (R4 rest timer kept, R6 leave rule, R12 prefill, R13/E12 mm:ss entry, R20 redirect, A2 Settings before setup); and your edit changes only that expected value, plus any input value the new control needs (for example cardio <code>fill(&quot;1200&quot;)</code> → <code>fill(&quot;20:00&quot;)</code>). Log every such edit in the report as <code>file:line old → new</code>.</li>
 <li>Existing tests that are known to assert changed copy (you will likely need to update these, and only these, plus any others that meet rule 4): <code>tests/unit/workout-runner.test.ts</code> (&quot;Explicitly complete&quot;), <code>tests/unit/authenticated-runner-resilience-plan.test.ts</code> and <code>tests/authenticated-e2e/onboarding.spec.ts</code> (&quot;Save activity&quot;), <code>tests/unit/hosted-authenticated-media-command.test.ts</code> and <code>tests/authenticated-e2e/customization-geometry.spec.ts</code> (&quot;Your routes&quot;), <code>tests/unit/program-collection-component.test.tsx</code> (&quot;Active overview&quot;), <code>tests/unit/public-account-entry.test.tsx</code>, <code>tests/unit/hosted-auth-command.test.ts</code>, <code>tests/e2e/public-release.spec.ts</code> (&quot;My workouts&quot;, &quot;Five-day starter example&quot;, &quot;Starter preview&quot;, &quot;Open Push day&quot;, &quot;Sample data&quot;), <code>tests/unit/accessible-labels.test.tsx</code>, <code>tests/unit/public-exercise-return.test.ts</code>, <code>tests/unit/public-progress-page.test.tsx</code>, <code>tests/e2e/animal-surface-pilot.spec.ts</code>, <code>tests/unit/member-home-route-states.test.tsx</code> and <code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts</code> (&quot;Loading your home&quot;, &quot;Your home did not load&quot;), <code>tests/authenticated-e2e/{onboarding,runner-resilience,quiet-set}.spec.ts</code> (&quot;Complete exercise&quot;, &quot;Step 2 of 3&quot; is kept), <code>tests/unit/workout-runner-presenters.test.ts</code>, <code>tests/authenticated-e2e/runner-resilience.spec.ts</code>, <code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts</code> (&quot;Offline queued&quot;), <code>tests/unit/workout-runner-component-harness.test.tsx</code> (&quot;Reauthenticate&quot;, &quot;Leave both values&quot;), the cardio <code>Duration (seconds)</code> fills in <code>tests/authenticated-e2e/*.spec.ts</code>, <code>tests/unit/training-insights-components.test.tsx</code>.</li>
@@ -215,6 +215,7 @@ pnpm test:e2e:release
 <p><code>src/domain/time-zones.ts</code>:</p>
 <ul>
 <li><code>timeZoneOptions(saved?: string): readonly string[]</code>. Return <code>Intl.supportedValuesOf(&quot;timeZone&quot;)</code>, plus <code>&quot;UTC&quot;</code> if missing, plus <code>saved</code> if provided and missing, deduplicated and sorted with <code>localeCompare(…, &quot;en-US&quot;)</code>.</li>
+<li>September 22 contract correction: require <code>America/Chicago</code>, UTC, every runtime-supported zone, and preservation of the saved value. Do not require an unsaved alias absent from the runtime list, such as <code>Asia/Kolkata</code> on Node 24.19.0 / ICU 78.3. A saved alias must still be preserved. The list contains choices; it does not determine the selected zone. Onboarding keeps the browser-detected zone, and Settings keeps the account&#39;s saved zone. The owner&#39;s local Node runtime was verified as <code>America/Chicago</code>; do not force that zone on other users.</li>
 </ul>
 <p><code>src/domain/navigation/member-return.ts</code>:</p>
 <ul>

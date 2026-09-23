@@ -8,7 +8,8 @@ Use the following documents as the maintained project map:
 - [Production-grade audit](../plans/PRODUCTION-GRADE-AUDIT.md): September 22 whole-application findings for workflows, UI, UX, and copy.
 - [Production-grade implementation plan](../plans/PRODUCTION-GRADE-IMPLEMENTATION.md): handoff build contract, acceptance tests, and win conditions for the audit fixes.
 - `PRODUCT.md`: durable product truth.
-- `docs/qa/latest/QUIET-SET-QA.md`: current redesign and release verification.
+- [Member-atmosphere release QA](../qa/latest/MEMBER-ATMOSPHERE-QA.md): most recent completed application release verification.
+- [Production-grade audit QA](../qa/latest/PRODUCTION-GRADE-QA.md): time-zone contract correction and historical blocked implementation attempt.
 - `docs/plans/QUIET-SET-IMPLEMENTATION.md`: implemented report contracts and user-directed cartoon art.
 - `docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md`: deletion rationale and interrupted History correction.
 - `docs/context/PROJECT.md`: scope, workflows, stack, and boundaries.
@@ -66,7 +67,7 @@ Markdown files are canonical. Generated HTML counterparts support portable revie
 
 ## Wave 4 production status (historical)
 
-The following describes the earlier Wave 4 release; current production evidence is in `docs/qa/latest/QUIET-SET-QA.md`.
+The following describes the earlier Wave 4 release. See [member-atmosphere release QA](../qa/latest/MEMBER-ATMOSPHERE-QA.md) for the most recent completed application verification.
 
 The complete pilot, rollout, integration, and release lineage is public on
 `main`. Application commit `de19b1c89c34235723158ad8858f6b46f4fcde72`

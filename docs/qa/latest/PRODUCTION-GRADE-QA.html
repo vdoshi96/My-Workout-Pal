@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="d585d8fea9f9e091a44b6a77fedd85d8aeec7a6958de239892a773cd38611ea2">
+  <title>Production-grade implementation: time-zone correction · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Production-grade implementation: time-zone correction</h1>
+<h2>September 22 time-zone contract correction</h2>
+<p>The owner requested Chicago after seeing the Node 24.19.0 alias report. Local Node resolves <code>Intl.DateTimeFormat().resolvedOptions().timeZone</code> to <code>America/Chicago</code>, with UTC-6 in January and UTC-5 in July. The macOS zone is also <code>America/Chicago</code>. No system setting or account preference needs to be inferred from the global supported-zone list.</p>
+<p>The contract correction retains <code>America/Chicago</code>, requires UTC and every runtime-supported zone, and preserves a supplied saved value, including <code>Asia/Kolkata</code>. It removes the requirement that an unsaved alias appear in a runtime that omits it. The implementation plan records this bounded correction to acceptance-test rule 2. No other acceptance block or application source changes.</p>
+<p>The original alias assertion fails against the section 3.3 algorithm on Node 24.19.0 / ICU 78.3. The existing corrected time-zone acceptance block passes when evaluated against the section 3.3 algorithm, both with the installed runtime list and a synthetic list using the alternate Kolkata name. This is algorithm-contract verification; the application helper does not exist yet. This contract correction does not implement the missing helpers or establish a passing full acceptance suite. The audit branch remains active and cannot merge to main until the broader implementation and its required checks are complete.</p>
+<h3>Correction verification</h3>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Original unsaved-Kolkata assertion against section 3.3 algorithm</td>
+<td>Failed as reproduced before the edit</td>
+</tr>
+<tr>
+<td>Existing corrected acceptance block against section 3.3 algorithm</td>
+<td>Passed for installed Node list and synthetic alternate-name list</td>
+</tr>
+<tr>
+<td>Local default time zone</td>
+<td><code>America/Chicago</code></td>
+</tr>
+<tr>
+<td><code>pnpm exec eslint tests/unit/production-audit-contracts.test.ts</code></td>
+<td>Passed</td>
+</tr>
+<tr>
+<td><code>git diff --check</code></td>
+<td>Passed</td>
+</tr>
+<tr>
+<td><code>pnpm exec vitest run tests/unit/production-audit-contracts.test.ts</code></td>
+<td>Still fails collection: missing <code>@/domain/navigation/member-return</code>; one failed file, no tests executed</td>
+</tr>
+<tr>
+<td><code>pnpm docs:build</code> and <code>pnpm docs:check</code></td>
+<td>Rendered and verified 72 documentation files</td>
+</tr>
+</tbody></table>
+<p>The wiki&#39;s stale reference to removed Quiet Set QA is corrected to the existing member-atmosphere release report. The last completed application evidence remains intact because this correction does not replace that release QA. No new test file, test block, application helper, browser screenshot, or production verification was added.</p>
+<h3>Correction closeout</h3>
+<p>The correction is committed locally on <code>vishal/production-grade-audit</code>. GitHub confirmed that the signed-in account owns the origin repository and has push permission. Automatic approval review still rejected publication because the public branch contents require explicit user approval. Nothing was pushed, merged, or deployed. The canonical checkout remains the sole active worktree for the unfinished audit.</p>
+<h2>Historical blocked attempt at 81715d7</h2>
+<p>The remainder records the earlier attempt before the correction. Its unchanged-source and required-stop statements describe that attempt, not the corrected acceptance contract.</p>
+<p>September 22, 2026. Source commit: <code>81715d70c7a2cf85832093681ea5e6bd3756c9b5</code>. Branch: <code>vishal/production-grade-audit</code>. This is the section 10 report for a blocked attempt, not completed release QA. Application source, dependencies, and every test remain unchanged. Only this report, the project status, and their generated HTML counterparts change locally.</p>
+<h2>Win conditions W1–W7</h2>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Result</th>
+<th>Command and exact output</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>W1</td>
+<td>Fail: baseline only</td>
+<td><code>npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts</code>: <code>Test Files  2 failed (2)</code> and <code>Tests  25 failed | 1 passed (26)</code></td>
+</tr>
+<tr>
+<td>W2</td>
+<td>Not run: required stop</td>
+<td><code>pnpm test:e2e:authenticated -- production-audit</code></td>
+</tr>
+<tr>
+<td>W3</td>
+<td>Not run: required stop</td>
+<td><code>pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop</code></td>
+</tr>
+<tr>
+<td>W4</td>
+<td>Not run: required stop</td>
+<td><code>pnpm verify</code></td>
+</tr>
+<tr>
+<td>W5</td>
+<td>Not run: required stop</td>
+<td><code>pnpm test:e2e:authenticated</code> and <code>pnpm test:e2e:release</code></td>
+</tr>
+<tr>
+<td>W6</td>
+<td>Incomplete</td>
+<td>This blocked report exists. No replacement screenshots or completed implementation evidence exist. Documentation parity is checked separately below.</td>
+</tr>
+<tr>
+<td>W7</td>
+<td>Delivered as a blocked report</td>
+<td>This report follows section 10&#39;s order and records the required stop.</td>
+</tr>
+</tbody></table>
+<p>The contracts file fails during collection because the planned <code>src/domain/navigation/member-return.ts</code> module does not exist. Its time-zone assertion has not executed in Vitest. The time-zone conflict below is independently reproduced with the exact section 3.3 algorithm. The copy test&#39;s baseline failures are expected before implementation. There is no final passing implementation run or implementation commit.</p>
+<p>Documentation parity passes: <code>pnpm docs:build</code> reports <code>Rendered 72 documentation files.</code> and <code>pnpm docs:check</code> reports <code>Verified 72 documentation files.</code> Both exit 0.</p>
+<h2>Items from sections 3–7 not implemented</h2>
+<p>Every implementation item remains unimplemented because acceptance-test rule 2 requires a stop when an acceptance assertion conflicts with the contract. The instruction is: &quot;Do not edit the four acceptance files. If you believe one is wrong, stop and say which assertion and why in the report; do not work around it.&quot;</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Outstanding scope</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>3.1</td>
+<td>Runner rest preservation, prefill, failed-change discard, leaving rules, resume requeue check, and finishing messages</td>
+<td>Required stop before application edits</td>
+</tr>
+<tr>
+<td>3.2</td>
+<td>Set-entry error presenter</td>
+<td>Required stop before application edits</td>
+</tr>
+<tr>
+<td>3.3</td>
+<td>Clock entry, time-zone options, member return path, and readable routine validation helpers</td>
+<td>Time-zone contract conflict; required stop before application edits</td>
+</tr>
+<tr>
+<td>3.4</td>
+<td>Manifest</td>
+<td>Required stop before application edits</td>
+</tr>
+<tr>
+<td>4</td>
+<td>All runner UI, recovery, route, and practice changes and fixture mirrors</td>
+<td>Required stop before application edits</td>
+</tr>
+<tr>
+<td>5</td>
+<td>All routine, equipment, chooser, custom movement, onboarding, title, label, and dead-code changes and fixture mirrors</td>
+<td>Required stop before application edits</td>
+</tr>
+<tr>
+<td>6</td>
+<td>All member shell, account, settings, navigation, motion, sign-in return, sign-out, library, insight, and companion changes and fixture mirrors</td>
+<td>Required stop before application edits</td>
+</tr>
+<tr>
+<td>7</td>
+<td>All public pages, shared guide, navigation, authentication, recovery, and PWA copy changes and fixture mirrors</td>
+<td>Required stop before application edits</td>
+</tr>
+</tbody></table>
+<h3>Blocking assertion and reproduction</h3>
+<p><code>tests/unit/production-audit-contracts.test.ts:303</code> asserts:</p>
+<pre><code class="language-ts">expect(options).toContain(&quot;Asia/Kolkata&quot;);
+</code></pre>
+<p>Its input is <code>timeZoneOptions(&quot;Mars/Olympus_Mons&quot;)</code>. Section 3.3 specifies the runtime&#39;s supported time zones, with only UTC and the supplied saved value added. On the installed Node 24.19.0 / ICU 78.3 runtime, that list contains <code>Asia/Calcutta</code> but omits <code>Asia/Kolkata</code>.</p>
+<p>This read-only reproduction applies the specified algorithm without adding or changing any source or test file:</p>
+<pre><code class="language-sh">node --input-type=module -e &#39;
+import assert from &quot;node:assert/strict&quot;;
+const saved = &quot;Mars/Olympus_Mons&quot;;
+const options = [...new Set([
+  ...Intl.supportedValuesOf(&quot;timeZone&quot;), &quot;UTC&quot;, saved,
+])].sort((a, b) =&gt; a.localeCompare(b, &quot;en-US&quot;));
+console.log({
+  node: process.version,
+  icu: process.versions.icu,
+  count: options.length,
+  kolkata: options.includes(&quot;Asia/Kolkata&quot;),
+  calcutta: options.includes(&quot;Asia/Calcutta&quot;),
+});
+assert.ok(options.includes(&quot;Asia/Kolkata&quot;));
+&#39;
+</code></pre>
+<p>Observed values: <code>node: v24.19.0</code>, <code>icu: 78.3</code>, <code>count: 420</code>, <code>kolkata: false</code>, <code>calcutta: true</code>. The assertion exits 1. UTC, America/Chicago, and the supplied saved value are present.</p>
+<p>Proposed correction: change the acceptance assertion to require every entry from <code>Intl.supportedValuesOf(&quot;timeZone&quot;)</code>, rather than requiring a particular alias absent from that runtime&#39;s list. Alternatively, revise section 3.3 to require <code>Asia/Kolkata</code> as an additional alias. Neither correction has been applied because the plan prohibits editing acceptance tests and requires literal implementation. The blocker is an unresolved choice between these two contracts.</p>
+<h2>Edits to pre-existing tests</h2>
+<p>None. The four acceptance files and all pre-audit tests are unchanged. No test blocks, skips, retries, timeouts, or snapshots were added.</p>
+<h2>Noticed, not changed</h2>
+<p>No additional out-of-scope product findings were investigated. The prior member-atmosphere QA report and screenshots remain because this attempt produced no verified replacement evidence. No browser screenshots, production verification, or deployment are claimed.</p>
+<h2>PR URL</h2>
+<p>None. Implementation stopped before a commit, push, or PR. The existing branch and canonical checkout remain available for resumption after the contract is corrected. No merge, deployment, branch deletion, or production-data action occurred.</p>
+
+  </main>
+</body>
+</html>

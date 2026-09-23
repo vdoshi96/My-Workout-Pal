@@ -1,5 +1,11 @@
 # Project status
 
+## Production-grade time-zone contract corrected: September 22, 2026
+
+The owner-requested correction removes the time-zone contract conflict on `vishal/production-grade-audit`. Local Node 24.19.0 / ICU 78.3 resolves the default zone to `America/Chicago`. `Asia/Calcutta` is one entry in the global supported-zone list, not the selected local zone. The acceptance block retains the Chicago requirement, requires UTC and all runtime-supported zones, and checks that saved Chicago and Kolkata values remain available. Section 3.3 documents this bounded acceptance correction.
+
+Application source and account preferences are unchanged. The broader production-grade implementation remains pending, and the full contracts file still depends on helpers that have not been implemented. See [the time-zone correction and historical blocked report](../qa/latest/PRODUCTION-GRADE-QA.md) for verification limits. The canonical checkout is the only worktree and remains active for that unfinished audit. Main must not receive this audit branch until its implementation and required gates are complete; this correction does not authorize releasing the unfinished audit. The correction is committed locally. Automatic approval review blocked the push to the verified owner's public GitHub repository because it requires explicit approval for publishing the branch contents. Remote publication is pending that approval; main and production are unchanged.
+
 ## Production-grade audit: September 22, 2026 (plan ready, not implemented)
 
 A whole-application audit of workflows, UI, UX, and copy is recorded in `docs/plans/PRODUCTION-GRADE-AUDIT.md`. At the owner's request, implementation was stopped after the audit and handed off. The build contract is `docs/plans/PRODUCTION-GRADE-IMPLEMENTATION.md`. Durable quality rules were added to `AGENTS.md`.
