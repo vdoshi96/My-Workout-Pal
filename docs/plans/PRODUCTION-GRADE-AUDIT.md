@@ -65,3 +65,5 @@ Phone (390 px), tablet, and desktop layouts must have no horizontal overflow and
 - Existing unit, integration, authenticated, and public end-to-end tests are updated wherever copy or controls intentionally change, never weakened to hide a regression.
 - `pnpm verify` passes: types, lint, all tests, database/seed/PWA checks, documentation parity, production build, and the production route boundary.
 - Browser evidence covers the public welcome, example routine and day, Library and detail, Progress preview, sign-in, and the member Today, onboarding, routine editor, routines, workout runner, Progress, History, and Settings on phone and desktop.
+
+Implemented on branch vishal/production-grade-audit; see docs/qa/latest/PRODUCTION-GRADE-QA.md.

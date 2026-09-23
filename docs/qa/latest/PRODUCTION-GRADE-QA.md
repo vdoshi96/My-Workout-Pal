@@ -1,111 +1,146 @@
-# Production-grade implementation: time-zone correction
+# Production-grade audit QA
 
-## September 22 time-zone contract correction
+September 22, 2026 (America/Chicago). Implementation source: `b460cc281c02f21e31d5dc8a28fb7a8ea7e84abd`. Branch: `vishal/production-grade-audit`. The documentation and screenshot commit follows this source commit without changing application code. W1–W3 were recorded at `c49ac02831f944a579988427e4bcaacf2b4dccf6`; the only subsequent source change removes three unused CSS rules. W4's production build and both W5 runs use the implementation source recorded here.
 
-The owner requested Chicago after seeing the Node 24.19.0 alias report. Local Node resolves `Intl.DateTimeFormat().resolvedOptions().timeZone` to `America/Chicago`, with UTC-6 in January and UTC-5 in July. The macOS zone is also `America/Chicago`. No system setting or account preference needs to be inferred from the global supported-zone list.
+Sections 3–7 are implemented, but **the plan's completion bar is not met: W5 is blocked**. The owner explicitly chose “Keep the plan's strict boundary” after the stale browser journeys were identified. This is a branch review report, not production release approval. The earlier time-zone correction and blocked attempt remain in [the baseline report](https://github.com/vdoshi96/My-Workout-Pal/blob/9d5162d/docs/qa/latest/PRODUCTION-GRADE-QA.md).
 
-The contract correction retains `America/Chicago`, requires UTC and every runtime-supported zone, and preserves a supplied saved value, including `Asia/Kolkata`. It removes the requirement that an unsaved alias appear in a runtime that omits it. The implementation plan records this bounded correction to acceptance-test rule 2. No other acceptance block or application source changes.
+## 1. Win conditions W1–W7
 
-The original alias assertion fails against the section 3.3 algorithm on Node 24.19.0 / ICU 78.3. The existing corrected time-zone acceptance block passes when evaluated against the section 3.3 algorithm, both with the installed runtime list and a synthetic list using the alternate Kolkata name. This is algorithm-contract verification; the application helper does not exist yet. This contract correction does not implement the missing helpers or establish a passing full acceptance suite. The audit branch remains active and cannot merge to main until the broader implementation and its required checks are complete.
+The following summary lines are copied from the recorded command output. Commands ran serially; no retries, timeout increases, new skips, test files, test blocks, or snapshots were added.
 
-### Correction verification
+| Condition | Result | Command | Output |
+| --- | --- | --- | --- |
+| W1 | Pass | `npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts` | `Test Files  2 passed (2)`<br>`Tests  96 passed (96)` |
+| W2 | Pass | `pnpm test:e2e:authenticated -- production-audit` | `14 passed (32.8s)` |
+| W3 | Pass | `pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop` | `12 passed (30.5s)` |
+| W4 | Pass | `pnpm verify` | `Test Files  129 passed (129)`<br>`Tests  965 passed (965)`<br>`Everything's fine 🐶🔥`<br>`Test Files  4 passed (4)`<br>`Tests  34 passed (34)`<br>`seed:check passed: 27 required variation(s) have exactly two approved videos.`<br>`Verified generated service worker.`<br>`Verified 71 documentation files.`<br>`Production route boundary verified (47 App Router entries).` |
+| W5, member | Blocked; run stopped after the reproducible stale-flow failure | `pnpm test:e2e:authenticated` | `1 failed`<br>`1 interrupted`<br>`86 did not run` |
+| W5, release | Fail; existing browser assumptions remain outside the permitted edits | `pnpm test:e2e:release` | `36 failed`<br>`66 skipped`<br>`66 passed (2.0m)` |
+| W6 | Pass | `pnpm docs:build; pnpm docs:check` | `Rendered 71 documentation files.`<br>`Verified 71 documentation files.` |
+| W7 | Delivered | `Section 10 report` | This file records all five required report sections; the PR remains blocked at W5. |
 
-| Check | Result |
+W4 includes typecheck, lint, 965 unit and integration tests across 129 files, 34 repeated database checks across four files, seed policy, service worker parity, documentation parity, the production build, and the 47-entry production route boundary. No migration or seed command ran.
+
+W5 member exits 130 because the run is deliberately stopped after its first reproducible baseline blocker; the interrupted and unrun tests are reported, not treated as passes or skips. W5 release exits 1. The release suite's 66 skips are existing conditions, including the acceptance suite's intentional project exclusions; this change adds none. Both broad suites remain unverified beyond the results recorded here. There is no fully passing final-commit run, so this report does not mark the implementation plan complete.
+
+A development-cache run encountered `__webpack_modules__[moduleId] is not a function`; the stopped server's `.next` directory was moved aside before repeating the unchanged public acceptance command. Screenshot capture also encountered a development-only manifest JSON parse error. A fresh dev process completed the affected captures. No package, Next.js configuration, acceptance expectation, or retry policy changed.
+
+### Test-driven evidence
+
+Before the domain implementation, the existing acceptance run reported `Test Files  2 failed (2)` and `Tests  86 failed | 10 passed (96)`. Its rest-timer assertion at `tests/unit/production-audit-contracts.test.ts:116` expected `{ startedAt: 1000, endsAt: 46000, pausedAt: undefined }` and received `undefined` after `next_set`. Prefill, failed-change discard, and pending-save navigation assertions also failed before implementation. The same unchanged acceptance files subsequently pass all 96 tests. Phase A through G each ran the unit acceptance command.
+
+The first full Vitest run after implementation reported 40 failures and 925 passes. Each legacy expectation edit below followed an actual failing run and changes copy, a route, a control, or a behavior explicitly changed by the plan. The last additional name-validation failure was `Enter a program name` versus `Enter a routine name.`; the nine-test collection-model suite passes after that bounded expectation update. The public account-entry test first failed looking for `My workouts` linking to `/app`; its permitted edits now expect the section 7 Sign in navigation.
+
+### Screenshot evidence and limits
+
+All 32 required PNGs exist under `docs/qa/latest/production-grade/`: phone images are exactly 390×844 and desktop images are exactly 1440×1000. Public views use local Chromium; member views use the synthetic authenticated fixture with WebKit at phone width and Chromium at desktop width. The member fixture's local scope is deleted after each capture journey. Public catalog reads are read-only. No real account was used.
+
+The screenshots were inspected for clipping, overlap, gutters, readable labels, and dialog layout. Visual review corrected tall demo tabs, the public Library introduction overlapping artwork, the Progress badge placement, inherited uppercase form labels, faint guide instructions, the New routine heading contrast, and dialog positioning. The browser acceptance checks report no horizontal overflow on their public and member route matrices; the 16 member capture measurements also report zero overflow. The onboarding, editor-error, and runner captures intentionally show the relevant focused control or dialog.
+
+YouTube requests are replaced with inert local HTML during capture. A black public player area is not playback evidence; the fixture member guide exercises the no-video fallback. Screenshots are local light-theme evidence, not native-device, hosted authentication, production, offline durability, email delivery, account deletion, or full human video-review proof. No production data, Firebase identity, Neon resource, Vercel setting, approval record, dependency, schema, or artwork changed.
+
+The preceding member-atmosphere report and its images were removed from `docs/qa/latest/` after the replacement images were checked. Their original release evidence remains [in Git history](https://github.com/vdoshi96/My-Workout-Pal/blob/9d5162d/docs/qa/latest/MEMBER-ATMOSPHERE-QA.md).
+
+| View | Phone | Desktop |
+| --- | --- | --- |
+| `landing` | [landing-phone.png](production-grade/landing-phone.png) | [landing-desktop.png](production-grade/landing-desktop.png) |
+| `program` | [program-phone.png](production-grade/program-phone.png) | [program-desktop.png](production-grade/program-desktop.png) |
+| `program-push` | [program-push-phone.png](production-grade/program-push-phone.png) | [program-push-desktop.png](production-grade/program-push-desktop.png) |
+| `library` | [library-phone.png](production-grade/library-phone.png) | [library-desktop.png](production-grade/library-desktop.png) |
+| `library-push-up` | [library-push-up-phone.png](production-grade/library-push-up-phone.png) | [library-push-up-desktop.png](production-grade/library-push-up-desktop.png) |
+| `progress` | [progress-phone.png](production-grade/progress-phone.png) | [progress-desktop.png](production-grade/progress-desktop.png) |
+| `sign-in` | [sign-in-phone.png](production-grade/sign-in-phone.png) | [sign-in-desktop.png](production-grade/sign-in-desktop.png) |
+| `not-found` | [not-found-phone.png](production-grade/not-found-phone.png) | [not-found-desktop.png](production-grade/not-found-desktop.png) |
+| `member-today` | [member-today-phone.png](production-grade/member-today-phone.png) | [member-today-desktop.png](production-grade/member-today-desktop.png) |
+| `member-onboarding-step2` | [member-onboarding-step2-phone.png](production-grade/member-onboarding-step2-phone.png) | [member-onboarding-step2-desktop.png](production-grade/member-onboarding-step2-desktop.png) |
+| `member-settings-presetup` | [member-settings-presetup-phone.png](production-grade/member-settings-presetup-phone.png) | [member-settings-presetup-desktop.png](production-grade/member-settings-presetup-desktop.png) |
+| `member-routine-editor-errors` | [member-routine-editor-errors-phone.png](production-grade/member-routine-editor-errors-phone.png) | [member-routine-editor-errors-desktop.png](production-grade/member-routine-editor-errors-desktop.png) |
+| `member-routines` | [member-routines-phone.png](production-grade/member-routines-phone.png) | [member-routines-desktop.png](production-grade/member-routines-desktop.png) |
+| `member-library-guide` | [member-library-guide-phone.png](production-grade/member-library-guide-phone.png) | [member-library-guide-desktop.png](production-grade/member-library-guide-desktop.png) |
+| `runner-set-entry` | [runner-set-entry-phone.png](production-grade/runner-set-entry-phone.png) | [runner-set-entry-desktop.png](production-grade/runner-set-entry-desktop.png) |
+| `runner-end-dialog` | [runner-end-dialog-phone.png](production-grade/runner-end-dialog-phone.png) | [runner-end-dialog-desktop.png](production-grade/runner-end-dialog-desktop.png) |
+
+## 2. Items from sections 3–7 not implemented
+
+None. E1 uses the same underlying `listCatalogExercises` read and `deterministicSeedUuid` database-ID mapping as `loadMovementChooserData`, covering both equipment profiles; the chooser's read model itself is limited to the active profile. The unresolved work is the W5 verification boundary, not an omitted section 3–7 implementation item. The four acceptance files remain byte-identical to baseline `9d5162d`.
+
+## 3. Every edit to a pre-existing test
+
+The ledger contains all 63 changed hunks across 20 pre-existing test files, compared with `9d5162d`. Each location is the final file's line number, and each row records the complete removed text → replacement text. `⏎` marks an original line break. Fixture application mirrors are implementation files and are excluded from this test ledger. No acceptance file changed.
+
+| File and final line | Old → new |
 | --- | --- |
-| Original unsaved-Kolkata assertion against section 3.3 algorithm | Failed as reproduced before the edit |
-| Existing corrected acceptance block against section 3.3 algorithm | Passed for installed Node list and synthetic alternate-name list |
-| Local default time zone | `America/Chicago` |
-| `pnpm exec eslint tests/unit/production-audit-contracts.test.ts` | Passed |
-| `git diff --check` | Passed |
-| `pnpm exec vitest run tests/unit/production-audit-contracts.test.ts` | Still fails collection: missing `@/domain/navigation/member-return`; one failed file, no tests executed |
-| `pnpm docs:build` and `pnpm docs:check` | Rendered and verified 72 documentation files |
+| `tests/e2e/public-release.spec.ts:164` | <code>name: &quot;My workouts&quot;,</code> → <code>name: &quot;Sign in&quot;,</code> |
+| `tests/e2e/public-release.spec.ts:166` | <code>await expect(landingAccountAction).toHaveAttribute(&quot;href&quot;, &quot;/app&quot;);</code> → <code>await expect(landingAccountAction).toHaveAttribute(&quot;href&quot;, &quot;/sign-in&quot;);</code> |
+| `tests/e2e/public-release.spec.ts:168` | <code>await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp$/u); ⏎ await expect(page.locator(&quot;#auth-heading&quot;)).toHaveText(/^(Sign-in connection pending&#124;Sign in)$/);</code> → <code>await expect(page).toHaveURL(/\/sign-in$/u); ⏎ await expect(page.locator(&quot;#auth-heading&quot;)).toHaveText(/^(Sign-in is unavailable&#124;Sign in)$/);</code> |
+| `tests/e2e/public-release.spec.ts:173` | <code>await expect(page.getByText(&quot;Starter preview · not saved&quot;)).toBeVisible(); ⏎ const programAccountActions = page.getByRole(&quot;link&quot;, { name: &quot;My workouts&quot; }); ⏎ await expect(programAccountActions.first()).toHaveAttribute(&quot;href&quot;, &quot;/app&quot;);</code> → <code>await expect(page.getByText(&quot;Five-day example routine&quot;)).toBeVisible(); ⏎ const programAccountActions = page.getByRole(&quot;link&quot;, { name: &quot;Sign in&quot; }); ⏎ await expect(programAccountActions.first()).toHaveAttribute(&quot;href&quot;, &quot;/sign-in&quot;);</code> |
+| `tests/e2e/public-release.spec.ts:178` | <code>await expect(page.getByText(&quot;Starter preview · not saved&quot;)).toBeVisible(); ⏎ await expect(page.getByText(&quot;Five-day starter example&quot;)).toBeVisible(); ⏎ const dayAccountAction = page.getByRole(&quot;link&quot;, { name: &quot;My workouts&quot; }); ⏎ await expect(dayAccountAction).toHaveAttribute(&quot;href&quot;, &quot;/app&quot;);</code> → <code>await expect(page.getByText(/\d+ movements with a walker or runner finish\./)).toBeVisible(); ⏎ await expect(page.getByText(&quot;Example routine&quot;)).toBeVisible(); ⏎ const dayAccountAction = page.getByRole(&quot;link&quot;, { name: &quot;Sign in&quot; }); ⏎ await expect(dayAccountAction).toHaveAttribute(&quot;href&quot;, &quot;/sign-in&quot;);</code> |
+| `tests/e2e/public-release.spec.ts:183` | <code>await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp$/u); ⏎ await expect(page.locator(&quot;#auth-heading&quot;)).toHaveText(/^(Sign-in connection pending&#124;Sign in)$/);</code> → <code>await expect(page).toHaveURL(/\/sign-in$/u); ⏎ await expect(page.locator(&quot;#auth-heading&quot;)).toHaveText(/^(Sign-in is unavailable&#124;Sign in)$/);</code> |
+| `tests/unit/accessible-labels.test.tsx:65` | <code>expect(explorerMarkup).toContain(&quot;Five-day starter example&quot;);</code> → <code>expect(explorerMarkup).toContain(&quot;Five-day example routine&quot;);</code> |
+| `tests/unit/accessible-labels.test.tsx:73` | <code>expect(explorerMarkup).toContain(`&lt;strong&gt;${number}&lt;/strong&gt;&lt;span&gt;${day}&lt;/span&gt;`);</code> → <code>expect(explorerMarkup).toContain(`&lt;small&gt;Day ${number}&lt;/small&gt;&lt;h2&gt;${day}&lt;/h2&gt;`);</code> |
+| `tests/unit/accessible-labels.test.tsx:112` | <code>&#x27;id=&quot;selected-day-sheet&quot; tabindex=&quot;-1&quot;&#x27;,</code> → <code>&#x27;id=&quot;main-content&quot; tabindex=&quot;-1&quot;&#x27;,</code> |
+| `tests/unit/auth-navigation-boundary.test.ts:21` | <code>expect(settings).toContain(&#x27;window.location.replace(&quot;/sign-in&quot;)&#x27;);</code> → <code>expect(settings).not.toContain(&#x27;window.location.replace(&quot;/sign-in&quot;)&#x27;);</code> |
+| `tests/unit/authenticated-program-customization-fixture-boundary.test.ts:84` | <code>/\.program-editor-section-actions button, \.program-editor-add-section button \{[^}]*min-height: 2\.75rem;/u,</code> → <code>/\.program-editor-add-section button \{[^}]*min-height: 2\.75rem;/u,</code> |
+| `tests/unit/catalog-text-only-presentation.test.tsx:62` | <code>expect(markup).toContain(&quot;No demonstration is available&quot;);</code> → <code>expect(markup).toContain(&quot;No video yet. Follow the steps below.&quot;);</code> |
+| `tests/unit/curated-video-publication.test.tsx:105` | <code>expect(unavailable).toContain(&quot;No demonstration is available&quot;);</code> → <code>expect(unavailable).toContain(&quot;No video yet. Follow the steps below.&quot;);</code> |
+| `tests/unit/curated-video-publication.test.tsx:216` | <code>expect(publicMarkup).toContain(&quot;No demonstration is available&quot;);</code> → <code>expect(publicMarkup).toContain(&quot;No video yet. Follow the steps below.&quot;);</code> |
+| `tests/unit/firebase-client-identity-status.test.tsx:15` | <code>expect(markup).toContain(&quot;Checking the browser Firebase sign-in&quot;);</code> → <code>expect(markup).toContain(&quot;Checking…&quot;);</code> |
+| `tests/unit/firebase-client-identity-status.test.tsx:28` | <code>expect(markup).toContain(&quot;ready for same-account reauthentication&quot;);</code> → <code>expect(markup).toBe(&quot;&quot;);</code> |
+| `tests/unit/firebase-client-identity-status.test.tsx:33` | <code>[&quot;missing&quot;, &quot;could not be found&quot;], ⏎ [&quot;mismatch&quot;, &quot;does not match this secure server session&quot;],</code> → <code>[&quot;missing&quot;, &quot;Please sign in again to delete your account.&quot;], ⏎ [&quot;mismatch&quot;, &quot;Please sign in again to delete your account.&quot;],</code> |
+| `tests/unit/firebase-client-identity-status.test.tsx:57` | <code>expect(markup).toContain(&quot;did not finish loading safely&quot;); ⏎ expect(markup).toContain(&quot;Retry Firebase check&quot;);</code> → <code>expect(markup).toContain(&quot;Something went wrong. Try again.&quot;); ⏎ expect(markup).toContain(&quot;Try again&quot;);</code> |
+| `tests/unit/member-home-route-states.test.tsx:11` | <code>expect(markup).toContain(&quot;Loading your home…&quot;); ⏎ expect(markup).toContain(&quot;routine, saved progress, and any resumable workout&quot;);</code> → <code>expect(markup).toContain(&quot;Loading…&quot;); ⏎ expect(markup).not.toContain(&quot;routine, saved progress, and any resumable workout&quot;);</code> |
+| `tests/unit/member-home-route-states.test.tsx:22` | <code>expect(markup).toContain(&quot;Your home did not load.&quot;); ⏎ expect(markup).toContain(&quot;No routine or workout changes were made.&quot;);</code> → <code>expect(markup).toContain(&quot;This page didn&amp;#x27;t load&quot;); ⏎ expect(markup).toContain(&quot;Nothing was changed.&quot;);</code> |
+| `tests/unit/member-program-home.test.tsx:116` | <code>expect(markup).toContain(&quot;1 movement · no cardio&quot;); ⏎ expect(markup).toContain(&quot;1 movement · 1 cardio option&quot;);</code> → <code>expect(markup).toContain(&quot;1 movements&quot;); ⏎ expect(markup).toContain(&quot;1 movements&quot;);</code> |
+| `tests/unit/member-program-home.test.tsx:119` | <code>expect(markup).toContain(&quot;Open Mobility to start&quot;);</code> → <code>expect(markup).not.toContain(&quot;Open Mobility to start&quot;);</code> |
+| `tests/unit/member-program-home.test.tsx:176` | <code>expect(markup).toContain(&quot;Review Mobility&quot;);</code> → <code>expect(markup).toContain(&quot;Mobility&quot;);</code> |
+| `tests/unit/member-program-home.test.tsx:201` | <code>expect(markup).not.toContain(&#x27;href=&quot;/app/program/70000000-0000-4000-8000-000000000001&quot;&#x27;);</code> → <code>expect(markup).toContain(&#x27;href=&quot;/app/program/70000000-0000-4000-8000-000000000001&quot;&#x27;);</code> |
+| `tests/unit/program-collection-component.test.tsx:43` | <code>expect(markup.match(/Active program/g)).toHaveLength(1);</code> → <code>expect(markup.match(/&gt;Active&lt;/g)).toHaveLength(1);</code> |
+| `tests/unit/program-collection-component.test.tsx:46` | <code>expect(markup).toContain(&quot;Create from example&quot;);</code> → <code>expect(markup).toContain(&quot;Create and use this routine&quot;);</code> |
+| `tests/unit/program-collection-component.test.tsx:51` | <code>expect(markup).toContain(&quot;Clone&quot;);</code> → <code>expect(markup).toContain(&quot;Duplicate&quot;);</code> |
+| `tests/unit/program-collection-component.test.tsx:61` | <code>expect(markup).toContain(&quot;Active overview&quot;);</code> → <code>expect(markup).toContain(&quot;Back to Today&quot;);</code> |
+| `tests/unit/program-collection-model.test.ts:167` | <code>expect(() =&gt; validatedProgramName(&quot;   &quot;)).toThrow(&quot;Enter a program name&quot;);</code> → <code>expect(() =&gt; validatedProgramName(&quot;   &quot;)).toThrow(&quot;Enter a routine name&quot;);</code> |
+| `tests/unit/program-editor-model.test.ts:402` | <code>pace: &quot;seconds / km&quot;,</code> → <code>pace: &quot;min / km&quot;,</code> |
+| `tests/unit/program-editor-model.test.ts:407` | <code>pace: &quot;seconds / mile&quot;,</code> → <code>pace: &quot;min / mile&quot;,</code> |
+| `tests/unit/public-account-entry.test.tsx:52` | <code>href: &quot;/app&quot;, ⏎ label: expect.stringContaining(&quot;My workouts&quot;),</code> → <code>href: &quot;/sign-in&quot;, ⏎ label: expect.stringContaining(&quot;Sign in&quot;),</code> |
+| `tests/unit/public-account-entry.test.tsx:70` | <code>expect(observedLinks.filter(({ label }) =&gt; label.includes(&quot;My workouts&quot;)))</code> → <code>expect(observedLinks.filter(({ label }) =&gt; label.includes(&quot;Sign in&quot;)))</code> |
+| `tests/unit/public-account-entry.test.tsx:72` | <code>{ href: &quot;/app&quot;, label: expect.stringContaining(&quot;My workouts&quot;), prefetch: false }, ⏎ { href: &quot;/app&quot;, label: expect.stringContaining(&quot;My workouts&quot;), prefetch: false },</code> → <code>{ href: &quot;/sign-in&quot;, label: expect.stringContaining(&quot;Sign in&quot;), prefetch: false }, ⏎ { href: &quot;/sign-in&quot;, label: expect.stringContaining(&quot;Sign in to save your own version&quot;), prefetch: undefined },</code> |
+| `tests/unit/public-account-entry.test.tsx:81` | <code>expect(explorer).toContain(&quot;Five-day starter example&quot;); ⏎ expect(explorer).toContain(&quot;Starter preview · not saved&quot;); ⏎ expect(day).toContain(&quot;Five-day starter example&quot;); ⏎ expect(day).toContain(&quot;Starter preview · not saved&quot;); ⏎ expect(day).toContain(&#x27;href=&quot;/app&quot;&#x27;); ⏎ expect(day).toContain(&quot;My workouts&quot;);</code> → <code>expect(explorer).toContain(&quot;Five-day example routine&quot;); ⏎ expect(explorer).not.toContain(&quot;Starter preview · not saved&quot;); ⏎ expect(day).toContain(&quot;Example routine&quot;); ⏎ expect(day).not.toContain(&quot;Starter preview · not saved&quot;); ⏎ expect(day).toContain(&#x27;href=&quot;/sample-workout&quot;&#x27;); ⏎ expect(day).toContain(&#x27;PublicShell current=&quot;program&quot;&#x27;);</code> |
+| `tests/unit/public-account-entry.test.tsx:92` | <code>expect(contents).not.toContain(&#x27;href=&quot;/sign-in&quot;&#x27;); ⏎ expect(contents).toContain(&#x27;href=&quot;/app&quot;&#x27;); ⏎ expect(contents).toMatch(/href=&quot;\/app&quot;\s+prefetch=\{false\}/u);</code> → <code>expect(contents).not.toContain(path.includes(&quot;sample-workout&quot;) ? &#x27;href=&quot;/app&quot;&#x27; : &#x27;href=&quot;/sign-in&quot;&#x27;); ⏎ expect(contents).toContain(path.includes(&quot;sample-workout&quot;) ? &#x27;href=&quot;/sign-in&quot;&#x27; : &#x27;href=&quot;/app&quot;&#x27;); ⏎ expect(contents).toMatch(path.includes(&quot;sample-workout&quot;) ? /href=&quot;\/sign-in&quot;\s+prefetch=\{false\}/u : /href=&quot;\/app&quot;\s+prefetch=\{false\}/u);</code> |
+| `tests/unit/public-progress-page.test.tsx:18` | <code>expect(markup).toContain(&quot;Sample data · not your history&quot;); ⏎ expect(markup.match(/Sample data · not your history/g)).toHaveLength(1);</code> → <code>expect(markup).toContain(&quot;Example data&quot;); ⏎ expect(markup.match(/Example data/g)).toHaveLength(1);</code> |
+| `tests/unit/settings-form-auth-readiness.test.tsx:36` | <code>expect(markup).toContain(&quot;Checking the browser Firebase sign-in&quot;); ⏎ expect(markup.match(/Checking the browser Firebase sign-in/g)).toHaveLength(1); ⏎ expect(markup).toMatch(/&lt;button[^&gt;]*disabled=&quot;&quot;[^&gt;]*&gt;Review permanent deletion&lt;\/button&gt;/);</code> → <code>expect(markup).toContain(&quot;Checking…&quot;); ⏎ expect(markup.match(/Checking…/g)).toHaveLength(1); ⏎ expect(markup).toMatch(/&lt;button[^&gt;]*disabled=&quot;&quot;[^&gt;]*&gt;Delete my account&lt;\/button&gt;/);</code> |
+| `tests/unit/strength-catalog-expansion.test.tsx:280` | <code>expect(markup).toContain(&quot;No demonstration is available&quot;);</code> → <code>expect(markup).toContain(&quot;No video yet. Follow the steps below.&quot;);</code> |
+| `tests/unit/training-insights-components.test.tsx:137` | <code>expect(markup).toContain(&quot;Read-only snapshot.&quot;);</code> → <code>expect(markup).not.toContain(&quot;Read-only snapshot.&quot;);</code> |
+| `tests/unit/training-insights-components.test.tsx:155` | <code>expect(markup).toContain(&quot;Tied best · 21 exact source sets&quot;);</code> → <code>expect(markup).toContain(&quot;Tied best (21 times)&quot;);</code> |
+| `tests/unit/workout-runner-component-harness.test.tsx:200` | <code>expect(oneMarkup).toContain(&quot;Configured cardio option&quot;); ⏎ expect(oneMarkup).toContain(&quot;Choose the configured cardio option&quot;);</code> → <code>expect(oneMarkup).toContain(&quot;Cardio finish&quot;); ⏎ expect(oneMarkup).toContain(&quot;Choose Walker or Runner to log it.&quot;);</code> |
+| `tests/unit/workout-runner-component-harness.test.tsx:205` | <code>expect(twoMarkup).toContain(&quot;Configured cardio options (2)&quot;); ⏎ expect(twoMarkup).toContain(&quot;Choose one of the 2 configured cardio options&quot;);</code> → <code>expect(twoMarkup).toContain(&quot;Cardio finish&quot;); ⏎ expect(twoMarkup).toContain(&quot;Choose Walker or Runner to log it.&quot;);</code> |
+| `tests/unit/workout-runner-component-harness.test.tsx:424` | <code>expect(markup).toContain(&quot;Choose the workout value to keep&quot;);</code> → <code>expect(markup).toContain(&quot;Pick which value to keep&quot;);</code> |
+| `tests/unit/workout-runner-component-harness.test.tsx:427` | <code>&#x27;aria-label=&quot;Keep 20 kg · 10 reps for Set 1 · Floor press&quot;&#x27;,</code> → <code>&#x27;aria-label=&quot;Keep 20 kg · 10 reps&quot;&#x27;,</code> |
+| `tests/unit/workout-runner-component-harness.test.tsx:430` | <code>&#x27;aria-label=&quot;Keep 25 kg · 8 reps for Set 1 · Floor press&quot;&#x27;,</code> → <code>&#x27;aria-label=&quot;Keep 25 kg · 8 reps&quot;&#x27;,</code> |
+| `tests/unit/workout-runner-component-harness.test.tsx:432` | <code>expect(markup).toContain(&quot;Leave both values unresolved&quot;);</code> → <code>expect(markup).not.toContain(&quot;Leave both values unresolved&quot;);</code> |
+| `tests/unit/workout-runner-component-harness.test.tsx:483` | <code>expect(markup).toContain(&quot;Reauthenticate and return&quot;);</code> → <code>expect(markup).toContain(&quot;Sign in again&quot;);</code> |
+| `tests/unit/workout-runner-component-harness.test.tsx:506` | <code>expect(revokedMarkup).toContain(&quot;Sign-in revoked&quot;);</code> → <code>expect(revokedMarkup).toContain(&quot;Sign in again&quot;);</code> |
+| `tests/unit/workout-runner-presenters.test.ts:92` | <code>label: &quot;Offline queued&quot;,</code> → <code>label: &quot;Saved on this device&quot;,</code> |
+| `tests/unit/workout-runner-presenters.test.ts:96` | <code>label: &quot;Sign-in expired&quot;,</code> → <code>label: &quot;Sign in again&quot;,</code> |
+| `tests/unit/workout-runner-presenters.test.ts:100` | <code>label: &quot;Sign-in revoked&quot;,</code> → <code>label: &quot;Sign in again&quot;,</code> |
+| `tests/unit/workout-runner.test.ts:1040` | <code>expect(isNavigationBlocked(queued)).toBe(true);</code> → <code>expect(isNavigationBlocked(queued)).toBe(false);</code> |
+| `tests/unit/workout-runner.test.ts:1457` | <code>expect(isNavigationBlocked(completing)).toBe(true);</code> → <code>expect(isNavigationBlocked(completing)).toBe(false);</code> |
+| `tests/unit/workout-runner.test.ts:1522` | <code>).toThrow(/local draft&#124;confirmed/);</code> → <code>).toThrow(/Save your edited set or note first/);</code> |
+| `tests/unit/workout-runner.test.ts:1538` | <code>).toThrow(/confirmed/);</code> → <code>).toThrow(/Wait for your last changes to save/);</code> |
+| `tests/unit/workout-runner.test.ts:1627` | <code>/Explicitly complete/,</code> → <code>/Finish or skip/,</code> |
+| `tests/unit/workout-runner.test.ts:1639` | <code>/confirmed/,</code> → <code>/Wait for your last changes to save/,</code> |
+| `tests/unit/workout-runner.test.ts:1721` | <code>/required cardio/,</code> → <code>/Log your cardio finish first/,</code> |
+| `tests/unit/workout-runner.test.ts:1731` | <code>/required cardio/,</code> → <code>/Log your cardio finish first/,</code> |
+| `tests/unit/workout-runner.test.ts:1736` | <code>/required cardio/,</code> → <code>/Log your cardio finish first/,</code> |
+| `tests/unit/workout-runner.test.ts:1751` | <code>expect(isNavigationBlocked(state)).toBe(true);</code> → <code>expect(isNavigationBlocked(state)).toBe(false);</code> |
+| `tests/unit/workout-runner.test.ts:1847` | <code>expect(next.restTimer).toBeUndefined();</code> → <code>expect(next.restTimer).toBe(state.restTimer);</code> |
 
-The wiki's stale reference to removed Quiet Set QA is corrected to the existing member-atmosphere release report. The last completed application evidence remains intact because this correction does not replace that release QA. No new test file, test block, application helper, browser screenshot, or production verification was added.
+## 4. Noticed, not changed
 
-### Correction closeout
+- `tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:167` and `:266` still click **Start with example**. Baseline `9d5162d` already has **Example routine**, two **Continue** steps, and **Save routine**. The first test times out at line 167; the second is interrupted waiting for the same absent control. The owner declined broader stale-journey updates, so these tests and the remaining older onboarding helpers stay unchanged.
+- Older public pilot, release, and PWA journeys require **Your workout. Your way.**, `.landing-actions`, and earlier illustration behavior. Baseline `9d5162d:src/app/page.tsx` already renders **A little space for your next set.** and **Try one set**. The library illustration tests also assume the retired breakpoint and layout. These baseline assumptions are outside the audit's permitted expectation changes. Their remaining failures are reported in W5; they are not hidden by skips or altered geometry thresholds.
+- Next.js development cache errors and the loopback `allowedDevOrigins` warning remain outside this plan's dependency and configuration boundary. Cold-cache acceptance and production-build results are reported separately.
+- Hosted Firebase resend, real sign-out/deletion, hosted persistence, video playback, native device behavior, and production deployment were not exercised. The plan prohibits those provider and production actions.
 
-The correction is committed locally on `vishal/production-grade-audit`. GitHub confirmed that the signed-in account owns the origin repository and has push permission. Automatic approval review still rejected publication because the public branch contents require explicit user approval. Nothing was pushed, merged, or deployed. The canonical checkout remains the sole active worktree for the unfinished audit.
+## 5. Pull request
 
-## Historical blocked attempt at 81715d7
-
-The remainder records the earlier attempt before the correction. Its unchanged-source and required-stop statements describe that attempt, not the corrected acceptance contract.
-
-
-September 22, 2026. Source commit: `81715d70c7a2cf85832093681ea5e6bd3756c9b5`. Branch: `vishal/production-grade-audit`. This is the section 10 report for a blocked attempt, not completed release QA. Application source, dependencies, and every test remain unchanged. Only this report, the project status, and their generated HTML counterparts change locally.
-
-## Win conditions W1–W7
-
-| Condition | Result | Command and exact output |
-| --- | --- | --- |
-| W1 | Fail: baseline only | `npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts`: `Test Files  2 failed (2)` and `Tests  25 failed \| 1 passed (26)` |
-| W2 | Not run: required stop | `pnpm test:e2e:authenticated -- production-audit` |
-| W3 | Not run: required stop | `pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop` |
-| W4 | Not run: required stop | `pnpm verify` |
-| W5 | Not run: required stop | `pnpm test:e2e:authenticated` and `pnpm test:e2e:release` |
-| W6 | Incomplete | This blocked report exists. No replacement screenshots or completed implementation evidence exist. Documentation parity is checked separately below. |
-| W7 | Delivered as a blocked report | This report follows section 10's order and records the required stop. |
-
-The contracts file fails during collection because the planned `src/domain/navigation/member-return.ts` module does not exist. Its time-zone assertion has not executed in Vitest. The time-zone conflict below is independently reproduced with the exact section 3.3 algorithm. The copy test's baseline failures are expected before implementation. There is no final passing implementation run or implementation commit.
-
-Documentation parity passes: `pnpm docs:build` reports `Rendered 72 documentation files.` and `pnpm docs:check` reports `Verified 72 documentation files.` Both exit 0.
-
-## Items from sections 3–7 not implemented
-
-Every implementation item remains unimplemented because acceptance-test rule 2 requires a stop when an acceptance assertion conflicts with the contract. The instruction is: "Do not edit the four acceptance files. If you believe one is wrong, stop and say which assertion and why in the report; do not work around it."
-
-| Section | Outstanding scope | Reason |
-| --- | --- | --- |
-| 3.1 | Runner rest preservation, prefill, failed-change discard, leaving rules, resume requeue check, and finishing messages | Required stop before application edits |
-| 3.2 | Set-entry error presenter | Required stop before application edits |
-| 3.3 | Clock entry, time-zone options, member return path, and readable routine validation helpers | Time-zone contract conflict; required stop before application edits |
-| 3.4 | Manifest | Required stop before application edits |
-| 4 | All runner UI, recovery, route, and practice changes and fixture mirrors | Required stop before application edits |
-| 5 | All routine, equipment, chooser, custom movement, onboarding, title, label, and dead-code changes and fixture mirrors | Required stop before application edits |
-| 6 | All member shell, account, settings, navigation, motion, sign-in return, sign-out, library, insight, and companion changes and fixture mirrors | Required stop before application edits |
-| 7 | All public pages, shared guide, navigation, authentication, recovery, and PWA copy changes and fixture mirrors | Required stop before application edits |
-
-### Blocking assertion and reproduction
-
-`tests/unit/production-audit-contracts.test.ts:303` asserts:
-
-```ts
-expect(options).toContain("Asia/Kolkata");
-```
-
-Its input is `timeZoneOptions("Mars/Olympus_Mons")`. Section 3.3 specifies the runtime's supported time zones, with only UTC and the supplied saved value added. On the installed Node 24.19.0 / ICU 78.3 runtime, that list contains `Asia/Calcutta` but omits `Asia/Kolkata`.
-
-This read-only reproduction applies the specified algorithm without adding or changing any source or test file:
-
-```sh
-node --input-type=module -e '
-import assert from "node:assert/strict";
-const saved = "Mars/Olympus_Mons";
-const options = [...new Set([
-  ...Intl.supportedValuesOf("timeZone"), "UTC", saved,
-])].sort((a, b) => a.localeCompare(b, "en-US"));
-console.log({
-  node: process.version,
-  icu: process.versions.icu,
-  count: options.length,
-  kolkata: options.includes("Asia/Kolkata"),
-  calcutta: options.includes("Asia/Calcutta"),
-});
-assert.ok(options.includes("Asia/Kolkata"));
-'
-```
-
-Observed values: `node: v24.19.0`, `icu: 78.3`, `count: 420`, `kolkata: false`, `calcutta: true`. The assertion exits 1. UTC, America/Chicago, and the supplied saved value are present.
-
-Proposed correction: change the acceptance assertion to require every entry from `Intl.supportedValuesOf("timeZone")`, rather than requiring a particular alias absent from that runtime's list. Alternatively, revise section 3.3 to require `Asia/Kolkata` as an additional alias. Neither correction has been applied because the plan prohibits editing acceptance tests and requires literal implementation. The blocker is an unresolved choice between these two contracts.
-
-## Edits to pre-existing tests
-
-None. The four acceptance files and all pre-audit tests are unchanged. No test blocks, skips, retries, timeouts, or snapshots were added.
-
-## Noticed, not changed
-
-No additional out-of-scope product findings were investigated. The prior member-atmosphere QA report and screenshots remain because this attempt produced no verified replacement evidence. No browser screenshots, production verification, or deployment are claimed.
-
-## PR URL
-
-None. Implementation stopped before a commit, push, or PR. The existing branch and canonical checkout remain available for resumption after the contract is corrected. No merge, deployment, branch deletion, or production-data action occurred.
+PR creation pending. Title: **Production-grade audit fixes**. The PR is a draft because W5 remains blocked. No merge, deployment, branch deletion, or worktree creation is part of this closeout. The canonical checkout is the sole worktree and remains active for owner review and the unresolved W5 boundary.

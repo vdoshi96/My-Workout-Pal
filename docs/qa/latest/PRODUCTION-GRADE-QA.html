@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="d585d8fea9f9e091a44b6a77fedd85d8aeec7a6958de239892a773cd38611ea2">
-  <title>Production-grade implementation: time-zone correction · My Workout Pal docs</title>
+  <meta name="source-sha256" content="d8cb6f819f423e009b552d51376e125fb017977f7f842d49c962e8a6c43aa124">
+  <title>Production-grade audit QA · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
     @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
@@ -27,182 +27,442 @@
 </head>
 <body>
   <main>
-<h1>Production-grade implementation: time-zone correction</h1>
-<h2>September 22 time-zone contract correction</h2>
-<p>The owner requested Chicago after seeing the Node 24.19.0 alias report. Local Node resolves <code>Intl.DateTimeFormat().resolvedOptions().timeZone</code> to <code>America/Chicago</code>, with UTC-6 in January and UTC-5 in July. The macOS zone is also <code>America/Chicago</code>. No system setting or account preference needs to be inferred from the global supported-zone list.</p>
-<p>The contract correction retains <code>America/Chicago</code>, requires UTC and every runtime-supported zone, and preserves a supplied saved value, including <code>Asia/Kolkata</code>. It removes the requirement that an unsaved alias appear in a runtime that omits it. The implementation plan records this bounded correction to acceptance-test rule 2. No other acceptance block or application source changes.</p>
-<p>The original alias assertion fails against the section 3.3 algorithm on Node 24.19.0 / ICU 78.3. The existing corrected time-zone acceptance block passes when evaluated against the section 3.3 algorithm, both with the installed runtime list and a synthetic list using the alternate Kolkata name. This is algorithm-contract verification; the application helper does not exist yet. This contract correction does not implement the missing helpers or establish a passing full acceptance suite. The audit branch remains active and cannot merge to main until the broader implementation and its required checks are complete.</p>
-<h3>Correction verification</h3>
-<table>
-<thead>
-<tr>
-<th>Check</th>
-<th>Result</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Original unsaved-Kolkata assertion against section 3.3 algorithm</td>
-<td>Failed as reproduced before the edit</td>
-</tr>
-<tr>
-<td>Existing corrected acceptance block against section 3.3 algorithm</td>
-<td>Passed for installed Node list and synthetic alternate-name list</td>
-</tr>
-<tr>
-<td>Local default time zone</td>
-<td><code>America/Chicago</code></td>
-</tr>
-<tr>
-<td><code>pnpm exec eslint tests/unit/production-audit-contracts.test.ts</code></td>
-<td>Passed</td>
-</tr>
-<tr>
-<td><code>git diff --check</code></td>
-<td>Passed</td>
-</tr>
-<tr>
-<td><code>pnpm exec vitest run tests/unit/production-audit-contracts.test.ts</code></td>
-<td>Still fails collection: missing <code>@/domain/navigation/member-return</code>; one failed file, no tests executed</td>
-</tr>
-<tr>
-<td><code>pnpm docs:build</code> and <code>pnpm docs:check</code></td>
-<td>Rendered and verified 72 documentation files</td>
-</tr>
-</tbody></table>
-<p>The wiki&#39;s stale reference to removed Quiet Set QA is corrected to the existing member-atmosphere release report. The last completed application evidence remains intact because this correction does not replace that release QA. No new test file, test block, application helper, browser screenshot, or production verification was added.</p>
-<h3>Correction closeout</h3>
-<p>The correction is committed locally on <code>vishal/production-grade-audit</code>. GitHub confirmed that the signed-in account owns the origin repository and has push permission. Automatic approval review still rejected publication because the public branch contents require explicit user approval. Nothing was pushed, merged, or deployed. The canonical checkout remains the sole active worktree for the unfinished audit.</p>
-<h2>Historical blocked attempt at 81715d7</h2>
-<p>The remainder records the earlier attempt before the correction. Its unchanged-source and required-stop statements describe that attempt, not the corrected acceptance contract.</p>
-<p>September 22, 2026. Source commit: <code>81715d70c7a2cf85832093681ea5e6bd3756c9b5</code>. Branch: <code>vishal/production-grade-audit</code>. This is the section 10 report for a blocked attempt, not completed release QA. Application source, dependencies, and every test remain unchanged. Only this report, the project status, and their generated HTML counterparts change locally.</p>
-<h2>Win conditions W1–W7</h2>
+<h1>Production-grade audit QA</h1>
+<p>September 22, 2026 (America/Chicago). Implementation source: <code>b460cc281c02f21e31d5dc8a28fb7a8ea7e84abd</code>. Branch: <code>vishal/production-grade-audit</code>. The documentation and screenshot commit follows this source commit without changing application code. W1–W3 were recorded at <code>c49ac02831f944a579988427e4bcaacf2b4dccf6</code>; the only subsequent source change removes three unused CSS rules. W4&#39;s production build and both W5 runs use the implementation source recorded here.</p>
+<p>Sections 3–7 are implemented, but <strong>the plan&#39;s completion bar is not met: W5 is blocked</strong>. The owner explicitly chose “Keep the plan&#39;s strict boundary” after the stale browser journeys were identified. This is a branch review report, not production release approval. The earlier time-zone correction and blocked attempt remain in <a href="https://github.com/vdoshi96/My-Workout-Pal/blob/9d5162d/docs/qa/latest/PRODUCTION-GRADE-QA.html">the baseline report</a>.</p>
+<h2>1. Win conditions W1–W7</h2>
+<p>The following summary lines are copied from the recorded command output. Commands ran serially; no retries, timeout increases, new skips, test files, test blocks, or snapshots were added.</p>
 <table>
 <thead>
 <tr>
 <th>Condition</th>
 <th>Result</th>
-<th>Command and exact output</th>
+<th>Command</th>
+<th>Output</th>
 </tr>
 </thead>
 <tbody><tr>
 <td>W1</td>
-<td>Fail: baseline only</td>
-<td><code>npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts</code>: <code>Test Files  2 failed (2)</code> and <code>Tests  25 failed | 1 passed (26)</code></td>
+<td>Pass</td>
+<td><code>npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts</code></td>
+<td><code>Test Files  2 passed (2)</code><br><code>Tests  96 passed (96)</code></td>
 </tr>
 <tr>
 <td>W2</td>
-<td>Not run: required stop</td>
+<td>Pass</td>
 <td><code>pnpm test:e2e:authenticated -- production-audit</code></td>
+<td><code>14 passed (32.8s)</code></td>
 </tr>
 <tr>
 <td>W3</td>
-<td>Not run: required stop</td>
+<td>Pass</td>
 <td><code>pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop</code></td>
+<td><code>12 passed (30.5s)</code></td>
 </tr>
 <tr>
 <td>W4</td>
-<td>Not run: required stop</td>
+<td>Pass</td>
 <td><code>pnpm verify</code></td>
+<td><code>Test Files  129 passed (129)</code><br><code>Tests  965 passed (965)</code><br><code>Everything&#39;s fine 🐶🔥</code><br><code>Test Files  4 passed (4)</code><br><code>Tests  34 passed (34)</code><br><code>seed:check passed: 27 required variation(s) have exactly two approved videos.</code><br><code>Verified generated service worker.</code><br><code>Verified 71 documentation files.</code><br><code>Production route boundary verified (47 App Router entries).</code></td>
 </tr>
 <tr>
-<td>W5</td>
-<td>Not run: required stop</td>
-<td><code>pnpm test:e2e:authenticated</code> and <code>pnpm test:e2e:release</code></td>
+<td>W5, member</td>
+<td>Blocked; run stopped after the reproducible stale-flow failure</td>
+<td><code>pnpm test:e2e:authenticated</code></td>
+<td><code>1 failed</code><br><code>1 interrupted</code><br><code>86 did not run</code></td>
+</tr>
+<tr>
+<td>W5, release</td>
+<td>Fail; existing browser assumptions remain outside the permitted edits</td>
+<td><code>pnpm test:e2e:release</code></td>
+<td><code>36 failed</code><br><code>66 skipped</code><br><code>66 passed (2.0m)</code></td>
 </tr>
 <tr>
 <td>W6</td>
-<td>Incomplete</td>
-<td>This blocked report exists. No replacement screenshots or completed implementation evidence exist. Documentation parity is checked separately below.</td>
+<td>Pass</td>
+<td><code>pnpm docs:build; pnpm docs:check</code></td>
+<td><code>Rendered 71 documentation files.</code><br><code>Verified 71 documentation files.</code></td>
 </tr>
 <tr>
 <td>W7</td>
-<td>Delivered as a blocked report</td>
-<td>This report follows section 10&#39;s order and records the required stop.</td>
+<td>Delivered</td>
+<td><code>Section 10 report</code></td>
+<td>This file records all five required report sections; the PR remains blocked at W5.</td>
 </tr>
 </tbody></table>
-<p>The contracts file fails during collection because the planned <code>src/domain/navigation/member-return.ts</code> module does not exist. Its time-zone assertion has not executed in Vitest. The time-zone conflict below is independently reproduced with the exact section 3.3 algorithm. The copy test&#39;s baseline failures are expected before implementation. There is no final passing implementation run or implementation commit.</p>
-<p>Documentation parity passes: <code>pnpm docs:build</code> reports <code>Rendered 72 documentation files.</code> and <code>pnpm docs:check</code> reports <code>Verified 72 documentation files.</code> Both exit 0.</p>
-<h2>Items from sections 3–7 not implemented</h2>
-<p>Every implementation item remains unimplemented because acceptance-test rule 2 requires a stop when an acceptance assertion conflicts with the contract. The instruction is: &quot;Do not edit the four acceptance files. If you believe one is wrong, stop and say which assertion and why in the report; do not work around it.&quot;</p>
+<p>W4 includes typecheck, lint, 965 unit and integration tests across 129 files, 34 repeated database checks across four files, seed policy, service worker parity, documentation parity, the production build, and the 47-entry production route boundary. No migration or seed command ran.</p>
+<p>W5 member exits 130 because the run is deliberately stopped after its first reproducible baseline blocker; the interrupted and unrun tests are reported, not treated as passes or skips. W5 release exits 1. The release suite&#39;s 66 skips are existing conditions, including the acceptance suite&#39;s intentional project exclusions; this change adds none. Both broad suites remain unverified beyond the results recorded here. There is no fully passing final-commit run, so this report does not mark the implementation plan complete.</p>
+<p>A development-cache run encountered <code>__webpack_modules__[moduleId] is not a function</code>; the stopped server&#39;s <code>.next</code> directory was moved aside before repeating the unchanged public acceptance command. Screenshot capture also encountered a development-only manifest JSON parse error. A fresh dev process completed the affected captures. No package, Next.js configuration, acceptance expectation, or retry policy changed.</p>
+<h3>Test-driven evidence</h3>
+<p>Before the domain implementation, the existing acceptance run reported <code>Test Files  2 failed (2)</code> and <code>Tests  86 failed | 10 passed (96)</code>. Its rest-timer assertion at <code>tests/unit/production-audit-contracts.test.ts:116</code> expected <code>{ startedAt: 1000, endsAt: 46000, pausedAt: undefined }</code> and received <code>undefined</code> after <code>next_set</code>. Prefill, failed-change discard, and pending-save navigation assertions also failed before implementation. The same unchanged acceptance files subsequently pass all 96 tests. Phase A through G each ran the unit acceptance command.</p>
+<p>The first full Vitest run after implementation reported 40 failures and 925 passes. Each legacy expectation edit below followed an actual failing run and changes copy, a route, a control, or a behavior explicitly changed by the plan. The last additional name-validation failure was <code>Enter a program name</code> versus <code>Enter a routine name.</code>; the nine-test collection-model suite passes after that bounded expectation update. The public account-entry test first failed looking for <code>My workouts</code> linking to <code>/app</code>; its permitted edits now expect the section 7 Sign in navigation.</p>
+<h3>Screenshot evidence and limits</h3>
+<p>All 32 required PNGs exist under <code>docs/qa/latest/production-grade/</code>: phone images are exactly 390×844 and desktop images are exactly 1440×1000. Public views use local Chromium; member views use the synthetic authenticated fixture with WebKit at phone width and Chromium at desktop width. The member fixture&#39;s local scope is deleted after each capture journey. Public catalog reads are read-only. No real account was used.</p>
+<p>The screenshots were inspected for clipping, overlap, gutters, readable labels, and dialog layout. Visual review corrected tall demo tabs, the public Library introduction overlapping artwork, the Progress badge placement, inherited uppercase form labels, faint guide instructions, the New routine heading contrast, and dialog positioning. The browser acceptance checks report no horizontal overflow on their public and member route matrices; the 16 member capture measurements also report zero overflow. The onboarding, editor-error, and runner captures intentionally show the relevant focused control or dialog.</p>
+<p>YouTube requests are replaced with inert local HTML during capture. A black public player area is not playback evidence; the fixture member guide exercises the no-video fallback. Screenshots are local light-theme evidence, not native-device, hosted authentication, production, offline durability, email delivery, account deletion, or full human video-review proof. No production data, Firebase identity, Neon resource, Vercel setting, approval record, dependency, schema, or artwork changed.</p>
+<p>The preceding member-atmosphere report and its images were removed from <code>docs/qa/latest/</code> after the replacement images were checked. Their original release evidence remains <a href="https://github.com/vdoshi96/My-Workout-Pal/blob/9d5162d/docs/qa/latest/MEMBER-ATMOSPHERE-QA.html">in Git history</a>.</p>
 <table>
 <thead>
 <tr>
-<th>Section</th>
-<th>Outstanding scope</th>
-<th>Reason</th>
+<th>View</th>
+<th>Phone</th>
+<th>Desktop</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>3.1</td>
-<td>Runner rest preservation, prefill, failed-change discard, leaving rules, resume requeue check, and finishing messages</td>
-<td>Required stop before application edits</td>
+<td><code>landing</code></td>
+<td><a href="production-grade/landing-phone.png">landing-phone.png</a></td>
+<td><a href="production-grade/landing-desktop.png">landing-desktop.png</a></td>
 </tr>
 <tr>
-<td>3.2</td>
-<td>Set-entry error presenter</td>
-<td>Required stop before application edits</td>
+<td><code>program</code></td>
+<td><a href="production-grade/program-phone.png">program-phone.png</a></td>
+<td><a href="production-grade/program-desktop.png">program-desktop.png</a></td>
 </tr>
 <tr>
-<td>3.3</td>
-<td>Clock entry, time-zone options, member return path, and readable routine validation helpers</td>
-<td>Time-zone contract conflict; required stop before application edits</td>
+<td><code>program-push</code></td>
+<td><a href="production-grade/program-push-phone.png">program-push-phone.png</a></td>
+<td><a href="production-grade/program-push-desktop.png">program-push-desktop.png</a></td>
 </tr>
 <tr>
-<td>3.4</td>
-<td>Manifest</td>
-<td>Required stop before application edits</td>
+<td><code>library</code></td>
+<td><a href="production-grade/library-phone.png">library-phone.png</a></td>
+<td><a href="production-grade/library-desktop.png">library-desktop.png</a></td>
 </tr>
 <tr>
-<td>4</td>
-<td>All runner UI, recovery, route, and practice changes and fixture mirrors</td>
-<td>Required stop before application edits</td>
+<td><code>library-push-up</code></td>
+<td><a href="production-grade/library-push-up-phone.png">library-push-up-phone.png</a></td>
+<td><a href="production-grade/library-push-up-desktop.png">library-push-up-desktop.png</a></td>
 </tr>
 <tr>
-<td>5</td>
-<td>All routine, equipment, chooser, custom movement, onboarding, title, label, and dead-code changes and fixture mirrors</td>
-<td>Required stop before application edits</td>
+<td><code>progress</code></td>
+<td><a href="production-grade/progress-phone.png">progress-phone.png</a></td>
+<td><a href="production-grade/progress-desktop.png">progress-desktop.png</a></td>
 </tr>
 <tr>
-<td>6</td>
-<td>All member shell, account, settings, navigation, motion, sign-in return, sign-out, library, insight, and companion changes and fixture mirrors</td>
-<td>Required stop before application edits</td>
+<td><code>sign-in</code></td>
+<td><a href="production-grade/sign-in-phone.png">sign-in-phone.png</a></td>
+<td><a href="production-grade/sign-in-desktop.png">sign-in-desktop.png</a></td>
 </tr>
 <tr>
-<td>7</td>
-<td>All public pages, shared guide, navigation, authentication, recovery, and PWA copy changes and fixture mirrors</td>
-<td>Required stop before application edits</td>
+<td><code>not-found</code></td>
+<td><a href="production-grade/not-found-phone.png">not-found-phone.png</a></td>
+<td><a href="production-grade/not-found-desktop.png">not-found-desktop.png</a></td>
+</tr>
+<tr>
+<td><code>member-today</code></td>
+<td><a href="production-grade/member-today-phone.png">member-today-phone.png</a></td>
+<td><a href="production-grade/member-today-desktop.png">member-today-desktop.png</a></td>
+</tr>
+<tr>
+<td><code>member-onboarding-step2</code></td>
+<td><a href="production-grade/member-onboarding-step2-phone.png">member-onboarding-step2-phone.png</a></td>
+<td><a href="production-grade/member-onboarding-step2-desktop.png">member-onboarding-step2-desktop.png</a></td>
+</tr>
+<tr>
+<td><code>member-settings-presetup</code></td>
+<td><a href="production-grade/member-settings-presetup-phone.png">member-settings-presetup-phone.png</a></td>
+<td><a href="production-grade/member-settings-presetup-desktop.png">member-settings-presetup-desktop.png</a></td>
+</tr>
+<tr>
+<td><code>member-routine-editor-errors</code></td>
+<td><a href="production-grade/member-routine-editor-errors-phone.png">member-routine-editor-errors-phone.png</a></td>
+<td><a href="production-grade/member-routine-editor-errors-desktop.png">member-routine-editor-errors-desktop.png</a></td>
+</tr>
+<tr>
+<td><code>member-routines</code></td>
+<td><a href="production-grade/member-routines-phone.png">member-routines-phone.png</a></td>
+<td><a href="production-grade/member-routines-desktop.png">member-routines-desktop.png</a></td>
+</tr>
+<tr>
+<td><code>member-library-guide</code></td>
+<td><a href="production-grade/member-library-guide-phone.png">member-library-guide-phone.png</a></td>
+<td><a href="production-grade/member-library-guide-desktop.png">member-library-guide-desktop.png</a></td>
+</tr>
+<tr>
+<td><code>runner-set-entry</code></td>
+<td><a href="production-grade/runner-set-entry-phone.png">runner-set-entry-phone.png</a></td>
+<td><a href="production-grade/runner-set-entry-desktop.png">runner-set-entry-desktop.png</a></td>
+</tr>
+<tr>
+<td><code>runner-end-dialog</code></td>
+<td><a href="production-grade/runner-end-dialog-phone.png">runner-end-dialog-phone.png</a></td>
+<td><a href="production-grade/runner-end-dialog-desktop.png">runner-end-dialog-desktop.png</a></td>
 </tr>
 </tbody></table>
-<h3>Blocking assertion and reproduction</h3>
-<p><code>tests/unit/production-audit-contracts.test.ts:303</code> asserts:</p>
-<pre><code class="language-ts">expect(options).toContain(&quot;Asia/Kolkata&quot;);
-</code></pre>
-<p>Its input is <code>timeZoneOptions(&quot;Mars/Olympus_Mons&quot;)</code>. Section 3.3 specifies the runtime&#39;s supported time zones, with only UTC and the supplied saved value added. On the installed Node 24.19.0 / ICU 78.3 runtime, that list contains <code>Asia/Calcutta</code> but omits <code>Asia/Kolkata</code>.</p>
-<p>This read-only reproduction applies the specified algorithm without adding or changing any source or test file:</p>
-<pre><code class="language-sh">node --input-type=module -e &#39;
-import assert from &quot;node:assert/strict&quot;;
-const saved = &quot;Mars/Olympus_Mons&quot;;
-const options = [...new Set([
-  ...Intl.supportedValuesOf(&quot;timeZone&quot;), &quot;UTC&quot;, saved,
-])].sort((a, b) =&gt; a.localeCompare(b, &quot;en-US&quot;));
-console.log({
-  node: process.version,
-  icu: process.versions.icu,
-  count: options.length,
-  kolkata: options.includes(&quot;Asia/Kolkata&quot;),
-  calcutta: options.includes(&quot;Asia/Calcutta&quot;),
-});
-assert.ok(options.includes(&quot;Asia/Kolkata&quot;));
-&#39;
-</code></pre>
-<p>Observed values: <code>node: v24.19.0</code>, <code>icu: 78.3</code>, <code>count: 420</code>, <code>kolkata: false</code>, <code>calcutta: true</code>. The assertion exits 1. UTC, America/Chicago, and the supplied saved value are present.</p>
-<p>Proposed correction: change the acceptance assertion to require every entry from <code>Intl.supportedValuesOf(&quot;timeZone&quot;)</code>, rather than requiring a particular alias absent from that runtime&#39;s list. Alternatively, revise section 3.3 to require <code>Asia/Kolkata</code> as an additional alias. Neither correction has been applied because the plan prohibits editing acceptance tests and requires literal implementation. The blocker is an unresolved choice between these two contracts.</p>
-<h2>Edits to pre-existing tests</h2>
-<p>None. The four acceptance files and all pre-audit tests are unchanged. No test blocks, skips, retries, timeouts, or snapshots were added.</p>
-<h2>Noticed, not changed</h2>
-<p>No additional out-of-scope product findings were investigated. The prior member-atmosphere QA report and screenshots remain because this attempt produced no verified replacement evidence. No browser screenshots, production verification, or deployment are claimed.</p>
-<h2>PR URL</h2>
-<p>None. Implementation stopped before a commit, push, or PR. The existing branch and canonical checkout remain available for resumption after the contract is corrected. No merge, deployment, branch deletion, or production-data action occurred.</p>
+<h2>2. Items from sections 3–7 not implemented</h2>
+<p>None. E1 uses the same underlying <code>listCatalogExercises</code> read and <code>deterministicSeedUuid</code> database-ID mapping as <code>loadMovementChooserData</code>, covering both equipment profiles; the chooser&#39;s read model itself is limited to the active profile. The unresolved work is the W5 verification boundary, not an omitted section 3–7 implementation item. The four acceptance files remain byte-identical to baseline <code>9d5162d</code>.</p>
+<h2>3. Every edit to a pre-existing test</h2>
+<p>The ledger contains all 63 changed hunks across 20 pre-existing test files, compared with <code>9d5162d</code>. Each location is the final file&#39;s line number, and each row records the complete removed text → replacement text. <code>⏎</code> marks an original line break. Fixture application mirrors are implementation files and are excluded from this test ledger. No acceptance file changed.</p>
+<table>
+<thead>
+<tr>
+<th>File and final line</th>
+<th>Old → new</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tests/e2e/public-release.spec.ts:164</code></td>
+<td><code>name: &quot;My workouts&quot;,</code> → <code>name: &quot;Sign in&quot;,</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:166</code></td>
+<td><code>await expect(landingAccountAction).toHaveAttribute(&quot;href&quot;, &quot;/app&quot;);</code> → <code>await expect(landingAccountAction).toHaveAttribute(&quot;href&quot;, &quot;/sign-in&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:168</code></td>
+<td><code>await expect(page).toHaveURL(//sign-in?returnTo=%2Fapp$/u); ⏎ await expect(page.locator(&quot;#auth-heading&quot;)).toHaveText(/^(Sign-in connection pending&#124;Sign in)$/);</code> → <code>await expect(page).toHaveURL(//sign-in$/u); ⏎ await expect(page.locator(&quot;#auth-heading&quot;)).toHaveText(/^(Sign-in is unavailable&#124;Sign in)$/);</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:173</code></td>
+<td><code>await expect(page.getByText(&quot;Starter preview · not saved&quot;)).toBeVisible(); ⏎ const programAccountActions = page.getByRole(&quot;link&quot;, { name: &quot;My workouts&quot; }); ⏎ await expect(programAccountActions.first()).toHaveAttribute(&quot;href&quot;, &quot;/app&quot;);</code> → <code>await expect(page.getByText(&quot;Five-day example routine&quot;)).toBeVisible(); ⏎ const programAccountActions = page.getByRole(&quot;link&quot;, { name: &quot;Sign in&quot; }); ⏎ await expect(programAccountActions.first()).toHaveAttribute(&quot;href&quot;, &quot;/sign-in&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:178</code></td>
+<td><code>await expect(page.getByText(&quot;Starter preview · not saved&quot;)).toBeVisible(); ⏎ await expect(page.getByText(&quot;Five-day starter example&quot;)).toBeVisible(); ⏎ const dayAccountAction = page.getByRole(&quot;link&quot;, { name: &quot;My workouts&quot; }); ⏎ await expect(dayAccountAction).toHaveAttribute(&quot;href&quot;, &quot;/app&quot;);</code> → <code>await expect(page.getByText(/\d+ movements with a walker or runner finish./)).toBeVisible(); ⏎ await expect(page.getByText(&quot;Example routine&quot;)).toBeVisible(); ⏎ const dayAccountAction = page.getByRole(&quot;link&quot;, { name: &quot;Sign in&quot; }); ⏎ await expect(dayAccountAction).toHaveAttribute(&quot;href&quot;, &quot;/sign-in&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:183</code></td>
+<td><code>await expect(page).toHaveURL(//sign-in?returnTo=%2Fapp$/u); ⏎ await expect(page.locator(&quot;#auth-heading&quot;)).toHaveText(/^(Sign-in connection pending&#124;Sign in)$/);</code> → <code>await expect(page).toHaveURL(//sign-in$/u); ⏎ await expect(page.locator(&quot;#auth-heading&quot;)).toHaveText(/^(Sign-in is unavailable&#124;Sign in)$/);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/accessible-labels.test.tsx:65</code></td>
+<td><code>expect(explorerMarkup).toContain(&quot;Five-day starter example&quot;);</code> → <code>expect(explorerMarkup).toContain(&quot;Five-day example routine&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/accessible-labels.test.tsx:73</code></td>
+<td><code>expect(explorerMarkup).toContain(<code>&amp;lt;strong&amp;gt;${number}&amp;lt;/strong&amp;gt;&amp;lt;span&amp;gt;${day}&amp;lt;/span&amp;gt;</code>);</code> → <code>expect(explorerMarkup).toContain(<code>&amp;lt;small&amp;gt;Day ${number}&amp;lt;/small&amp;gt;&amp;lt;h2&amp;gt;${day}&amp;lt;/h2&amp;gt;</code>);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/accessible-labels.test.tsx:112</code></td>
+<td><code>&#x27;id=&quot;selected-day-sheet&quot; tabindex=&quot;-1&quot;&#x27;,</code> → <code>&#x27;id=&quot;main-content&quot; tabindex=&quot;-1&quot;&#x27;,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/auth-navigation-boundary.test.ts:21</code></td>
+<td><code>expect(settings).toContain(&#x27;window.location.replace(&quot;/sign-in&quot;)&#x27;);</code> → <code>expect(settings).not.toContain(&#x27;window.location.replace(&quot;/sign-in&quot;)&#x27;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/authenticated-program-customization-fixture-boundary.test.ts:84</code></td>
+<td><code>/.program-editor-section-actions button, .program-editor-add-section button {[^}]*min-height: 2.75rem;/u,</code> → <code>/.program-editor-add-section button {[^}]*min-height: 2.75rem;/u,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/catalog-text-only-presentation.test.tsx:62</code></td>
+<td><code>expect(markup).toContain(&quot;No demonstration is available&quot;);</code> → <code>expect(markup).toContain(&quot;No video yet. Follow the steps below.&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/curated-video-publication.test.tsx:105</code></td>
+<td><code>expect(unavailable).toContain(&quot;No demonstration is available&quot;);</code> → <code>expect(unavailable).toContain(&quot;No video yet. Follow the steps below.&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/curated-video-publication.test.tsx:216</code></td>
+<td><code>expect(publicMarkup).toContain(&quot;No demonstration is available&quot;);</code> → <code>expect(publicMarkup).toContain(&quot;No video yet. Follow the steps below.&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/firebase-client-identity-status.test.tsx:15</code></td>
+<td><code>expect(markup).toContain(&quot;Checking the browser Firebase sign-in&quot;);</code> → <code>expect(markup).toContain(&quot;Checking…&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/firebase-client-identity-status.test.tsx:28</code></td>
+<td><code>expect(markup).toContain(&quot;ready for same-account reauthentication&quot;);</code> → <code>expect(markup).toBe(&quot;&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/firebase-client-identity-status.test.tsx:33</code></td>
+<td><code>[&quot;missing&quot;, &quot;could not be found&quot;], ⏎ [&quot;mismatch&quot;, &quot;does not match this secure server session&quot;],</code> → <code>[&quot;missing&quot;, &quot;Please sign in again to delete your account.&quot;], ⏎ [&quot;mismatch&quot;, &quot;Please sign in again to delete your account.&quot;],</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/firebase-client-identity-status.test.tsx:57</code></td>
+<td><code>expect(markup).toContain(&quot;did not finish loading safely&quot;); ⏎ expect(markup).toContain(&quot;Retry Firebase check&quot;);</code> → <code>expect(markup).toContain(&quot;Something went wrong. Try again.&quot;); ⏎ expect(markup).toContain(&quot;Try again&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-home-route-states.test.tsx:11</code></td>
+<td><code>expect(markup).toContain(&quot;Loading your home…&quot;); ⏎ expect(markup).toContain(&quot;routine, saved progress, and any resumable workout&quot;);</code> → <code>expect(markup).toContain(&quot;Loading…&quot;); ⏎ expect(markup).not.toContain(&quot;routine, saved progress, and any resumable workout&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-home-route-states.test.tsx:22</code></td>
+<td><code>expect(markup).toContain(&quot;Your home did not load.&quot;); ⏎ expect(markup).toContain(&quot;No routine or workout changes were made.&quot;);</code> → <code>expect(markup).toContain(&quot;This page didn&amp;#x27;t load&quot;); ⏎ expect(markup).toContain(&quot;Nothing was changed.&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:116</code></td>
+<td><code>expect(markup).toContain(&quot;1 movement · no cardio&quot;); ⏎ expect(markup).toContain(&quot;1 movement · 1 cardio option&quot;);</code> → <code>expect(markup).toContain(&quot;1 movements&quot;); ⏎ expect(markup).toContain(&quot;1 movements&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:119</code></td>
+<td><code>expect(markup).toContain(&quot;Open Mobility to start&quot;);</code> → <code>expect(markup).not.toContain(&quot;Open Mobility to start&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:176</code></td>
+<td><code>expect(markup).toContain(&quot;Review Mobility&quot;);</code> → <code>expect(markup).toContain(&quot;Mobility&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:201</code></td>
+<td><code>expect(markup).not.toContain(&#x27;href=&quot;/app/program/70000000-0000-4000-8000-000000000001&quot;&#x27;);</code> → <code>expect(markup).toContain(&#x27;href=&quot;/app/program/70000000-0000-4000-8000-000000000001&quot;&#x27;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/program-collection-component.test.tsx:43</code></td>
+<td><code>expect(markup.match(/Active program/g)).toHaveLength(1);</code> → <code>expect(markup.match(/&gt;Active&lt;/g)).toHaveLength(1);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/program-collection-component.test.tsx:46</code></td>
+<td><code>expect(markup).toContain(&quot;Create from example&quot;);</code> → <code>expect(markup).toContain(&quot;Create and use this routine&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/program-collection-component.test.tsx:51</code></td>
+<td><code>expect(markup).toContain(&quot;Clone&quot;);</code> → <code>expect(markup).toContain(&quot;Duplicate&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/program-collection-component.test.tsx:61</code></td>
+<td><code>expect(markup).toContain(&quot;Active overview&quot;);</code> → <code>expect(markup).toContain(&quot;Back to Today&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/program-collection-model.test.ts:167</code></td>
+<td><code>expect(() =&gt; validatedProgramName(&quot;   &quot;)).toThrow(&quot;Enter a program name&quot;);</code> → <code>expect(() =&gt; validatedProgramName(&quot;   &quot;)).toThrow(&quot;Enter a routine name&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/program-editor-model.test.ts:402</code></td>
+<td><code>pace: &quot;seconds / km&quot;,</code> → <code>pace: &quot;min / km&quot;,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/program-editor-model.test.ts:407</code></td>
+<td><code>pace: &quot;seconds / mile&quot;,</code> → <code>pace: &quot;min / mile&quot;,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/public-account-entry.test.tsx:52</code></td>
+<td><code>href: &quot;/app&quot;, ⏎ label: expect.stringContaining(&quot;My workouts&quot;),</code> → <code>href: &quot;/sign-in&quot;, ⏎ label: expect.stringContaining(&quot;Sign in&quot;),</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/public-account-entry.test.tsx:70</code></td>
+<td><code>expect(observedLinks.filter(({ label }) =&gt; label.includes(&quot;My workouts&quot;)))</code> → <code>expect(observedLinks.filter(({ label }) =&gt; label.includes(&quot;Sign in&quot;)))</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/public-account-entry.test.tsx:72</code></td>
+<td><code>{ href: &quot;/app&quot;, label: expect.stringContaining(&quot;My workouts&quot;), prefetch: false }, ⏎ { href: &quot;/app&quot;, label: expect.stringContaining(&quot;My workouts&quot;), prefetch: false },</code> → <code>{ href: &quot;/sign-in&quot;, label: expect.stringContaining(&quot;Sign in&quot;), prefetch: false }, ⏎ { href: &quot;/sign-in&quot;, label: expect.stringContaining(&quot;Sign in to save your own version&quot;), prefetch: undefined },</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/public-account-entry.test.tsx:81</code></td>
+<td><code>expect(explorer).toContain(&quot;Five-day starter example&quot;); ⏎ expect(explorer).toContain(&quot;Starter preview · not saved&quot;); ⏎ expect(day).toContain(&quot;Five-day starter example&quot;); ⏎ expect(day).toContain(&quot;Starter preview · not saved&quot;); ⏎ expect(day).toContain(&#x27;href=&quot;/app&quot;&#x27;); ⏎ expect(day).toContain(&quot;My workouts&quot;);</code> → <code>expect(explorer).toContain(&quot;Five-day example routine&quot;); ⏎ expect(explorer).not.toContain(&quot;Starter preview · not saved&quot;); ⏎ expect(day).toContain(&quot;Example routine&quot;); ⏎ expect(day).not.toContain(&quot;Starter preview · not saved&quot;); ⏎ expect(day).toContain(&#x27;href=&quot;/sample-workout&quot;&#x27;); ⏎ expect(day).toContain(&#x27;PublicShell current=&quot;program&quot;&#x27;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/public-account-entry.test.tsx:92</code></td>
+<td><code>expect(contents).not.toContain(&#x27;href=&quot;/sign-in&quot;&#x27;); ⏎ expect(contents).toContain(&#x27;href=&quot;/app&quot;&#x27;); ⏎ expect(contents).toMatch(/href=&quot;/app&quot;\s+prefetch={false}/u);</code> → <code>expect(contents).not.toContain(path.includes(&quot;sample-workout&quot;) ? &#x27;href=&quot;/app&quot;&#x27; : &#x27;href=&quot;/sign-in&quot;&#x27;); ⏎ expect(contents).toContain(path.includes(&quot;sample-workout&quot;) ? &#x27;href=&quot;/sign-in&quot;&#x27; : &#x27;href=&quot;/app&quot;&#x27;); ⏎ expect(contents).toMatch(path.includes(&quot;sample-workout&quot;) ? /href=&quot;/sign-in&quot;\s+prefetch={false}/u : /href=&quot;/app&quot;\s+prefetch={false}/u);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/public-progress-page.test.tsx:18</code></td>
+<td><code>expect(markup).toContain(&quot;Sample data · not your history&quot;); ⏎ expect(markup.match(/Sample data · not your history/g)).toHaveLength(1);</code> → <code>expect(markup).toContain(&quot;Example data&quot;); ⏎ expect(markup.match(/Example data/g)).toHaveLength(1);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/settings-form-auth-readiness.test.tsx:36</code></td>
+<td><code>expect(markup).toContain(&quot;Checking the browser Firebase sign-in&quot;); ⏎ expect(markup.match(/Checking the browser Firebase sign-in/g)).toHaveLength(1); ⏎ expect(markup).toMatch(/&lt;button[^&gt;]<em>disabled=&quot;&quot;[^&gt;]</em>&gt;Review permanent deletion&lt;/button&gt;/);</code> → <code>expect(markup).toContain(&quot;Checking…&quot;); ⏎ expect(markup.match(/Checking…/g)).toHaveLength(1); ⏎ expect(markup).toMatch(/&lt;button[^&gt;]<em>disabled=&quot;&quot;[^&gt;]</em>&gt;Delete my account&lt;/button&gt;/);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/strength-catalog-expansion.test.tsx:280</code></td>
+<td><code>expect(markup).toContain(&quot;No demonstration is available&quot;);</code> → <code>expect(markup).toContain(&quot;No video yet. Follow the steps below.&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/training-insights-components.test.tsx:137</code></td>
+<td><code>expect(markup).toContain(&quot;Read-only snapshot.&quot;);</code> → <code>expect(markup).not.toContain(&quot;Read-only snapshot.&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/training-insights-components.test.tsx:155</code></td>
+<td><code>expect(markup).toContain(&quot;Tied best · 21 exact source sets&quot;);</code> → <code>expect(markup).toContain(&quot;Tied best (21 times)&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-component-harness.test.tsx:200</code></td>
+<td><code>expect(oneMarkup).toContain(&quot;Configured cardio option&quot;); ⏎ expect(oneMarkup).toContain(&quot;Choose the configured cardio option&quot;);</code> → <code>expect(oneMarkup).toContain(&quot;Cardio finish&quot;); ⏎ expect(oneMarkup).toContain(&quot;Choose Walker or Runner to log it.&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-component-harness.test.tsx:205</code></td>
+<td><code>expect(twoMarkup).toContain(&quot;Configured cardio options (2)&quot;); ⏎ expect(twoMarkup).toContain(&quot;Choose one of the 2 configured cardio options&quot;);</code> → <code>expect(twoMarkup).toContain(&quot;Cardio finish&quot;); ⏎ expect(twoMarkup).toContain(&quot;Choose Walker or Runner to log it.&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-component-harness.test.tsx:424</code></td>
+<td><code>expect(markup).toContain(&quot;Choose the workout value to keep&quot;);</code> → <code>expect(markup).toContain(&quot;Pick which value to keep&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-component-harness.test.tsx:427</code></td>
+<td><code>&#x27;aria-label=&quot;Keep 20 kg · 10 reps for Set 1 · Floor press&quot;&#x27;,</code> → <code>&#x27;aria-label=&quot;Keep 20 kg · 10 reps&quot;&#x27;,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-component-harness.test.tsx:430</code></td>
+<td><code>&#x27;aria-label=&quot;Keep 25 kg · 8 reps for Set 1 · Floor press&quot;&#x27;,</code> → <code>&#x27;aria-label=&quot;Keep 25 kg · 8 reps&quot;&#x27;,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-component-harness.test.tsx:432</code></td>
+<td><code>expect(markup).toContain(&quot;Leave both values unresolved&quot;);</code> → <code>expect(markup).not.toContain(&quot;Leave both values unresolved&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-component-harness.test.tsx:483</code></td>
+<td><code>expect(markup).toContain(&quot;Reauthenticate and return&quot;);</code> → <code>expect(markup).toContain(&quot;Sign in again&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-component-harness.test.tsx:506</code></td>
+<td><code>expect(revokedMarkup).toContain(&quot;Sign-in revoked&quot;);</code> → <code>expect(revokedMarkup).toContain(&quot;Sign in again&quot;);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-presenters.test.ts:92</code></td>
+<td><code>label: &quot;Offline queued&quot;,</code> → <code>label: &quot;Saved on this device&quot;,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-presenters.test.ts:96</code></td>
+<td><code>label: &quot;Sign-in expired&quot;,</code> → <code>label: &quot;Sign in again&quot;,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner-presenters.test.ts:100</code></td>
+<td><code>label: &quot;Sign-in revoked&quot;,</code> → <code>label: &quot;Sign in again&quot;,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1040</code></td>
+<td><code>expect(isNavigationBlocked(queued)).toBe(true);</code> → <code>expect(isNavigationBlocked(queued)).toBe(false);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1457</code></td>
+<td><code>expect(isNavigationBlocked(completing)).toBe(true);</code> → <code>expect(isNavigationBlocked(completing)).toBe(false);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1522</code></td>
+<td><code>).toThrow(/local draft&#124;confirmed/);</code> → <code>).toThrow(/Save your edited set or note first/);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1538</code></td>
+<td><code>).toThrow(/confirmed/);</code> → <code>).toThrow(/Wait for your last changes to save/);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1627</code></td>
+<td><code>/Explicitly complete/,</code> → <code>/Finish or skip/,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1639</code></td>
+<td><code>/confirmed/,</code> → <code>/Wait for your last changes to save/,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1721</code></td>
+<td><code>/required cardio/,</code> → <code>/Log your cardio finish first/,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1731</code></td>
+<td><code>/required cardio/,</code> → <code>/Log your cardio finish first/,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1736</code></td>
+<td><code>/required cardio/,</code> → <code>/Log your cardio finish first/,</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1751</code></td>
+<td><code>expect(isNavigationBlocked(state)).toBe(true);</code> → <code>expect(isNavigationBlocked(state)).toBe(false);</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/workout-runner.test.ts:1847</code></td>
+<td><code>expect(next.restTimer).toBeUndefined();</code> → <code>expect(next.restTimer).toBe(state.restTimer);</code></td>
+</tr>
+</tbody></table>
+<h2>4. Noticed, not changed</h2>
+<ul>
+<li><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:167</code> and <code>:266</code> still click <strong>Start with example</strong>. Baseline <code>9d5162d</code> already has <strong>Example routine</strong>, two <strong>Continue</strong> steps, and <strong>Save routine</strong>. The first test times out at line 167; the second is interrupted waiting for the same absent control. The owner declined broader stale-journey updates, so these tests and the remaining older onboarding helpers stay unchanged.</li>
+<li>Older public pilot, release, and PWA journeys require <strong>Your workout. Your way.</strong>, <code>.landing-actions</code>, and earlier illustration behavior. Baseline <code>9d5162d:src/app/page.tsx</code> already renders <strong>A little space for your next set.</strong> and <strong>Try one set</strong>. The library illustration tests also assume the retired breakpoint and layout. These baseline assumptions are outside the audit&#39;s permitted expectation changes. Their remaining failures are reported in W5; they are not hidden by skips or altered geometry thresholds.</li>
+<li>Next.js development cache errors and the loopback <code>allowedDevOrigins</code> warning remain outside this plan&#39;s dependency and configuration boundary. Cold-cache acceptance and production-build results are reported separately.</li>
+<li>Hosted Firebase resend, real sign-out/deletion, hosted persistence, video playback, native device behavior, and production deployment were not exercised. The plan prohibits those provider and production actions.</li>
+</ul>
+<h2>5. Pull request</h2>
+<p>PR creation pending. Title: <strong>Production-grade audit fixes</strong>. The PR is a draft because W5 remains blocked. No merge, deployment, branch deletion, or worktree creation is part of this closeout. The canonical checkout is the sole worktree and remains active for owner review and the unresolved W5 boundary.</p>
 
   </main>
 </body>
