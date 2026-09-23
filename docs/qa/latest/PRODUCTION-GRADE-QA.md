@@ -143,4 +143,4 @@ The ledger contains all 63 changed hunks across 20 pre-existing test files, comp
 
 ## 5. Pull request
 
-PR creation pending. Title: **Production-grade audit fixes**. The PR is a draft because W5 remains blocked. No merge, deployment, branch deletion, or worktree creation is part of this closeout. The canonical checkout is the sole worktree and remains active for owner review and the unresolved W5 boundary.
+[PR #8 — Production-grade audit fixes](https://github.com/vdoshi96/My-Workout-Pal/pull/8) targets `main` from `vishal/production-grade-audit`. The PR is a draft because W5 remains blocked. No merge, deployment command, branch deletion, or worktree creation is part of this closeout. The canonical checkout is the sole worktree and remains active for owner review and the unresolved W5 boundary.
