@@ -12,9 +12,8 @@ export default function OwnedWorkoutError({
 
   return (
     <main className="owned-runner-recovery owned-runner-recovery--blocked">
-      <span className="eyebrow">Workout interrupted</span>
-      <h1>The saved workout could not be opened</h1>
-      <p>No pending device activity has been reported as saved or overwritten.</p>
+      <h1>{"This workout didn't load"}</h1>
+      <p>Your logged sets are safe on this device.</p>
       <button className="primary-action" onClick={reset} type="button">
         Try again
       </button>
