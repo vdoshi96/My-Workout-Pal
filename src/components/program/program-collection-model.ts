@@ -159,9 +159,9 @@ export function programCollectionSuccess(
 
 export function validatedProgramName(value: string): string {
   const normalized = value.trim();
-  if (normalized.length === 0) throw new Error("Enter a program name.");
+  if (normalized.length === 0) throw new Error("Enter a routine name.");
   if (normalized.length > 80) {
-    throw new Error("Use 80 characters or fewer for the program name.");
+    throw new Error("Use 80 characters or fewer for the routine name.");
   }
   return normalized;
 }

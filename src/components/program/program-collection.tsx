@@ -42,12 +42,11 @@ function failureMessage(error: unknown): string {
       return "The collection changed before this request finished. Your entries are still here; reload before retrying.";
     }
     if (error.code === "email_unverified") {
-      return "Verify your email, sign in again, and then retry this permanent change.";
+      return "Verify your email to save changes.";
     }
-    return error.message;
   }
-  if (error instanceof Error) return error.message;
-  return "The program change was not confirmed. Check the connection and retry.";
+  if (error instanceof Error && ["Enter a routine name.", "Use 80 characters or fewer for the routine name."].includes(error.message)) return error.message;
+  return "Your routine wasn't saved. Check your connection and try again.";
 }
 
 function updatedLabel(value: string): string {
@@ -138,8 +137,8 @@ export function ProgramCollection({
     const success = programCollectionSuccess(parsed);
     setPrograms(parsed.programs);
     setFailure("");
-    setMessage(success.message);
-    if (success.openActiveOverview) router.push("/app");
+    setMessage(expected.kind === "clone" ? "Copy created. It's now your active routine." : success.message);
+    if (success.openActiveOverview && expected.kind !== "clone") router.push("/app");
   }
 
   async function createProgram(event: FormEvent<HTMLFormElement>) {
@@ -314,16 +313,13 @@ export function ProgramCollection({
     >
       <header className="member-page-heading companion-heading">
         <div>
-          <span className="eyebrow">Owned programs</span>
-          <h1 id="program-collection-title">Your routes</h1>
+          <h1 id="program-collection-title">Your routines</h1>
           <p>
-            Keep up to 24 private programs. One is active for the overview,
-            editor, compatible library, and future workouts; existing workout
-            snapshots never change.
+            The active routine is the one you train from on Today.
           </p>
         </div>
         <Link className="secondary-action" href="/app">
-          <Icon name="arrow-left" /> Active overview
+          <Icon name="arrow-left" /> Back to Today
         </Link>
         <DecorativeCompanion variant="routine-editor" />
       </header>
@@ -340,7 +336,7 @@ export function ProgramCollection({
           <div className="section-heading">
             <div>
               <span className="eyebrow">Collection</span>
-              <h2 id="owned-programs-title">Programs</h2>
+              <h2 id="owned-programs-title">Saved routines</h2>
             </div>
             <span>{programs.length} / 24</span>
           </div>
@@ -355,7 +351,7 @@ export function ProgramCollection({
                   <header>
                     <div>
                       <span className="program-collection-state">
-                        {program.isActive ? "Active program" : "Owned program"}
+                        {program.isActive ? "Active" : "Saved"}
                       </span>
                       <h3>{program.name}</h3>
                     </div>
@@ -367,10 +363,6 @@ export function ProgramCollection({
                       <dd>
                         {EQUIPMENT_PROFILES[program.equipmentProfileKind].label}
                       </dd>
-                    </div>
-                    <div>
-                      <dt>Current revision</dt>
-                      <dd>{program.revisionNumber}</dd>
                     </div>
                     <div>
                       <dt>Schedule</dt>
@@ -391,7 +383,7 @@ export function ProgramCollection({
                         className="secondary-action"
                         href="/app/program/edit"
                       >
-                        Edit active
+                        Edit routine
                       </Link>
                     ) : (
                       <button
@@ -408,7 +400,7 @@ export function ProgramCollection({
                       onClick={(event) => openClone(program, event)}
                       type="button"
                     >
-                      Clone
+                      Duplicate
                     </button>
                   </div>
                 </li>
@@ -422,7 +414,7 @@ export function ProgramCollection({
           aria-labelledby="create-program-title"
         >
           <span className="eyebrow">New owned routine</span>
-          <h2 id="create-program-title">Create a program</h2>
+          <h2 id="create-program-title">New routine</h2>
           <p>
             Start with the five-day example or publish a one-day custom starting
             point. Both become private, independent revisions you can edit.
@@ -443,7 +435,7 @@ export function ProgramCollection({
                 />
                 <span>
                   <strong>Five-day example</strong>
-                  <small>Copy the published starter topology.</small>
+                  <small>Five ready-made days.</small>
                 </span>
               </label>
               <label>
@@ -459,11 +451,11 @@ export function ProgramCollection({
                 />
                 <span>
                   <strong>Custom starting point</strong>
-                  <small>One named day, one section, one movement, no cardio.</small>
+                  <small>Start with one day and build from there.</small>
                 </span>
               </label>
             </fieldset>
-            <label htmlFor="create-program-name">Program name</label>
+            <label htmlFor="create-program-name">Routine name</label>
             <input
               autoComplete="off"
               disabled={!canMutate || busyOperation !== null}
@@ -562,14 +554,13 @@ export function ProgramCollection({
             >
               {busyOperation === "create"
                 ? "Creating…"
-                : createMode === "custom"
-                  ? "Publish custom routine"
-                  : "Create from example"}
+                : "Create and use this routine"}
               <Icon name="arrow-right" />
             </button>
+            <p>It replaces {programs.find((program) => program.isActive)?.name ?? "your active routine"} on Today.</p>
             {programs.length >= 24 ? (
               <p className="program-limit-note">
-                The 24-program limit is reached.
+                The 24-routine limit is reached.
               </p>
             ) : null}
           </form>
@@ -603,7 +594,7 @@ export function ProgramCollection({
             <header>
               <div>
                 <span className="eyebrow">Independent copy</span>
-                <h2 id="clone-program-title">Clone {cloneSource.name}</h2>
+                <h2 id="clone-program-title">Duplicate {cloneSource.name}</h2>
               </div>
               <button
                 aria-label="Close clone review"
@@ -615,11 +606,9 @@ export function ProgramCollection({
               </button>
             </header>
             <p>
-              Revision {cloneSource.revisionNumber} and all {cloneSource.dayCount} current day{cloneSource.dayCount === 1 ? "" : "s"}
-              will be copied with new private record IDs. The source and workout
-              history stay unchanged. The copy becomes active.
+              The copy becomes your active routine. Past workouts stay unchanged.
             </p>
-            <label htmlFor="clone-program-name">New program name</label>
+            <label htmlFor="clone-program-name">New routine name</label>
             <input
               autoComplete="off"
               disabled={busyOperation === "clone"}
@@ -644,7 +633,7 @@ export function ProgramCollection({
                 disabled={busyOperation === "clone"}
                 type="submit"
               >
-                {busyOperation === "clone" ? "Cloning…" : "Clone and activate"}
+                {busyOperation === "clone" ? "Duplicating…" : "Duplicate"}
               </button>
               <button
                 disabled={busyOperation === "clone"}
