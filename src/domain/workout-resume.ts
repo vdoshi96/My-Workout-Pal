@@ -781,7 +781,10 @@ export function reconcileWorkoutResumeState(
       }
       continue;
     }
-    const merged = operation.status === "saved" ? resumeMismatch(operation) : operation;
+    const merged: RunnerOperation = operation.status === "saved" ? resumeMismatch(operation) :
+      operation.status === "failed" && (operation.failureKind === "transient" || operation.failureKind === "offline" || operation.failureKind === "auth")
+        ? { ...operation, status: "pending", errorCode: undefined, errorMessage: undefined, retryable: undefined, failureKind: undefined }
+        : operation;
     mergedOperations.push(merged);
     if (merged.status !== "superseded") unresolved.push(merged);
   }

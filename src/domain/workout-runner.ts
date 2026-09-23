@@ -381,6 +381,7 @@ export type RunnerAction =
   | Readonly<{ type: "complete_exercise"; exerciseId: string; now?: number }>
   | Readonly<{ type: "abandon_session"; reason?: string; now?: number }>
   | Readonly<{ type: "complete_session"; now?: number }>
+  | Readonly<{ type: "discard_failed_operation"; idempotencyKey: string; now?: number }>
   | Readonly<{ type: "retry_operation"; idempotencyKey: string; now?: number }>
   | Readonly<{
       type: "operation_saved";
@@ -3104,13 +3105,13 @@ function ensureCompleteSession(state: ActiveWorkoutState): void {
   if (state.snapshot.cardioOptions.length > 0 && !state.loggedCardio) {
     throw new RunnerTransitionError(
       "required_cardio_missing",
-      "Select and save the required cardio option before completing the session.",
+      "Log your cardio finish first.",
     );
   }
   if (!requiredCardioOperationConfirmed(state)) {
     throw new RunnerTransitionError(
       "required_operations_unconfirmed",
-      "The required cardio log must be saved and confirmed before completing the session.",
+      "Wait for your last changes to save, then finish.",
     );
   }
   for (const exercise of state.snapshot.exercises) {
@@ -3118,20 +3119,20 @@ function ensureCompleteSession(state: ActiveWorkoutState): void {
     if (!state.completedExerciseIds.includes(exercise.id)) {
       throw new RunnerTransitionError(
         "exercise_not_completed",
-        `Explicitly complete or skip ${exercise.name} before completing the session.`,
+        `Finish or skip ${exercise.name} first.`,
       );
     }
     if (!allWorkSetsLogged(state, exercise)) {
       throw new RunnerTransitionError(
         "required_sets_missing",
-        `Log every work set for ${exercise.name} before completing the session.`,
+        `Log every work set for ${exercise.name} first.`,
       );
     }
   }
   if (!requiredWorkOperationsConfirmed(state)) {
     throw new RunnerTransitionError(
       "required_operations_unconfirmed",
-      "Every required work set must be saved and confirmed before completing the session.",
+      "Wait for your last changes to save, then finish.",
     );
   }
   if (
@@ -3141,7 +3142,7 @@ function ensureCompleteSession(state: ActiveWorkoutState): void {
   ) {
     throw new RunnerTransitionError(
       "dirty_draft",
-      "Save or discard every local draft before completing the session.",
+      "Save your edited set or note first.",
     );
   }
   if (
@@ -3155,7 +3156,7 @@ function ensureCompleteSession(state: ActiveWorkoutState): void {
   ) {
     throw new RunnerTransitionError(
       "required_operations_unconfirmed",
-      "Every runner operation must be confirmed before completing the session.",
+      "Wait for your last changes to save, then finish.",
     );
   }
 }
@@ -3201,6 +3202,57 @@ export function runnerReducer(
     );
   }
 
+  if (action.type === "discard_failed_operation") {
+    const operation = state.operations.find((item) => item.idempotencyKey === action.idempotencyKey);
+    if (!operation) throw new RunnerTransitionError("unknown_operation", "The change no longer exists.");
+    if (operation.status !== "failed") throw new RunnerTransitionError("discard_not_allowed", "Only a change that failed can be discarded.");
+    if (operation.kind === "abandon_session" || operation.kind === "complete_session")
+      throw new RunnerTransitionError("discard_not_allowed", "Reload the workout to continue.");
+    const target = semanticTargetKey(runnerOperationSemanticTarget(operation));
+    const saved = state.operations.filter((item) => item.status === "saved" && semanticTargetKey(runnerOperationSemanticTarget(item)) === target)
+      .sort((left, right) => right.sequence - left.sequence)[0];
+    let next = withUpdated(state, { operations: state.operations.map((item) => item === operation ? {
+      ...item, status: "superseded" as const, errorCode: undefined, errorMessage: undefined, failureKind: undefined, retryable: undefined,
+    } : item) }, at);
+    const payload = operation.payload;
+    switch (payload.kind) {
+      case "save_set": {
+        const loggedSets = { ...next.loggedSets };
+        const drafts = { ...next.drafts };
+        if (saved?.payload.kind === "save_set") {
+          const previous = saved.payload;
+          loggedSets[payload.setId] = { setId: previous.setId, exerciseId: previous.exerciseId, phase: previous.phase, measurement: previous.measurement, operationKey: saved.idempotencyKey };
+        } else delete loggedSets[payload.setId];
+        delete drafts[payload.setId];
+        next = { ...next, loggedSets, drafts, dirtySetIds: next.dirtySetIds.filter((id) => id !== payload.setId) };
+        break;
+      }
+      case "save_cardio":
+        next = { ...next, loggedCardio: saved?.payload.kind === "save_cardio" ? { mode: saved.payload.mode, cardio: saved.payload.cardio, operationKey: saved.idempotencyKey } : undefined, dirtyCardio: false };
+        break;
+      case "save_note": {
+        const notesByExercise = { ...next.notesByExercise };
+        if (saved?.payload.kind === "save_note") notesByExercise[payload.exerciseId] = saved.payload.note;
+        else delete notesByExercise[payload.exerciseId];
+        next = { ...next, notesByExercise, dirtyNoteExerciseIds: next.dirtyNoteExerciseIds.filter((id) => id !== payload.exerciseId) };
+        break;
+      }
+      case "skip_exercise":
+        if (saved?.payload.kind !== "skip_exercise") next = { ...next, skippedExerciseIds: next.skippedExerciseIds.filter((id) => id !== payload.exerciseId) };
+        break;
+      case "complete_exercise":
+        if (saved?.payload.kind !== "complete_exercise") next = { ...next, completedExerciseIds: next.completedExerciseIds.filter((id) => id !== payload.exerciseId) };
+        break;
+      case "substitute_exercise": {
+        const substitutions = { ...next.substitutions };
+        if (saved?.payload.kind === "substitute_exercise") substitutions[payload.exerciseId] = saved.payload.replacement;
+        else delete substitutions[payload.exerciseId];
+        next = { ...next, substitutions };
+        break;
+      }
+    }
+    return { ...next, sync: syncForState(next) };
+  }
   if (action.type === "navigate_exercise") {
     assertMutable(state);
     if (
@@ -3210,11 +3262,11 @@ export function runnerReducer(
     ) {
       return state;
     }
-    return withUpdated(
+    return prefillActiveSet(withUpdated(
       state,
       { currentExerciseIndex: action.index, currentSetIndex: 0 },
       at,
-    );
+    ));
   }
   if (action.type === "navigate_set") {
     assertMutable(state);
@@ -3227,7 +3279,7 @@ export function runnerReducer(
     ) {
       return state;
     }
-    return withUpdated(state, { currentSetIndex: action.index }, at);
+    return prefillActiveSet(withUpdated(state, { currentSetIndex: action.index }, at));
   }
   if (action.type === "set_connectivity") {
     const next = {
@@ -3248,7 +3300,7 @@ export function runnerReducer(
       throw new RunnerTransitionError("invalid_draft", "Log this set before moving to the next set.");
     }
     const next = runnerReducer(state, { type: "navigate_set", index: state.currentSetIndex + 1 });
-    return withUpdated(next, { restTimer: undefined }, at);
+    return prefillActiveSet(withUpdated(next, { restTimer: state.restTimer }, at));
   }
   if (action.type === "complete_exercise_and_next") {
     assertMutable(state);
@@ -3256,7 +3308,7 @@ export function runnerReducer(
     const completed = state.completedExerciseIds.includes(action.exerciseId) ? state :
       runnerReducer(state, { type: "complete_exercise", exerciseId: action.exerciseId, now: at });
     const next = runnerReducer(completed, { type: "navigate_exercise", index: state.currentExerciseIndex + 1 });
-    return withUpdated(next, { restTimer: undefined }, at);
+    return prefillActiveSet(withUpdated(next, { restTimer: state.restTimer }, at));
   }
   if (action.type === "log_set_and_rest") {
     assertMutable(state);
@@ -3790,39 +3842,21 @@ export function runnerReducer(
 }
 
 export function isNavigationBlocked(state: ActiveWorkoutState): boolean {
-  if (state.status === "completed" || state.status === "abandoned")
-    return false;
-  return (
-    state.status === "completing" ||
-    state.dirtySetIds.length > 0 ||
-    state.dirtyCardio ||
-    state.dirtyNoteExerciseIds.length > 0 ||
-    state.operations.some(
-      ({ status }) => status !== "saved" && status !== "superseded",
-    )
-  );
+  return navigationProtectionReason(state) !== undefined;
 }
 
 export function canNavigateAway(state: ActiveWorkoutState): boolean {
   return !isNavigationBlocked(state);
 }
 
-export function navigationProtectionReason(
-  state: ActiveWorkoutState,
-): string | undefined {
-  if (state.status === "completing") return "The workout is still being saved.";
-  if (
-    state.dirtySetIds.length > 0 ||
-    state.dirtyCardio ||
-    state.dirtyNoteExerciseIds.length > 0
-  )
-    return "Unsaved local workout changes remain.";
-  if (state.operations.some(({ failureKind }) => failureKind === "conflict"))
-    return "A workout save conflicts with server state and needs resolution.";
-  if (state.operations.some(({ status }) => status === "failed"))
-    return "A workout save failed and needs retry.";
-  if (state.operations.some(({ status }) => status === "pending"))
-    return "A workout save is still pending.";
+export function navigationProtectionReason(state: ActiveWorkoutState): string | undefined {
+  if (state.status === "completed" || state.status === "abandoned") return undefined;
+  if (state.status === "completing") return "Your workout is still being saved.";
+  if (state.dirtySetIds.length > 0 || state.dirtyCardio || state.dirtyNoteExerciseIds.length > 0)
+    return "You have an unsaved entry. Log it or clear it first.";
+  if (state.operations.some((operation) => operation.status === "failed" &&
+    (operation.failureKind === "conflict" || operation.failureKind === "permanent" || operation.retryable === false)))
+    return "A change couldn't be saved. Discard it or try again first.";
   return undefined;
 }
 
@@ -4282,4 +4316,26 @@ export function getFailedOperations(
   return state.operations
     .filter(({ status }) => status === "failed")
     .sort((left, right) => left.sequence - right.sequence);
+}
+
+export function prefilledSetDraft(state: ActiveWorkoutState, setId: string): SetDraft {
+  const { exercise, set } = setAt(state, setId);
+  const kind = effectiveLoggingKind(state, exercise);
+  const candidates = exercise.sets.filter((candidate) => candidate.id !== setId && candidate.phase === set.phase && state.loggedSets[candidate.id])
+    .sort((left, right) => right.position - left.position);
+  const preceding = candidates.find((candidate) => candidate.position < set.position) ?? candidates[0];
+  const measurement = preceding ? state.loggedSets[preceding.id]?.measurement : set.previous;
+  if (!measurement || measurement.kind !== kind) return createSetDraft(kind);
+  switch (measurement.kind) {
+    case "weight_reps": return { kind: measurement.kind, weightKg: measurement.weightKg, repetitions: measurement.repetitions };
+    case "bodyweight_reps": return { kind: measurement.kind, repetitions: measurement.repetitions, addedWeightKg: measurement.addedWeightKg };
+    case "duration": return { kind: measurement.kind, durationSeconds: measurement.durationSeconds };
+    case "distance_duration": return { kind: measurement.kind, distanceMeters: measurement.distanceMeters, durationSeconds: measurement.durationSeconds };
+  }
+}
+
+function prefillActiveSet(state: ActiveWorkoutState): ActiveWorkoutState {
+  const setId = getActiveSetDisplay(state).setId;
+  if (state.drafts[setId] !== undefined || state.loggedSets[setId] !== undefined) return state;
+  return { ...state, drafts: { ...state.drafts, [setId]: prefilledSetDraft(state, setId) } };
 }
