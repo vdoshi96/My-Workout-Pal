@@ -93,7 +93,6 @@ input[type=checkbox],input[type=radio] {accent-color:var(--coral);}
 .member-onboarding {max-width:760px; margin:auto;}
 .onboarding-form {padding:0; gap:24px;}
 .onboarding-form fieldset {padding:0; border:0; min-width:0;}
-.onboarding-form legend {font:600 1.2rem var(--font-body); margin-bottom:16px;}
 .onboarding-profile-grid label {border-radius:12px; background:var(--white); padding:20px;}
 .onboarding-profile-grid label strong {font:600 1.1rem var(--font-body); text-transform:none;}
 .quiet-step {font-size:.9rem; color:var(--ink-soft); margin:0;}

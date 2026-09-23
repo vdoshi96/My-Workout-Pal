@@ -316,7 +316,6 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .member-onboarding > .member-inline-notice { margin-bottom: 1.5rem; }
 .onboarding-form { display: grid; gap: clamp(1.5rem, 5vw, 3rem); margin-top: 2rem; }
 .onboarding-form fieldset { border: 0; margin: 0; padding: 0; }
-.onboarding-form legend { font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 2.4rem); font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; }
 .onboarding-profile-grid { display: grid; gap: .75rem; }
 .onboarding-profile-grid > label { cursor: pointer; position: relative; }
 .onboarding-profile-grid > label > input { height: 1px; opacity: 0; position: absolute; width: 1px; }
@@ -623,7 +622,6 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .video-unavailable p { color: var(--ink-soft); line-height: 1.4; margin: 0; max-width: 48ch; }
 
 .sample-warning { border: 2px solid var(--coral); color: var(--coral-strong); display: grid; font-family: var(--font-display); gap: .1rem; justify-self: start; letter-spacing: .04em; margin-top: 1rem; padding: .65rem .8rem; text-transform: uppercase; width: fit-content; }
-.sample-warning span { font-family: var(--font-body); font-size: .8rem; letter-spacing: 0; text-transform: none; }
 .sample-metrics { display: grid; }
 .sample-metrics article { border-bottom: 1px solid var(--rule); display: grid; min-height: 9rem; padding: 1.25rem clamp(1rem, 5vw, 3rem); }
 .sample-metrics article > span { color: var(--lichen); font-family: var(--font-display); letter-spacing: .06em; text-transform: uppercase; }
