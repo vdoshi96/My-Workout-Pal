@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="cafe86da8ce915639e58614e8f0686654601e8a0cdd4727904020d166be36086">
+  <meta name="source-sha256" content="08d460bc3a93c0a73a5be0a261cbf69b4f26afca3de99f598c55a3161555c3dc">
   <title>Production-grade implementation plan · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -83,6 +83,7 @@
 <p>All other test and environment limits remain. Run W1–W6 fresh and serially on the final commit, retaining existing skips only. Retake both member-today screenshots and any other affected UI evidence. Add a main-versus-branch W5 table and tag every new ledger row <code>plan-changed</code> or <code>stale on main (fails at c619ac6)</code>. Update STATUS and documentation parity. Push logical commits to the existing branch and mark PR #8 ready for review, as requested by the owner. Report every failed gate and stopped item explicitly; review status does not waive the win conditions. Do not merge or deploy.</p>
 <p>The main-passing Quiet Set journey exposed a finish-button race after its required label updates: Finish accepted a click while the preceding exercise completion was pending, then rejected it. Keep Finish disabled during pending saves and the local device write, while retaining the domain&#39;s completion checks and existing history assertion. Verify this through the unchanged completion journey; do not add test blocks.</p>
 <p>The main-passing suspended-tab journey also exposed shared storage overwriting the online tab&#39;s connectivity with the offline tab&#39;s value. When adopting a committed write, preserve the calling tab&#39;s connectivity and derive its save status from that value. Keep merged workout changes and confirmed completion intact. A request failure can still put that tab offline until explicit retry; do not infer recovery from <code>navigator.onLine</code>. Verify with the existing suspended-tab and aborted-request journeys.</p>
+<p>The full matrix exposed stale navigation in that same journey: navigation and draft edits inherited an older timestamp, so a stale tab&#39;s later save could replace the newly selected set. Timestamp actual local runner state changes at the UI boundary, preserving explicit operation times and the existing merge rules. The main-passing WebKit Quiet Set journey also reported hydration errors in Settings because Node and WebKit expose different IANA lists. Generate the Settings choices on the server and pass that list through the existing page and fixture to the form. Keep the helper&#39;s full-list and saved-alias contract; do not suppress hydration errors or alter their assertions.</p>
 <h3>Commands</h3>
 <pre><code class="language-sh"># Unit acceptance (fast; run constantly)
 npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts

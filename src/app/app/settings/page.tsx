@@ -2,6 +2,7 @@
 import type { FirebasePublicConfig } from "@/client/firebase";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { getDatabase } from "@/db/client";
+import { timeZoneOptions } from "@/domain/time-zones";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import {
   getViewerProfileProgram,
@@ -45,6 +46,7 @@ export default async function SettingsPage() {
       equipmentProfileKind={data.model?.equipment.profileKind ?? null}
       firebaseConfig={firebasePublicConfig()}
       initialPreferences={data.model?.preferences ?? null}
+      timeZones={timeZoneOptions(data.model?.preferences?.timezone)}
       ownerUid={data.viewer.uid}
       viewerProvider={data.viewer.provider}
     />

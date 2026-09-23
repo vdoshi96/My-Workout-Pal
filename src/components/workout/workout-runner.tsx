@@ -977,7 +977,11 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   function apply(action: RunnerAction, message?: string) {
     try {
       const next = runnerReducer(state, action);
-      setState(next);
+      // Draft edits and navigation must outrank older shared projections too.
+      setState(next === state ? state : {
+        ...next,
+        lastUpdatedAt: Math.max(Date.now(), state.lastUpdatedAt + 1, next.lastUpdatedAt),
+      });
       setActionError(undefined);
       if (message !== undefined) setAnnouncement(message);
     } catch (error: unknown) {

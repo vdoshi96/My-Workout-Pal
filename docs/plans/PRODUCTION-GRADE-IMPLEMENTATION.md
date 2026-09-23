@@ -42,6 +42,8 @@ The main-passing Quiet Set journey exposed a finish-button race after its requir
 
 The main-passing suspended-tab journey also exposed shared storage overwriting the online tab's connectivity with the offline tab's value. When adopting a committed write, preserve the calling tab's connectivity and derive its save status from that value. Keep merged workout changes and confirmed completion intact. A request failure can still put that tab offline until explicit retry; do not infer recovery from `navigator.onLine`. Verify with the existing suspended-tab and aborted-request journeys.
 
+The full matrix exposed stale navigation in that same journey: navigation and draft edits inherited an older timestamp, so a stale tab's later save could replace the newly selected set. Timestamp actual local runner state changes at the UI boundary, preserving explicit operation times and the existing merge rules. The main-passing WebKit Quiet Set journey also reported hydration errors in Settings because Node and WebKit expose different IANA lists. Generate the Settings choices on the server and pass that list through the existing page and fixture to the form. Keep the helper's full-list and saved-alias contract; do not suppress hydration errors or alter their assertions.
+
 ### Commands
 
 ```sh

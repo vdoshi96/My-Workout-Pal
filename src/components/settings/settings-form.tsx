@@ -55,6 +55,7 @@ export function SettingsForm({
   firebaseConfig,
   initialFirebaseIdentityState = { status: "loading" },
   initialPreferences,
+  timeZones = timeZoneOptions(initialPreferences?.timezone),
   ownerUid,
   viewerProvider,
 }: Readonly<{
@@ -64,6 +65,7 @@ export function SettingsForm({
   firebaseConfig: FirebasePublicConfig | null;
   initialFirebaseIdentityState?: FirebaseClientIdentityState;
   initialPreferences: PreferencesReadModel | null;
+  timeZones?: readonly string[];
   ownerUid: string;
   viewerProvider: ViewerProvider;
 }>) {
@@ -361,7 +363,7 @@ export function SettingsForm({
 
           <label htmlFor="settings-timezone">Time zone</label>
           <select id="settings-timezone" disabled={!canMutate || busy || !preferences} value={timezone} onChange={(event) => { changed(); setTimezone(event.target.value); }}>
-            {timeZoneOptions(timezone).map((zone) => <option key={zone} value={zone}>{zone}</option>)}
+            {timeZones.map((zone) => <option key={zone} value={zone}>{zone}</option>)}
           </select>
 
           <label className="settings-check">

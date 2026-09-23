@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 
 import { SettingsForm } from "@/components/settings/settings-form";
+import { timeZoneOptions } from "@/domain/time-zones";
 import { getViewerProfileProgram, RepositoryNotFoundError } from "@/server/repositories/profile-program";
 import { getHarnessDatabase } from "../../../server/database";
 import { harnessRequestContext } from "../../../server/harness-context";
@@ -40,6 +41,7 @@ export default async function HarnessSettingsPage() {
       }
       initialFirebaseIdentityState={{ status: "ready" }}
       initialPreferences={model?.preferences ?? null}
+      timeZones={timeZoneOptions(model?.preferences?.timezone)}
       ownerUid={context.viewer.uid}
       viewerProvider={context.viewer.provider}
     />
