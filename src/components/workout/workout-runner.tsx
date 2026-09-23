@@ -2,7 +2,7 @@
 
 import { LOGGING_KIND_LABELS } from "@/components/exercises/labels";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
   createRunnerState,
@@ -974,7 +974,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     previousTimerView.current = timerView;
   }, [timerView]);
 
-  function apply(action: RunnerAction, message?: string) {
+  const apply = useCallback((action: RunnerAction, message?: string) => {
     try {
       const next = runnerReducer(state, action);
       // Draft edits and navigation must outrank older shared projections too.
@@ -989,7 +989,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       setActionError(messageText);
       setAnnouncement(messageText);
     }
-  }
+  }, [state, setState, setActionError, setAnnouncement]);
 
   const currentExercise =
     state.snapshot.exercises[state.currentExerciseIndex] ??
