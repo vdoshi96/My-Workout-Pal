@@ -413,7 +413,6 @@ export function ProgramCollection({
           className="program-create-panel"
           aria-labelledby="create-program-title"
         >
-          <span className="eyebrow">New owned routine</span>
           <h2 id="create-program-title">New routine</h2>
           <p>
             Start with the five-day example or publish a one-day custom starting

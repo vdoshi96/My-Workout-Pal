@@ -286,6 +286,7 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .program-collection-card-actions button:not(.primary-action), .program-clone-sheet button:not(.primary-action) { background: transparent; border: 1px solid var(--rule); color: var(--ink); cursor: pointer; min-height: 2.75rem; padding: .65rem .9rem; }
 .program-collection-card-actions .primary-action, .program-collection-card-actions .secondary-action { min-height: 2.75rem; width: fit-content; }
 .program-create-panel { align-self: start; background: var(--ink); color: var(--paper); padding: clamp(1.25rem, 5vw, 2.25rem); }
+.member-frame .program-create-panel h2 { color: var(--paper); }
 .program-create-panel > p { color: color-mix(in srgb, var(--paper) 75%, transparent); }
 .program-create-panel form { display: grid; gap: .75rem; margin-top: 1.5rem; }
 .program-create-panel form > label, .program-create-panel legend, .program-clone-sheet > label { font-family: var(--font-display); font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; }
@@ -331,7 +332,7 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .onboarding-preview li { border-top: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); display: grid; gap: .2rem; padding: .75rem 0; }
 .onboarding-preview li span { color: var(--coral-strong); font-family: var(--font-display); font-size: .8rem; text-transform: uppercase; }
 .onboarding-preferences { display: grid; gap: .5rem; max-width: 42rem; }
-.onboarding-preferences > label:not(.onboarding-check) { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin-top: .75rem; text-transform: uppercase; }
+.onboarding-preferences > label:not(.onboarding-check) { font-family: var(--font-body); font-size: 1rem; font-weight: 600; margin-top: .75rem; text-transform: none; }
 .onboarding-preferences input, .onboarding-preferences select { background: var(--white); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); min-height: 3.4rem; padding: .7rem; width: 100%; }
 .onboarding-preferences > small { color: var(--ink-soft); }
 .onboarding-check { align-items: start; border-top: 1px solid var(--rule); display: grid; gap: .7rem; grid-template-columns: auto minmax(0, 1fr); margin-top: 1rem; padding-top: 1rem; }
@@ -384,7 +385,7 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .settings-form > section, .settings-account { border-top: 1px solid var(--rule); padding-top: 1.5rem; }
 .settings-form h2, .settings-account h2 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.8rem); line-height: .9; margin: .55rem 0 1.25rem; text-transform: uppercase; }
 .settings-form > section:first-child { display: grid; gap: .5rem; }
-.settings-form label:not(.settings-check) { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin-top: .65rem; text-transform: uppercase; }
+.settings-form label:not(.settings-check) { font-family: var(--font-body); font-size: 1rem; font-weight: 600; margin-top: .65rem; text-transform: none; }
 .settings-form input, .settings-form select { background: var(--white); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); min-height: 3.4rem; padding: .7rem; width: 100%; }
 .settings-form small, .settings-form p, .settings-account > p { color: var(--ink-soft); }
 .settings-check { align-items: start; border-top: 1px solid var(--rule); display: grid; gap: .7rem; grid-template-columns: auto minmax(0, 1fr); margin-top: 1rem; padding-top: 1rem; }
@@ -601,7 +602,7 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .empty-sheet h3 { font-family: var(--font-display); font-size: 2rem; margin: 0; text-transform: uppercase; }
 .video-field { min-width: 0; padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 5vw, 5rem); }
 .exercise-cues { display: grid; gap: .65rem; margin: 0; padding-inline-start: 1.25rem; }
-.exercise-cues li { color: color-mix(in srgb, var(--paper) 86%, transparent); line-height: 1.45; padding-inline-start: .25rem; }
+.exercise-cues li { color: var(--ink); line-height: 1.45; padding-inline-start: .25rem; }
 .video-slots { display: grid; gap: 1rem; }
 .curated-player { display: grid; gap: 1rem; }
 .curated-player-tabs { display: grid; gap: .7rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
