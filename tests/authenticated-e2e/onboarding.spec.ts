@@ -567,16 +567,17 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   const aliceProgram = activeProgramIds(aliceOnboarding.body);
   await expect(alice.page.getByRole("heading", { name: "All days" })).toBeVisible();
   await expect(alice.page.getByRole("heading", { name: "Ready when you are, Alice QA." })).toBeVisible();
-  await expect(alice.page.getByText("No completed workouts yet")).toBeVisible();
-  await expect(alice.page.getByRole("link", { name: "Manage routines" })).toBeVisible();
-  await expect(alice.page.getByRole("link", { name: "Edit routine" })).toBeVisible();
+  await expect(alice.page.locator(".member-home-progress, .member-home-totals")).toHaveCount(0);
+  const nextWorkout = alice.page.getByRole("region", { name: "Your next workout" });
+  await expect(nextWorkout.getByRole("heading", { name: "Your next workout" })).toBeVisible();
+  await expect(nextWorkout.getByLabel("Training day")).toBeVisible();
   await expect(
-    alice.page.locator(".member-program-actions").getByRole("link", { name: "Library", exact: true }),
+    alice.page.getByRole("navigation", { name: "Account", exact: true }).getByRole("link", { name: "Library", exact: true }),
   ).toHaveAttribute("href", "/app/library");
-  await expect(alice.page.getByRole("link", { name: "Review history" })).toHaveAttribute("href", "/app/history");
-  await expect(alice.page.getByRole("link", { name: "Open progress" })).toHaveAttribute("href", "/app/progress");
+  await expect(nextWorkout.getByRole("button", { name: "Start workout", exact: true })).toBeEnabled();
+  await expect(nextWorkout.getByRole("link", { name: "Review this day" })).toHaveAttribute("href", "/app/program/push");
   await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(5);
-  await expect(alice.page.getByText("Dumbbells · 5 days")).toBeVisible();
+  await expect(alice.page.locator(".member-program-copy > p").getByText("Five-day starter route · Dumbbells · 5 days", { exact: true })).toBeVisible();
   await assertAccessible(alice.page);
   expect(await alice.page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   expect(alice.failedResponses).toEqual([]);
@@ -593,9 +594,9 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   const activeSessionPath = new URL(alice.page.url()).pathname;
   await alice.page.goto("/app");
   await expect(alice.page.getByRole("link", { name: "Resume Push" })).toHaveAttribute("href", activeSessionPath);
-  await expect(alice.page.getByText("Workout in progress")).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Keep going with Push", exact: true })).toBeVisible();
   await expect(alice.page.getByText("Open Push to start")).toHaveCount(0);
-  await expect(alice.page.getByRole("link", { name: "Manage routines" })).toBeVisible();
+  await expect(alice.page.getByRole("link", { name: "Routine", exact: true })).toBeVisible();
   await assertAccessible(alice.page);
 
   const unverifiedActive = await openPage(browser, scope, "alice-unverified", testInfo);
@@ -606,8 +607,8 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   await expect(unverifiedActive.page.getByRole("heading", { name: "Verify to resume Push" })).toBeVisible();
   await expect(unverifiedActive.page.getByRole("link", { name: "Review Push", exact: true })).toHaveAttribute("href", activeSessionPath);
   await expect(unverifiedActive.page.getByText("Open Push to start")).toHaveCount(0);
-  await expect(unverifiedActive.page.getByRole("link", { name: "Manage routines" })).toBeVisible();
-  await expect(unverifiedActive.page.getByRole("link", { name: "Edit routine" })).toHaveCount(0);
+  await expect(unverifiedActive.page.getByRole("link", { name: "Routine", exact: true })).toBeVisible();
+  await expect(unverifiedActive.page.getByRole("button", { name: "Start workout", exact: true })).toHaveCount(0);
   await assertAccessible(unverifiedActive.page);
   if (testInfo.project.name === "webkit-phone") {
     const narrowLayout = await unverifiedActive.page.evaluate(() => {
@@ -624,7 +625,7 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
     expect(narrowLayout.scrollWidth).toBeLessThanOrEqual(narrowLayout.clientWidth);
     expect(narrowLayout.framePaddingBottom).toBeGreaterThanOrEqual(narrowLayout.navHeight);
     const materialTargetSizes = await unverifiedActive.page
-      .locator(".member-program-actions a, .member-resume-card a, .member-home-insight-links a")
+      .locator(".member-nav a, .member-resume-card a")
       .evaluateAll((links) => links.map((link) => {
         const box = link.getBoundingClientRect();
         return { height: box.height, width: box.width };
@@ -1162,7 +1163,7 @@ test("owned customization publishes once, preserves history, and derives private
   );
   await alice.page.getByRole("button", { name: "Save preferences" }).click();
   expect((await preferencesResponse).status()).toBe(200);
-  await expect(alice.page.getByText(/Stored workout measurements remain in canonical/)).toBeVisible();
+  await expect(alice.page.getByText("Changing units only changes how weights and distances are shown. Your logged sets stay the same.", { exact: true })).toBeVisible();
   const afterPreferences = await readProfileProgram(alice.page);
   expect(afterPreferences.preferences).toMatchObject({
     timezone: "America/Chicago",
@@ -1223,7 +1224,7 @@ test("owned customization publishes once, preserves history, and derives private
   await expect(progressTotals.getByText("1.61 km", { exact: true })).toBeVisible();
   await alice.page.getByRole("link", { name: /Personal records/ }).click();
   await expect(alice.page.getByText("11.3 kg").first()).toBeVisible();
-  await expect(alice.page.getByText("Tied best · 3 exact source sets").first()).toBeVisible();
+  await expect(alice.page.getByText("Tied best (3 times)").first()).toBeVisible();
   await expect(alice.page.getByRole("link", { name: /View tied workout/ }).first()).toHaveAttribute(
     "href",
     `/app/history/${sessionId}`,
@@ -1275,9 +1276,9 @@ test("owned customization publishes once, preserves history, and derives private
   expect(await readScopeSummary(bob.page)).toEqual(bobScopeBefore);
 
   await bob.page.getByRole("link", { name: "Progress", exact: true }).click();
-  await expect(bob.page.getByText("No completed data")).toBeVisible();
+  await expect(bob.page.getByRole("heading", { name: "Finish a workout to see your progress.", exact: true })).toBeVisible();
   await bob.page.getByRole("link", { name: /Personal records/ }).click();
-  await expect(bob.page.getByText("No record rows yet")).toBeVisible();
+  await expect(bob.page.getByRole("heading", { name: "No records yet", exact: true })).toBeVisible();
   const bobMarkup = await bob.page.locator("main").innerText();
   expect(bobMarkup).not.toContain("QA supported row");
   expect(bobMarkup).not.toContain("Immutable QA walk");

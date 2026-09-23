@@ -162,9 +162,19 @@ test("customization surfaces preserve geometry and media preferences", async ({
     expect(deviceSemantics.maxTouchPoints).toBe(0);
     expect(deviceSemantics.coarsePointer).toBe(false);
   }
-  await expect(page.locator(".member-identity")).toBeVisible();
-  await expect(page.getByText("Alice QA", { exact: true })).toBeVisible();
-  await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
+  if (testInfo.project.name.endsWith("-phone")) {
+    await expect(page.locator(".member-identity")).toBeHidden();
+    await page.getByRole("link", { name: "Settings", exact: true }).click();
+    const account = page.getByRole("region", { name: "Account", exact: true });
+    await expect(account.getByText("Alice QA", { exact: true })).toBeVisible();
+    await expect(account.getByText("alice@example.invalid", { exact: true })).toBeVisible();
+    await expect(account.getByText("Verified", { exact: true })).toBeVisible();
+    await page.getByRole("link", { name: "Today", exact: true }).click();
+  } else {
+    await expect(page.locator(".member-identity")).toBeVisible();
+    await expect(page.getByText("Alice QA", { exact: true })).toBeVisible();
+    await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
+  }
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Make room for your routine." })).toBeVisible();
   await page.getByRole("radio", { name: /Example routine/ }).check();

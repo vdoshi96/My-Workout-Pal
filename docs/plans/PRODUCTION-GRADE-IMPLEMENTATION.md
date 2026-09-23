@@ -36,7 +36,7 @@ The owner permits a bounded expansion of rule 4 for PR #8. First run both full W
 
 The authorized stale flows include three-step example onboarding, current public landing controls, and Library artwork layout. The rule-5 copy and cardio clock-entry edits remain required. The owner also requests singular/plural movement counts in Today, the day page and its fixture, and the editor outline. In the existing member-home unit test, replace the duplicate plural checks with one meaningful singular check and check the Mobility row's destination instead of its bare name. If an acceptance file requires the incorrect singular copy, stop and report it.
 
-All other test and environment limits remain. Run W1–W6 fresh and serially on the final commit, retaining existing skips only. Retake both member-today screenshots and any other affected UI evidence. Add a main-versus-branch W5 table and tag every new ledger row `plan-changed` or `stale on main (fails at c619ac6)`. Update STATUS and documentation parity. Push logical commits to the existing branch and mark PR #8 ready for review, as requested by the owner. Report every failed gate and stopped item explicitly; review status does not waive the win conditions. Do not merge or deploy.
+All other test and environment limits remain. Run W1–W6 fresh and serially on the final commit, retaining existing skips only. Retake both member-today screenshots and any other affected UI evidence. Add a main-versus-branch W5 table and tag every new ledger row `plan-changed` or `stale on main (fails at c619ac6)`. Update STATUS and documentation parity. Push logical commits to the existing branch and mark PR #8 ready for review, as requested by the owner. Report every failed gate and stopped item explicitly; review status does not waive the win conditions. Merge is conditional on the round-2 owner decisions below; do not deploy manually.
 
 The main-passing Quiet Set journey exposed a finish-button race after its required label updates: Finish accepted a click while the preceding exercise completion was pending, then rejected it. Keep Finish disabled during pending saves and the local device write, while retaining the domain's completion checks and existing history assertion. Verify this through the unchanged completion journey; do not add test blocks.
 
@@ -46,6 +46,37 @@ The full matrix exposed stale navigation in that same journey: navigation inheri
 
 The final matrix's existing accessibility scan caught low contrast while Finish changed between pending-save and ready states. Keep runner buttons at full opacity when disabled and distinguish them with a dashed border and the existing disabled semantics. Edit the existing disabled rule, retain the unchanged accessibility assertion, and retake the affected runner evidence.
 
+### September 23 owner decisions (round 2)
+
+These owner decisions supersede conflicting requirements in this plan for PR #8, starting at `4183485`. Keep the four acceptance files unchanged. Add no test files, test blocks, skips, retries, or longer timeouts. Run one heavy process at a time. Do not change production data, Firebase, Neon, Vercel settings, schema, seeds, dependencies, or artwork. Edit an existing test only as named below, preserve each assertion's intent and every numeric threshold, and log each edit as `file:line old → new`, tagged `owner-decision-2`.
+
+1. **Error recovery:** use the `retry` prop in `src/app/app/error.tsx`, `src/app/error.tsx`, `src/app/workout/[sessionId]/error.tsx`, and the authenticated member error fixture. Keep their copy. The installed Next.js error-file guide recommends `retry()` to re-fetch and render the page. Keep global-error Reload and the pilot's successful-retry assertion unchanged; fix the app or fixture if recovery still fails. The owner separately authorized changing only the `AccountError` render prop in `tests/unit/member-home-route-states.test.tsx:19` from `reset={vi.fn()}` to `retry={vi.fn()}`, with every assertion unchanged.
+2. **Public landing pilot:** rewrite the five public pilot journeys for the `.quiet-studio` background composition. Compare collapsed-whitespace heading `textContent`. Protect the h1, intro, Try one set, Create my routine, and primary navigation: each center must hit the element or a child, and each rectangle must intersect foreground decoration by at most 1 px. Art remains decorative, outside accessibility and keyboard focus, with no horizontal overflow. Dark mode, reduced motion, forced colors, image failure, and 200% zoom preserve visible, usable protected controls. Drop only the retired landing side-rectangle and grid-collapse selectors; retain their behavioral coverage through these checks.
+3. **Member artwork:** derive protected rectangles from the rendered layout in authenticated pilot and rollout checks, including product priority. Today protects the greeting, subtitle, next-workout card and every control, All days list, header, and bottom navigation. Member Library protects the search form and result cards. Keep the 1 px intersection limit; fix CSS at any failing project width.
+4. **Empty Today:** replace the retired empty-progress, `.member-program-actions`, `.member-home-progress`, and `.member-equipment` checks in the authenticated pilot and onboarding with the real empty-workout contract: greeting; subtitle with routine, equipment label, and day count; Your next workout card with Training day, Start workout, and Review this day; All days; no progress card or invented statistics.
+5. **Cardio summary:** in flexible-routine-publication, expect `1 movement` in the Today row. Preserve the no-cardio assertion on that routine's `/app/program/[day]` page by checking that Cardio finish is absent.
+6. **Phone account identity:** keep identity hidden in the phone header. Add display name, email, and Verified or Not verified yet to Settings > Account using the server viewer, in the real page and fixture mirror. Keep desktop geometry assertions unchanged; phone geometry checks assert those three facts in Settings. This is an owner-requested addition so phone users can identify the signed-in account.
+7. **Editor metadata:** show section and logging type on each movement row as muted small sentence-case text, such as `Strength · Weight and reps`. Change only the four expected strings in library-core-conditioning-expansion. Verify at 390 px and 1440 px.
+8. **Settings units:** add help under Display units: `Changing units only changes how weights and distances are shown. Your logged sets stay the same.` Point the retained onboarding assertion at this copy, and pass W1.
+9. **Routine collection copy:** replace `private, independent revisions` with `Each routine is yours to edit. Switching routines doesn't change past workouts.`
+10. **W3 reliability:** monitor file changes during the run to identify the cause of navigation aborts and Fast Refresh reloads. Start the dev server on 3118, wait for readiness, request every public acceptance route until each returns 200 once, wait for a quiet server log, and run W3 against that server. Use environment steps only; no retries around tests. If warmed navigation still aborts, identify and correct the responsible file or route. Record the root cause.
+
+The owner also authorized two subsequent copy mappings: the hidden `Workout in progress` eyebrow becomes the visible `Keep going with Push` heading check in authenticated pilot and onboarding; `Tied best · 3 exact source sets` becomes `Tied best (3 times)` in onboarding. Preserve the Resume link, tie count, and source-workout assertions. The owner authorized adapting retired member-art visibility and layout checks to the current composition, retaining decoration semantics, state-dependent hiding, protected controls, the 1 px overlap limit, and all overflow tolerances. These supplemental edits also use the `owner-decision-2` ledger tag.
+
+The owner subsequently authorized the remaining bounded journey mappings: onboarding checks the visible `Finish a workout to see your progress.` and `No records yet` headings; member-art rollout opens Equipment and substitutions and Workout outline before existing actions and permits the proposed Finish mapping; source verification showed the current control and this plan still say `Finish workout`, so retain that existing selector. Flexible-routine publication opens its existing More actions, Add a section, Equipment and substitutions, and Workout outline disclosures, expects `Core · Time`, changes equipment through Settings, and checks the original workout's resume API `snapshot.programRevisionId` before and after the equipment change instead of removed visible IDs. Preserve every surrounding action, ordering, removal, focus, ownership, persistence, completion, artwork-state, and numeric assertion. The owner also authorized diagnosing and fixing WebKit video-frame teardown (`Cache API operation failed: Context is stopped`) without changing the zero-error assertion, video selections, dependencies, or browser settings. Record these edits with `owner-decision-2`.
+
+The video teardown investigation reproduced the Cache API error when Next removes a guide containing a loaded YouTube frame. Keep the embed URL stable through hydration in `src/components/video/curated-video-player.tsx`; this non-API player does not need a client-only origin parameter that reloads its document. Preserve server-rendered embeds, video selection, keyboard controls, and the external fallback. The experimental guide-link handler that navigated the iframe to about:blank caused YouTube telemetry errors and is not retained. Verify loaded-frame departures and the unchanged release suite without suppressing errors or adding test retries. If the remaining cross-origin teardown error cannot be resolved reliably within scope, report it and do not merge.
+
+The owner also permits adding only `/illustrations/quiet-set/tortoise-review.webp` to the existing `tests/authenticated-e2e/companion-request-policy.ts` allowlist. Keep its same-origin, cancellation, and navigation-supersession guards and all assertions unchanged. The full authenticated run exposed a cancellation between History pages; the helper still named only retired artwork paths.
+
+The main-passing Dumbbell farmer carry journey exposed an interrupted-response regression under R6's reload behavior. In `src/client/private-api.ts`, preserve transport errors thrown while reading a response body so the existing network-error path retains a pending workout write. Only malformed JSON should become an absent error body. The current catch-all incorrectly turns an aborted CSRF body into a server rejection with status 200, leaving the durable operation failed after reload. Fix the client, retain every Quiet Set assertion, and verify through the existing journey and client tests; do not add test blocks or automatic retries.
+
+For decisions 6, 7, and 8, run each edited assertion before its application change and preserve its failing and passing output in the QA report. Keep the pre-hydration input issue under Noticed, not changed.
+
+Run W1–W6 serially on the final commit after each commit. W3 must pass 12/12. Both full W5 suites must exit 0, with only the existing 13 authenticated and 66 release skips. Retake affected phone and desktop screenshots, including member-today, member-settings-presetup, member-routine-editor-errors, member-routines, and landing. Add phone and desktop member-settings-account, member-library, member-routines-create, and member-routine-editor-metadata views to make the changed account facts, Library composition, routine explanation, and movement labels reviewable. Replace the report's stopped items with these decisions and their results, update the main-versus-branch table and ledger, update STATUS, run docs:build and docs:check, restore next-env.d.ts, and push logical commits.
+
+**Conditional closeout replaces the earlier no-merge instruction only when every gate is green:** W1–W6 must pass on one final commit, both W5 suites must exit 0, and PR #8's Vercel checks must succeed. Then run `gh pr merge 8 --merge`, fast-forward local main to the merge commit, and confirm `git rev-parse main origin/main` match. Keep the branch. Do not deploy manually or change Vercel settings; report the observed automatic main deployment URL and status. If any gate fails, do not merge; report exact failing titles/output and the smallest required owner decision.
+
 ### Commands
 
 ```sh
@@ -53,8 +84,17 @@ The final matrix's existing accessibility scan caught low contrast while Finish 
 npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts
 # Member acceptance (builds the fixture; ~3 min)
 pnpm test:e2e:authenticated -- production-audit
-# Public acceptance (starts `pnpm dev`; reads the ignored local database read-only)
-pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop
+# Public acceptance: start the server in its own terminal (read-only local data).
+NEXT_TELEMETRY_DISABLED=1 pnpm exec next dev --webpack -H 127.0.0.1 -p 3118
+# After readiness, warm every route until each has returned 200 once.
+for route in / /try /program /program/push /library /library/push-up /progress /sample-workout /sign-in /offline; do
+  until [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3118$route")" = 200 ]; do
+    sleep 1
+  done
+done
+# Wait until the server log is quiet before starting the browser command.
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop
+# Stop that dev server before starting the full gate.
 # Full gate
 pnpm verify
 pnpm test:e2e:authenticated
@@ -325,7 +365,7 @@ Files: `src/app/app/{layout,page,loading,error,not-found}.tsx`, `src/app/app/[..
 
 **Not found (A7).** New `src/app/app/not-found.tsx`: `<section className="member-empty">` with `<h1>Page not found</h1>`, `<p>We couldn't find that page.</p>`, `<Link className="primary-action" href="/app">Back to Today</Link>`. New `src/app/app/[...missing]/page.tsx` that calls `notFound()`. Fixture: add the same `not-found.tsx` at `tests/fixtures/authenticated-app/app/app/not-found.tsx` and change `tests/fixtures/authenticated-app/app/app/[...path]/page.tsx` to call `notFound()`.
 
-**Loading and error.** `src/app/app/loading.tsx`: `<p role="status">Loading…</p>` inside the existing wrapper, nothing else. `src/app/app/error.tsx`: `<h1>This page didn't load</h1>`, `<p>Nothing was changed.</p>`, button `Try again` that calls `reset()` only. Mirror in fixture `loading.tsx`/`error.tsx`.
+**Loading and error.** `src/app/app/loading.tsx`: `<p role="status">Loading…</p>` inside the existing wrapper, nothing else. `src/app/app/error.tsx`: `<h1>This page didn't load</h1>`, `<p>Nothing was changed.</p>`, button `Try again` that calls `retry()` to re-fetch the page (round-2 owner correction). Mirror in fixture `loading.tsx`/`error.tsx`.
 
 **A2. Settings before setup.** `src/app/app/settings/page.tsx` and fixture mirror: never redirect for a missing routine or missing profile. Pass `activeProgram: null`, `initialPreferences: null`, `equipmentProfileKind: null` when absent; `ownerUid` comes from the viewer. `SettingsForm` changes:
 - Section order: `Units and time zone` (card), `Characters` (card, contains `CompanionPreference`), `Equipment` (card; render only when a routine exists), `Account` (card).
@@ -406,7 +446,7 @@ Delete the dark `Field notes` sidebar and uppercase serif labels. In `curated-vi
 
 **Recovery pages.**
 - `src/app/not-found.tsx`: inside `PublicShell current={null}`: `<h1>Page not found</h1>`, `<p>We couldn't find that page.</p>`, `<Link className="primary-action" href="/">Go home</Link>`. The response status stays 404.
-- `src/app/error.tsx`: `<h1>Something went wrong</h1>`, `<p>This page didn't load.</p>`, button `Try again` (`reset()`).
+- `src/app/error.tsx`: `<h1>Something went wrong</h1>`, `<p>This page didn't load.</p>`, button `Try again` (`retry()`, round-2 owner correction).
 - `src/app/global-error.tsx`: import `./globals.css` and `./quiet-set.css`; `<h1>Something went wrong</h1>`, button `Reload` (`window.location.reload()`).
 - Root `loading.tsx` (if present): `Loading…`.
 - `src/app/offline/page.tsx`: `PublicShell current={null}`; `<h1>You're offline</h1>`; `<p>Pages you've opened before still work. Changes save when you reconnect.</p>`; link `Go home` → `/`.
@@ -438,7 +478,7 @@ Do not reorganize, rename, or reformat unrelated rules.
 3. Write `docs/qa/latest/PRODUCTION-GRADE-QA.md`: date, commit SHA, each command with pass counts copied from its output, the screenshot list, and known limits. Delete `docs/qa/latest/MEMBER-ATMOSPHERE-QA.md`, its HTML twin, and `docs/qa/latest/member-atmosphere/` (superseded; history stays in Git).
 4. Update `docs/context/STATUS.md` with a new top section "Production-grade audit implementation: <date>" (4–6 sentences: what changed, verification result, branch/PR, not deployed). Append a status line to `docs/plans/PRODUCTION-GRADE-AUDIT.md`: `Implemented on branch vishal/production-grade-audit; see docs/qa/latest/PRODUCTION-GRADE-QA.md.`
 5. `pnpm docs:build`, then `pnpm docs:check`.
-6. `git checkout next-env.d.ts`, commit on `vishal/production-grade-audit` in logical commits (domain, runner, routine, member shell, public, copy/styles, docs), push the branch, and open a pull request to `main` titled `Production-grade audit fixes`. Do **not** merge, deploy, or delete branches; the owner reviews first.
+6. `git checkout next-env.d.ts`, commit on `vishal/production-grade-audit` in logical commits (domain, runner, routine, member shell, public, copy/styles, docs), push the branch, and open a pull request to `main` titled `Production-grade audit fixes`. Merge only under the September 23 round-2 closeout conditions. Do not deploy manually or delete branches.
 
 ## 10. Final report
 

@@ -790,12 +790,13 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 }
 
 @media (max-width: 47.99rem) {
+  .member-frame .member-program--resumable .decorative-companion--member-home,
   .member-program--resumable .decorative-companion--member-home { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
-  .decorative-companion img { animation: none !important; transform: none !important; transition: none !important; }
+  .quiet-studio img, .decorative-companion img { animation: none !important; transform: none !important; transition: none !important; }
 }
 
 @media (forced-colors: active) {

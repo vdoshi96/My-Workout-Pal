@@ -37,7 +37,7 @@ import { type EquipmentProfileKind } from "@/domain/equipment";
 import type {
   PreferencesReadModel,
 } from "@/server/repositories/profile-program";
-import type { ViewerProvider } from "@/server/auth/viewer";
+import type { ViewerContext, ViewerProvider } from "@/server/auth/viewer";
 
 import { timeZoneOptions } from "@/domain/time-zones";
 
@@ -58,6 +58,7 @@ export function SettingsForm({
   timeZones = timeZoneOptions(initialPreferences?.timezone),
   ownerUid,
   viewerProvider,
+  viewerIdentity,
 }: Readonly<{
   canMutate: boolean;
   activeProgram?: ActiveProgramReadModel | null;
@@ -68,6 +69,7 @@ export function SettingsForm({
   timeZones?: readonly string[];
   ownerUid: string;
   viewerProvider: ViewerProvider;
+  viewerIdentity?: Pick<ViewerContext, "displayName" | "email" | "emailVerified">;
 }>) {
   const router = useRouter();
   const [equipmentProgram, setEquipmentProgram] = useState(activeProgram);
@@ -350,6 +352,7 @@ export function SettingsForm({
           <label htmlFor="settings-units">Display units</label>
           <select
             disabled={!canMutate || busy || !preferences}
+            aria-describedby="settings-units-help"
             id="settings-units"
             onChange={(event) => {
               changed();
@@ -360,6 +363,8 @@ export function SettingsForm({
             <option value="imperial">Pounds and miles</option>
             <option value="metric">Kilograms and kilometers</option>
           </select>
+
+          <p id="settings-units-help">Changing units only changes how weights and distances are shown. Your logged sets stay the same.</p>
 
           <label htmlFor="settings-timezone">Time zone</label>
           <select id="settings-timezone" disabled={!canMutate || busy || !preferences} value={timezone} onChange={(event) => { changed(); setTimezone(event.target.value); }}>
@@ -387,6 +392,11 @@ export function SettingsForm({
       {equipmentProgram ? <EquipmentProfileControl canMutate={canMutate} disabled={busy || deleteBusy} program={equipmentProgram} onSaved={setEquipmentProgram} /> : null}
       <section className="settings-account" aria-labelledby="account-settings-title">
         <h2 id="account-settings-title">Account</h2>
+        {viewerIdentity ? <p>
+          <strong>{viewerIdentity.displayName}</strong><br />
+          {viewerIdentity.email ? <><span>{viewerIdentity.email}</span><br /></> : null}
+          <span>{viewerIdentity.emailVerified ? "Verified" : "Not verified yet"}</span>
+        </p> : null}
         <div className="settings-delete-preview">
           <strong>Delete account</strong>
           <p>{"Permanently deletes your account, routines, workout history and records. This can't be undone."}</p>

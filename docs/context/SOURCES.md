@@ -160,3 +160,10 @@ The project keeps Firebase Admin as the trusted server verifier, constrains only
 - [Atlassian product illustration guidance](https://atlassian.design/guidelines/brand/illustrations/): contextual scale and avoiding visual overload.
 - [GitLab illustration principles](https://design.gitlab.com/brand-design/visual-design-brand-illustrations): consistent visual storytelling paired with readable copy.
 - Seven original integrated cartoon scenes are optimized under `public/illustrations/quiet-set/`, with exact generation prompts and source references in JSON sidecars. The old standalone plates remain as source references; active decorative placement uses the contextual scenes.
+
+## September 23, 2026: Error recovery and video teardown investigation
+
+- Installed Next.js 16.3.2 error-file guide (`node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/error.md`): the owner-directed `retry()` recovery contract.
+- [WebKit Cache Storage implementation](https://github.com/WebKit/WebKit/blob/main/Source/WebCore/Modules/cache/DOMCacheStorage.cpp): pending cache work rejects when its context stops; supports the observed teardown mechanism, without identifying the cross-origin player's internal operation.
+- [YouTube embedded player parameters](https://developers.google.com/youtube/player_parameters#origin): origin binding is associated with enabled IFrame API control. The current non-API embed can keep its server-rendered URL stable through hydration.
+- [QA report](../qa/latest/PRODUCTION-GRADE-QA.md): local reproduction, failed experiments, evidence limits, and the unresolved owner decision.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useSyncExternalStore } from "react";
+import { useId, useState } from "react";
 import type { KeyboardEvent } from "react";
 
 import {
@@ -11,14 +11,11 @@ import {
 
 import { VIDEO_VARIANT_NOTES } from "@/domain/youtube/variant-notes";
 
-const subscribeToOrigin = () => () => {};
-
 export function CuratedVideoPlayer({
   videos,
 }: Readonly<{ videos: CuratedVideos }>) {
   const [activeVideoId, setActiveVideoId] = useState(videos[0].videoId);
   const playerId = useId();
-  const origin = useSyncExternalStore<string | undefined>(subscribeToOrigin, () => window.location.origin, () => undefined);
   const activeVideo =
     videos.find(({ videoId }) => videoId === activeVideoId) ?? videos[0];
 
@@ -83,7 +80,7 @@ export function CuratedVideoPlayer({
             allowFullScreen
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            src={buildYouTubeEmbedUrl(activeVideo.videoId, origin)}
+            src={buildYouTubeEmbedUrl(activeVideo.videoId)}
             title={`${activeVideo.title} — ${activeVideo.channelTitle}`}
           />
         </div>

@@ -14,7 +14,7 @@ export default function HomePage({ searchParams }: { searchParams?: Promise<{ ac
     {query.account === "deleted" ? <p className="member-inline-notice" role="status">Your account and workout data were deleted.</p> : null}
     <section className="quiet-welcome" aria-labelledby="landing-heading">
       <div className="quiet-welcome-copy">
-        <h1 id="landing-heading">A little space<br />for your next set.</h1>
+        <h1 id="landing-heading">A little space <br />for your next set.</h1>
         <p>Your routine, a clear next step, and a place to keep the work you put in.</p>
         <Link className="primary-action" href="/try">Try one set <Icon name="arrow-right" /></Link>
         <span className="quiet-welcome-note">No account needed. Practice stays temporary.</span>

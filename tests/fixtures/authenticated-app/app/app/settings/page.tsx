@@ -44,6 +44,7 @@ export default async function HarnessSettingsPage() {
       timeZones={timeZoneOptions(model?.preferences?.timezone)}
       ownerUid={context.viewer.uid}
       viewerProvider={context.viewer.provider}
+      viewerIdentity={{ displayName: context.viewer.displayName, email: context.viewer.email, emailVerified: context.viewer.emailVerified }}
     />
   );
 }

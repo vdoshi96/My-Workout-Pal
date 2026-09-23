@@ -415,8 +415,7 @@ export function ProgramCollection({
         >
           <h2 id="create-program-title">New routine</h2>
           <p>
-            Start with the five-day example or publish a one-day custom starting
-            point. Both become private, independent revisions you can edit.
+            {"Each routine is yours to edit. Switching routines doesn't change past workouts."}
           </p>
           <form onSubmit={(event) => void createProgram(event)}>
             <fieldset disabled={!canMutate || busyOperation !== null}>

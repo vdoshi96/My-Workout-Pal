@@ -1215,7 +1215,7 @@ export function ProgramEditor({
                       >
                         <header>
                           <div>
-                            <span>{section.kind} · {meaning ? LOGGING_KIND_LABELS[meaning.measurementKind] : "exercise"}</span>
+                            <span>{section.kind.charAt(0).toUpperCase() + section.kind.slice(1)} · {meaning ? LOGGING_KIND_LABELS[meaning.measurementKind] : "Exercise"}</span>
                             <h3>{movementLabel}</h3>
                           </div>
                           <div className="program-editor-prescription-actions">

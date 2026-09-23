@@ -1,6 +1,7 @@
 import type { Request } from "@playwright/test";
 
 const supersededCompanionPaths = new Set([
+  "/illustrations/quiet-set/tortoise-review.webp",
   "/illustrations/companions/cataloging-otter-512.webp",
   "/illustrations/companions/cataloging-otter.webp",
   "/illustrations/companions/history-archive-tortoise-512.webp",

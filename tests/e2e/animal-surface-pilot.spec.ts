@@ -18,17 +18,6 @@ async function visibleBox(locator: Locator) {
   return box!;
 }
 
-async function expectNoHorizontalOverlap(first: Locator, second: Locator) {
-  const [firstBox, secondBox] = await Promise.all([
-    visibleBox(first),
-    visibleBox(second),
-  ]);
-  expect(
-    firstBox.x + firstBox.width <= secondBox.x + 1 ||
-      secondBox.x + secondBox.width <= firstBox.x + 1,
-  ).toBe(true);
-}
-
 async function expectNoIntersection(first: Locator, second: Locator) {
   const [firstBox, secondBox] = await Promise.all([
     visibleBox(first),
@@ -61,10 +50,11 @@ async function expectPointerInert(placement: Locator) {
 }
 
 async function expectCompanionSemantics(page: Page, variant: string) {
-  const placement = page.locator(`[data-companion-placement="${variant}"]`);
+  const placement = page.locator(variant === "landing" ? ".quiet-studio" : `[data-companion-placement="${variant}"]`);
   const image = placement.locator("img");
   await expect(placement).toBeVisible();
-  await expect(placement).toHaveAttribute("aria-hidden", "true");
+  if (variant !== "landing") await expect(placement).toHaveAttribute("aria-hidden", "true");
+  await expect(placement.locator("a, button, input, select, textarea, [tabindex]")).toHaveCount(0);
   await expect(image).toHaveAttribute("alt", "");
   await expect(image).toHaveAttribute("aria-hidden", "true");
   await expect(image).not.toHaveAttribute("tabindex", /.+/u);
@@ -78,38 +68,60 @@ async function expectCompanionSemantics(page: Page, variant: string) {
   return placement;
 }
 
-async function headingWordLines(heading: Locator) {
-  return heading.evaluate((element) => {
-    const textNode = element.firstChild;
-    if (!textNode || textNode.nodeType !== Node.TEXT_NODE) {
-      throw new Error("Landing heading must remain one text node for line measurement.");
+async function expectLandingControls(page: Page) {
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  const protectedAreas = [
+    page.getByRole("heading", { level: 1 }),
+    page.locator(".quiet-welcome-copy > p"),
+    page.getByRole("link", { name: "Try one set", exact: true }),
+    page.getByRole("link", { name: "Create my routine", exact: true }),
+    page.getByRole("navigation", { name: "Primary" }),
+  ];
+  expect(await protectedAreas[0]!.evaluate((element) => element.textContent?.replace(/\s+/gu, " ").trim()))
+    .toBe("A little space for your next set.");
+  for (const area of protectedAreas) {
+    await area.scrollIntoViewIfNeeded();
+    await expect(area).toBeVisible();
+    expect(await area.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return hit === element || (hit !== null && element.contains(hit));
+    })).toBe(true);
+    // The studio is a background scene. Any foreground decoration still must
+    // leave each protected rectangle clear, with the original 1 px limit.
+    for (const decoration of await page.locator(".quiet-studio, .quiet-welcome .decorative-companion").all()) {
+      const foreground = await decoration.evaluate((element) => getComputedStyle(element).zIndex !== "-1");
+      if (foreground && await decoration.isVisible()) await expectNoIntersection(area, decoration);
     }
-    const text = textNode.textContent ?? "";
-    const tokens = ["Your", "workout.", "Your", "way."];
-    let cursor = 0;
-    return tokens.map((token) => {
-      const start = text.indexOf(token, cursor);
-      if (start < 0) throw new Error(`Missing heading token: ${token}`);
-      cursor = start + token.length;
-      const range = document.createRange();
-      range.setStart(textNode, start);
-      range.setEnd(textNode, cursor);
-      return Math.round(range.getBoundingClientRect().top);
-    });
-  });
+  }
+  for (const link of await page.locator(".quiet-welcome-copy > a, .public-nav a").all()) {
+    await expect(link).toHaveAttribute("href", /^\//u);
+    await link.focus();
+    await expect(link).toBeFocused();
+    const scale = await page.evaluate(() => window.visualViewport?.scale ?? 1);
+    if (scale > 1) {
+      // CDP page scaling changes pointer coordinates. Verify real keyboard
+      // activation at that scale, then restore the landing scene for each link.
+      const landingUrl = page.url();
+      const destination = new URL((await link.getAttribute("href"))!, landingUrl).href;
+      await link.press("Enter");
+      await expect(page).toHaveURL(new URL(destination).pathname === "/app"
+        ? new URL("/sign-in?returnTo=%2Fapp", landingUrl).href
+        : destination);
+      await page.goto(landingUrl);
+      const devtools = await page.context().newCDPSession(page);
+      await devtools.send("Emulation.setPageScaleFactor", { pageScaleFactor: scale });
+      await devtools.detach();
+    } else {
+      await link.click({ trial: true });
+    }
+  }
 }
 
 async function openLanding(page: Page) {
   await page.goto("/");
-  await expect(
-    page.getByRole("heading", { level: 1, name: "A little space for your next set." }),
-  ).toBeVisible();
-  const placement = await expectCompanionSemantics(page, "landing");
-  if ((await page.viewportSize())!.width >= 1024) {
-    await expectNoHorizontalOverlap(page.locator(".quiet-welcome-copy"), placement);
-  } else {
-    await expectNoIntersection(page.locator(".quiet-welcome-copy"), placement);
-  }
+  await expectCompanionSemantics(page, "landing");
+  await expectLandingControls(page);
 }
 
 test("landing first viewport reproduces the selected board hierarchy", async ({
@@ -121,17 +133,6 @@ test("landing first viewport reproduces the selected board hierarchy", async ({
 
   await page.setViewportSize({ height: 1024, width: 1536 });
   await openLanding(page);
-  const lines = await headingWordLines(
-    page.getByRole("heading", { level: 1, name: "A little space for your next set." }),
-  );
-  const [yourLine, workoutLine, secondYourLine, wayLine] = lines;
-  expect(yourLine).toBeDefined();
-  expect(workoutLine).toBeDefined();
-  expect(secondYourLine).toBeDefined();
-  expect(wayLine).toBeDefined();
-  expect(yourLine).toBe(workoutLine);
-  expect(secondYourLine).toBe(wayLine);
-  expect(secondYourLine!).toBeGreaterThan(yourLine!);
   mkdirSync(dirname(heroReproductionPath), { recursive: true });
   await page.screenshot({ path: heroReproductionPath });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1536);
@@ -181,15 +182,13 @@ test("public pilot surfaces stay decorative, bounded, and truthful across requir
         page.getByRole("heading", { level: 1, name: surface.heading }),
       ).toBeVisible();
       const placement = await expectCompanionSemantics(page, surface.variant);
-      await expectNoIntersection(placement, page.locator(surface.copy));
-      await expectNoIntersection(placement, page.locator(".public-header"));
-      await expectNoIntersection(placement, page.locator(".public-nav"));
       if (surface.path === "/") {
-        await expectNoIntersection(placement, page.locator(".quiet-welcome-copy"));
+        await expectLandingControls(page);
       } else {
-        await expect(
-          page.getByText("Example data", { exact: true }),
-        ).toHaveCount(1);
+        await expectNoIntersection(placement, page.locator(surface.copy));
+        await expectNoIntersection(placement, page.locator(".public-header"));
+        await expectNoIntersection(placement, page.locator(".public-nav"));
+        await expect(page.getByText("Example data", { exact: true })).toHaveCount(1);
         await expectNoIntersection(placement, page.locator(".sample-warning"));
         await expectNoIntersection(placement, page.locator(".sample-metrics"));
         await expectNoIntersection(placement, page.locator(".sample-chart"));
@@ -248,7 +247,8 @@ test("dark and reduced-motion rendering keep both public companions intact", asy
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       ),
     ).toBeLessThanOrEqual(1);
-    await expectNoIntersection(placement, page.locator(".public-nav"));
+    if (surface.path === "/") await expectLandingControls(page);
+    else await expectNoIntersection(placement, page.locator(".public-nav"));
 
     if (browserName === "chromium") {
       const evidencePath = resolve(
@@ -275,10 +275,12 @@ test("forced colors, image failure, and 200 percent zoom collapse decoration saf
   await page.emulateMedia({ colorScheme: "light", forcedColors: "active" });
   for (const surface of publicPilotSurfaces) {
     await page.goto(surface.path);
-    const placement = page.locator(
-      `[data-companion-placement="${surface.variant}"]`,
-    );
+    const placement = page.locator(surface.path === "/" ? ".quiet-studio" : `[data-companion-placement="${surface.variant}"]`);
     await expect(placement).toBeHidden();
+    if (surface.path === "/") {
+      await expectLandingControls(page);
+      continue;
+    }
     const collapsedLayout = await page.locator(surface.copy).evaluate((element) => {
       const hero = element.parentElement;
       if (!hero) throw new Error("Pilot hero wrapper is missing.");
@@ -296,10 +298,22 @@ test("forced colors, image failure, and 200 percent zoom collapse decoration saf
   await page.emulateMedia({ colorScheme: "light", forcedColors: "none" });
   for (const surface of publicPilotSurfaces) {
     await page.goto(surface.path);
-    const placement = page.locator(
-      `[data-companion-placement="${surface.variant}"]`,
-    );
+    const placement = page.locator(surface.path === "/" ? ".quiet-studio" : `[data-companion-placement="${surface.variant}"]`);
     await expectCompanionSemantics(page, surface.variant);
+    if (surface.path === "/") {
+      await page.route("**/illustrations/quiet-set/**", (route) => route.abort());
+      await placement.evaluate((picture) => {
+        for (const source of picture.querySelectorAll("source")) source.removeAttribute("srcset");
+        const image = picture.querySelector("img");
+        if (!image) throw new Error("Landing image is missing.");
+        image.removeAttribute("srcset");
+        image.src = "/illustrations/quiet-set/missing-pilot-image.webp";
+      });
+      await expect.poll(() => placement.locator("img").evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBe(0);
+      await expectLandingControls(page);
+      await page.unroute("**/illustrations/quiet-set/**");
+      continue;
+    }
     await placement.locator("img").evaluate((image) => {
       image.dispatchEvent(new Event("error"));
     });
@@ -318,14 +332,7 @@ test("forced colors, image failure, and 200 percent zoom collapse decoration saf
   await page.goto("/");
   await devtools.send("Emulation.setPageScaleFactor", { pageScaleFactor: 2 });
   await expect.poll(() => page.evaluate(() => window.visualViewport?.scale ?? 1)).toBe(2);
-  await expectNoIntersection(
-    page.locator('[data-companion-placement="landing"]'),
-    page.locator(".quiet-welcome-copy"),
-  );
-  await expectNoIntersection(
-    page.locator('[data-companion-placement="landing"]'),
-    page.locator(".public-nav"),
-  );
+  await expectLandingControls(page);
   const pageScaleEvidence = resolve(
     process.cwd(),
     "docs/qa/latest/animal-surface-pilot/landing-1280x1024-page-scale-200.png",
@@ -344,14 +351,7 @@ test("forced colors, image failure, and 200 percent zoom collapse decoration saf
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     ),
   ).toBeLessThanOrEqual(1);
-  await expectNoIntersection(
-    page.locator('[data-companion-placement="landing"]'),
-    page.locator(".quiet-welcome-copy"),
-  );
-  await expectNoIntersection(
-    page.locator('[data-companion-placement="landing"]'),
-    page.locator(".public-nav"),
-  );
+  await expectLandingControls(page);
   const zoomEvidence = resolve(
     process.cwd(),
     "docs/qa/latest/animal-surface-pilot/landing-1280x1024-zoom-200.png",
@@ -369,7 +369,7 @@ test("public companion stays outside keyboard focus and the accessibility name g
   );
   await page.setViewportSize({ height: 844, width: 390 });
   await openLanding(page);
-  const placement = page.locator('[data-companion-placement="landing"]');
+  const placement = page.locator(".quiet-studio");
   for (let step = 0; step < 8; step += 1) {
     await page.keyboard.press("Tab");
     expect(
@@ -381,4 +381,5 @@ test("public companion stays outside keyboard focus and the accessibility name g
   const ariaGraph = await page.locator("body").ariaSnapshot();
   expect(ariaGraph).not.toContain("planning-hedgehog");
   expect(ariaGraph).not.toContain("illustrations/companions");
+  expect(ariaGraph).not.toContain("illustrations/quiet-set");
 });

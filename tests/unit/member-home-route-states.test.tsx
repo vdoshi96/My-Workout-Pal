@@ -16,7 +16,7 @@ describe("personal home route states", () => {
 
   it("keeps a failed home read recoverable without implying a write", () => {
     const markup = renderToStaticMarkup(
-      <AccountError error={new Error("read failed")} reset={vi.fn()} />,
+      <AccountError error={new Error("read failed")} retry={vi.fn()} />,
     );
 
     expect(markup).toContain("This page didn&#x27;t load");

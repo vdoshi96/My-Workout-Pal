@@ -44,7 +44,7 @@ input[type=checkbox],input[type=radio] {accent-color:var(--coral);}
 .member-header {min-height:0; padding:16px 24px; gap:12px;}
 .member-account-controls {gap:16px;}
 .member-identity {font-size:.85rem;}
-.quiet-settings-link {display:inline-flex; gap:8px; align-items:center; padding:8px; min-height:48px;}
+.quiet-settings-link {display:inline-flex; gap:8px; align-items:center; justify-content:center; padding:8px; min-height:48px; min-width:44px;}
 .quiet-settings-link svg {width:20px; height:20px;}
 .member-nav {grid-template-columns:repeat(3,1fr); background:var(--white); color:var(--ink); border-top:1px solid var(--rule);}
 .member-nav a {font:600 .85rem var(--font-body); letter-spacing:0; text-transform:none; min-height:48px; border-radius:10px;}
@@ -60,8 +60,10 @@ input[type=checkbox],input[type=radio] {accent-color:var(--coral);}
 .quiet-today-start select {width:100%; font-size:1.3rem;}
 .quiet-today-start .primary-action {width:100%;}
 .workout-start-control p {font-size:.85rem; margin:8px 0;}
-.member-resume-card {margin:0 0 24px; border-radius:16px; padding:24px; background:var(--paper-deep);}
+.member-resume-card {margin:0 0 24px; border-radius:16px; padding:24px; background:var(--paper-deep); color:var(--ink);}
 .member-resume-card h2 {margin:0 0 12px;}
+.member-resume-card p {color:var(--ink-soft);}
+.member-resume-card .secondary-action {color:var(--ink);}
 .member-week,.member-home-progress {padding:24px 0;}
 .member-day-grid {gap:0; border-top:1px solid var(--rule);}
 .member-day-grid li {border:0; border-bottom:1px solid var(--rule); background:transparent;}
@@ -173,7 +175,9 @@ input[type=checkbox],input[type=radio] {accent-color:var(--coral);}
 .public-frame #main-content> :is(.public-hero,.library-tools,.library-results,.sample-metrics,.sample-grid,.sample-cta,.sample-runner-head,.sample-runner-grid,.auth-layout,.program-example,.day-page,.exercise-guide) {max-width:1320px; margin-inline:auto; padding-inline:max(1rem,env(safe-area-inset-left));}
 .public-frame .public-hero {min-height:0; display:block; padding-block:32px;}
 .public-frame .public-hero h1 {margin:0 0 16px;}
-.public-frame .public-hero:has(.decorative-companion:not([hidden])) > div:not(.decorative-companion) {max-width:58%;}
+@media(forced-colors:none) {
+  .public-frame .public-hero:has(.decorative-companion:not([hidden])) > div:not(.decorative-companion) {max-width:58%;}
+}
 .public-frame .public-hero .decorative-companion {width:42%;}
 .public-frame :is(.program-example,.day-page,.exercise-guide) {padding-block:24px;}
 .program-example>.public-hero {padding-inline:0;}
@@ -277,7 +281,7 @@ html:has([data-reduced-motion="true"]) {scroll-behavior:auto !important;}
 .public-header .brand {color:var(--ink);}
 @media(max-width:700px) {
   .quiet-welcome {display:block; min-height:0; padding:32px 24px 0;}
-  .quiet-studio {position:relative; inset:auto; display:block; width:calc(100% + 48px); max-width:none; height:auto; margin:32px -24px 0; object-fit:contain; z-index:0;}
+  .quiet-studio {position:relative; inset:auto; display:block; width:calc(100% + 48px); max-width:none; height:auto; margin:32px -24px 0; object-fit:contain; z-index:-1;}
   .quiet-welcome h1 {font-size:2.75rem; max-width:none;}
   .quiet-welcome-copy>p {max-width:none;}
 }
@@ -312,7 +316,7 @@ html:has([data-reduced-motion="true"]) {scroll-behavior:auto !important;}
 .member-frame .program-editor-day>header h2 {font:400 2rem/1.15 var(--font-display); text-transform:none;}
 .program-editor-section>legend,.program-editor-section>legend input {font:600 1.25rem/1.4 var(--font-body); text-transform:none; letter-spacing:0;}
 .program-editor-section>legend>span {display:none;}
-.program-editor-prescription>header>div>span {display:none;}
+.program-editor-prescription>header>div>span {display:block; color:var(--ink-soft); font: .85rem/1.4 var(--font-body); letter-spacing:normal; text-transform:none;}
 .program-editor-prescription h3 {font-family:var(--font-body); text-transform:none;}
 .program-editor-day,.program-editor-footer {border-radius:12px;}
 .program-editor-footer strong {font:600 1rem var(--font-body); text-transform:none;}
@@ -371,14 +375,18 @@ html:has([data-reduced-motion="true"]) {scroll-behavior:auto !important;}
 }
 :is(.member-frame,.public-frame) .decorative-companion[hidden] {display:none;}
 .member-frame .companion-heading:not(:has(.decorative-companion)),
-.member-frame .companion-heading:has(.decorative-companion[hidden]) {min-height:0; padding-right:0;}
+.member-frame .companion-heading:has(.decorative-companion[hidden]),
+.member-frame .member-today-scene .member-program-hero:has(.decorative-companion[hidden]),
+.public-frame .sample-hero:has(.decorative-companion[hidden]) {min-height:0; padding-right:0;}
+.public-frame .sample-hero:has(.decorative-companion[hidden]) .sample-hero-copy {flex-basis:100%; max-width:none;}
 .member-today-scene {position:relative; isolation:isolate; padding:32px 0 24px;}
 .member-today-scene .member-program-hero {position:static; min-height:0; padding:0; width:54%; margin-bottom:24px;}
 .member-today-scene .member-program-copy h1 {font-size:clamp(2.1rem,3.7vw,3.3rem); max-width:20ch;}
-.member-today-scene .decorative-companion {width:70%; height:100%; max-height:650px;}
+.member-today-scene .decorative-companion {width:46%; height:100%; max-height:650px;}
 .member-today-scene .decorative-companion img {object-position:right center;}
 .member-today-scene .quiet-today-start {width:49%; max-width:none; margin:0; background:var(--white); border:0; box-shadow:0 14px 38px #183f3514; padding:24px;}
 .member-today-scene .member-resume-card {width:52%; display:block; background:var(--white); box-shadow:0 14px 38px #183f3514;}
+.member-today-scene .member-home-verification {width:52%;}
 .member-today-scene .member-resume-card .primary-action {margin-top:16px;}
 .companion-switcher {width:49%; padding:20px 0 0; display:grid; grid-template-columns:1fr auto; column-gap:16px; align-items:center;}
 .member-frame .companion-switcher h2 {font:600 1rem/1.4 var(--font-body); margin:0;}
@@ -431,9 +439,10 @@ html:has([data-reduced-motion="true"]) {scroll-behavior:auto !important;}
   .member-today-scene .member-program-hero {width:100%; min-height:180px; padding:0 30% 16px 0; margin:0;}
   .member-today-scene .member-program-copy h1 {font-size:1.85rem;}
   .member-today-scene .member-program-copy p {font-size:.85rem;}
-  .member-today-scene .decorative-companion {height:200px; width:66%;}
+  .member-today-scene .decorative-companion {top:16px; height:180px; width:30%;}
   .member-today-scene .decorative-companion img {object-position:76% center;}
   .member-today-scene .quiet-today-start, .member-today-scene .member-resume-card {width:100%; padding:20px; margin:0;}
+  .member-today-scene .member-home-verification {width:100%;}
   .companion-switcher {width:100%; padding:16px 0 0;}
   .companion-switcher p {font-size:.8rem;}
   .companion-switcher select {max-width:145px;}
@@ -449,7 +458,9 @@ html:has([data-reduced-motion="true"]) {scroll-behavior:auto !important;}
 }
 @media(forced-colors:active) {
   .member-frame,.owned-workout-route {background:Canvas;}
-  .member-frame :is(.companion-heading,.member-program-hero) {min-height:0; padding-right:0;}
+  .member-frame :is(.companion-heading,.member-program-hero), .public-frame .sample-hero {min-height:0; padding-right:0;}
+  .public-frame .sample-hero {display:grid; grid-template-columns:minmax(0,1fr);}
+  .public-frame .sample-hero .sample-hero-copy {flex-basis:100%; max-width:none;}
   .member-nav a[aria-current=page] {border:2px solid Highlight;}
 }
 /* Keep the illustration behind the complete task surface, including controls. */
@@ -461,14 +472,14 @@ html:has([data-reduced-motion="true"]) {scroll-behavior:auto !important;}
 }
 .member-frame .companion-heading > :not(.decorative-companion) {position:relative; z-index:1;}
 .member-frame .companion-heading {padding-right:42%;}
-.member-frame .companion-heading > .decorative-companion {width:58%;}
+.member-frame .companion-heading > .decorative-companion {width:42%;}
 .member-frame .member-day-heading {display:block;}
 .member-frame .member-day-heading h1 {margin-top:16px;}
 .progress-timeline {padding:24px;}
 .owned-workout-route .runner-outline {align-self:start;}
 @media(max-width:700px) {
   .member-frame .companion-heading {padding-right:38%; min-height:220px;}
-  .member-frame .companion-heading > .decorative-companion {width:54%; max-height:260px;}
+  .member-frame .companion-heading > .decorative-companion {width:38%; max-height:260px;}
   .member-frame .companion-heading > .decorative-companion img {object-position:72% center;}
   .member-frame .companion-heading > div:first-child {min-width:0; width:100%;}
   .member-frame .companion-heading p {max-width:100%;}

@@ -264,16 +264,16 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
   const flutter = prescriptionRow(alice.page, section, "Flutter kick");
   const carry = prescriptionRow(alice.page, section, "Dumbbell farmer carry");
 
-  await expect(clean.getByText("strength · Weight and reps", { exact: true })).toBeVisible();
+  await expect(clean.getByText("Strength · Weight and reps", { exact: true })).toBeVisible();
   await expect(clean.getByLabel("Minimum reps")).toHaveValue("8");
   await expect(clean.getByLabel("Maximum reps")).toHaveValue("12");
-  await expect(crunch.getByText("strength · Reps", { exact: true })).toBeVisible();
+  await expect(crunch.getByText("Strength · Reps", { exact: true })).toBeVisible();
   await expect(crunch.getByLabel("Minimum reps")).toHaveValue("8");
   await expect(crunch.getByLabel("Maximum reps")).toHaveValue("12");
-  await expect(flutter.getByText("strength · Time", { exact: true })).toBeVisible();
+  await expect(flutter.getByText("Strength · Time", { exact: true })).toBeVisible();
   await expect(flutter.getByLabel("Minimum seconds")).toHaveValue("20");
   await expect(flutter.getByLabel("Maximum seconds")).toHaveValue("45");
-  await expect(carry.getByText("strength · Distance and time", { exact: true })).toBeVisible();
+  await expect(carry.getByText("Strength · Distance and time", { exact: true })).toBeVisible();
   await expect(carry.getByLabel("Minimum seconds")).toHaveValue("20");
   await expect(carry.getByLabel("Maximum seconds")).toHaveValue("45");
   await expect(carry.getByLabel(targetDistanceLabel)).toHaveValue("");

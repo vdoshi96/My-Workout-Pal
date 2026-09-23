@@ -141,9 +141,10 @@ async function expectCompanion(
   ).toBe(false);
 
   for (const selector of protectedSelectors) {
-    const protectedRegion = page.locator(selector).first();
-    if (await protectedRegion.isVisible()) {
-      await expectNoIntersection(placement, protectedRegion);
+    for (const protectedRegion of await page.locator(selector).all()) {
+      if (await protectedRegion.isVisible()) {
+        await expectNoIntersection(placement, protectedRegion);
+      }
     }
   }
   return placement;
@@ -225,10 +226,11 @@ test("member rollout surfaces preserve product priority across the authenticated
     await expectCompanion(page, "library", true, [
       ".member-header",
       ".member-nav",
-      ".member-library-heading > div:first-child",
+      ".member-library-heading h1",
+      ".member-library-heading p",
       ".member-library-heading .primary-action",
       ".member-library-search",
-      ".member-library-results",
+      ".member-library-list > li",
     ]);
     await page.getByLabel("Search movements").focus();
     await expect(page.getByLabel("Search movements")).toBeFocused();
@@ -242,7 +244,7 @@ test("member rollout surfaces preserve product priority across the authenticated
 
     await page.goto("/app/program/edit");
     await expect(page.getByRole("heading", { name: "Your routine" })).toBeVisible();
-    await expectCompanion(page, "routine-editor", width >= 1024, [
+    await expectCompanion(page, "routine-editor", true, [
       ".member-header",
       ".member-nav",
       ".program-editor-hero > div:first-child",
@@ -254,6 +256,7 @@ test("member rollout surfaces preserve product priority across the authenticated
     await expectNoOverflow(page);
     if (testInfo.project.name === "chromium-desktop" && width === 1440) {
       await capture(page, "routine-editor-chromium-desktop");
+      await page.getByText("Equipment and substitutions", { exact: true }).click();
       await page.locator(".member-equipment-options button[aria-controls]").click();
       await expect(page.locator(".equipment-review")).toBeVisible();
       await expect(
@@ -268,7 +271,7 @@ test("member rollout surfaces preserve product priority across the authenticated
 
     await page.goto("/app/settings");
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-    await expectCompanion(page, "settings", width >= 768, [
+    await expectCompanion(page, "settings", true, [
       ".member-header",
       ".member-nav",
       ".member-settings-heading > div:first-child",
@@ -336,7 +339,7 @@ test("member rollout surfaces preserve product priority across the authenticated
   const runnerPlacement = await expectCompanion(
     page,
     "workout",
-    currentWidth(testInfo) >= 1024,
+    true,
     [
       ".owned-workout-route-bar",
       ".runner-header > div:first-child",
@@ -402,6 +405,7 @@ test("member rollout surfaces preserve product priority across the authenticated
   await page.getByRole("button", { name: "Save cardio" }).click();
   expect((await cardioResponse).status()).toBe(200);
 
+  await page.getByText("Workout outline", { exact: true }).click();
   const outlineItems = page.locator(".runner-outline li button");
   const exerciseCount = await outlineItems.count();
   for (let index = 0; index < exerciseCount; index += 1) {
@@ -431,7 +435,7 @@ test("member rollout surfaces preserve product priority across the authenticated
   expect((await completionResponse).status()).toBe(200);
   await expect(page).toHaveURL(`/app/history/${sessionId}`);
   await expect(page.getByText("Completed workout")).toBeVisible();
-  await expectCompanion(page, "history", currentWidth(testInfo) >= 1024, [
+  await expectCompanion(page, "history", true, [
     ".member-header",
     ".member-nav",
     ".insights-heading > div:first-child",
@@ -443,7 +447,7 @@ test("member rollout surfaces preserve product priority across the authenticated
 
   await page.goto("/app/history");
   await expect(page.getByRole("heading", { name: "History" })).toBeVisible();
-  await expectCompanion(page, "history", currentWidth(testInfo) >= 1024, [
+  await expectCompanion(page, "history", true, [
     ".member-header",
     ".member-nav",
     ".insights-heading > div:first-child",
@@ -557,6 +561,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
     await page.getByRole("button", { name: "Save cardio" }).click();
     expect((await cardioResponse).status()).toBe(200);
 
+    await page.getByText("Workout outline", { exact: true }).click();
     const outlineItems = page.locator(".runner-outline li button");
     const exerciseCount = await outlineItems.count();
     for (let index = 0; index < exerciseCount; index += 1) {

@@ -49,6 +49,7 @@ export default async function SettingsPage() {
       timeZones={timeZoneOptions(data.model?.preferences?.timezone)}
       ownerUid={data.viewer.uid}
       viewerProvider={data.viewer.provider}
+      viewerIdentity={{ displayName: data.viewer.displayName, email: data.viewer.email, emailVerified: data.viewer.emailVerified }}
     />
   );
 }
