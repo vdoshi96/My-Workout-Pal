@@ -134,7 +134,7 @@ describe("shared persisted training-insight views", () => {
       />,
     );
     expect(markup).toContain("Interrupted workout");
-    expect(markup).toContain("Read-only snapshot.");
+    expect(markup).not.toContain("Read-only snapshot.");
     expect(markup).toContain("Pull strength · unfinished");
     expect(markup).not.toContain("pending");
     if (hasSets) expect(markup).toContain("10 bodyweight reps");
@@ -152,7 +152,7 @@ describe("shared persisted training-insight views", () => {
 
     expect(markup).toContain("Personal records");
     expect(markup).toContain("25 lb");
-    expect(markup).toContain("Tied best · 21 exact source sets");
+    expect(markup).toContain("Tied best (21 times)");
     expect(markup).toContain("Showing sources from the newest 2 tied sets");
     expect(markup).toContain("/app/history/10000000-0000-4000-8000-000000000001");
     expect(markup).not.toContain("sample");

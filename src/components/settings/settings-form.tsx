@@ -8,7 +8,6 @@ import {
   reauthenticateWithPopup,
   signOut,
 } from "firebase/auth";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -26,7 +25,6 @@ import type { FirebasePublicConfig } from "@/client/firebase";
 import { getFirebaseClientAuth } from "@/client/firebase";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import { createIndexedDBRunnerStorage } from "@/client/runner-storage";
-import { performSessionSignOut } from "@/client/session-sign-out";
 import { FirebaseClientIdentityStatus } from "@/components/settings/firebase-client-identity-status";
 import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
 import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
@@ -35,11 +33,13 @@ import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 import { parsePreferencesMutationResponse } from "@/components/settings/preferences-response";
 import { canShowSettingsCompanion } from "@/domain/companions/visibility";
-import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
+import { type EquipmentProfileKind } from "@/domain/equipment";
 import type {
   PreferencesReadModel,
 } from "@/server/repositories/profile-program";
 import type { ViewerProvider } from "@/server/auth/viewer";
+
+import { timeZoneOptions } from "@/domain/time-zones";
 
 function operationKey(): string {
   return globalThis.crypto.randomUUID();
@@ -52,7 +52,6 @@ function errorMessage(error: unknown, fallback: string): string {
 export function SettingsForm({
   canMutate,
   activeProgram,
-  equipmentProfileKind,
   firebaseConfig,
   initialFirebaseIdentityState = { status: "loading" },
   initialPreferences,
@@ -60,20 +59,20 @@ export function SettingsForm({
   viewerProvider,
 }: Readonly<{
   canMutate: boolean;
-  activeProgram?: ActiveProgramReadModel;
-  equipmentProfileKind: EquipmentProfileKind;
+  activeProgram?: ActiveProgramReadModel | null;
+  equipmentProfileKind: EquipmentProfileKind | null;
   firebaseConfig: FirebasePublicConfig | null;
   initialFirebaseIdentityState?: FirebaseClientIdentityState;
-  initialPreferences: PreferencesReadModel;
+  initialPreferences: PreferencesReadModel | null;
   ownerUid: string;
   viewerProvider: ViewerProvider;
 }>) {
   const router = useRouter();
   const [equipmentProgram, setEquipmentProgram] = useState(activeProgram);
   const [preferences, setPreferences] = useState(initialPreferences);
-  const [unitSystem, setUnitSystem] = useState(initialPreferences.unitSystem);
-  const [timezone, setTimezone] = useState(initialPreferences.timezone);
-  const [reducedMotion, setReducedMotion] = useState(initialPreferences.reducedMotion);
+  const [unitSystem, setUnitSystem] = useState(initialPreferences?.unitSystem ?? "imperial");
+  const [timezone, setTimezone] = useState(initialPreferences?.timezone ?? "UTC");
+  const [reducedMotion, setReducedMotion] = useState(initialPreferences?.reducedMotion ?? false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -93,9 +92,9 @@ export function SettingsForm({
   const shouldResolveFirebaseIdentity = canMutate && firebaseConfig !== null && providerSupported;
   const deletionAvailable = shouldResolveFirebaseIdentity && firebaseIdentityState.status === "ready";
   const hasUnsubmittedInput =
-    unitSystem !== preferences.unitSystem ||
-    timezone !== preferences.timezone ||
-    reducedMotion !== preferences.reducedMotion;
+    unitSystem !== preferences?.unitSystem ||
+    timezone !== preferences?.timezone ||
+    reducedMotion !== preferences?.reducedMotion;
   const showSettingsCompanion = canShowSettingsCompanion({
     busy,
     deleteBusy,
@@ -167,11 +166,11 @@ export function SettingsForm({
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canMutate || busy) return;
+    if (!canMutate || busy || !preferences) return;
     const idempotencyKey = saveKey.current ?? operationKey();
     saveKey.current = idempotencyKey;
     setBusy(true);
-    setMessage("Saving presentation preferences…");
+    setMessage("Saving…");
     try {
       const raw = await privateApiMutation<unknown>(
         "/api/app/preferences",
@@ -193,7 +192,10 @@ export function SettingsForm({
       });
       saveKey.current = undefined;
       setPreferences(saved);
-      setMessage("Preferences saved. Stored workout measurements remain in canonical kilograms and meters.");
+      const shell = document.querySelector(".authenticated-shell-root");
+      if (saved.reducedMotion) shell?.setAttribute("data-reduced-motion", "true");
+      else shell?.removeAttribute("data-reduced-motion");
+      setMessage("Saved.");
       router.refresh();
     } catch (error) {
       setMessage(
@@ -202,37 +204,6 @@ export function SettingsForm({
           : errorMessage(error, "Preferences were not saved. Try again."),
       );
     } finally {
-      setBusy(false);
-    }
-  }
-
-  async function signOutAccount() {
-    if (busy || deleteBusy) return;
-    setBusy(true);
-    setMessage("Clearing this account’s local workout drafts…");
-    try {
-      const storage = createIndexedDBRunnerStorage({ ownerUid });
-      await performSessionSignOut(
-        {
-          clearOwner: async (uid) => {
-            if (!storage.clearOwner) {
-              throw new Error("Local account cleanup is unavailable.");
-            }
-            await storage.clearOwner(uid);
-          },
-          deleteServerSession: () => privateApiMutation<unknown>(
-            "/api/auth/session",
-            { body: {}, method: "DELETE" },
-          ),
-          signOutFirebase: async () => {
-            if (firebaseConfig) await signOut(getFirebaseClientAuth(firebaseConfig));
-          },
-        },
-        ownerUid,
-      );
-      window.location.replace("/sign-in");
-    } catch (error) {
-      setMessage(errorMessage(error, "Sign out did not finish safely. Try again."));
       setBusy(false);
     }
   }
@@ -250,7 +221,7 @@ export function SettingsForm({
   }
 
   function deletionFailureMessage(error: unknown): string {
-    if (error instanceof AccountDeletionClientError) return error.message;
+    if (error instanceof AccountDeletionClientError) return error.accountDeleted ? error.message : "Please sign in again, then retry.";
     if (error instanceof PrivateApiClientError) return error.message;
     return mapFirebaseAuthError(error);
   }
@@ -267,19 +238,19 @@ export function SettingsForm({
     deleteKey.current = idempotencyKey;
     const auth = getFirebaseClientAuth(firebaseConfig);
     setDeleteBusy(true);
-    setDeleteMessage("Reauthenticating this Firebase account…");
+    setDeleteMessage("Confirming your sign-in…");
 
     try {
       await performAccountDeletion(
         {
           clearOwner: async (uid) => {
-            setDeleteMessage("Clearing this account’s local workout drafts…");
+            setDeleteMessage("Finishing…");
             const storage = createIndexedDBRunnerStorage({ ownerUid: uid });
             if (!storage.clearOwner) throw new Error("Local owner cleanup is unavailable.");
             await storage.clearOwner(uid);
           },
           deleteAccount: async (input) => {
-            setDeleteMessage("Deleting fitness data and Firebase identity…");
+            setDeleteMessage("Deleting…");
             const response = await privateApiMutation<{
               deletion: { status: string };
             }>("/api/app/account", { body: input, method: "DELETE" });
@@ -291,13 +262,13 @@ export function SettingsForm({
             if (!currentUser) {
               throw new AccountDeletionClientError(
                 "identity_unavailable",
-                "Your Firebase session is unavailable. Sign in again before deleting the account.",
+                "Please sign in again, then retry.",
               );
             }
             if (currentUser.uid !== user.uid) {
               throw new AccountDeletionClientError(
                 "identity_mismatch",
-                "The active Firebase identity changed before reauthentication.",
+                "Please sign in again, then retry.",
               );
             }
             return (await reauthenticateWithPopup(currentUser, new GoogleAuthProvider())).user;
@@ -307,13 +278,13 @@ export function SettingsForm({
             if (!currentUser) {
               throw new AccountDeletionClientError(
                 "identity_unavailable",
-                "Your Firebase session is unavailable. Sign in again before deleting the account.",
+                "Please sign in again, then retry.",
               );
             }
             if (currentUser.uid !== user.uid) {
               throw new AccountDeletionClientError(
                 "identity_mismatch",
-                "The active Firebase identity changed before reauthentication.",
+                "Please sign in again, then retry.",
               );
             }
             return (
@@ -324,14 +295,14 @@ export function SettingsForm({
             ).user;
           },
           refreshServerSession: async (idToken) => {
-            setDeleteMessage("Refreshing the secure server session…");
+            setDeleteMessage("Confirming your sign-in…");
             await privateApiMutation<{ authenticated: true }>("/api/auth/session", {
               body: { idToken },
               method: "POST",
             });
           },
           signOut: async () => {
-            setDeleteMessage("Finishing Firebase sign-out…");
+            setDeleteMessage("Finishing…");
             await signOut(auth);
           },
         },
@@ -361,7 +332,6 @@ export function SettingsForm({
     <section className="member-settings" aria-labelledby="settings-title">
       <header className="member-settings-heading companion-heading contour-surface">
         <div>
-          <span className="eyebrow">Private account preferences</span>
           <h1 id="settings-title">Settings</h1>
           <p>Make the app comfortable for you.</p>
         </div>
@@ -372,14 +342,12 @@ export function SettingsForm({
         <aside className="member-inline-notice" role="status">Verify your email and sign in again before saving permanent preference changes.</aside>
       ) : null}
 
-      <CompanionPreference />
       <form className="settings-form" onSubmit={(event) => void save(event)}>
-        <section aria-labelledby="units-title">
-          <span className="eyebrow">Presentation</span>
-          <h2 id="units-title">Units and dates</h2>
+        <section>
+          <h2 id="units-title">Units and time zone</h2>
           <label htmlFor="settings-units">Display units</label>
           <select
-            disabled={!canMutate || busy}
+            disabled={!canMutate || busy || !preferences}
             id="settings-units"
             onChange={(event) => {
               changed();
@@ -392,53 +360,35 @@ export function SettingsForm({
           </select>
 
           <label htmlFor="settings-timezone">Time zone</label>
-          <input
-            disabled={!canMutate || busy}
-            id="settings-timezone"
-            maxLength={64}
-            onChange={(event) => {
-              changed();
-              setTimezone(event.target.value);
-            }}
-            required
-            spellCheck={false}
-            value={timezone}
-          />
-          <small>Examples: America/Chicago, Europe/London, Asia/Kolkata.</small>
+          <select id="settings-timezone" disabled={!canMutate || busy || !preferences} value={timezone} onChange={(event) => { changed(); setTimezone(event.target.value); }}>
+            {timeZoneOptions(timezone).map((zone) => <option key={zone} value={zone}>{zone}</option>)}
+          </select>
 
           <label className="settings-check">
             <input
               checked={reducedMotion}
-              disabled={!canMutate || busy}
+              disabled={!canMutate || busy || !preferences}
               onChange={(event) => {
                 changed();
                 setReducedMotion(event.target.checked);
               }}
               type="checkbox"
             />
-            <span><strong>Reduce interface motion</strong><small>Status, timers, and errors remain available as text.</small></span>
+            <span><strong>Reduce interface motion</strong><small>Turns off animations and smooth scrolling.</small></span>
           </label>
-          <button className="primary-action" disabled={!canMutate || busy} type="submit">{busy ? "Working…" : "Save preferences"}<Icon name="arrow-right" /></button>
+          <>{preferences ? <button className="primary-action" disabled={!canMutate || busy} type="submit">{busy ? "Saving…" : "Save preferences"}<Icon name="arrow-right" /></button> : <p>Set up your routine to choose units and time zone.</p>}</>
         </section>
 
-        {!equipmentProgram ? <section aria-labelledby="equipment-settings-title">
-          <h2 id="equipment-settings-title">Equipment</h2>
-          <p>{EQUIPMENT_PROFILES[equipmentProfileKind].label} is active.</p>
-          <Link className="secondary-action" href="/app/program/edit#program-editor-equipment-title">Review equipment change <Icon name="arrow-right" /></Link>
-        </section> : null}
       </form>
 
+      <CompanionPreference />
       {equipmentProgram ? <EquipmentProfileControl canMutate={canMutate} disabled={busy || deleteBusy} program={equipmentProgram} onSaved={setEquipmentProgram} /> : null}
       <section className="settings-account" aria-labelledby="account-settings-title">
-        <span className="eyebrow">Account</span>
-        <h2 id="account-settings-title">Session and data</h2>
-        <p>Signing out clears only this Firebase account’s local workout draft namespace, then removes the secure server session.</p>
-        <button disabled={busy || deleteBusy} onClick={() => void signOutAccount()} type="button"><Icon name="sign-in" /> Sign out</button>
+        <h2 id="account-settings-title">Account</h2>
         <div className="settings-delete-preview">
-          <strong>Delete account and fitness data</strong>
-          <p>This permanently removes the Firebase sign-in, program revisions, workout history, records, analytics, preferences, and custom exercises. It cannot be undone.</p>
-          {!firebaseConfig ? <small>Deletion remains unavailable until Firebase is configured.</small> : null}
-          {!providerSupported ? <small>This sign-in provider does not support deletion yet.</small> : null}
+          <strong>Delete account</strong>
+          <p>{"Permanently deletes your account, routines, workout history and records. This can't be undone."}</p>
+          {!firebaseConfig || !providerSupported ? <small>Account deletion is unavailable right now.</small> : null}
           {shouldResolveFirebaseIdentity ? (
             <FirebaseClientIdentityStatus
               onRetry={retryFirebaseIdentity}
@@ -450,7 +400,7 @@ export function SettingsForm({
             disabled={!deletionAvailable || busy || deleteBusy}
             onClick={openDeletionReview}
             type="button"
-          >Review permanent deletion</button>
+          >Delete my account</button>
         </div>
       </section>
       <p aria-live="polite" className="member-save-status" role="status">{message}</p>
@@ -466,16 +416,8 @@ export function SettingsForm({
         ref={deleteDialog}
       >
         <form className="account-delete-form" onSubmit={(event) => void deleteAccount(event)}>
-          <span className="eyebrow">Permanent account action</span>
-          <h2 id="account-delete-heading" ref={deleteHeading} tabIndex={-1}>Delete everything owned by this account?</h2>
-          <div id="account-delete-impact">
-            <p>The server deletes fitness data first, then the matching Firebase identity. If identity deletion is interrupted, the screen reports that partial state and offers a safe retry.</p>
-            <ul>
-              <li>Programs, custom exercises, workout snapshots, set and cardio logs</li>
-              <li>History, personal records, analytics summaries, equipment and preferences</li>
-              <li>The matching Firebase sign-in after a fresh {viewerProvider === "google" ? "Google popup" : "password"} check</li>
-            </ul>
-          </div>
+          <h2 id="account-delete-heading" ref={deleteHeading} tabIndex={-1}>Delete your account?</h2>
+          <div id="account-delete-impact"><p>{"You'll confirm your sign-in, then everything is deleted."}</p></div>
 
           {deletionFinished ? null : (
             <>
@@ -530,7 +472,7 @@ export function SettingsForm({
                     (viewerProvider === "password" && deletePassword.length === 0)
                   }
                   type="submit"
-                >{deleteBusy ? "Deletion in progress…" : "Reauthenticate and permanently delete"}</button>
+                >{deleteBusy ? "Deleting…" : "Delete everything"}</button>
                 <button
                   disabled={deleteBusy}
                   onClick={() => deleteDialog.current?.close()}

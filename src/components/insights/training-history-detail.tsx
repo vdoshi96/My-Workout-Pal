@@ -107,10 +107,6 @@ export function TrainingHistoryDetail({
         <DecorativeCompanion variant="history" />
       </header>
 
-      <aside className="archive-notice">
-        <strong>Read-only snapshot.</strong> Exercise names, substitutions, notes, and
-        logged values are preserved from this session.
-      </aside>
 
       <ol className="history-exercises">
         {session.exercises.map((exercise) => {

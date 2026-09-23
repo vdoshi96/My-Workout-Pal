@@ -23,6 +23,8 @@ export function proxy(request: NextRequest): NextResponse {
   const requestHeaders = new Headers(request.headers);
 
   requestHeaders.set("x-nonce", nonce);
+  requestHeaders.delete("x-mwp-pathname");
+  if (request.nextUrl.pathname === "/app" || request.nextUrl.pathname.startsWith("/app/")) requestHeaders.set("x-mwp-pathname", request.nextUrl.pathname + request.nextUrl.search);
   for (const [name, value] of securityHeaders) requestHeaders.set(name, value);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });

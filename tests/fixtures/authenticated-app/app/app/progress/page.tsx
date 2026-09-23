@@ -5,6 +5,8 @@ import { loadProgressInsights } from "@/server/repositories/training-insights";
 import { getHarnessDatabase } from "../../../server/database";
 import { harnessRequestContext } from "../../../server/harness-context";
 
+export const metadata = { title: "Progress" };
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

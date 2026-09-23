@@ -10,6 +10,8 @@ import {
 import { loadProgressInsights } from "@/server/repositories/training-insights";
 import { createWorkoutRepository } from "@/server/repositories/workout-repository";
 
+export const metadata = { title: "Today" };
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

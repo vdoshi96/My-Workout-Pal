@@ -1,10 +1,11 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { SettingsForm } from "@/components/settings/settings-form";
 import { getViewerProfileProgram, RepositoryNotFoundError } from "@/server/repositories/profile-program";
 import { getHarnessDatabase } from "../../../server/database";
 import { harnessRequestContext } from "../../../server/harness-context";
+
+export const metadata = { title: "Settings" };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -24,24 +25,22 @@ export default async function HarnessSettingsPage() {
   try {
     model = await getViewerProfileProgram(database, context.viewer);
   } catch (error) {
-    if (error instanceof RepositoryNotFoundError) redirect("/app");
-    throw error;
+    if (!(error instanceof RepositoryNotFoundError)) throw error;
   }
-  if (!model.activeProgram) redirect("/app");
 
   return (
     <SettingsForm
-      activeProgram={model.activeProgram}
+      activeProgram={model?.activeProgram ?? null}
       canMutate={context.viewer.eligibleForPermanentMutations}
-      equipmentProfileKind={model.equipment.profileKind}
+      equipmentProfileKind={model?.equipment.profileKind ?? null}
       firebaseConfig={
         context.scenario === "firebase-client-missing"
           ? fixtureFirebasePublicConfig
           : null
       }
       initialFirebaseIdentityState={{ status: "ready" }}
-      initialPreferences={model.preferences}
-      ownerUid={model.profile.firebaseUid}
+      initialPreferences={model?.preferences ?? null}
+      ownerUid={context.viewer.uid}
       viewerProvider={context.viewer.provider}
     />
   );

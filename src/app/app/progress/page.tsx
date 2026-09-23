@@ -3,6 +3,8 @@ import { getDatabase } from "@/db/client";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import { loadProgressInsights } from "@/server/repositories/training-insights";
 
+export const metadata = { title: "Progress" };
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

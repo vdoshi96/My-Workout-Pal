@@ -10,7 +10,6 @@ import {
   formatInsightVolume,
 } from "@/components/insights/training-insights-presenters";
 import { Icon } from "@/components/ui/icon";
-import { CompanionPreference } from "@/components/ui/companion-preference";
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
@@ -44,7 +43,7 @@ export function MemberProgramHome({
   progress: MemberHomeProgressSummary;
   resumableWorkout: MemberHomeResumableWorkout | null;
 }>) {
-  const [program] = useState(initialProgram);
+  const program = initialProgram;
   const [selectedDayId, setSelectedDayId] = useState(program.days[0]!.id);
   const selectedDay = program.days.find((day) => day.id === selectedDayId) ?? program.days[0]!;
   const dayCountLabel = `${program.days.length} ${program.days.length === 1 ? "day" : "days"}`;
@@ -113,15 +112,13 @@ export function MemberProgramHome({
         <Link href={`/app/program/${selectedDay.dayKey}`} prefetch={false}>Review this day</Link>
       </section> : null}
 
-      <CompanionPreference compact />
       </div>
 
       <section className="member-week" aria-labelledby="member-week-title">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">Current route</span>
             <h2 id="member-week-title">
-              {hasResumableWorkout ? "Your routine" : "Choose a training day"}
+              All days
             </h2>
           </div>
           <span>{dayCountLabel}</span>
@@ -129,34 +126,11 @@ export function MemberProgramHome({
         <ol className="member-day-grid">
           {program.days.map((day) => (
             <li key={day.id}>
-              {!hasResumableWorkout ? (
-                <Link
-                  href={`/app/program/${day.dayKey}`}
-                  prefetch={false}
-                >
-                  <span>{String(day.dayNumber).padStart(2, "0")}</span>
-                  <strong>{day.displayName}</strong>
-                  <small>
-                    {day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"} · {day.cardio.length === 0
-                      ? "no cardio"
-                      : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
-                  </small>
-                  <small className="member-day-action-label">
-                    {canMutate ? `Open ${day.displayName} to start` : `Review ${day.displayName}`}
-                  </small>
-                  <Icon name="chevron-right" />
-                </Link>
-              ) : (
-                <div className="member-day-unavailable">
-                  <span>{String(day.dayNumber).padStart(2, "0")}</span>
-                  <strong>{day.displayName}</strong>
-                  <small>
-                    {day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"} · {day.cardio.length === 0
-                      ? "no cardio"
-                      : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
-                  </small>
-                </div>
-              )}
+              <Link href={`/app/program/${day.dayKey}`} prefetch={false}>
+                <span>{String(day.dayNumber).padStart(2, "0")}</span>
+                <strong>{day.displayName}</strong><small>{day.prescriptions.length} movements</small>
+                <Icon name="chevron-right" />
+              </Link>
             </li>
           ))}
         </ol>
@@ -173,12 +147,6 @@ export function MemberProgramHome({
             <Link href="/app/progress">Open progress</Link>
           </div>
         </header>
-        {progress.completedSessions === 0 ? (
-          <div className="member-home-empty">
-            <strong>No completed workouts yet</strong>
-            <span>Finish an owned workout to begin your private history and progress.</span>
-          </div>
-        ) : (
           <dl className="member-home-totals">
             <div><dt>Completed</dt><dd>{progress.completedSessions}</dd></div>
             <div><dt>Work sets</dt><dd>{progress.completedWorkSets ?? 0}</dd></div>
@@ -187,7 +155,6 @@ export function MemberProgramHome({
             {progress.durationSeconds > 0 ? <div><dt>Duration</dt><dd>{formatInsightDuration(progress.durationSeconds)}</dd></div> : null}
             {progress.distanceMeters > 0 ? <div><dt>Distance</dt><dd>{formatInsightDistance(progress.distanceMeters, progress.unitSystem)}</dd></div> : null}
           </dl>
-        )}
       </section> : null}
 
     </section>

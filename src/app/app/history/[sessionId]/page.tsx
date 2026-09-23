@@ -38,6 +38,13 @@ async function loadHistoryDetailData(
   }
 }
 
+export async function generateMetadata({ params }: Readonly<{ params: Promise<{ sessionId: string }> }>) {
+  const viewer = await getCurrentViewer();
+  if (!viewer) return { title: "Workout" };
+  try { const session = await loadTrainingSession(getDatabase(), viewer, (await params).sessionId); return { title: `${session.dayName} workout` }; }
+  catch { return { title: "Workout" }; }
+}
+
 export default async function TrainingHistoryDetailPage({ params }: PageProps) {
   const viewer = await getCurrentViewer();
   if (!viewer) return null;
