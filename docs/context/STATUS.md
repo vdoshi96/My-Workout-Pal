@@ -1,8 +1,8 @@
 # Project status
 
-## Production-grade audit implementation: September 22, 2026
+## Production-grade audit implementation: September 23, 2026
 
-The runner, routine editor, account pages, member navigation, and public pages implement sections 3–7 on `vishal/production-grade-audit`. The audit acceptance suites pass 96 unit, 14 member, and 12 public tests; the final full-gate results are recorded in [the section 10 QA report](../qa/latest/PRODUCTION-GRADE-QA.md). W5 remains blocked by older browser journeys whose required controls were already absent at baseline, and the owner explicitly retained the strict test-edit boundary. The report includes 32 phone and desktop screenshots and a complete ledger of permitted legacy test edits. The branch is pushed as [draft PR #8 — Production-grade audit fixes](https://github.com/vdoshi96/My-Workout-Pal/pull/8); it is not merged, and no deployment command ran. The canonical checkout is the sole worktree and remains active for owner review and unresolved W5 verification.
+The PR #8 follow-up fixes singular movement counts, prevents finishing before pending workout saves complete, and keeps an offline tab from stopping another tab's uploads. Both full W5 suites completed on detached main `c619ac6` before the authorized stale-journey updates; the [section 10 QA report](../qa/latest/PRODUCTION-GRADE-QA.md) records every baseline failure, the branch comparison, and all new test-edit ledger rows. W1–W4 and W6 pass, but W5 remains blocked by preserved assertions for retired content and artwork layouts, plus the plan's reset-only recovery conflict. The 32 required screenshots include fresh phone and desktop views of the one-movement Today and editor screens. [PR #8 — Production-grade audit fixes](https://github.com/vdoshi96/My-Workout-Pal/pull/8) is pushed and marked ready for review at the owner's request, with failed gates disclosed; no merge or deployment command ran, and local main remains at `c619ac6`. The canonical checkout is the sole worktree and remains active for review and the unresolved stopped items.
 
 ## Production-grade time-zone contract corrected: September 22, 2026 (historical correction)
 
