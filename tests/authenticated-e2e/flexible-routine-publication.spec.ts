@@ -226,7 +226,10 @@ async function submitOnboarding(page: Page) {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start with example" }).click();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
   return responsePromise;
 }
 
@@ -247,7 +250,15 @@ async function submitRunnerAction(page: Page, name: string | RegExp) {
       /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name }).click();
+  if (name === "Skip exercise") {
+    if (await page.locator(".runner-more").getAttribute("open") === null) {
+      await page.getByText("More options", { exact: true }).click();
+    }
+    await page.getByRole("button", { name, exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name, exact: true }).click();
+  } else {
+    await page.getByRole("button", { name, exact: true }).click();
+  }
   return responsePromise;
 }
 
@@ -288,9 +299,10 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
 
   await alice.page.goto("/app");
   expect((await submitOnboarding(alice.page)).status()).toBe(201);
-  await alice.page.getByRole("link", { name: /Manage routines/ }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
+  await alice.page.getByRole("link", { name: "All routines", exact: true }).click();
   await alice.page.getByRole("radio", { name: /Custom starting point/ }).check();
-  await alice.page.getByLabel("Program name").fill("Weekend route");
+  await alice.page.getByLabel("Routine name").fill("Weekend route");
   await alice.page.getByLabel("First day name").fill("Sunrise strength");
   await alice.page.getByLabel("First section name").fill("Main work");
   await alice.page.getByLabel("First movement").selectOption({ label: "Dumbbell bench press" });
@@ -299,16 +311,16 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
       new URL(response.url()).pathname === "/api/app/programs" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Publish custom routine" }).click();
+  await alice.page.getByRole("button", { name: "Create and use this routine" }).click();
   expect((await createResponse).status()).toBe(201);
 
   await expect(
-    alice.page.getByText("Weekend route · Revision 1 · Dumbbells · 1 day", {
+    alice.page.getByText("Weekend route · Dumbbells · 1 day", {
       exact: true,
     }),
   ).toBeVisible();
   await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(1);
-  await expect(alice.page.getByText("1 movements · no cardio")).toBeVisible();
+  await expect(alice.page.getByText("1 movement · no cardio")).toBeVisible();
   const created = await readProfileProgram(alice.page);
   const createdProgram = created.activeProgram;
   if (!createdProgram) throw new Error("The custom program was not activated.");
@@ -325,7 +337,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
 
   await alice.page.getByRole("link", { name: /Sunrise strength/ }).click();
   await expect(alice.page).toHaveURL(`/app/program/${createdDayKey}`);
-  await expect(alice.page.getByText("1 movements · no cardio finish")).toBeVisible();
+  await expect(alice.page.getByText("1 movement · no cardio finish")).toBeVisible();
   await expect(alice.page.getByRole("heading", { name: "Strength only" })).toBeVisible();
   await expect(alice.page.getByText("This day has no configured cardio segment.")).toBeVisible();
   const firstStart = alice.page.waitForResponse(
@@ -333,13 +345,13 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Start or resume workout" }).click();
+  await alice.page.getByRole("button", { name: "Start workout" }).click();
   expect((await firstStart).status()).toBe(201);
   await expect(alice.page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   await expect(alice.page.getByRole("heading", { level: 1, name: "Sunrise strength" })).toBeVisible();
   await expect(alice.page.getByText("Main work", { exact: true })).toBeVisible();
   expect((await submitRunnerAction(alice.page, "Skip exercise")).status()).toBe(200);
-  const completion = submitRunnerAction(alice.page, "Complete workout");
+  const completion = submitRunnerAction(alice.page, "Finish workout");
   expect((await completion).status()).toBe(200);
   await expect(alice.page).toHaveURL(/\/app\/history\/[0-9a-f-]+$/u);
   const originalHistoryUrl = alice.page.url();
@@ -349,8 +361,8 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   await alice.page.goto("/app/program/edit");
   await alice.page.getByLabel("Day name").fill("Sunrise power");
   await alice.page.getByRole("button", { name: "Add day" }).click();
-  const daySetup = alice.page.getByRole("region", {
-    name: "Name the day before choosing its first movement",
+  const daySetup = alice.page.getByRole("dialog", {
+    name: "New day",
   });
   await daySetup.getByLabel("Day name").fill("Tempo and touch");
   await daySetup.getByLabel("First section name").fill("Tempo drills");
@@ -482,9 +494,9 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
       new URL(response.url()).pathname === "/api/app/program/publish" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Publish new revision" }).click();
+  await alice.page.getByRole("button", { name: "Save routine" }).click();
   expect((await publishResponse).status()).toBe(200);
-  await expect(alice.page.getByText(/Published revision 2/)).toBeVisible();
+  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
   const publishedFromEditor = await readProfileProgram(alice.page);
   const publishedDay = publishedFromEditor.activeProgram?.days.find(
     ({ displayName }) => displayName === "Mobility reset",
@@ -521,7 +533,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   });
 
   await alice.page.goto("/app");
-  await expect(alice.page.getByText("Revision 2 · Dumbbells · 2 days")).toBeVisible();
+  await expect(alice.page.getByText("Dumbbells · 2 days")).toBeVisible();
   await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(2);
   const published = await readProfileProgram(alice.page);
   const publishedProgram = published.activeProgram;
@@ -550,7 +562,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Start or resume workout" }).click();
+  await alice.page.getByRole("button", { name: "Start workout" }).click();
   expect((await secondStart).status()).toBe(201);
   await expect(alice.page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const activeSessionUrl = alice.page.url();
@@ -576,7 +588,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   );
   await equipmentPage.getByRole("button", { name: "Confirm Barbell + rack" }).click();
   expect((await equipmentResponse).status()).toBe(200);
-  await expect(equipmentPage.getByText(/Saved revision 3/)).toBeVisible();
+  await expect(equipmentPage.getByText("Equipment updated.", { exact: true })).toBeVisible();
   const afterEquipment = await readProfileProgram(equipmentPage);
   const afterEquipmentSummary = await readHarnessSummary(equipmentPage);
   const equipmentProgram = afterEquipment.activeProgram;
@@ -610,10 +622,10 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   await expect(alice.page.getByText("Trunk check", { exact: true })).toBeVisible();
   expect((await submitRunnerAction(alice.page, "Skip exercise")).status()).toBe(200);
   await alice.page.getByRole("button", { name: /Runner/ }).click();
-  await alice.page.getByLabel("Duration (seconds)").last().fill("900");
+  await alice.page.getByLabel("Duration", { exact: true }).fill("15:00");
   await alice.page.getByLabel("Cardio notes").fill("Saved flexible runner");
   expect((await submitRunnerAction(alice.page, "Save cardio")).status()).toBe(200);
-  const resumedCompletion = submitRunnerAction(alice.page, "Complete workout");
+  const resumedCompletion = submitRunnerAction(alice.page, "Finish workout");
   expect((await resumedCompletion).status()).toBe(200);
   await expect(alice.page).toHaveURL(
     workoutApiPath(activeSessionUrl).replace("/api/app/workouts/", "/app/history/"),
@@ -634,7 +646,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   const bob = await openHarnessPage(browser, scope, "bob", testInfo);
   await bob.page.goto("/app");
   expect((await submitOnboarding(bob.page)).status()).toBe(201);
-  await expect(bob.page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await expect(bob.page.getByRole("heading", { name: "All days" })).toBeVisible();
   await bob.page.goto("/app/program/edit");
   const bobSection = bob.page.locator("fieldset.program-editor-section").first();
   await bobSection.getByRole("button", { name: "Add movement" }).click();

@@ -208,8 +208,11 @@ test("member rollout surfaces preserve product priority across the authenticated
   const context = await createHarnessContext(browser, scope, testInfo, "alice", control);
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   for (const width of widthMatrix(testInfo)) {
     await page.setViewportSize({
@@ -219,7 +222,7 @@ test("member rollout surfaces preserve product priority across the authenticated
 
     await page.goto("/app/library");
     await expect(page.getByRole("heading", { name: "Exercise library" })).toBeVisible();
-    await expectCompanion(page, "library", width >= 1024, [
+    await expectCompanion(page, "library", true, [
       ".member-header",
       ".member-nav",
       ".member-library-heading > div:first-child",
@@ -238,7 +241,7 @@ test("member rollout surfaces preserve product priority across the authenticated
     }
 
     await page.goto("/app/program/edit");
-    await expect(page.getByRole("heading", { name: "Edit your route" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your routine" })).toBeVisible();
     await expectCompanion(page, "routine-editor", width >= 1024, [
       ".member-header",
       ".member-nav",
@@ -292,9 +295,9 @@ test("member rollout surfaces preserve product priority across the authenticated
 
   await page.goto("/app/program/edit");
   const editorPlacement = page.locator('[data-companion-placement="routine-editor"]');
-  await page.getByLabel("Program name").fill("Draft state hides decoration");
+  await page.getByLabel("Routine name").fill("Draft state hides decoration");
   await expect(editorPlacement).toBeHidden();
-  await expect(page.getByText("Unpublished changes")).toBeVisible();
+  await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible();
 
   page.once("dialog", async (dialog) => dialog.accept());
   await page.goto("/app/settings");
@@ -314,17 +317,17 @@ test("member rollout surfaces preserve product priority across the authenticated
   await page.getByRole("button", { name: "Save preferences" }).click();
   expect((await saveSettings).status()).toBe(200);
   expect((await refreshSettings).status()).toBe(200);
-  await expect(page.getByText("Preferences saved.")).toBeVisible();
+  await expect(page.getByText("Saved.", { exact: true })).toBeVisible();
   await expect(settingsPlacement).toBeHidden();
 
   await page.goto("/app");
-  await page.getByRole("link", { name: /Open Push to start/u }).click();
+  await page.getByRole("link", { name: /Push/ }).click();
   const startResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start or resume workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   expect((await startResponse).status()).toBe(201);
   await page.waitForURL(/\/workout\/[0-9a-f-]+$/u);
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -358,10 +361,10 @@ test("member rollout surfaces preserve product priority across the authenticated
     await page.getByRole("button", { name: "Clear" }).click();
     await expect(runnerPlacement).toBeVisible();
     await context.setOffline(true);
-    await expect(page.getByRole("heading", { name: "Offline queued" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "You're offline" })).toBeVisible();
     await expect(runnerPlacement).toBeHidden();
     await context.setOffline(false);
-    await expect(page.getByRole("heading", { name: "Offline queued" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "You're offline" })).toHaveCount(0);
     await expect(runnerPlacement).toBeVisible();
   }
 
@@ -389,7 +392,7 @@ test("member rollout surfaces preserve product priority across the authenticated
 
   await page.getByRole("button", { name: "Runner 20:00" }).click();
   await page.getByLabel(/^Distance \((mi|meters)\)$/u).last().fill("1");
-  await page.getByLabel("Duration (seconds)").last().fill("1200");
+  await page.getByLabel("Duration", { exact: true }).fill("20:00");
   const cardioResponse = page.waitForResponse(
     (response) =>
       /\/api\/app\/workouts\/[^/]+\/operations$/u.test(
@@ -409,7 +412,11 @@ test("member rollout surfaces preserve product priority across the authenticated
           new URL(response.url()).pathname,
         ) && response.request().method() === "POST",
     );
-    await page.getByRole("button", { name: "Skip exercise" }).click();
+    if (await page.locator(".runner-more").getAttribute("open") === null) {
+      await page.getByText("More options", { exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Skip exercise", exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Skip exercise", exact: true }).click();
     expect((await skipResponse).status()).toBe(200);
     await expect(outlineItems.nth(index).getByText("Skipped")).toBeVisible();
   }
@@ -420,7 +427,7 @@ test("member rollout surfaces preserve product priority across the authenticated
       /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Complete workout" }).click();
+  await page.getByRole("button", { name: "Finish workout" }).click();
   expect((await completionResponse).status()).toBe(200);
   await expect(page).toHaveURL(`/app/history/${sessionId}`);
   await expect(page.getByText("Completed workout")).toBeVisible();
@@ -480,8 +487,11 @@ test("owned companion failure collapses without changing protected controls", as
   const context = await createHarnessContext(browser, scope, testInfo, "alice", control);
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
   await page.goto("/app/library");
   const placement = page.locator('[data-companion-placement="library"]');
   if (currentWidth(testInfo) >= 1024) {
@@ -517,15 +527,18 @@ test("headed native 200 percent zoom reflows member Library and History", async 
 
   try {
     await page.goto("/app");
-    await page.getByRole("button", { name: "Start with example" }).click();
-    await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
-    await page.getByRole("link", { name: /Open Push to start/u }).click();
+    await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+    await page.getByRole("link", { name: /Push/ }).click();
     const startResponse = page.waitForResponse(
       (response) =>
         new URL(response.url()).pathname === "/api/app/workouts" &&
         response.request().method() === "POST",
     );
-    await page.getByRole("button", { name: "Start or resume workout" }).click();
+    await page.getByRole("button", { name: "Start workout" }).click();
     expect((await startResponse).status()).toBe(201);
     await page.waitForURL(/\/workout\/[0-9a-f-]+$/u);
     const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -533,7 +546,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
 
     await page.getByRole("button", { name: "Runner 20:00" }).click();
     await page.getByLabel(/^Distance \((mi|meters)\)$/u).last().fill("1");
-    await page.getByLabel("Duration (seconds)").last().fill("1200");
+    await page.getByLabel("Duration", { exact: true }).fill("20:00");
     const cardioResponse = page.waitForResponse(
       (response) =>
         /\/api\/app\/workouts\/[^/]+\/operations$/u.test(
@@ -553,7 +566,11 @@ test("headed native 200 percent zoom reflows member Library and History", async 
             new URL(response.url()).pathname,
           ) && response.request().method() === "POST",
       );
-      await page.getByRole("button", { name: "Skip exercise" }).click();
+      if (await page.locator(".runner-more").getAttribute("open") === null) {
+      await page.getByText("More options", { exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Skip exercise", exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Skip exercise", exact: true }).click();
       expect((await skipResponse).status()).toBe(200);
       await expect(outlineItems.nth(index).getByText("Skipped")).toBeVisible();
     }
@@ -563,7 +580,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
           new URL(response.url()).pathname,
         ) && response.request().method() === "POST",
     );
-    await page.getByRole("button", { name: "Complete workout" }).click();
+    await page.getByRole("button", { name: "Finish workout" }).click();
     expect((await completionResponse).status()).toBe(200);
     await expect(page).toHaveURL(`/app/history/${sessionId}`);
 

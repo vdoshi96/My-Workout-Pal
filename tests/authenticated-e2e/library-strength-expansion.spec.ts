@@ -87,9 +87,12 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start with example" }).click();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
   expect((await onboarding).status()).toBe(201);
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   plannedSameOriginNavigationUrl = new URL("/app/program/edit", page.url()).href;
   try {
@@ -130,9 +133,9 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
       new URL(response.url()).pathname === "/api/app/program/publish" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Publish new revision" }).click();
+  await page.getByRole("button", { name: "Save routine" }).click();
   expect((await publishResponse).status()).toBe(200);
-  await expect(page.getByText(/Published revision \d+/u)).toBeVisible();
+  await expect(page.locator(".quiet-save-state")).toHaveText("Saved");
 
   const savedDayLink = page.getByRole("link", { name: "Open saved day" });
   const savedDayHref = await savedDayLink.getAttribute("href");
@@ -159,19 +162,21 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start or resume workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   expect((await startResponse).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
 
+  await page.getByText("Workout outline", { exact: true }).click();
   await page.getByRole("button", { name: /Dumbbell floor press/iu }).click();
   await expect(
     page.getByRole("heading", { level: 2, name: "Dumbbell floor press" }),
   ).toBeVisible();
-  const techniquePanel = page.locator("section.runner-technique");
+  await page.getByText("Watch demo and technique guidance", { exact: true }).click();
+  const techniquePanel = page.locator("details.runner-technique");
   await expect(techniquePanel.getByText("Unavailable", { exact: true })).toBeVisible();
   await expect(
     techniquePanel.getByText(
-      "No approved catalog pair is available for this movement. Workout logging remains available.",
+      "No demonstration is available for this movement. Workout logging remains available.",
     ),
   ).toBeVisible();
   await expect(page.locator("iframe")).toHaveCount(0);

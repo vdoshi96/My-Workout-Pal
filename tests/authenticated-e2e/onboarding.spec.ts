@@ -253,11 +253,19 @@ async function submitOnboarding(
   profile: "barbell" | "dumbbells",
   mode: "example" | "blank" = "example",
 ) {
+  if (await page.getByRole("radio", { name: /Example routine/ }).isVisible()) {
+    await page.getByRole("radio", { name: mode === "example" ? /Example routine/ : /Blank routine/ }).check();
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+  }
+  if (await page.getByLabel("Display units").isVisible()) {
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+  }
   if (profile === "barbell") {
     await page.getByRole("radio", { name: /Barbell \+ rack/ }).check();
   }
-  if (mode === "blank") {
-    await page.getByRole("radio", { name: /Blank routine/ }).check();
+  if (mode === "blank" && await page.getByLabel("Search movements").isVisible()) {
+    await page.getByLabel("Search movements").fill("Dead bug");
+    await page.getByRole("button", { name: "Dead bug bodyweight", exact: true }).click();
   }
   const responsePromise = page.waitForResponse(
     (response) =>
@@ -265,7 +273,7 @@ async function submitOnboarding(
       response.request().method() === "POST",
   );
   await page.getByRole("button", {
-    name: mode === "example" ? "Start with example" : "Start blank",
+    name: "Save routine", exact: true,
   }).click();
   const response = await responsePromise;
   return { body: await response.json(), response };
@@ -382,7 +390,7 @@ async function saveWeightSet(
       /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
       response.request().method() === "POST",
   );
-  const saveButton = page.getByRole("button", { name: "Save set" });
+  const saveButton = page.getByRole("button", { name: /^(Log|Update) set & rest$/ });
   if (activation === "keyboard") {
     await saveButton.focus();
     await expect(saveButton).toBeFocused();
@@ -399,7 +407,15 @@ async function submitRunnerAction(page: Page, name: string | RegExp) {
       /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name }).click();
+  if (name === "Skip exercise") {
+    if (await page.locator(".runner-more").getAttribute("open") === null) {
+      await page.getByText("More options", { exact: true }).click();
+    }
+    await page.getByRole("button", { name, exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name, exact: true }).click();
+  } else {
+    await page.getByRole("button", { name, exact: true }).click();
+  }
   return responsePromise;
 }
 
@@ -415,7 +431,7 @@ async function completePullWorkoutForInsights(page: Page): Promise<string> {
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start or resume workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   expect((await startPromise).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -429,7 +445,8 @@ async function completePullWorkoutForInsights(page: Page): Promise<string> {
     if (index > 0) await page.getByRole("button", { name: label }).click();
     expect((await saveWeightSet(page, "25", "12", index === 0 ? "keyboard" : "pointer")).status()).toBe(200);
   }
-  expect((await submitRunnerAction(page, "Complete exercise")).status()).toBe(200);
+  expect((await submitRunnerAction(page, "Next exercise")).status()).toBe(200);
+  await page.getByText("Workout outline", { exact: true }).click();
 
   for (const exerciseName of [
     "One-arm dumbbell row",
@@ -443,12 +460,12 @@ async function completePullWorkoutForInsights(page: Page): Promise<string> {
   }
 
   await page.getByRole("button", { name: /Walker/ }).click();
-  await page.getByLabel("Duration (seconds)").last().fill("1200");
+  await page.getByLabel("Duration", { exact: true }).fill("20:00");
   await page.getByLabel("Distance (mi)").last().fill("1");
   await page.getByLabel("Incline (%)").fill("2");
   await page.getByLabel("Cardio notes").fill("Immutable QA walk");
   expect((await submitRunnerAction(page, "Save cardio")).status()).toBe(200);
-  const completionPromise = submitRunnerAction(page, "Complete workout");
+  const completionPromise = submitRunnerAction(page, "Finish workout");
   await expect(page).toHaveURL(`/app/history/${sessionId}`);
   expect((await completionPromise).status()).toBe(200);
   await expect(page.getByText(/25 lb · 12 reps/i).first()).toBeVisible();
@@ -479,8 +496,8 @@ test("new accounts choose one idempotent example or blank graph through onboardi
   expect(blankResult.response.status()).toBe(201);
   expect(blankResult.body).toMatchObject({ mode: "blank" });
   await expect(blank.page).toHaveURL(/\/app\/program\/edit$/u);
-  await expect(blank.page.getByRole("heading", { name: "Edit your route" })).toBeVisible();
-  await expect(blank.page.getByLabel("Program name")).toHaveValue("Blank routine");
+  await expect(blank.page.getByRole("heading", { name: "Your routine" })).toBeVisible();
+  await expect(blank.page.getByLabel("Routine name")).toHaveValue("Blank routine");
   const blankProfile = await readProfileProgram(blank.page);
   expect(blankProfile.programs).toHaveLength(1);
   expect(blankProfile.activeProgram).toMatchObject({
@@ -530,8 +547,8 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
 
   const unverified = await openPage(browser, scope, "alice-unverified", testInfo);
   await unverified.page.goto("/app");
-  await expect(unverified.page.getByText("Read-only account.")).toBeVisible();
-  await expect(unverified.page.getByRole("button", { name: "Start with example" })).toBeDisabled();
+  await expect(unverified.page.getByText("Verify your email to save changes.")).toBeVisible();
+  await expect(unverified.page.getByRole("button", { name: "Continue", exact: true })).toBeDisabled();
   await expect(unverified.page.getByRole("radio", { name: /Blank routine/ })).toBeDisabled();
   await assertAccessible(unverified.page);
   expect(unverified.failedResponses).toEqual([]);
@@ -548,8 +565,8 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   const aliceOnboarding = await submitOnboarding(alice.page, "dumbbells");
   expect(aliceOnboarding.response.status()).toBe(201);
   const aliceProgram = activeProgramIds(aliceOnboarding.body);
-  await expect(alice.page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
-  await expect(alice.page.getByRole("heading", { name: "Welcome back, Alice QA" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Ready when you are, Alice QA." })).toBeVisible();
   await expect(alice.page.getByText("No completed workouts yet")).toBeVisible();
   await expect(alice.page.getByRole("link", { name: "Manage routines" })).toBeVisible();
   await expect(alice.page.getByRole("link", { name: "Edit routine" })).toBeVisible();
@@ -559,18 +576,18 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   await expect(alice.page.getByRole("link", { name: "Review history" })).toHaveAttribute("href", "/app/history");
   await expect(alice.page.getByRole("link", { name: "Open progress" })).toHaveAttribute("href", "/app/progress");
   await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(5);
-  await expect(alice.page.getByText("Revision 1 · Dumbbells · 5 days")).toBeVisible();
+  await expect(alice.page.getByText("Dumbbells · 5 days")).toBeVisible();
   await assertAccessible(alice.page);
   expect(await alice.page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   expect(alice.failedResponses).toEqual([]);
 
-  await alice.page.getByRole("link", { name: /Open Push to start/ }).click();
+  await alice.page.getByRole("link", { name: /Push/ }).click();
   const startResponse = alice.page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Start or resume workout" }).click();
+  await alice.page.getByRole("button", { name: "Start workout" }).click();
   expect((await startResponse).status()).toBe(201);
   await expect(alice.page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const activeSessionPath = new URL(alice.page.url()).pathname;
@@ -623,7 +640,7 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   await bob.page.goto("/app");
   const bobOnboarding = await submitOnboarding(bob.page, "barbell");
   expect(bobOnboarding.response.status()).toBe(201);
-  await expect(bob.page.getByText("Revision 1 · Barbell + rack · 5 days")).toBeVisible();
+  await expect(bob.page.getByText("Barbell + rack · 5 days")).toBeVisible();
   await expect(bob.page.locator(".member-day-grid > li")).toHaveCount(5);
   const bobProgramsBefore = await programCount(bob.page);
 
@@ -654,7 +671,7 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
     "POST /api/app/programs 404",
   ]);
   await bob.page.reload();
-  await expect(bob.page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await expect(bob.page.getByRole("heading", { name: "All days" })).toBeVisible();
   await assertAccessible(bob.page);
   const evidenceName =
     testInfo.project.name === "chromium-desktop"
@@ -707,14 +724,14 @@ test("a failed onboarding retry keeps the same idempotency key and never claims 
   const first = await submitOnboarding(page, "dumbbells");
   expect(first.response.status()).toBe(500);
   await expect(page.getByText("The request could not be completed.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Start with the example or start blank" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Make room for your routine." })).toBeVisible();
   const firstBody = first.response.request().postDataJSON() as { idempotencyKey?: unknown };
 
   const retry = await submitOnboarding(page, "dumbbells");
   expect(retry.response.status()).toBe(201);
   const retryBody = retry.response.request().postDataJSON() as { idempotencyKey?: unknown };
   expect(retryBody.idempotencyKey).toBe(firstBody.idempotencyKey);
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   await page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));
 
@@ -729,14 +746,15 @@ test("imperial editor typing stays literal and browser Back protects a dirty dra
   await alice.page.goto("/app");
   expect((await submitOnboarding(alice.page, "dumbbells")).response.status()).toBe(201);
 
-  await alice.page.getByRole("link", { name: /Edit routine/ }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
   await expect(alice.page).toHaveURL(/\/app\/program\/edit$/u);
   const targetWeight = alice.page.getByLabel("Target lb (optional)").first();
   await targetWeight.selectText();
   await targetWeight.pressSequentially("44.1");
   await expect(targetWeight).toHaveValue("44.1");
-  await expect(alice.page.getByText("Unpublished changes")).toBeVisible();
+  await expect(alice.page.getByText("Unsaved changes", { exact: true })).toBeVisible();
 
+  await alice.page.getByText("Equipment and substitutions", { exact: true }).click();
   const barbellProfile = alice.page
     .getByRole("group", { name: "Equipment profile" })
     .getByRole("button", { name: /Barbell \+ rack/ });
@@ -748,7 +766,7 @@ test("imperial editor typing stays literal and browser Back protects a dirty dra
   await expect(barbellProfile).toHaveAttribute("aria-expanded", "true");
   await expect(equipmentReview).toHaveAttribute("id", reviewId!);
   await expect(
-    alice.page.getByText(/Your unpublished editor changes are not included/),
+    alice.page.getByText("Save or discard your routine edits first."),
   ).toBeVisible();
   await expect(
     alice.page.getByRole("button", { name: "Confirm Barbell + rack" }),
@@ -759,7 +777,7 @@ test("imperial editor typing stays literal and browser Back protects a dirty dra
 
   alice.page.once("dialog", async (dialog) => {
     expect(dialog.type()).toBe("confirm");
-    expect(dialog.message()).toBe("Discard this unpublished program draft?");
+    expect(dialog.message()).toBe("Discard your routine changes?");
     await dialog.dismiss();
   });
   await alice.page.goBack();
@@ -770,7 +788,7 @@ test("imperial editor typing stays literal and browser Back protects a dirty dra
   await cardioDistance.selectText();
   await cardioDistance.pressSequentially("0.1");
   await expect(cardioDistance).toHaveValue("0.1");
-  await expect(alice.page.getByText("Unpublished changes")).toBeVisible();
+  await expect(alice.page.getByText("Unsaved changes", { exact: true })).toBeVisible();
   await assertAccessible(alice.page);
 
   alice.page.once("dialog", async (dialog) => {
@@ -779,7 +797,7 @@ test("imperial editor typing stays literal and browser Back protects a dirty dra
   });
   await alice.page.goBack();
   await expect(alice.page).toHaveURL(/\/app$/u);
-  await expect(alice.page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   await alice.page.goto("/app/library?q=not-a-movement&q=squat");
   await expect(alice.page.getByRole("heading", { name: "Exercise library" })).toBeVisible();
@@ -802,40 +820,45 @@ test("owned customization publishes once, preserves history, and derives private
     "accept-next-program-publish-then-error",
   );
   await alice.page.goto("/app");
-  await alice.page.getByLabel("Time zone").fill("UTC");
+  await alice.page.getByRole("radio", { name: /Example routine/ }).check();
+  await alice.page.getByRole("button", { name: "Continue", exact: true }).click();
+  await alice.page.getByLabel("Time zone").selectOption("UTC");
   expect((await submitOnboarding(alice.page, "dumbbells")).response.status()).toBe(201);
   await assertAccessible(alice.page);
   const onboardingSummary = await readScopeSummary(alice.page);
 
-  await alice.page.getByRole("link", { name: "Home", exact: true }).click();
-  await alice.page.getByRole("link", { name: /Manage routines/ }).click();
-  await alice.page.getByLabel("Program name").fill("QA barbell route");
+  await alice.page.getByRole("link", { name: "Today", exact: true }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
+  await alice.page.getByRole("link", { name: "All routines", exact: true }).click();
   await alice.page.getByRole("radio", { name: /Barbell \+ rack/ }).check();
+  await alice.page.getByLabel("Routine name").fill("QA barbell route");
   const createProgramResponse = alice.page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/programs" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Create from example" }).click();
+  await alice.page.getByRole("button", { name: "Create and use this routine" }).click();
   expect((await createProgramResponse).status()).toBe(201);
-  await expect(alice.page.getByText("Revision 1 · Barbell + rack · 5 days")).toBeVisible();
+  await expect(alice.page.getByText("Barbell + rack · 5 days")).toBeVisible();
   await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(5);
 
-  await alice.page.getByRole("link", { name: /Manage routines/ }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
+  await alice.page.getByRole("link", { name: "All routines", exact: true }).click();
   const barbellProgramCard = alice.page
     .locator(".program-collection-list > li")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "QA barbell route" }) });
-  await barbellProgramCard.getByRole("button", { name: "Clone" }).click();
-  await alice.page.getByLabel("New program name").fill("QA cloned route");
+  await barbellProgramCard.getByRole("button", { name: "Duplicate" }).click();
+  await alice.page.getByLabel("New routine name").fill("QA cloned route");
   const cloneProgramResponse = alice.page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/programs" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Clone and activate" }).click();
+  await alice.page.getByRole("dialog").getByRole("button", { name: "Duplicate", exact: true }).click();
   expect((await cloneProgramResponse).status()).toBe(201);
+  await alice.page.getByRole("link", { name: "Back to Today", exact: true }).click();
   await expect(
-    alice.page.getByText("QA cloned route · Revision 1 · Barbell + rack · 5 days", {
+    alice.page.getByText("QA cloned route · Barbell + rack · 5 days", {
       exact: true,
     }),
   ).toBeVisible();
@@ -847,7 +870,8 @@ test("owned customization publishes once, preserves history, and derives private
     onboardingSummary.counts.programRevisions + 2,
   );
 
-  await alice.page.getByRole("link", { name: /Manage routines/ }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
+  await alice.page.getByRole("link", { name: "All routines", exact: true }).click();
   const originalProgramCard = alice.page
     .locator(".program-collection-list > li")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "Five-day starter route" }) });
@@ -861,10 +885,10 @@ test("owned customization publishes once, preserves history, and derives private
   await expect(activateOriginal).toBeFocused();
   await alice.page.keyboard.press("Enter");
   expect((await activateOriginalResponse).status()).toBe(200);
-  await expect(alice.page.getByText("Revision 1 · Dumbbells · 5 days")).toBeVisible();
+  await expect(alice.page.getByText("Dumbbells · 5 days")).toBeVisible();
 
-  await alice.page.getByRole("link", { name: /Manage private exercises/ }).click();
-  await alice.page.getByRole("link", { name: "Create exercise" }).click();
+  await alice.page.getByRole("link", { name: "Library", exact: true }).click();
+  await alice.page.getByRole("link", { name: "Create private exercise" }).click();
   await alice.page.getByLabel("Exercise name").fill("QA supported row");
   await alice.page.getByLabel("Instructions").fill("Brace on the bench and row with control.");
   await alice.page.getByLabel("Search aliases").fill("supported row\nbench row");
@@ -886,8 +910,9 @@ test("owned customization publishes once, preserves history, and derives private
   await alice.page.getByRole("link", { name: /Custom library/ }).click();
   await expect(alice.page.getByRole("link", { name: /QA supported row/ })).toBeVisible();
 
-  await alice.page.getByRole("link", { name: "Home", exact: true }).click();
-  await alice.page.getByRole("link", { name: /Edit routine/ }).click();
+  await alice.page.getByRole("link", { name: "Today", exact: true }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
+  await alice.page.getByText("Add a section", { exact: true }).click();
   await expect(alice.page.getByRole("button", { name: "Add core section" })).toBeEnabled();
   const accessorySection = alice.page
     .locator("fieldset.program-editor-section")
@@ -896,6 +921,7 @@ test("owned customization publishes once, preserves history, and derives private
   const removeAccessory = accessorySection.getByRole("button", {
     name: `Remove ${accessoryName} section`,
   });
+  await accessorySection.getByLabel(`More actions for ${accessoryName}`, { exact: true }).click();
   await removeAccessory.click();
   await expect(alice.page.getByRole("heading", { name: `Remove ${accessoryName}?` })).toBeVisible();
   await expect(
@@ -935,6 +961,7 @@ test("owned customization publishes once, preserves history, and derives private
   const moveCustomDown = customPrescription.getByRole("button", {
     name: "Move QA supported row down",
   });
+  await customPrescription.getByLabel("More actions for QA supported row", { exact: true }).click();
   await moveCustomDown.focus();
   await expect(moveCustomDown).toBeFocused();
   await moveCustomDown.press("Enter");
@@ -942,12 +969,13 @@ test("owned customization publishes once, preserves history, and derives private
     "Dumbbell curl",
     "QA supported row",
   ]);
+  await newAccessorySection.getByLabel("More actions for Custom assistance", { exact: true }).click();
   await alice.page.getByRole("button", { name: "Move Custom assistance section up" }).click();
 
   const walkerEditor = alice.page
     .locator("fieldset.program-editor-cardio section")
     .filter({ has: alice.page.getByRole("heading", { exact: true, level: 3, name: "walker" }) });
-  await walkerEditor.getByLabel("Duration seconds").fill("900");
+  await walkerEditor.getByLabel("Duration", { exact: true }).fill("15:00");
   const walkerDistance = walkerEditor.getByLabel("Distance miles");
   await walkerDistance.selectText();
   await walkerDistance.pressSequentially("0.1");
@@ -974,14 +1002,14 @@ test("owned customization publishes once, preserves history, and derives private
       new URL(response.url()).pathname === "/api/app/program/publish" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Publish new revision" }).click();
+  await alice.page.getByRole("button", { name: "Save routine" }).click();
   const failedPublish = await firstPublishResponse;
   expect(failedPublish.status()).toBe(500);
   const failedPublishBody = failedPublish.request().postDataJSON() as { idempotencyKey?: unknown };
   expect(failedPublishBody.idempotencyKey).toEqual(expect.any(String));
   expect((failedPublishBody.idempotencyKey as string).trim().length).toBeGreaterThan(0);
   await expect(
-    alice.page.getByText("The synthetic transport lost the accepted publication response."),
+    alice.page.getByText("Couldn't save your routine. Try again."),
   ).toBeVisible();
   await assertAccessible(alice.page);
   const acceptedPublishSummary = await readScopeSummary(alice.page);
@@ -994,13 +1022,13 @@ test("owned customization publishes once, preserves history, and derives private
       new URL(response.url()).pathname === "/api/app/program/publish" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Publish new revision" }).click();
+  await alice.page.getByRole("button", { name: "Save routine" }).click();
   const reconciledPublish = await retryPublishResponse;
   expect(reconciledPublish.status()).toBe(200);
   expect((reconciledPublish.request().postDataJSON() as { idempotencyKey?: unknown }).idempotencyKey)
     .toBe(failedPublishBody.idempotencyKey);
-  await expect(alice.page.getByText(/Published revision 2/)).toBeVisible();
-  await expect(alice.page.getByText("Draft matches the active revision")).toBeVisible();
+  await expect(alice.page.getByText("Routine saved. Past workouts stay as they were.", { exact: true })).toBeVisible();
+  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
   expect(await readScopeSummary(alice.page)).toEqual(acceptedPublishSummary);
   await alice.page
     .locator(".program-editor-outline")
@@ -1015,13 +1043,13 @@ test("owned customization publishes once, preserves history, and derives private
     });
   }
 
-  await alice.page.getByRole("link", { name: "Back to program" }).click();
-  await expect(alice.page.getByRole("heading", { name: "Welcome back, Alice QA" })).toBeVisible();
+  await alice.page.getByRole("link", { name: "Back to Today" }).click();
+  await expect(alice.page.getByRole("heading", { name: "Ready when you are, Alice QA." })).toBeVisible();
   await expect(alice.page.getByText("Five-day starter route", { exact: false })).toBeVisible();
   const sessionId = await completePullWorkoutForInsights(alice.page);
   await assertAccessible(alice.page);
-  await alice.page.getByRole("link", { name: "Home", exact: true }).click();
-  await expect(alice.page.getByRole("heading", { name: "Welcome back, Alice QA" })).toBeVisible();
+  await alice.page.getByRole("link", { name: "Today", exact: true }).click();
+  await expect(alice.page.getByRole("heading", { name: "Ready when you are, Alice QA." })).toBeVisible();
   const completedHomeTotals = alice.page.locator(".member-home-totals");
   await expect(completedHomeTotals.getByText("Completed", { exact: true })).toBeVisible();
   await expect(completedHomeTotals.locator("dd").first()).toHaveText("1");
@@ -1031,12 +1059,13 @@ test("owned customization publishes once, preserves history, and derives private
   const beforeEquipmentSummary = await readScopeSummary(alice.page);
   expect(beforeEquipmentSummary.counts.workoutSnapshots).toBeGreaterThan(0);
   expect(beforeEquipmentSummary.counts.personalRecords).toBeGreaterThan(0);
-  await alice.page.getByRole("link", { name: /Edit routine/ }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
   await expect(alice.page).toHaveURL(/\/app\/program\/edit$/u);
-  await expect(alice.page.getByRole("heading", { name: "Edit your route" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Your routine" })).toBeVisible();
   const editorBarbellProfile = alice.page
     .getByRole("group", { name: "Equipment profile" })
     .getByRole("button", { name: /Barbell \+ rack/ });
+  await alice.page.getByText("Equipment and substitutions", { exact: true }).click();
   await editorBarbellProfile.click();
   const equipmentReviewHeading = alice.page.getByRole("heading", {
     name: "Review Barbell + rack",
@@ -1064,7 +1093,7 @@ test("owned customization publishes once, preserves history, and derives private
   ]);
   await expect(
     alice.page.getByText(
-      "Sets, range, rest, position, and notes stay. Movement-specific targets clear.",
+      "Sets, reps, rest and notes carry over.",
     ),
   ).toHaveCount(6);
   await expect(alice.page.getByText("Resolve incompatible custom movements first.")).toHaveCount(0);
@@ -1085,7 +1114,7 @@ test("owned customization publishes once, preserves history, and derives private
   );
   await alice.page.getByRole("button", { name: "Confirm Barbell + rack" }).click();
   expect((await equipmentResponse).status()).toBe(200);
-  await expect(alice.page.getByText(/Saved revision 3/)).toBeVisible();
+  await expect(alice.page.getByText("Equipment updated.", { exact: true })).toBeVisible();
   const afterEquipmentSummary = await readScopeSummary(alice.page);
   expect(afterEquipmentSummary.counts.programRevisions).toBe(
     beforeEquipmentSummary.counts.programRevisions + 1,
@@ -1124,7 +1153,7 @@ test("owned customization publishes once, preserves history, and derives private
 
   await alice.page.getByRole("link", { name: "Settings" }).click();
   await alice.page.getByLabel("Display units").selectOption("metric");
-  await alice.page.getByLabel("IANA time zone").fill("America/Chicago");
+  await alice.page.getByLabel("Time zone").selectOption("America/Chicago");
   await alice.page.getByRole("checkbox", { name: /Reduce interface motion/ }).check();
   const preferencesResponse = alice.page.waitForResponse(
     (response) =>
@@ -1141,8 +1170,8 @@ test("owned customization publishes once, preserves history, and derives private
   });
   expect(JSON.stringify(afterPreferences.activeProgram)).toBe(canonicalBeforePreferences);
 
-  await alice.page.getByRole("link", { name: "Home", exact: true }).click();
-  await alice.page.getByRole("link", { name: /Edit routine/ }).click();
+  await alice.page.getByRole("link", { name: "Today", exact: true }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
   await alice.page
     .locator(".program-editor-outline")
     .getByRole("button", { name: /Power Push \d+ movements$/u })
@@ -1158,10 +1187,10 @@ test("owned customization publishes once, preserves history, and derives private
     .locator("fieldset.program-editor-cardio section")
     .filter({ has: alice.page.getByRole("heading", { exact: true, level: 3, name: "walker" }) });
   await expect(metricWalker.getByLabel("Distance metres")).toHaveValue("160.934");
-  await expect(alice.page.getByText("Draft matches the active revision")).toBeVisible();
-  await alice.page.getByRole("link", { name: "Back to program" }).click();
+  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
+  await alice.page.getByRole("link", { name: "Back to Today" }).click();
 
-  await alice.page.getByRole("link", { name: "History", exact: true }).click();
+  await alice.page.getByRole("link", { name: "Review history", exact: true }).click();
   const pullHistory = alice.page.locator(".history-list > li").filter({
     has: alice.page.locator(".history-main strong", { hasText: "Pull" }),
   });
@@ -1187,7 +1216,7 @@ test("owned customization publishes once, preserves history, and derives private
   await assertAccessible(alice.page);
 
   await alice.page.getByRole("link", { name: "Progress", exact: true }).click();
-  await expect(alice.page.getByRole("heading", { name: "Progress" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Progress", exact: true })).toBeVisible();
   await expect(alice.page.getByText("Logged distance")).toBeVisible();
   const progressTotals = alice.page.locator(".progress-totals");
   await expect(progressTotals.getByText("408.2 kg·reps", { exact: true })).toBeVisible();
@@ -1281,8 +1310,8 @@ test("an incompatible private movement blocks an editor equipment change without
   await alice.page.goto("/app");
   expect((await submitOnboarding(alice.page, "barbell")).response.status()).toBe(201);
 
-  await alice.page.getByRole("link", { name: /Manage private exercises/ }).click();
-  await alice.page.getByRole("link", { name: "Create exercise" }).click();
+  await alice.page.getByRole("link", { name: "Library", exact: true }).click();
+  await alice.page.getByRole("link", { name: "Create private exercise" }).click();
   await alice.page.getByLabel("Exercise name").fill("QA rack press");
   await alice.page
     .getByLabel("Instructions")
@@ -1299,8 +1328,8 @@ test("an incompatible private movement blocks an editor equipment change without
   await alice.page.getByRole("button", { name: "Create exercise" }).click();
   expect((await createResponse).status()).toBe(201);
 
-  await alice.page.getByRole("link", { name: "Home", exact: true }).click();
-  await alice.page.getByRole("link", { name: /Edit routine/ }).click();
+  await alice.page.getByRole("link", { name: "Today", exact: true }).click();
+  await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
   const accessorySection = alice.page
     .locator("fieldset.program-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for accessory") });
@@ -1311,12 +1340,13 @@ test("an incompatible private movement blocks an editor equipment change without
       new URL(response.url()).pathname === "/api/app/program/publish" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Publish new revision" }).click();
+  await alice.page.getByRole("button", { name: "Save routine" }).click();
   expect((await publishResponse).status()).toBe(200);
-  await expect(alice.page.getByText(/Published revision 2/)).toBeVisible();
+  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
 
   const beforeProfile = await readProfileProgram(alice.page);
   const beforeScope = await readScopeSummary(alice.page);
+  await alice.page.getByText("Equipment and substitutions", { exact: true }).click();
   const dumbbellProfile = alice.page.getByRole("button", { name: /^Dumbbells/ });
   await dumbbellProfile.click();
   const reviewHeading = alice.page.getByRole("heading", { name: "Review Dumbbells" });
@@ -1367,7 +1397,7 @@ test("an accepted runner save reconciles after an error response, replays once, 
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Start or resume workout" }).click();
+  await alice.page.getByRole("button", { name: "Start workout" }).click();
   const startResponse = await startPromise;
   expect(startResponse.status()).toBe(201);
   expect(startResponse.request().postDataJSON()).not.toHaveProperty("ownerUid");
@@ -1383,7 +1413,7 @@ test("an accepted runner save reconciles after an error response, replays once, 
   const interruptedBody = interrupted.request().postDataJSON() as Record<string, unknown>;
   expect(interruptedBody).not.toHaveProperty("ownerUid");
   expect(interruptedBody).not.toHaveProperty("sequence");
-  await expect(alice.page.getByRole("heading", { name: "Save activity" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Couldn't save" })).toBeVisible();
   await expect(alice.page.getByText("1 failed")).toBeVisible();
   await expect(
     alice.page.getByText("Local authenticated QA harness · synthetic data only"),
@@ -1416,14 +1446,15 @@ test("an accepted runner save reconciles after an error response, replays once, 
   await expect(
     alice.page.getByRole("progressbar", { name: /1 of \d+ work sets logged/ }),
   ).toBeVisible();
-  await expect(alice.page.getByRole("heading", { name: "Save activity" })).toHaveCount(0);
+  await expect(alice.page.getByRole("heading", { name: "Couldn't save" })).toHaveCount(0);
   await assertAccessible(alice.page);
 
   await alice.page.getByRole("button", { name: /2 Work Not logged/ }).click();
   expect((await saveWeightSet(alice.page, "25", "11")).status()).toBe(200);
   await alice.page.getByRole("button", { name: /3 Work Not logged/ }).click();
   expect((await saveWeightSet(alice.page, "25", "10")).status()).toBe(200);
-  expect((await submitRunnerAction(alice.page, "Complete exercise")).status()).toBe(200);
+  expect((await submitRunnerAction(alice.page, "Next exercise")).status()).toBe(200);
+  await alice.page.getByText("Workout outline", { exact: true }).click();
 
   for (const exerciseName of [
     "Seated dumbbell shoulder press",
@@ -1439,13 +1470,13 @@ test("an accepted runner save reconciles after an error response, replays once, 
   }
 
   await alice.page.getByRole("button", { name: /Walker/ }).click();
-  await alice.page.getByLabel("Duration (seconds)").last().fill("1200");
+  await alice.page.getByLabel("Duration", { exact: true }).fill("20:00");
   await alice.page.getByLabel("Distance (mi)").last().fill("1");
   await alice.page.getByLabel("Incline (%)").fill("2");
   await alice.page.getByLabel("Cardio notes").fill("Synthetic QA walk");
   expect((await submitRunnerAction(alice.page, "Save cardio")).status()).toBe(200);
 
-  const completionPromise = submitRunnerAction(alice.page, "Complete workout");
+  const completionPromise = submitRunnerAction(alice.page, "Finish workout");
   await expect(alice.page).toHaveURL(`/app/history/${sessionId}`);
   expect((await completionPromise).status()).toBe(200);
   await expect(alice.page.getByText("Completed workout")).toBeVisible();

@@ -190,7 +190,10 @@ async function submitOnboarding(page: Page) {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start with example" }).click();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
   return responsePromise;
 }
 
@@ -203,7 +206,7 @@ async function chooseMovement(page: Page, query: string, name: string) {
   await chooser.getByRole("searchbox", { name: "Search movements" }).fill(query);
   const result = chooser.getByRole("button", {
     name: new RegExp(
-      `^${escapeRegExp(name)} (?:weight reps|bodyweight reps|duration|distance duration) ·`,
+      `^${escapeRegExp(name)} (?:Weight and reps|Reps|Time|Distance and time) ·`,
       "u",
     ),
   });
@@ -238,7 +241,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
 
   await alice.page.goto("/app");
   expect((await submitOnboarding(alice.page)).status()).toBe(201);
-  await expect(alice.page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "All days" })).toBeVisible();
   await alice.page.waitForLoadState("networkidle");
   const onboarded = await readProfileProgram(alice.page);
   const usesImperialUnits = onboarded.preferences.unitSystem === "imperial";
@@ -261,16 +264,16 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
   const flutter = prescriptionRow(alice.page, section, "Flutter kick");
   const carry = prescriptionRow(alice.page, section, "Dumbbell farmer carry");
 
-  await expect(clean.getByText("strength · weight reps", { exact: true })).toBeVisible();
+  await expect(clean.getByText("strength · Weight and reps", { exact: true })).toBeVisible();
   await expect(clean.getByLabel("Minimum reps")).toHaveValue("8");
   await expect(clean.getByLabel("Maximum reps")).toHaveValue("12");
-  await expect(crunch.getByText("strength · bodyweight reps", { exact: true })).toBeVisible();
+  await expect(crunch.getByText("strength · Reps", { exact: true })).toBeVisible();
   await expect(crunch.getByLabel("Minimum reps")).toHaveValue("8");
   await expect(crunch.getByLabel("Maximum reps")).toHaveValue("12");
-  await expect(flutter.getByText("strength · duration", { exact: true })).toBeVisible();
+  await expect(flutter.getByText("strength · Time", { exact: true })).toBeVisible();
   await expect(flutter.getByLabel("Minimum seconds")).toHaveValue("20");
   await expect(flutter.getByLabel("Maximum seconds")).toHaveValue("45");
-  await expect(carry.getByText("strength · distance duration", { exact: true })).toBeVisible();
+  await expect(carry.getByText("strength · Distance and time", { exact: true })).toBeVisible();
   await expect(carry.getByLabel("Minimum seconds")).toHaveValue("20");
   await expect(carry.getByLabel("Maximum seconds")).toHaveValue("45");
   await expect(carry.getByLabel(targetDistanceLabel)).toHaveValue("");
@@ -284,7 +287,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
       publishRequests += 1;
     }
   });
-  await alice.page.getByRole("button", { name: "Publish new revision" }).click();
+  await alice.page.getByRole("button", { name: "Save routine" }).click();
   await expect(alice.page.locator(".program-editor-errors")).toContainText(
     "Dumbbell farmer carry needs a positive distance target before publication.",
   );
@@ -312,10 +315,10 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
       url.searchParams.has("_rsc")
     );
   });
-  await alice.page.getByRole("button", { name: "Publish new revision" }).click();
+  await alice.page.getByRole("button", { name: "Save routine" }).click();
   expect((await publishResponse).status()).toBe(200);
   expect(publishRequests).toBe(1);
-  await expect(alice.page.getByText(/Published revision 2/u)).toBeVisible();
+  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
   expect((await refreshedEditorResponse).status()).toBe(200);
 
   await alice.page.reload();
@@ -355,18 +358,20 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Start or resume workout" }).click();
+  await alice.page.getByRole("button", { name: "Start workout" }).click();
   expect((await startResponse).status()).toBe(201);
   await expect(alice.page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const workoutUrl = alice.page.url();
 
+  await alice.page.getByText("Workout outline", { exact: true }).click();
   await alice.page.getByRole("button", { name: /Dumbbell farmer carry/u }).click();
   await expect(alice.page.getByRole("heading", { level: 2, name: "Dumbbell farmer carry" })).toBeVisible();
+  await alice.page.getByText("Watch demo and technique guidance", { exact: true }).click();
   await expect(alice.page.getByRole("heading", { name: "Technique guidance" })).toBeVisible();
   await expect(alice.page.getByText("Unavailable", { exact: true })).toBeVisible();
   await expect(
     alice.page.getByText(
-      "No approved catalog pair is available for this movement. Workout logging remains available.",
+      "No demonstration is available for this movement. Workout logging remains available.",
       { exact: true },
     ),
   ).toBeVisible();
@@ -379,7 +384,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
       /\/api\/app\/workouts\/[^/]+\/operations$/u.test(new URL(response.url()).pathname) &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Save set" }).click();
+  await alice.page.getByRole("button", { name: /^(Log|Update) set & rest$/ }).click();
   expect((await saveResponse).status()).toBe(200);
   await expect(alice.page.getByText("Saved", { exact: true }).last()).toBeVisible();
 

@@ -164,8 +164,11 @@ test("verified, unverified, empty, and active member states keep the fox decorat
   const verified = await createHarnessContext(browser, scope, testInfo, "alice");
   const page = await verified.newPage();
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
   await expect(page.getByText("No completed workouts yet")).toBeVisible();
   await expectMemberCompanion(page);
   await assertAccessible(page);
@@ -183,13 +186,13 @@ test("verified, unverified, empty, and active member states keep the fox decorat
   }
   await captureMemberEvidence(page, "ready", testInfo);
 
-  await page.getByRole("link", { name: /Open Push to start/u }).click();
+  await page.getByRole("link", { name: /Push/ }).click();
   const startResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start or resume workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   expect((await startResponse).status()).toBe(201);
   await page.waitForURL(/\/workout\//u);
   await page.goto("/app");
@@ -263,8 +266,11 @@ test("member decoration is static, forced-color safe, and failure safe", async (
   const context = await createHarnessContext(browser, scope, testInfo, "alice");
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await page.reload();
@@ -322,20 +328,23 @@ test("slow and failed personal-home reads stay truthful and recover through retr
   const context = await createHarnessContext(browser, scope, testInfo, "alice", control);
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   await page.goto("/sign-in?returnTo=/app");
   control.scenario = "slow-member-home";
   const slowNavigation = page
     .getByRole("link", { name: "Return as the current synthetic viewer" })
     .click();
-  const loading = page.locator('.member-state[role="status"]');
-  await expect(loading).toContainText("Loading your home…");
+  const loading = page.locator('.member-state[aria-busy="true"]');
+  await expect(loading).toContainText("Loading…");
   await expect(loading).toHaveAttribute("aria-busy", "true");
   await expect(page.locator('[data-companion-placement="member-home"]')).toHaveCount(0);
   await slowNavigation;
-  await expect(page.getByRole("heading", { name: /Welcome back/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Ready when you are/u })).toBeVisible();
 
   control.scenario = "ready";
   await page.goto("/sign-in?returnTo=/app");
@@ -344,12 +353,12 @@ test("slow and failed personal-home reads stay truthful and recover through retr
     .getByRole("link", { name: "Return as the current synthetic viewer" })
     .click();
   const error = page.locator('.member-state[role="alert"]');
-  await expect(error).toContainText("Your home did not load.");
-  await expect(error).toContainText("No routine or workout changes were made.");
+  await expect(error).toContainText("This page didn't load");
+  await expect(error).toContainText("Nothing was changed.");
   await expect(page.locator('[data-companion-placement="member-home"]')).toHaveCount(0);
   control.scenario = "ready";
   await page.getByRole("button", { name: "Try again" }).click();
-  await expect(page.getByRole("heading", { name: /Welcome back/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Ready when you are/u })).toBeVisible();
   await expectMemberCompanion(page);
 
   await page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));
