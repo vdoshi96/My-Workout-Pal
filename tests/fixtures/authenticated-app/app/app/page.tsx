@@ -13,6 +13,8 @@ import { createWorkoutRepository } from "@/server/repositories/workout-repositor
 import { getHarnessDatabase } from "../../server/database";
 import { harnessRequestContext } from "../../server/harness-context";
 
+export const metadata = { title: "Today" };
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

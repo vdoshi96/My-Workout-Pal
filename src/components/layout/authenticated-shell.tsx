@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { sendEmailVerification } from "firebase/auth";
+import { getFirebaseClientAuth } from "@/client/firebase";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -11,13 +16,35 @@ export function AuthenticatedShell({
   children,
   firebaseConfig = null,
   viewer,
+  reducedMotion = false,
 }: Readonly<{
   children: ReactNode;
   firebaseConfig?: FirebasePublicConfig | null;
   viewer: ViewerContext;
+  reducedMotion?: boolean;
 }>) {
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
+  useEffect(() => {
+    if (!cooldown) return;
+    const timeout = window.setTimeout(() => setCooldown(false), 60_000);
+    return () => window.clearTimeout(timeout);
+  }, [cooldown]);
+  async function resendVerification() {
+    if (!firebaseConfig || sending || cooldown) return;
+    setSending(true);
+    try {
+      const user = getFirebaseClientAuth(firebaseConfig).currentUser;
+      if (!user || user.uid !== viewer.uid) { setVerificationMessage("Sign in again to resend the email."); return; }
+      await sendEmailVerification(user);
+      setVerificationMessage("Email sent. Check your inbox, then sign out and sign in again.");
+      setCooldown(true);
+    } catch { setVerificationMessage("Couldn't send the email. Try again later."); }
+    finally { setSending(false); }
+  }
   return (
-    <div className="member-frame">
+    <div className="member-frame authenticated-shell-root" data-reduced-motion={reducedMotion ? "true" : undefined}>
       <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="member-header">
         <Link className="brand" href="/app" prefetch={false}>
@@ -44,7 +71,9 @@ export function AuthenticatedShell({
       </header>
       {!viewer.eligibleForPermanentMutations ? (
         <aside className="verification-banner" role="status">
-          <strong>Read-only account.</strong> Verify your email, then sign in again before saving permanent changes.
+          <p>Verify your email to save changes.</p>
+          <button type="button" disabled={!firebaseConfig || sending || cooldown} onClick={() => void resendVerification()}>Resend verification email</button>
+          {verificationMessage ? <p>{verificationMessage}</p> : null}
         </aside>
       ) : null}
       <main className="member-main" id="main-content" tabIndex={-1}>{children}</main>

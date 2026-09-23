@@ -1,4 +1,4 @@
-import type { WorkoutMeasurement } from "@/domain/analytics";
+import type { MeasurementKind, WorkoutMeasurement } from "@/domain/analytics";
 import type {
   RestTimerView,
   RunnerStatus,
@@ -171,11 +171,11 @@ export function formatSyncStatus(
     case "pending":
       return { label: "Pending", tone: "pending" };
     case "offline":
-      return { label: "Offline queued", tone: "offline" };
+      return { label: "Saved on this device", tone: "offline" };
     case "auth_expired":
-      return { label: "Sign-in expired", tone: "auth" };
+      return { label: "Sign in again", tone: "auth" };
     case "auth_revoked":
-      return { label: "Sign-in revoked", tone: "auth" };
+      return { label: "Sign in again", tone: "auth" };
     case "failed":
       return { label: "Save failed", tone: "failed" };
     case "conflict":
@@ -286,4 +286,13 @@ export function formatCardioSummary(
   if (input.inclinePercent !== undefined)
     values.push(`${formatNumber(input.inclinePercent)}% incline`);
   return values.join(" · ");
+}
+
+export function setEntryErrorMessage(kind: MeasurementKind): string {
+  switch (kind) {
+    case "weight_reps": return "Enter weight and reps to log this set.";
+    case "bodyweight_reps": return "Enter reps to log this set.";
+    case "duration": return "Enter a time to log this set.";
+    case "distance_duration": return "Enter distance and time to log this set.";
+  }
 }

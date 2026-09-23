@@ -1,3 +1,4 @@
+import { use } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicShell } from "@/components/layout/public-shell";
@@ -7,15 +8,17 @@ export const metadata: Metadata = {
   title: "A little space for your next set",
   description: "Build a routine, log your sets, rest, and return. Try My Workout Pal without an account.",
 };
-export default function HomePage() {
+export default function HomePage({ searchParams }: { searchParams?: Promise<{ account?: string }> }) {
+  const query = searchParams ? use(searchParams) : {};
   return <PublicShell current="home">
+    {query.account === "deleted" ? <p className="member-inline-notice" role="status">Your account and workout data were deleted.</p> : null}
     <section className="quiet-welcome" aria-labelledby="landing-heading">
       <div className="quiet-welcome-copy">
-        <h1 id="landing-heading">A little space<br />for your next set.</h1>
+        <h1 id="landing-heading">A little space <br />for your next set.</h1>
         <p>Your routine, a clear next step, and a place to keep the work you put in.</p>
         <Link className="primary-action" href="/try">Try one set <Icon name="arrow-right" /></Link>
         <span className="quiet-welcome-note">No account needed. Practice stays temporary.</span>
-        <Link className="quiet-welcome-secondary" href="/app" prefetch={false}>Create my routine</Link>
+        <Link className="secondary-action" href="/app" prefetch={false}>Create my routine</Link>
       </div>
       {/* Plain image preserves the exact public offline asset and nonce CSP. */}
       <picture className="quiet-studio"><source media="(prefers-color-scheme: dark)" srcSet="/illustrations/quiet-set/evening-studio-phone.webp 600w, /illustrations/quiet-set/evening-studio.webp 1200w" sizes="(max-width: 700px) 100vw, 75vw" />

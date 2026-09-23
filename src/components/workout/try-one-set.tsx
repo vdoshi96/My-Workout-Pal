@@ -21,18 +21,18 @@ export function TryOneSet() {
   }, [deadline, paused]);
   function reset() {setReps(""); setLogged(null); setDeadline(null); setRemaining(30); setPaused(false); setFinished(false); setError("");}
   return <section className={`quiet-trial${finished ? " quiet-trial--complete" : ""}`} aria-labelledby="trial-heading">
-    <p className="quiet-disclosure">Practice only · Nothing is saved to an account. Refresh resets this trial.</p>
+    <p className="quiet-disclosure">Practice only. Nothing is saved.</p>
     <h1 id="trial-heading">{finished ? "That’s the rhythm." : logged !== null ? "Take a moment." : "Try one set."}</h1>
     {finished ? <>
       <p>You practiced logging {logged} push-up reps and moving through rest.</p>
-      <Link href="/app" className="primary-action" prefetch={false}>Save my routine <Icon name="arrow-right" /></Link>
+      <Link href="/app" className="primary-action" prefetch={false}>Set up my routine <Icon name="arrow-right" /></Link>
       <Link href="/program">Explore the five-day example</Link>
     </> : logged !== null ? <>
       <p role="status">Practice entry: {logged} reps. Not saved.</p>
       <div className="quiet-trial-timer" role="timer" aria-label={`${remaining} seconds of practice rest`}>{String(Math.floor(remaining / 60)).padStart(2, "0")}:{String(remaining % 60).padStart(2, "0")}</div>
       <div className="quiet-trial-controls">
         <button className="secondary-action" type="button" onClick={() => {if (paused) setDeadline(Date.now() + remaining * 1000); setPaused(!paused);}}>{paused ? "Resume timer" : "Pause timer"}</button>
-        <button className="secondary-action" type="button" onClick={() => {setRemaining(remaining + 30); setDeadline((deadline ?? Date.now()) + 30000);}}>Add 30 seconds</button>
+        <button className="secondary-action" type="button" onClick={() => {setRemaining(remaining + 30); setDeadline(Math.max(Date.now(), deadline ?? Date.now()) + 30000);}}>Add 30 seconds</button>
       </div>
       <button className="primary-action" type="button" onClick={() => setFinished(true)}>Finish practice <Icon name="check" /></button>
       <button className="quiet-text-button" type="button" onClick={() => {setLogged(null); setDeadline(null); setPaused(false); setRemaining(30);}}>Edit practice entry</button>
@@ -41,8 +41,8 @@ export function TryOneSet() {
       <label htmlFor="practice-reps">Repetitions</label><input id="practice-reps" inputMode="numeric" type="number" min="1" max="1000" step="1" value={reps} onChange={(event) => setReps(event.target.value)} aria-describedby={error ? "practice-error" : undefined} required />
       {error ? <p id="practice-error" role="alert">{error}</p> : null}
       <button type="submit" className="primary-action">Log set &amp; rest <Icon name="check" /></button>
-      <p>Enter a practice number to explore the interaction. You don’t need to exercise to try it.</p>
+      <p>Any number works. Nothing is saved.</p>
     </form>}
-    <button className="quiet-text-button" type="button" onClick={reset}><Icon name="undo" /> Reset practice</button>
+    {reps !== "" || logged !== null ? <button className="quiet-text-button" type="button" onClick={reset}><Icon name="undo" /> Reset practice</button> : null}
   </section>;
 }

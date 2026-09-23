@@ -45,7 +45,7 @@ export function ProgressInsightsView({
       {progress.series.length === 0 ? (
         <div className="member-empty-sheet">
           <span className="eyebrow">No completed data</span>
-          <h2>Finish a workout to begin your timeline.</h2>
+          <h2>Finish a workout to see your progress.</h2>
           <p>
             No sample points are mixed into account analytics. Any interrupted session remains
             recoverable or archived separately.
@@ -56,7 +56,6 @@ export function ProgressInsightsView({
         <section className="progress-timeline" aria-labelledby="progress-timeline-title">
           <header className="section-heading">
             <div>
-              <span className="eyebrow">Daily series</span>
               <h2 id="progress-timeline-title">Training timeline</h2>
               <p>
                 {progress.scope.truncated ? (

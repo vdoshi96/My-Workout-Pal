@@ -40,15 +40,15 @@ describe("ProgramCollection", () => {
     );
 
     expect(markup).toContain('aria-current="true"');
-    expect(markup.match(/Active program/g)).toHaveLength(1);
+    expect(markup.match(/>Active</g)).toHaveLength(1);
     expect(markup).toContain("Dumbbells");
     expect(markup).toContain("Barbell + rack");
-    expect(markup).toContain("Create from example");
+    expect(markup).toContain("Create and use this routine");
     expect(markup).toContain("Custom starting point");
     expect(markup).toContain("5 days");
     expect(markup).toContain("3 days");
     expect(markup).toContain("Make active");
-    expect(markup).toContain("Clone");
+    expect(markup).toContain("Duplicate");
   });
 
   it("makes permanent controls read-only for an unverified member", () => {
@@ -58,6 +58,6 @@ describe("ProgramCollection", () => {
 
     expect(markup).toContain("read-only until you verify your email");
     expect(markup).toContain('disabled=""');
-    expect(markup).toContain("Active overview");
+    expect(markup).toContain("Back to Today");
   });
 });

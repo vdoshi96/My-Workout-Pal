@@ -455,7 +455,15 @@ async function submitRunnerAction(
   const response = page.waitForResponse((candidate) =>
     isOperationRequest(candidate.request()),
   );
-  await page.getByRole("button", { name }).click();
+  if (name === "Skip exercise") {
+    if (await page.locator(".runner-more").getAttribute("open") === null) {
+      await page.getByText("More options", { exact: true }).click();
+    }
+    await page.getByRole("button", { name, exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name, exact: true }).click();
+  } else {
+    await page.getByRole("button", { name, exact: true }).click();
+  }
   expect((await response).status()).toBe(200);
 }
 
@@ -464,7 +472,7 @@ async function preparePushCompletion(page: Page): Promise<void> {
     await page.locator(".runner-set-tab").nth(index).click();
     await saveWeightSet(page, "25");
   }
-  await submitRunnerAction(page, "Complete exercise");
+  await submitRunnerAction(page, "Next exercise");
   await page.locator(".runner-outline > summary").click();
 
   for (const exerciseName of [
@@ -481,7 +489,7 @@ async function preparePushCompletion(page: Page): Promise<void> {
   }
 
   await page.getByRole("button", { name: /Walker/iu }).click();
-  await page.getByLabel("Duration (seconds)").last().fill("1200");
+  await page.getByLabel("Duration", { exact: true }).fill("20:00");
   await page.getByLabel("Distance (mi)").last().fill("1");
   await page.getByLabel("Incline (%)").fill("2");
   await page.getByLabel("Cardio notes").fill("Terminal tab recovery walk");
@@ -542,7 +550,7 @@ test("a real aborted operation retries explicitly with the same key and no onlin
   harness.control.abortNextOperation = true;
   await enterFirstSet(harness.page);
   await expect(
-    harness.page.getByRole("heading", { name: "Offline queued" }),
+    harness.page.getByRole("heading", { name: "You're offline" }),
   ).toBeVisible();
   const retry = harness.page.getByRole("button", { name: "Retry connection" });
   await assertAccessible(harness.page);
@@ -571,7 +579,7 @@ test("a real aborted operation retries explicitly with the same key and no onlin
   });
   await reloadCommitted;
   await expect(
-    harness.page.getByRole("heading", { name: "Offline queued" }),
+    harness.page.getByRole("heading", { name: "You're offline" }),
   ).toBeVisible();
   expect(
     await harness.page.evaluate(
@@ -679,7 +687,7 @@ for (const authCase of [
     const returnPath = `/workout/${sessionId}`;
     const signInPath = `/sign-in?returnTo=${encodeURIComponent(returnPath)}`;
     const reauthenticate = harness.page.getByRole("link", {
-      name: "Reauthenticate and return",
+      name: "Sign in again",
     });
     await expect(reauthenticate).toHaveAttribute("href", signInPath);
     await reauthenticate.click();
@@ -796,7 +804,7 @@ test("two tabs retain distinct offline set operations through reload and retry",
   harness.control.abortNextOperation = true;
   await harness.context.setOffline(false);
   await expect(
-    first.getByRole("heading", { name: "Offline queued" }),
+    first.getByRole("heading", { name: "You're offline" }),
   ).toBeVisible();
   harness.control.abortNextOperation = true;
   await first.reload();
@@ -804,7 +812,7 @@ test("two tabs retain distinct offline set operations through reload and retry",
     first.getByRole("progressbar", { name: /2 of \d+ work sets logged/u }),
   ).toBeVisible();
   await expect(
-    first.getByRole("heading", { name: "Offline queued" }),
+    first.getByRole("heading", { name: "You're offline" }),
   ).toBeVisible();
   const restored = await readStoredRunner(first, sessionId);
   expect(restored.operations).toHaveLength(2);
@@ -873,16 +881,16 @@ test("two tabs block a divergent set until the member chooses one original key",
   await first.bringToFront();
   await first.evaluate(() => window.dispatchEvent(new Event("focus")));
   const conflictHeading = first.getByRole("heading", {
-    name: "Choose the workout value to keep",
+    name: "Pick which value to keep",
   });
   await expect(conflictHeading).toBeVisible();
   await expect(conflictHeading).toBeFocused();
   await assertAccessible(first);
   const choice25 = first.getByRole("button", {
-    name: /Keep 25 lb · 12 reps for Set 1 · Dumbbell bench press/u,
+    name: /Keep 25 lb · 12 reps/u,
   });
   const choice30 = first.getByRole("button", {
-    name: /Keep 30 lb · 12 reps for Set 1 · Dumbbell bench press/u,
+    name: /Keep 30 lb · 12 reps/u,
   });
   await expect(choice25).toBeVisible();
   await expect(choice30).toBeVisible();
@@ -918,9 +926,7 @@ test("two tabs block a divergent set until the member chooses one original key",
     (left, right) => (right.weightKg ?? 0) - (left.weightKg ?? 0),
   )[0]!.idempotencyKey;
 
-  await first
-    .getByRole("button", { name: "Leave both values unresolved" })
-    .click();
+  await conflictHeading.focus();
   await expect(conflictHeading).toBeVisible();
   expect((await readStoredRunner(first, sessionId)).operations).toEqual(
     conflicted.operations,
@@ -1140,17 +1146,18 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
   ).toBeVisible();
   await expect(second.getByLabel("Weight (lb)")).toHaveValue("25");
   await expect(
-    second.getByRole("heading", { name: "Choose the workout value to keep" }),
+    second.getByRole("heading", { name: "Pick which value to keep" }),
   ).toHaveCount(0);
 
   await first.bringToFront();
   await preparePushCompletion(first);
   const requestsBeforeStaleNote = harness.signals.operationRequests.length;
+  await second.getByText("More options", { exact: true }).click();
   await second
-    .getByLabel(/Private note for Dumbbell bench press/iu)
+    .getByLabel("Note", { exact: true })
     .fill("This stale tab note must not reopen a completed workout.");
   await expect(second.getByRole("button", { name: "Save note" })).toBeDisabled();
-  await expect(second.getByRole("textbox", { name: /Private note/iu })).not.toHaveValue(
+  await expect(second.getByRole("textbox", { name: "Note", exact: true })).not.toHaveValue(
     "This stale tab note must not reopen a completed workout.",
   );
   expect(
@@ -1173,7 +1180,7 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
     const body = response.request().postDataJSON() as Record<string, unknown>;
     return body["kind"] === "complete_session";
   });
-  await first.getByRole("button", { name: "Complete workout" }).click();
+  await first.getByRole("button", { name: "Finish workout" }).click();
   await completionRequest;
 
   expect((await completionResponse).status()).toBe(200);

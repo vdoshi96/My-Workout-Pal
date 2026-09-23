@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { getCatalogExercise } from "@/domain/exercises/catalog";
-import { exerciseDetailHref } from "@/domain/navigation/public-exercise-return";
+import { PublicShell } from "@/components/layout/public-shell";
 import { createStarterProgram } from "@/domain/programs/starter";
 
 const dayBySlug = {
@@ -38,92 +38,21 @@ export default async function DayPage({ params, searchParams }: PageProps) {
   const selectedDay = program.days.find((candidate) => candidate.name === dayName);
   if (!selectedDay) notFound();
 
-  return (
-    <main className="day-page">
-      <a className="skip-link" href="#day-plan">
-        Skip to day plan
-      </a>
-      <header className="day-header">
-        <Link className="back-link" href={`/program?equipment=${profile}`}>
-          <Icon name="arrow-left" />
-          Five-day starter example
-        </Link>
-        <div className="day-header-actions">
-          <div className="guest-stamp">Starter preview · not saved</div>
-          <Link className="day-account-link" href="/app" prefetch={false}>
-            <Icon name="sign-in" />
-            My workouts
-          </Link>
-        </div>
-      </header>
-
-      <section className="day-intro contour-surface">
-        <div className="waypoint-number" aria-hidden="true">
-          {program.days.findIndex((candidate) => candidate.name === dayName) + 1}
-        </div>
-        <div>
-          <h1>{dayName} day</h1>
-          <p>
-            Six strength and core movements with your choice of walker or runner cardio.
-          </p>
-        </div>
-        <div className="equipment-stamp">
-          <Icon name="dumbbell" />
-          {EQUIPMENT_PROFILES[profile].label}
-        </div>
-      </section>
-
-      <div className="day-layout" id="day-plan" tabIndex={-1}>
-        <section className="route-sheet day-sheet" aria-labelledby="prescriptions-heading">
-          <h2 id="prescriptions-heading">Example route</h2>
-          {selectedDay.sections.map((section) => (
-            <section className="prescription-section" key={section.kind}>
-              <h3>{section.kind}</h3>
-              <ol>
-                {section.prescriptionIndexes.map((index) => {
-                  const prescription = selectedDay.prescriptions[index];
-                  if (!prescription) return null;
-                  const exercise = getCatalogExercise(prescription.exerciseSlug);
-                  const target = prescription.minimumSeconds
-                    ? `${prescription.sets} × ${prescription.minimumSeconds}–${prescription.maximumSeconds} sec`
-                    : `${prescription.sets} × ${prescription.minimumReps}–${prescription.maximumReps}`;
-                  return (
-                    <li key={exercise.slug}>
-                      <Link
-                        href={exerciseDetailHref(exercise.slug, {
-                          equipment: profile,
-                          returnTo: `/program/${day}?equipment=${profile}`,
-                        })}
-                        prefetch={false}
-                      >
-                        <span>
-                          <strong>{prescription.displayName ?? exercise.name}</strong>
-                          <small>{target} · {prescription.restSeconds}s rest</small>
-                        </span>
-                        <Icon name="chevron-right" />
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ol>
-            </section>
-          ))}
-        </section>
-
-        <aside className="cardio-sheet" aria-labelledby="cardio-heading">
-          <h2 id="cardio-heading">Cardio finish</h2>
-          <p>Choose the mode that fits the day. Time, distance, pace, incline, and notes are editable when you save a program.</p>
-          <div className="cardio-options">
-            <div><Icon name="walk" /><strong>Walker</strong><span>20 minutes</span></div>
-            <div><Icon name="run" /><strong>Runner</strong><span>20 minutes</span></div>
-          </div>
-          <Link className="primary-action" href={`/sample-workout?day=${day}&equipment=${profile}`}>
-            View example workout record
-            <Icon name="arrow-right" />
-          </Link>
-          <p className="temporary-note">Sample activity stays in this tab and is not saved to an account.</p>
-        </aside>
-      </div>
-    </main>
-  );
+  return <PublicShell current="program"><section className="day-page">
+    <Link className="back-link" href={`/program?equipment=${profile}`}><Icon name="arrow-left" />Example routine</Link>
+    <header className="public-hero"><h1>{dayName} day</h1><p>{selectedDay.prescriptions.length} movements with a walker or runner finish.</p></header>
+    <div className="day-layout">
+      <div>{selectedDay.sections.map((section) => <section className="prescription-section" key={section.kind}>
+        <h2>{section.kind === "strength" ? "Strength" : section.kind === "accessory" ? "Accessory" : "Core"}</h2>
+        <ol>{section.prescriptionIndexes.map((index) => {
+          const prescription = selectedDay.prescriptions[index];
+          if (!prescription) return null;
+          const exercise = getCatalogExercise(prescription.exerciseSlug);
+          const target = prescription.minimumSeconds ? `${prescription.minimumSeconds}–${prescription.maximumSeconds} sec` : `${prescription.minimumReps}–${prescription.maximumReps}`;
+          return <li key={exercise.slug}><Link href={`/library/${exercise.slug}?equipment=${profile}`}><span><strong>{prescription.displayName ?? exercise.name}</strong><small>{prescription.sets} × {target} · {prescription.restSeconds}s rest</small></span><Icon name="chevron-right" /></Link></li>;
+        })}</ol>
+      </section>)}</div>
+      <aside className="cardio-sheet"><h2>Cardio finish</h2><div className="cardio-options"><div><Icon name="walk" /><strong>Walker</strong><span>20 minutes</span></div><div><Icon name="run" /><strong>Runner</strong><span>20 minutes</span></div></div><p>Edit cardio targets once you save a routine.</p><Link href="/sample-workout">See an example finished workout</Link></aside>
+    </div>
+  </section></PublicShell>;
 }

@@ -14,6 +14,8 @@ import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_IDS, type EquipmentId } from "@/domain/equipment";
 import type { CustomExerciseView } from "@/server/repositories/custom-exercises";
 
+import { EQUIPMENT_LABELS, LOGGING_KIND_LABELS } from "@/components/exercises/labels";
+
 type EditorMode = "create" | "edit";
 
 type EditableExercise = Readonly<{
@@ -24,22 +26,6 @@ type EditableExercise = Readonly<{
   name: string;
   videoUrls: readonly [string, string];
 }>;
-
-const equipmentLabels: Readonly<Record<EquipmentId, string>> = {
-  bodyweight: "Bodyweight",
-  dumbbells: "Dumbbells",
-  bench: "Ordinary bench",
-  barbell: "Barbell",
-  plates: "Weight plates",
-  rack: "Rack",
-};
-
-const loggingKinds = [
-  { value: "weight_reps", label: "Weight + repetitions" },
-  { value: "bodyweight_reps", label: "Bodyweight repetitions" },
-  { value: "duration", label: "Duration" },
-  { value: "distance_duration", label: "Distance + duration" },
-] as const;
 
 function editorValue(exercise?: CustomExerciseView): EditableExercise {
   return {
@@ -73,13 +59,17 @@ export function CustomExerciseEditor({
   canMutate,
   exercise,
   mode,
+  referenced = false,
 }: Readonly<{
   canMutate: boolean;
   exercise?: CustomExerciseView;
   mode: EditorMode;
+  referenced?: boolean;
 }>) {
   const router = useRouter();
   const [value, setValue] = useState(() => editorValue(exercise));
+  const [baseline, setBaseline] = useState(() => JSON.stringify(editorValue(exercise)));
+  const dirty = JSON.stringify(value) !== baseline;
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(exercise?.updatedAt);
@@ -91,6 +81,18 @@ export function CustomExerciseEditor({
   useEffect(() => {
     if (deleteOpen) deleteConfirmButton.current?.focus();
   }, [deleteOpen]);
+
+  useEffect(() => {
+    if (!dirty || busy) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    const protect = (event: MouseEvent) => {
+      const link = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!(link instanceof HTMLAnchorElement) || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (link.href !== window.location.href && !window.confirm("Discard your movement changes?")) { event.preventDefault(); event.stopImmediatePropagation(); }
+    };
+    window.addEventListener("beforeunload", warn); document.addEventListener("click", protect, true);
+    return () => { window.removeEventListener("beforeunload", warn); document.removeEventListener("click", protect, true); };
+  }, [dirty, busy]);
 
   function changed(next: EditableExercise) {
     saveKey.current = undefined;
@@ -138,8 +140,9 @@ export function CustomExerciseEditor({
       );
       saveKey.current = undefined;
       setValue(editorValue(result.exercise));
+      setBaseline(JSON.stringify(editorValue(result.exercise)));
       setExpectedUpdatedAt(result.exercise.updatedAt);
-      setMessage(result.duplicate ? "The earlier save is already stored." : "Exercise saved.");
+      setMessage(result.duplicate ? "Saved." : "Exercise saved.");
       if (mode === "create") {
         router.replace(`/app/library/custom/${result.exercise.id}`);
       }
@@ -179,7 +182,7 @@ export function CustomExerciseEditor({
         <div>
           <span className="eyebrow">Private exercise</span>
           <h1 id="custom-exercise-title">{mode === "create" ? "Create a movement" : "Edit movement"}</h1>
-          <p>Choose one durable logging meaning. A referenced movement must be cloned before that meaning can change.</p>
+
         </div>
         <Link className="back-link" href="/app/library/custom"><Icon name="arrow-left" /> Custom library</Link>
         <DecorativeCompanion variant="library" />
@@ -205,14 +208,14 @@ export function CustomExerciseEditor({
 
         <label htmlFor="custom-logging">How results are logged</label>
         <select
-          disabled={!canMutate || busy}
+          disabled={!canMutate || busy || referenced}
           id="custom-logging"
           onChange={(event) => changed({ ...value, loggingKind: event.target.value })}
           value={value.loggingKind}
         >
-          {loggingKinds.map((kind) => <option key={kind.value} value={kind.value}>{kind.label}</option>)}
+          {Object.entries(LOGGING_KIND_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
         </select>
-        <small>Changing this later requires a clone once a program or workout references the exercise.</small>
+        {referenced ? <small>{"Can't be changed once it's in a routine or workout."}</small> : null}
 
         <fieldset disabled={!canMutate || busy}>
           <legend>Required equipment</legend>
@@ -224,7 +227,7 @@ export function CustomExerciseEditor({
                   onChange={() => toggleEquipment(id)}
                   type="checkbox"
                 />
-                <span>{equipmentLabels[id]}</span>
+                <span>{EQUIPMENT_LABELS[id]}</span>
               </label>
             ))}
           </div>
@@ -252,7 +255,7 @@ export function CustomExerciseEditor({
 
         <fieldset disabled={!canMutate || busy}>
           <legend>YouTube demonstrations</legend>
-          <p>Optional. Add up to two standard YouTube or youtu.be URLs. Links are normalized; the app does not fetch or approve custom videos.</p>
+          <p>Optional. Up to two YouTube links.</p>
           {value.videoUrls.map((url, index) => (
             <label htmlFor={`custom-video-${index + 1}`} key={index}>
               Video {index + 1}
@@ -285,7 +288,7 @@ export function CustomExerciseEditor({
         <section className="custom-danger-zone">
           <span className="eyebrow">Deletion</span>
           <h2>Remove this custom movement</h2>
-          <p>Deletion is refused while any program, workout snapshot, record, or progress summary still references it.</p>
+          <p>You can delete this once no routine or workout uses it.</p>
           {deleteOpen ? (
             <div aria-labelledby="custom-delete-heading" className="custom-delete-confirm" role="alertdialog">
               <strong id="custom-delete-heading">Delete {exercise.name}?</strong>

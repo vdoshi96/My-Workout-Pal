@@ -684,3 +684,16 @@
 - Added deterministic `pwa:build` and `pwa:check` commands so the shipped worker must match the tested policy.
 - Replayed the worker against a production server and retained the failure that showed `navigator.onLine` remained true during a cached offline navigation.
 - Replaced the unreliable single signal with a same-origin manifest reachability probe, then verified the real cached Push route, private-cache denial, and offline announcement in Chromium phone.
+
+## 2026-09-23: Production-grade owner decisions, round 2
+
+- Implemented the named recovery, account, metadata, copy, and layout decisions and every approved test mapping in PR #8; preserved the four acceptance files and all test thresholds.
+- Corrected interrupted response-body classification so queued workout writes recover after reload. Latest complete commands report 75 authenticated passes / 13 skips and 102 release passes / 66 skips; exact preflight and committed verification boundaries are in the [QA report](../qa/latest/PRODUCTION-GRADE-QA.md) and PR.
+- Refreshed and reviewed 40 phone/desktop screenshots. Removed the unsuccessful blank-frame video navigation experiment; the stable embed still reproduces a WebKit Cache API teardown error in one of 48 loaded-video departures.
+- Keep merge blocked pending the explicit teardown-policy decision. The canonical checkout remains the sole active worktree; no manual deployment or production/provider changes were made.
+
+## 2026-09-23: Round-2 committed verification
+
+- Serial W1–W6 on `3e540ac` finished both W5 suites: authenticated 2 failed / 13 skipped / 73 passed; release 66 skipped / 102 passed. Other gates passed.
+- Preserved the logging-shapes refresh/reload failure and the pre-workout Start click timeout. The latter is consistent with the owner-excluded pre-hydration issue. Response-completion synchronization and video teardown policy remain pending decisions; no assertion or timeout was changed.
+- Updated the report and status. Keep PR #8 unmerged; the sole canonical worktree remains active for unresolved gates.

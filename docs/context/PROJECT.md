@@ -11,7 +11,7 @@ My Workout Pal is a customizable workout companion that connects planning, in-wo
 - Preview dumbbell-only and barbell-enabled equipment profiles.
 - Inspect reviewed instructions for every published movement and approved demonstrations where available.
 - Review progress-preview data with one clear sample-data disclosure.
-- Return from an exercise guide to the exact public day, filtered library, or sample workout that opened it.
+- Return from a public exercise guide to the library with its equipment selection, or from a member guide to the member Library.
 - Register or sign in with Google or email and password.
 - Land in an unmistakably private account after sign-in and see identity, account state, and sign-out controls.
 - Verify a password account before permanent mutations.
@@ -31,7 +31,7 @@ My Workout Pal is a customizable workout companion that connects planning, in-wo
 - Neon Postgres through Vercel Marketplace, accessed through Drizzle ORM and versioned migrations.
 - Zod validation at every untrusted input boundary.
 - Authentication return targets are server-normalized to bounded local paths before client navigation. Missing or invalid destinations use `/app` as the safe member default.
-- Public exercise return targets use a separate allowlist for the program, five days, filtered library, sample workout, and canonical Progress preview. The old `/sample-progress` alias normalizes to `/progress`; direct or hostile origins fall back to the library.
+- Public guides use a library back link with the equipment query; member guides stay under `/app/library`. The existing bounded public-return helper remains available to legacy callers. The old `/sample-progress` alias still normalizes to `/progress`.
 - Vitest for domain and integration tests. Playwright covers Chromium and WebKit browser flows.
 - Vercel Pro hosts preview and production deployments from GitHub.
 

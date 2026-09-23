@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b454ce898d8994072787ed63669fd16c8bc6477040ed9c5a0c991fe44725c51b">
+  <meta name="source-sha256" content="7625fbf0269a76ce6a70f1a20c4a3475b83fb6857d71e0f602eee83b4b8aeb5d">
   <title>Sources · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -198,6 +198,13 @@ remained Ready from <code>5c416d774fb53c3a4f5f5623ef1a202fca4b07ee</code>.</p>
 <li><a href="https://atlassian.design/guidelines/brand/illustrations/">Atlassian product illustration guidance</a>: contextual scale and avoiding visual overload.</li>
 <li><a href="https://design.gitlab.com/brand-design/visual-design-brand-illustrations">GitLab illustration principles</a>: consistent visual storytelling paired with readable copy.</li>
 <li>Seven original integrated cartoon scenes are optimized under <code>public/illustrations/quiet-set/</code>, with exact generation prompts and source references in JSON sidecars. The old standalone plates remain as source references; active decorative placement uses the contextual scenes.</li>
+</ul>
+<h2>September 23, 2026: Error recovery and video teardown investigation</h2>
+<ul>
+<li>Installed Next.js 16.3.2 error-file guide (<code>node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/error.md</code>): the owner-directed <code>retry()</code> recovery contract.</li>
+<li><a href="https://github.com/WebKit/WebKit/blob/main/Source/WebCore/Modules/cache/DOMCacheStorage.cpp">WebKit Cache Storage implementation</a>: pending cache work rejects when its context stops; supports the observed teardown mechanism, without identifying the cross-origin player&#39;s internal operation.</li>
+<li><a href="https://developers.google.com/youtube/player_parameters#origin">YouTube embedded player parameters</a>: origin binding is associated with enabled IFrame API control. The current non-API embed can keep its server-rendered URL stable through hydration.</li>
+<li><a href="../qa/latest/PRODUCTION-GRADE-QA.html">QA report</a>: local reproduction, failed experiments, evidence limits, and the unresolved owner decision.</li>
 </ul>
 
   </main>

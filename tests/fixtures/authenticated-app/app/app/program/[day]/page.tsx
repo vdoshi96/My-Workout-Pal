@@ -1,15 +1,24 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { Icon } from "@/components/ui/icon";
 import { StartWorkoutControl } from "@/components/workout/start-workout-control";
-import { getViewerProfileProgram } from "@/server/repositories/profile-program";
+import { getViewerProfileProgram, RepositoryNotFoundError } from "@/server/repositories/profile-program";
 import { getHarnessDatabase } from "../../../../server/database";
 import { harnessRequestContext } from "../../../../server/harness-context";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+export async function generateMetadata({ params }: Readonly<{ params: Promise<{ day: string }> }>) {
+  const context = harnessRequestContext(await headers());
+  if (!context.viewer) return { title: "Routine" };
+  const { database } = await getHarnessDatabase(context.scope);
+  const { day } = await params;
+  try { const model = await getViewerProfileProgram(database, context.viewer); return { title: model.activeProgram?.days.find((item) => item.dayKey === day)?.displayName ?? "Routine" }; }
+  catch { return { title: "Routine" }; }
+}
 
 export default async function HarnessMemberDayPage({
   params,
@@ -20,7 +29,7 @@ export default async function HarnessMemberDayPage({
   ]);
   if (!context.viewer) return null;
   const { database } = await getHarnessDatabase(context.scope);
-  const model = await getViewerProfileProgram(database, context.viewer);
+  const model = await getViewerProfileProgram(database, context.viewer).catch((error: unknown) => { if (error instanceof RepositoryNotFoundError) redirect("/app"); throw error; });
   const program = model.activeProgram;
   const day = program?.days.find((candidate) => candidate.dayKey === dayKey);
   if (!program || !day) notFound();
@@ -32,11 +41,11 @@ export default async function HarnessMemberDayPage({
           <Icon name="arrow-left" /> Program
         </Link>
         <span className="eyebrow">
-          Day {day.dayNumber} · revision {program.revisionNumber}
+          Day {day.dayNumber}
         </span>
         <h1 id="member-day-title">{day.displayName}</h1>
         <p>
-          {day.prescriptions.length} movements · {day.cardio.length === 0
+          {day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"} · {day.cardio.length === 0
             ? "no cardio finish"
             : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
         </p>
@@ -61,7 +70,7 @@ export default async function HarnessMemberDayPage({
                     </span>
                     {prescription.exercise.kind === "catalog" ? (
                       <Link
-                        href={`/library/${prescription.exercise.slug}`}
+                        href={`/app/library/${prescription.exercise.slug}`}
                         prefetch={false}
                       >
                         Details <Icon name="chevron-right" />
@@ -85,7 +94,7 @@ export default async function HarnessMemberDayPage({
             {day.cardio.length === 0 ? "No cardio" : day.cardio.length === 1 ? "Cardio option" : "Cardio options"}
           </span>
           <h2>
-            {day.cardio.length === 0 ? "Strength only" : day.cardio.length === 1 ? "Configured finish" : "Choose a finish"}
+            {day.cardio.length === 0 ? "Strength only" : day.cardio.length === 1 ? "Cardio finish" : "Choose a finish"}
           </h2>
           {day.cardio.length > 0 ? (
             <ul>

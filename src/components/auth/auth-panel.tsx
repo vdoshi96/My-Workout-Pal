@@ -49,11 +49,7 @@ export function AuthPanel({
 
   async function finishSignIn(user: User) {
     await createServerSession(user);
-    setMessage(
-      user.emailVerified
-        ? "Signed in securely. Opening your route."
-        : "Signed in. Verify your email before saving permanent changes.",
-    );
+    setMessage("Signed in.");
     window.location.replace(returnTo);
   }
 
@@ -64,7 +60,8 @@ export function AuthPanel({
       const credential = await signInWithPopup(auth, new GoogleAuthProvider());
       await finishSignIn(credential.user);
     } catch (error) {
-      setMessage(error instanceof Error && !('code' in error) ? error.message : mapFirebaseAuthError(error));
+      console.error("Sign-in failed", error);
+      setMessage(mapFirebaseAuthError(error));
     } finally {
       setBusy(false);
     }
@@ -78,21 +75,22 @@ export function AuthPanel({
     try {
       if (mode === "reset") {
         await sendPasswordResetEmail(auth, email);
-        setMessage("If this email has an account, Firebase will send recovery instructions.");
+        setMessage("If that email has an account, we've sent a reset link.");
         return;
       }
       if (mode === "register") {
         const credential = await createUserWithEmailAndPassword(auth, email, password);
         await sendEmailVerification(credential.user);
         await signOut(auth);
-        setMessage("Account created. Verify the email before signing in to save permanent changes.");
+        setMessage("Account created. Check your inbox to verify your email.");
         setMode("sign-in");
         return;
       }
       const credential = await signInWithEmailAndPassword(auth, email, password);
       await finishSignIn(credential.user);
     } catch (error) {
-      setMessage(error instanceof Error && !('code' in error) ? error.message : mapFirebaseAuthError(error));
+      console.error("Sign-in failed", error);
+      setMessage(mapFirebaseAuthError(error));
     } finally {
       setBusy(false);
     }
@@ -100,14 +98,14 @@ export function AuthPanel({
 
   return (
     <>
-      <div className="status-stamp">Firebase session</div>
+
       <h2 id="auth-heading">
         {mode === "register" ? "Create account" : mode === "reset" ? "Recover access" : "Sign in"}
       </h2>
       <div className="auth-tabs" role="group" aria-label="Authentication task">
         <button aria-pressed={mode === "sign-in"} onClick={() => setMode("sign-in")} type="button">Sign in</button>
         <button aria-pressed={mode === "register"} onClick={() => setMode("register")} type="button">Register</button>
-        <button aria-pressed={mode === "reset"} onClick={() => setMode("reset")} type="button">Recovery</button>
+        <button aria-pressed={mode === "reset"} onClick={() => setMode("reset")} type="button">Forgot password?</button>
       </div>
       {mode === "sign-in" ? (
         <button className="auth-method" disabled={busy} onClick={() => void handleGoogle()} type="button">
@@ -131,12 +129,12 @@ export function AuthPanel({
           </>
         )}
         <button className="primary-action" disabled={busy} type="submit">
-          <span>{busy ? "Working…" : mode === "register" ? "Create account" : mode === "reset" ? "Send recovery" : "Sign in with email"}</span>
+          <span>{busy ? "Working…" : mode === "register" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in with email"}</span>
           <Icon name="arrow-right" />
         </button>
       </form>
       <p aria-live="polite" className="auth-message" role="status">{message}</p>
-      <small>Password accounts must verify email before permanent mutations. The server accepts identity only through a verified HTTP-only Firebase session cookie.</small>
+
     </>
   );
 }

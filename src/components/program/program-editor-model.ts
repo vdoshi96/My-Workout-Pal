@@ -92,10 +92,10 @@ export type ProgramPrescriptionRemovalReview = Readonly<{
 
 export function programEditorUnitLabels(
   unitSystem: ProgramEditorUnitSystem,
-): Readonly<{ distance: "metres" | "miles"; pace: "seconds / km" | "seconds / mile"; weight: "kg" | "lb" }> {
+): Readonly<{ distance: "metres" | "miles"; pace: "min / km" | "min / mile"; weight: "kg" | "lb" }> {
   return unitSystem === "imperial"
-    ? { distance: "miles", pace: "seconds / mile", weight: "lb" }
-    : { distance: "metres", pace: "seconds / km", weight: "kg" };
+    ? { distance: "miles", pace: "min / mile", weight: "lb" }
+    : { distance: "metres", pace: "min / km", weight: "kg" };
 }
 
 function roundProgramEditorDisplayValue(value: number, fractionDigits: number): string {
@@ -1049,4 +1049,32 @@ export function stripLocalProgramPrescriptionIds(
       }),
     })) as ProgramPublishInput["days"],
   };
+}
+
+export function formatProgramDraftIssue(
+  draft: ProgramEditorDraft | ProgramPublishInput,
+  issue: { path: readonly PropertyKey[]; message: string },
+  exerciseNames: ReadonlyMap<string, string>,
+): string {
+  const path = issue.path;
+  const day = path[0] === "days" && typeof path[1] === "number" ? draft.days[path[1]] : undefined;
+  let prefix = day ? (("name" in day && typeof day.name === "string" ? day.name : day.displayName) || "Routine") : "Routine";
+  if (day && path[2] === "sections" && typeof path[3] === "number") {
+    const section = day.sections[path[3]];
+    const position = path[5];
+    const prescription = path[4] === "prescriptions" && typeof position === "number" ? section?.prescriptions[position] : undefined;
+    if (prescription) prefix += ` › ${prescription.displayName || exerciseNames.get(prescription.catalogExerciseId ?? prescription.customExerciseId ?? "") || `Movement ${Number(position) + 1}`}`;
+    else if (section) prefix += ` › ${section.title}`;
+  } else if (day && path[2] === "cardio") prefix += " › Cardio";
+  const labels: Readonly<Record<string, string>> = {
+    name: "Day name", title: "Section name", setCount: "Sets", minimumReps: "Min reps", maximumReps: "Max reps",
+    minimumSeconds: "Min time", maximumSeconds: "Max time", restSeconds: "Rest", targetWeightKg: "Target weight",
+    targetDistanceM: "Target distance", durationSeconds: "Duration", distanceM: "Distance", inclinePercent: "Incline", notes: "Notes",
+  };
+  const last = path.at(-1);
+  const label = typeof last === "string" ? labels[last] : undefined;
+  const message = issue.message;
+  const friendly = message.startsWith("Too small") ? "is too low." : message.startsWith("Too big") ? "is too high." :
+    message.includes("Required") || message.includes("expected number, received null") ? "is required." : message;
+  return `${prefix}: ${label ? `${label} ${friendly}` : message}`;
 }

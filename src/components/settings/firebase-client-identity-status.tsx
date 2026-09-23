@@ -16,31 +16,22 @@ export function FirebaseClientIdentityStatus({
   if (state.status === "loading") {
     return (
       <p aria-live="polite" className="settings-firebase-status" role="status">
-        Checking the browser Firebase sign-in before enabling permanent deletion…
+        Checking…
       </p>
     );
   }
 
-  if (state.status === "ready") {
-    return (
-      <p aria-live="polite" className="settings-firebase-status" role="status">
-        Browser Firebase sign-in is ready for same-account reauthentication.
-      </p>
-    );
-  }
-
-  const message = state.status === "missing"
-    ? "The browser Firebase sign-in could not be found after initialization."
-    : state.status === "mismatch"
-      ? "The browser Firebase sign-in does not match this secure server session."
-      : "Firebase sign-in did not finish loading safely.";
+  if (state.status === "ready") return null;
+  const message = state.status === "missing" || state.status === "mismatch"
+    ? "Please sign in again to delete your account."
+    : "Something went wrong. Try again.";
 
   return (
     <div className="settings-firebase-status" role="alert">
-      <p>{message} Permanent deletion remains disabled.</p>
+      <p>{message}</p>
       <div className="settings-firebase-actions">
         {state.status === "unavailable" ? (
-          <button onClick={onRetry} type="button">Retry Firebase check</button>
+          <button onClick={onRetry} type="button">Try again</button>
         ) : null}
         <Link href={settingsSignInHref}>Sign in again</Link>
       </div>

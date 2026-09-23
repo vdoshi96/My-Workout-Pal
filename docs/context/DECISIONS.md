@@ -245,3 +245,7 @@ a conflict. This read correction requires no historical writes or schema change.
 The member shell exposes Today, Routine, Library, and Progress. Library owns its nested routes and stays searchable before setup with an explicitly labeled default equipment scope. Settings remains a utility; the runner route bar also links to Library.
 
 Seven integrated illustrations with six original cartoon characters replace isolated portrait plates in active placements. Page headers reserve scene space; forms and logging controls retain readable surfaces. Browser-local Pip/Mica choice applies to Today, and Off hides the entire cast. Public-only service-worker cache v8 includes the scene files; private routes and owner data remain excluded.
+
+## September 23, 2026: Bounded production-audit closeout
+
+The owner decisions and supplemental permissions in [the implementation plan](../plans/PRODUCTION-GRADE-IMPLEMENTATION.md) are the authority for PR #8. Keep acceptance files, assertion intent, geometry thresholds, skips, retries, and timeouts unchanged except for the explicitly recorded value/flow mappings. Merge requires all final same-commit gates and Vercel checks to pass; retain the branch and use no manual deployment. The proposed WebKit third-party teardown-policy exception is still unapproved and must not be inferred from earlier test-edit permissions.

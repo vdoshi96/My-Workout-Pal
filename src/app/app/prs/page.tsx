@@ -9,6 +9,8 @@ import {
 } from "@/server/repositories/profile-program";
 import { loadPersonalRecords } from "@/server/repositories/training-insights";
 
+export const metadata = { title: "Personal records" };
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

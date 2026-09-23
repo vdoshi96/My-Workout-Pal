@@ -1,14 +1,5 @@
 import Link from "next/link";
-
+import { PublicShell } from "@/components/layout/public-shell";
 export default function NotFound() {
-  return (
-    <main className="status-page contour-surface">
-      <p className="status-stamp">Waypoint not found</p>
-      <h1>This route is not on the map.</h1>
-      <p>Return to your program and choose a listed day.</p>
-      <Link className="primary-action" href="/">
-        Open program
-      </Link>
-    </main>
-  );
+  return <PublicShell current={null}><section className="status-page"><h1>Page not found</h1><p>{"We couldn't find that page."}</p><Link className="primary-action" href="/">Go home</Link></section></PublicShell>;
 }

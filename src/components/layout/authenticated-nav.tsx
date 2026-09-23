@@ -14,7 +14,7 @@ const destinations = [
 
 export function authenticatedDestinationIsCurrent(pathname: string, href: string): boolean {
   if (href === "/app") return pathname === href || pathname.startsWith("/workout/");
-  if (href === "/app/program/edit") return pathname === "/app/program" || pathname.startsWith("/app/program/");
+  if (href === "/app/program/edit") return pathname === "/app/programs" || pathname === "/app/program" || pathname.startsWith("/app/program/");
   if (href === "/app/progress") return ["/app/progress", "/app/history", "/app/prs"].some((path) => pathname === path || pathname.startsWith(`${path}/`));
   return pathname === href || pathname.startsWith(`${href}/`);
 }

@@ -89,15 +89,15 @@ describe("workout runner presentation helpers", () => {
       tone: "pending",
     });
     expect(formatSyncStatus("offline")).toMatchObject({
-      label: "Offline queued",
+      label: "Saved on this device",
       tone: "offline",
     });
     expect(formatSyncStatus("auth_expired")).toMatchObject({
-      label: "Sign-in expired",
+      label: "Sign in again",
       tone: "auth",
     });
     expect(formatSyncStatus("auth_revoked")).toMatchObject({
-      label: "Sign-in revoked",
+      label: "Sign in again",
       tone: "auth",
     });
     expect(formatSyncStatus("conflict")).toMatchObject({

@@ -81,7 +81,7 @@ describe("authenticated customization fixture boundary", () => {
 
     expect(collection.match(/maxLength=\{80\}/gu)).toHaveLength(2);
     expect(styles).toMatch(
-      /\.program-editor-section-actions button, \.program-editor-add-section button \{[^}]*min-height: 2\.75rem;/u,
+      /\.program-editor-add-section button \{[^}]*min-height: 2\.75rem;/u,
     );
     expect(styles).toMatch(
       /\.program-editor-prescription-actions button, \.program-editor-add \{[^}]*min-height: 2\.75rem;/u,

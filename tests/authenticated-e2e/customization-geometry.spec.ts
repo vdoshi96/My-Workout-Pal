@@ -70,7 +70,7 @@ async function assertDialogFitsViewport(page: Page) {
 }
 
 async function assertMemberTargets(page: Page) {
-  const sizes = await page.locator(".member-nav a").evaluateAll((links) =>
+  const sizes = await page.locator(".member-nav a, .quiet-settings-link").evaluateAll((links) =>
     links.map((link) => {
       const box = link.getBoundingClientRect();
       return { height: box.height, width: box.width };
@@ -162,20 +162,33 @@ test("customization surfaces preserve geometry and media preferences", async ({
     expect(deviceSemantics.maxTouchPoints).toBe(0);
     expect(deviceSemantics.coarsePointer).toBe(false);
   }
-  await expect(page.locator(".member-identity")).toBeVisible();
-  await expect(page.getByText("Alice QA", { exact: true })).toBeVisible();
-  await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
+  if (testInfo.project.name.endsWith("-phone")) {
+    await expect(page.locator(".member-identity")).toBeHidden();
+    await page.getByRole("link", { name: "Settings", exact: true }).click();
+    const account = page.getByRole("region", { name: "Account", exact: true });
+    await expect(account.getByText("Alice QA", { exact: true })).toBeVisible();
+    await expect(account.getByText("alice@example.invalid", { exact: true })).toBeVisible();
+    await expect(account.getByText("Verified", { exact: true })).toBeVisible();
+    await page.getByRole("link", { name: "Today", exact: true }).click();
+  } else {
+    await expect(page.locator(".member-identity")).toBeVisible();
+    await expect(page.getByText("Alice QA", { exact: true })).toBeVisible();
+    await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
+  }
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Start with the example or start blank" })).toBeVisible();
-  await page.getByLabel("Time zone").fill("America/Chicago");
+  await expect(page.getByRole("heading", { name: "Make room for your routine." })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByLabel("Time zone").selectOption("America/Chicago");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   const onboardingResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start with example" }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
   expect((await onboardingResponse).status()).toBe(201);
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   expect(
     await page.evaluate(() => ({
@@ -184,26 +197,28 @@ test("customization surfaces preserve geometry and media preferences", async ({
       reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
       scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
     })),
-  ).toEqual({ dark: true, paper: "#0b252b", reduced: true, scrollBehavior: "auto" });
+  ).toEqual({ dark: true, paper: "#142a23", reduced: true, scrollBehavior: "auto" });
   await assertViewportGeometry(page);
   await assertMemberTargets(page);
   await assertAccessible(page);
 
-  await page.getByRole("link", { name: /Manage routines/ }).click();
-  await expect(page.getByRole("heading", { name: "Your routes" })).toBeVisible();
-  await expect(page.getByLabel("Program name")).toHaveAttribute("maxlength", "80");
-  const cloneButton = page.getByRole("button", { name: "Clone" }).first();
+  await page.getByRole("link", { name: "Routine", exact: true }).click();
+  await page.getByRole("link", { name: "All routines", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Your routines" })).toBeVisible();
+  await expect(page.getByLabel("Routine name")).toHaveAttribute("maxlength", "80");
+  const cloneButton = page.getByRole("button", { name: "Duplicate" }).first();
   await assertMaterialTarget(cloneButton);
   await cloneButton.click();
-  await expect(page.getByRole("heading", { name: /Clone Five-day starter route/ })).toBeVisible();
-  await expect(page.getByLabel("New program name")).toHaveAttribute("maxlength", "80");
+  await expect(page.getByRole("heading", { name: /Duplicate Five-day starter route/ })).toBeVisible();
+  await expect(page.getByLabel("New routine name")).toHaveAttribute("maxlength", "80");
   await assertDialogFitsViewport(page);
   await assertViewportGeometry(page);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
 
   await page.goto("/app/program/edit");
-  await expect(page.getByRole("heading", { name: "Edit your route" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your routine" })).toBeVisible();
+  await page.getByText("Add a section", { exact: true }).click();
   await expect(page.getByRole("button", { name: "Add core section" })).toBeEnabled();
   const accessorySection = page
     .locator("fieldset.program-editor-section")
@@ -212,6 +227,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
   const removeAccessory = accessorySection.getByRole("button", {
     name: `Remove ${accessoryName} section`,
   });
+  await accessorySection.getByLabel(`More actions for ${accessoryName}`, { exact: true }).click();
   await assertMaterialTarget(removeAccessory);
   await assertMaterialTarget(accessorySection.getByRole("button", { name: "Add movement" }));
   await removeAccessory.click();
@@ -221,7 +237,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
   await assertAccessible(page);
   await page.getByRole("button", { name: "Keep section" }).click();
 
-  await page.goto("/app");
+  await page.goto("/app/settings");
   const barbellButton = page.getByRole("button", { name: /Barbell \+ rack/ });
   await assertMaterialTarget(barbellButton);
   await barbellButton.click();
@@ -250,7 +266,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
   await assertViewportGeometry(page);
 
   await page.goto("/app/progress");
-  await expect(page.getByRole("heading", { name: "Progress" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Progress", exact: true })).toBeVisible();
   await assertViewportGeometry(page);
   await assertAccessible(page);
 

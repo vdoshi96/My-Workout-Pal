@@ -1,3 +1,5 @@
+import { getHarnessDatabase } from "../../server/database";
+import { getViewerProfileProgram, RepositoryNotFoundError } from "@/server/repositories/profile-program";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
@@ -17,5 +19,7 @@ export default async function HarnessAccountLayout({ children }: Readonly<{ chil
       </main>
     );
   }
-  return <AuthenticatedShell viewer={context.viewer}>{children}</AuthenticatedShell>;
+  const { database } = await getHarnessDatabase(context.scope);
+  const reducedMotion = await getViewerProfileProgram(database, context.viewer).then((model) => model.preferences.reducedMotion).catch((error: unknown) => { if (error instanceof RepositoryNotFoundError) return false; throw error; });
+  return <AuthenticatedShell viewer={context.viewer} reducedMotion={reducedMotion}>{children}</AuthenticatedShell>;
 }

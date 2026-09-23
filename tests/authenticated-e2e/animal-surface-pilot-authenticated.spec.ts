@@ -106,13 +106,15 @@ async function expectMemberCompanion(page: Page) {
   expect(
     await placement.evaluate((element) => getComputedStyle(element).pointerEvents),
   ).toBe("none");
-  await expectNoIntersection(placement, page.locator(".member-header"));
-  await expectNoIntersection(placement, page.locator(".member-nav"));
-  await expectNoIntersection(placement, page.locator(".member-program-copy"));
-  await expectNoIntersection(placement, page.locator(".member-program-actions"));
-  await expectNoIntersection(placement, page.locator(".member-home-progress"));
-  await expectNoIntersection(placement, page.locator(".member-week"));
-  await expectNoIntersection(placement, page.locator(".member-equipment"));
+  for (const selector of [
+    ".member-header", ".member-nav", ".member-program-copy h1", ".member-program-copy > p",
+    ".quiet-today-start", ".quiet-today-start :is(button, select, a)",
+    ".member-resume-card", ".member-resume-card a", ".member-home-verification", ".member-week",
+  ]) {
+    for (const region of await page.locator(selector).all()) {
+      if (await region.isVisible()) await expectNoIntersection(placement, region);
+    }
+  }
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -164,9 +166,19 @@ test("verified, unverified, empty, and active member states keep the fox decorat
   const verified = await createHarnessContext(browser, scope, testInfo, "alice");
   const page = await verified.newPage();
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
-  await expect(page.getByText("No completed workouts yet")).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ready when you are, Alice QA." })).toBeVisible();
+  await expect(page.locator(".member-program-copy > p")).toHaveText("Five-day starter route · Dumbbells · 5 days");
+  const nextWorkout = page.getByRole("region", { name: "Your next workout" });
+  await expect(nextWorkout.getByLabel("Training day")).toBeVisible();
+  await expect(nextWorkout.getByRole("button", { name: "Start workout", exact: true })).toBeEnabled();
+  await expect(nextWorkout.getByRole("link", { name: "Review this day" })).toHaveAttribute("href", "/app/program/push");
+  await expect(page.locator(".member-day-grid > li")).toHaveCount(5);
+  await expect(page.locator(".member-home-progress, .member-home-totals")).toHaveCount(0);
   await expectMemberCompanion(page);
   await assertAccessible(page);
 
@@ -183,17 +195,17 @@ test("verified, unverified, empty, and active member states keep the fox decorat
   }
   await captureMemberEvidence(page, "ready", testInfo);
 
-  await page.getByRole("link", { name: /Open Push to start/u }).click();
+  await page.getByRole("link", { name: /Push/ }).click();
   const startResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start or resume workout" }).click();
+  await page.getByRole("button", { name: "Start workout" }).click();
   expect((await startResponse).status()).toBe(201);
   await page.waitForURL(/\/workout\//u);
   await page.goto("/app");
-  await expect(page.getByText("Workout in progress")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Keep going with Push", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Resume Push" })).toBeVisible();
   for (const width of widths) {
     await page.setViewportSize({
@@ -263,8 +275,11 @@ test("member decoration is static, forced-color safe, and failure safe", async (
   const context = await createHarnessContext(browser, scope, testInfo, "alice");
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await page.reload();
@@ -287,10 +302,18 @@ test("member decoration is static, forced-color safe, and failure safe", async (
   await page.reload();
   await expect(page.locator('[data-companion-placement="member-home"]')).toBeHidden();
   expect(
-    await page.locator(".member-program-hero").evaluate(
-      (element) => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/u).length,
-    ),
+    await page.locator(".member-program-hero > .member-program-copy:visible").count(),
   ).toBe(1);
+  const protectedControls = page.locator(".member-program-copy h1, .member-program-copy > p, .quiet-today-start h2, .quiet-today-start button, .quiet-today-start select, .quiet-today-start a, .member-week h2, .member-nav a");
+  for (const control of await protectedControls.all()) {
+    await expect(control).toBeVisible();
+    await control.scrollIntoViewIfNeeded();
+    expect(await control.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return hit === element || (hit !== null && element.contains(hit));
+    })).toBe(true);
+  }
 
   await page.emulateMedia({ colorScheme: "light", forcedColors: "none" });
   await page.reload();
@@ -305,6 +328,7 @@ test("member decoration is static, forced-color safe, and failure safe", async (
     return element.getBoundingClientRect().width / hero.getBoundingClientRect().width;
   });
   expect(copyRatio).toBeGreaterThan(0.8);
+  for (const control of await protectedControls.all()) await expect(control).toBeVisible();
 
   await page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));
   await context.close();
@@ -322,20 +346,23 @@ test("slow and failed personal-home reads stay truthful and recover through retr
   const context = await createHarnessContext(browser, scope, testInfo, "alice", control);
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
 
   await page.goto("/sign-in?returnTo=/app");
   control.scenario = "slow-member-home";
   const slowNavigation = page
     .getByRole("link", { name: "Return as the current synthetic viewer" })
     .click();
-  const loading = page.locator('.member-state[role="status"]');
-  await expect(loading).toContainText("Loading your home…");
+  const loading = page.locator('.member-state[aria-busy="true"]');
+  await expect(loading).toContainText("Loading…");
   await expect(loading).toHaveAttribute("aria-busy", "true");
   await expect(page.locator('[data-companion-placement="member-home"]')).toHaveCount(0);
   await slowNavigation;
-  await expect(page.getByRole("heading", { name: /Welcome back/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Ready when you are/u })).toBeVisible();
 
   control.scenario = "ready";
   await page.goto("/sign-in?returnTo=/app");
@@ -344,12 +371,12 @@ test("slow and failed personal-home reads stay truthful and recover through retr
     .getByRole("link", { name: "Return as the current synthetic viewer" })
     .click();
   const error = page.locator('.member-state[role="alert"]');
-  await expect(error).toContainText("Your home did not load.");
-  await expect(error).toContainText("No routine or workout changes were made.");
+  await expect(error).toContainText("This page didn't load");
+  await expect(error).toContainText("Nothing was changed.");
   await expect(page.locator('[data-companion-placement="member-home"]')).toHaveCount(0);
   control.scenario = "ready";
   await page.getByRole("button", { name: "Try again" }).click();
-  await expect(page.getByRole("heading", { name: /Welcome back/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Ready when you are/u })).toBeVisible();
   await expectMemberCompanion(page);
 
   await page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));

@@ -1,6 +1,7 @@
+import { loadTrainingSession, TrainingInsightsRepositoryError } from "@/server/repositories/training-insights";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { OwnedWorkoutRunner } from "@/components/workout/owned-workout-runner";
 import { hydrateWorkoutResumeState } from "@/domain/workout-resume";
@@ -57,6 +58,13 @@ async function loadHarnessWorkout(
       error instanceof WorkoutRepositoryError &&
       (error.code === "not_found" || error.code === "invalid_request")
     ) {
+      if (error.code === "not_found") {
+        const session = await loadTrainingSession(database, viewer, sessionId).catch((historyError: unknown) => {
+          if (historyError instanceof TrainingInsightsRepositoryError && historyError.code === "not_found") return undefined;
+          throw historyError;
+        });
+        if (session) redirect(`/app/history/${sessionId}`);
+      }
       notFound();
     }
     throw error;
@@ -117,7 +125,7 @@ export default async function HarnessOwnedWorkoutPage({
           >
             <span className="eyebrow">Read-only account</span>
             <h1 id="workout-verification-title">Verify before editing this workout</h1>
-            <p>The immutable snapshot remains saved. Verify your email before continuing.</p>
+            <p>Verify your email, then sign in again to continue this workout.</p>
           </section>
         )}
       </main>

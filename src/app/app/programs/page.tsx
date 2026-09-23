@@ -1,3 +1,6 @@
+import { listCatalogExercises } from "@/domain/exercises/library";
+import { EQUIPMENT_PROFILES } from "@/domain/equipment";
+import { deterministicSeedUuid } from "@/domain/seed/identity";
 import { redirect } from "next/navigation";
 
 import { ProgramCollection } from "@/components/program/program-collection";
@@ -7,6 +10,8 @@ import {
   getViewerProfileProgram,
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
+
+export const metadata = { title: "Your routines" };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -27,21 +32,11 @@ export default async function ProgramsPage() {
   if (!viewer) return null;
   const model = await readCollectionOrUndefined(viewer);
   if (!model?.activeProgram || model.programs.length === 0) redirect("/app");
-  const catalogMovements = [
-    ...new Map(
-      model.activeProgram.days
-        .flatMap((day) => day.prescriptions)
-        .filter((prescription) => prescription.catalogExerciseId !== null)
-        .map((prescription) => [
-          prescription.catalogExerciseId!,
-          {
-            id: prescription.catalogExerciseId!,
-            name: prescription.exercise.name,
-            requiredEquipment: prescription.exercise.requiredEquipment,
-          },
-        ]),
-    ).values(),
-  ].sort((left, right) => left.name.localeCompare(right.name, "en-US"));
+  const catalogMovements = [...new Map(Object.values(EQUIPMENT_PROFILES).flatMap((profile) =>
+    listCatalogExercises({ profile }).map((exercise) => [exercise.slug, {
+      id: deterministicSeedUuid("catalog-exercise", exercise.slug), name: exercise.name, requiredEquipment: exercise.requiredEquipment,
+    }] as const),
+  )).values()].sort((left, right) => left.name.localeCompare(right.name, "en-US"));
   return (
     <ProgramCollection
       canMutate={viewer.eligibleForPermanentMutations}

@@ -164,7 +164,7 @@ describe("program collection client model", () => {
 
   it("normalizes bounded names without inventing an empty value", () => {
     expect(validatedProgramName("  Trail strength  ")).toBe("Trail strength");
-    expect(() => validatedProgramName("   ")).toThrow("Enter a program name");
+    expect(() => validatedProgramName("   ")).toThrow("Enter a routine name");
     expect(validatedProgramName("x".repeat(80))).toHaveLength(80);
     expect(() => validatedProgramName("x".repeat(81))).toThrow(
       "80 characters or fewer",

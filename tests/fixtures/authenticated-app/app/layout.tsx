@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "My Workout Pal · Authenticated QA harness",
+  title: { default: "My Workout Pal", template: "%s · My Workout Pal" },
 };
 
 export default function HarnessRootLayout({ children }: Readonly<{ children: ReactNode }>) {

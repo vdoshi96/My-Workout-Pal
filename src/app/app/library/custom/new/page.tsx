@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { CustomExerciseEditor } from "@/components/exercises/custom-exercise-editor";
 import { getCurrentViewer } from "@/server/auth/viewer";
 
+export const metadata = { title: "New movement" };
+
 export const dynamic = "force-dynamic";
 
 export default async function NewCustomExercisePage() {

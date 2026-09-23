@@ -399,12 +399,12 @@ describe("program editor request model", () => {
 
     expect(programEditorUnitLabels("metric")).toEqual({
       distance: "metres",
-      pace: "seconds / km",
+      pace: "min / km",
       weight: "kg",
     });
     expect(programEditorUnitLabels("imperial")).toEqual({
       distance: "miles",
-      pace: "seconds / mile",
+      pace: "min / mile",
       weight: "lb",
     });
     expect(programEditorDisplayValue(canonical.targetWeightKg, "weight", "imperial")).toBe("44.09");

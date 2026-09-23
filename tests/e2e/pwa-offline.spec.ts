@@ -34,7 +34,7 @@ test("restores every opened public companion route offline without caching owned
   // boundary joins the public cache alongside the install-time HTML/assets.
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(
-    page.getByRole("heading", { level: 1, name: "Your workout. Your way." }),
+    page.getByRole("heading", { level: 1, name: "A little space for your next set." }),
   ).toBeVisible();
   await page.goto("/progress", { waitUntil: "networkidle" });
   await expect(
@@ -121,16 +121,16 @@ test("restores every opened public companion route offline without caching owned
   try {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1, name: "Push" })).toBeVisible();
-    await expect(page.locator(".offline-indicator")).toContainText("Offline");
+    await expect(page.locator(".offline-indicator")).toContainText("offline");
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { level: 1, name: "Your workout. Your way." }),
+      page.getByRole("heading", { level: 1, name: "A little space for your next set." }),
     ).toBeVisible();
     await expect
       .poll(() =>
         page
-          .locator('[data-companion-placement="landing"] img')
+          .locator('.quiet-studio img')
           .evaluate((image) => (image as HTMLImageElement).naturalWidth),
       )
       .toBeGreaterThan(0);
@@ -151,7 +151,7 @@ test("restores every opened public companion route offline without caching owned
     await expect(
       page.getByRole("heading", { level: 1, name: "Exercise library" }),
     ).toBeVisible();
-    await expect(page.locator(".offline-indicator")).toContainText("Offline");
+    await expect(page.locator(".offline-indicator")).toContainText("offline");
     await expect
       .poll(() =>
         page

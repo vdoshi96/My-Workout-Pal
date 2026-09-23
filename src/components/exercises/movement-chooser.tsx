@@ -31,6 +31,9 @@ import type {
   MovementSource,
 } from "@/domain/exercises/movement-chooser-contract";
 
+import { EQUIPMENT_LABELS, LOGGING_KIND_LABELS } from "@/components/exercises/labels";
+import type { EquipmentId } from "@/domain/equipment";
+
 type LoadState =
   | Readonly<{ status: "loading" }>
   | Readonly<{ status: "error"; message: string }>
@@ -56,12 +59,7 @@ type CreateDraft = Readonly<{
 
 const EMPTY_GUIDANCE_URLS = ["", ""] as const;
 
-const loggingKinds = [
-  { value: "weight_reps", label: "Weight + repetitions" },
-  { value: "bodyweight_reps", label: "Bodyweight repetitions" },
-  { value: "duration", label: "Duration" },
-  { value: "distance_duration", label: "Distance + duration" },
-] as const;
+
 
 function sourceKey(source: MovementSource): string {
   return `${source.kind}:${source.id}`;
@@ -310,7 +308,7 @@ export function MovementChooserAdapter({
         urls,
         savedUrls: urls,
         message: result.duplicate
-          ? "The earlier guidance save is already stored."
+          ? "Links saved."
           : urls.some(Boolean)
             ? "Your links are saved privately."
             : "Personal guidance removed.",
@@ -424,7 +422,7 @@ export function MovementChooserAdapter({
             "The movement was created, but its guidance was not saved. Retry the links before choosing it.",
           );
           setCreateMessage(message);
-          setCreateOpen(false);
+          setCreateOpen(true);
           onError(chooserError("guidance_failed", message, true));
           return;
         }
@@ -468,7 +466,7 @@ export function MovementChooserAdapter({
         <div>
           <span className="eyebrow">Library</span>
           <h2 id="movement-chooser-title">{intentLabel}</h2>
-          <p>Compatible canonical movements and only your private movements.</p>
+          <p>Movements that fit your equipment.</p>
         </div>
         <button onClick={onDismiss} type="button" aria-label="Close movement chooser">
           Close
@@ -540,10 +538,10 @@ export function MovementChooserAdapter({
                         <span>
                           <strong>{candidate.selection.name}</strong>
                           <small>
-                            {candidate.selection.loggingKind.replaceAll("_", " ")} · {candidate.requiredEquipment.join(" + ")}
+                            {LOGGING_KIND_LABELS[candidate.selection.loggingKind]} · {candidate.requiredEquipment.map((id) => EQUIPMENT_LABELS[id as EquipmentId]).join(" + ")}
                           </small>
                         </span>
-                        <span>{candidate.selection.source.kind === "catalog" ? "Canonical" : "Private"}</span>
+                        <span>{candidate.selection.source.kind === "catalog" ? "Library" : "Yours"}</span>
                       </button>
                     </li>
                   );
@@ -562,20 +560,21 @@ export function MovementChooserAdapter({
             ) : null}
           </section>
 
-          <section className="movement-chooser__detail" aria-live="polite">
+          <section className="movement-chooser__detail">
+            <p className="sr-only" aria-live="polite">{selectedCandidate ? `${selectedCandidate.selection.name} selected.` : ""}</p>
             {selectedCandidate ? (
               <>
                 <span className="eyebrow">
-                  {selectedCandidate.selection.source.kind === "catalog" ? "Canonical" : "Private"}
+                  {selectedCandidate.selection.source.kind === "catalog" ? "Library" : "Yours"}
                 </span>
                 <h3>{selectedCandidate.selection.name}</h3>
                 <p>
-                  {selectedCandidate.selection.loggingKind.replaceAll("_", " ")} · {selectedCandidate.requiredEquipment.join(" + ")}
+                  {LOGGING_KIND_LABELS[selectedCandidate.selection.loggingKind]} · {selectedCandidate.requiredEquipment.map((id) => EQUIPMENT_LABELS[id as EquipmentId]).join(" + ")}
                 </p>
                 {selectedCandidate.hasApprovedGuidance ? (
                   <div className="movement-chooser__guidance-status">
                     <strong>Approved catalog guidance available</strong>
-                    <p>The workout will use its reviewed demonstration pair.</p>
+                    <p>Includes demo videos.</p>
                   </div>
                 ) : guidance.status === "loading" ? (
                   <p role="status">Loading your private guidance…</p>
@@ -646,7 +645,7 @@ export function MovementChooserAdapter({
               })}
               value={createDraft.loggingKind}
             >
-              {loggingKinds.map(({ value, label }) => (
+              {Object.entries(LOGGING_KIND_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
               ))}
             </select>
@@ -659,7 +658,7 @@ export function MovementChooserAdapter({
                     onChange={() => toggleCreateEquipment(equipmentId)}
                     type="checkbox"
                   />
-                  <span>{equipmentId}</span>
+                  <span>{EQUIPMENT_LABELS[equipmentId as EquipmentId]}</span>
                 </label>
               ))}
             </fieldset>
@@ -704,9 +703,7 @@ export function MovementChooserAdapter({
           </form>
         </section>
       ) : null}
+      {selectedCandidate && !createOpen ? <div className="movement-chooser__bottom-bar"><button className="primary-action" disabled={guidanceDirty || guidanceBusy} type="button" onClick={() => choose()}>Use {selectedCandidate.selection.name}</button></div> : null}
     </dialog>
   );
 }
-
-/** Short import alias for day-builder integrations. */
-export const MovementChooser = MovementChooserAdapter;
