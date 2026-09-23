@@ -499,6 +499,7 @@ test("owned companion failure collapses without changing protected controls", as
     await placement.locator("img").evaluate((image) => image.dispatchEvent(new Event("error")));
     await expect(placement).toBeHidden();
   } else {
+    await placement.locator("img").evaluate((image) => image.dispatchEvent(new Event("error")));
     await expect(placement).toBeHidden();
   }
   await expect(page.getByLabel("Search movements")).toBeVisible();

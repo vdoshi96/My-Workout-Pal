@@ -286,7 +286,7 @@ async function chooseEditorMovement(
 ) {
   const chooser = page.getByRole("dialog");
   await chooser.getByRole("searchbox", { name: "Search movements" }).fill(query);
-  await chooser.getByRole("button", { name }).click();
+  await chooser.locator(".movement-chooser__list").getByRole("button", { name }).click();
   await chooser.getByRole("button", { name: "Use this movement" }).click();
 }
 

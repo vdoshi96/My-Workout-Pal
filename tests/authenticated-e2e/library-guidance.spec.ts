@@ -122,7 +122,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
   await page.getByRole("button", { name: "Open movement chooser" }).click();
   const reopened = page.getByRole("dialog", { name: "Add movement" });
   await reopened.getByRole("searchbox", { name: "Search movements" }).fill("suitcase");
-  await reopened.getByRole("button", { name: /Suitcase march/ }).click();
+  await reopened.locator(".movement-chooser__list").getByRole("button", { name: /Suitcase march/ }).click();
   const firstLink = reopened.getByLabel("Your link 1");
   await expect(firstLink).toHaveValue(
     "https://www.youtube.com/watch?v=AbCdEfGhI01",
