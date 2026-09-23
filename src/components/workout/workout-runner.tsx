@@ -2123,7 +2123,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
 
       <footer className="runner-footer">
         <div className="runner-footer-actions">
-          <button className="runner-button runner-button--primary" disabled={closed || state.status === "completing"} type="button" onClick={() => apply({ type: "complete_session" })}>Finish workout</button>
+          <button className="runner-button runner-button--primary" disabled={closed || state.status === "completing" || persistedState !== state || state.operations.some(({ status }) => status === "pending")} type="button" onClick={() => apply({ type: "complete_session" })}>Finish workout</button>
           <button ref={endButton} className="runner-button" disabled={closed || state.status === "abandoning"} type="button" onClick={() => endDialog.current?.showModal()}>End workout</button>
           {props.onNavigateAway ? <button className="runner-button runner-button--quiet" type="button" onClick={handleNavigateAway}>Leave for now</button> : null}
         </div>

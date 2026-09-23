@@ -4037,7 +4037,10 @@ export async function persistRunnerState(
     runnerStorageKey(state.snapshot.ownerUid, state.snapshot.sessionId),
     runnerStorageRecord(state),
   );
-  return clone(committed.state);
+  // Connectivity belongs to this tab. A newer shared workout write can come
+  // from an offline tab without changing this tab's ability to send requests.
+  const next = { ...clone(committed.state), connectivity: state.connectivity };
+  return { ...next, sync: syncForState(next) };
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
