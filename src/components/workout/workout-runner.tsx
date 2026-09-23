@@ -977,11 +977,13 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const apply = useCallback((action: RunnerAction, message?: string) => {
     try {
       const next = runnerReducer(state, action);
-      // Draft edits and navigation must outrank older shared projections too.
-      setState(next === state ? state : {
+      // Keep a new set or exercise selection ahead of older shared navigation.
+      const navigated = next.currentExerciseIndex !== state.currentExerciseIndex ||
+        next.currentSetIndex !== state.currentSetIndex;
+      setState(navigated ? {
         ...next,
         lastUpdatedAt: Math.max(Date.now(), state.lastUpdatedAt + 1, next.lastUpdatedAt),
-      });
+      } : next);
       setActionError(undefined);
       if (message !== undefined) setAnnouncement(message);
     } catch (error: unknown) {

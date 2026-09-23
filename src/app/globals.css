@@ -897,7 +897,7 @@ svg { display: block; height: 1.4em; width: 1.4em; }
 .runner-inline-actions, .runner-footer-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .85rem; }
 .runner-button { align-items: center; background: transparent; border: 1px solid var(--ink); cursor: pointer; display: inline-flex; font-family: var(--font-display); font-size: .85rem; justify-content: center; letter-spacing: .06em; min-height: 2.9rem; padding: .55rem .8rem; text-transform: uppercase; }
 .runner-button:hover { background: var(--paper-deep); }
-.runner-button:disabled { cursor: not-allowed; opacity: .55; }
+.runner-button:disabled { border-style: dashed; cursor: not-allowed; opacity: 1; }
 .runner-button--primary { background: var(--coral); border-color: var(--coral); color: var(--on-coral); }
 .runner-button--primary:hover { background: var(--coral-strong); }
 .runner-button--quiet { border-color: var(--rule); color: var(--ink-soft); }
