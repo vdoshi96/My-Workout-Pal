@@ -529,9 +529,9 @@ test("headed native 200 percent zoom reflows member Library and History", async 
   try {
     await page.goto("/app");
     await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    await page.getByRole("button", { name: "Save routine", exact: true }).click();
     await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
     await page.getByRole("link", { name: /Push/ }).click();
     const startResponse = page.waitForResponse(
@@ -568,10 +568,10 @@ test("headed native 200 percent zoom reflows member Library and History", async 
           ) && response.request().method() === "POST",
       );
       if (await page.locator(".runner-more").getAttribute("open") === null) {
-      await page.getByText("More options", { exact: true }).click();
-    }
-    await page.getByRole("button", { name: "Skip exercise", exact: true }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "Skip exercise", exact: true }).click();
+        await page.getByText("More options", { exact: true }).click();
+      }
+      await page.getByRole("button", { name: "Skip exercise", exact: true }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Skip exercise", exact: true }).click();
       expect((await skipResponse).status()).toBe(200);
       await expect(outlineItems.nth(index).getByText("Skipped")).toBeVisible();
     }
