@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="820cd5138ad0644a950947e0d7dde6223739c74cde8bb233d0b9f4e69f7cdfa7">
+  <title>Production-grade implementation plan · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Production-grade implementation plan</h1>
+<p>This is the build contract for the September 22, 2026 audit (<code>docs/plans/PRODUCTION-GRADE-AUDIT.md</code>). It is written for an implementing agent that did not see the audit. Follow it literally. Where it gives exact copy, use that copy character for character, including curly or straight apostrophes as written (all apostrophes in this plan are straight <code>&#39;</code>).</p>
+<h2>0. Rules of engagement</h2>
+<p>Read these files before touching code, in this order: <code>AGENTS.md</code> (especially &quot;Production quality bar&quot;), this plan, <code>DESIGN.md</code> (sections Overview and Colors only), <code>PRODUCT.md</code> (section &quot;Current interaction contract&quot; only). Nothing else is required reading.</p>
+<ul>
+<li>Work on the existing branch <code>vishal/production-grade-audit</code>. Do not create another branch or worktree.</li>
+<li>This Next.js version (16.3) differs from older versions. Before using <code>notFound</code>, <code>generateMetadata</code>, <code>headers()</code>, or <code>proxy.ts</code>, read the matching file under <code>node_modules/next/dist/docs/</code>.</li>
+<li>Run one heavy process at a time (build, dev server, Playwright, full Vitest). Two at once has crashed this machine (exit 137).</li>
+<li>Do not touch production data, Firebase, Neon, Vercel, YouTube curation, video approval, seeds, migrations, database schema, artwork, or dependencies.</li>
+<li>Do not add features, refactors, abstractions, or files that this plan does not name. If something outside this plan looks wrong, list it under &quot;Noticed, not changed&quot; in the final report.</li>
+</ul>
+<h3>Test rules (strict)</h3>
+<p>The acceptance tests are already written and committed on this branch. They are the only tests you need.</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Runner</th>
+<th>Covers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tests/unit/production-audit-copy.test.ts</code></td>
+<td>Vitest</td>
+<td>Implementation vocabulary scan and required copy</td>
+</tr>
+<tr>
+<td><code>tests/unit/production-audit-contracts.test.ts</code></td>
+<td>Vitest</td>
+<td>Runner domain, helpers, manifest, file contracts</td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/production-audit.spec.ts</code></td>
+<td>Playwright (authenticated fixture)</td>
+<td>Member flows</td>
+</tr>
+<tr>
+<td><code>tests/e2e/production-audit-public.spec.ts</code></td>
+<td>Playwright (dev server)</td>
+<td>Public pages</td>
+</tr>
+</tbody></table>
+<ol>
+<li>Do not create test files. Do not add <code>it</code>, <code>test</code>, or <code>describe</code> blocks anywhere. Do not add snapshot files.</li>
+<li>Do not edit the four acceptance files. If you believe one is wrong, stop and say which assertion and why in the report; do not work around it.</li>
+<li>Never use <code>.skip</code>, <code>.only</code>, <code>.todo</code>, <code>test.fixme</code>, raised timeouts, or retries to get green.</li>
+<li>You may edit an existing (pre-audit) test only when all three hold: it fails after your change; the failing assertion checks copy, a label, a role, a route, a control, or a behavior that this plan explicitly changes (R4 rest timer kept, R6 leave rule, R12 prefill, R13/E12 mm:ss entry, R20 redirect, A2 Settings before setup); and your edit changes only that expected value, plus any input value the new control needs (for example cardio <code>fill(&quot;1200&quot;)</code> → <code>fill(&quot;20:00&quot;)</code>). Log every such edit in the report as <code>file:line old → new</code>.</li>
+<li>Existing tests that are known to assert changed copy (you will likely need to update these, and only these, plus any others that meet rule 4): <code>tests/unit/workout-runner.test.ts</code> (&quot;Explicitly complete&quot;), <code>tests/unit/authenticated-runner-resilience-plan.test.ts</code> and <code>tests/authenticated-e2e/onboarding.spec.ts</code> (&quot;Save activity&quot;), <code>tests/unit/hosted-authenticated-media-command.test.ts</code> and <code>tests/authenticated-e2e/customization-geometry.spec.ts</code> (&quot;Your routes&quot;), <code>tests/unit/program-collection-component.test.tsx</code> (&quot;Active overview&quot;), <code>tests/unit/public-account-entry.test.tsx</code>, <code>tests/unit/hosted-auth-command.test.ts</code>, <code>tests/e2e/public-release.spec.ts</code> (&quot;My workouts&quot;, &quot;Five-day starter example&quot;, &quot;Starter preview&quot;, &quot;Open Push day&quot;, &quot;Sample data&quot;), <code>tests/unit/accessible-labels.test.tsx</code>, <code>tests/unit/public-exercise-return.test.ts</code>, <code>tests/unit/public-progress-page.test.tsx</code>, <code>tests/e2e/animal-surface-pilot.spec.ts</code>, <code>tests/unit/member-home-route-states.test.tsx</code> and <code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts</code> (&quot;Loading your home&quot;, &quot;Your home did not load&quot;), <code>tests/authenticated-e2e/{onboarding,runner-resilience,quiet-set}.spec.ts</code> (&quot;Complete exercise&quot;, &quot;Step 2 of 3&quot; is kept), <code>tests/unit/workout-runner-presenters.test.ts</code>, <code>tests/authenticated-e2e/runner-resilience.spec.ts</code>, <code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts</code> (&quot;Offline queued&quot;), <code>tests/unit/workout-runner-component-harness.test.tsx</code> (&quot;Reauthenticate&quot;, &quot;Leave both values&quot;), the cardio <code>Duration (seconds)</code> fills in <code>tests/authenticated-e2e/*.spec.ts</code>, <code>tests/unit/training-insights-components.test.tsx</code>.</li>
+<li>Tests under <code>tests/fixtures/authenticated-app/**</code> are application mirrors, not tests. You must change them wherever this plan says &quot;fixture mirror&quot;.</li>
+</ol>
+<h3>Commands</h3>
+<pre><code class="language-sh"># Unit acceptance (fast; run constantly)
+npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts
+# Member acceptance (builds the fixture; ~3 min)
+pnpm test:e2e:authenticated -- production-audit
+# Public acceptance (starts `pnpm dev`; reads the ignored local database read-only)
+pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop
+# Full gate
+pnpm verify
+pnpm test:e2e:authenticated
+pnpm test:e2e:release
+</code></pre>
+<p><code>pnpm dev</code> rewrites <code>next-env.d.ts</code>. Run <code>git checkout next-env.d.ts</code> before committing.</p>
+<h2>1. Win conditions</h2>
+<p>The work is done only when every line below is true, in one final run, on the final commit:</p>
+<ul>
+<li><strong>W1</strong> Both unit acceptance files pass: 0 failures.</li>
+<li><strong>W2</strong> <code>pnpm test:e2e:authenticated -- production-audit</code> passes on both <code>chromium-desktop</code> and <code>webkit-phone</code> (7 tests × 2 projects).</li>
+<li><strong>W3</strong> The public acceptance command passes on <code>chromium-phone</code> and <code>chromium-desktop</code> (6 tests × 2; other projects report skipped by design).</li>
+<li><strong>W4</strong> <code>pnpm verify</code> exits 0 (typecheck, lint, every Vitest file, db/seed/PWA/docs checks, production build, production boundary).</li>
+<li><strong>W5</strong> <code>pnpm test:e2e:authenticated</code> (full) and <code>pnpm test:e2e:release</code> exit 0 with no new skips.</li>
+<li><strong>W6</strong> The QA evidence and documentation in section 9 exist, and <code>pnpm docs:check</code> passes.</li>
+<li><strong>W7</strong> The final report (section 10) is delivered.</li>
+</ul>
+<h2>2. Build order</h2>
+<p>Do the phases in order. Run the unit acceptance command after every phase.</p>
+<ol>
+<li>Phase A: domain and helpers (sections 3.1–3.4). Target: every <code>production-audit-contracts</code> block except &quot;file-level contracts&quot; passes.</li>
+<li>Phase B: runner UI (section 4).</li>
+<li>Phase C: routine management (section 5).</li>
+<li>Phase D: member shell and account (section 6).</li>
+<li>Phase E: public pages (section 7).</li>
+<li>Phase F: copy sweep until <code>production-audit-copy</code> passes (section 8).</li>
+<li>Phase G: styles cleanup (section 8.3).</li>
+<li>Phase H: full verification, evidence, docs, commit, push, PR (sections 9–10).</li>
+</ol>
+<h2>3. Phase A: domain and helper contracts</h2>
+<h3>3.1 Runner domain (<code>src/domain/workout-runner.ts</code>)</h3>
+<p><strong>R4. Rest timer survives advancing.</strong> In <code>runnerReducer</code>, the <code>next_set</code> branch (currently <code>return withUpdated(next, { restTimer: undefined }, at);</code> near line 3251) and the <code>complete_exercise_and_next</code> branch (near line 3259) must keep <code>state.restTimer</code> unchanged. Only <code>clear_rest</code> and session end clear it.</p>
+<p><strong>R12. Prefill.</strong> Export <code>prefilledSetDraft(state: ActiveWorkoutState, setId: string): SetDraft</code>:</p>
+<ol>
+<li>Find the set and its exercise; kind = <code>effectiveLoggingKind(state, exercise)</code>.</li>
+<li>Among <code>state.loggedSets</code> entries with the same <code>exerciseId</code> and the same <code>phase</code> as the target set, excluding the target set, take the one whose set has the highest <code>position</code> lower than the target&#39;s position; if none is lower, take the highest position overall. Convert its <code>measurement</code> to a draft of the same kind.</li>
+<li>Else, if the target set has <code>previous</code> of the same kind, convert <code>previous</code> to a draft.</li>
+<li>Else, return <code>createSetDraft(kind)</code>.</li>
+</ol>
+<p>Draft conversion: <code>weight_reps</code> → <code>{ kind, weightKg, repetitions }</code>; <code>bodyweight_reps</code> → <code>{ kind, repetitions, addedWeightKg }</code>; <code>duration</code> → <code>{ kind, durationSeconds }</code>; <code>distance_duration</code> → <code>{ kind, distanceMeters, durationSeconds }</code>.</p>
+<p>Apply the prefill in the reducer: after <code>navigate_set</code>, <code>next_set</code>, <code>navigate_exercise</code>, and <code>complete_exercise_and_next</code> compute the new active set; if <code>state.drafts[activeSetId]</code> is undefined and <code>state.loggedSets[activeSetId]</code> is undefined, set <code>drafts[activeSetId] = prefilledSetDraft(next, activeSetId)</code>. Do <strong>not</strong> add it to <code>dirtySetIds</code>. <code>save_set</code> must accept a draft that exists but is not dirty (it already does).</p>
+<p><strong>R2. Discard a failed change.</strong> Add action <code>{ type: &quot;discard_failed_operation&quot;; idempotencyKey: string; now?: number }</code> to <code>RunnerAction</code> and handle it in <code>runnerReducer</code>:</p>
+<ul>
+<li>Unknown key → throw <code>RunnerTransitionError(&quot;unknown_operation&quot;, &quot;The change no longer exists.&quot;)</code>.</li>
+<li>Operation <code>status !== &quot;failed&quot;</code> → throw <code>RunnerTransitionError(&quot;discard_not_allowed&quot;, &quot;Only a change that failed can be discarded.&quot;)</code>.</li>
+<li>Kind <code>abandon_session</code> or <code>complete_session</code> → throw <code>RunnerTransitionError(&quot;discard_not_allowed&quot;, &quot;Reload the workout to continue.&quot;)</code>.</li>
+<li>Otherwise set that operation&#39;s <code>status</code> to <code>&quot;superseded&quot;</code> and clear its error fields. Then rebuild the local effect of the operation&#39;s semantic target from the most recent (highest <code>sequence</code>) operation with the same <code>semanticTarget</code> (use <code>runnerOperationSemanticTarget</code>) whose <code>status === &quot;saved&quot;</code>:<ul>
+<li><code>save_set</code>: if a saved operation exists, <code>loggedSets[setId] = { setId, exerciseId, phase, measurement: payload.measurement, operationKey: saved.idempotencyKey }</code>; otherwise delete <code>loggedSets[setId]</code>. Delete <code>drafts[setId]</code> and remove <code>setId</code> from <code>dirtySetIds</code>.</li>
+<li><code>save_cardio</code>: restore <code>loggedCardio</code> from the saved operation or set it to <code>undefined</code>; set <code>dirtyCardio</code> to <code>false</code>.</li>
+<li><code>save_note</code>: restore <code>notesByExercise[exerciseId]</code> from the saved payload, or delete the key; remove it from <code>dirtyNoteExerciseIds</code>.</li>
+<li><code>skip_exercise</code>: remove the exercise from <code>skippedExerciseIds</code> unless a saved skip exists.</li>
+<li><code>complete_exercise</code>: remove it from <code>completedExerciseIds</code> unless a saved completion exists.</li>
+<li><code>substitute_exercise</code>: restore the saved substitution or delete <code>substitutions[exerciseId]</code>.</li>
+</ul>
+</li>
+<li>Finish with <code>withUpdated(...)</code> and recompute <code>sync</code> with <code>syncForState</code>.</li>
+</ul>
+<p><strong>R6. Leaving and finishing.</strong> Replace <code>isNavigationBlocked</code> and <code>navigationProtectionReason</code> with these exact rules (completed/abandoned sessions stay unblocked):</p>
+<table>
+<thead>
+<tr>
+<th>Condition (first match wins)</th>
+<th>Blocked</th>
+<th>Reason string</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>status === &quot;completing&quot;</code></td>
+<td>yes</td>
+<td><code>Your workout is still being saved.</code></td>
+</tr>
+<tr>
+<td>any <code>dirtySetIds</code>, <code>dirtyCardio</code>, or <code>dirtyNoteExerciseIds</code></td>
+<td>yes</td>
+<td><code>You have an unsaved entry. Log it or clear it first.</code></td>
+</tr>
+<tr>
+<td>any operation <code>status === &quot;failed&quot;</code> with <code>failureKind</code> <code>conflict</code> or <code>permanent</code>, or <code>retryable === false</code></td>
+<td>yes</td>
+<td><code>A change couldn&#39;t be saved. Discard it or try again first.</code></td>
+</tr>
+<tr>
+<td>anything else (pending, transient, offline, or auth failures)</td>
+<td>no</td>
+<td><code>undefined</code></td>
+</tr>
+</tbody></table>
+<p>Pending and transient failures are stored on the device. Confirm that <code>src/domain/workout-resume.ts</code> re-queues <code>failed</code> operations with <code>transient</code>, <code>offline</code>, or <code>auth</code> failure kinds as <code>pending</code> when a workout is reopened; if it does not, make it do so (reset <code>status</code> to <code>pending</code>, clear error fields). The runner component must still block navigation while an IndexedDB write for the latest state is in flight (see R6 in section 4).</p>
+<p><strong>Finishing messages.</strong> In <code>ensureCompleteSession</code>, replace messages exactly:</p>
+<ul>
+<li><code>Explicitly complete or skip ${exercise.name} before completing the session.</code> → <code>Finish or skip ${exercise.name} first.</code></li>
+<li><code>Log every work set for ${exercise.name} before completing the session.</code> → <code>Log every work set for ${exercise.name} first.</code></li>
+<li><code>Select and save the required cardio option before completing the session.</code> → <code>Log your cardio finish first.</code></li>
+<li><code>The required cardio log must be saved and confirmed before completing the session.</code> and <code>Every required work set must be saved and confirmed before completing the session.</code> → <code>Wait for your last changes to save, then finish.</code></li>
+<li>The dirty-draft message → <code>Save your edited set or note first.</code></li>
+</ul>
+<h3>3.2 Presenters (<code>src/components/workout/workout-runner-presenters.ts</code>)</h3>
+<p>Export <code>setEntryErrorMessage(kind: MeasurementKind): string</code> returning exactly:</p>
+<table>
+<thead>
+<tr>
+<th>kind</th>
+<th>text</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>weight_reps</code></td>
+<td><code>Enter weight and reps to log this set.</code></td>
+</tr>
+<tr>
+<td><code>bodyweight_reps</code></td>
+<td><code>Enter reps to log this set.</code></td>
+</tr>
+<tr>
+<td><code>duration</code></td>
+<td><code>Enter a time to log this set.</code></td>
+</tr>
+<tr>
+<td><code>distance_duration</code></td>
+<td><code>Enter distance and time to log this set.</code></td>
+</tr>
+</tbody></table>
+<h3>3.3 New pure helpers</h3>
+<p><code>src/domain/time-entry.ts</code>:</p>
+<ul>
+<li><code>parseClockDuration(input: string): number | undefined</code>. Trim. Accept <code>M:SS</code>, <code>MM:SS</code>, or <code>H:MM:SS</code>, where seconds and minutes after a colon are exactly two digits <code>00</code>–<code>59</code>. A bare non-negative integer means whole minutes (<code>&quot;20&quot;</code> → <code>1200</code>). Anything else, including empty, negative, <code>&quot;1:60&quot;</code>, <code>&quot;1::00&quot;</code>, and <code>&quot;12:3&quot;</code>, returns <code>undefined</code>.</li>
+<li><code>formatClockDuration(seconds: number): string</code>. Under one hour: <code>M:SS</code> (<code>65</code> → <code>&quot;1:05&quot;</code>, <code>0</code> → <code>&quot;0:00&quot;</code>, <code>1200</code> → <code>&quot;20:00&quot;</code>). One hour or more: <code>H:MM:SS</code> (<code>3900</code> → <code>&quot;1:05:00&quot;</code>). Round down to whole seconds.</li>
+</ul>
+<p><code>src/domain/time-zones.ts</code>:</p>
+<ul>
+<li><code>timeZoneOptions(saved?: string): readonly string[]</code>. Return <code>Intl.supportedValuesOf(&quot;timeZone&quot;)</code>, plus <code>&quot;UTC&quot;</code> if missing, plus <code>saved</code> if provided and missing, deduplicated and sorted with <code>localeCompare(…, &quot;en-US&quot;)</code>.</li>
+</ul>
+<p><code>src/domain/navigation/member-return.ts</code>:</p>
+<ul>
+<li><code>signInRedirectPath(requested: string | null): string</code>. If <code>requested</code> is a string that equals <code>/app</code> or starts with <code>/app/</code> or <code>/app?</code>, and does not start with <code>//</code>, return <code>/sign-in?returnTo=${encodeURIComponent(requested)}</code>. Otherwise return <code>/sign-in?returnTo=%2Fapp</code>.</li>
+</ul>
+<p><code>src/components/program/program-editor-model.ts</code>:</p>
+<ul>
+<li><code>formatProgramDraftIssue(draft: ProgramEditorDraft, issue: { path: readonly PropertyKey[]; message: string }, exerciseNames: ReadonlyMap&lt;string, string&gt;): string</code>.<ul>
+<li><p>Location: if <code>path[0] === &quot;days&quot;</code> and <code>draft.days[path[1]]</code> exists, the prefix is that day&#39;s <code>name</code>. If the path continues with <code>&quot;sections&quot;, s, &quot;prescriptions&quot;, p</code> and that prescription exists, append <code>›</code> and the movement name: <code>displayName</code>, else <code>exerciseNames.get(catalogExerciseId ?? customExerciseId)</code>, else <code>Movement ${p + 1}</code>. If it continues only with <code>&quot;sections&quot;, s</code>, append <code>›</code> and that section&#39;s <code>title</code>. If it continues with <code>&quot;cardio&quot;, c</code>, append <code> › Cardio</code>. With no day, the prefix is <code>Routine</code>.</p>
+</li>
+<li><p>Field: if the last path element is a string in this table, the text after <code>: </code> starts with the label then a space then the lowercase-first message rewrite, as follows: known zod codes produce <code>Max reps is too low.</code> style text. Implement as: <code>${label} ${friendly}</code> where <code>friendly</code> is <code>is too low.</code> if <code>message</code> starts with <code>Too small</code>, <code>is too high.</code> if it starts with <code>Too big</code>, <code>is required.</code> if it contains <code>Required</code> or <code>expected number, received null</code>, otherwise the original message.</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>label</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td><code>Day name</code></td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td><code>Section name</code></td>
+</tr>
+<tr>
+<td><code>setCount</code></td>
+<td><code>Sets</code></td>
+</tr>
+<tr>
+<td><code>minimumReps</code></td>
+<td><code>Min reps</code></td>
+</tr>
+<tr>
+<td><code>maximumReps</code></td>
+<td><code>Max reps</code></td>
+</tr>
+<tr>
+<td><code>minimumSeconds</code></td>
+<td><code>Min time</code></td>
+</tr>
+<tr>
+<td><code>maximumSeconds</code></td>
+<td><code>Max time</code></td>
+</tr>
+<tr>
+<td><code>restSeconds</code></td>
+<td><code>Rest</code></td>
+</tr>
+<tr>
+<td><code>targetWeightKg</code></td>
+<td><code>Target weight</code></td>
+</tr>
+<tr>
+<td><code>targetDistanceM</code></td>
+<td><code>Target distance</code></td>
+</tr>
+<tr>
+<td><code>durationSeconds</code></td>
+<td><code>Duration</code></td>
+</tr>
+<tr>
+<td><code>distanceM</code></td>
+<td><code>Distance</code></td>
+</tr>
+<tr>
+<td><code>inclinePercent</code></td>
+<td><code>Incline</code></td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td><code>Notes</code></td>
+</tr>
+</tbody></table>
+</li>
+<li><p>If the last element is not in the table, the text after <code>: </code> is the original message.</p>
+</li>
+<li><p>Output: <code>${prefix}: ${text}</code>. It must never contain <code>→</code> or any raw key.</p>
+</li>
+</ul>
+</li>
+<li>In <code>src/domain/programs/publication.ts</code> replace the message <code>Use one complete ascending repetition or duration range.</code> with <code>Set a low-to-high range for reps or time.</code></li>
+</ul>
+<h3>3.4 Manifest (<code>src/app/manifest.ts</code>)</h3>
+<p>Set exactly: <code>start_url: &quot;/app&quot;</code>, <code>scope: &quot;/&quot;</code>, <code>background_color: &quot;#f6f3e9&quot;</code>, <code>theme_color: &quot;#f6f3e9&quot;</code>. Icons: four entries: <code>icon-192.png</code> and <code>icon-512.png</code> each once with <code>purpose: &quot;any&quot;</code> and once with <code>purpose: &quot;maskable&quot;</code>. Shortcuts, in order: <code>{ name: &quot;Today&quot;, short_name: &quot;Today&quot;, url: &quot;/app&quot; }</code>, <code>{ name: &quot;Library&quot;, short_name: &quot;Library&quot;, url: &quot;/app/library&quot; }</code>, <code>{ name: &quot;Progress&quot;, short_name: &quot;Progress&quot;, url: &quot;/app/progress&quot; }</code>, each with the existing 192 icon.</p>
+<h2>4. Phase B: workout runner</h2>
+<p>Files: <code>src/components/workout/workout-runner.tsx</code>, <code>owned-workout-runner.tsx</code>, <code>try-one-set.tsx</code>, <code>src/app/workout/[sessionId]/{page,loading,error}.tsx</code>, and fixture mirror <code>tests/fixtures/authenticated-app/app/workout/[sessionId]/page.tsx</code>.</p>
+<p>Layout order inside the active exercise card, top to bottom (anything not listed is removed from the card):</p>
+<ol>
+<li>Exercise heading <code>&lt;h2 id=&quot;runner-active-heading&quot; tabIndex={-1}&gt;</code> with the movement name.</li>
+<li>Set tabs.</li>
+<li>Previous / Target line.</li>
+<li>Set entry fieldset with inputs, the inline error slot, and <strong>Log set &amp; rest</strong>.</li>
+<li>Forward button (when the active set is logged).</li>
+<li>Rest timer.</li>
+<li><code>&lt;details className=&quot;runner-more&quot;&gt;</code> with <code>&lt;summary&gt;More options&lt;/summary&gt;</code> containing, in order: Exercise note (textarea labeled <code>Note</code> and a <code>Save note</code> button), Swap exercise (heading <code>Swap exercise</code>, text <code>Swap before your first set. Targets stay the same.</code>, button <code>Find a compatible movement</code>), and a <code>Skip exercise</code> button.</li>
+<li><code>Watch demo and technique guidance</code> disclosure (unchanged).</li>
+</ol>
+<p>Remove the &quot;Mark this movement&quot; card and its skip-reason textarea entirely.</p>
+<p><strong>R5. Validation.</strong> When Log set &amp; rest runs with missing or invalid values, do not dispatch. Render <code>&lt;p id=&quot;runner-set-error&quot; className=&quot;runner-field-error&quot;&gt;</code> directly under the inputs with <code>setEntryErrorMessage(kind)</code>. Set <code>aria-invalid=&quot;true&quot;</code> and <code>aria-describedby=&quot;runner-set-error&quot;</code> on every empty or invalid input and focus the first one. Clear the error and <code>aria-invalid</code> as soon as any input in that fieldset changes. Remove the top-of-page banner path for this case. Never render text containing <code>weightKg</code>, <code>repetitions is required</code>, or an error <code>code</code>.</p>
+<p><strong>R4/R8. Forward button and focus.</strong> Label: <code>Next set</code> when more sets remain; <code>Next exercise</code> on the last set when more exercises remain; <code>Finish exercise</code> on the last set of the last exercise. After it runs, focus <code>#runner-active-heading</code> and announce once, in the existing polite status region: <code>Next: ${exerciseName}, set ${n} of ${total}.</code> (for the last one: <code>Exercise done.</code>). The rest timer keeps running (domain R4).</p>
+<p><strong>R12.</strong> Inputs show the draft values from the domain prefill, formatted with the display unit and without trailing zeros (<code>25</code>, not <code>25.0</code>). A value entered as 25 lb must display as <code>25</code> in the next set.</p>
+<p><strong>R9.</strong> In the timer-affecting <code>apply</code> calls (<code>log_set_and_rest</code>, <code>start_rest</code>, <code>resume_rest</code>, <code>extend_rest</code>), call <code>setClockNow(Date.now())</code> before dispatching so the first render and announcement use the current time.</p>
+<p><strong>R10. Skip confirmation.</strong> <code>Skip exercise</code> opens a native <code>&lt;dialog&gt;</code> (<code>showModal</code>) with <code>aria-labelledby</code> pointing at <code>&lt;h2&gt;Skip {exerciseName}?&lt;/h2&gt;</code>, text <code>You can&#39;t log sets for it after skipping.</code>, an optional textarea labeled <code>Reason (optional)</code>, and buttons <code>Skip exercise</code> (confirm, dispatches <code>skip_exercise</code> with the reason) and <code>Cancel</code> (closes; focus returns to the More options summary).</p>
+<p><strong>R1. End workout.</strong> Rename the footer <code>Abandon workout</code> button to <code>End workout</code>. It opens a <code>&lt;dialog&gt;</code> with <code>aria-labelledby</code> pointing at <code>&lt;h2&gt;End this workout?&lt;/h2&gt;</code>, the text <code>Sets you logged stay in your history.</code>, a textarea labeled <code>Note (optional)</code>, and buttons <code>End workout</code> (dispatches <code>abandon_session</code> with the note) and <code>Keep going</code> (closes; focus returns to the footer End workout button). Delete the always-visible &quot;Abandonment note (optional)&quot; textarea.</p>
+<p><strong>Footer.</strong> Order: <code>Finish workout</code> (primary; renamed from <code>Complete workout</code>; dispatches <code>complete_session</code>; if the domain throws, show its message in the inline status under the footer), <code>End workout</code> (secondary), <code>Leave for now</code> (link-style button; renamed from <code>Exit workout</code>). Show <code>All changes saved.</code> when nothing is pending; <code>Saving…</code> while any operation is pending; nothing else.</p>
+<p><strong>R6. One leave rule.</strong> <code>Leave for now</code>, the top-bar <code>Back to Today</code> and <code>Library</code> links, and <code>beforeunload</code> all use <code>isNavigationBlocked</code>. While an IndexedDB write for the latest state is in flight, treat it as blocked with reason <code>Saving to this device…</code>. When blocked, the links call <code>preventDefault()</code> and show the reason in the footer status; <code>beforeunload</code> sets <code>returnValue</code>. When leaving with pending operations, show nothing extra: they sync when the workout is reopened.</p>
+<p><strong>R2. Failed saves.</strong> Replace the recovery section heading <code>Save activity</code> with <code>Couldn&#39;t save</code>. For each failed operation render: its human label (existing <code>formatOperationStatus</code> label), and either <code>Try again</code> (transient/offline/auth: dispatches <code>retry_operation</code>) or <code>Discard this change</code> (conflict/permanent/<code>retryable === false</code>: dispatches <code>discard_failed_operation</code>, then announces <code>Change discarded.</code>). Never render <code>errorCode</code> or <code>errorMessage</code> from the server. Delete the <code>Resolve conflict</code> text and the <code>Leave both values unresolved</code> button.</p>
+<p><strong>R14. Device storage errors.</strong> Replace every <code>Local workout storage is unavailable: ${…}</code> banner with <code>We couldn&#39;t save to this device. Your last logged set is safe.</code> plus a <code>Try again</code> button that re-runs the last persist. Log the raw error with <code>console.error</code>.</p>
+<p><strong>Local-tab conflict chooser.</strong> Keep the feature. Copy: heading <code>Pick which value to keep</code>, per option button <code>Keep ${choiceLabel}</code>, success announcement <code>${value} kept.</code></p>
+<p><strong>R13. Cardio entry.</strong> In the cardio form only (not timed strength sets), replace the <code>Duration (seconds)</code> number input with a text input labeled <code>Duration</code> (<code>inputMode=&quot;numeric&quot;</code>, <code>placeholder=&quot;mm:ss&quot;</code>), parsed with <code>parseClockDuration</code> and displayed with <code>formatClockDuration</code>. Replace <code>Pace (seconds/km|mi)</code> with <code>Pace (min/km)</code> or <code>Pace (min/mi)</code>, same mm:ss handling (storage stays seconds per kilometer). Invalid text shows <code>Enter a time like 20:00.</code> inline with <code>aria-invalid</code>. Cardio heading <code>Cardio finish</code>, intro <code>Pick your cardio finish.</code>; when cardio exists, show <code>Required to finish</code> next to the heading. The mode group label is <code>Cardio</code>. Placeholder when no mode is selected: <code>Choose Walker or Runner to log it.</code></p>
+<p><strong>R15. Set tabs.</strong> Warm-up tabs keep a visible short label <code>Warm-up</code> on every width and use the <code>--paper-deep</code> background with a dashed <code>--rule</code> border; work tabs use the solid style. Fix in <code>src/app/quiet-set.css</code> next to the existing <code>.runner-set-tab</code> rules.</p>
+<p><strong>R19. Accessibility.</strong> Remove <code>aria-label</code> from the timer <code>&lt;strong&gt;</code>; give the timer region <code>role=&quot;timer&quot;</code> and keep the visible text. Remove <code>aria-live=&quot;off&quot;</code>. Remove the duplicate <code>Workout outline</code> <code>&lt;h2&gt;</code> inside <code>&lt;details&gt;</code> (the summary already names it). Keep one skip link per page (remove the runner&#39;s own). Replace internal kind text such as <code>weight reps · preserve targets</code> with <code>Weight and reps</code>, <code>Reps</code>, <code>Time</code>, or <code>Distance and time</code>.</p>
+<p><strong>Offline and sign-in states.</strong> Offline heading <code>You&#39;re offline</code>, text <code>Sets are saved on this device and will sync when you reconnect.</code> Re-auth text <code>Sign in again to keep syncing. Your sets are safe on this device.</code>, button <code>Sign in again</code>. Other announcements: <code>Retrying…</code>, <code>Updated from another tab.</code>, <code>Exercise done.</code>, <code>Skipped.</code></p>
+<p><strong>R3. Recovery screen</strong> (<code>owned-workout-runner.tsx</code>). Loading: heading <code>Opening your workout…</code> only. Failure: heading <code>We couldn&#39;t open this workout</code>, text <code>Your logged sets are still on this device.</code>, buttons <code>Try again</code> (existing retry), <code>Use the version saved to your account</code> (opens a <code>&lt;dialog&gt;</code>: heading <code>Use the saved version?</code>, text <code>Changes that only exist on this device will be removed.</code>, buttons <code>Use saved version</code> and <code>Cancel</code>; confirm deletes this session&#39;s record through the existing runner-storage delete function for <code>(ownerUid, sessionId)</code> and reloads), and link <code>Back to Today</code> (<code>/app</code>).</p>
+<p><strong>R20. Finished workouts.</strong> In <code>src/app/workout/[sessionId]/page.tsx</code> and its fixture mirror: when the session exists but is completed or abandoned, <code>redirect(</code>/app/history/${sessionId}<code>)</code> instead of <code>notFound()</code>. Use the repository&#39;s existing session status read; do not add a query if one exists.</p>
+<p><strong>Route files.</strong> <code>loading.tsx</code>: heading <code>Opening your workout…</code>, no paragraph. <code>error.tsx</code>: heading <code>This workout didn&#39;t load</code>, text <code>Your logged sets are safe on this device.</code>, button <code>Try again</code>. <code>page.tsx</code> verification text: <code>Verify your email, then sign in again to continue this workout.</code></p>
+<p><strong>Try one set</strong> (<code>src/components/workout/try-one-set.tsx</code> or wherever <code>/try</code> renders):</p>
+<ul>
+<li>Banner: <code>Practice only. Nothing is saved.</code></li>
+<li>Helper under the button: <code>Any number works. Nothing is saved.</code></li>
+<li><code>Reset practice</code> renders only after a value has been entered or logged.</li>
+<li><code>Add 30 seconds</code> extends from <code>Math.max(Date.now(), deadline)</code>.</li>
+<li>End-of-practice call to action: <code>Set up my routine</code> (replaces <code>Save my routine</code>).</li>
+</ul>
+<h2>5. Phase C: routine management</h2>
+<p>Files: <code>src/components/program/{program-editor,program-editor-model,program-collection,program-collection-model,equipment-profile-control,onboarding-form}.tsx|ts</code>, <code>src/components/exercises/{movement-chooser,custom-exercise-editor}.tsx</code>, <code>src/app/app/program/**</code>, <code>src/app/app/programs/page.tsx</code>, <code>src/app/app/library/custom/**</code>, and fixture mirrors <code>tests/fixtures/authenticated-app/app/app/{program,programs,library/custom}/**</code>.</p>
+<p><strong>Vocabulary.</strong> The member-facing noun is <strong>routine</strong> everywhere in these files. Required replacements:</p>
+<table>
+<thead>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Your routes</code> (page title and h1)</td>
+<td><code>Your routines</code></td>
+</tr>
+<tr>
+<td><code>Owned programs</code>, <code>Owned program</code>, <code>Current revision</code> row</td>
+<td>remove</td>
+</tr>
+<tr>
+<td><code>Programs</code> (collection h2)</td>
+<td><code>Saved routines</code></td>
+</tr>
+<tr>
+<td><code>Create a program</code></td>
+<td><code>New routine</code></td>
+</tr>
+<tr>
+<td><code>Program name</code></td>
+<td><code>Routine name</code></td>
+</tr>
+<tr>
+<td><code>Edit active</code></td>
+<td><code>Edit routine</code></td>
+</tr>
+<tr>
+<td><code>Active overview</code></td>
+<td><code>Back to Today</code></td>
+</tr>
+<tr>
+<td><code>Clone</code></td>
+<td><code>Duplicate</code></td>
+</tr>
+<tr>
+<td><code>Manage routines</code> (editor link)</td>
+<td><code>All routines</code></td>
+</tr>
+<tr>
+<td>day page back link <code>Program</code></td>
+<td><code>Today</code> (it goes to <code>/app</code>)</td>
+</tr>
+</tbody></table>
+<p><strong>E1. Custom starting point.</strong> <code>src/app/app/programs/page.tsx</code> (and fixture mirror) must pass every catalog movement compatible with each equipment profile, not the active routine&#39;s prescriptions. Read catalog rows with database IDs through the same repository read that backs <code>/api/app/movement-chooser</code> (find it from <code>src/app/api/app/movement-chooser/route.ts</code>); pass <code>{ id, name, requiredEquipment }</code> sorted by name. <code>program-collection.tsx</code> filters that list by the selected equipment profile (the existing <code>requiredEquipment</code> check). The <code>First movement</code> control stays a <code>&lt;select&gt;</code> with that label.</p>
+<p><strong>E8. Explicit switch.</strong> Create buttons read <code>Create and use this routine</code>. Under them: <code>It replaces ${activeName} on Today.</code> Duplicate buttons read <code>Duplicate</code>; after success show <code>Copy created. It&#39;s now your active routine.</code></p>
+<p><strong>Collection copy.</strong> Intro: <code>The active routine is the one you train from on Today.</code> Starting points: <code>Five-day example</code> / <code>Five ready-made days.</code>; <code>Custom starting point</code> / <code>Start with one day and build from there.</code></p>
+<p><strong>E2. Discard changes</strong> (<code>program-editor.tsx</code>). When <code>dirty</code>, render a secondary button <code>Discard changes</code> in the footer next to <code>Save routine</code>. It opens a <code>&lt;dialog&gt;</code> with <code>aria-labelledby</code> → <code>&lt;h2&gt;Discard your changes?&lt;/h2&gt;</code>, text <code>Your routine goes back to the last saved version.</code>, buttons <code>Discard</code> and <code>Keep editing</code>. Discard resets the draft from the saved baseline, clears errors, pending measurement text, undo, and the dirty flag, closes the dialog, and announces <code>Changes discarded.</code> The button disappears when not dirty.</p>
+<p><strong>E3. Readable errors.</strong> Replace the <code>${issue.path.join(&quot; → &quot;)}: ${issue.message}</code> mapping with <code>formatProgramDraftIssue(publishableDraft, issue, exerciseNames)</code>, where <code>exerciseNames</code> maps catalog and custom IDs to names from the editor&#39;s candidates. Render errors as a list under the heading <code>Fix these before saving</code>. For each issue whose path reaches a prescription field, set <code>aria-invalid=&quot;true&quot;</code> and <code>aria-describedby</code> (pointing to the list item&#39;s id) on that input. For the range issue (path ends at the prescription, message <code>Set a low-to-high range for reps or time.</code>), mark both the min and max inputs. Clear an input&#39;s error when that input changes. Status text: <code>Check the highlighted fields.</code> Keep the input labels <code>Sets</code>, <code>Minimum reps</code>, <code>Maximum reps</code>, <code>Minimum seconds</code>, <code>Maximum seconds</code> unchanged.</p>
+<p><strong>E9. Conflicts.</strong> Replace <code>reload before publishing again</code>, <code>Return to Your routes</code>, and <code>The stored publication was reconciled…</code> with text <code>This routine changed somewhere else. Reload to get the latest version. Your unsaved edits will be lost.</code>, a button <code>Reload latest</code> (<code>window.location.reload()</code> after the existing leave-guard confirm), and a link <code>All routines</code> → <code>/app/programs</code>.</p>
+<p><strong>E10. Equipment deep link.</strong> On mount and on <code>hashchange</code>, if <code>location.hash === &quot;#program-editor-equipment-title&quot;</code>, set <code>open</code> on the <code>&lt;details&gt;</code> that contains that heading and scroll it into view.</p>
+<p><strong>E11. Add day.</strong> Render the add-day form in a <code>&lt;dialog&gt;</code> (heading <code>New day</code>, field <code>Day name</code>, buttons <code>Choose first movement</code> and <code>Cancel</code>). If the chooser is dismissed, reopen this dialog with the typed name preserved. Delete the text <code>Choosing a movement next creates one new day with fresh topology keys. Cardio is optional.</code> and the eyebrow <code>New unpublished day</code>.</p>
+<p><strong>E12. Cardio targets.</strong> Editor cardio <code>Duration seconds</code> becomes a text input labeled <code>Duration</code> with mm:ss handling (<code>parseClockDuration</code>/<code>formatClockDuration</code>). Pace labels become <code>Pace (min/km)</code> / <code>Pace (min/mi)</code> with mm:ss handling. Distance input <code>step=&quot;0.01&quot;</code>. Update <code>programEditorUnitLabels</code> pace values to <code>min / km</code> and <code>min / mile</code>. Storage stays seconds and meters.</p>
+<p><strong>E13. Row actions.</strong> For each day row, section, and movement: keep <code>Replace</code> visible (movements only). Move <code>Up</code>, <code>Down</code>, <code>Duplicate</code> (days), and <code>Remove</code> into a native <code>&lt;details className=&quot;row-menu&quot;&gt;</code> with <code>&lt;summary aria-label=&quot;More actions for ${name}&quot;&gt;More&lt;/summary&gt;</code>. Keep existing accessible button names (<code>Remove ${name}</code> etc.) so dialogs and tests still find them. Add <code>role=&quot;group&quot;</code> wherever a <code>div</code> carries <code>aria-label</code>.</p>
+<p><strong>Editor copy.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Day duplicated with independent topology keys. The duplicate is still unpublished.</code></td>
+<td><code>Day duplicated.</code></td>
+</tr>
+<tr>
+<td><code>Equipment revision N is now the clean editor baseline…</code></td>
+<td><code>Equipment updated. Past workouts are unchanged.</code></td>
+</tr>
+<tr>
+<td><code>…section added as an empty unpublished draft…</code></td>
+<td><code>Section added. Add a movement to it.</code></td>
+</tr>
+<tr>
+<td><code>This section is empty. Add a movement before publishing…</code></td>
+<td><code>Empty section: add a movement or remove it.</code></td>
+</tr>
+<tr>
+<td><code>Sets, rest, and notes were retained; the range and incompatible targets were reset.</code></td>
+<td><code>${name} swapped in. Check its targets.</code></td>
+</tr>
+<tr>
+<td><code>Removing this movement omits it from the next publication. Earlier revisions and workout snapshots remain unchanged.</code> and similar day/section text</td>
+<td><code>Past workouts won&#39;t change.</code></td>
+</tr>
+<tr>
+<td>dialog eyebrow <code>Review unpublished changes</code></td>
+<td>remove</td>
+</tr>
+<tr>
+<td><code>…before publishing permanent changes. You can still inspect this draft.</code></td>
+<td><code>Verify your email to save changes.</code></td>
+</tr>
+<tr>
+<td><code>The draft has validation errors and was not sent.</code> / <code>…exercise selection errors…</code></td>
+<td><code>Check the highlighted fields.</code></td>
+</tr>
+</tbody></table>
+<p>Keep only one save-state indicator (the <code>.quiet-save-state</code> element with <code>Saved</code> / <code>Unsaved changes</code> / <code>Saving…</code>) and one polite live region.</p>
+<p><strong>Equipment control copy</strong> (<code>equipment-profile-control.tsx</code>): <code>Editor settings</code> → <code>Equipment</code>; <code>No canonical movement substitutions are required.</code> → <code>No movements need to change.</code>; <code>Sets, range, rest, position, and notes stay. Movement-specific targets clear.</code> → <code>Sets, reps, rest and notes carry over.</code>; <code>This preview uses published revision N…</code> → <code>Save or discard your routine edits first.</code>; <code>Saved revision N…</code> → <code>Equipment updated.</code>; <code>The server response could not be reconciled. Reload before retrying this equipment change.</code> → <code>Something went wrong. Reload the page and try again.</code></p>
+<p><strong>E4. Chooser on phones</strong> (<code>movement-chooser.tsx</code>). Below 48rem width, when a result is selected, show a bar fixed to the bottom of the chooser dialog: <code>&lt;button className=&quot;primary-action&quot;&gt;Use ${name}&lt;/button&gt;</code> (same handler as the detail pane&#39;s use button). Copy: <code>Compatible canonical movements and only your private movements.</code> → <code>Movements that fit your equipment.</code>; badge <code>Canonical</code> → <code>Library</code>; <code>The workout will use its reviewed demonstration pair.</code> → <code>Includes demo videos.</code>; <code>The earlier guidance save is already stored.</code> → <code>Links saved.</code> Move <code>aria-live</code> from the whole detail pane to a visually hidden element that announces <code>${name} selected.</code> <strong>E16:</strong> when a guidance save fails, keep the create form open and show the error inside it.</p>
+<p><strong>E14. Custom movements.</strong> <code>custom-exercise-editor.tsx</code>: add the same leave guard the routine editor uses (<code>beforeunload</code> plus in-app link confirm) while dirty. When the movement is referenced, disable the logging select and show <code>Can&#39;t be changed once it&#39;s in a routine or workout.</code> Copy: delete <code>Choose one durable logging meaning…</code>; links help → <code>Optional. Up to two YouTube links.</code>; deletion help → <code>You can delete this once no routine or workout uses it.</code>; <code>The earlier save is already stored.</code> → <code>Saved.</code>; <code>Deletion is refused while any program, workout snapshot, record, or progress summary still references it.</code> → <code>You can delete this once no routine or workout uses it.</code>
+Custom list page: intro <code>Only you can see these.</code>; empty heading <code>No custom movements yet</code>; empty text <code>Add one when the library doesn&#39;t have what you need.</code>; link <code>Browse the library</code> → <code>/app/library</code>.</p>
+<p><strong>E15. Onboarding</strong> (<code>onboarding-form.tsx</code>). Keep <code>Step N of 3 · …</code> and all labels. Replace each <code>&lt;legend&gt;</code> with an <code>&lt;h2 tabIndex={-1}&gt;</code> (ref) and give the fieldset <code>aria-labelledby</code>. Headings exactly: <code>Where would you like to start?</code>, <code>Your preferences</code>, <code>Equipment</code>. After Back or Continue changes the step, focus the new step&#39;s heading (in an effect keyed on <code>step</code>, not on first mount). Time zone becomes a <code>&lt;select id=&quot;onboarding-timezone&quot;&gt;</code> of <code>timeZoneOptions(timezone)</code>, defaulting to <code>Intl.DateTimeFormat().resolvedOptions().timeZone</code>, and moves out of the <code>&lt;details&gt;</code> (rename the details summary to <code>Motion</code>). When more than 12 first-movement results exist, show <code>Showing 12 of ${n}. Keep typing to narrow it down.</code> Headings use sentence case (remove any uppercase transform on these headings in CSS).</p>
+<p><strong>Member day page</strong> (<code>src/app/app/program/[day]/page.tsx</code> and fixture mirror): catch <code>RepositoryNotFoundError</code> → <code>redirect(&quot;/app&quot;)</code>; remove <code>revision N</code> text; <code>Configured finish</code> → <code>Cardio finish</code>; delete <code>The server snapshots this exact revision…</code>; guide links → <code>/app/library/${slug}</code>.</p>
+<p><strong>Titles.</strong> <code>export const metadata = { title: &quot;…&quot; }</code> in: <code>/app/program/edit</code> → <code>Routine</code>; <code>/app/programs</code> → <code>Your routines</code>; <code>/app/library/custom</code> → <code>Custom movements</code>; <code>/app/library/custom/new</code> → <code>New movement</code>. <code>generateMetadata</code> in <code>/app/program/[day]</code> → <code>${dayName}</code> and <code>/app/library/custom/[id]</code> → movement name (fall back to <code>Routine</code> / <code>Custom movement</code>). Mirror each in the fixture page.</p>
+<p><strong>Dead code.</strong> Delete the unused <code>MovementChooser</code> alias export, unused exports <code>PROGRAM_CARDIO_MODES</code>/<code>PROGRAM_SECTION_MAXIMUM</code> only if still unused after this phase (otherwise use them in place of hard-coded <code>[&quot;walker&quot;,&quot;runner&quot;]</code>, <code>12</code>, <code>14</code>), and create <code>src/components/exercises/labels.ts</code> exporting <code>EQUIPMENT_LABELS</code> and <code>LOGGING_KIND_LABELS</code> (<code>weight_reps: &quot;Weight and reps&quot;</code>, <code>bodyweight_reps: &quot;Reps&quot;</code>, <code>duration: &quot;Time&quot;</code>, <code>distance_duration: &quot;Distance and time&quot;</code>) used by the chooser, custom editor, and library pages instead of <code>replaceAll(&quot;_&quot;, &quot; &quot;)</code> or local copies.</p>
+<h2>6. Phase D: member shell and account</h2>
+<p>Files: <code>src/app/app/{layout,page,loading,error,not-found}.tsx</code>, <code>src/app/app/[...missing]/page.tsx</code> (new), <code>src/app/app/{settings,progress,prs,history}/**</code>, <code>src/app/app/library/page.tsx</code>, <code>src/components/layout/{authenticated-shell,authenticated-nav,authenticated-session-sign-out}.tsx</code>, <code>src/components/settings/**</code>, <code>src/components/insights/**</code>, <code>src/components/program/member-program-home.tsx</code>, <code>src/components/ui/companion-preference.tsx</code>, <code>src/client/session-sign-out.ts</code>, <code>src/proxy.ts</code>, and fixture mirrors under <code>tests/fixtures/authenticated-app/app/</code>.</p>
+<p><strong>Titles (A5).</strong> Fixture root layout <code>tests/fixtures/authenticated-app/app/layout.tsx</code>: <code>title: { default: &quot;My Workout Pal&quot;, template: &quot;%s · My Workout Pal&quot; }</code> (the harness banner stays). Add <code>metadata</code> titles: <code>/app</code> → <code>Today</code>; <code>/app/settings</code> → <code>Settings</code>; <code>/app/progress</code> → <code>Progress</code>; <code>/app/prs</code> → <code>Personal records</code>; <code>/app/history</code> → <code>History</code>; <code>/app/library</code> → <code>Library</code>; <code>generateMetadata</code> for <code>/app/history/[sessionId]</code> → <code>${dayName} workout</code> (fallback <code>Workout</code>). Mirror each in fixture pages.</p>
+<p><strong>Not found (A7).</strong> New <code>src/app/app/not-found.tsx</code>: <code>&lt;section className=&quot;member-empty&quot;&gt;</code> with <code>&lt;h1&gt;Page not found&lt;/h1&gt;</code>, <code>&lt;p&gt;We couldn&#39;t find that page.&lt;/p&gt;</code>, <code>&lt;Link className=&quot;primary-action&quot; href=&quot;/app&quot;&gt;Back to Today&lt;/Link&gt;</code>. New <code>src/app/app/[...missing]/page.tsx</code> that calls <code>notFound()</code>. Fixture: add the same <code>not-found.tsx</code> at <code>tests/fixtures/authenticated-app/app/app/not-found.tsx</code> and change <code>tests/fixtures/authenticated-app/app/app/[...path]/page.tsx</code> to call <code>notFound()</code>.</p>
+<p><strong>Loading and error.</strong> <code>src/app/app/loading.tsx</code>: <code>&lt;p role=&quot;status&quot;&gt;Loading…&lt;/p&gt;</code> inside the existing wrapper, nothing else. <code>src/app/app/error.tsx</code>: <code>&lt;h1&gt;This page didn&#39;t load&lt;/h1&gt;</code>, <code>&lt;p&gt;Nothing was changed.&lt;/p&gt;</code>, button <code>Try again</code> that calls <code>reset()</code> only. Mirror in fixture <code>loading.tsx</code>/<code>error.tsx</code>.</p>
+<p><strong>A2. Settings before setup.</strong> <code>src/app/app/settings/page.tsx</code> and fixture mirror: never redirect for a missing routine or missing profile. Pass <code>activeProgram: null</code>, <code>initialPreferences: null</code>, <code>equipmentProfileKind: null</code> when absent; <code>ownerUid</code> comes from the viewer. <code>SettingsForm</code> changes:</p>
+<ul>
+<li>Section order: <code>Units and time zone</code> (card), <code>Characters</code> (card, contains <code>CompanionPreference</code>), <code>Equipment</code> (card; render only when a routine exists), <code>Account</code> (card).</li>
+<li>Preferences with no saved preferences: render the controls disabled and the text <code>Set up your routine to choose units and time zone.</code>; hide <code>Save preferences</code>.</li>
+<li>Time zone is a <code>&lt;select id=&quot;settings-timezone&quot;&gt;</code> of <code>timeZoneOptions(saved)</code>. Label <code>Time zone</code>. Delete the examples text.</li>
+<li>Motion checkbox label <code>Reduce interface motion</code>, help text <code>Turns off animations and smooth scrolling.</code></li>
+<li>Save success status text exactly <code>Saved.</code>; in progress <code>Saving…</code>.</li>
+<li>Equipment card heading <code>Equipment</code>; when the <code>EquipmentProfileControl</code> renders, its heading is also <code>Equipment</code> (no second heading).</li>
+<li>Account card: heading <code>Account</code>; delete the settings <code>Sign out</code> button and its paragraph (the header keeps sign-out); deletion block title <code>Delete account</code>, text <code>Permanently deletes your account, routines, workout history and records. This can&#39;t be undone.</code>, button <code>Delete my account</code> (opens the existing dialog). If deletion is unavailable (no Firebase config or unsupported provider) show <code>Account deletion is unavailable right now.</code> and keep the button visible but disabled.</li>
+<li>Deletion dialog: remove eyebrow <code>Permanent account action</code>; heading <code>Delete your account?</code>; body <code>You&#39;ll confirm your sign-in, then everything is deleted.</code>; confirm button <code>Delete everything</code>; progress texts <code>Confirming your sign-in…</code>, <code>Deleting…</code>, <code>Finishing…</code>; identity errors <code>Please sign in again, then retry.</code></li>
+<li><code>firebase-client-identity-status.tsx</code>: checking → <code>Checking…</code>; ready → render nothing; not found or mismatch → <code>Please sign in again to delete your account.</code>; load failure → <code>Something went wrong. Try again.</code>; retry button <code>Try again</code>.</li>
+<li>Use normal field label styling (sentence case, body font) for every label on the page; remove uppercase serif treatments for <code>.member-settings label</code> and <code>.danger-action</code>.</li>
+</ul>
+<p><strong>A3. Motion preference.</strong> <code>src/app/app/layout.tsx</code>: after resolving the viewer, read the viewer&#39;s saved <code>reducedMotion</code> (reuse the preferences read inside <code>getViewerProfileProgram</code>; treat <code>RepositoryNotFoundError</code> as <code>false</code>). Pass <code>reducedMotion</code> to <code>AuthenticatedShell</code>, which sets <code>data-reduced-motion=&quot;true&quot;</code> on its root element only when true (omit the attribute otherwise). Add the class <code>authenticated-shell-root</code> to the shell&#39;s root element. After every successful preferences save, <code>SettingsForm</code> sets <code>data-reduced-motion=&quot;true&quot;</code> on <code>document.querySelector(&quot;.authenticated-shell-root&quot;)</code> when the saved value is true and removes the attribute when it is false. CSS: <code>[data-reduced-motion=&quot;true&quot;] *, [data-reduced-motion=&quot;true&quot;] *::before, [data-reduced-motion=&quot;true&quot;] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }</code>. Fixture layout mirror: read preferences from the harness database the same way the fixture settings page does and pass the flag.</p>
+<p><strong>A8. Return after sign-in.</strong> In <code>src/proxy.ts</code>, for requests whose pathname is <code>/app</code> or starts with <code>/app/</code>, set request header <code>x-mwp-pathname</code> to <code>pathname + search</code> (use <code>NextResponse.next({ request: { headers } })</code> while keeping every existing security header and CSP behavior). In <code>src/app/app/layout.tsx</code>, replace <code>redirect(&quot;/sign-in?returnTo=%2Fapp&quot;)</code> with <code>redirect(signInRedirectPath((await headers()).get(&quot;x-mwp-pathname&quot;)))</code>.</p>
+<p><strong>A1. Verification resend.</strong> In <code>authenticated-shell.tsx</code>, the unverified banner reads <code>Verify your email to save changes.</code> and has a button <code>Resend verification email</code>. On click: get the Firebase client auth (existing client helpers in <code>src/client/firebase*</code>); if <code>auth.currentUser</code> matches the viewer UID call <code>sendEmailVerification(auth.currentUser)</code> and show <code>Email sent. Check your inbox, then sign out and sign in again.</code>; if no matching user, show <code>Sign in again to resend the email.</code>; on error, <code>Couldn&#39;t send the email. Try again later.</code> Disable the button while sending and for 60 seconds after success. If Firebase config is absent (fixture), render the button disabled.</p>
+<p><strong>A9. Safe sign-out.</strong> Before <code>performSessionSignOut</code> clears local data, read this owner&#39;s runner records with the existing runner-storage read functions (do not change <code>runner-storage.ts</code>). If any record has an unfinished session with operations not <code>saved</code>/<code>superseded</code> or dirty drafts, <code>window.confirm(&quot;You have a workout in progress on this device. Signing out removes it from this device. Sign out anyway?&quot;)</code>; cancel aborts. Sign-out texts: <code>Signing out…</code>; failure <code>Couldn&#39;t sign out. Try again.</code> Use a distinct <code>sign-out</code> icon (add it to <code>src/components/ui/icon.tsx</code>: a door-with-arrow path in the existing 24×24 stroke style).</p>
+<p><strong>Navigation.</strong> <code>authenticated-nav.tsx</code>: <code>Routine</code> is current for <code>/app/program/*</code> and <code>/app/programs</code>.</p>
+<p><strong>Today</strong> (<code>member-program-home.tsx</code>, <code>src/app/app/page.tsx</code>): remove the <code>CompanionPreference</code> block (it lives in Settings); remove the <code>Current route</code> eyebrow; delete the unreachable <code>completedSessions === 0</code> branch and the redundant <code>useState(initialProgram)</code>. The day list below the start card gets the heading <code>All days</code>; each row shows the day name and <code>${n} movements</code> and links to the day page (delete the per-row <code>Open ${day} to start</code> text).</p>
+<p><strong>Library index</strong> (<code>src/app/app/library/page.tsx</code>): links go to <code>/app/library/${slug}</code> (no query string). Copy: remove eyebrow <code>Your compatible field guide</code>; <code>Owner-only</code> → <code>Yours</code>; remove <code>Canonical</code> badge; empty search <code>No matches. Try a different search.</code>; remove <code>Incompatible exercises remain in the catalog and nothing was deleted.</code> Add <code>role=&quot;search&quot;</code> to the search form. The member library heading stays <code>Exercise library</code>.</p>
+<p><strong>Insights copy.</strong> History: remove eyebrow <code>Immutable training archive</code>; intro <code>Every workout you&#39;ve finished or stopped.</code>; timezone line <code>Times shown in ${tz}.</code>; empty text <code>Finished workouts will show up here.</code> History detail: delete <code>Read-only snapshot…</code>. Progress: empty text <code>Finish a workout to see your progress.</code>; remove eyebrow <code>Daily series</code>. Records: remove <code>Persisted milestones</code>; intro <code>Your best lifts, reps and times.</code>; empty <code>No records yet</code> / <code>Log a few workouts and your bests will show up here.</code>; ties <code>Tied best (${n} times)</code>.</p>
+<p><strong>Companion copy</strong> (<code>companion-preference.tsx</code>): section heading <code>Characters</code>, help <code>Pick who greets you on Today, or turn the characters off. Saved on this device.</code></p>
+<h2>7. Phase E: public pages</h2>
+<p>Every public route (<code>/</code>, <code>/try</code>, <code>/program</code>, <code>/program/[day]</code>, <code>/library</code>, <code>/library/[slug]</code>, <code>/progress</code>, <code>/sample-workout</code>, <code>/sign-in</code>, <code>/offline</code>, and the root not-found page) renders inside <code>PublicShell</code>, so the <code>Primary</code> navigation is present on each.</p>
+<p>Files: <code>src/app/{page,layout,not-found,error,global-error,loading}.tsx</code>, <code>src/app/offline/page.tsx</code>, <code>src/app/program/**</code>, <code>src/components/program/program-explorer.tsx</code> (replace), <code>src/app/library/**</code>, <code>src/app/app/library/[slug]/page.tsx</code> (new) and fixture mirror, <code>src/app/progress/page.tsx</code>, <code>src/app/sample-workout/page.tsx</code>, <code>src/app/sign-in/page.tsx</code>, <code>src/components/layout/public-shell.tsx</code>, <code>src/components/auth/auth-panel.tsx</code>, <code>src/components/video/{curated-video-player,exercise-video-field}.tsx</code>.</p>
+<p><strong>P10. Root layout.</strong> Delete <code>designContract</code> and the <code>&lt;template&gt;</code>. Keep metadata; the template <code>%s · My Workout Pal</code> stays. Also delete the three unused <code>@fontsource/barlow-condensed</code> imports only if <code>--font-display</code> is unused after Phase G; otherwise leave them.</p>
+<p><strong>Public navigation (<code>public-shell.tsx</code>).</strong> Items exactly, in order: <code>{ id: &quot;program&quot;, href: &quot;/program&quot;, label: &quot;Example&quot;, icon: &quot;map&quot; }</code>, <code>{ id: &quot;library&quot;, href: &quot;/library&quot;, label: &quot;Library&quot;, icon: &quot;library&quot; }</code>, <code>{ id: &quot;progress&quot;, href: &quot;/progress&quot;, label: &quot;Progress&quot;, icon: &quot;sample&quot; }</code>, <code>{ id: &quot;account&quot;, href: &quot;/sign-in&quot;, label: &quot;Sign in&quot;, icon: &quot;sign-in&quot; }</code>. <code>current</code> accepts <code>null</code> for pages with no current item. Desktop: a light header bar matching the member header (cream background, forest text, active item as the forest pill used by <code>.member-nav [aria-current=&quot;page&quot;]</code>), not the dark block. Phone: the fixed bottom bar keeps four equal columns; labels never wrap (<code>white-space: nowrap</code>). Brand subtitle stays.</p>
+<p><strong>Example routine (<code>/program</code>).</strong> Replace <code>ProgramExplorer</code>&#39;s atlas UI entirely. Render inside <code>PublicShell current=&quot;program&quot;</code>:</p>
+<ul>
+<li><code>export const metadata = { title: &quot;Five-day example routine&quot; }</code> in <code>src/app/program/page.tsx</code> (the acceptance test reads this file).</li>
+<li><code>&lt;h1&gt;Five-day example routine&lt;/h1&gt;</code>, intro <code>Strength, core, and an optional cardio finish across five days. Change anything once it&#39;s yours.</code></li>
+<li>Equipment segmented control (two links with <code>aria-current</code> on the active one, keeping the existing <code>?equipment=</code> query): <code>Dumbbells</code>, <code>Barbell + rack</code>, and under it the profile description.</li>
+<li>A grid of five day cards (<code>&lt;ol&gt;</code>; two columns at ≥48rem, three at ≥72rem). Each card is one link to <code>/program/${day}${equipmentQuery}</code> containing: <code>Day ${n}</code> small label, <code>&lt;h2&gt;</code> day name, <code>${count} movements · cardio finish</code>, and the first three movement names as a list.</li>
+<li>Below the grid: primary link <code>Try one set</code> → <code>/try</code> and secondary link <code>Sign in to save your own version</code> → <code>/sign-in</code>.</li>
+<li>Where substitutions apply for the selected equipment, show one line per substituted movement on the card: <code>${original} → ${replacement}</code> is not allowed (no arrows); write <code>${replacement} replaces ${original}</code>.</li>
+<li>Delete the classes and CSS for <code>.route-map</code>, <code>.route-lines</code>, <code>.route-path</code>, <code>.map-legend</code>, <code>.atlas-grid</code>, <code>.guest-map-stamp</code>, <code>.equipment-stamp</code>, <code>.route-sheet</code>, <code>.selected-number</code>, <code>.route-heading</code>, <code>.alternate-*</code>, <code>.route-swatch</code>, <code>.movement-preview</code>, <code>.remaining-movements</code>, <code>.temporary-note</code> once unreferenced.</li>
+</ul>
+<p><strong>Example day (<code>/program/[day]</code>).</strong> Render inside <code>PublicShell current=&quot;program&quot;</code>:</p>
+<ul>
+<li>Back link <code>Example routine</code> → <code>/program</code> (keep the equipment query).</li>
+<li><code>&lt;h1&gt;${Day} day&lt;/h1&gt;</code> (for example <code>Push day</code>), intro <code>${count} movements with a walker or runner finish.</code></li>
+<li>Sections as <code>&lt;h2&gt;</code> (<code>Strength</code>, <code>Accessory</code>, <code>Core</code>) with rows linking to <code>/library/${slug}</code> showing name and <code>${sets} × ${reps} · ${rest}s rest</code>.</li>
+<li><code>&lt;h2&gt;Cardio finish&lt;/h2&gt;</code> with the two options and <code>Edit cardio targets once you save a routine.</code></li>
+<li>Link <code>See an example finished workout</code> → <code>/sample-workout</code>.</li>
+<li>Remove <code>Starter preview · not saved</code>, <code>Example route</code>, and all uppercase serif labels.</li>
+</ul>
+<p><strong>Library (<code>/library</code>).</strong> Heading block uses the shared page gutter (no element touches the viewport edge; content inset ≥16px on phones, matching member pages on desktop). Copy: remove eyebrow <code>Canonical field guide</code> and badge <code>Guest browsing · not saved</code>; intro <code>Find a movement and see how to do it.</code>; profile line <code>Showing movements for ${label}.</code>; empty text <code>Try a different name or switch equipment.</code> Search form gets <code>role=&quot;search&quot;</code>; the equipment links wrapper gets <code>role=&quot;group&quot;</code>. Results: <code>&lt;ul className=&quot;library-grid&quot;&gt;</code> of compact cards (name + <code>${role} · ${equipment}</code>), one column on phones, two at ≥48rem, three at ≥72rem. Remove the <code>01</code>, <code>02</code> counters.</p>
+<p><strong>Guide (<code>/library/[slug]</code>) and member guide (<code>/app/library/[slug]</code>).</strong> Extract the body into <code>src/components/exercises/exercise-guide.tsx</code> (<code>ExerciseGuide({ exercise, profileLabel, backHref, backLabel })</code>). Structure, in DOM order:</p>
+<ol>
+<li>Back link (<code>Exercise library</code> → public list with the equipment query; member: <code>Library</code> → <code>/app/library</code>).</li>
+<li><code>&lt;h1&gt;</code> movement name, then <code>Works with ${profileLabel}</code> when compatible (guests: the profile from the query, default Dumbbells; members: their equipment profile) or <code>Needs ${missing}</code> when not.</li>
+<li><code>&lt;h2&gt;Demo&lt;/h2&gt;</code> then the video player (tab buttons at normal button height, not tall boxes) or the fallback <code>No video yet. Follow the steps below.</code></li>
+<li><code>&lt;h2&gt;How to do it&lt;/h2&gt;</code> with the cue list.</li>
+<li><code>&lt;h2&gt;Details&lt;/h2&gt;</code> with a <code>&lt;dl&gt;</code>: <code>Default</code> (<code>${sets} work sets · ${reps} reps · ${rest}s rest</code>), <code>Tracks</code> (logging label from <code>LOGGING_KIND_LABELS</code>), <code>Equipment</code>, <code>Main muscles</code>.</li>
+<li>One line: <code>Pick a weight and range you can control.</code></li>
+</ol>
+<p>Delete the dark <code>Field notes</code> sidebar and uppercase serif labels. In <code>curated-video-player.tsx</code> delete the <code>Report a problem</code> link (keep <code>Open on YouTube</code>). The member page (<code>src/app/app/library/[slug]/page.tsx</code>) loads the viewer&#39;s equipment profile the way <code>src/app/app/library/page.tsx</code> does, calls <code>notFound()</code> for unknown slugs, and exports <code>generateMetadata</code> → movement name. Fixture mirror: <code>tests/fixtures/authenticated-app/app/app/library/[slug]/page.tsx</code> using the harness database like the fixture library page.</p>
+<p><strong>Progress preview (<code>/progress</code>).</strong> Gutter as above. <code>&lt;h1&gt;Progress&lt;/h1&gt;</code>, badge text exactly <code>Example data</code>, intro <code>An example of what Progress shows after a few workouts.</code> Delete <code>Immutable snapshots</code>, <code>Signed-in analytics are derived only…</code>, <code>Practice without persistence</code>. Closing band: heading <code>Track your own</code>, text <code>Sign in to see your real sets, reps and records.</code>, link <code>Sign in</code> → <code>/sign-in</code>. Replace uppercase serif labels with the member Progress styles.</p>
+<p><strong>Example workout (<code>/sample-workout</code>).</strong> <code>metadata.title</code> and <code>&lt;h1&gt;</code>: <code>Example workout</code>. Intro <code>An example of a finished workout. Nothing here is saved.</code> Back link <code>Push day</code> stays. Side panel heading <code>During a real workout</code> with items: <code>Saving</code> / <code>Each set shows when it&#39;s saved.</code>; <code>Interruptions</code> / <code>Close the app mid-workout and pick up where you left off.</code>; <code>Your targets</code> / <code>Review your last session and set your own targets.</code> Delete the <code>Rest</code> item. Headings <code>Read-only practice snapshot</code>, <code>Exercise snapshots</code>, <code>Cardio snapshot</code> → <code>Finished sets</code>, <code>Movements</code>, <code>Cardio</code>. Replace <code>READ ONLY</code>, <code>SAMPLE COMPLETE</code>, <code>TECHNIQUE</code>, <code>WARM-UP</code>, <code>WORK 1</code> uppercase serif labels with sentence-case body text (<code>Technique</code>, <code>Warm-up</code>, <code>Set 1</code>). Button <code>Sign in to start</code> → <code>/sign-in</code>.</p>
+<p><strong>Sign-in (<code>/sign-in</code>) and <code>auth-panel.tsx</code>.</strong> <code>&lt;h1&gt;Sign in to save your workouts&lt;/h1&gt;</code>, intro <code>Keep your routine, history and records on any device.</code> Bullets: <code>A routine that fits your equipment</code>, <code>Pick up where you left off</code>, <code>Your own custom movements</code>. Unavailable state: heading <code>Sign-in is unavailable</code>, text <code>Please try again later.</code> (delete <code>Credential gate</code> and the Firebase paragraphs). Secondary link <code>Explore the example routine</code> → <code>/program</code>. Auth panel: delete the <code>Firebase session</code> label and the <code>Password accounts must verify email…HTTP-only…</code> paragraph; <code>Recovery</code> → <code>Forgot password?</code>; <code>Send recovery</code> → <code>Send reset link</code>; reset result <code>If that email has an account, we&#39;ve sent a reset link.</code>; success <code>Signed in.</code>; after sign-up <code>Account created. Check your inbox to verify your email.</code></p>
+<p><strong>Landing (<code>/</code>).</strong> <code>Create my routine</code> becomes a <code>secondary-action</code> link (same destination). If <code>searchParams.account === &quot;deleted&quot;</code>, render at the top of main <code>&lt;p className=&quot;member-inline-notice&quot; role=&quot;status&quot;&gt;Your account and workout data were deleted.&lt;/p&gt;</code>.</p>
+<p><strong>Recovery pages.</strong></p>
+<ul>
+<li><code>src/app/not-found.tsx</code>: inside <code>PublicShell current={null}</code>: <code>&lt;h1&gt;Page not found&lt;/h1&gt;</code>, <code>&lt;p&gt;We couldn&#39;t find that page.&lt;/p&gt;</code>, <code>&lt;Link className=&quot;primary-action&quot; href=&quot;/&quot;&gt;Go home&lt;/Link&gt;</code>. The response status stays 404.</li>
+<li><code>src/app/error.tsx</code>: <code>&lt;h1&gt;Something went wrong&lt;/h1&gt;</code>, <code>&lt;p&gt;This page didn&#39;t load.&lt;/p&gt;</code>, button <code>Try again</code> (<code>reset()</code>).</li>
+<li><code>src/app/global-error.tsx</code>: import <code>./globals.css</code> and <code>./quiet-set.css</code>; <code>&lt;h1&gt;Something went wrong&lt;/h1&gt;</code>, button <code>Reload</code> (<code>window.location.reload()</code>).</li>
+<li>Root <code>loading.tsx</code> (if present): <code>Loading…</code>.</li>
+<li><code>src/app/offline/page.tsx</code>: <code>PublicShell current={null}</code>; <code>&lt;h1&gt;You&#39;re offline&lt;/h1&gt;</code>; <code>&lt;p&gt;Pages you&#39;ve opened before still work. Changes save when you reconnect.&lt;/p&gt;</code>; link <code>Go home</code> → <code>/</code>.</li>
+<li>PWA notices in <code>src/components/pwa/pwa-registration.tsx</code>: offline <code>You&#39;re offline. Changes will save when you reconnect.</code>; update <code>A new version is ready.</code>; install <code>Add My Workout Pal to your home screen for quick access.</code></li>
+</ul>
+<h2>8. Phase F–G: copy sweep and styles</h2>
+<h3>8.1 Copy sweep</h3>
+<p>Run the copy acceptance test. It lists every remaining user-facing string with implementation vocabulary as <code>file: text</code>. Rewrite each with the <code>AGENTS.md</code> copy rules. Do not rename identifiers, CSS classes, or API fields to satisfy it; the scanner ignores them. Error strings passed to <code>new Error(...)</code> or <code>console.*</code> are ignored; if such a string is later shown to users, map it to plain copy at the display site.</p>
+<h3>8.2 Copy that must not change</h3>
+<p><code>Log set &amp; rest</code>, <code>Start workout</code>, <code>Save routine</code>, <code>Try one set</code>, <code>Step N of 3 · …</code>, <code>Display units</code>, <code>Weight (lb)</code>/<code>Weight (kg)</code>, <code>Repetitions</code>, <code>Sets</code>, <code>Minimum reps</code>, <code>Maximum reps</code>, <code>Watch demo and technique guidance</code>, <code>Workout outline</code>, navigation labels <code>Today</code>, <code>Routine</code>, <code>Library</code>, <code>Progress</code>, <code>Settings</code>, and the member library heading <code>Exercise library</code>.</p>
+<h3>8.3 Styles (Phase G)</h3>
+<p>Only these style changes:</p>
+<ol>
+<li>Delete every selector that became unreferenced through this plan. Verify each with <code>rg -n &quot;&lt;class-name&gt;&quot; src tests/fixtures</code> before deleting.</li>
+<li>Add styles for new elements next to related rules: <code>.runner-field-error</code>, <code>.runner-more</code>, runner dialogs (reuse <code>.account-delete-dialog</code> look), <code>.row-menu</code>, <code>.library-grid</code>, <code>.program-day-grid</code>, <code>.exercise-guide</code>, the chooser bottom bar, and <code>[data-reduced-motion=&quot;true&quot;]</code>.</li>
+<li>Warm-up tab style (R15) and sentence-case headings/labels (Settings, onboarding, public pages).</li>
+<li>Page gutter: public page headers use the same inline padding as member pages (<code>padding-inline: max(1rem, env(safe-area-inset-left))</code> on phones; existing member max-width container on desktop).
+Do not reorganize, rename, or reformat unrelated rules.</li>
+</ol>
+<h2>9. Phase H: verification, evidence, docs</h2>
+<ol>
+<li>Run the win-condition commands in section 1 in order. Fix and re-run until all pass.</li>
+<li>Evidence: start <code>pnpm dev</code> (public) and the authenticated fixture (<code>node scripts/test-e2e-authenticated.mjs</code> builds it; or reuse the fixture server the Playwright config starts) and capture these PNGs at 390×844 and 1440×1000 into <code>docs/qa/latest/production-grade/</code>: <code>landing</code>, <code>program</code>, <code>program-push</code>, <code>library</code>, <code>library-push-up</code>, <code>progress</code>, <code>sign-in</code>, <code>not-found</code>, <code>member-today</code>, <code>member-onboarding-step2</code>, <code>member-settings-presetup</code>, <code>member-routine-editor-errors</code>, <code>member-routines</code>, <code>member-library-guide</code>, <code>runner-set-entry</code>, <code>runner-end-dialog</code>. Name files <code>${name}-phone.png</code> and <code>${name}-desktop.png</code>. Use synthetic fixture data only.</li>
+<li>Write <code>docs/qa/latest/PRODUCTION-GRADE-QA.md</code>: date, commit SHA, each command with pass counts copied from its output, the screenshot list, and known limits. Delete <code>docs/qa/latest/MEMBER-ATMOSPHERE-QA.md</code>, its HTML twin, and <code>docs/qa/latest/member-atmosphere/</code> (superseded; history stays in Git).</li>
+<li>Update <code>docs/context/STATUS.md</code> with a new top section &quot;Production-grade audit implementation: <date>&quot; (4–6 sentences: what changed, verification result, branch/PR, not deployed). Append a status line to <code>docs/plans/PRODUCTION-GRADE-AUDIT.md</code>: <code>Implemented on branch vishal/production-grade-audit; see docs/qa/latest/PRODUCTION-GRADE-QA.md.</code></li>
+<li><code>pnpm docs:build</code>, then <code>pnpm docs:check</code>.</li>
+<li><code>git checkout next-env.d.ts</code>, commit on <code>vishal/production-grade-audit</code> in logical commits (domain, runner, routine, member shell, public, copy/styles, docs), push the branch, and open a pull request to <code>main</code> titled <code>Production-grade audit fixes</code>. Do <strong>not</strong> merge, deploy, or delete branches; the owner reviews first.</li>
+</ol>
+<h2>10. Final report</h2>
+<p>Deliver, in this order:</p>
+<ol>
+<li>Win conditions W1–W7 with the exact final pass/fail lines from each command.</li>
+<li>Items from sections 3–7 not implemented, each with the reason (should be empty).</li>
+<li>Every edit to a pre-existing test (<code>file:line old → new</code>).</li>
+<li>&quot;Noticed, not changed&quot;: anything outside the plan.</li>
+<li>PR URL.</li>
+</ol>
+<h2>11. Out of scope</h2>
+<p>Routine delete/rename API, library category filters, companion artwork, video curation, schema or migration changes, <code>viewer.ts</code> display-name fallback, deployment, and any dependency change.</p>
+
+  </main>
+</body>
+</html>

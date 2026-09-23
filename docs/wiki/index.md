@@ -5,6 +5,8 @@ Use the following documents as the maintained project map:
 - [Comparative product report and full redesign recommendation](../reviews/COMPANION-COMPARISON.md): September 4 public/synthetic evidence, video inventory, original artwork, and interactive concept.
 - [Comparison report plan](../plans/COMPANION-COMPARISON.md): evidence boundaries and report acceptance.
 
+- [Production-grade audit](../plans/PRODUCTION-GRADE-AUDIT.md): September 22 whole-application findings for workflows, UI, UX, and copy.
+- [Production-grade implementation plan](../plans/PRODUCTION-GRADE-IMPLEMENTATION.md): handoff build contract, acceptance tests, and win conditions for the audit fixes.
 - `PRODUCT.md`: durable product truth.
 - `docs/qa/latest/QUIET-SET-QA.md`: current redesign and release verification.
 - `docs/plans/QUIET-SET-IMPLEMENTATION.md`: implemented report contracts and user-directed cartoon art.

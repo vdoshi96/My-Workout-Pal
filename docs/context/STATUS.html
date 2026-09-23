@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="a73999f16eeab038a5f5b8efbe2f734521619a6697dfcb41cc56a788e96aab08">
+  <meta name="source-sha256" content="2d08ca4a5de597e75ff2c1003f305740dc5936cdb0676d5f1f03bdb726891653">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,9 @@
 <body>
   <main>
 <h1>Project status</h1>
+<h2>Production-grade audit: September 22, 2026 (plan ready, not implemented)</h2>
+<p>A whole-application audit of workflows, UI, UX, and copy is recorded in <code>docs/plans/PRODUCTION-GRADE-AUDIT.md</code>. At the owner&#39;s request, implementation was stopped after the audit and handed off. The build contract is <code>docs/plans/PRODUCTION-GRADE-IMPLEMENTATION.md</code>. Durable quality rules were added to <code>AGENTS.md</code>.</p>
+<p>Branch <code>vishal/production-grade-audit</code> contains the plans and four acceptance test files: <code>tests/unit/production-audit-copy.test.ts</code>, <code>tests/unit/production-audit-contracts.test.ts</code>, <code>tests/authenticated-e2e/production-audit.spec.ts</code>, and <code>tests/e2e/production-audit-public.spec.ts</code>. They fail by design until the plan is implemented, so <code>pnpm typecheck</code> and <code>pnpm verify</code> fail on this branch until then. The branch also moves 24 illustration provenance sidecars from <code>public/illustrations/quiet-set/</code> to <code>docs/design/provenance/quiet-set/</code>. This fixes the one pre-existing unit failure, which was caused by those files being publicly served. Application source is unchanged. Nothing is deployed. The canonical checkout is the only worktree.</p>
 <h2>Member atmosphere and Library: September 5, 2026</h2>
 <p>The redesign merged through <a href="https://github.com/vdoshi96/My-Workout-Pal/pull/6">PR #6</a>. Application commit <code>368997d465e6ffac5a45f3f9646b3589fb6fa023</code> is verified on Ready deployment <code>dpl_DdwYMTT4tqL6g2boJ7JYokES4vZa</code>, serving <a href="https://my-workout-pal-chi.vercel.app">the stable site</a>. Library is a primary member destination, including before routine setup. Six characters in seven contextual scenes extend the illustrated gym across the application. Today exposes browser-local companion selection; Off hides the whole cast.</p>
 <p>Verification passed the full 868-test suite, final focused tests including pre-setup Library, typecheck, lint, database/seed/PWA checks, production build, local Chromium desktop and WebKit phone journeys, and dark-theme accessibility checks. Production passed public desktop/phone checks and the authenticated Library, routine, workout recovery, completion, Progress, and ownership journey. Both disposable accounts were removed; Firebase returned to its one pre-existing identity, owner rows were cleared, and the shared persistence digest was unchanged. See <code>docs/qa/latest/MEMBER-ATMOSPHERE-QA.md</code> for evidence and limits.</p>

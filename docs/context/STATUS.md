@@ -1,5 +1,11 @@
 # Project status
 
+## Production-grade audit: September 22, 2026 (plan ready, not implemented)
+
+A whole-application audit of workflows, UI, UX, and copy is recorded in `docs/plans/PRODUCTION-GRADE-AUDIT.md`. At the owner's request, implementation was stopped after the audit and handed off. The build contract is `docs/plans/PRODUCTION-GRADE-IMPLEMENTATION.md`. Durable quality rules were added to `AGENTS.md`.
+
+Branch `vishal/production-grade-audit` contains the plans and four acceptance test files: `tests/unit/production-audit-copy.test.ts`, `tests/unit/production-audit-contracts.test.ts`, `tests/authenticated-e2e/production-audit.spec.ts`, and `tests/e2e/production-audit-public.spec.ts`. They fail by design until the plan is implemented, so `pnpm typecheck` and `pnpm verify` fail on this branch until then. The branch also moves 24 illustration provenance sidecars from `public/illustrations/quiet-set/` to `docs/design/provenance/quiet-set/`. This fixes the one pre-existing unit failure, which was caused by those files being publicly served. Application source is unchanged. Nothing is deployed. The canonical checkout is the only worktree.
+
 ## Member atmosphere and Library: September 5, 2026
 
 The redesign merged through [PR #6](https://github.com/vdoshi96/My-Workout-Pal/pull/6). Application commit `368997d465e6ffac5a45f3f9646b3589fb6fa023` is verified on Ready deployment `dpl_DdwYMTT4tqL6g2boJ7JYokES4vZa`, serving [the stable site](https://my-workout-pal-chi.vercel.app). Library is a primary member destination, including before routine setup. Six characters in seven contextual scenes extend the illustrated gym across the application. Today exposes browser-local companion selection; Off hides the whole cast.
