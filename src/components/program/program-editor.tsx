@@ -1095,7 +1095,7 @@ export function ProgramEditor({
                 >
                   <span>{String(day.dayNumber).padStart(2, "0")}</span>
                   <strong>{day.displayName}</strong>
-                  <small>{day.sections.flatMap(({ prescriptions }) => prescriptions).length} movements</small>
+                  <small>{day.sections.flatMap(({ prescriptions }) => prescriptions).length} {day.sections.flatMap(({ prescriptions }) => prescriptions).length === 1 ? "movement" : "movements"}</small>
                 </button>
                 <details className="row-menu"><summary aria-label={`More actions for ${day.displayName}`}>More</summary>
                   <button

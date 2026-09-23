@@ -113,8 +113,7 @@ describe("MemberProgramHome", () => {
 
     expect(markup).toContain("Ready when you are, Alice QA.");
     expect(markup).toContain("Dumbbells · 2 days");
-    expect(markup).toContain("1 movements");
-    expect(markup).toContain("1 movements");
+    expect(markup).toContain("<small>1 movement</small>");
     expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001"');
     expect(markup).not.toContain("Open Mobility to start");
     expect(markup).not.toContain('aria-label="Open Mobility to start"');
@@ -173,7 +172,7 @@ describe("MemberProgramHome", () => {
     expect(markup).toContain("Your routine is available to review.");
     expect(markup).toContain("Verify your email and sign in again to start or edit workouts.");
     expect(markup).not.toContain("Open Mobility to start");
-    expect(markup).toContain("Mobility");
+    expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001"><span>01</span><strong>Mobility</strong>');
     expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001"');
     expect(markup).not.toContain("Edit routine");
     expect(markup).toContain('data-companion-placement="member-home"');

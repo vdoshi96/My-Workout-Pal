@@ -33,7 +33,7 @@ export default async function MemberDayPage({ params }: Readonly<{ params: Promi
         <Link className="back-link" href="/app"><Icon name="arrow-left" /> Today</Link>
         <span className="eyebrow">Day {day.dayNumber}</span>
         <h1 id="member-day-title">{day.displayName}</h1>
-        <p>{day.prescriptions.length} movements · {day.cardio.length === 0
+        <p>{day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"} · {day.cardio.length === 0
           ? "no cardio finish"
           : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}</p>
         <DecorativeCompanion variant="workout" />

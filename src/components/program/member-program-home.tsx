@@ -128,7 +128,7 @@ export function MemberProgramHome({
             <li key={day.id}>
               <Link href={`/app/program/${day.dayKey}`} prefetch={false}>
                 <span>{String(day.dayNumber).padStart(2, "0")}</span>
-                <strong>{day.displayName}</strong><small>{day.prescriptions.length} movements</small>
+                <strong>{day.displayName}</strong><small>{day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"}</small>
                 <Icon name="chevron-right" />
               </Link>
             </li>

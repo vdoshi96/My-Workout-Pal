@@ -45,7 +45,7 @@ export default async function HarnessMemberDayPage({
         </span>
         <h1 id="member-day-title">{day.displayName}</h1>
         <p>
-          {day.prescriptions.length} movements · {day.cardio.length === 0
+          {day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"} · {day.cardio.length === 0
             ? "no cardio finish"
             : `${day.cardio.length} cardio option${day.cardio.length === 1 ? "" : "s"}`}
         </p>
