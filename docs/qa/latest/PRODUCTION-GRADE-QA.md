@@ -1,19 +1,19 @@
 # Production-grade audit QA
 
-September 23, 2026 (America/Chicago). Round-2 implementation based on `4183485178692f48a4c6355c84c36ebe3a7abcb1`, branch `vishal/production-grade-audit`, [PR #8](https://github.com/vdoshi96/My-Workout-Pal/pull/8). The table records completed preflight commands. A fresh serial W1–W6 run follows the commit containing this report; the PR and owner handoff record that verification SHA and its exact output. These preflight elapsed times are not presented as the later committed run.
+September 23, 2026 (America/Chicago). Round-2 implementation on `3e540ac6f6be740c38ebf6cc07ee9c37d3d044a2`, branch `vishal/production-grade-audit`, [PR #8](https://github.com/vdoshi96/My-Workout-Pal/pull/8). The table records the fresh serial committed run. The documentation closeout repeats W1–W6; its SHA and exact output are recorded in the PR and owner handoff.
 
-**All latest preflight commands exit 0, but the video teardown remains unresolved.** The stable embed reproduced one WebKit Cache API context-stopped error in 48 loaded-video departures. A passing release run does not erase that evidence. No test-policy exception has been applied or approved, and the branch must not merge while this decision is pending. The four acceptance files remain byte-identical to `9d5162d`.
+**Authenticated W5 fails; merge is blocked.** Its complete run reports two failures, 13 existing skips, and 73 passes. Release W5 passes, but the separate stable-embed diagnostic still reproduces a WebKit Cache API context-stopped error in one of 48 loaded-video departures. No error-policy exception has been approved or applied. The four acceptance files remain byte-identical to `9d5162d`.
 
 ## 1. Win conditions W1–W7
 
 | Condition | Result | Command | Exact output |
 | --- | --- | --- | --- |
 | W1 | Pass; exit 0 | `npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts` | `Test Files  2 passed (2)`<br>`Tests  96 passed (96)` |
-| W2 | Pass; exit 0 | `pnpm test:e2e:authenticated -- production-audit` | `14 passed (32.0s)` |
-| W3 | Pass; exit 0; warmed reused server | `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop` | `12 passed (22.2s)` |
+| W2 | Pass; exit 0 | `pnpm test:e2e:authenticated -- production-audit` | `14 passed (27.6s)` |
+| W3 | Pass; exit 0; warmed reused server | `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop` | `12 passed (23.3s)` |
 | W4 | Pass; exit 0 | `pnpm verify` | `Test Files  129 passed (129)`<br>`Tests  965 passed (965)`<br>`Everything's fine 🐶🔥`<br>`Test Files  4 passed (4)`<br>`Tests  34 passed (34)`<br>`seed:check passed: 27 required variation(s) have exactly two approved videos.`<br>`Verified generated service worker.`<br>`Verified 71 documentation files.`<br>`Production route boundary verified (47 App Router entries).` |
-| W5, authenticated | Pass; exit 0; all 88 cases completed | `pnpm test:e2e:authenticated` | `13 skipped`<br>`75 passed (6.7m)` |
-| W5, public release | Command passes; teardown reliability remains blocked | `pnpm test:e2e:release` | `66 skipped`<br>`102 passed (1.2m)` |
+| W5, authenticated | Fail; exit 1; all 88 cases completed | `pnpm test:e2e:authenticated` | `2 failed`<br>`13 skipped`<br>`73 passed (8.4m)` |
+| W5, public release | Command passes; teardown reliability remains blocked | `pnpm test:e2e:release` | `66 skipped`<br>`102 passed (58.1s)` |
 | W6 | Refreshed evidence and documentation parity | `pnpm docs:build; pnpm docs:check` | `Rendered 71 documentation files.`<br>`Verified 71 documentation files.`<br>40 PNGs at 390×844 and 1440×1000; every capture reports 0 px horizontal overflow |
 | W7 | Section 10 report delivered; closeout blocked | `Section 10` | Decisions, results, baseline, complete edit ledger, evidence, and the unresolved teardown decision are recorded here. |
 
@@ -25,12 +25,17 @@ W3 uses a task-owned dev server on port 3118 to avoid another project's existing
 
 | Suite | Main `c619ac6` | Latest complete branch run | Exit, main / branch |
 | --- | --- | --- | --- |
-| Authenticated | `42 failed`<br>`13 skipped`<br>`19 passed (1.9h)` | `13 skipped`<br>`75 passed (6.7m)` | `1 / 0` |
-| Public release | `36 failed`<br>`42 skipped`<br>`54 passed (1.1m)` | `66 skipped`<br>`102 passed (1.2m)` | `1 / 0` |
+| Authenticated | `42 failed`<br>`13 skipped`<br>`19 passed (1.9h)` | `2 failed`<br>`13 skipped`<br>`73 passed (8.4m)` | `1 / 1` |
+| Public release | `36 failed`<br>`42 skipped`<br>`54 passed (1.1m)` | `66 skipped`<br>`102 passed (58.1s)` | `1 / 0` |
 
-Both suites ran to completion and their latest commands exit 0. The authenticated suite retains exactly 13 skips; release retains exactly 66. W1, W3, W4, and authenticated W5 are from the latest serial preflight; W2 and release W5 were run again after removing the unsuccessful video navigation handler. These are explicit preflight evidence boundaries. The committed source must repeat W1–W6 serially. The separate loaded-video diagnostic still reproduces the teardown error, so closeout remains blocked.
+Both suites ran to completion on `3e540ac`. Authenticated retains exactly 13 skips and release exactly 66. W1–W4 and W6 exit 0; authenticated W5 exits 1 and release W5 exits 0. No test retry was used. The audit adds 14 authenticated acceptance cases and 12 running public acceptance cases; 24 public acceptance project instances are excluded by existing conditions. No test block, skip, retry, timeout, or acceptance file changed in round 2.
 
-The audit adds 14 authenticated acceptance cases and 12 running public acceptance cases; 24 public acceptance project instances are excluded by existing conditions. Main's 13 authenticated and 42 public skips correspond to the branch's existing 13 and 66 skips. No test block, skip, retry, timeout, or acceptance file changed in round 2. Complete-run comparisons found no main-passing title failing on the branch. The following tables preserve every failing main title and identify failures in the latest complete branch commands. Earlier failures and their fixes remain documented below.
+Final authenticated failures, both `webkit-phone`:
+
+- `tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:235`: **a verified member publishes, reloads, and starts all owned logging shapes**. At line 142, `expect(errors).toEqual([])` received `["Load failed"]`. The trace records the existing editor refresh response returning 200, followed immediately by `page.reload()`; the page error arrives 10 ms later. The response has no completed receive timing. Awaiting that existing response's `finished()` before reload is proposed; permission is pending because this file's named boundary allows only the four metadata strings. Every assertion remains unchanged.
+- `tests/authenticated-e2e/runner-resilience.spec.ts:540`: **a real aborted operation retries explicitly with the same key and no online event**. `Test timeout of 120000ms exceeded.` The wait at line 295 never receives a workout-creation response. The trace shows the Start workout click completing, no `POST /api/app/workouts`, and the day page remaining visible. This is consistent with the excluded pre-hydration interaction issue; it does not prove a recovery failure because the recovery scenario never began. This title passed on main. Neither its test nor the excluded hydration behavior was changed.
+
+The current-path flexible-routine journey passes both projects. Earlier passing preflights do not override these final failures. The following tables retain every failing main title; the new runner-resilience failure is separately listed above because it passed on main.
 
 ### Authenticated: every title that failed on main
 
@@ -44,7 +49,7 @@ The audit adds 14 authenticated acceptance cases and 12 running public acceptanc
 | `tests/authenticated-e2e/customization-geometry.spec.ts` — customization surfaces preserve geometry and media preferences | `chromium-desktop`, `webkit-phone`, `chromium-phone`, `chromium-tablet`, `webkit-tablet`, `webkit-desktop` | None |
 | `tests/authenticated-e2e/firebase-auth-hydration.spec.ts` — full-page Settings fails closed until the browser Firebase identity is restored | `chromium-desktop`, `webkit-phone` | None |
 | `tests/authenticated-e2e/flexible-routine-publication.spec.ts` — a custom flexible routine survives publication, workout snapshots, and equipment revision | `chromium-desktop`, `webkit-phone` | None |
-| `tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts` — a verified member publishes, reloads, and starts all owned logging shapes | `chromium-desktop`, `webkit-phone` | None |
+| `tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts` — a verified member publishes, reloads, and starts all owned logging shapes | `chromium-desktop`, `webkit-phone` | `webkit-phone` |
 | `tests/authenticated-e2e/library-guidance.spec.ts` — browses, creates, links, selects, and isolates private movements | `chromium-desktop`, `webkit-phone` | None |
 | `tests/authenticated-e2e/library-strength-expansion.spec.ts` — publishes, reloads, and starts a routine with text-only upper- and lower-body additions | `chromium-desktop`, `webkit-phone` | None |
 | `tests/authenticated-e2e/onboarding.spec.ts` — new accounts choose one idempotent example or blank graph through onboarding | `chromium-desktop`, `webkit-phone` | None |
@@ -91,7 +96,7 @@ The edited identity, metadata, and units assertions ran before their application
 - Decision 7, desktop and phone: `getByText('Strength · Weight and reps', { exact: true })`; `Expected: visible`; `Error: element(s) not found`.
 - Decision 8, desktop and phone: `getByText('Changing units only changes how weights and distances are shown. Your logged sets stay the same.', { exact: true })`; `Expected: visible`; `Error: element(s) not found`.
 
-After implementation, the full authenticated preflight passed the metadata journey at 1440 px and 390 px and all six geometry projects. The units help assertion passed in both browsers, confirmed by the Playwright trace after-events (`call@1278` desktop and `call@1260` phone); those journeys then reached the separately authorized tied-best copy mapping. The complete preflight journey results appear in W5. Those trace events establish the assertion pass; the later complete W5 run also passes both owned-customization journeys.
+After implementation, the full authenticated preflight passed the metadata journey at 1440 px and 390 px and all six geometry projects. The units help assertion passed in both browsers, confirmed by the Playwright trace after-events (`call@1278` desktop and `call@1260` phone); those journeys then reached the separately authorized tied-best copy mapping. The committed W5 results appear above; the retained preflight lines below establish the test-first checks. Those trace events establish the assertion pass; the later complete W5 run also passes both owned-customization journeys.
 
 Exact passing output retained for decisions 6–8:
 
@@ -840,9 +845,9 @@ The retained change keeps the server-rendered embed URL stable through hydration
 
 The discarded experiments included cleanup during unmount, client-only single-load hydration, and unloading to about:blank before Next navigation. The last approach passed focused diagnostics but caused YouTube telemetry access-control errors in complete release runs. It also required a history correction. The latest failed experimental release run reported `2 failed`, `66 skipped`, `100 passed (1.2m)`. Its exact failing title was `guest previews both profiles and completes the public discovery route` in `webkit-phone` and `webkit-tablet`, at `tests/e2e/public-release.spec.ts:153`. The errors included `/www.youtube-nocookie.com/youtubei/v1/log_event?alt=json due to access control checks.` and the corresponding `/api/stats/atr` request. The entire navigation interceptor was removed; no event replay, blank-frame navigation, or navigation delay remains.
 
-After removal, the complete release command reports `66 skipped` and `102 passed (1.2m)`, but the separate stable-URL diagnostic still failed once in 48 departures. No error was suppressed or filtered by the application or tests. Re-running until a green command would not resolve this known behavior.
+After removal, the complete release command reports `66 skipped` and `102 passed (58.1s)`, but the separate stable-URL diagnostic still failed once in 48 departures. No error was suppressed or filtered by the application or tests. Re-running until a green command would not resolve this known behavior.
 
-**Smallest pending owner decision:** permit a narrowly guarded test-policy exception for the exact WebKit Cache API context-stopped error only when a YouTube frame detaches during confirmed navigation, leaving every other error fatal and the existing zero-error assertions intact; or retain the current boundary and keep this PR blocked. This permission has been requested but not received. No exception code has been added. All earlier copy, disclosure, layout, and single-path permissions are implemented; there are no other stopped items from the earlier steps 3 or 4.
+**Smallest pending owner decision:** permit a narrowly guarded test-policy exception for the exact WebKit Cache API context-stopped error only when a YouTube frame detaches during confirmed navigation, leaving every other error fatal and the existing zero-error assertions intact; or retain the current boundary and keep this PR blocked. This permission has been requested but not received. No exception code has been added. All earlier copy, disclosure, layout, and single-path permissions are implemented; the final authenticated run adds the response-completion permission request and the excluded pre-hydration blocker described in W5.
 
 
 Two screenshot-only development captures encountered `Unexpected end of JSON input` while opening successive routes in new pages. A fresh server and one reused page per viewport completed all 16 public captures. This is an evidence-capture result, not a demonstrated application fix or a W3 test retry.
