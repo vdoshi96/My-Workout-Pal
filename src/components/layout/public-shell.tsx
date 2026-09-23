@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
 
 const items = [
-  { id: "program", href: "/program", label: "Program", icon: "map" },
+  { id: "program", href: "/program", label: "Example", icon: "map" },
   { id: "library", href: "/library", label: "Library", icon: "library" },
   { id: "progress", href: "/progress", label: "Progress", icon: "sample" },
-  { id: "account", href: "/app", label: "My workouts", icon: "sign-in" },
+  { id: "account", href: "/sign-in", label: "Sign in", icon: "sign-in" },
 ] as const;
 
 type NavItem = "home" | (typeof items)[number]["id"];

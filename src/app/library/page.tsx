@@ -1,3 +1,4 @@
+import { EQUIPMENT_LABELS } from "@/components/exercises/labels";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -33,18 +34,18 @@ export default async function LibraryPage({ searchParams }: PageProps) {
     <PublicShell current="library">
       <section className="public-hero public-library-hero companion-heading contour-surface">
         <div>
-          <span className="eyebrow">Canonical field guide</span>
+
           <h1>Exercise library</h1>
-          <p>Search the seeded movements, then filter out anything your current route cannot perform.</p>
+          <p>Find a movement and see how to do it.</p>
         </div>
-        <div className="guest-stamp">Guest browsing · not saved</div>
+
         <DecorativeCompanion variant="library" />
       </section>
 
       <section className="library-tools" aria-labelledby="library-tools-heading">
         <div>
           <h2 id="library-tools-heading">Compatible equipment</h2>
-          <div className="profile-links" aria-label="Equipment filter">
+          <div className="profile-links" role="group" aria-label="Equipment filter">
             {(Object.keys(EQUIPMENT_PROFILES) as EquipmentProfileKind[]).map((profileId) => (
               <Link
                 aria-current={profile === profileId ? "true" : undefined}
@@ -56,9 +57,9 @@ export default async function LibraryPage({ searchParams }: PageProps) {
               </Link>
             ))}
           </div>
-          <p>{EQUIPMENT_PROFILES[profile].description}. Incompatible catalog records are hidden.</p>
+          <p>Showing movements for {EQUIPMENT_PROFILES[profile].label}.</p>
         </div>
-        <form className="library-search" method="get">
+        <form className="library-search" role="search" method="get">
           <input name="equipment" type="hidden" value={profile} />
           <label htmlFor="library-query">Search movements</label>
           <div>
@@ -85,11 +86,11 @@ export default async function LibraryPage({ searchParams }: PageProps) {
         {exercises.length === 0 ? (
           <div className="empty-sheet">
             <h3>No compatible match</h3>
-            <p>Try a broader movement name or switch equipment. Nothing was removed from the catalog.</p>
+            <p>Try a different name or switch equipment.</p>
           </div>
         ) : (
-          <ol className="library-list">
-            {exercises.map((exercise, index) => (
+          <ul className="library-grid">
+            {exercises.map((exercise) => (
               <li key={exercise.slug}>
                 <Link
                   href={exerciseDetailHref(exercise.slug, {
@@ -98,16 +99,16 @@ export default async function LibraryPage({ searchParams }: PageProps) {
                   })}
                   prefetch={false}
                 >
-                  <span className="catalog-number">{String(index + 1).padStart(2, "0")}</span>
+
                   <span>
                     <strong>{exercise.name}</strong>
-                    <small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.join(" + ")}</small>
+                    <small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small>
                   </span>
                   <Icon name="chevron-right" />
                 </Link>
               </li>
             ))}
-          </ol>
+          </ul>
         )}
       </section>
     </PublicShell>

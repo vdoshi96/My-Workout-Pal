@@ -161,27 +161,27 @@ test("public account entry uses the protected member boundary from every public 
   await page.goto("/");
   const landingAccountAction = page.getByRole("link", {
     exact: true,
-    name: "My workouts",
+    name: "Sign in",
   });
-  await expect(landingAccountAction).toHaveAttribute("href", "/app");
+  await expect(landingAccountAction).toHaveAttribute("href", "/sign-in");
   await landingAccountAction.click();
-  await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp$/u);
-  await expect(page.locator("#auth-heading")).toHaveText(/^(Sign-in connection pending|Sign in)$/);
+  await expect(page).toHaveURL(/\/sign-in$/u);
+  await expect(page.locator("#auth-heading")).toHaveText(/^(Sign-in is unavailable|Sign in)$/);
   await page.waitForLoadState("networkidle");
 
   await page.goto("/program");
-  await expect(page.getByText("Starter preview · not saved")).toBeVisible();
-  const programAccountActions = page.getByRole("link", { name: "My workouts" });
-  await expect(programAccountActions.first()).toHaveAttribute("href", "/app");
+  await expect(page.getByText("Five-day example routine")).toBeVisible();
+  const programAccountActions = page.getByRole("link", { name: "Sign in" });
+  await expect(programAccountActions.first()).toHaveAttribute("href", "/sign-in");
 
   await page.goto("/program/push?equipment=dumbbells");
-  await expect(page.getByText("Starter preview · not saved")).toBeVisible();
-  await expect(page.getByText("Five-day starter example")).toBeVisible();
-  const dayAccountAction = page.getByRole("link", { name: "My workouts" });
-  await expect(dayAccountAction).toHaveAttribute("href", "/app");
+  await expect(page.getByText(/\d+ movements with a walker or runner finish\./)).toBeVisible();
+  await expect(page.getByText("Example routine")).toBeVisible();
+  const dayAccountAction = page.getByRole("link", { name: "Sign in" });
+  await expect(dayAccountAction).toHaveAttribute("href", "/sign-in");
   await dayAccountAction.click();
-  await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp$/u);
-  await expect(page.locator("#auth-heading")).toHaveText(/^(Sign-in connection pending|Sign in)$/);
+  await expect(page).toHaveURL(/\/sign-in$/u);
+  await expect(page.locator("#auth-heading")).toHaveText(/^(Sign-in is unavailable|Sign in)$/);
   await page.waitForLoadState("networkidle");
 
   expect(errors).toEqual([]);

@@ -102,7 +102,7 @@ describe("approved curated video publication", () => {
     );
     expect(available).not.toContain("web-share");
     expect(available).not.toContain("Manual review pending");
-    expect(unavailable).toContain("No demonstration is available");
+    expect(unavailable).toContain("No video yet. Follow the steps below.");
     expect(unavailable).not.toContain("required YouTube API credential");
   });
 
@@ -213,7 +213,7 @@ describe("approved curated video publication", () => {
     );
 
     expect(publicMarkup).toContain("Move under control.");
-    expect(publicMarkup).toContain("No demonstration is available");
+    expect(publicMarkup).toContain("No video yet. Follow the steps below.");
     expect(publicMarkup).not.toContain("<iframe");
     expect(privateMarkup).toContain("No demonstration is available");
     expect(privateMarkup).toContain("Log set &amp; rest");

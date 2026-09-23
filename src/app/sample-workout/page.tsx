@@ -8,7 +8,7 @@ import { getCatalogExercise } from "@/domain/exercises/catalog";
 import { exerciseDetailHref } from "@/domain/navigation/public-exercise-return";
 import { createStarterProgram } from "@/domain/programs/starter";
 
-export const metadata: Metadata = { title: "Read-only sample workout" };
+export const metadata: Metadata = { title: "Example workout" };
 
 const validDays = ["push", "pull", "legs", "upper", "lower"] as const;
 type DaySlug = (typeof validDays)[number];
@@ -39,9 +39,9 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
           >
             <Icon name="arrow-left" /> {selectedDay.name} day
           </Link>
-          <span className="eyebrow">Read-only practice snapshot</span>
-          <h1>{selectedDay.name} workout</h1>
-          <p>This completed example demonstrates warm-up/work distinction, previous values, targets, notes, cardio, and saved-state language without writing guest data.</p>
+          <h2>Finished sets</h2>
+          <h1>Example workout</h1>
+          <p>An example of a finished workout. Nothing here is saved.</p>
         </div>
         <div className="sample-warning"><strong>Sample complete</strong><span>Not your workout · never saved</span></div>
       </section>
@@ -49,7 +49,7 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
       <div className="sample-runner-grid">
         <section className="sample-log" aria-labelledby="sample-log-heading">
           <div className="section-heading">
-            <div><span className="eyebrow">Exercise snapshots</span><h2 id="sample-log-heading">Completed route</h2></div>
+            <div><h2 id="sample-log-heading">Movements</h2></div>
             <span className="status-stamp">Read only</span>
           </div>
           <ol>
@@ -76,7 +76,7 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
                   <div className="sample-set-row">
                     {exercise.loggingKind === "weight_reps" ? <span><small>Warm-up</small><strong>Light × 8</strong></span> : null}
                     {Array.from({ length: prescription.sets }, (_, setIndex) => (
-                      <span key={setIndex}><small>Work {setIndex + 1}</small><strong>{top} {unit}</strong></span>
+                      <span key={setIndex}><small>Set {setIndex + 1}</small><strong>{top} {unit}</strong></span>
                     ))}
                   </div>
                   <p><strong>Previous:</strong> {exercise.loggingKind === "weight_reps" ? "Same controlled load · one fewer rep on final set." : "One fewer rep or five fewer seconds."} <strong>Sample note:</strong> Form stayed controlled.</p>
@@ -87,23 +87,21 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
         </section>
 
         <aside className="sample-runner-side">
-          <span className="eyebrow">Recovery states</span>
-          <h2>What the live runner adds</h2>
+
+          <h2>During a real workout</h2>
           <dl>
-            <div><dt>Save state</dt><dd>Pending → saved, or failed with explicit retry.</dd></div>
-            <div><dt>Interruption</dt><dd>Refresh and reconnection resume one idempotent session.</dd></div>
-            <div><dt>Rest</dt><dd>90 seconds for compounds; 60 for accessory and core work.</dd></div>
-            <div><dt>Next workout</dt><dd>Review your saved work and choose your own targets. Automatic load suggestions are not part of the runner.</dd></div>
+            <div><dt>Saving</dt><dd>{"Each set shows when it's saved."}</dd></div>
+            <div><dt>Interruptions</dt><dd>Close the app mid-workout and pick up where you left off.</dd></div>
+            <div><dt>Your targets</dt><dd>Review your last session and set your own targets.</dd></div>
           </dl>
           <section className="sample-cardio-log">
-            <h3>Cardio snapshot</h3>
+            <h3>Cardio</h3>
             <p><strong>Walker</strong> · 20:00 · 1.2 mi · 2% incline</p>
             <small>Sample note: conversational pace.</small>
           </section>
-          <Link className="primary-action" href="/app" prefetch={false}>
-            <span>Open my workouts</span><Icon name="arrow-right" />
+          <Link className="primary-action" href="/sign-in" prefetch={false}>
+            <span>Sign in to start</span><Icon name="arrow-right" />
           </Link>
-          <p className="temporary-note">Sign in only when you want this work saved to your own history and analytics.</p>
         </aside>
       </div>
     </PublicShell>
