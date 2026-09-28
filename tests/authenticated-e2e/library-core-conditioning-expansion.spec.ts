@@ -320,6 +320,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
   expect(publishRequests).toBe(1);
   await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
   expect((await refreshedEditorResponse).status()).toBe(200);
+  await (await refreshedEditorResponse).finished();
 
   await alice.page.reload();
   for (const name of ["Dumbbell clean", "Crunch", "Flutter kick", "Dumbbell farmer carry"]) {

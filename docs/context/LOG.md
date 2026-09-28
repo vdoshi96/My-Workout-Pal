@@ -697,3 +697,9 @@
 - Serial W1–W6 on `3e540ac` finished both W5 suites: authenticated 2 failed / 13 skipped / 73 passed; release 66 skipped / 102 passed. Other gates passed.
 - Preserved the logging-shapes refresh/reload failure and the pre-workout Start click timeout. The latter is consistent with the owner-excluded pre-hydration issue. Response-completion synchronization and video teardown policy remain pending decisions; no assertion or timeout was changed.
 - Updated the report and status. Keep PR #8 unmerged; the sole canonical worktree remains active for unresolved gates.
+
+## 2026-09-27: Bounded test reliability approvals
+
+- Implemented the owner-approved exact WebKit Cache API teardown guard and editor response-completion wait. Every assertion and timeout remains unchanged.
+- The guard passes 24 positive/negative diagnostic checks; typecheck passes. Full serial committed gates and conditional closeout are recorded in PR #8.
+- Preserved the excluded pre-hydration issue and prior intermittent failures as historical evidence. No application/UI/provider change; retain the 40 representative screenshots.

@@ -1,10 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
-import { isSupersededWebKitFlightPageError } from "./public-page-error-policy";
+import { captureWebKitVideoTeardown, isSupersededWebKitFlightPageError } from "./public-page-error-policy";
 
 function capturePageErrors(page: Page): string[] {
   const errors: string[] = [];
+  const isVideoTeardown = captureWebKitVideoTeardown(page);
   page.on("console", (message) => {
     const text = message.text();
     if (
@@ -15,6 +16,7 @@ function capturePageErrors(page: Page): string[] {
     }
   });
   page.on("pageerror", (error) => {
+    if (isVideoTeardown(error)) return;
     if (
       !isSupersededWebKitFlightPageError({
         browserName:

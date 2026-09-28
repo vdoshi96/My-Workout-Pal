@@ -1,21 +1,21 @@
 # Production-grade audit QA
 
-September 23, 2026 (America/Chicago). Round-2 implementation on `3e540ac6f6be740c38ebf6cc07ee9c37d3d044a2`, branch `vishal/production-grade-audit`, [PR #8](https://github.com/vdoshi96/My-Workout-Pal/pull/8). The table records the fresh serial committed run. The documentation closeout repeats W1–W6; its SHA and exact output are recorded in the PR and owner handoff.
+September 27, 2026 (America/Chicago). The owner approved the exact WebKit video-teardown policy exception and the logging-shapes response-completion wait. Both are implemented; the zero-error assertions and all timeouts remain unchanged. The W1–W6 table below records the last complete committed run on `3feaf55`; the commit containing these supplemental edits receives a fresh serial run, with its SHA and exact output recorded in [PR #8](https://github.com/vdoshi96/My-Workout-Pal/pull/8) and the owner handoff. This report does not present the prior run as verification of these edits.
 
-**Authenticated W5 fails; merge is blocked.** Its complete run reports two failures, 13 existing skips, and 73 passes. Release W5 passes, but the separate stable-embed diagnostic still reproduces a WebKit Cache API context-stopped error in one of 48 loaded-video departures. No error-policy exception has been approved or applied. The four acceptance files remain byte-identical to `9d5162d`.
+The four acceptance files remain byte-identical to `9d5162d`. The underlying third-party Cache API rejection is classified only under the owner's exact exception, not claimed as an application fix. Pre-hydration interaction remains out of scope. Merge requires the new same-commit W1–W6 run and Vercel checks to succeed.
 
 ## 1. Win conditions W1–W7
 
 | Condition | Result | Command | Exact output |
 | --- | --- | --- | --- |
 | W1 | Pass; exit 0 | `npx vitest run tests/unit/production-audit-copy.test.ts tests/unit/production-audit-contracts.test.ts` | `Test Files  2 passed (2)`<br>`Tests  96 passed (96)` |
-| W2 | Pass; exit 0 | `pnpm test:e2e:authenticated -- production-audit` | `14 passed (27.6s)` |
-| W3 | Pass; exit 0; warmed reused server | `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop` | `12 passed (23.3s)` |
+| W2 | Pass; exit 0 | `pnpm test:e2e:authenticated -- production-audit` | `14 passed (27.5s)` |
+| W3 | Pass; exit 0; warmed reused server | `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop` | `12 passed (21.2s)` |
 | W4 | Pass; exit 0 | `pnpm verify` | `Test Files  129 passed (129)`<br>`Tests  965 passed (965)`<br>`Everything's fine 🐶🔥`<br>`Test Files  4 passed (4)`<br>`Tests  34 passed (34)`<br>`seed:check passed: 27 required variation(s) have exactly two approved videos.`<br>`Verified generated service worker.`<br>`Verified 71 documentation files.`<br>`Production route boundary verified (47 App Router entries).` |
-| W5, authenticated | Fail; exit 1; all 88 cases completed | `pnpm test:e2e:authenticated` | `2 failed`<br>`13 skipped`<br>`73 passed (8.4m)` |
-| W5, public release | Command passes; teardown reliability remains blocked | `pnpm test:e2e:release` | `66 skipped`<br>`102 passed (58.1s)` |
+| W5, authenticated | Pass; exit 0; all 88 cases completed | `pnpm test:e2e:authenticated` | `13 skipped`<br>`75 passed (6.6m)` |
+| W5, public release | Pass; exit 0 | `pnpm test:e2e:release` | `66 skipped`<br>`102 passed (53.7s)` |
 | W6 | Refreshed evidence and documentation parity | `pnpm docs:build; pnpm docs:check` | `Rendered 71 documentation files.`<br>`Verified 71 documentation files.`<br>40 PNGs at 390×844 and 1440×1000; every capture reports 0 px horizontal overflow |
-| W7 | Section 10 report delivered; closeout blocked | `Section 10` | Decisions, results, baseline, complete edit ledger, evidence, and the unresolved teardown decision are recorded here. |
+| W7 | Section 10 report delivered; final gates required | `Section 10` | Decisions, results, baseline, complete edit ledger, evidence, and the approved teardown boundary are recorded here. |
 
 Both full W5 suites ran to completion on unchanged detached main `c619ac61316f91a1a096867f93df5b649282663e` in the canonical checkout. The branch was restored before edits. The recorded full branch preflights also ran to completion. The latest authenticated full run includes the approved tortoise-path mapping and interrupted-response fix. The release run shown above follows removal of the experimental blank-frame navigation handler. Focused diagnostic subsets are not represented as full-suite results. No test files, blocks, snapshots, skips, retries, or longer timeouts were added. Every browser assertion remains; the only removed unit assertion was the duplicate specifically identified by the owner. Geometry and overflow thresholds remain unchanged.
 
@@ -25,17 +25,19 @@ W3 uses a task-owned dev server on port 3118 to avoid another project's existing
 
 | Suite | Main `c619ac6` | Latest complete branch run | Exit, main / branch |
 | --- | --- | --- | --- |
-| Authenticated | `42 failed`<br>`13 skipped`<br>`19 passed (1.9h)` | `2 failed`<br>`13 skipped`<br>`73 passed (8.4m)` | `1 / 1` |
-| Public release | `36 failed`<br>`42 skipped`<br>`54 passed (1.1m)` | `66 skipped`<br>`102 passed (58.1s)` | `1 / 0` |
+| Authenticated | `42 failed`<br>`13 skipped`<br>`19 passed (1.9h)` | `13 skipped`<br>`75 passed (6.6m)` | `1 / 0` |
+| Public release | `36 failed`<br>`42 skipped`<br>`54 passed (1.1m)` | `66 skipped`<br>`102 passed (53.7s)` | `1 / 0` |
 
-Both suites ran to completion on `3e540ac`. Authenticated retains exactly 13 skips and release exactly 66. W1–W4 and W6 exit 0; authenticated W5 exits 1 and release W5 exits 0. No test retry was used. The audit adds 14 authenticated acceptance cases and 12 running public acceptance cases; 24 public acceptance project instances are excluded by existing conditions. No test block, skip, retry, timeout, or acceptance file changed in round 2.
+Both suites ran to completion on `3feaf55`, with all commands exiting 0. Authenticated retains exactly 13 skips and release exactly 66. The audit adds 14 authenticated acceptance cases and 12 running public acceptance cases; 24 public acceptance project instances are excluded by existing conditions. No test block, skip, retry, timeout, or acceptance file changed in round 2. The new supplemental policy and synchronization edits must repeat these gates.
 
-Final authenticated failures, both `webkit-phone`:
+Historical authenticated failures on `3e540ac` remain below for traceability; both titles subsequently passed on `3feaf55` without application changes. The September 27 approval addresses the refresh/reload synchronization. The excluded pre-hydration issue remains noticed, not changed.
 
-- `tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:235`: **a verified member publishes, reloads, and starts all owned logging shapes**. At line 142, `expect(errors).toEqual([])` received `["Load failed"]`. The trace records the existing editor refresh response returning 200, followed immediately by `page.reload()`; the page error arrives 10 ms later. The response has no completed receive timing. Awaiting that existing response's `finished()` before reload is proposed; permission is pending because this file's named boundary allows only the four metadata strings. Every assertion remains unchanged.
+Historical authenticated failures, both `webkit-phone`:
+
+- `tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:235`: **a verified member publishes, reloads, and starts all owned logging shapes**. At line 142, `expect(errors).toEqual([])` received `["Load failed"]`. The trace records the existing editor refresh response returning 200, followed immediately by `page.reload()`; the page error arrives 10 ms later. The response has no completed receive timing. On September 27, the owner approved awaiting that existing response's `finished()` before reload; that single wait is implemented. Every assertion remains unchanged.
 - `tests/authenticated-e2e/runner-resilience.spec.ts:540`: **a real aborted operation retries explicitly with the same key and no online event**. `Test timeout of 120000ms exceeded.` The wait at line 295 never receives a workout-creation response. The trace shows the Start workout click completing, no `POST /api/app/workouts`, and the day page remaining visible. This is consistent with the excluded pre-hydration interaction issue; it does not prove a recovery failure because the recovery scenario never began. This title passed on main. Neither its test nor the excluded hydration behavior was changed.
 
-The current-path flexible-routine journey passes both projects. Earlier passing preflights do not override these final failures. The following tables retain every failing main title; the new runner-resilience failure is separately listed above because it passed on main.
+The current-path flexible-routine journey passes both projects. The later successful command does not erase the earlier intermittent failures. The following tables retain every failing main title; the historical runner-resilience failure is separately listed above because it passed on main.
 
 ### Authenticated: every title that failed on main
 
@@ -49,7 +51,7 @@ The current-path flexible-routine journey passes both projects. Earlier passing 
 | `tests/authenticated-e2e/customization-geometry.spec.ts` — customization surfaces preserve geometry and media preferences | `chromium-desktop`, `webkit-phone`, `chromium-phone`, `chromium-tablet`, `webkit-tablet`, `webkit-desktop` | None |
 | `tests/authenticated-e2e/firebase-auth-hydration.spec.ts` — full-page Settings fails closed until the browser Firebase identity is restored | `chromium-desktop`, `webkit-phone` | None |
 | `tests/authenticated-e2e/flexible-routine-publication.spec.ts` — a custom flexible routine survives publication, workout snapshots, and equipment revision | `chromium-desktop`, `webkit-phone` | None |
-| `tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts` — a verified member publishes, reloads, and starts all owned logging shapes | `chromium-desktop`, `webkit-phone` | `webkit-phone` |
+| `tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts` — a verified member publishes, reloads, and starts all owned logging shapes | `chromium-desktop`, `webkit-phone` | None |
 | `tests/authenticated-e2e/library-guidance.spec.ts` — browses, creates, links, selects, and isolates private movements | `chromium-desktop`, `webkit-phone` | None |
 | `tests/authenticated-e2e/library-strength-expansion.spec.ts` — publishes, reloads, and starts a routine with text-only upper- and lower-body additions | `chromium-desktop`, `webkit-phone` | None |
 | `tests/authenticated-e2e/onboarding.spec.ts` — new accounts choose one idempotent example or blank graph through onboarding | `chromium-desktop`, `webkit-phone` | None |
@@ -137,9 +139,21 @@ Synthetic scopes are deleted after capture. YouTube requests use inert local HTM
 | `member-routine-editor-metadata` | [member-routine-editor-metadata-phone.png](production-grade/member-routine-editor-metadata-phone.png) | [member-routine-editor-metadata-desktop.png](production-grade/member-routine-editor-metadata-desktop.png) |
 | `runner-end-dialog` | [runner-end-dialog-phone.png](production-grade/runner-end-dialog-phone.png) | [runner-end-dialog-desktop.png](production-grade/runner-end-dialog-desktop.png) |
 
+### September 27 supplemental ledger
+
+These rows compare `3feaf55` with the two newly approved edits. Application behavior and UI are unchanged; the 40 September 23 screenshots remain representative and were not recaptured for test-only edits.
+
+| File:line | Authority | Old → new |
+| --- | --- | --- |
+| `tests/e2e/public-page-error-policy.ts:1` | `owner-decision-2` | <code>(absent)</code> → <code>import type { Frame, Page } from &quot;@playwright/test&quot;; ⏎  ⏎ export function captureWebKitVideoTeardown(page: Page): (error: Error) =&gt; boolean { ⏎ const embeds = new Map&lt;Frame, string&gt;(); ⏎ let mainUrl = page.url(); ⏎ let navigation: { from: string; to: string; at: number } &#124; undefined; ⏎ let detached: { destination: string; at: number } &#124; undefined; ⏎  ⏎ page.on(&quot;framenavigated&quot;, (frame) =&gt; { ⏎ if (frame === page.mainFrame()) { ⏎ navigation = { from: mainUrl, to: frame.url(), at: performance.now() }; ⏎ mainUrl = frame.url(); ⏎ detached = undefined; ⏎ return; ⏎ } ⏎ embeds.delete(frame); ⏎ if ( ⏎ frame.parentFrame() === page.mainFrame() &amp;&amp; ⏎ /^https:\/\/www\.youtube-nocookie\.com\/embed\/[\w-]{11}(?:\?&#124;$)/u.test(frame.url()) ⏎ ) { ⏎ embeds.set(frame, mainUrl); ⏎ } ⏎ }); ⏎  ⏎ page.on(&quot;framedetached&quot;, (frame) =&gt; { ⏎ const source = embeds.get(frame); ⏎ embeds.delete(frame); ⏎ if (!source &#124;&#124; !navigation &#124;&#124; navigation.from !== source) return; ⏎ const from = new URL(source); ⏎ const to = new URL(navigation.to); ⏎ if ( ⏎ from.hostname !== &quot;127.0.0.1&quot; &#124;&#124; ⏎ !/^\/library\/[^/]+$/u.test(from.pathname) &#124;&#124; ⏎ from.origin !== to.origin &#124;&#124; ⏎ `${from.pathname}${from.search}` === `${to.pathname}${to.search}` &#124;&#124; ⏎ page.url() !== navigation.to &#124;&#124; ⏎ performance.now() - navigation.at &gt; 100 ⏎ ) return; ⏎ detached = { destination: navigation.to, at: performance.now() }; ⏎ }); ⏎  ⏎ return (error) =&gt; { ⏎ const departure = detached; ⏎ detached = undefined; ⏎ return ( ⏎ page.context().browser()?.browserType().name() === &quot;webkit&quot; &amp;&amp; ⏎ departure !== undefined &amp;&amp; ⏎ page.url() === departure.destination &amp;&amp; ⏎ performance.now() - departure.at &lt;= 100 &amp;&amp; ⏎ error.message === &quot;Context is stopped&quot; &amp;&amp; ⏎ error.stack?.split(&quot;\n&quot;)[0] === &quot;Cache API operation failed: Context is stopped&quot; ⏎ ); ⏎ }; ⏎ } ⏎ </code> |
+| `tests/e2e/public-release.spec.ts:4` | `owner-decision-2` | <code>import { isSupersededWebKitFlightPageError } from &quot;./public-page-error-policy&quot;;</code> → <code>import { captureWebKitVideoTeardown, isSupersededWebKitFlightPageError } from &quot;./public-page-error-policy&quot;;</code> |
+| `tests/e2e/public-release.spec.ts:8` | `owner-decision-2` | <code>(absent)</code> → <code>const isVideoTeardown = captureWebKitVideoTeardown(page);</code> |
+| `tests/e2e/public-release.spec.ts:19` | `owner-decision-2` | <code>(absent)</code> → <code>if (isVideoTeardown(error)) return;</code> |
+| `tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:323` | `owner-decision-2` | <code>(absent)</code> → <code>await (await refreshedEditorResponse).finished();</code> |
+
 ## 2. Round-2 owner decisions and results
 
-The plan records all ten September 23 decisions and the subsequent unit-prop, copy-mapping, and member-layout permissions. The ten named round-2 interface decisions are implemented. The supplemental video teardown resolution remains blocked; diagnostic subsets do not replace W5.
+The plan records all ten September 23 decisions and the subsequent unit-prop, copy-mapping, and member-layout permissions. The ten named round-2 interface decisions are implemented. The September 27 supplemental permission authorizes only the guarded teardown exception described below; diagnostic subsets do not replace W5.
 
 | Decision | Implementation and verification |
 | --- | --- |
@@ -837,7 +851,7 @@ A filesystem observer watched `next-env.d.ts`, configuration, source files, gene
 
 The plan's environment procedure warms all ten acceptance routes before reusing the server. No acceptance assertion, dependency, retry setting, or timeout changed. The latest checkpoint W3 output is recorded with the gates above. The root-cause limit remains explicit even if that final run passes.
 
-### WebKit video teardown: unresolved
+### WebKit video teardown: owner-approved bounded exception
 
 The owner authorized diagnosis and an application fix while retaining the zero-error assertion, videos, dependencies, and browser settings. A diagnostic reproduced `Cache API operation failed: Context is stopped` one millisecond after a loaded YouTube frame detached, with React's native DOM removal in the stack. WebKit's [Cache Storage implementation](https://github.com/WebKit/WebKit/blob/main/Source/WebCore/Modules/cache/DOMCacheStorage.cpp) rejects pending work when its context stops. This supports the teardown mechanism; the exact internal YouTube operation is cross-origin and was not inspected.
 
@@ -845,9 +859,12 @@ The retained change keeps the server-rendered embed URL stable through hydration
 
 The discarded experiments included cleanup during unmount, client-only single-load hydration, and unloading to about:blank before Next navigation. The last approach passed focused diagnostics but caused YouTube telemetry access-control errors in complete release runs. It also required a history correction. The latest failed experimental release run reported `2 failed`, `66 skipped`, `100 passed (1.2m)`. Its exact failing title was `guest previews both profiles and completes the public discovery route` in `webkit-phone` and `webkit-tablet`, at `tests/e2e/public-release.spec.ts:153`. The errors included `/www.youtube-nocookie.com/youtubei/v1/log_event?alt=json due to access control checks.` and the corresponding `/api/stats/atr` request. The entire navigation interceptor was removed; no event replay, blank-frame navigation, or navigation delay remains.
 
-After removal, the complete release command reports `66 skipped` and `102 passed (58.1s)`, but the separate stable-URL diagnostic still failed once in 48 departures. No error was suppressed or filtered by the application or tests. Re-running until a green command would not resolve this known behavior.
+After removal, the complete release command reports `66 skipped` and `102 passed (53.7s)`, but the separate stable-URL diagnostic still failed once in 48 departures. No error was suppressed or filtered by the application or tests. Re-running until a green command would not resolve this known behavior.
 
-**Smallest pending owner decision:** permit a narrowly guarded test-policy exception for the exact WebKit Cache API context-stopped error only when a YouTube frame detaches during confirmed navigation, leaving every other error fatal and the existing zero-error assertions intact; or retain the current boundary and keep this PR blocked. This permission has been requested but not received. No exception code has been added. All earlier copy, disclosure, layout, and single-path permissions are implemented; the final authenticated run adds the response-completion permission request and the excluded pre-hydration blocker described in W5.
+**September 27 decision and implementation:** the owner approved both the guarded teardown exception and awaiting the existing editor refresh response before reload. The test collector accepts the exact `Context is stopped` message only with the `Cache API operation failed: Context is stopped` stack heading, WebKit, a recorded loaded top-level YouTube privacy-enhanced embed, and confirmed same-origin navigation from its local public guide. Navigation-to-detachment and detachment-to-error must each be within 100 ms; the allowance is consumed once and invalidated by later navigation or any intervening page error. This correlation bound introduces no wait, retry, or longer timeout. Other page/console errors remain subject to the existing fatal policy. The underlying external rejection is not claimed fixed. The pre-hydration issue remains excluded.
+
+The temporary policy diagnostic fails against the old module (`Guarded teardown policy must exist`) and passes `Guarded teardown policy: 24 positive and negative checks passed.` It covers the accepted event sequence and rejection of other browsers, origins, paths, frames, messages, stack headings, missing navigation/detachment, stale events, and repeated use. `pnpm typecheck` exits 0. No test file or test block was added. Full W5 remains required on the committed change.
+
 
 
 Two screenshot-only development captures encountered `Unexpected end of JSON input` while opening successive routes in new pages. A fresh server and one reused page per viewport completed all 16 public captures. This is an evidence-capture result, not a demonstrated application fix or a W3 test retry.
@@ -860,4 +877,4 @@ The initial main release build encountered stale generated `.next/dev/types` art
 
 [PR #8 — Production-grade audit fixes](https://github.com/vdoshi96/My-Workout-Pal/pull/8) targets `main` from `vishal/production-grade-audit`. The implementation, authorized test mappings, report, generated HTML, and 40 refreshed screenshots are reviewable. The proposed Finish mapping was unnecessary because the real control remains Finish workout; the original selector is retained.
 
-The commit containing this report receives a fresh serial W1–W6 run before push; exact committed outputs and its SHA are recorded in the PR and owner handoff. The unresolved video teardown prevents merge under the retained boundary, even when a single complete release command passes. No manual deployment or provider setting change is part of this work. Main remains at `c619ac6` until the blocker is resolved and all same-commit gates and Vercel checks pass. The canonical checkout is the sole worktree and remains active for this unresolved PR. Keep the branch.
+The commit containing this report receives a fresh serial W1–W6 run before push; exact committed outputs and its SHA are recorded in the PR and owner handoff. The owner-approved policy resolves the teardown permission boundary; merge still requires all final gates and Vercel checks to pass. No manual deployment or provider setting change is part of this work. Main remains at `c619ac6` until all same-commit gates and Vercel checks pass. The canonical checkout is the sole worktree and remains active for this unresolved PR. Keep the branch.
