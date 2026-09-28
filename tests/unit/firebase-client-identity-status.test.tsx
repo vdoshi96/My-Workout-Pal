@@ -12,7 +12,7 @@ describe("Firebase client identity status", () => {
       />,
     );
 
-    expect(markup).toContain("Checking the browser Firebase sign-in");
+    expect(markup).toContain("Checking…");
     expect(markup).toContain('role="status"');
     expect(markup).not.toContain("Sign in again");
   });
@@ -25,13 +25,13 @@ describe("Firebase client identity status", () => {
       />,
     );
 
-    expect(markup).toContain("ready for same-account reauthentication");
+    expect(markup).toBe("");
     expect(markup).not.toContain("/sign-in");
   });
 
   it.each([
-    ["missing", "could not be found"],
-    ["mismatch", "does not match this secure server session"],
+    ["missing", "Please sign in again to delete your account."],
+    ["mismatch", "Please sign in again to delete your account."],
   ] as const)("renders a bounded sign-in recovery for %s", (status, copy) => {
     const markup = renderToStaticMarkup(
       <FirebaseClientIdentityStatus
@@ -54,8 +54,8 @@ describe("Firebase client identity status", () => {
       />,
     );
 
-    expect(markup).toContain("did not finish loading safely");
-    expect(markup).toContain("Retry Firebase check");
+    expect(markup).toContain("Something went wrong. Try again.");
+    expect(markup).toContain("Try again");
     expect(markup).toContain('href="/sign-in?returnTo=%2Fapp%2Fsettings"');
     expect(markup).not.toContain("uid");
   });

@@ -21,11 +21,11 @@ export default function ProgressPage() {
     <PublicShell current="progress">
       <section className="public-hero sample-hero contour-surface">
         <div className="sample-hero-copy">
-          <span className="eyebrow">Workout companion preview</span>
+
           <h1>Progress</h1>
-          <p>See how completed workouts, personal records, and trends can read before you create an account.</p>
+          <p>An example of what Progress shows after a few workouts.</p>
+          <div className="sample-warning"><strong>Example data</strong></div>
         </div>
-        <div className="sample-warning"><strong>Sample data · not your history</strong></div>
         <DecorativeCompanion variant="progress-preview" />
       </section>
 
@@ -38,7 +38,7 @@ export default function ProgressPage() {
       <div className="sample-grid">
         <section className="sample-history" aria-labelledby="progress-history-heading">
           <div className="section-heading">
-            <div><span className="eyebrow">Immutable snapshots</span><h2 id="progress-history-heading">Workout history</h2></div>
+            <div><h2 id="progress-history-heading">Workout history</h2></div>
           </div>
           <ol>
             {sampleSessions.map((session, index) => (
@@ -59,13 +59,13 @@ export default function ProgressPage() {
             <i className="sample-bar-72"><span>1,530</span></i>
             <i className="sample-bar-88"><span>1,620</span></i>
           </div>
-          <p>Signed-in analytics are derived only from completed workout snapshots and never mix this preview with personal data.</p>
+
         </aside>
       </div>
 
       <section className="sample-cta">
-        <div><span className="eyebrow">Practice without persistence</span><h2>Open a starter day</h2><p>Guest changes remain temporary and will never be presented as saved.</p></div>
-        <Link className="primary-action" href="/sample-workout?day=push&equipment=dumbbells"><span>Open sample workout</span><Icon name="arrow-right" /></Link>
+        <div><h2>Track your own</h2><p>Sign in to see your real sets, reps and records.</p></div>
+        <Link className="primary-action" href="/sign-in"><span>Sign in</span><Icon name="arrow-right" /></Link>
       </section>
     </PublicShell>
   );

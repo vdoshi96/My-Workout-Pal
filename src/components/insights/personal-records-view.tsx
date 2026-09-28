@@ -24,11 +24,9 @@ export function PersonalRecordsView({
           <Link className="back-link" href="/app/progress" prefetch={false}>
             <Icon name="arrow-left" /> Back to progress
           </Link>
-          <span className="eyebrow">Persisted milestones</span>
           <h1 id="records-title">Personal records</h1>
           <p>
-            Records come from your saved sets. Equal bests are kept as ties instead of silently
-            choosing one source.
+            Your best lifts, reps and times.
           </p>
         </div>
         <DecorativeCompanion variant="history" />
@@ -36,11 +34,9 @@ export function PersonalRecordsView({
 
       {records.length === 0 ? (
         <div className="member-empty-sheet">
-          <span className="eyebrow">No record rows yet</span>
-          <h2>Your first verified milestone will appear here.</h2>
+          <h2>No records yet</h2>
           <p>
-            Completing a workout does not guarantee a record. This page only shows personal-record
-            rows saved from your own set logs.
+            Log a few workouts and your bests will show up here.
           </p>
           <Link href="/app/history">Review history</Link>
         </div>
@@ -57,7 +53,7 @@ export function PersonalRecordsView({
                 {record.isTie ? (
                   <>
                     <p className="record-tie">
-                      Tied best · {record.totalTieCount} exact source sets
+                      Tied best ({record.totalTieCount} times)
                     </p>
                     {record.hasMoreSources ? (
                       <p>

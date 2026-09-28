@@ -25,7 +25,11 @@ function responseErrorBody(value: unknown): Readonly<{ code: string; message: st
 }
 
 async function parsedBody(response: Response): Promise<unknown> {
-  return response.json().catch(() => null);
+  return response.json().catch((error: unknown) => {
+    if (error instanceof SyntaxError) return null;
+    // Preserve interrupted body reads for the caller's network-error handling.
+    throw error;
+  });
 }
 
 export async function privateApiRead<T>(url: string): Promise<T> {

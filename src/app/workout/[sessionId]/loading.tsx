@@ -6,9 +6,7 @@ export default function OwnedWorkoutLoading() {
       className="owned-runner-recovery"
       role="status"
     >
-      <span className="eyebrow">Private workout</span>
-      <h1 id="workout-loading-title">Loading saved workout</h1>
-      <p>Reading the immutable session snapshot before the runner becomes interactive.</p>
+      <h1 id="workout-loading-title">Opening your workout…</h1>
     </main>
   );
 }

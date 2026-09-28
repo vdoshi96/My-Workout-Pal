@@ -36,6 +36,14 @@ async function loadHarnessHistory(
   }
 }
 
+export async function generateMetadata({ params }: Readonly<{ params: Promise<{ sessionId: string }> }>) {
+  const context = harnessRequestContext(await headers());
+  if (!context.viewer) return { title: "Workout" };
+  const { database } = await getHarnessDatabase(context.scope);
+  try { const session = await loadTrainingSession(database, context.viewer, (await params).sessionId); return { title: `${session.dayName} workout` }; }
+  catch { return { title: "Workout" }; }
+}
+
 export default async function HarnessHistoryDetailPage({
   params,
 }: Readonly<{ params: Promise<{ sessionId: string }> }>) {

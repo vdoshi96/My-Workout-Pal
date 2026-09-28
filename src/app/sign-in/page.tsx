@@ -25,16 +25,16 @@ export default async function SignInPage({ searchParams }: PageProps) {
     : null;
 
   return (
-    <PublicShell current={null}>
+    <PublicShell current="account">
       <div className="auth-layout contour-surface">
         <section className="auth-copy">
-          <span className="eyebrow">Save only when you choose</span>
-          <h1>Your route can travel with you.</h1>
-          <p>An account will persist equipment, editable programs, workout snapshots, records, analytics, and preferences. Guest browsing remains temporary.</p>
+
+          <h1>Sign in to save your workouts</h1>
+          <p>Keep your routine, history and records on any device.</p>
           <ul>
-            <li><Icon name="map" /> Equipment-aware program revisions</li>
-            <li><Icon name="sample" /> Resumable workouts and immutable history</li>
-            <li><Icon name="library" /> Custom exercises and approved demos</li>
+            <li><Icon name="map" /> A routine that fits your equipment</li>
+            <li><Icon name="sample" /> Pick up where you left off</li>
+            <li><Icon name="library" /> Your own custom movements</li>
           </ul>
         </section>
         <section className="auth-sheet" aria-labelledby="auth-heading">
@@ -42,15 +42,15 @@ export default async function SignInPage({ searchParams }: PageProps) {
             <AuthPanel config={config} returnTo={returnTo} />
           ) : (
             <>
-              <div className="status-stamp">Credential gate</div>
-              <h2 id="auth-heading">Sign-in connection pending</h2>
-              <p>Firebase project credentials and server session keys are not available in this workspace. Sign-in stays closed instead of simulating account creation.</p>
+
+              <h2 id="auth-heading">Sign-in is unavailable</h2>
+              <p>Please try again later.</p>
               <button className="auth-method" disabled type="button"><Icon name="sign-in" /> Continue with Google</button>
               <button className="auth-method" disabled type="button">Continue with email</button>
-              <small>Password accounts will require verified email before permanent mutations. Google identity must be verified by Firebase Admin on the server.</small>
+
             </>
           )}
-          <Link className="back-link" href="/program"><Icon name="arrow-left" /> Browse the free program</Link>
+          <Link className="back-link" href="/program"><Icon name="arrow-left" /> Explore the example routine</Link>
         </section>
       </div>
     </PublicShell>

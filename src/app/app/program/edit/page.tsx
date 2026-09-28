@@ -6,6 +6,8 @@ import { getCurrentViewer } from "@/server/auth/viewer";
 import { RepositoryNotFoundError } from "@/server/repositories/profile-program";
 import { loadProgramEditorReadModel } from "@/server/read-models/program-editor";
 
+export const metadata = { title: "Routine" };
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

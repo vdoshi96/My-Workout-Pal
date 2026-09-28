@@ -79,15 +79,18 @@ test("full-page Settings fails closed until the browser Firebase identity is res
   });
 
   await page.goto("/app");
-  await page.getByRole("button", { name: "Start with example" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a training day" })).toBeVisible();
+  await page.getByRole("radio", { name: /Example routine/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
   await page.goto("/app/settings");
   await page.reload();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(
-    page.getByText("The browser Firebase sign-in could not be found after initialization."),
+    page.getByText("Please sign in again to delete your account."),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Review permanent deletion" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Delete my account" })).toBeDisabled();
   await expect(page.getByRole("link", { name: "Sign in again" })).toHaveAttribute(
     "href",
     "/sign-in?returnTo=%2Fapp%2Fsettings",

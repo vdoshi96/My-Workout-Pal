@@ -1,3 +1,4 @@
+import { EQUIPMENT_LABELS, LOGGING_KIND_LABELS } from "@/components/exercises/labels";
 import { headers } from "next/headers";
 import Link from "next/link";
 
@@ -5,6 +6,8 @@ import { Icon } from "@/components/ui/icon";
 import { getHarnessDatabase } from "../../../../server/database";
 import { harnessRequestContext } from "../../../../server/harness-context";
 import { listCustomExercises } from "@/server/repositories/custom-exercises";
+
+export const metadata = { title: "Custom movements" };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,17 +24,16 @@ export default async function HarnessCustomExerciseLibraryPage() {
         <div>
           <span className="eyebrow">Your private library</span>
           <h1>Custom movements</h1>
-          <p>Private exercises can join owned programs and workout snapshots. They never appear in another member’s search.</p>
+          <p>Only you can see these.</p>
         </div>
         <Link className="primary-action" href="/app/library/custom/new"><span>Create exercise</span><Icon name="arrow-right" /></Link>
       </header>
 
       {exercises.length === 0 ? (
         <div className="member-empty-sheet">
-          <span className="eyebrow">No custom movements</span>
-          <h2>The canonical catalog is still available.</h2>
-          <p>Create a movement only when the seeded library does not describe the logging and equipment you need.</p>
-          <Link className="back-link" href="/app/library"><Icon name="library" /> Browse compatible exercises</Link>
+          <h2>No custom movements yet</h2>
+          <p>{"Add one when the library doesn't have what you need."}</p>
+          <Link className="back-link" href="/app/library"><Icon name="library" /> Browse the library</Link>
         </div>
       ) : (
         <ul className="custom-exercise-list">
@@ -40,7 +42,7 @@ export default async function HarnessCustomExerciseLibraryPage() {
               <Link href={`/app/library/custom/${exercise.id}`}>
                 <span>
                   <strong>{exercise.name}</strong>
-                  <small>{exercise.loggingKind.replaceAll("_", " ")} · {exercise.equipmentIds.map((id) => equipmentLabel(id)).join(", ")}</small>
+                  <small>{LOGGING_KIND_LABELS[exercise.loggingKind]} · {exercise.equipmentIds.map((id) => EQUIPMENT_LABELS[id]).join(", ")}</small>
                 </span>
                 <span>{exercise.youtubeVideoIds.length} video{exercise.youtubeVideoIds.length === 1 ? "" : "s"}</span>
                 <Icon name="chevron-right" />
@@ -51,8 +53,4 @@ export default async function HarnessCustomExerciseLibraryPage() {
       )}
     </section>
   );
-}
-
-function equipmentLabel(id: string): string {
-  return id === "bodyweight" ? "bodyweight" : id === "bench" ? "bench" : id;
 }

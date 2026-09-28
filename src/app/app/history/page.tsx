@@ -16,6 +16,8 @@ import {
 } from "@/server/repositories/profile-program";
 import { loadTrainingHistory } from "@/server/repositories/training-insights";
 
+export const metadata = { title: "History" };
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -70,9 +72,8 @@ export default async function TrainingHistoryPage({ searchParams }: PageProps) {
     <section className="insights-page" aria-labelledby="history-title">
         <header className="insights-heading companion-heading contour-surface">
           <div>
-            <span className="eyebrow">Immutable training archive</span>
             <h1 id="history-title">History</h1>
-            <p>Completed and interrupted workouts exactly as they were saved. Later program edits never rewrite these snapshots.</p>
+            <p>{"Every workout you've finished or stopped."}</p>
           </div>
           <Link className="insight-action" href="/app/progress">View progress <Icon name="arrow-right" /></Link>
           {history.sessions.length > 0 ? <DecorativeCompanion variant="history" /> : null}
@@ -88,14 +89,14 @@ export default async function TrainingHistoryPage({ searchParams }: PageProps) {
             </select>
             <button type="submit">Apply filter</button>
           </div>
-          <p>Dates use {timezone}. The archive is read-only.</p>
+          <p>Times shown in {timezone}.</p>
         </form>
 
         {history.sessions.length === 0 ? (
           <div className="member-empty-sheet">
             <span className="eyebrow">No saved match</span>
             <h2>{state ? `No ${state === "abandoned" ? "interrupted" : "completed"} workouts yet.` : "Your history starts after a workout ends."}</h2>
-            <p>Active workouts remain in the runner so they can be resumed. This page never invents sample activity.</p>
+            <p>Finished workouts will show up here.</p>
             {state ? <Link href="/app/history">Clear filter</Link> : <Link href="/app">Open your program</Link>}
           </div>
         ) : (

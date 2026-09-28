@@ -49,8 +49,8 @@ describe("ordinary public account entry", () => {
     );
 
     expect(observedLinks).toContainEqual({
-      href: "/app",
-      label: expect.stringContaining("My workouts"),
+      href: "/sign-in",
+      label: expect.stringContaining("Sign in"),
       prefetch: false,
     });
     expect(source("src/components/layout/public-shell.tsx")).not.toMatch(
@@ -67,10 +67,10 @@ describe("ordinary public account entry", () => {
       />,
     );
 
-    expect(observedLinks.filter(({ label }) => label.includes("My workouts")))
+    expect(observedLinks.filter(({ label }) => label.includes("Sign in")))
       .toEqual([
-        { href: "/app", label: expect.stringContaining("My workouts"), prefetch: false },
-        { href: "/app", label: expect.stringContaining("My workouts"), prefetch: false },
+        { href: "/sign-in", label: expect.stringContaining("Sign in"), prefetch: false },
+        { href: "/sign-in", label: expect.stringContaining("Sign in to save your own version"), prefetch: undefined },
       ]);
   });
 
@@ -78,20 +78,20 @@ describe("ordinary public account entry", () => {
     const explorer = source("src/components/program/program-explorer.tsx");
     const day = source("src/app/program/[day]/page.tsx");
 
-    expect(explorer).toContain("Five-day starter example");
-    expect(explorer).toContain("Starter preview · not saved");
-    expect(day).toContain("Five-day starter example");
-    expect(day).toContain("Starter preview · not saved");
-    expect(day).toContain('href="/app"');
-    expect(day).toContain("My workouts");
+    expect(explorer).toContain("Five-day example routine");
+    expect(explorer).not.toContain("Starter preview · not saved");
+    expect(day).toContain("Example routine");
+    expect(day).not.toContain("Starter preview · not saved");
+    expect(day).toContain('href="/sample-workout"');
+    expect(day).toContain('PublicShell current="program"');
   });
 
   it("routes contextual public save actions through the protected boundary", () => {
     for (const path of ["src/app/page.tsx", "src/app/sample-workout/page.tsx"]) {
       const contents = source(path);
-      expect(contents).not.toContain('href="/sign-in"');
-      expect(contents).toContain('href="/app"');
-      expect(contents).toMatch(/href="\/app"\s+prefetch=\{false\}/u);
+      expect(contents).not.toContain(path.includes("sample-workout") ? 'href="/app"' : 'href="/sign-in"');
+      expect(contents).toContain(path.includes("sample-workout") ? 'href="/sign-in"' : 'href="/app"');
+      expect(contents).toMatch(path.includes("sample-workout") ? /href="\/sign-in"\s+prefetch=\{false\}/u : /href="\/app"\s+prefetch=\{false\}/u);
     }
   });
 });

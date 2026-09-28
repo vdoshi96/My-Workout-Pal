@@ -19,6 +19,7 @@ type IconName =
   | "run"
   | "sample"
   | "settings"
+  | "sign-out"
   | "sign-in"
   | "walk";
 
@@ -61,6 +62,7 @@ export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGEle
   if (name === "settings") {
     return <svg {...common}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1 1.55V21h-4v-.08a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3v-4h.08a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3h4v.08a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21v4h-.08a1.7 1.7 0 0 0-1.52 1Z" /></svg>;
   }
+  if (name === "sign-out") return <svg {...common}><path d="M10 3H4v18h6M10 12h11m-4-4 4 4-4 4" /></svg>;
   if (name === "sign-in") {
     return <svg {...common}><circle cx="12" cy="7" r="4" /><path d="M4 22a8 8 0 0 1 16 0" /></svg>;
   }

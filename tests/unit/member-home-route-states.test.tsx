@@ -8,19 +8,19 @@ describe("personal home route states", () => {
   it("describes the full personal-home read while loading", () => {
     const markup = renderToStaticMarkup(<AccountLoading />);
 
-    expect(markup).toContain("Loading your home…");
-    expect(markup).toContain("routine, saved progress, and any resumable workout");
+    expect(markup).toContain("Loading…");
+    expect(markup).not.toContain("routine, saved progress, and any resumable workout");
     expect(markup).toContain('aria-busy="true"');
     expect(markup).not.toContain("data-companion-placement");
   });
 
   it("keeps a failed home read recoverable without implying a write", () => {
     const markup = renderToStaticMarkup(
-      <AccountError error={new Error("read failed")} reset={vi.fn()} />,
+      <AccountError error={new Error("read failed")} retry={vi.fn()} />,
     );
 
-    expect(markup).toContain("Your home did not load.");
-    expect(markup).toContain("No routine or workout changes were made.");
+    expect(markup).toContain("This page didn&#x27;t load");
+    expect(markup).toContain("Nothing was changed.");
     expect(markup).toContain("Try again");
     expect(markup).not.toContain("data-companion-placement");
   });

@@ -1,3 +1,4 @@
+import { EQUIPMENT_LABELS, LOGGING_KIND_LABELS } from "@/components/exercises/labels";
 import { headers } from "next/headers";
 import Link from "next/link";
 
@@ -17,6 +18,8 @@ import {
 } from "@/server/repositories/profile-program";
 import { getHarnessDatabase } from "../../../server/database";
 import { harnessRequestContext } from "../../../server/harness-context";
+
+export const metadata = { title: "Library" };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -57,7 +60,6 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
     <section className="member-library" aria-labelledby="member-library-title">
       <header className="member-library-heading companion-heading contour-surface">
         <div>
-          <span className="eyebrow">Your compatible field guide</span>
           <h1 id="member-library-title">Exercise library</h1>
           <p>{hasRoutine ? `Movement guides and your private exercises, filtered for ${profile.label.toLocaleLowerCase("en-US")}.` : "Browse dumbbell, bodyweight, and bench movements. Set up your routine to choose your equipment."}</p>
         </div>
@@ -83,9 +85,7 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
 
       {resultCount === 0 ? (
         <div className="member-empty-sheet">
-          <span className="eyebrow">No compatible match</span>
-          <h2>Try a broader term.</h2>
-          <p>Incompatible exercises remain in the catalog and nothing was deleted.</p>
+          <h2>No matches. Try a different search.</h2>
           <Link href="/app/library">Clear search</Link>
         </div>
       ) : (
@@ -93,14 +93,14 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
           {customExercises.length > 0 ? (
             <section aria-labelledby="private-results-title">
               <div className="section-heading">
-                <div><span className="eyebrow">Owner-only</span><h2 id="private-results-title">Your private movements</h2></div>
+                <div><span className="eyebrow">Yours</span><h2 id="private-results-title">Your private movements</h2></div>
                 <Link href="/app/library/custom">Manage all</Link>
               </div>
               <ul className="member-library-list">
                 {customExercises.map((exercise) => (
                   <li key={exercise.id}>
                     <Link href={`/app/library/custom/${exercise.id}`}>
-                      <span><strong>{exercise.name}</strong><small>{exercise.loggingKind.replaceAll("_", " ")} · {exercise.equipmentIds.join(" + ")}</small></span>
+                      <span><strong>{exercise.name}</strong><small>{LOGGING_KIND_LABELS[exercise.loggingKind]} · {exercise.equipmentIds.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small></span>
                       <span>Private</span><Icon name="chevron-right" />
                     </Link>
                   </li>
@@ -111,17 +111,17 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
 
           <section aria-labelledby="catalog-results-title">
             <div className="section-heading">
-              <div><span className="eyebrow">Canonical</span><h2 id="catalog-results-title">Movement guides</h2></div>
+              <div><h2 id="catalog-results-title">Movement guides</h2></div>
               {query ? <Link href="/app/library">Clear search</Link> : null}
             </div>
             {catalogExercises.length === 0 ? (
-              <p className="member-library-section-empty">No canonical movement matches this compatible search.</p>
+              <p className="member-library-section-empty">No matches. Try a different search.</p>
             ) : (
               <ul className="member-library-list">
                 {catalogExercises.map((exercise) => (
                   <li key={exercise.slug}>
-                    <Link href={`/library/${exercise.slug}?equipment=${profileKind}`} prefetch={false}>
-                      <span><strong>{exercise.name}</strong><small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.join(" + ")}</small></span>
+                    <Link href={`/app/library/${exercise.slug}`} prefetch={false}>
+                      <span><strong>{exercise.name}</strong><small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small></span>
                       <span>Guide</span><Icon name="chevron-right" />
                     </Link>
                   </li>

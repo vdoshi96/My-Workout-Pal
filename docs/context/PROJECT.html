@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="e794db5b3e365f4f9b6b8d4256b66ca8a40dc3799a1a197025631cb0c9e32051">
+  <meta name="source-sha256" content="739a274430dcd50b6c042d0e225b5fb04c1651003a805b1372ec772814344e11">
   <title>Project context · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,7 +37,7 @@
 <li>Preview dumbbell-only and barbell-enabled equipment profiles.</li>
 <li>Inspect reviewed instructions for every published movement and approved demonstrations where available.</li>
 <li>Review progress-preview data with one clear sample-data disclosure.</li>
-<li>Return from an exercise guide to the exact public day, filtered library, or sample workout that opened it.</li>
+<li>Return from a public exercise guide to the library with its equipment selection, or from a member guide to the member Library.</li>
 <li>Register or sign in with Google or email and password.</li>
 <li>Land in an unmistakably private account after sign-in and see identity, account state, and sign-out controls.</li>
 <li>Verify a password account before permanent mutations.</li>
@@ -57,7 +57,7 @@
 <li>Neon Postgres through Vercel Marketplace, accessed through Drizzle ORM and versioned migrations.</li>
 <li>Zod validation at every untrusted input boundary.</li>
 <li>Authentication return targets are server-normalized to bounded local paths before client navigation. Missing or invalid destinations use <code>/app</code> as the safe member default.</li>
-<li>Public exercise return targets use a separate allowlist for the program, five days, filtered library, sample workout, and canonical Progress preview. The old <code>/sample-progress</code> alias normalizes to <code>/progress</code>; direct or hostile origins fall back to the library.</li>
+<li>Public guides use a library back link with the equipment query; member guides stay under <code>/app/library</code>. The existing bounded public-return helper remains available to legacy callers. The old <code>/sample-progress</code> alias still normalizes to <code>/progress</code>.</li>
 <li>Vitest for domain and integration tests. Playwright covers Chromium and WebKit browser flows.</li>
 <li>Vercel Pro hosts preview and production deployments from GitHub.</li>
 </ul>

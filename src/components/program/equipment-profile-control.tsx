@@ -21,10 +21,10 @@ function operationKey(): string {
 function failedMessage(error: unknown): string {
   if (error instanceof PrivateApiClientError) {
     return error.code === "conflict"
-      ? "The program changed after this preview. Reload the current revision before confirming."
+      ? "This routine changed. Reload the page and try again."
       : error.message;
   }
-  return "The server response could not be reconciled. Reload before retrying this equipment change.";
+  return "Something went wrong. Reload the page and try again.";
 }
 
 function oppositeProfile(profile: EquipmentProfileKind): EquipmentProfileKind {
@@ -99,7 +99,7 @@ export function EquipmentProfileControl({
     confirmationKey.current = idempotencyKey;
     setBusy(true);
     onBusyChange?.(true);
-    setMessage("Saving a new program revision…");
+    setMessage("Saving…");
     try {
       const raw = await privateApiMutation<unknown>(
         "/api/app/profile-program/equipment",
@@ -123,7 +123,7 @@ export function EquipmentProfileControl({
       if (reconciliation.kind === "stored-inactive") {
         updateReviewOpen(false);
         setMessage(
-          `${reconciliation.affectedProgramName}'s earlier equipment revision is stored, but ${reconciliation.activeProgramName} remains active. Review your program collection before opening an overview.`,
+          "This routine changed somewhere else. Reload to get the latest version.",
         );
         return;
       }
@@ -133,8 +133,8 @@ export function EquipmentProfileControl({
       updateReviewOpen(false);
       setMessage(
         response.changeCount === 0
-          ? `Saved revision ${nextProgram.revisionNumber}. No movement substitutions were required; existing workout history was not changed.`
-          : `Saved revision ${nextProgram.revisionNumber}. Existing workout history was not changed.`,
+          ? "Equipment updated."
+          : "Equipment updated.",
       );
       router.refresh();
     } catch (error) {
@@ -152,8 +152,7 @@ export function EquipmentProfileControl({
       id={placement === "settings" ? "equipment-profile" : undefined}
     >
       <header>
-        <span className="eyebrow">{placement === "editor" ? "Editor settings" : "Program settings"}</span>
-        <h2 id={headingId}>Equipment profile</h2>
+        <h2 id={headingId}>Equipment</h2>
         <p>
           Preview the movements that would change before confirming. Past and in-progress workouts stay as they were.
         </p>
@@ -188,14 +187,14 @@ export function EquipmentProfileControl({
           <h3 id={reviewId} ref={reviewHeading} tabIndex={-1}>Review {EQUIPMENT_PROFILES[targetProfile].label}</h3>
           <p>{EQUIPMENT_PROFILES[targetProfile].description}</p>
           {preview.changes.length === 0 ? (
-            <p>No canonical movement substitutions are required.</p>
+            <p>No movements need to change.</p>
           ) : (
             <ol className="equipment-change-list">
               {preview.changes.map((change) => (
                 <li key={change.prescriptionId}>
                   <span>{change.dayDisplayName}</span>
                   <strong>{change.fromName} → {change.toName}</strong>
-                  <small>Sets, range, rest, position, and notes stay. Movement-specific targets clear.</small>
+                  <small>Sets, reps, rest and notes carry over.</small>
                 </li>
               ))}
             </ol>
@@ -214,7 +213,7 @@ export function EquipmentProfileControl({
           ) : null}
           {draftDirty ? (
             <p className="member-inline-notice" role="status">
-              This preview uses published revision {program.revisionNumber}. Your unpublished editor changes are not included. Publish or discard them before confirming an equipment revision.
+              Save or discard your routine edits first.
             </p>
           ) : null}
           {!canMutate ? (

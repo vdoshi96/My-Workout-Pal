@@ -1,3 +1,7 @@
+import { headers } from "next/headers";
+import { signInRedirectPath } from "@/domain/navigation/member-return";
+import { getDatabase } from "@/db/client";
+import { getViewerProfileProgram, RepositoryNotFoundError } from "@/server/repositories/profile-program";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
@@ -17,10 +21,12 @@ function firebasePublicConfig(): FirebasePublicConfig | null {
 
 export default async function AccountLayout({ children }: Readonly<{ children: ReactNode }>) {
   const viewer = await getCurrentViewer();
-  if (!viewer) redirect("/sign-in?returnTo=%2Fapp");
+  if (!viewer) redirect(signInRedirectPath((await headers()).get("x-mwp-pathname")));
+
+  const reducedMotion = await getViewerProfileProgram(getDatabase(), viewer).then((model) => model.preferences.reducedMotion).catch((error: unknown) => { if (error instanceof RepositoryNotFoundError) return false; throw error; });
 
   return (
-    <AuthenticatedShell firebaseConfig={firebasePublicConfig()} viewer={viewer}>
+    <AuthenticatedShell reducedMotion={reducedMotion} firebaseConfig={firebasePublicConfig()} viewer={viewer}>
       {children}
     </AuthenticatedShell>
   );

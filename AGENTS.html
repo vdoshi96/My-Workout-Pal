@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="aa325b426116ec5cfdeb4c14aa2eaa2a5659d6239f6f3d93530733d248e3f99b">
+  <meta name="source-sha256" content="061c61321c8b39611f7695961d525a35e4b31a76aa315243d93e67566e54fc9d">
   <title>Repository instructions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -48,6 +48,38 @@
 <li>Keep secrets in local or Vercel environment variables. Commit only <code>.env.example</code> with empty values and setup notes.</li>
 <li>Keep project-owned Markdown and generated HTML documentation in parity. Use <code>pnpm docs:build</code> and verify with <code>pnpm docs:check</code> after the package scripts exist.</li>
 <li>Keep only the newest completed QA evidence in <code>docs/qa/latest/</code>. Remove superseded generated evidence after the replacement is verified.</li>
+</ul>
+<h2>Production quality bar</h2>
+<p>These rules came out of the September 22, 2026 whole-application audit (<code>docs/plans/PRODUCTION-GRADE-AUDIT.md</code>). Apply them to every change.</p>
+<h3>Interface copy</h3>
+<ul>
+<li>Write for a person holding a phone between sets: short, direct, second person, plain words. One idea per sentence.</li>
+<li>Never show implementation vocabulary: snapshot, immutable, canonical, seeded, topology, idempotent, reconcile, revision number, namespace, Firebase, server session, route (meaning routine), catalog record, operation, domain. Say &quot;routine&quot;, &quot;workout&quot;, &quot;library&quot;, &quot;saved&quot;, &quot;on this device&quot;.</li>
+<li>Never show raw error codes, schema paths, or field identifiers such as <code>weightKg</code>. Map them to a sentence that says what happened and what to do next.</li>
+<li>Do not repeat policy disclaimers on ordinary screens. State truthful constraints once, where they matter: guest activity is not saved, the app does not prescribe load, videos appear only when approved.</li>
+<li>Eyebrows and badges must carry information the heading does not. Remove decorative labels such as &quot;Field notes&quot;, &quot;Session control&quot;, and &quot;Owned programs&quot;.</li>
+<li>Use one name per concept: routine (not program or route), movement or exercise consistently within a screen, Today, Library, Progress, Settings.</li>
+</ul>
+<h3>Workflows</h3>
+<ul>
+<li>Every destructive or irreversible action (abandon, skip, delete, discard, sign out with unsynced work) needs a confirmation step or an undo.</li>
+<li>Every error state offers a way forward: retry, discard, go back, or sign in again. A button that only repeats the same failure is not recovery.</li>
+<li>When a step, set, or view changes and the focused control disappears, move focus to the new heading and announce the change once.</li>
+<li>Validation appears next to the field it concerns, uses <code>aria-invalid</code> and <code>aria-describedby</code>, and clears when the field is corrected.</li>
+<li>Account-level pages (Settings, sign-out, deletion) work before a routine exists.</li>
+<li>Members stay inside the member layout. Links from <code>/app</code> must not drop into public pages.</li>
+</ul>
+<h3>Visual system</h3>
+<ul>
+<li>All pages, public and member, use the Quiet Set system in <code>DESIGN.md</code> and the shared shells (<code>PublicShell</code>, <code>AuthenticatedShell</code>). Do not reintroduce the retired all-caps atlas typography or page-specific headers.</li>
+<li>Page content keeps the shared horizontal gutter; nothing touches the viewport edge except full-bleed artwork.</li>
+<li>Check 390 px and 1440 px widths for overlap, clipping, and horizontal scroll before calling UI work done.</li>
+<li>Prefer editing an existing rule over adding a later override. Delete CSS that no markup references.</li>
+</ul>
+<h3>Verification discipline</h3>
+<ul>
+<li>Running several Next.js servers and the full test suite at once can exhaust memory (exit 137). Run one heavy process at a time.</li>
+<li>Public illustration folders must contain only served assets. Provenance sidecars live under <code>docs/design/provenance/</code>.</li>
 </ul>
 <h2>Git closeout</h2>
 <p>For each authorized implementation iteration, use a feature branch, push it, merge it into <code>main</code>, update local <code>main</code> to the identical commit, and remove completed worktrees. Record any active or unresolved worktree and its reason in <code>docs/context/STATUS.md</code>.</p>

@@ -15,8 +15,8 @@ describe("public Progress preview", () => {
     const markup = renderToStaticMarkup(<ProgressPage />);
 
     expect(metadata.title).toBe("Progress");
-    expect(markup).toContain("Sample data · not your history");
-    expect(markup.match(/Sample data · not your history/g)).toHaveLength(1);
+    expect(markup).toContain("Example data");
+    expect(markup.match(/Example data/g)).toHaveLength(1);
     expect(markup).toContain("Workouts");
     expect(markup).toContain("Consistency");
     expect(markup).toContain("Cardio");

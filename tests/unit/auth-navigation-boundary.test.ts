@@ -18,7 +18,7 @@ describe("authenticated session navigation boundary", () => {
     expect(authPanel).not.toContain("router.replace(returnTo)");
     expect(accountShell).toContain('window.location.replace("/sign-in")');
     expect(accountShell).not.toContain('router.replace("/sign-in")');
-    expect(settings).toContain('window.location.replace("/sign-in")');
+    expect(settings).not.toContain('window.location.replace("/sign-in")');
     expect(settings).not.toContain('router.replace("/sign-in")');
   });
 });

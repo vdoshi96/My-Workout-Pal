@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { LOGGING_KIND_LABELS } from "@/components/exercises/labels";
+
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
   createRunnerState,
+  RunnerTransitionError,
+  validateSetDraft,
   getActiveSetDisplay,
   getFailedOperations,
   getRestTimerView,
@@ -30,6 +34,7 @@ import {
   type WorkoutSnapshot,
 } from "@/domain/workout-runner";
 import {
+  setEntryErrorMessage,
   formatCardioPace,
   formatCardioSummary,
   displayToKilograms,
@@ -50,6 +55,7 @@ import {
   type RunnerUnitSystem,
   type RunnerStatusPresentation,
 } from "@/components/workout/workout-runner-presenters";
+import { parseClockDuration, formatClockDuration } from "@/domain/time-entry";
 import { CuratedVideoPlayer } from "@/components/video/curated-video-player";
 import type { CuratedVideos } from "@/domain/youtube/embed";
 import { PersonalGuidancePanel } from "@/components/workout/personal-guidance-panel";
@@ -63,6 +69,7 @@ export type RunnerNavigationProtection = Readonly<{
 
 type NavigationProtectionOptions = Readonly<{
   onChange?: (protection: RunnerNavigationProtection) => void;
+  deviceWritePending?: boolean;
   protectBeforeUnload?: boolean;
 }>;
 
@@ -243,8 +250,8 @@ export function useWorkoutRunnerNavigationProtection(
   state: ActiveWorkoutState,
   options: NavigationProtectionOptions = {},
 ): RunnerNavigationProtection {
-  const blocked = isNavigationBlocked(state);
-  const reason = blocked ? navigationProtectionReason(state) : undefined;
+  const blocked = options.deviceWritePending === true || isNavigationBlocked(state);
+  const reason = options.deviceWritePending ? "Saving to this device…" : blocked ? navigationProtectionReason(state) : undefined;
   const { onChange, protectBeforeUnload } = options;
   const protection = useMemo<RunnerNavigationProtection>(
     () => (reason === undefined ? { blocked } : { blocked, reason }),
@@ -314,9 +321,9 @@ function snapshotFor(input: RunnerInput): WorkoutSnapshot {
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "The workout action could not be completed.";
+  if (error instanceof RunnerTransitionError && !error.code.startsWith("invalid_")) return error.message;
+  console.error("Workout action failed", error);
+  return "Couldn't save that change. Check your entries and try again.";
 }
 
 function scheduleRunnerMicrotask(task: () => void): () => void {
@@ -531,6 +538,7 @@ function Field({
   inputMode = "decimal",
   placeholder,
   describedBy,
+  invalid,
 }: Readonly<{
   id: string;
   label: string;
@@ -541,13 +549,15 @@ function Field({
   min?: string;
   inputMode?: "decimal" | "numeric" | "text";
   placeholder?: string;
-  describedBy?: string;
+  describedBy?: string | undefined;
+  invalid?: boolean;
 }>): ReactNode {
   return (
     <label className="runner-field" htmlFor={id}>
       <span>{label}</span>
       <input
         aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
         id={id}
         inputMode={inputMode}
         min={type === "number" ? min : undefined}
@@ -568,6 +578,18 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     initialStateFor(props),
   );
   const [announcement, setAnnouncement] = useState("");
+  const [setError, setSetError] = useState(false);
+  const [persistedState, setPersistedState] = useState<ActiveWorkoutState>();
+  const [persistAttempt, setPersistAttempt] = useState(0);
+  const [cardioText, setCardioText] = useState<Partial<Record<"durationSeconds" | "paceSecondsPerKilometer", string>>>({});
+  const [cardioError, setCardioError] = useState(false);
+  const activeHeading = useRef<HTMLHeadingElement>(null);
+  const setFieldset = useRef<HTMLFieldSetElement>(null);
+  const moreSummary = useRef<HTMLElement>(null);
+  const endButton = useRef<HTMLButtonElement>(null);
+  const endDialog = useRef<HTMLDialogElement>(null);
+  const skipDialog = useRef<HTMLDialogElement>(null);
+  const focusAfterAdvance = useRef(false);
   const [actionError, setActionError] = useState<string | undefined>();
   const [adapterError, setAdapterError] = useState<string | undefined>();
   const [isRestoring, setIsRestoring] = useState(
@@ -628,7 +650,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         };
   const protection = useWorkoutRunnerNavigationProtection(
     state,
-    protectionOptions,
+    { ...protectionOptions, deviceWritePending: persistedState !== state },
   );
   const localTabConflictGroups = useMemo(
     () => groupLocalTabConflicts(state.operations),
@@ -690,7 +712,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         setAnnouncement("Saved workout state restored.");
       })
       .catch((error: unknown) => {
-        if (!cancelled) setAdapterError(errorMessage(error));
+        if (!cancelled) { console.error("Workout device storage failed", error); setAdapterError("We couldn't save to this device. Your last logged set is safe."); }
       })
       .finally(() => {
         if (!cancelled && restoreInFlightKey.current === snapshotKey) {
@@ -742,7 +764,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             }),
       );
       setAnnouncement(
-        "You are offline. New workout changes remain queued on this device.",
+        "You're offline. Sets are saved on this device and will sync when you reconnect.",
       );
     };
     const handleOnline = () => {
@@ -794,12 +816,12 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             setState(next);
             setAdapterError(undefined);
             setAnnouncement(
-              "Another tab updated this workout. Device state reconciled.",
+              "Updated from another tab.",
             );
           }
         })
         .catch((error: unknown) => {
-          if (!cancelled) setAdapterError(errorMessage(error));
+          if (!cancelled) { console.error("Workout device storage failed", error); setAdapterError("We couldn't save to this device. Your last logged set is safe."); }
         })
         .finally(() => {
           inFlight = false;
@@ -847,13 +869,18 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           setState((current) => (current === state ? next : current));
         }
       },
-      () => persistRunnerState(props.storage, state),
+      async () => {
+        const record = await persistRunnerState(props.storage, state);
+        if (stateRef.current === state) setPersistedState(state);
+        return record;
+      },
     );
     void handle.promise.catch((error: unknown) => {
-      if (handle.isCurrent()) setAdapterError(errorMessage(error));
+      if (handle.isCurrent()) { console.error("Workout device storage failed", error); setAdapterError("We couldn't save to this device. Your last logged set is safe."); }
     });
     return () => handle.cancel();
   }, [
+    persistAttempt,
     connectivityInitialized,
     isRestoring,
     props.storage,
@@ -924,7 +951,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       }),
     );
     setAnnouncement(
-      "Retrying the connection with the same queued workout operation.",
+      "Retrying…",
     );
   }
 
@@ -947,10 +974,16 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     previousTimerView.current = timerView;
   }, [timerView]);
 
-  function apply(action: RunnerAction, message?: string) {
+  const apply = useCallback((action: RunnerAction, message?: string) => {
     try {
       const next = runnerReducer(state, action);
-      setState(next);
+      // Keep a new set or exercise selection ahead of older shared navigation.
+      const navigated = next.currentExerciseIndex !== state.currentExerciseIndex ||
+        next.currentSetIndex !== state.currentSetIndex;
+      setState(navigated ? {
+        ...next,
+        lastUpdatedAt: Math.max(Date.now(), state.lastUpdatedAt + 1, next.lastUpdatedAt),
+      } : next);
       setActionError(undefined);
       if (message !== undefined) setAnnouncement(message);
     } catch (error: unknown) {
@@ -958,7 +991,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       setActionError(messageText);
       setAnnouncement(messageText);
     }
-  }
+  }, [state, setState, setActionError, setAnnouncement]);
 
   const currentExercise =
     state.snapshot.exercises[state.currentExerciseIndex] ??
@@ -1058,6 +1091,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   );
 
   function updateSetField(field: string, value: string) {
+    setSetError(false);
     const parsed = numberFromInput(value);
     const canonicalValue =
       parsed === undefined
@@ -1076,7 +1110,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
 
   function updateCardioField(field: string, value: string) {
     if (state.cardioDraft === undefined) return;
-    const parsed = field === "notes" ? undefined : numberFromInput(value);
+    const clockField = field === "durationSeconds" || field === "paceSecondsPerKilometer";
+    if (clockField) setCardioText((previous) => ({ ...previous, [field]: value }));
+    setCardioError(false);
+    const parsed = field === "notes" ? undefined : clockField ? parseClockDuration(value) : numberFromInput(value);
     const nextValue =
       field === "notes"
         ? value
@@ -1127,6 +1164,32 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     props.onNavigateAway?.();
   }
 
+  useEffect(() => {
+    const guard = (event: MouseEvent) => {
+      const link = (event.target as Element).closest?.(".owned-workout-route-bar a");
+      if (link && protection.blocked) {
+        event.preventDefault();
+        event.stopPropagation();
+        setActionError(protection.reason);
+      }
+    };
+    document.addEventListener("click", guard, true);
+    return () => document.removeEventListener("click", guard, true);
+  }, [protection]);
+
+  useEffect(() => {
+    if (setError) setFieldset.current?.querySelector<HTMLInputElement>('[aria-invalid="true"]')?.focus();
+  }, [setError]);
+
+  useEffect(() => {
+    if (!focusAfterAdvance.current) return;
+    focusAfterAdvance.current = false;
+    activeHeading.current?.focus();
+    const done = state.completedExerciseIds.includes(currentExercise.id);
+    setAnnouncement(done ? "Exercise done." : `Next: ${currentExerciseName}, set ${state.currentSetIndex + 1} of ${currentExercise.sets.length}.`);
+  }, [state, currentExercise.id, currentExerciseName, currentExercise.sets.length]);
+
+
   function statusForOperation(
     operationKey: string | undefined,
   ): RunnerStatusPresentation | undefined {
@@ -1149,6 +1212,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         <div className="runner-field-grid">
           <Field
             id={`${prefix}-weight`}
+            invalid={setError && ((draft.weightKg === undefined || draft.weightKg < 0))}
+            describedBy={setError && ((draft.weightKg === undefined || draft.weightKg < 0)) ? "runner-set-error" : undefined}
             label={`Weight (${unitSystem === "imperial" ? "lb" : "kg"})`}
             step="0.01"
             value={displayInputValue(
@@ -1160,6 +1225,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           />
           <Field
             id={`${prefix}-repetitions`}
+            invalid={setError && ((draft.repetitions === undefined || draft.repetitions < 1 || !Number.isInteger(draft.repetitions)))}
+            describedBy={setError && ((draft.repetitions === undefined || draft.repetitions < 1 || !Number.isInteger(draft.repetitions))) ? "runner-set-error" : undefined}
             label="Repetitions"
             inputMode="numeric"
             step="1"
@@ -1174,6 +1241,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         <div className="runner-field-grid">
           <Field
             id={`${prefix}-repetitions`}
+            invalid={setError && ((draft.repetitions === undefined || draft.repetitions < 1 || !Number.isInteger(draft.repetitions)))}
+            describedBy={setError && ((draft.repetitions === undefined || draft.repetitions < 1 || !Number.isInteger(draft.repetitions))) ? "runner-set-error" : undefined}
             label="Repetitions"
             inputMode="numeric"
             step="1"
@@ -1182,6 +1251,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           />
           <Field
             id={`${prefix}-added-weight`}
+            invalid={setError && (draft.addedWeightKg !== undefined && draft.addedWeightKg < 0)}
+            describedBy={setError && (draft.addedWeightKg !== undefined && draft.addedWeightKg < 0) ? "runner-set-error" : undefined}
             label={`Added weight, optional (${unitSystem === "imperial" ? "lb" : "kg"})`}
             step="0.01"
             value={displayInputValue(
@@ -1199,6 +1270,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         <div className="runner-field-grid runner-field-grid--single">
           <Field
             id={`${prefix}-duration`}
+            invalid={setError && ((draft.durationSeconds === undefined || draft.durationSeconds <= 0 || !Number.isInteger(draft.durationSeconds)))}
+            describedBy={setError && ((draft.durationSeconds === undefined || draft.durationSeconds <= 0 || !Number.isInteger(draft.durationSeconds))) ? "runner-set-error" : undefined}
             label="Duration (seconds)"
             inputMode="numeric"
             step="1"
@@ -1212,6 +1285,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       <div className="runner-field-grid">
         <Field
           id={`${prefix}-distance`}
+            invalid={setError && ((draft.distanceMeters === undefined || draft.distanceMeters <= 0))}
+            describedBy={setError && ((draft.distanceMeters === undefined || draft.distanceMeters <= 0)) ? "runner-set-error" : undefined}
           label={`Distance (${unitSystem === "imperial" ? "mi" : "meters"})`}
           step="0.01"
           value={displayInputValue(
@@ -1223,6 +1298,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         />
         <Field
           id={`${prefix}-duration`}
+            invalid={setError && ((draft.durationSeconds === undefined || draft.durationSeconds <= 0 || !Number.isInteger(draft.durationSeconds)))}
+            describedBy={setError && ((draft.durationSeconds === undefined || draft.durationSeconds <= 0 || !Number.isInteger(draft.durationSeconds))) ? "runner-set-error" : undefined}
           label="Duration (seconds)"
           inputMode="numeric"
           step="1"
@@ -1248,12 +1325,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       >
         <div className="runner-section-heading">
           <div>
-            <span className="runner-eyebrow">
-              {cardioOptionCount === 1
-                ? "Configured cardio option"
-                : `Configured cardio options (${cardioOptionCount})`}
-            </span>
-            <h3 id="runner-cardio-heading">Cardio finish</h3>
+            <h3 id="runner-cardio-heading">Cardio finish</h3><span>Required to finish</span>
           </div>
           {state.loggedCardio ? (
             <span className={statusClass({ label: "Saved", tone: "saved" })}>
@@ -1261,15 +1333,11 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             </span>
           ) : null}
         </div>
-        <p className="runner-muted">
-          {cardioOptionCount === 1
-            ? "Choose the configured cardio option that belongs to this immutable session snapshot."
-            : `Choose one of the ${cardioOptionCount} configured cardio options in this immutable session snapshot.`}
-        </p>
+        <p className="runner-muted">Pick your cardio finish.</p>
         <div
           className="runner-choice-grid"
           role="group"
-          aria-label="Cardio mode"
+          aria-label="Cardio"
         >
           {state.snapshot.cardioOptions.map((option) => (
             <button
@@ -1280,12 +1348,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               )}
               disabled={closed}
               key={option.id}
-              onClick={() =>
-                apply(
-                  { type: "select_cardio", mode: option.mode },
-                  `${option.mode === "walker" ? "Walker" : "Runner"} cardio selected.`,
-                )
-              }
+              onClick={() => { setCardioText({}); setCardioError(false); apply({ type: "select_cardio", mode: option.mode }); }}
               type="button"
             >
               <strong>{option.mode === "walker" ? "Walker" : "Runner"}</strong>
@@ -1332,10 +1395,14 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             <div className="runner-field-grid">
               <Field
                 id={`${cardioPrefix}-duration`}
-                label="Duration (seconds)"
+                label="Duration"
+                type="text"
+                placeholder="mm:ss"
+                invalid={cardioError && !cardioDraft.durationSeconds}
+                describedBy={cardioError ? "runner-cardio-error" : undefined}
                 inputMode="numeric"
                 step="1"
-                value={inputValue(cardioDraft.durationSeconds)}
+                value={cardioText.durationSeconds ?? (cardioDraft.durationSeconds === undefined ? "" : formatClockDuration(cardioDraft.durationSeconds))}
                 onChange={(value) =>
                   updateCardioField("durationSeconds", value)
                 }
@@ -1353,14 +1420,14 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               />
               <Field
                 id={`${cardioPrefix}-pace`}
-                label={`Pace (seconds/${unitSystem === "imperial" ? "mi" : "km"})`}
+                label={`Pace (min/${unitSystem === "imperial" ? "mi" : "km"})`}
+                type="text"
+                placeholder="mm:ss"
+                invalid={cardioError && cardioText.paceSecondsPerKilometer !== undefined && cardioText.paceSecondsPerKilometer !== "" && parseClockDuration(cardioText.paceSecondsPerKilometer) === undefined}
+                describedBy={cardioError ? "runner-cardio-error" : undefined}
                 inputMode="numeric"
                 step="1"
-                value={displayInputValue(
-                  cardioDraft.paceSecondsPerKilometer,
-                  unitSystem,
-                  paceToDisplay,
-                )}
+                value={cardioText.paceSecondsPerKilometer ?? (cardioDraft.paceSecondsPerKilometer === undefined ? "" : formatClockDuration(paceToDisplay(cardioDraft.paceSecondsPerKilometer, unitSystem)))}
                 onChange={(value) =>
                   updateCardioField("paceSecondsPerKilometer", value)
                 }
@@ -1372,6 +1439,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 onChange={(value) => updateCardioField("inclinePercent", value)}
               />
             </div>
+            {cardioError ? <p id="runner-cardio-error" className="runner-field-error">Enter a time like 20:00.</p> : null}
             <p className="runner-field-help">
               {cardioDraft.paceSource === "derived"
                 ? `Pace ${formatCardioPace(cardioDraft.paceSecondsPerKilometer, { unitSystem })} is derived from duration and distance.`
@@ -1396,12 +1464,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               <button
                 className="runner-button runner-button--primary"
                 disabled={closed}
-                onClick={() =>
-                  apply(
-                    { type: "save_cardio" },
-                    "Cardio log queued for saving.",
-                  )
-                }
+                onClick={() => {
+                  if (!cardioDraft.durationSeconds || (cardioText.paceSecondsPerKilometer && parseClockDuration(cardioText.paceSecondsPerKilometer) === undefined)) { setCardioError(true); return; }
+                  apply({ type: "save_cardio" });
+                }}
                 type="button"
               >
                 Save cardio
@@ -1417,7 +1483,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           </>
         ) : (
           <p className="runner-empty">
-            Select a cardio template to enter its result.
+            Choose Walker or Runner to log it.
           </p>
         )}
       </section>
@@ -1429,9 +1495,6 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       className={classNames("workout-runner", props.className)}
       aria-labelledby="runner-title"
     >
-      <a className="skip-link" href="#runner-active-panel">
-        Skip to active set
-      </a>
       <header className="runner-header companion-heading">
         <div>
 
@@ -1464,21 +1527,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           Resuming saved workout state…
         </p>
       ) : null}
-      {adapterError ? (
-        <p className="runner-banner runner-banner--failed" role="alert">
-          Local workout storage is unavailable: {adapterError}
-        </p>
-      ) : null}
-      {actionError ? (
-        <p className="runner-banner runner-banner--failed" role="alert">
-          {actionError}
-        </p>
-      ) : null}
-      {state.sync.errorMessage ? (
-        <p className="runner-banner runner-banner--failed" role="alert">
-          {state.sync.errorMessage}
-        </p>
-      ) : null}
+      {adapterError ? <div className="runner-banner runner-banner--failed" role="alert">
+        <p>{"We couldn't save to this device. Your last logged set is safe."}</p>
+        <button className="runner-button" type="button" onClick={() => setPersistAttempt((value) => value + 1)}>Try again</button>
+      </div> : null}
       {state.auth !== "valid" ? (
         <section
           aria-labelledby="runner-auth-blocked-title"
@@ -1495,15 +1547,14 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               : "Your sign-in expired"}
           </h2>
           <p>
-            Reauthenticate as the same account to sync this workout. Queued
-            activity remains on this device.
+            Sign in again to keep syncing. Your sets are safe on this device.
           </p>
           {props.reauthenticationHref ? (
             <a
               className="runner-button runner-button--primary"
               href={props.reauthenticationHref}
             >
-              Reauthenticate and return
+              Sign in again
             </a>
           ) : null}
         </section>
@@ -1514,10 +1565,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           className="runner-banner runner-banner--offline runner-banner--action"
           role="status"
         >
-          <h2 id="runner-offline-title">Offline queued</h2>
+          <h2 id="runner-offline-title">{"You're offline"}</h2>
           <p>
-            Changes remain on this device until a connection attempt is
-            confirmed.
+            Sets are saved on this device and will sync when you reconnect.
           </p>
           <button
             className="runner-button"
@@ -1535,13 +1585,11 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       <div className="runner-layout">
         <details
           className="runner-outline"
-          aria-labelledby="runner-outline-heading"
+          aria-label="Workout outline"
         >
           <summary>Workout outline</summary>
           <div className="runner-section-heading">
-            <div>
-              <h2 id="runner-outline-heading">Workout outline</h2>
-            </div>
+
             <span>{state.snapshot.exercises.length} moves</span>
           </div>
           <ol>
@@ -1571,7 +1619,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                           ? "Skipped"
                           : complete
                             ? "Completed"
-                            : `${exercise.sets.length} sets · ${exercise.loggingKind.replace("_", " ")}`}
+                            : `${exercise.sets.length} sets · ${LOGGING_KIND_LABELS[exercise.loggingKind]}`}
                       </small>
                     </span>
                     <span aria-hidden="true">
@@ -1596,7 +1644,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   Exercise {state.currentExerciseIndex + 1} of{" "}
                   {state.snapshot.exercises.length}
                 </span>
-                <h2 id="runner-active-heading">{currentExerciseName}</h2>
+                <h2 id="runner-active-heading" ref={activeHeading} tabIndex={-1}>{currentExerciseName}</h2>
 
               </div>
               <span
@@ -1664,21 +1712,22 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               </div>
             </div>
 
-            <fieldset className="runner-editor" disabled={closed}>
+            <fieldset className="runner-editor" ref={setFieldset} disabled={closed}>
               <legend>
                 Log {activeSet.isWarmup ? "warm-up" : "work"} set{" "}
                 {activeSet.setPosition}
               </legend>
               {renderSetEditor()}
+              {setError ? <p id="runner-set-error" className="runner-field-error">{setEntryErrorMessage(activeSet.draft.kind)}</p> : null}
               <div className="runner-inline-actions">
                 <button
                   className="runner-button runner-button--primary"
-                  onClick={() =>
-                    apply(
-                      { type: "log_set_and_rest", setId: activeSet.setId },
-                      `${activeSet.isWarmup ? "Warm-up" : "Work"} set queued for saving.`,
-                    )
-                  }
+                  onClick={() => {
+                    if (!validateSetDraft(activeSet.draft).ok) { setSetError(true); setActionError(undefined); return; }
+                    const now = Date.now();
+                    setClockNow(now);
+                    apply({ type: "log_set_and_rest", setId: activeSet.setId, now });
+                  }}
                   type="button"
                 >
                   {state.loggedSets[activeSet.setId] ? "Update set & rest" : "Log set & rest"}
@@ -1700,31 +1749,30 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             </fieldset>
 
             {state.loggedSets[activeSet.setId] && !state.completedExerciseIds.includes(currentExercise.id) ? <div className="quiet-runner-forward">
-              <button type="button" className="runner-button runner-button--primary" disabled={closed || state.dirtySetIds.includes(activeSet.setId)} onClick={() => apply(
+              <button type="button" className="runner-button runner-button--primary" disabled={closed || state.dirtySetIds.includes(activeSet.setId)} onClick={() => { focusAfterAdvance.current = true; setSetError(false); apply(
                 state.currentSetIndex < currentExercise.sets.length - 1
                   ? { type: "next_set", setId: activeSet.setId }
                   : { type: "complete_exercise_and_next", exerciseId: currentExercise.id },
-                state.currentSetIndex < currentExercise.sets.length - 1 ? "Next set ready." : "Movement complete."
-              )}>{state.currentSetIndex < currentExercise.sets.length - 1 ? "Next set" : state.currentExerciseIndex < state.snapshot.exercises.length - 1 ? "Next exercise" : "Complete exercise"}</button>
+                undefined
+              ); }}>{state.currentSetIndex < currentExercise.sets.length - 1 ? "Next set" : state.currentExerciseIndex < state.snapshot.exercises.length - 1 ? "Next exercise" : "Finish exercise"}</button>
               <p>You can edit a logged set by selecting its row.</p>
             </div> : null}
 
             <section
               className="runner-rest"
+              role="timer"
               aria-labelledby="runner-rest-heading"
             >
               <div>
                 <span className="runner-eyebrow">Recovery interval</span>
                 <h3 id="runner-rest-heading">Rest timer</h3>
-                <p aria-live="off">{formatTimerStatus(timerView)}</p>
+                <p>{formatTimerStatus(timerView)}</p>
               </div>
-              <strong
-                aria-label={`${timerView.remainingSeconds} seconds remaining`}
-              >
+              <strong>
                 {formatRestTimer(timerView.remainingSeconds)}
               </strong>
               <div className="runner-inline-actions">
-                {timerView.status !== "idle" ? <button type="button" className="runner-button" disabled={closed} onClick={() => apply({type: "extend_rest", seconds: 30}, "30 seconds added.")}>Add 30 seconds</button> : null}
+                {timerView.status !== "idle" ? <button type="button" className="runner-button" disabled={closed} onClick={() => { const now = Date.now(); setClockNow(now); apply({type: "extend_rest", seconds: 30, now}, "30 seconds added."); }}>Add 30 seconds</button> : null}
                 {timerView.status === "running" ? (
                   <button
                     className="runner-button"
@@ -1741,9 +1789,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   <button
                     className="runner-button"
                     disabled={closed}
-                    onClick={() =>
-                      apply({ type: "resume_rest" }, "Rest timer resumed.")
-                    }
+                    onClick={() => { const now = Date.now(); setClockNow(now); apply({ type: "resume_rest", now }, "Rest timer resumed."); }}
                     type="button"
                   >
                     Resume
@@ -1754,9 +1800,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   <button
                     className="runner-button"
                     disabled={closed}
-                    onClick={() =>
-                      apply({ type: "start_rest" }, "Rest timer started.")
-                    }
+                    onClick={() => { const now = Date.now(); setClockNow(now); apply({ type: "start_rest", now }, "Rest timer started."); }}
                     type="button"
                   >
                     Start {formatRestTimer(activeSet.target.restSeconds)}
@@ -1776,53 +1820,14 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 ) : null}
               </div>
             </section>
-            {props.curatedVideosByExerciseId ? (
-              <details className="runner-technique"><summary>Watch demo and technique guidance</summary>
-                <div className="runner-section-heading">
-                  <div>
-                    <span className="runner-eyebrow">
-                      {currentCuratedVideos
-                        ? "Movement reference"
-                        : currentPersonalGuidance.length > 0
-                          ? "Personal technique reference"
-                          : "Technique check"}
-                    </span>
-                    <h3 id="runner-technique-heading">
-                      {currentCuratedVideos
-                        ? "Technique demonstrations"
-                        : "Technique guidance"}
-                    </h3>
-                  </div>
-                  <span>
-                    {currentCuratedVideos
-                      ? "Demo"
-                      : currentPersonalGuidance.length > 0
-                        ? "Your links"
-                        : "Unavailable"}
-                  </span>
-                </div>
-                {currentCuratedVideos ? (
-                  <CuratedVideoPlayer videos={currentCuratedVideos} />
-                ) : currentPersonalGuidance.length > 0 ? (
-                  <PersonalGuidancePanel links={currentPersonalGuidance} />
-                ) : (
-                  <p className="runner-empty">
-                    No demonstration is available for this movement.
-                    Workout logging remains available.
-                  </p>
-                )}
-              </details>
-            ) : null}
-
-          </section>
-
+            <details className="runner-more"><summary ref={moreSummary}>More options</summary>
           <section
             className="runner-card runner-notes"
             aria-labelledby="runner-notes-heading"
           >
             <div className="runner-section-heading">
               <div>
-                <span className="runner-eyebrow">Field notes</span>
+
                 <h3 id="runner-notes-heading">Exercise note</h3>
               </div>
               {state.dirtyNoteExerciseIds.includes(currentExercise.id) ? (
@@ -1837,7 +1842,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               className="runner-field runner-field--wide"
               htmlFor="runner-exercise-note"
             >
-              <span>Private note for {currentExerciseName}</span>
+              <span>Note</span>
               <textarea
                 disabled={closed}
                 id="runner-exercise-note"
@@ -1878,9 +1883,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             >
               <div className="runner-section-heading">
                 <div>
-                  <span className="runner-eyebrow">Compatible reroute</span>
+
                   <h3 id="runner-substitution-heading">
-                    Need another movement
+                    Swap exercise
                   </h3>
                 </div>
                 <span>
@@ -1890,8 +1895,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 </span>
               </div>
               <p className="runner-muted">
-                Choose a replacement before logging this exercise. The domain
-                keeps the original targets and logging kind.
+                Swap before your first set. Targets stay the same.
               </p>
               <button
                 className="runner-button"
@@ -1928,8 +1932,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                       >
                         <strong>{candidate.name}</strong>
                         <span>
-                          {candidate.loggingKind.replace("_", " ")} · preserve
-                          targets
+                          {{ weight_reps: "Weight and reps", bodyweight_reps: "Reps", duration: "Time", distance_duration: "Distance and time" }[candidate.loggingKind]}
                         </span>
                       </button>
                     </li>
@@ -1946,90 +1949,46 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             </section>
           ) : null}
 
-          <section
-            className="runner-card runner-exercise-actions"
-            aria-labelledby="runner-exercise-actions-heading"
-          >
-            <div className="runner-section-heading">
-              <div>
-                <span className="runner-eyebrow">Exercise decision</span>
-                <h3 id="runner-exercise-actions-heading">Mark this movement</h3>
-              </div>
-            </div>
-            {state.skippedExerciseIds.includes(currentExercise.id) ? (
-              <p className="runner-banner runner-banner--offline">
-                This exercise is skipped. Its work sets are excluded from
-                completion requirements.
-              </p>
-            ) : state.completedExerciseIds.includes(currentExercise.id) ? (
-              <p className="runner-banner runner-banner--saved">
-                Exercise completed. You can review the snapshot before finishing
-                the workout.
-              </p>
-            ) : (
-              <>
-                <label
-                  className="runner-field runner-field--wide"
-                  htmlFor="runner-skip-reason"
-                >
-                  <span>Skip reason (optional)</span>
-                  <textarea
-                    disabled={closed}
-                    id="runner-skip-reason"
-                    maxLength={500}
-                    onChange={(event) =>
-                      setSkipReasons((previous) => ({
-                        ...previous,
-                        [currentExercise.id]: event.target.value,
-                      }))
-                    }
-                    rows={2}
-                    value={skipReasons[currentExercise.id] ?? ""}
-                  />
-                </label>
-                <div className="runner-inline-actions">
-                  <button
-                    className="runner-button runner-button--quiet"
-                    disabled={closed}
-                    onClick={() => {
-                      const reason = skipReasons[currentExercise.id];
-                      apply(
-                        reason
-                          ? {
-                              type: "skip_exercise",
-                              exerciseId: currentExercise.id,
-                              reason,
-                            }
-                          : {
-                              type: "skip_exercise",
-                              exerciseId: currentExercise.id,
-                            },
-                        "Exercise skipped and queued for saving.",
-                      );
-                    }}
-                    type="button"
-                  >
-                    Skip exercise
-                  </button>
-                  <button
-                    className="runner-button runner-button--primary"
-                    disabled={closed}
-                    onClick={() =>
-                      apply(
-                        {
-                          type: "complete_exercise",
-                          exerciseId: currentExercise.id,
-                        },
-                        "Exercise completed and queued for saving.",
-                      )
-                    }
-                    type="button"
-                  >
-                    Complete exercise
-                  </button>
+              <button className="runner-button" type="button" disabled={closed || state.skippedExerciseIds.includes(currentExercise.id)} onClick={() => skipDialog.current?.showModal()}>Skip exercise</button>
+            </details>
+            {props.curatedVideosByExerciseId ? (
+              <details className="runner-technique"><summary>Watch demo and technique guidance</summary>
+                <div className="runner-section-heading">
+                  <div>
+                    <span className="runner-eyebrow">
+                      {currentCuratedVideos
+                        ? "Movement reference"
+                        : currentPersonalGuidance.length > 0
+                          ? "Personal technique reference"
+                          : "Technique check"}
+                    </span>
+                    <h3 id="runner-technique-heading">
+                      {currentCuratedVideos
+                        ? "Technique demonstrations"
+                        : "Technique guidance"}
+                    </h3>
+                  </div>
+                  <span>
+                    {currentCuratedVideos
+                      ? "Demo"
+                      : currentPersonalGuidance.length > 0
+                        ? "Your links"
+                        : "Unavailable"}
+                  </span>
                 </div>
-              </>
-            )}
+                {currentCuratedVideos ? (
+                  <CuratedVideoPlayer videos={currentCuratedVideos} />
+                ) : currentPersonalGuidance.length > 0 ? (
+                  <PersonalGuidancePanel links={currentPersonalGuidance} />
+                ) : (
+                  <p className="runner-empty">
+                    No demonstration is available for this movement.
+                    Workout logging remains available.
+                  </p>
+                )}
+              </details>
+            ) : null}
+
           </section>
 
           {renderCardio()}
@@ -2050,7 +2009,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                     ref={localConflictHeading}
                     tabIndex={-1}
                   >
-                    Choose the workout value to keep
+                    Pick which value to keep
                   </h3>
                 </div>
                 <span
@@ -2064,8 +2023,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 </span>
               </div>
               <p className="runner-muted">
-                Both values remain on this device. Nothing is sent until you
-                choose one original operation.
+                Choose the value you want to save.
               </p>
               {localTabConflictGroups.map((group) => {
                 const targetLabel = conflictTargetLabel(
@@ -2086,7 +2044,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                         );
                         return (
                           <button
-                            aria-label={`Keep ${choiceLabel} for ${targetLabel}`}
+                            aria-label={`Keep ${choiceLabel}`}
                             className="runner-button"
                             disabled={closed}
                             key={operation.idempotencyKey}
@@ -2096,13 +2054,12 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                                   type: "resolve_local_tab_conflict",
                                   idempotencyKey: operation.idempotencyKey,
                                 },
-                                `${choiceLabel} selected for ${targetLabel} and queued with its original save identity.`,
+                                `${choiceLabel} kept.`,
                               )
                             }
                             type="button"
                           >
-                            <strong>{choiceLabel}</strong>
-                            <span>Keep this value</span>
+                            <strong>Keep {choiceLabel}</strong>
                           </button>
                         );
                       })}
@@ -2110,18 +2067,6 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   </fieldset>
                 );
               })}
-              <button
-                className="runner-button runner-button--quiet"
-                onClick={() => {
-                  localConflictHeading.current?.focus();
-                  setAnnouncement(
-                    "Conflict left unresolved. Both values remain blocked on this device.",
-                  );
-                }}
-                type="button"
-              >
-                Leave both values unresolved
-              </button>
             </section>
           ) : null}
 
@@ -2133,7 +2078,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               <div className="runner-section-heading">
                 <div>
                   <span className="runner-eyebrow">Recovery</span>
-                  <h3 id="runner-recovery-heading">Save activity</h3>
+                  <h3 id="runner-recovery-heading">{"Couldn't save"}</h3>
                 </div>
                 <span
                   className={statusClass({ label: "Failed", tone: "failed" })}
@@ -2151,9 +2096,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                     <li key={operation.idempotencyKey}>
                       <div>
                         <strong>{readableOperationKind(operation.kind)}</strong>
-                        <small>
-                          {operation.errorMessage ?? operation.errorCode}
-                        </small>
+
                       </div>
                       {retryable ? (
                         <button
@@ -2165,15 +2108,15 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                                 type: "retry_operation",
                                 idempotencyKey: operation.idempotencyKey,
                               },
-                              `${readableOperationKind(operation.kind)} retry queued.`,
+                              "Retrying…",
                             )
                           }
                           type="button"
                         >
-                          Retry
+                          Try again
                         </button>
                       ) : (
-                        <span className="runner-muted">Resolve conflict</span>
+                        <button className="runner-button" type="button" onClick={() => apply({ type: "discard_failed_operation", idempotencyKey: operation.idempotencyKey }, "Change discarded.")}>Discard this change</button>
                       )}
                     </li>
                   );
@@ -2185,70 +2128,30 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       </div>
 
       <footer className="runner-footer">
-        <div>
-          <span className="runner-eyebrow">Session control</span>
-          <p>
-            {protection.blocked
-              ? (protection.reason ??
-                "Save or resolve this workout before leaving.")
-              : "All local changes are saved or safely reconciled."}
-          </p>
-        </div>
         <div className="runner-footer-actions">
-          <button
-            className="runner-button runner-button--quiet"
-            disabled={state.status === "abandoning" || closed}
-            onClick={() => {
-              const reason = abandonReason.trim();
-              apply(
-                reason
-                  ? { type: "abandon_session", reason }
-                  : { type: "abandon_session" },
-                "Workout abandonment queued for saving.",
-              );
-            }}
-            type="button"
-          >
-            Abandon workout
-          </button>
-          <button
-            className="runner-button runner-button--primary"
-            disabled={closed || state.status === "completing" || state.operations.some(({ status }) => status === "pending")}
-            onClick={() =>
-              apply(
-                { type: "complete_session" },
-                "Workout completion queued for saving.",
-              )
-            }
-            type="button"
-          >
-            Complete workout
-          </button>
-          {props.onNavigateAway ? (
-            <button
-              className="runner-button runner-button--quiet"
-              onClick={handleNavigateAway}
-              type="button"
-            >
-              Exit workout
-            </button>
-          ) : null}
+          <button className="runner-button runner-button--primary" disabled={closed || state.status === "completing" || persistedState !== state || state.operations.some(({ status }) => status === "pending")} type="button" onClick={() => apply({ type: "complete_session" })}>Finish workout</button>
+          <button ref={endButton} className="runner-button" disabled={closed || state.status === "abandoning"} type="button" onClick={() => endDialog.current?.showModal()}>End workout</button>
+          {props.onNavigateAway ? <button className="runner-button runner-button--quiet" type="button" onClick={handleNavigateAway}>Leave for now</button> : null}
         </div>
-        <label
-          className="runner-field runner-field--wide runner-footer-reason"
-          htmlFor="runner-abandon-reason"
-        >
-          <span>Abandonment note (optional)</span>
-          <textarea
-            disabled={closed}
-            id="runner-abandon-reason"
-            maxLength={500}
-            onChange={(event) => setAbandonReason(event.target.value)}
-            rows={2}
-            value={abandonReason}
-          />
-        </label>
+        <p>{state.operations.some(({ status }) => status === "pending") ? "Saving…" : state.operations.every(({ status }) => status === "saved" || status === "superseded") ? "All changes saved." : ""}</p>
+        {actionError ? <p className="runner-field-error" role="status">{actionError}</p> : null}
       </footer>
+      <dialog className="account-delete-dialog runner-dialog" ref={skipDialog} aria-labelledby="runner-skip-title" onClose={() => moreSummary.current?.focus()}>
+        <h2 id="runner-skip-title">Skip {currentExerciseName}?</h2>
+        <p>{"You can't log sets for it after skipping."}</p>
+        <label htmlFor="runner-skip-reason">Reason (optional)</label>
+        <textarea id="runner-skip-reason" maxLength={500} value={skipReasons[currentExercise.id] ?? ""} onChange={(event) => setSkipReasons((previous) => ({ ...previous, [currentExercise.id]: event.target.value }))} />
+        <button className="runner-button" type="button" onClick={() => { apply({ type: "skip_exercise", exerciseId: currentExercise.id, reason: skipReasons[currentExercise.id] ?? "" }, "Skipped."); skipDialog.current?.close(); }}>Skip exercise</button>
+        <button className="runner-button" type="button" onClick={() => skipDialog.current?.close()}>Cancel</button>
+      </dialog>
+      <dialog className="account-delete-dialog runner-dialog" ref={endDialog} aria-labelledby="runner-end-title" onClose={() => endButton.current?.focus()}>
+        <h2 id="runner-end-title">End this workout?</h2>
+        <p>Sets you logged stay in your history.</p>
+        <label htmlFor="runner-abandon-reason">Note (optional)</label>
+        <textarea id="runner-abandon-reason" maxLength={500} value={abandonReason} onChange={(event) => setAbandonReason(event.target.value)} />
+        <button className="runner-button" type="button" onClick={() => { apply({ type: "abandon_session", reason: abandonReason.trim() }); endDialog.current?.close(); }}>End workout</button>
+        <button className="runner-button" type="button" onClick={() => endDialog.current?.close()}>Keep going</button>
+      </dialog>
     </section>
   );
 }

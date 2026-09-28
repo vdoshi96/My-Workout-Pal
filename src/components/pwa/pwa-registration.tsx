@@ -168,14 +168,12 @@ export function PwaRegistration() {
   return (
     <div className="pwa-status-stack">
       {!online ? (
-        <div className="offline-indicator" role="status">
-          Offline · public routes remain readable; account writes will wait for a confirmed connection.
-        </div>
+        <div className="offline-indicator" role="status">{"You're offline. Changes will save when you reconnect."}</div>
       ) : null}
       {updateReady ? (
         <section aria-labelledby="pwa-update-title" className="pwa-notice pwa-update-notice">
           <div>
-            <strong id="pwa-update-title">App update ready</strong>
+            <strong id="pwa-update-title">A new version is ready.</strong>
             <span>Your saved workout drafts remain in device storage. Reload when you are ready.</span>
           </div>
           <button onClick={() => window.location.reload()} type="button">Reload</button>
@@ -186,7 +184,7 @@ export function PwaRegistration() {
         <section aria-labelledby="pwa-install-title" className="pwa-notice pwa-install-notice">
           <div>
             <strong id="pwa-install-title">Install My Workout Pal</strong>
-            <span>Open the public guide in its own window. Account saves still require a connection.</span>
+            <span>Add My Workout Pal to your home screen for quick access.</span>
           </div>
           <button disabled={installPending} onClick={() => void requestInstall()} type="button">
             {installPending ? "Opening…" : "Install"}

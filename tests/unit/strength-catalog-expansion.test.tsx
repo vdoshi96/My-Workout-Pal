@@ -277,7 +277,7 @@ describe("Wave 2 strength catalog expansion", () => {
         <ExerciseVideoField videos={undefined} />
       </main>,
     );
-    expect(markup).toContain("No demonstration is available");
+    expect(markup).toContain("No video yet. Follow the steps below.");
     expect(markup).not.toContain("<iframe");
   });
 });

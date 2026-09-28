@@ -1,7 +1,7 @@
 "use client";
 
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
 import { parseOnboardingResponse } from "@/components/program/program-mutation-response";
@@ -9,6 +9,8 @@ import { EquipmentIllustration } from "@/components/ui/equipment-illustration";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, supportsEquipment, type EquipmentProfileKind } from "@/domain/equipment";
 import { CATALOG_EXERCISES } from "@/domain/exercises/catalog";
+
+import { timeZoneOptions } from "@/domain/time-zones";
 
 type OnboardingMode = "example" | "blank";
 
@@ -34,6 +36,12 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
   const saveKey = useRef<string | undefined>(undefined);
 
   const [step, setStep] = useState(0);
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  const previousStep = useRef(step);
+  useEffect(() => {
+    if (previousStep.current !== step) stepHeading.current?.focus();
+    previousStep.current = step;
+  }, [step]);
   const [firstExerciseSlug, setFirstExerciseSlug] = useState("");
   const [search, setSearch] = useState("");
   const submitLock = useRef(false);
@@ -97,8 +105,8 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
       {!canMutate ? <p role="status">Verify your email and sign in again before saving a routine.</p> : null}
       <form className="onboarding-form" onSubmit={(event) => void submit(event)}>
         <p className="quiet-step">Step {step + 1} of 3 · {step === 0 ? "Your routine" : step === 1 ? "Your preferences" : "Equipment and review"}</p>
-        {step === 0 ? <fieldset disabled={!canMutate || busy}>
-          <legend>Where would you like to start?</legend>
+        {step === 0 ? <fieldset aria-labelledby="onboarding-step-heading" disabled={!canMutate || busy}>
+          <h2 id="onboarding-step-heading" ref={stepHeading} tabIndex={-1}>Where would you like to start?</h2>
           <div className="onboarding-profile-grid">
             {(["example", "blank"] as const).map((choice) => <label key={choice}>
               <input type="radio" name="onboarding-mode" checked={mode === choice} onChange={() => {setMode(choice); saveKey.current = undefined;}} />
@@ -106,18 +114,18 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
             </label>)}
           </div>
         </fieldset> : null}
-        {step === 1 ? <fieldset disabled={!canMutate || busy} className="onboarding-preferences">
-          <legend>Your preferences</legend>
+        {step === 1 ? <fieldset aria-labelledby="onboarding-step-heading" disabled={!canMutate || busy} className="onboarding-preferences">
+          <h2 id="onboarding-step-heading" ref={stepHeading} tabIndex={-1}>Your preferences</h2>
           <label htmlFor="onboarding-units">Display units</label>
           <select id="onboarding-units" value={unitSystem} onChange={(event) => {setUnitSystem(event.target.value === "metric" ? "metric" : "imperial"); saveKey.current = undefined;}}><option value="imperial">Pounds and miles</option><option value="metric">Kilograms and kilometers</option></select>
-          <details><summary>Time zone and motion</summary>
             <label htmlFor="onboarding-timezone">Time zone</label>
-            <input id="onboarding-timezone" value={timezone} required maxLength={64} onChange={(event) => {setTimezone(event.target.value); saveKey.current = undefined;}} />
+            <select id="onboarding-timezone" value={timezone} onChange={(event) => {setTimezone(event.target.value); saveKey.current = undefined;}}>{timeZoneOptions(timezone).map((zone) => <option key={zone} value={zone}>{zone}</option>)}</select>
+          <details><summary>Motion</summary>
             <label className="onboarding-check"><input type="checkbox" checked={reducedMotion} onChange={(event) => {setReducedMotion(event.target.checked); saveKey.current = undefined;}} />Reduce interface motion</label>
           </details>
         </fieldset> : null}
-        {step === 2 ? <fieldset disabled={!canMutate || busy}>
-          <legend>Equipment</legend>
+        {step === 2 ? <fieldset aria-labelledby="onboarding-step-heading" disabled={!canMutate || busy}>
+          <h2 id="onboarding-step-heading" ref={stepHeading} tabIndex={-1}>Equipment</h2>
           <div className="onboarding-profile-grid">{(Object.keys(EQUIPMENT_PROFILES) as EquipmentProfileKind[]).map((profile) => <label key={profile}>
             <input type="radio" name="equipment-profile" checked={equipmentProfileKind === profile} onChange={() => {setEquipmentProfileKind(profile); setFirstExerciseSlug(""); saveKey.current = undefined;}} />
             <span><EquipmentIllustration kind={profile === "barbell" ? "barbell" : "dumbbell"} /><strong>{EQUIPMENT_PROFILES[profile].label}</strong><small>{EQUIPMENT_PROFILES[profile].description}</small></span>
@@ -128,6 +136,7 @@ export function OnboardingForm({ canMutate }: Readonly<{ canMutate: boolean }>) 
             {firstExerciseSlug ? <div className="quiet-selected-movement"><strong>{CATALOG_EXERCISES[firstExerciseSlug]?.name}</strong><button type="button" onClick={() => {setFirstExerciseSlug(""); saveKey.current = undefined;}}>Remove movement</button></div> : <>
               <label htmlFor="first-movement-search">Search movements</label><input id="first-movement-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Try push-up or dumbbell row" />
               <ul className="quiet-movement-results">{choices.slice(0, 12).map((exercise) => <li key={exercise.slug}><button type="button" onClick={() => {setFirstExerciseSlug(exercise.slug); saveKey.current = undefined;}}><strong>{exercise.name}</strong><span>{exercise.requiredEquipment.join(", ")}</span><Icon name="plus" /></button></li>)}</ul>
+              {choices.length > 12 ? <p>Showing 12 of {choices.length}. Keep typing to narrow it down.</p> : null}
               {choices.length === 0 ? <p>No matching movements for this equipment. Try another search.</p> : null}
             </>}
           </section> : <p>Creates five editable days using {EQUIPMENT_PROFILES[equipmentProfileKind].label.toLowerCase()}. Review any substitutions in your routine before training.</p>}

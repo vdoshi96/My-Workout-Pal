@@ -62,7 +62,7 @@ describe("visible labels remain in accessible names", () => {
     );
 
     expect(explorerMarkup).toContain("My Workout Pal");
-    expect(explorerMarkup).toContain("Five-day starter example");
+    expect(explorerMarkup).toContain("Five-day example routine");
     for (const [number, day] of [
       [1, "Push"],
       [2, "Pull"],
@@ -70,7 +70,7 @@ describe("visible labels remain in accessible names", () => {
       [4, "Upper"],
       [5, "Lower"],
     ] as const) {
-      expect(explorerMarkup).toContain(`<strong>${number}</strong><span>${day}</span>`);
+      expect(explorerMarkup).toContain(`<small>Day ${number}</small><h2>${day}</h2>`);
     }
     expect(publicMarkup).toContain("Your workout companion");
     expect(authenticatedMarkup).toContain("Your workout companion");
@@ -109,7 +109,7 @@ describe("visible labels remain in accessible names", () => {
       '<main class="member-main" id="main-content" tabindex="-1">',
     );
     expect(explorerMarkup).toContain(
-      'id="selected-day-sheet" tabindex="-1"',
+      'id="main-content" tabindex="-1"',
     );
   });
 });

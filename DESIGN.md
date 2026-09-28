@@ -173,7 +173,7 @@ Six original characters use expressive classic 2D theatrical-cartoon drawing, co
 
 This record describes the application source in `src/app/quiet-set.css`, its inherited `src/app/globals.css` rules, and the affected components. The final CSS cascade is authoritative when earlier rules remain overridden. Release evidence and its limits belong in `docs/qa/latest/`; this design specification does not assert production verification or user approval.
 
-The historical public program map remains an optional five-day example at `/program`. Its waypoint composition does not define the member experience or this visual system. Earlier atlas and Corner Companions briefs remain historical references under `.impeccable/surfaces/`.
+The public five-day example at `/program` uses the shared PublicShell and responsive day cards. Its former waypoint map has been removed. Earlier atlas and Corner Companions briefs remain historical references under `.impeccable/surfaces/`.
 
 ## Colors
 
@@ -216,7 +216,7 @@ Member navigation has four destinations: Today, Routine, Library, and Progress. 
 
 Page headings combine readable copy with a full illustrated scene. On larger member screens, the heading reserves 42% for art, with the scene occupying 58% and a `280px` minimum height. Phones keep the art: a `220px` heading reserves 38%, and its scene uses 54% width with a `260px` height cap. Off or failed-image states collapse ordinary member heading reservations where the host's selectors apply.
 
-Today has a larger composition. The greeting uses 54% of the desktop width; the Start panel and companion selector use 49%, while Resume uses 52%. Its scene uses 70% width with a `650px` height cap. Phones place a `200px` scene alongside the greeting, followed by full-width Start or Resume and companion choice. The task surface stays above the artwork in the stacking order.
+Today has a larger composition. The greeting uses 54% of the desktop width; the Start panel uses 49%, while Resume uses 52%. Its scene uses 70% width with a `650px` height cap. Phones place a `200px` scene alongside the greeting, followed by full-width Start or Resume. The task surface stays above the artwork in the stacking order.
 
 The logger precedes guidance in document order. Below `960px`, the outline follows the logger; broader screens place it beside a main column capped at `720px`. The runner is bounded to `1100px` inside a route container capped at `1200px`. Its header reserves a compact `150px × 95px` scene outside the logger. The disposable trial has a `540px` width cap. Native disclosures keep reference material reachable without displacing active entry.
 
@@ -258,7 +258,7 @@ Technique, workout outline, equipment, and add-section details use native `detai
 
 ### Navigation
 
-The member active destination uses theme ink as its fill and paper as its text color, plus `aria-current`. Library selects its own nested routes; Routine does not select Library. History and records select Progress. Library stays available before setup, with a labeled dumbbell, bodyweight, and bench scope and a routine setup action. Settings is a contextual utility. Public navigation remains a distinct four-link block for Program, Library, Progress, and My workouts. Do not copy that public example navigation into the member shell.
+The member active destination uses theme ink as its fill and paper as its text color, plus `aria-current`. Library selects its own nested routes; Routine does not select Library. History and records select Progress. Library stays available before setup, with a labeled dumbbell, bodyweight, and bench scope and a routine setup action. Settings is a contextual utility. Public navigation uses Example, Library, Progress, and Sign in in the shared cream header and fixed phone bar. Do not copy that public example navigation into the member shell.
 
 ### Equipment and Settings
 
@@ -268,7 +268,7 @@ Selected equipment uses a complete `2px` lichen outline and `aria-pressed`, with
 
 Seven integrated gym scenes contain six original characters. Today and the landing registry select Pip the stoat or Mica the kingfisher. Library uses an otter studying guidance; Routine uses a beaver planning; Progress and History use a tortoise reviewing; Settings uses a hare preparing equipment. Workout and day surfaces use Pip recovering. These placements are contextual company, not claims about achievements or saved state.
 
-The preference is `pip | mica | off` in browser-local storage under `mwp:companion:v1`. Missing, unsupported, or unreadable values fall back to Pip. Today exposes the compact choice; Settings exposes the full choice. Off hides every companion, including contextual characters; it does not remove the separate gym background or alter workout data. Preference changes update mounted companion components, and storage events synchronize other tabs.
+The preference is `pip | mica | off` in browser-local storage under `mwp:companion:v1`. Missing, unsupported, or unreadable values fall back to Pip. Settings exposes the character choice; Today displays the selected character. Off hides every companion, including contextual characters; it does not remove the separate gym background or alter workout data. Preference changes update mounted companion components, and storage events synchronize other tabs.
 
 Each scene has a `1200 × 800` WebP and a 600-pixel-wide phone derivative. These are opaque environment illustrations blended with CSS masks, not transparent cutouts or square character portraits. Keep the optimized exports and their prompt/reference provenance together. The earlier public gym environments remain separate assets. Decorative images have empty alternative text, hidden semantics, reserved dimensions, no dragging, and no pointer interaction; image failure hides the slot. Public gym pictures are also decorative. Equipment illustrations are original SVG components for dumbbell, barbell, bench, mat, shoe, towel, timer, and distance marker.
 

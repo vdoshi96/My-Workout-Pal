@@ -1,13 +1,15 @@
-import { redirect } from "next/navigation";
 
 import type { FirebasePublicConfig } from "@/client/firebase";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { getDatabase } from "@/db/client";
+import { timeZoneOptions } from "@/domain/time-zones";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import {
   getViewerProfileProgram,
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
+
+export const metadata = { title: "Settings" };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -29,23 +31,25 @@ async function loadSettings() {
     const model = await getViewerProfileProgram(getDatabase(), viewer);
     return { model, viewer };
   } catch (error) {
-    if (error instanceof RepositoryNotFoundError) return undefined;
+    if (error instanceof RepositoryNotFoundError) return { model: null, viewer };
     throw error;
   }
 }
 
 export default async function SettingsPage() {
   const data = await loadSettings();
-  if (!data?.model.activeProgram) redirect("/app");
+  if (!data) return null;
   return (
     <SettingsForm
-      activeProgram={data.model.activeProgram}
+      activeProgram={data.model?.activeProgram ?? null}
       canMutate={data.viewer.eligibleForPermanentMutations}
-      equipmentProfileKind={data.model.equipment.profileKind}
+      equipmentProfileKind={data.model?.equipment.profileKind ?? null}
       firebaseConfig={firebasePublicConfig()}
-      initialPreferences={data.model.preferences}
-      ownerUid={data.model.profile.firebaseUid}
+      initialPreferences={data.model?.preferences ?? null}
+      timeZones={timeZoneOptions(data.model?.preferences?.timezone)}
+      ownerUid={data.viewer.uid}
       viewerProvider={data.viewer.provider}
+      viewerIdentity={{ displayName: data.viewer.displayName, email: data.viewer.email, emailVerified: data.viewer.emailVerified }}
     />
   );
 }

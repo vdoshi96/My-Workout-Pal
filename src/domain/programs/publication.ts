@@ -78,7 +78,7 @@ const programPrescriptionPublishSchema = z
     ) {
       context.addIssue({
         code: "custom",
-        message: "Use one complete ascending repetition or duration range.",
+        message: "Set a low-to-high range for reps or time.",
       });
     }
     if (value.targetDistanceM !== null && !hasDuration) {

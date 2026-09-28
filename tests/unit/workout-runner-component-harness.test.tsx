@@ -197,13 +197,13 @@ describe("WorkoutRunner injected boundary harness", () => {
     );
 
     const oneMarkup = render(oneOption);
-    expect(oneMarkup).toContain("Configured cardio option");
-    expect(oneMarkup).toContain("Choose the configured cardio option");
+    expect(oneMarkup).toContain("Cardio finish");
+    expect(oneMarkup).toContain("Choose Walker or Runner to log it.");
     expect(oneMarkup).not.toContain("walker or runner template");
 
     const twoMarkup = render(twoOptions);
-    expect(twoMarkup).toContain("Configured cardio options (2)");
-    expect(twoMarkup).toContain("Choose one of the 2 configured cardio options");
+    expect(twoMarkup).toContain("Cardio finish");
+    expect(twoMarkup).toContain("Choose Walker or Runner to log it.");
     expect(twoMarkup).not.toContain("walker or runner template");
   });
 
@@ -421,15 +421,15 @@ describe("WorkoutRunner injected boundary harness", () => {
       />,
     );
 
-    expect(markup).toContain("Choose the workout value to keep");
+    expect(markup).toContain("Pick which value to keep");
     expect(markup).toContain("Set 1 · Floor press");
     expect(markup).toContain(
-      'aria-label="Keep 20 kg · 10 reps for Set 1 · Floor press"',
+      'aria-label="Keep 20 kg · 10 reps"',
     );
     expect(markup).toContain(
-      'aria-label="Keep 25 kg · 8 reps for Set 1 · Floor press"',
+      'aria-label="Keep 25 kg · 8 reps"',
     );
-    expect(markup).toContain("Leave both values unresolved");
+    expect(markup).not.toContain("Leave both values unresolved");
   });
 
   it("keys restoration by owner and session, not session alone", () => {
@@ -480,7 +480,7 @@ describe("WorkoutRunner injected boundary harness", () => {
     );
 
     expect(markup).toContain("Retry connection");
-    expect(markup).toContain("Reauthenticate and return");
+    expect(markup).toContain("Sign in again");
     expect(markup).toContain(
       'href="/sign-in?returnTo=%2Fworkout%2Fsession-harness"',
     );
@@ -503,6 +503,6 @@ describe("WorkoutRunner injected boundary harness", () => {
       />,
     );
     expect(revokedMarkup).toContain("Your sign-in was revoked");
-    expect(revokedMarkup).toContain("Sign-in revoked");
+    expect(revokedMarkup).toContain("Sign in again");
   });
 });

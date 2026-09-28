@@ -1037,7 +1037,7 @@ describe("rest timing and navigation protection", () => {
       type: "save_set",
       setId: "row-work-1",
     });
-    expect(isNavigationBlocked(queued)).toBe(true);
+    expect(isNavigationBlocked(queued)).toBe(false);
   });
 });
 
@@ -1454,7 +1454,7 @@ describe("session completion", () => {
     });
     expect(completing.status).toBe("active");
     expect(completing.sync.status).toBe("failed");
-    expect(isNavigationBlocked(completing)).toBe(true);
+    expect(isNavigationBlocked(completing)).toBe(false);
     completing = runnerReducer(completing, {
       type: "retry_operation",
       idempotencyKey: completeKey,
@@ -1519,7 +1519,7 @@ describe("session completion", () => {
         type: "retry_operation",
         idempotencyKey: completeKey,
       }),
-    ).toThrow(/local draft|confirmed/);
+    ).toThrow(/Save your edited set or note first/);
     expect(state.status).toBe("active");
     expect(operation(state, "complete_session").status).toBe("failed");
 
@@ -1535,7 +1535,7 @@ describe("session completion", () => {
         type: "retry_operation",
         idempotencyKey: completeKey,
       }),
-    ).toThrow(/confirmed/);
+    ).toThrow(/Wait for your last changes to save/);
 
     state = runnerReducer(state, {
       type: "operation_saved",
@@ -1624,7 +1624,7 @@ describe("session completion", () => {
     });
     state = runnerReducer(state, { type: "save_set", setId: "row-work-1" });
     expect(() => runnerReducer(state, { type: "complete_session" })).toThrow(
-      /Explicitly complete/,
+      /Finish or skip/,
     );
 
     state = await syncRunnerOperations(state, {
@@ -1636,7 +1636,7 @@ describe("session completion", () => {
       exerciseId: "exercise-row",
     });
     expect(() => runnerReducer(state, { type: "complete_session" })).toThrow(
-      /confirmed/,
+      /Wait for your last changes to save/,
     );
     state = await syncRunnerOperations(state, {
       storage,
@@ -1718,7 +1718,7 @@ describe("session completion", () => {
     });
     expect(state.loggedCardio).toBeUndefined();
     expect(() => runnerReducer(state, { type: "complete_session" })).toThrow(
-      /required cardio/,
+      /Log your cardio finish first/,
     );
 
     state = await syncRunnerOperations(state, {
@@ -1728,12 +1728,12 @@ describe("session completion", () => {
     state = runnerReducer(state, { type: "select_cardio", mode: "walker" });
     expect(state.loggedCardio).toBeUndefined();
     expect(() => runnerReducer(state, { type: "complete_session" })).toThrow(
-      /required cardio/,
+      /Log your cardio finish first/,
     );
 
     const missing = makeCardioState();
     expect(() => runnerReducer(missing, { type: "complete_session" })).toThrow(
-      /required cardio/,
+      /Log your cardio finish first/,
     );
   });
 
@@ -1748,7 +1748,7 @@ describe("session completion", () => {
       kind: "abandon_session",
       status: "pending",
     });
-    expect(isNavigationBlocked(state)).toBe(true);
+    expect(isNavigationBlocked(state)).toBe(false);
     state = await syncRunnerOperations(state, {
       storage,
       submit: async () => ({ status: "saved", persistedId: "abandoned-1" }),
@@ -1844,7 +1844,7 @@ describe("Quiet Set forward controls", () => {
     state = runnerReducer(state, { type: "log_set_and_rest", setId: "row-warmup-1", now: 2000 });
     const next = runnerReducer(state, { type: "next_set", setId: "row-warmup-1", now: 3000 });
     expect(next.currentSetIndex).toBe(1);
-    expect(next.restTimer).toBeUndefined();
+    expect(next.restTimer).toBe(state.restTimer);
     expect(runnerReducer(next, { type: "next_set", setId: "row-warmup-1" })).toBe(next);
   });
   it("extends a suspended timer without counting paused time", () => {

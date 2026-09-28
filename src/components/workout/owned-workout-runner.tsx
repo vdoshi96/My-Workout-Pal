@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
@@ -16,13 +17,10 @@ import {
 } from "@/client/runner-storage";
 import { createWorkoutRunnerSubmitter } from "@/client/workout-api";
 import { WorkoutRunner } from "@/components/workout/workout-runner";
-import { RunnerResumeError } from "@/domain/workout-resume";
 import {
   createRunnerWriterIdentity,
   loadRunnerState,
-  RunnerOwnershipError,
-  RunnerStorageError,
-  RunnerTransitionError,
+  runnerStorageKey,
   type ActiveWorkoutState,
   type ExerciseSubstitution,
 } from "@/domain/workout-runner";
@@ -33,18 +31,6 @@ type RecoveryState =
   | Readonly<{ status: "loading" }>
   | Readonly<{ status: "blocked"; message: string }>
   | Readonly<{ status: "ready"; state: ActiveWorkoutState }>;
-
-function recoveryErrorMessage(error: unknown): string {
-  if (
-    error instanceof RunnerResumeError ||
-    error instanceof RunnerOwnershipError ||
-    error instanceof RunnerStorageError ||
-    error instanceof RunnerTransitionError
-  ) {
-    return error.message;
-  }
-  return "This device's workout draft could not be reconciled safely.";
-}
 
 export function OwnedWorkoutRunner({
   curatedVideosByExerciseId,
@@ -61,6 +47,7 @@ export function OwnedWorkoutRunner({
 }>) {
   const router = useRouter();
   const [attempt, setAttempt] = useState(0);
+  const savedVersionDialog = useRef<HTMLDialogElement>(null);
   const [recovery, setRecovery] = useState<RecoveryState>({
     status: "loading",
   });
@@ -127,10 +114,8 @@ export function OwnedWorkoutRunner({
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          setRecovery({
-            status: "blocked",
-            message: recoveryErrorMessage(error),
-          });
+          console.error("Workout recovery failed", error);
+          setRecovery({ status: "blocked", message: "Your logged sets are still on this device." });
         }
       });
     return () => {
@@ -155,12 +140,7 @@ export function OwnedWorkoutRunner({
         className="owned-runner-recovery"
         role="status"
       >
-        <span className="eyebrow">Private recovery</span>
-        <h1 id="runner-recovery-title">Reconciling saved workout</h1>
-        <p>
-          Checking the server snapshot and device draft for this account before
-          editing begins.
-        </p>
+        <h1 id="runner-recovery-title">Opening your workout…</h1>
       </section>
     );
   }
@@ -172,25 +152,22 @@ export function OwnedWorkoutRunner({
         className="owned-runner-recovery owned-runner-recovery--blocked"
         role="alert"
       >
-        <span className="eyebrow">Recovery stopped</span>
-        <h1 id="runner-recovery-title">Your local draft was not overwritten</h1>
-        <p>{recovery.message}</p>
+        <h1 id="runner-recovery-title">{"We couldn't open this workout"}</h1>
+        <p>Your logged sets are still on this device.</p>
         <div>
-          <button
-            className="primary-action"
-            onClick={retryRecovery}
-            type="button"
-          >
-            Retry recovery
-          </button>
-          <button
-            className="secondary-action"
-            onClick={() => router.push("/app")}
-            type="button"
-          >
-            Return to program
-          </button>
+          <button className="primary-action" onClick={retryRecovery} type="button">Try again</button>
+          <button className="secondary-action" onClick={() => savedVersionDialog.current?.showModal()} type="button">Use the version saved to your account</button>
+          <Link href="/app">Back to Today</Link>
         </div>
+        <dialog className="account-delete-dialog" ref={savedVersionDialog} aria-labelledby="runner-saved-version-title">
+          <h2 id="runner-saved-version-title">Use the saved version?</h2>
+          <p>Changes that only exist on this device will be removed.</p>
+          <button className="primary-action" type="button" onClick={async () => {
+            try { await storage.remove(runnerStorageKey(ownerUid, sessionId)); window.location.reload(); }
+            catch (error) { console.error("Workout recovery cleanup failed", error); savedVersionDialog.current?.close(); }
+          }}>Use saved version</button>
+          <button className="secondary-action" type="button" onClick={() => savedVersionDialog.current?.close()}>Cancel</button>
+        </dialog>
       </section>
     );
   }

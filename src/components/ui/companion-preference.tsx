@@ -25,8 +25,8 @@ export function useCompanionChoice(): CompanionChoice {
 export function CompanionPreference({ compact = false }: { compact?: boolean }) {
   const choice = useCompanionChoice();
   return <section className={`quiet-companion-preference${compact ? " companion-switcher" : ""}`} aria-labelledby="companion-preference-title">
-    <h2 id="companion-preference-title">{compact ? "Your training companion" : "A little company"}</h2>
-    <p>{compact ? "Choose your welcome. The rest of the crew joins you around the gym." : "Choose Pip or Mica for Today. The library, planner, progress, and settings have their own companions. Off hides the whole crew. Saved on this browser only."}</p>
+    <h2 id="companion-preference-title">Characters</h2>
+    <p>Pick who greets you on Today, or turn the characters off. Saved on this device.</p>
     <label htmlFor="companion-choice">Your companion</label>
     <select id="companion-choice" value={choice} onChange={(event) => {
       try { localStorage.setItem(key, event.target.value); } catch { return; }

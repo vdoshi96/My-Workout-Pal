@@ -25,7 +25,7 @@ export function AuthenticatedSessionSignOut({
   async function beginSignOut() {
     if (busy) return;
     setBusy(true);
-    setMessage("Clearing this account’s local workout drafts…");
+    setMessage("Signing out…");
     try {
       const storage = createIndexedDBRunnerStorage({ ownerUid });
       await performSessionSignOut(
@@ -49,8 +49,8 @@ export function AuthenticatedSessionSignOut({
         ownerUid,
       );
       window.location.replace("/sign-in");
-    } catch {
-      setMessage("Sign out did not finish safely. Try again.");
+    } catch (error) {
+      setMessage(error instanceof Error && error.message === "Sign-out cancelled." ? "" : "Couldn't sign out. Try again.");
       setBusy(false);
     }
   }
@@ -58,7 +58,7 @@ export function AuthenticatedSessionSignOut({
   return (
     <div className="member-session-signout">
       <button disabled={busy} onClick={() => void beginSignOut()} type="button">
-        <Icon name="sign-in" /> {busy ? "Signing out…" : "Sign out"}
+        <Icon name="sign-out" /> {busy ? "Signing out…" : "Sign out"}
       </button>
       <p aria-live="polite" role="status">{message}</p>
     </div>

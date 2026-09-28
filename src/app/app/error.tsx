@@ -1,17 +1,5 @@
 "use client";
 
-export default function AccountError({ reset }: Readonly<{ error: Error & { digest?: string }; reset: () => void }>) {
-  function retryFullRead() {
-    reset();
-    window.location.reload();
-  }
-
-  return (
-    <section className="member-state" role="alert">
-      <span className="eyebrow">Personal home unavailable</span>
-      <h1>Your home did not load.</h1>
-      <p>No routine or workout changes were made. Check the connection and try again.</p>
-      <button className="primary-action" onClick={retryFullRead} type="button">Try again</button>
-    </section>
-  );
+export default function AccountError({ retry }: Readonly<{ error: Error & { digest?: string }; retry: () => void }>) {
+  return <section className="member-state" role="alert"><h1>{"This page didn't load"}</h1><p>Nothing was changed.</p><button className="primary-action" onClick={retry} type="button">Try again</button></section>;
 }
