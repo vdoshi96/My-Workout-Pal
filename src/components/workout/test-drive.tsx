@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
+import { useLocaleUnitSystem } from "@/client/locale-units";
 import { Icon } from "@/components/ui/icon";
 import { PalSticker } from "@/components/ui/scene-stage";
 import { MovementDemo } from "@/components/video/demo-sheet";
@@ -33,7 +34,7 @@ function clock(seconds: number) {
 export function TestDrive({ movements }: Readonly<{ movements: readonly [TestDriveMovement, TestDriveMovement] }>) {
   const [squat, plank] = movements;
   const [step, setStep] = useState<Step>("plan");
-  const [unit, setUnit] = useState<"lb" | "kg">("lb");
+  const unit = useLocaleUnitSystem() === "imperial" ? "lb" : "kg";
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
   const [seconds, setSeconds] = useState("");
@@ -43,11 +44,6 @@ export function TestDrive({ movements }: Readonly<{ movements: readonly [TestDri
   const [remaining, setRemaining] = useState(REST_SECONDS);
   const heading = useRef<HTMLHeadingElement>(null);
   const first = useRef(true);
-
-  useEffect(() => {
-    // Most of the world logs in kilograms; the US, Liberia and Myanmar use pounds.
-    if (!/^(en-US|en-LR|my)/u.test(navigator.language)) setUnit("kg");
-  }, []);
 
   useEffect(() => {
     if (first.current) { first.current = false; return; }

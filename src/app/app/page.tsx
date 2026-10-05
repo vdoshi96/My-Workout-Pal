@@ -7,7 +7,8 @@ import {
   getViewerProfileProgram,
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
-import { listApprovedCuratedVideoPairsByExerciseIds } from "@/server/repositories/curated-videos";
+import { listApprovedCuratedVideoPairsByExerciseIds, listApprovedCuratedVideoPairsBySlugs } from "@/server/repositories/curated-videos";
+import { APPROVED_DEMO_SLUGS } from "@/domain/programs/generate-routine";
 import { loadProgressInsights } from "@/server/repositories/training-insights";
 import { createWorkoutRepository } from "@/server/repositories/workout-repository";
 
@@ -34,7 +35,8 @@ export default async function MemberHomePage({ searchParams }: Readonly<{ search
   const database = getDatabase();
   const model = await readProfileProgramOrUndefined(database, viewer);
   if (!model?.activeProgram) {
-    return <OnboardingForm canMutate={viewer.eligibleForPermanentMutations} />;
+    const demos = await listApprovedCuratedVideoPairsBySlugs(database, [...APPROVED_DEMO_SLUGS]).catch(() => ({}));
+    return <OnboardingForm canMutate={viewer.eligibleForPermanentMutations} demos={demos} displayName={viewer.displayName} />;
   }
   const { day } = await searchParams;
   const initialDayKey = typeof day === "string" ? day : null;
