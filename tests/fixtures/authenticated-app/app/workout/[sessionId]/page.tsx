@@ -109,7 +109,7 @@ export default async function HarnessOwnedWorkoutPage({
   return (
     <div className="owned-workout-route">
       <a className="skip-link" href="#runner-title">Skip to active workout</a>
-      <SceneStage scene="workout" />
+      {context.viewer.eligibleForPermanentMutations ? <SceneStage scene="workout" /> : null}
       <header className="pal-run-bar">
         <BackLink target={{ href: "/app", label: "Back to Today" }} />
       </header>

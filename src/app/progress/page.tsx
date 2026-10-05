@@ -28,9 +28,9 @@ export default function ProgressPage() {
 
       <div className="pal-page-body">
         <dl className="pal-glance" aria-label="Progress preview">
-          <div><dt>Workouts</dt><dd>3</dd><small>Across two weeks</small></div>
-          <div><dt>Consistency</dt><dd>3 of 3</dd><small>Planned workouts done</small></div>
-          <div><dt>Cardio</dt><dd>62 min</dd><small>Walking and running</small></div>
+          <div><dt>Workouts</dt><dd>3</dd><dd className="pal-glance-note">Across two weeks</dd></div>
+          <div><dt>Consistency</dt><dd>3 of 3</dd><dd className="pal-glance-note">Planned workouts done</dd></div>
+          <div><dt>Cardio</dt><dd>62 min</dd><dd className="pal-glance-note">Walking and running</dd></div>
         </dl>
 
         <section aria-labelledby="progress-chart-heading">

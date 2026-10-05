@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useLocaleUnitSystem } from "@/client/locale-units";
 import { privateApiMutation, PrivateApiClientError } from "@/client/private-api";
+import { requestArrivalFocus } from "@/components/navigation/arrival-focus";
 import { parseOnboardingResponse } from "@/components/program/program-mutation-response";
 import { EquipmentIllustration } from "@/components/ui/equipment-illustration";
 import { Icon } from "@/components/ui/icon";
@@ -142,7 +143,7 @@ export function OnboardingForm({
     }
   }
 
-  function finishTour() { router.refresh(); }
+  function finishTour() { requestArrivalFocus("member-program-title"); router.refresh(); }
 
   const choiceList = <T extends string | number>(name: string, options: ReadonlyArray<readonly [T, string, string]>, value: T | null, set: (value: T) => void) => (
     <div className="pal-choices" role="radiogroup" aria-labelledby="onboarding-heading" aria-describedby={missing ? "onboarding-missing" : undefined}>
@@ -162,7 +163,7 @@ export function OnboardingForm({
           <p className="pal-step-count">Step {questionNumber} of {QUESTIONS.length}</p>
           <ol aria-hidden="true" className="pal-steps">{QUESTIONS.map((name, index) => <li className={index < questionNumber ? "is-done" : undefined} key={name} />)}</ol>
         </div> : null}
-        {!canMutate ? <p className="pal-notice" role="status">Verify your email and sign in again before saving a routine. You can still look around.</p> : null}
+        {!canMutate ? <p className="pal-notice">Verify your email and sign in again before saving a routine. You can still look around.</p> : null}
 
         {stage === "goal" ? <>
           <p className="pal-onboarding-hello">{firstName ? `Hi ${firstName}! ` : "Hi! "}Let&apos;s build a routine that fits you.</p>

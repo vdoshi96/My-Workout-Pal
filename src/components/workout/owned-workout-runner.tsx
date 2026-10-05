@@ -15,6 +15,7 @@ import {
   runnerStorageNamespaceDigest,
 } from "@/client/runner-storage";
 import { createWorkoutRunnerSubmitter } from "@/client/workout-api";
+import { requestArrivalFocus } from "@/components/navigation/arrival-focus";
 import { BackLink } from "@/components/navigation/back-link";
 import { WorkoutRunner } from "@/components/workout/workout-runner";
 import {
@@ -133,6 +134,7 @@ export function OwnedWorkoutRunner({
 
   function openCompletedHistory() {
     // `done=1` lets the summary celebrate a workout that was just finished.
+    requestArrivalFocus("history-done-title");
     router.push(`${withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app")}&done=1`);
   }
 

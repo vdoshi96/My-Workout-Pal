@@ -236,6 +236,13 @@ type PrescriptionRemoval = Readonly<{
   sectionIndex: number;
 }>;
 
+/** Returns focus to a control; one inside a closed "More" menu hands focus to that menu's button. */
+function focusReturnTarget(target: HTMLElement | null) {
+  const menu = target?.closest<HTMLDetailsElement>("details.pal-editor-menu");
+  if (menu && !menu.open) menu.querySelector<HTMLElement>("summary")?.focus();
+  else target?.focus();
+}
+
 export function ProgramEditor({
   back = { href: "/app", label: "Back to Today" },
   canMutate,
@@ -317,15 +324,9 @@ export function ProgramEditor({
   );
   const selected = draft.days[selectedDay] ?? draft.days[0]!;
   const selectedSavedDayKey = program.days.some((day) => day.dayKey === selected.dayKey) ? selected.dayKey : undefined;
-  useEffect(() => {
-    // Keep the selected day in the URL (`?day=`) so a round trip reopens it.
-    // Skip while a draft guard entry exists so the guard's history stays intact.
-    if (!selectedSavedDayKey || dirtyRef.current || draftHistoryGuardActiveRef.current) return;
-    const url = new URL(window.location.href);
-    if (url.searchParams.get("day") === selectedSavedDayKey) return;
-    url.searchParams.set("day", selectedSavedDayKey);
-    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [selectedSavedDayKey]);
+  // The selected day travels in the links this editor builds (`?day=` on "All routines" and in each
+  // `from`), so round trips reopen it. The address bar is left alone: changing its search params makes
+  // Next.js treat the next refresh as a different page and remount the editor.
   const meaningBySourceId = useMemo(
     () =>
       new Map(
@@ -390,7 +391,7 @@ export function ProgramEditor({
 
   function dismissDayRemoval() {
     setDayRemoval(null);
-    window.setTimeout(() => dayRemovalReturnFocusRef.current?.focus(), 0);
+    window.setTimeout(() => focusReturnTarget(dayRemovalReturnFocusRef.current), 0);
   }
 
   function dismissSectionRemoval() {
@@ -398,12 +399,12 @@ export function ProgramEditor({
     // Native dialog close focus restoration runs after the close event in WebKit.
     // Defer our explicit destination until that browser work has settled so both
     // cancel and confirmed removal land on the intended surviving control.
-    window.setTimeout(() => sectionRemovalReturnFocusRef.current?.focus(), 0);
+    window.setTimeout(() => focusReturnTarget(sectionRemovalReturnFocusRef.current), 0);
   }
 
   function dismissPrescriptionRemoval() {
     setPrescriptionRemoval(null);
-    window.setTimeout(() => prescriptionRemovalReturnFocusRef.current?.focus(), 0);
+    window.setTimeout(() => focusReturnTarget(prescriptionRemovalReturnFocusRef.current), 0);
   }
 
   function openChooser(next: ExerciseChooser) {
@@ -412,6 +413,37 @@ export function ProgramEditor({
       : null;
     setChooser(next);
   }
+
+  useEffect(() => {
+    // "More" menus are small popovers: one open at a time, closed by choosing an item (unless it
+    // opens a confirmation), clicking elsewhere, or Escape (which returns focus to the menu's button).
+    const openMenus = () => Array.from(document.querySelectorAll<HTMLDetailsElement>("details.pal-editor-menu[open]"));
+    const onClick = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      // A confirmation dialog opened from a menu item returns focus to that item, so its menu stays open.
+      if (target?.closest("dialog")) return;
+      for (const menu of openMenus()) {
+        if (!target || !menu.contains(target)) menu.open = false;
+        else if (target.closest(".pal-editor-menu-list button")) {
+          window.setTimeout(() => { if (!document.querySelector("dialog[open]")) menu.open = false; }, 0);
+        }
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      for (const menu of openMenus()) {
+        if (!menu.contains(document.activeElement)) continue;
+        menu.open = false;
+        menu.querySelector("summary")?.focus();
+      }
+    };
+    document.addEventListener("click", onClick, true);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     if (dayCreatorOpen) { dayCreatorDialog.current?.showModal(); queueMicrotask(() => dayNameRef.current?.focus()); }
@@ -1168,8 +1200,8 @@ export function ProgramEditor({
               const sectionLabel = section.title.trim() || `${section.kind} section`;
               return (
               <fieldset className="pal-editor-section" disabled={busy} key={section.draftKey}>
-                <legend>
-                  <span>{sentenceCase(section.kind)} section</span>
+                <legend><span>{sentenceCase(section.kind)} section</span></legend>
+                <div className="pal-editor-section-head">
                   <input
                     aria-label={`Section name for ${section.kind}`}
                     disabled={busy}
@@ -1180,35 +1212,35 @@ export function ProgramEditor({
                     )}
                     value={section.title}
                   />
-                </legend>
-                <details className="pal-editor-menu pal-editor-section-menu"><summary aria-label={`More actions for ${sectionLabel}`}>More</summary>
-                  <div className="pal-editor-menu-list">
-                    <div role="group" aria-label={`Reorder ${sectionLabel} section`} className="pal-editor-reorder">
+                  <details className="pal-editor-menu pal-editor-section-menu"><summary aria-label={`More actions for ${sectionLabel}`}>More</summary>
+                    <div className="pal-editor-menu-list">
+                      <div role="group" aria-label={`Reorder ${sectionLabel} section`} className="pal-editor-reorder">
+                        <button
+                          aria-label={`Move ${sectionLabel} section up`}
+                          disabled={sectionIndex === 0}
+                          onClick={() => moveSection(selectedDay, sectionIndex, -1)}
+                          type="button"
+                        >Up</button>
+                        <button
+                          aria-label={`Move ${sectionLabel} section down`}
+                          disabled={sectionIndex === selected.sections.length - 1}
+                          onClick={() => moveSection(selectedDay, sectionIndex, 1)}
+                          type="button"
+                        >Down</button>
+                      </div>
                       <button
-                        aria-label={`Move ${sectionLabel} section up`}
-                        disabled={sectionIndex === 0}
-                        onClick={() => moveSection(selectedDay, sectionIndex, -1)}
+                        aria-label={`Remove ${sectionLabel} section`}
+                        disabled={selected.sections.length <= 1}
+                        onClick={(event) => openSectionRemoval(
+                          selectedDay,
+                          sectionIndex,
+                          event.currentTarget,
+                        )}
                         type="button"
-                      >Up</button>
-                      <button
-                        aria-label={`Move ${sectionLabel} section down`}
-                        disabled={sectionIndex === selected.sections.length - 1}
-                        onClick={() => moveSection(selectedDay, sectionIndex, 1)}
-                        type="button"
-                      >Down</button>
+                      >Remove section</button>
                     </div>
-                    <button
-                      aria-label={`Remove ${sectionLabel} section`}
-                      disabled={selected.sections.length <= 1}
-                      onClick={(event) => openSectionRemoval(
-                        selectedDay,
-                        sectionIndex,
-                        event.currentTarget,
-                      )}
-                      type="button"
-                    >Remove section</button>
-                  </div>
-                </details>
+                  </details>
+                </div>
                 {section.prescriptions.length === 0 ? (
                   <p className="pal-editor-empty">
                     This section is empty. Add a movement or remove the section.

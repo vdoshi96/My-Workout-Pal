@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 
+import { ArrivalFocus } from "@/components/navigation/arrival-focus";
 import { StartWorkoutControl } from "@/components/workout/start-workout-control";
 import {
   formatInsightDistance,
@@ -74,18 +75,17 @@ export function MemberProgramHome({
   resumableWorkout: MemberHomeResumableWorkout | null;
 }>) {
   const program = initialProgram;
-  const [selectedDayId, setSelectedDayId] = useState(
-    program.days.find((day) => day.dayKey === initialDayKey)?.id ?? program.days[0]!.id,
-  );
-  const selectedDay = program.days.find((day) => day.id === selectedDayId) ?? program.days[0]!;
+  // The address is the source of truth for the chosen day, so returning to Today restores it even
+  // when the router reuses an earlier render of this page.
+  const dayKey = useSearchParams()?.get("day") ?? initialDayKey;
+  const selectedDay = program.days.find((day) => day.dayKey === dayKey) ?? program.days[0]!;
   const dayCountLabel = `${program.days.length} ${program.days.length === 1 ? "day" : "days"} a week`;
   const firstName = displayName.trim().split(/\s+/u)[0] || "there";
   const movementCount = `${selectedDay.prescriptions.length} ${selectedDay.prescriptions.length === 1 ? "movement" : "movements"}`;
 
-  function chooseDay(dayId: string, dayKey: string) {
-    setSelectedDayId(dayId);
-    // Keep the choice in the address so returning to Today lands on the same day.
-    window.history.replaceState(window.history.state, "", `/app?day=${encodeURIComponent(dayKey)}`);
+  function chooseDay(key: string) {
+    // Next.js syncs replaceState with useSearchParams, which re-renders with the new day.
+    window.history.replaceState(null, "", `/app?day=${encodeURIComponent(key)}`);
   }
 
   return (
@@ -106,9 +106,10 @@ export function MemberProgramHome({
             </>
           ) : (
             <>
-              <h1 id="member-program-title">Hey {firstName}! Ready for {selectedDay.displayName}?</h1>
+              <h1 id="member-program-title" tabIndex={-1}>Hey {firstName}! Ready for {selectedDay.displayName}?</h1>
+              <ArrivalFocus headingId="member-program-title" />
               <p>{movementCount} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label}</p>
-              {!canMutate ? <p className="pal-notice" role="status">Your routine is ready to look through. Verify your email and sign in again to start or edit workouts.</p> : null}
+              {!canMutate ? <p className="pal-notice">Your routine is ready to look through. Verify your email and sign in again to start or edit workouts.</p> : null}
               <div className="pal-today-actions">
                 <StartWorkoutControl dayId={selectedDay.id} eligible={canMutate} label={`Start ${selectedDay.displayName}`} programId={program.id} />
               </div>
@@ -126,7 +127,7 @@ export function MemberProgramHome({
           <ul className="pal-day-pills">
             {program.days.map((day) => (
               <li key={day.id}>
-                <button aria-pressed={day.id === selectedDay.id} className="pal-day-pill" onClick={() => chooseDay(day.id, day.dayKey)} type="button">
+                <button aria-pressed={day.id === selectedDay.id} className="pal-day-pill" onClick={() => chooseDay(day.dayKey)} type="button">
                   {day.displayName === `Day ${day.dayNumber}` ? null : <small>Day {day.dayNumber}</small>}
                   <strong>{day.displayName}</strong>
                 </button>
@@ -160,7 +161,12 @@ export function MemberProgramHome({
         <section aria-labelledby="member-home-progress-title">
           <div className="pal-heading-row">
             <h2 id="member-home-progress-title">Your progress</h2>
-            {progress.completedSessions > 0 ? <Link href="/app/progress">See all progress</Link> : null}
+            {progress.completedSessions > 0 ? (
+              <span className="pal-heading-links">
+                <Link href="/app/history" prefetch={false}>Review history</Link>
+                <Link href="/app/progress" prefetch={false}>See all progress</Link>
+              </span>
+            ) : null}
           </div>
           {progress.completedSessions > 0 ? (
             <dl className="pal-glance">

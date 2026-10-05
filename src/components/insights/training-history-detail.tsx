@@ -11,6 +11,7 @@ import {
   summarizeFinishedWorkout,
 } from "@/components/insights/training-insights-presenters";
 import { formatCardioPace } from "@/components/workout/workout-runner-presenters";
+import { ArrivalFocus } from "@/components/navigation/arrival-focus";
 import { BackLink } from "@/components/navigation/back-link";
 import { Icon } from "@/components/ui/icon";
 import { PalSticker, SceneStage } from "@/components/ui/scene-stage";
@@ -104,7 +105,8 @@ function WorkoutDone({
         {Array.from({ length: 14 }, (_, index) => <i key={index} />)}
       </div>
       <PalSticker pose="complete" />
-      <h1 id="history-done-title">Workout done! Nice work.</h1>
+      <h1 id="history-done-title" tabIndex={-1}>Workout done! Nice work.</h1>
+      <ArrivalFocus headingId="history-done-title" />
       <p>{finishedWorkoutSummary(summarizeFinishedWorkout(session.exercises), unitSystem)}</p>
       {records.length > 0 ? (
         <div className="pal-insights-ribbon">
@@ -118,8 +120,8 @@ function WorkoutDone({
         </div>
       ) : null}
       <div className="pal-actions">
-        <Link className="primary-action" href={todayHref}>Back to Today <Icon name="arrow-right" /></Link>
-        <Link className="secondary-action" href="/app/progress">See your progress</Link>
+        <Link className="primary-action" href={todayHref} prefetch={false}>Back to Today <Icon name="arrow-right" /></Link>
+        <Link className="secondary-action" href="/app/progress" prefetch={false}>See your progress</Link>
       </div>
     </header>
   );

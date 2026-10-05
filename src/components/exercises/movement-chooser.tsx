@@ -522,7 +522,7 @@ export function MovementChooserAdapter({
             </p>
             {visibleCandidates.length === 0 ? (
               <div className="pal-chooser-empty">
-                <p>Nothing matches that search.</p>
+                <p>No compatible movement matches this search.</p>
                 <button className="pal-text-button" onClick={() => setQuery("")} type="button">Clear search</button>
               </div>
             ) : (

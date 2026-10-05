@@ -71,6 +71,9 @@ export function PwaRegistration() {
     let active = true;
     let registration: ServiceWorkerRegistration | undefined;
     let installingWorker: ServiceWorker | null = null;
+    // Only a page that was already controlled when it loaded can receive an update; a first
+    // install claims the page while installing and must not look like one.
+    const controlledAtLoad = "serviceWorker" in navigator && navigator.serviceWorker.controller !== null;
     const refreshConnection = () => {
       void probeConnection().then((available) => {
         if (active) setOnline(available);
@@ -89,7 +92,7 @@ export function PwaRegistration() {
     const inspectInstallingWorker = () => {
       if (!active || !installingWorker || installingWorker.state !== "installed") return;
       if (serviceWorkerUpdateIsReady({
-        hadController: navigator.serviceWorker.controller !== null,
+        hadController: controlledAtLoad,
         replacementInstalled: true,
       })) setUpdateReady(true);
     };

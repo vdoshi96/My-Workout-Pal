@@ -342,7 +342,7 @@ export function SettingsForm({
           initialTrainingProfile={initialTrainingProfile}
         />
 
-        <form aria-labelledby="units-title" className="pal-settings-section" onSubmit={(event) => void save(event)}>
+        <form className="pal-settings-section" onSubmit={(event) => void save(event)}>
           <h2 id="units-title">Units and time zone</h2>
           <div className="pal-settings-field">
             <label htmlFor="settings-units">Display units</label>

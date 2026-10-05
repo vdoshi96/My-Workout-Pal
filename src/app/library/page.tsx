@@ -82,7 +82,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
               <p>Try a different name or switch equipment.</p>
             </div>
           ) : (
-            <ul className="pal-moves">
+            <ul className="pal-moves pal-moves--grid">
               {exercises.map((exercise) => (
                 <li className="pal-move pal-move--plain" id={`movement-${exercise.slug}`} key={exercise.slug}>
                   <div>

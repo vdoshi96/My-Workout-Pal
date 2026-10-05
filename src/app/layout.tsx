@@ -4,7 +4,6 @@ import "@fontsource/barlow-condensed/700.css";
 import "@fontsource-variable/source-sans-3";
 import "@fontsource-variable/fredoka";
 import "./globals.css";
-import "./quiet-set.css";
 import "./studio-pals.css";
 import "./pal-runner.css";
 import "./pal-routine.css";
@@ -15,6 +14,7 @@ import { connection } from "next/server";
 import type { ReactNode } from "react";
 
 import { PwaRegistration } from "@/components/pwa/pwa-registration";
+import { FrameFocusRing } from "@/components/ui/frame-focus-ring";
 
 export const metadata: Metadata = {
   applicationName: "My Workout Pal",
@@ -58,6 +58,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html data-scroll-behavior="smooth" lang="en">
       <body>
         {children}
+        <FrameFocusRing />
         <PwaRegistration />
       </body>
     </html>

@@ -81,7 +81,7 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
             <input defaultValue={query} id="member-library-query" maxLength={120} name="q" placeholder="Name, equipment or muscle" type="search" />
             <button className="secondary-action" type="submit">Search</button>
           </div>
-          <p className="pal-note">{resultCount} compatible result{resultCount === 1 ? "" : "s"}. {hasRoutine ? <>Change equipment in <Link href="/app/settings#equipment-profile">Settings</Link>.</> : "Choose equipment when you set up your routine."}</p>
+          <p className="pal-note">{resultCount} compatible result{resultCount === 1 ? "" : "s"}. {hasRoutine ? "Change equipment in Settings." : "Choose equipment when you set up your routine."}</p>
         </form>
 
         {resultCount === 0 ? (
@@ -97,7 +97,7 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
                   <h2 id="private-results-title">Your private movements</h2>
                   <Link href={withFrom("/app/library/custom", libraryHref)}>Manage all</Link>
                 </div>
-                <ul className="pal-moves">
+                <ul className="pal-moves pal-moves--grid">
                   {customExercises.map((exercise) => (
                     <li className="pal-move pal-move--plain" id={`movement-${exercise.id}`} key={exercise.id}>
                       <div>
@@ -119,7 +119,7 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
               {catalogExercises.length === 0 ? (
                 <p className="pal-note">No matches. Try a different search.</p>
               ) : (
-                <ul className="pal-moves">
+                <ul className="pal-moves pal-moves--grid">
                   {catalogExercises.map((exercise) => (
                     <li className="pal-move pal-move--plain" id={`movement-${exercise.slug}`} key={exercise.slug}>
                       <div>

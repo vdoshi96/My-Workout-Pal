@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useSyncExternalStore } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { Icon } from "@/components/ui/icon";
 
@@ -31,25 +30,10 @@ export function authenticatedDestinationIsCurrent(currentPathname: string, href:
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function subscribeToHistory(onChange: () => void): () => void {
-  window.addEventListener("popstate", onChange);
-  return () => window.removeEventListener("popstate", onChange);
-}
-
-function readSearch(): string {
-  return window.location.search;
-}
-
-function readServerSearch(): string {
-  return "";
-}
-
 export function AuthenticatedNav() {
   const pathname = usePathname();
-  // Read the origin from the address bar; the snapshot refreshes on every
-  // pathname render and on history traversal.
-  const search = useSyncExternalStore(subscribeToHistory, readSearch, readServerSearch);
-  const from = new URLSearchParams(search).get("from");
+  // The router's own search params change in the same render as the pathname.
+  const from = useSearchParams()?.get("from") ?? null;
 
   return (
     <nav aria-label="Account" className="member-nav">
