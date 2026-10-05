@@ -41,15 +41,15 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "A little space for your next set.",
+      name: "Your new gym buddy.",
     }),
   ).toBeVisible();
-  await expect(page.locator('.quiet-studio')).toBeVisible();
+  await expect(page.locator('.pal-scene')).toBeVisible();
   await expect(
-    page.locator('.quiet-studio img'),
+    page.locator('.pal-scene img'),
   ).toHaveAttribute("fetchpriority", "high");
-  await expect(page.getByText("No account needed. Practice stays temporary.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create my routine" })).toBeVisible();
+  await expect(page.getByText("No account needed for the test drive.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Make my routine" })).toBeVisible();
   if (testInfo.project.name === "chromium-desktop") {
     const evidencePath = testInfo.outputPath("companion-landing-desktop.png");
     await page.screenshot({ fullPage: true, path: evidencePath });
@@ -59,7 +59,7 @@ test("guest previews both profiles and completes the public discovery route", as
     });
   }
 
-  await page.getByRole("link", { name: "Explore the five-day example" }).click();
+  await page.getByRole("link", { name: "Peek at a five-day routine" }).click();
   await expect(page).toHaveURL(/\/program$/);
   await expect(page.getByRole("link", { name: "Sign in to save your own version" })).toBeVisible();
   for (const [index, name] of ["Push", "Pull", "Legs", "Upper", "Lower"].entries()) {
@@ -85,11 +85,11 @@ test("guest previews both profiles and completes the public discovery route", as
   await barbellPreview.click();
   await expect(barbellPreview).toHaveAttribute("aria-current", "true");
   await page.getByRole("link", { name: /^Day 2 Pull / }).focus();
-  const selectedDay = page.locator(".program-day-grid > li").filter({ has: page.getByRole("heading", { name: "Pull", exact: true }) });
+  const selectedDay = page.locator(".pal-day-list > li").filter({ has: page.getByText("Pull", { exact: true }) });
   await expect(
-    selectedDay.getByRole("heading", { level: 2, name: "Pull" }),
+    selectedDay.getByText("Pull", { exact: true }),
   ).toBeVisible();
-  await expect(selectedDay.getByText("Barbell bent-over row", { exact: true })).toBeVisible();
+  await expect(selectedDay.getByText(/Barbell bent-over row/).first()).toBeVisible();
 
   await selectedDay.getByRole("link", { name: /^Day 2 Pull / }).click();
   await expect(page).toHaveURL(/\/program\/pull\?equipment=barbell$/);
@@ -99,7 +99,7 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("link", { name: /Barbell bent-over row/ }),
   ).toBeVisible();
-  await expect(page.getByText("Edit cardio targets once you save a routine.")).toBeVisible();
+  await expect(page.getByText(/You can change it once you save a routine\./)).toBeVisible();
 
   await page.goto("/library?equipment=barbell");
   await page.getByLabel("Search movements").fill("bent over row");
@@ -112,18 +112,18 @@ test("guest previews both profiles and completes the public discovery route", as
     page.getByRole("heading", { level: 1, name: "Barbell bent-over row" }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Back to Library" }).click();
-  await expect(page).toHaveURL(/\/library\?equipment=barbell(?:#movement-[a-z0-9-]+)?$/);
+  await expect(page).toHaveURL(/\/library\?equipment=barbell&q=bent\+over\+row(?:#movement-[a-z0-9-]+)?$/);
   await page.getByLabel("Search movements").fill("not a real movement");
   await page.getByRole("button", { name: "Search" }).click();
   await expect(
-    page.getByRole("heading", { level: 3, name: "No compatible match" }),
+    page.getByRole("heading", { level: 3, name: "No match yet" }),
   ).toBeVisible();
   await Promise.all([
     page.waitForURL(/\/library\?equipment=barbell$/),
     page.getByRole("link", { name: "Clear search" }).click(),
   ]);
   await expect(
-    page.getByRole("heading", { level: 2, name: /^\d+ compatible movements$/ }),
+    page.getByRole("heading", { level: 2, name: /^\d+ movements for / }),
   ).toBeVisible();
 
   await page.goto("/library?q=first&q=second");
@@ -135,8 +135,7 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("heading", { level: 1, name: "Example workout" }),
   ).toBeVisible();
-  await expect(page.getByText("Not your workout · never saved")).toBeVisible();
-  await expect(page.getByText("Read only")).toBeVisible();
+  await expect(page.getByText("Example · nothing here is saved")).toBeVisible();
 
   await page.goto("/progress");
   await expect(
@@ -151,7 +150,7 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(page.locator("#auth-heading")).toHaveText(
     /^(Sign-in is unavailable|Sign in)$/,
   );
-  await expect(page.getByRole("link", { name: "Explore the example routine" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Not ready? Take a test drive first" })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -177,7 +176,7 @@ test("public account entry uses the protected member boundary from every public 
   await expect(programAccountActions.first()).toHaveAttribute("href", "/sign-in");
 
   await page.goto("/program/push?equipment=dumbbells");
-  await expect(page.getByText(/\d+ movements with a walker or runner finish\./)).toBeVisible();
+  await expect(page.getByText(/\d+ movements, then a 20-minute walk or run/)).toBeVisible();
   await expect(page.getByText("Example routine")).toBeVisible();
   const dayAccountAction = page.getByRole("link", { name: "Sign in" });
   await expect(dayAccountAction).toHaveAttribute("href", "/sign-in");
@@ -244,7 +243,8 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
 
   if ((page.viewportSize()?.width ?? 0) <= 430) {
     const primaryAction = await page
-      .getByRole("link", { name: "Try one set" })
+      .getByRole("link", { name: "Take a test drive" })
+      .first()
       .boundingBox();
     const fixedNavigation = await page.locator(".public-nav").boundingBox();
     expect(primaryAction).not.toBeNull();
@@ -263,7 +263,7 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "A little space for your next set.",
+      name: "Your new gym buddy.",
     }),
   ).toBeVisible();
 
@@ -275,7 +275,7 @@ test("keyboard, phone targets, dark mode, and reduced motion preserve the public
       scrollBehavior: rootStyle.scrollBehavior,
     };
   });
-  expect(presentation.backgroundColor).toBe("rgb(20, 42, 35)");
+  expect(presentation.backgroundColor).toBe("rgb(25, 27, 51)");
   expect(presentation.scrollBehavior).toBe("auto");
   expect(presentation.overflow).toBeLessThanOrEqual(1);
 

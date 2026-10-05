@@ -330,9 +330,9 @@ describe("credential-free authenticated harness boundary", () => {
     expect(runner).toContain("stageAuthenticatedFixture({");
     expect(runner).toContain("const releaseFixture =");
     expect(runner).toContain("releaseFixture();");
-    expect(runner).toContain('"public/illustrations/companions/preparing-fox.webp"');
+    expect(runner).toContain('"public/illustrations/quiet-set"');
     expect(runner).toContain(
-      '"tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox.webp"',
+      '"tests/fixtures/authenticated-app/public/illustrations/quiet-set"',
     );
     expect(runner).not.toContain("copyFileSync");
     expect(runner).not.toContain("unlinkSync");

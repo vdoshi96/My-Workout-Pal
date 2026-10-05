@@ -7,6 +7,7 @@ import {
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
+import { saveExampleFromOnboarding } from "./support/member";
 
 async function chooseCanonicalMovement(
   page: Page,
@@ -87,12 +88,9 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await saveExampleFromOnboarding(page);
   expect((await onboarding).status()).toBe(201);
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
 
   plannedSameOriginNavigationUrl = new URL("/app/program/edit", page.url()).href;
   try {

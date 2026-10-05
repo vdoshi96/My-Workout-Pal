@@ -2,6 +2,8 @@
 // Do not edit these expectations to make them pass; implement the plan instead.
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
+import { saveExampleRoutine } from "./support/member";
+
 const bannedVocabulary =
   /\b(immutable|canonical|seeded|topology|idempotent|reconcil\w*|snapshots?|namespace|firebase|owned programs?|owner-only|field guide|field notes)\b/i;
 
@@ -14,15 +16,6 @@ async function useViewer(context: BrowserContext, scope: string) {
   await context.route(/youtube-nocookie\.com|youtube\.com/, (route) =>
     route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>Demo omitted in local QA</title>" }),
   );
-}
-
-async function saveExampleRoutine(page: Page) {
-  await page.goto("/app");
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Save routine" }).click();
-  await expect(page.getByRole("button", { name: "Start workout", exact: true })).toBeVisible();
 }
 
 async function expectPlainPage(page: Page) {
@@ -53,12 +46,17 @@ test.describe("production audit: member surfaces", () => {
     await useViewer(context, `audit-onboarding-${info.project.name}-${Date.now()}`);
     await page.goto("/app");
     await expect(page).toHaveTitle("Today · My Workout Pal");
-    await expect(page.getByRole("heading", { name: "Where would you like to start?" })).toBeVisible();
-    await page.getByRole("radio", { name: /Example routine/ }).check();
-    await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("heading", { name: "Your preferences" })).toBeFocused();
-    await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("heading", { name: "Equipment" })).toBeFocused();
+    await expect(page.getByRole("heading", { name: "What are you training for?" })).toBeVisible();
+    for (const [choice, next] of [
+      [/^Build muscle/, "How much lifting have you done?"],
+      [/^Some/, "How many days a week can you train?"],
+      [/^3 days/, "What do you have to work with?"],
+      [/^Dumbbells, a bench and bodyweight/, "Here's your routine."],
+    ] as const) {
+      await page.getByRole("radio", { name: choice }).check();
+      await page.getByRole("button", { name: "Continue" }).click();
+      await expect(page.getByRole("heading", { name: next })).toBeFocused();
+    }
     await expect(page.getByRole("link", { name: "Skip to content" })).not.toBeFocused();
     await expectPlainPage(page);
   });
@@ -125,7 +123,7 @@ test.describe("production audit: member surfaces", () => {
   test("runner: readable validation, kept rest, prefill, focus, and confirmations", async ({ page, context }, info) => {
     await useViewer(context, `audit-runner-${info.project.name}-${Date.now()}`);
     await saveExampleRoutine(page);
-    await page.getByRole("button", { name: "Start workout", exact: true }).click();
+    await page.getByRole("button", { name: /^Start / }).click();
     await expect(page).toHaveURL(/\/workout\//);
     const heading = page.locator("#runner-active-heading");
     await expect(heading).toHaveText("Dumbbell bench press");

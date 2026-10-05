@@ -28,8 +28,8 @@ export const DEFAULT_ANSWERS: OnboardingAnswers = {
 };
 
 /** Answers the four onboarding questions and stops on the routine preview. */
-export async function answerOnboarding(page: Page, answers: OnboardingAnswers = DEFAULT_ANSWERS) {
-  await page.goto("/app");
+export async function answerOnboarding(page: Page, answers: OnboardingAnswers = DEFAULT_ANSWERS, { navigate = true } = {}) {
+  if (navigate) await page.goto("/app");
   await expect(page.getByRole("heading", { level: 1, name: "What are you training for?" })).toBeVisible();
   for (const [heading, choice] of [
     ["What are you training for?", answers.goal],
@@ -68,4 +68,13 @@ export async function startBlankRoutine(page: Page, search: string, movement: Re
   await page.getByRole("button", { name: movement }).click();
   await page.getByRole("button", { name: "Save my routine" }).click();
   await page.waitForURL(/\/app\/program\/edit/u);
+}
+
+/** From the onboarding screen already open: choose the five-day example, save, and skip the tour. */
+export async function saveExampleFromOnboarding(page: Page) {
+  await answerOnboarding(page, DEFAULT_ANSWERS, { navigate: false });
+  await page.getByText("Prefer a different start?").click();
+  await page.getByRole("button", { name: "Use the five-day example" }).click();
+  await page.getByRole("button", { name: "Save my routine" }).click();
+  await page.getByRole("button", { name: "Skip tour" }).click();
 }

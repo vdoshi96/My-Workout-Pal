@@ -18,6 +18,7 @@ import {
   HARNESS_VIEWER_HEADER,
   type HarnessScenario,
 } from "../fixtures/authenticated-app/server/harness-context";
+import { saveExampleFromOnboarding } from "./support/member";
 
 type HarnessViewer = "alice" | "alice-unverified";
 type HarnessControl = { scenario: HarnessScenario };
@@ -92,8 +93,24 @@ async function expectNoIntersection(first: Locator, second: Locator) {
   expect(overlapWidth * overlapHeight).toBeLessThanOrEqual(1);
 }
 
+const PROTECTED_TODAY = [
+  ".member-header a", ".member-header button", ".member-nav a", ".pal-today-copy h1", ".pal-today-copy > p",
+  ".pal-today-actions :is(button, a)", ".pal-days h2", ".pal-day-pill", ".verification-banner",
+].join(", ");
+
+/** The control is the topmost element at its own centre, so decoration never covers it. */
+async function expectOnTop(area: Locator) {
+  await area.scrollIntoViewIfNeeded();
+  await expect(area).toBeVisible();
+  expect(await area.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    return hit === element || (hit !== null && element.contains(hit));
+  })).toBe(true);
+}
+
 async function expectMemberCompanion(page: Page) {
-  const placement = page.locator('[data-companion-placement="member-home"]');
+  const placement = page.locator(".pal-today-stage .pal-scene");
   const image = placement.locator("img");
   await expect(placement).toBeVisible();
   await expect(placement).toHaveAttribute("aria-hidden", "true");
@@ -106,15 +123,11 @@ async function expectMemberCompanion(page: Page) {
   expect(
     await placement.evaluate((element) => getComputedStyle(element).pointerEvents),
   ).toBe("none");
-  for (const selector of [
-    ".member-header", ".member-nav", ".member-program-copy h1", ".member-program-copy > p",
-    ".quiet-today-start", ".quiet-today-start :is(button, select, a)",
-    ".member-resume-card", ".member-resume-card a", ".member-home-verification", ".member-week",
-  ]) {
-    for (const region of await page.locator(selector).all()) {
-      if (await region.isVisible()) await expectNoIntersection(placement, region);
-    }
+  // The scene is a background behind the copy by design, so "no overlap" becomes "never on top".
+  for (const region of await page.locator(PROTECTED_TODAY).all()) {
+    if (await region.isVisible()) await expectOnTop(region);
   }
+  await page.evaluate(() => window.scrollTo(0, 0));
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -166,19 +179,17 @@ test("verified, unverified, empty, and active member states keep the fox decorat
   const verified = await createHarnessContext(browser, scope, testInfo, "alice");
   const page = await verified.newPage();
   await page.goto("/app");
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Ready when you are, Alice QA." })).toBeVisible();
-  await expect(page.locator(".member-program-copy > p")).toHaveText("Five-day starter route · Dumbbells · 5 days");
-  const nextWorkout = page.getByRole("region", { name: "Your next workout" });
-  await expect(nextWorkout.getByLabel("Training day")).toBeVisible();
-  await expect(nextWorkout.getByRole("button", { name: "Start workout", exact: true })).toBeEnabled();
-  await expect(nextWorkout.getByRole("link", { name: "Review this day" })).toHaveAttribute("href", "/app/program/push");
-  await expect(page.locator(".member-day-grid > li")).toHaveCount(5);
-  await expect(page.locator(".member-home-progress, .member-home-totals")).toHaveCount(0);
+  await saveExampleFromOnboarding(page);
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hey Alice! Ready for Push?" })).toBeVisible();
+  await expect(page.locator(".pal-today-copy > p").first()).toHaveText(/ · Dumbbells$/u);
+  await expect(page.getByText("Five-day starter route · 5 days a week", { exact: true })).toBeVisible();
+  const nextWorkout = page.locator(".pal-today-copy");
+  await expect(page.getByRole("region", { name: "Your week" }).getByRole("button", { name: /Push/u })).toHaveAttribute("aria-pressed", "true");
+  await expect(nextWorkout.getByRole("button", { name: "Start Push", exact: true })).toBeEnabled();
+  await expect(page.getByRole("link", { name: "See the whole day" })).toHaveAttribute("href", /^\/app\/program\/push\?from=/u);
+  await expect(page.locator(".pal-day-pills > li")).toHaveCount(5);
+  await expect(page.locator(".pal-glance")).toHaveCount(0);
   await expectMemberCompanion(page);
   await assertAccessible(page);
 
@@ -195,13 +206,13 @@ test("verified, unverified, empty, and active member states keep the fox decorat
   }
   await captureMemberEvidence(page, "ready", testInfo);
 
-  await page.getByRole("link", { name: /Push/ }).click();
+  await page.getByRole("link", { name: "See the whole day" }).click();
   const startResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start workout" }).click();
+  await page.getByRole("button", { name: "Start Push" }).click();
   expect((await startResponse).status()).toBe(201);
   await page.waitForURL(/\/workout\//u);
   await page.goto("/app");
@@ -213,18 +224,9 @@ test("verified, unverified, empty, and active member states keep the fox decorat
       width,
     });
     await page.reload();
-    const placement = page.locator('[data-companion-placement="member-home"]');
-    if (width <= 767) {
-      await expect(placement).toBeHidden();
-      if (width === 390) {
-        await page.evaluate(() => window.scrollTo(0, 0));
-        await expectNoIntersection(page.locator(".member-resume-card"), page.locator(".member-nav"));
-      }
-    } else {
-      await expectMemberCompanion(page);
-      await expectNoIntersection(placement, page.locator(".member-resume-card"));
-      await expectNoIntersection(page.locator(".member-resume-card"), page.locator(".member-nav"));
-    }
+    // The scene now shows at every width; Resume must stay clear of the phone tab bar.
+    await expectMemberCompanion(page);
+    await expectNoIntersection(page.locator(".pal-today-actions a"), page.locator(".member-nav"));
   }
   await page.setViewportSize({
     height: browserName === "webkit" ? 844 : 1000,
@@ -241,25 +243,11 @@ test("verified, unverified, empty, and active member states keep the fox decorat
   );
   const unverifiedPage = await unverified.newPage();
   await unverifiedPage.goto("/app");
-  await expect(unverifiedPage.getByText("Your routine is available to review.")).toBeVisible();
+  await expect(unverifiedPage.getByText("Your Push workout is waiting. Verify your email to keep going.")).toBeVisible();
   await expect(unverifiedPage.getByRole("heading", { name: "Verify to resume Push" })).toBeVisible();
   await expect(unverifiedPage.getByRole("link", { name: "Review Push" })).toBeVisible();
-  const unverifiedPlacement = unverifiedPage.locator(
-    '[data-companion-placement="member-home"]',
-  );
-  if (browserName === "webkit") {
-    await expect(unverifiedPlacement).toBeHidden();
-  } else {
-    await expectMemberCompanion(unverifiedPage);
-    await expectNoIntersection(
-      unverifiedPlacement,
-      unverifiedPage.locator(".member-home-verification"),
-    );
-    await expectNoIntersection(
-      unverifiedPlacement,
-      unverifiedPage.locator(".member-resume-card"),
-    );
-  }
+  // The verification banner and Review link are in PROTECTED_TODAY, so they must sit above the scene.
+  await expectMemberCompanion(unverifiedPage);
   await assertAccessible(unverifiedPage);
   await captureMemberEvidence(unverifiedPage, "unverified", testInfo);
 
@@ -275,11 +263,8 @@ test("member decoration is static, forced-color safe, and failure safe", async (
   const context = await createHarnessContext(browser, scope, testInfo, "alice");
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await saveExampleFromOnboarding(page);
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
 
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await page.reload();
@@ -300,11 +285,11 @@ test("member decoration is static, forced-color safe, and failure safe", async (
 
   await page.emulateMedia({ colorScheme: "light", forcedColors: "active" });
   await page.reload();
-  await expect(page.locator('[data-companion-placement="member-home"]')).toBeHidden();
+  await expect(page.locator(".pal-today-stage .pal-scene")).toBeHidden();
   expect(
-    await page.locator(".member-program-hero > .member-program-copy:visible").count(),
+    await page.locator(".pal-today-stage > .pal-today-copy:visible").count(),
   ).toBe(1);
-  const protectedControls = page.locator(".member-program-copy h1, .member-program-copy > p, .quiet-today-start h2, .quiet-today-start button, .quiet-today-start select, .quiet-today-start a, .member-week h2, .member-nav a");
+  const protectedControls = page.locator(".pal-today-copy h1, .pal-today-copy > p, .pal-today-actions button, .pal-today-actions a, .pal-days h2, .pal-day-pill, .member-nav a");
   for (const control of await protectedControls.all()) {
     await expect(control).toBeVisible();
     await control.scrollIntoViewIfNeeded();
@@ -318,15 +303,14 @@ test("member decoration is static, forced-color safe, and failure safe", async (
   await page.emulateMedia({ colorScheme: "light", forcedColors: "none" });
   await page.reload();
   const failedPlacement = await expectMemberCompanion(page);
+  const copyWidth = () => page.locator(".pal-today-copy").evaluate((element) => element.getBoundingClientRect().width);
+  const copyWidthWithArt = await copyWidth();
   await failedPlacement.locator("img").evaluate((image) => {
     image.dispatchEvent(new Event("error"));
   });
   await expect(failedPlacement).toBeHidden();
-  const copyRatio = await page.locator(".member-program-copy").evaluate((element) => {
-    const hero = element.parentElement;
-    if (!hero) throw new Error("Member hero wrapper is missing.");
-    return element.getBoundingClientRect().width / hero.getBoundingClientRect().width;
-  });
+  // The copy never shared a column with the art, so it keeps its width when the art fails.
+  const copyRatio = (await copyWidth()) / copyWidthWithArt;
   expect(copyRatio).toBeGreaterThan(0.8);
   for (const control of await protectedControls.all()) await expect(control).toBeVisible();
 
@@ -346,11 +330,8 @@ test("slow and failed personal-home reads stay truthful and recover through retr
   const context = await createHarnessContext(browser, scope, testInfo, "alice", control);
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await saveExampleFromOnboarding(page);
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
 
   await page.goto("/sign-in?returnTo=/app");
   control.scenario = "slow-member-home";
@@ -360,9 +341,9 @@ test("slow and failed personal-home reads stay truthful and recover through retr
   const loading = page.locator('.member-state[aria-busy="true"]');
   await expect(loading).toContainText("Loading…");
   await expect(loading).toHaveAttribute("aria-busy", "true");
-  await expect(page.locator('[data-companion-placement="member-home"]')).toHaveCount(0);
+  await expect(page.locator(".pal-scene")).toHaveCount(0);
   await slowNavigation;
-  await expect(page.getByRole("heading", { name: /Ready when you are/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Hey Alice! Ready for /u })).toBeVisible();
 
   control.scenario = "ready";
   await page.goto("/sign-in?returnTo=/app");
@@ -373,10 +354,10 @@ test("slow and failed personal-home reads stay truthful and recover through retr
   const error = page.locator('.member-state[role="alert"]');
   await expect(error).toContainText("This page didn't load");
   await expect(error).toContainText("Nothing was changed.");
-  await expect(page.locator('[data-companion-placement="member-home"]')).toHaveCount(0);
+  await expect(page.locator(".pal-scene")).toHaveCount(0);
   control.scenario = "ready";
   await page.getByRole("button", { name: "Try again" }).click();
-  await expect(page.getByRole("heading", { name: /Ready when you are/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Hey Alice! Ready for /u })).toBeVisible();
   await expectMemberCompanion(page);
 
   await page.evaluate(() => fetch("/api/harness/scope", { method: "DELETE" }));

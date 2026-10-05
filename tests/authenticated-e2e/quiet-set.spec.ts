@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { answerOnboarding } from "./support/member";
+
 test("blank setup stays empty until selection, then a bodyweight set survives reload and contributes reps", async ({ page, context }, info) => {
   const scope = `quiet-${info.project.name}-${Date.now()}`;
   await context.setExtraHTTPHeaders({"x-mwp-harness-viewer":"alice", "x-mwp-harness-scope":scope, "x-mwp-harness-scenario":"ready"});
@@ -25,21 +27,24 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     await expect(page).toHaveURL(/\/app\/library$/);
     await expect(page.getByRole("heading",{name:"Exercise library",exact:true})).toBeVisible();
     await page.getByRole("link",{name:"Set up your routine",exact:true}).click();
-    await page.getByRole("radio", { name:/Blank routine/ }).check();
+    await page.getByRole("radio", { name:/^Build muscle/ }).check();
     await page.getByRole("button", {name:"Continue"}).click();
-    await expect(page.getByText("Step 2 of 3", {exact:false})).toBeVisible();
+    await expect(page.getByText("Step 2 of 5", {exact:false})).toBeVisible();
     expect(onboardPosts).toBe(0);
-    await page.getByLabel("Display units").selectOption("metric");
-    await page.getByRole("button", {name:"Continue"}).click();
-    await expect(page.getByText("Day 1 is empty. This draft has not been saved.")).toBeVisible();
+    await page.getByRole("button", {name:"Back"}).click();
+    await answerOnboarding(page, undefined, { navigate: false });
+    await page.getByText("Prefer a different start?").click();
+    await page.getByRole("button", {name:"Start blank"}).click();
+    await page.getByRole("button", {name:"Use kilograms"}).click();
+    await expect(page.getByText("Pick your first movement. Nothing is saved until you do.")).toBeVisible();
     expect(onboardPosts).toBe(0);
-    await expect(page.getByRole("button", {name:"Save routine"})).toBeDisabled();
+    await expect(page.getByRole("button", {name:"Save my routine"})).toBeDisabled();
     await page.getByLabel("Search movements").fill("push-up");
-    await page.getByRole("button", {name:/^Push-up bodyweight/}).click();
+    await page.getByRole("button", {name:"Push-up", exact:true}).click();
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({path:info.outputPath("blank-selected.png"), fullPage:true});
     const created = page.waitForResponse(r=>r.request().method()==="POST" && r.url().includes("/profile-program/onboard"));
-    await page.getByRole("button", {name:"Save routine"}).click();
+    await page.getByRole("button", {name:"Save my routine"}).click();
     expect((await created).status()).toBe(201);
     expect(onboardPosts).toBe(1);
     await expect(page).toHaveURL(/\/app\/program\/edit$/);
@@ -57,7 +62,7 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({path:info.outputPath("routine.png"), fullPage:true});
     await page.getByRole("link", {name:"Today", exact:true}).click();
-    const start = page.getByRole("button", {name:"Start workout", exact:true});
+    const start = page.getByRole("button", {name:"Start Day 1", exact:true});
     await expect(start).toBeInViewport();
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({path:info.outputPath("today.png"), fullPage:true});
@@ -65,14 +70,14 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     await expect(page).toHaveURL(/\/app\/library$/);
     await expect(page.getByRole("link", {name:"Library",exact:true})).toHaveAttribute("aria-current","page");
     await expect(page.getByRole("link", {name:"Routine",exact:true})).not.toHaveAttribute("aria-current","page");
-    await expect(page.locator("[data-companion-placement=library] img")).toHaveAttribute("src",/otter-study/);
+    await expect(page.locator(".pal-scene[data-scene=library] img")).toHaveAttribute("src",/otter-study/);
     await page.screenshot({path:info.outputPath("library.png"),fullPage:true});
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
     await page.getByRole("link", {name:"Today",exact:true}).click();
     await page.getByRole("link", {name:"Settings", exact:true}).click();
     await page.getByLabel("Your companion").selectOption("mica");
     await page.getByRole("link", {name:"Today", exact:true}).click();
-    await expect(page.locator("[data-companion-placement=member-home] img")).toHaveAttribute("src",/mica-studio/);
+    await expect(page.locator(".pal-scene[data-scene=mica] img")).toHaveAttribute("src",/mica-studio/);
     await page.screenshot({path:info.outputPath("today-mica.png"),fullPage:true});
     await page.getByRole("link", {name:"Settings", exact:true}).click();
     await page.getByLabel("Your companion").selectOption("pip");
@@ -134,13 +139,13 @@ for (const scenario of [
   await context.route(/youtube-nocookie\.com/,route=>route.fulfill({status:200,body:"<!doctype html><title>External demo omitted</title>"}));
   try {
     await page.goto("/app");
-    await page.getByRole("radio",{name:/Blank routine/}).check();
-    await page.getByRole("button",{name:"Continue",exact:true}).click();
-    await page.getByLabel("Display units").selectOption("metric");
-    await page.getByRole("button",{name:"Continue",exact:true}).click();
+    await answerOnboarding(page, undefined, { navigate: false });
+    await page.getByText("Prefer a different start?").click();
+    await page.getByRole("button",{name:"Start blank"}).click();
+    await page.getByRole("button",{name:"Use kilograms"}).click();
     await page.getByLabel("Search movements").fill(scenario.search);
-    await page.getByRole("button",{name:new RegExp(`^${scenario.name} `)}).click();
-    await page.getByRole("button",{name:"Save routine",exact:true}).click();
+    await page.getByRole("button",{name:scenario.name,exact:true}).click();
+    await page.getByRole("button",{name:"Save my routine",exact:true}).click();
     await expect(page).toHaveURL(/\/app\/program\/edit$/);
     await page.getByLabel("Sets",{exact:true}).fill("1");
     await page.getByRole("button",{name:"Save routine",exact:true}).click();
@@ -150,7 +155,7 @@ for (const scenario of [
       await page.screenshot({path:info.outputPath("routine-long-name.png"),fullPage:true});
     }
     await page.getByRole("link",{name:"Today",exact:true}).click();
-    await page.getByRole("button",{name:"Start workout",exact:true}).click();
+    await page.getByRole("button",{name:"Start Day 1",exact:true}).click();
     await expect(page.getByLabel("Duration (seconds)",{exact:true})).toBeInViewport();
     await expect(page.getByLabel("Weight (kg)",{exact:true})).toHaveCount(0);
     await page.getByLabel("Duration (seconds)",{exact:true}).fill(scenario.duration);

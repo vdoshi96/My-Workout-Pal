@@ -118,6 +118,15 @@ async function measure(page: Page, screen: string, state: ContrastSample["state"
         };
         if (element.matches("input[type=radio], input[type=checkbox]")) {
           boundary = null;
+        } else if (resolvedState === "focus" && element.tagName === "IFRAME") {
+          // A focused frame's ring is drawn on its wrapper (FrameFocusRing).
+          const host = element.parentElement;
+          const hostStyle = host ? getComputedStyle(host) : null;
+          const outside = backgroundOf(host?.parentElement ?? null).color;
+          if (hostStyle && host?.hasAttribute("data-frame-focused") && hostStyle.outlineStyle !== "none" && parseFloat(hostStyle.outlineWidth) > 0) {
+            const outline = blend(parse(hostStyle.outlineColor), outside);
+            boundary = { color: hex(outline), against: hex(outside), ratio: ratio(outline, outside) };
+          } else boundary = { color: "none", against: hex(outside), ratio: 0 };
         } else if (resolvedState === "focus") {
           if (style.outlineStyle === "auto") boundary = { color: "browser default", against: hex(parentBackground), ratio: 3 };
           else if (style.outlineStyle !== "none" && outlineWidth > 0) {

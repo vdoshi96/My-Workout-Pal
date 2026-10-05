@@ -1060,9 +1060,7 @@ export async function executeHostedDeletionQa(
       identity: aliceIdentity,
     });
     stage = "public_return_evidence";
-    const hero = alicePage.locator(
-      'img[src="/illustrations/companions/planning-hedgehog.webp"]',
-    );
+    const hero = alicePage.locator('.pal-scene img');
     await expect(hero).toBeVisible();
     await expect(hero).toHaveAttribute("alt", "");
     await expect(hero).toHaveAttribute("aria-hidden", "true");

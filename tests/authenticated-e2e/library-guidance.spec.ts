@@ -7,6 +7,7 @@ import {
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
+import { saveExampleFromOnboarding } from "./support/member";
 
 async function privateMutation(
   page: Page,
@@ -84,12 +85,9 @@ test("browses, creates, links, selects, and isolates private movements", async (
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await saveExampleFromOnboarding(page);
   expect((await onboarding).status()).toBe(201);
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
 
   await page.goto("/app/library/chooser");
   const dialog = page.getByRole("dialog", { name: "Add movement" });
@@ -208,13 +206,13 @@ test("browses, creates, links, selects, and isolates private movements", async (
   expect(publishResult.status).toBe(200);
 
   await page.goto("/app");
-  await page.getByRole("link", { name: /Guidance day/ }).click();
+  await page.getByRole("link", { name: "See the whole day" }).click();
   const start = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start workout" }).click();
+  await page.getByRole("button", { name: "Start Guidance day" }).click();
   expect((await start).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   await expect(page.getByRole("heading", { name: "Suitcase march" })).toBeVisible();

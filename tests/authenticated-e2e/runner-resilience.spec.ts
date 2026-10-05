@@ -18,6 +18,7 @@ import {
   type HarnessScenario,
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
+import { saveExampleFromOnboarding } from "./support/member";
 
 type SyntheticViewer = "alice" | "bob";
 type ResilienceControl = {
@@ -287,17 +288,15 @@ async function onboardAndOpenPush(page: Page): Promise<string> {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await saveExampleFromOnboarding(page);
   expect((await onboard).status()).toBe(201);
-  await page.getByRole("link", { name: /Push/ }).click();
+  await page.getByRole("link", { name: "See the whole day" }).click();
   const start = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start workout" }).click();
+  await page.getByRole("button", { name: "Start Push" }).click();
   expect((await start).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -483,7 +482,7 @@ async function preparePushCompletion(page: Page): Promise<void> {
     "Front plank",
   ]) {
     await page
-      .getByRole("button", { name: new RegExp(exerciseName, "iu") })
+      .getByRole("button", { name: new RegExp(`^\\d+ ${exerciseName}`, "iu") })
       .click();
     await submitRunnerAction(page, "Skip exercise");
   }

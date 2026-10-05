@@ -1,8 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+const address = vi.hoisted(() => ({ search: "" }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(address.search),
 }));
 
 import { MemberProgramHome } from "@/components/program/member-program-home";
@@ -92,6 +94,8 @@ const program: ActiveProgramReadModel = {
 };
 
 describe("MemberProgramHome", () => {
+  afterEach(() => { address.search = ""; });
+
   const emptyProgress = {
     completedSessions: 0,
     distanceMeters: 0,
@@ -133,6 +137,24 @@ describe("MemberProgramHome", () => {
     expect(markup).toContain(
       'src="/illustrations/quiet-set/pip-studio.webp"',
     );
+  });
+
+  it("selects the day named in the address, even over a stale server render", () => {
+    address.search = "?day=70000000-0000-4000-8000-000000000002";
+    const markup = renderToStaticMarkup(
+      <MemberProgramHome
+        canMutate
+        displayName="Alice QA"
+        initialDayKey={null}
+        initialProgram={program}
+        progress={emptyProgress}
+        resumableWorkout={null}
+      />,
+    );
+
+    expect(markup).toContain("Hey Alice! Ready for Trail?");
+    expect(markup).toContain('aria-pressed="true" class="pal-day-pill" type="button"><small>Day 2</small><strong>Trail</strong>');
+    expect(markup).toContain('aria-pressed="false" class="pal-day-pill" type="button"><small>Day 1</small><strong>Mobility</strong>');
   });
 
   it("makes resume dominant and removes competing start links", () => {

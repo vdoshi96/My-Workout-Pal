@@ -16,7 +16,7 @@ test.describe("playful onboarding", () => {
 
     // A choice is required before moving on, and the message says so next to the question.
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("alert")).toHaveText("Pick one to continue.");
+    await expect(page.getByRole("alert").filter({ hasText: "Pick one" })).toHaveText("Pick one to continue.");
 
     await answerOnboarding(page, { goal: "Get stronger", experience: "I'm new to this", days: "2 days", equipment: "Dumbbells, a bench and bodyweight" });
     await expect(page.getByRole("heading", { level: 1, name: "Here's your routine." })).toBeFocused();
@@ -39,7 +39,9 @@ test.describe("playful onboarding", () => {
     await page.getByRole("button", { name: "Save my routine" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Your next workout lives on Today." })).toBeFocused();
     await page.getByRole("button", { name: "Skip tour" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: /^Hey Alice! Ready for / })).toBeVisible();
+    // The tour's controls disappear, so focus moves to Today's heading.
+    await expect(page.getByRole("heading", { level: 1, name: /^Hey Alice! Ready for / })).toBeFocused();
+    await expect(page.getByRole("link", { name: "Skip to content" })).not.toBeFocused();
     await expect(page.getByRole("button", { name: /^Start / })).toBeVisible();
 
     // The answers persist and stay editable; reload keeps the same routine.

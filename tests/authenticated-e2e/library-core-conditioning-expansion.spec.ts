@@ -18,6 +18,7 @@ import {
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
+import { saveExampleFromOnboarding } from "./support/member";
 
 type OpenHarnessPage = Readonly<{
   close: () => Promise<void>;
@@ -190,10 +191,7 @@ async function submitOnboarding(page: Page) {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await saveExampleFromOnboarding(page);
   return responsePromise;
 }
 
@@ -241,7 +239,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
 
   await alice.page.goto("/app");
   expect((await submitOnboarding(alice.page)).status()).toBe(201);
-  await expect(alice.page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Your week" })).toBeVisible();
   await alice.page.waitForLoadState("networkidle");
   const onboarded = await readProfileProgram(alice.page);
   const usesImperialUnits = onboarded.preferences.unitSystem === "imperial";

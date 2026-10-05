@@ -35,7 +35,8 @@ test.describe("back to the exact origin", () => {
 
     // Today → whole day → guide → back to the day at that movement → back to Today on Pull.
     await page.getByRole("link", { name: "See the whole day" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: /Pull/u })).toBeVisible();
+    await expect(page).toHaveURL(/\/app\/program\/pull\?from=/u);
+    await expect(page.getByRole("heading", { level: 1, name: "Day 2 · Pull" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Today", exact: true })).toHaveAttribute("aria-current", "page");
     await page.locator("#movement-4").getByRole("link").first().click();
     await page.getByRole("link", { name: "Back to Day 2 · Pull" }).click();
@@ -46,6 +47,7 @@ test.describe("back to the exact origin", () => {
 
     // A demo opens in place on the day page and closing it returns focus to the same trigger.
     await page.getByRole("link", { name: "See the whole day" }).click();
+    await expect(page).toHaveURL(/\/app\/program\/pull\?from=/u);
     const url = page.url();
     const trigger = page.getByRole("button", { name: /^Watch demo for / }).first();
     await trigger.click();
@@ -94,9 +96,11 @@ test.describe("back to the exact origin", () => {
 
     // The finish lands on the workout with a celebration and a way back to Today.
     await page.waitForURL(/\/app\/history\/[^?]+\?from=%2Fapp&done=1/u);
-    await expect(page.getByRole("heading", { name: "Workout done! Nice work." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Workout done! Nice work." })).toBeFocused();
+    await expect(page.getByRole("link", { name: "Skip to content" })).not.toBeFocused();
     await page.getByRole("link", { name: "Back to Today" }).first().click();
     await expect(page).toHaveURL(/\/app$/u);
+    await expect(page.getByRole("heading", { level: 1, name: /^Hey Alice! Ready for / })).toBeVisible();
 
     // Records → source workout → back to the same record.
     await page.goto("/app/prs");

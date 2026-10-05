@@ -8,6 +8,7 @@ import {
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
+import { saveExampleFromOnboarding } from "./support/member";
 
 function isSupersededNextFlightRequest(request: Request): boolean {
   const url = new URL(request.url());
@@ -79,11 +80,8 @@ test("full-page Settings fails closed until the browser Firebase identity is res
   });
 
   await page.goto("/app");
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await saveExampleFromOnboarding(page);
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
   await page.goto("/app/settings");
   await page.reload();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();

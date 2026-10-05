@@ -9,7 +9,6 @@ import {
   type Browser,
   type BrowserContext,
   type BrowserContextOptions,
-  type Locator,
   type Page,
   type TestInfo,
 } from "@playwright/test";
@@ -20,6 +19,7 @@ import {
   HARNESS_VIEWER_HEADER,
   type HarnessScenario,
 } from "../fixtures/authenticated-app/server/harness-context";
+import { saveExampleFromOnboarding } from "./support/member";
 
 type HarnessViewer = "alice" | "alice-unverified";
 type HarnessControl = { scenario: HarnessScenario };
@@ -75,88 +75,13 @@ async function createHarnessContext(
   return context;
 }
 
-async function expectNoIntersection(first: Locator, second: Locator) {
-  const [firstBox, secondBox] = await Promise.all([
-    first.boundingBox(),
-    second.boundingBox(),
-  ]);
-  expect(firstBox).not.toBeNull();
-  expect(secondBox).not.toBeNull();
-  if (!firstBox || !secondBox) throw new Error("Required geometry participant is hidden.");
-  const overlapWidth = Math.max(
-    0,
-    Math.min(firstBox.x + firstBox.width, secondBox.x + secondBox.width) -
-      Math.max(firstBox.x, secondBox.x),
-  );
-  const overlapHeight = Math.max(
-    0,
-    Math.min(firstBox.y + firstBox.height, secondBox.y + secondBox.height) -
-      Math.max(firstBox.y, secondBox.y),
-  );
-  expect(overlapWidth * overlapHeight).toBeLessThanOrEqual(1);
-}
-
-async function expectCompanion(
-  page: Page,
-  variant: "history" | "library" | "routine-editor" | "settings" | "workout",
-  visible: boolean,
-  protectedSelectors: readonly string[],
-) {
-  const placement = page.locator(`[data-companion-placement="${variant}"]`);
-  if (!visible) {
-    await expect(placement).toBeHidden();
-    return placement;
-  }
-
-  const image = placement.locator("img");
-  await expect(placement).toBeVisible();
-  await expect(placement).toHaveAttribute("aria-hidden", "true");
-  await expect(image).toHaveAttribute("alt", "");
-  await expect(image).toHaveAttribute("aria-hidden", "true");
-  await expect(image).not.toHaveAttribute("role", /.+/u);
-  await expect(image).not.toHaveAttribute("tabindex", /.+/u);
-  await expect(
-    placement.locator("a, button, input, select, textarea, [tabindex]"),
-  ).toHaveCount(0);
-  await expect
-    .poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth))
-    .toBeGreaterThan(0);
-  expect(
-    await placement.evaluate((element) => ({
-      labelled: element.getAttribute("aria-label") ?? "",
-      pointerEvents: getComputedStyle(element).pointerEvents,
-      role: element.getAttribute("role") ?? "",
-      focusable: element.matches(":focus, :focus-within"),
-    })),
-  ).toEqual({ labelled: "", pointerEvents: "none", role: "", focusable: false });
-  expect(
-    await placement.evaluate((element) => {
-      const rect = element.getBoundingClientRect();
-      const target = document.elementFromPoint(
-        rect.left + rect.width / 2,
-        rect.top + rect.height / 2,
-      );
-      return target === element || (target ? element.contains(target) : false);
-    }),
-  ).toBe(false);
-
-  for (const selector of protectedSelectors) {
-    for (const protectedRegion of await page.locator(selector).all()) {
-      if (await protectedRegion.isVisible()) {
-        await expectNoIntersection(placement, protectedRegion);
-      }
-    }
-  }
-  return placement;
-}
-
 /**
  * Studio Pals insights and Settings pages open on a decorative SceneStage behind the content.
  * It must stay outside meaning, pointer and focus semantics and never sit on top of a protected region.
  */
 async function expectInsightsScene(
   page: Page,
-  scene: "progress" | "routine" | "settings" | "workout",
+  scene: "library" | "progress" | "routine" | "settings" | "workout",
   protectedSelectors: readonly string[],
 ) {
   const stage = page.locator(`.pal-scene[data-scene="${scene}"]`);
@@ -164,6 +89,9 @@ async function expectInsightsScene(
   await expect(stage).toHaveCount(1);
   await expect(stage).toHaveAttribute("aria-hidden", "true");
   await expect(image).toHaveAttribute("alt", "");
+  await expect
+    .poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0);
   await expect(stage.locator("a, button, input, select, textarea, [tabindex]")).toHaveCount(0);
   expect(await stage.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
   for (const selector of protectedSelectors) {
@@ -244,11 +172,8 @@ test("member rollout surfaces preserve product priority across the authenticated
   const context = await createHarnessContext(browser, scope, testInfo, "alice", control);
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await saveExampleFromOnboarding(page);
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
 
   for (const width of widthMatrix(testInfo)) {
     await page.setViewportSize({
@@ -258,14 +183,14 @@ test("member rollout surfaces preserve product priority across the authenticated
 
     await page.goto("/app/library");
     await expect(page.getByRole("heading", { name: "Exercise library" })).toBeVisible();
-    await expectCompanion(page, "library", true, [
+    await expectInsightsScene(page, "library", [
       ".member-header",
       ".member-nav",
-      ".member-library-heading h1",
-      ".member-library-heading p",
-      ".member-library-heading .primary-action",
-      ".member-library-search",
-      ".member-library-list > li",
+      ".pal-page-head h1",
+      ".pal-page-head p",
+      ".pal-page-head .pal-actions a",
+      ".pal-search",
+      ".pal-moves > li",
     ]);
     await page.getByLabel("Search movements").focus();
     await expect(page.getByLabel("Search movements")).toBeFocused();
@@ -351,13 +276,13 @@ test("member rollout surfaces preserve product priority across the authenticated
   await expect(settingsPlacement).toHaveCount(1);
 
   await page.goto("/app");
-  await page.getByRole("link", { name: /Push/ }).click();
+  await page.getByRole("link", { name: "See the whole day" }).click();
   const startResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start workout" }).click();
+  await page.getByRole("button", { name: "Start Push" }).click();
   expect((await startResponse).status()).toBe(201);
   await page.waitForURL(/\/workout\/[0-9a-f-]+$/u);
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -407,7 +332,7 @@ test("member rollout surfaces preserve product priority across the authenticated
     unverifiedPage.getByRole("heading", { name: "Verify before editing this workout" }),
   ).toBeVisible();
   await expect(
-    unverifiedPage.locator('[data-companion-placement="workout"]'),
+    unverifiedPage.locator('.pal-scene[data-scene="workout"]'),
   ).toHaveCount(0);
   await unverified.close();
 
@@ -508,21 +433,13 @@ test("owned companion failure collapses without changing protected controls", as
   const context = await createHarnessContext(browser, scope, testInfo, "alice", control);
   const page = await context.newPage();
   await page.goto("/app");
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await saveExampleFromOnboarding(page);
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
   await page.goto("/app/library");
-  const placement = page.locator('[data-companion-placement="library"]');
-  if (currentWidth(testInfo) >= 1024) {
-    await expect(placement).toBeVisible();
-    await placement.locator("img").evaluate((image) => image.dispatchEvent(new Event("error")));
-    await expect(placement).toBeHidden();
-  } else {
-    await placement.locator("img").evaluate((image) => image.dispatchEvent(new Event("error")));
-    await expect(placement).toBeHidden();
-  }
+  const placement = page.locator('.pal-scene[data-scene="library"]');
+  await expect(placement).toBeVisible();
+  await placement.locator("img").evaluate((image) => image.dispatchEvent(new Event("error")));
+  await expect(placement).toBeHidden();
   await expect(page.getByLabel("Search movements")).toBeVisible();
   await expect(page.getByRole("link", { name: /Create private exercise/u })).toBeVisible();
   await expectNoOverflow(page);
@@ -549,18 +466,15 @@ test("headed native 200 percent zoom reflows member Library and History", async 
 
   try {
     await page.goto("/app");
-    await page.getByRole("radio", { name: /Example routine/ }).check();
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-    await page.getByRole("button", { name: "Save routine", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
-    await page.getByRole("link", { name: /Push/ }).click();
+    await saveExampleFromOnboarding(page);
+    await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
+    await page.getByRole("link", { name: "See the whole day" }).click();
     const startResponse = page.waitForResponse(
       (response) =>
         new URL(response.url()).pathname === "/api/app/workouts" &&
         response.request().method() === "POST",
     );
-    await page.getByRole("button", { name: "Start workout" }).click();
+    await page.getByRole("button", { name: "Start Push" }).click();
     expect((await startResponse).status()).toBe(201);
     await page.waitForURL(/\/workout\/[0-9a-f-]+$/u);
     const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -634,7 +548,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
     expect(before.innerWidth / zoomed.innerWidth).toBeCloseTo(2, 1);
     expect(zoomed.visualScale).toBe(1);
     expect(zoomed.scrollWidth - zoomed.clientWidth).toBeLessThanOrEqual(1);
-    await expect(page.locator('[data-companion-placement="library"]')).toBeHidden();
+    await expectInsightsScene(page, "library", [".pal-page-head h1", ".pal-search"]);
     await page.getByLabel("Search movements").focus();
     await expect(page.getByLabel("Search movements")).toBeFocused();
     await assertAccessible(page);

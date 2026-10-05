@@ -51,7 +51,7 @@ describe("hosted deletion and ownership QA command", () => {
     expect(browserSource).not.toContain('name: "Create my program"');
     expect(browserSource).toContain('name: "Your workout. Your way."');
     expect(browserSource).not.toContain('name: "Your whole five-day plan. No account required."');
-    expect(browserSource).toContain('img[src="/illustrations/companions/planning-hedgehog.webp"]');
+    expect(browserSource).toContain('.pal-scene img');
     expect(browserSource).not.toContain('img[src="/illustrations/workout-pals-gym.webp"]');
   });
 });

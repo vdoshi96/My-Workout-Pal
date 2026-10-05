@@ -26,13 +26,18 @@ test("public screens", async ({ page, context }, info) => {
       await capture(page, info, name);
     });
   }
-  await step("try-logged", async () => {
+  await step("test-drive", async () => {
     await page.goto("/try");
+    await page.getByRole("button", { name: "Let's go" }).click();
+    await page.getByLabel(/^Weight/u).fill("25");
     await page.getByLabel("Repetitions").fill("10");
-    await page.getByRole("button", { name: /Log set/ }).click();
-    await page.getByRole("button", { name: "Pause timer" }).click();
-    await capture(page, info, "try-rest");
-    await page.getByRole("button", { name: /Finish practice/ }).click();
+    await capture(page, info, "try-log");
+    await page.getByRole("button", { name: /Log set/u }).click();
+    await capture(page, info, "try-rest", { fullPage: false });
+    await page.getByRole("button", { name: /Skip rest|Next move/u }).click();
+    await page.getByLabel("Seconds").fill("30");
+    await page.getByRole("button", { name: "Finish workout" }).click();
     await capture(page, info, "try-complete");
   });
+
 });

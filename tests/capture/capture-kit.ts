@@ -19,7 +19,19 @@ function outputDirectory(info: TestInfo) {
 export async function capture(page: Page, info: TestInfo, name: string, options: { fullPage?: boolean } = {}) {
   await settle(page);
   const directory = outputDirectory(info);
-  await page.screenshot({ path: resolve(directory, `${name}.png`), fullPage: options.fullPage ?? true, animations: "disabled" });
+  const path = resolve(directory, `${name}.png`);
+  const viewport = page.viewportSize();
+  if ((options.fullPage ?? true) && viewport) {
+    // Grow the viewport to the page instead of a stitched full-page shot, so fixed bars sit at the
+    // real bottom and nothing hidden off-screen (like the skip link) is painted mid-page.
+    const height = await page.evaluate(() => Math.ceil(document.documentElement.scrollHeight));
+    await page.setViewportSize({ width: viewport.width, height: Math.min(Math.max(height, viewport.height), 12000) });
+    await settle(page);
+    await page.screenshot({ path, animations: "disabled" });
+    await page.setViewportSize(viewport);
+  } else {
+    await page.screenshot({ path, animations: "disabled" });
+  }
   const samples = await sampleStates(page, name, { interactive: !info.project.name.startsWith("phone") });
   writeFileSync(resolve(directory, `${name}.contrast.json`), JSON.stringify(samples, null, 2));
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

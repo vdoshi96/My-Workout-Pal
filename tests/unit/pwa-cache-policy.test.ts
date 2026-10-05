@@ -47,16 +47,16 @@ describe("PWA public-cache policy", () => {
       }),
     ).toBe(true);
     expect(PWA_INSTALL_ASSETS).toContain(
-      "/illustrations/companions/planning-hedgehog-512.webp",
+      "/illustrations/quiet-set/pip-studio-dusk.webp",
     );
     expect(PWA_INSTALL_ASSETS).toContain(
-      "/illustrations/companions/reviewing-raccoon-512.webp",
+      "/illustrations/quiet-set/tortoise-review-dusk-phone.webp",
     );
     expect(PWA_INSTALL_ASSETS).toContain(
-      "/illustrations/companions/cataloging-otter.webp",
+      "/illustrations/quiet-set/otter-study.webp",
     );
     expect(PWA_INSTALL_ASSETS).toContain(
-      "/illustrations/companions/cataloging-otter-512.webp",
+      "/illustrations/quiet-set/otter-study-dusk.webp",
     );
     for (const privateAsset of [
       "history-archive-tortoise",
@@ -85,7 +85,7 @@ describe("PWA public-cache policy", () => {
         appOrigin,
         destination: "image",
         method: "GET",
-        url: `${appOrigin}/illustrations/companions/cataloging-otter.webp`,
+        url: `${appOrigin}/illustrations/quiet-set/otter-study-dusk.webp`,
       }),
     ).toBe(true);
     expect(
@@ -95,13 +95,13 @@ describe("PWA public-cache policy", () => {
         method: "GET",
         url: `${appOrigin}/illustrations/companions/planning-hedgehog.webp`,
       }),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       isCacheableStaticRequest({
         appOrigin,
         destination: "image",
         method: "GET",
-        url: `${appOrigin}/illustrations/companions/reviewing-raccoon.webp`,
+        url: `${appOrigin}/illustrations/quiet-set/tortoise-review-dusk.webp`,
       }),
     ).toBe(true);
     expect(

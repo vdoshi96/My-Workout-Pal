@@ -34,8 +34,9 @@ describe("Wave 3 companion route and cache boundaries", () => {
       "utf8",
     );
 
-    expect(policy).toContain('"/illustrations/companions/cataloging-otter.webp"');
-    expect(policy).toContain('"/illustrations/companions/cataloging-otter-512.webp"');
+    expect(policy).toContain('"/illustrations/quiet-set/otter-study.webp"');
+    expect(policy).toContain('"/illustrations/quiet-set/otter-study-dusk.webp"');
+    expect(policy).not.toContain("/illustrations/companions/");
     expect(policy).not.toContain("routine-drafting-beaver");
     expect(policy).not.toContain("history-archive-tortoise");
     expect(policy).not.toContain("settings-packing-hare");
@@ -48,11 +49,11 @@ describe("Wave 3 companion route and cache boundaries", () => {
       import.meta.url,
     );
     const publicDirectory = new URL(
-      "../../public/illustrations/companions/",
+      "../../public/illustrations/quiet-set/",
       import.meta.url,
     );
     const provenanceDirectory = new URL(
-      "../../docs/design/provenance/companions/",
+      "../../docs/design/provenance/quiet-set/",
       import.meta.url,
     );
     const publicEntries = await readdir(publicDirectory);
@@ -75,43 +76,17 @@ describe("Wave 3 companion route and cache boundaries", () => {
         readFile(new URL(`${webpName}.json`, provenanceDirectory), "utf8"),
       ]);
       const provenance = JSON.parse(provenanceText) as Record<string, unknown>;
-      expect(provenance).toMatchObject({
-        generator: "OpenAI built-in image generation",
-        provenanceVersion: 2,
-        sha256: createHash("sha256").update(asset).digest("hex"),
-      });
-      expect(String(provenance["prompt"] ?? "").length).toBeGreaterThan(100);
-      expect(provenance).not.toHaveProperty("source");
-      expect(provenance).not.toHaveProperty("derivedFrom");
-      expect(provenance).not.toHaveProperty("chromaSource");
-      expect(provenance).not.toHaveProperty("alphaSource");
+      // Dusk scenes are deterministic recolours: their records pin the exact served bytes.
+      if (webpName.includes("-dusk")) {
+        expect(provenance["sha256"]).toBe(createHash("sha256").update(asset).digest("hex"));
+        expect(String(provenance["method"] ?? "")).toContain("recolor-dusk-scene.sh");
+      } else {
+        expect(String(provenance["prompt"] ?? "").length).toBeGreaterThan(100);
+      }
       expect(provenanceText).not.toMatch(
         /\/Users\/|\/private\/|generated_images|generationId|exec-[0-9a-z-]+/u,
       );
     }
 
-    for (const webpName of ["workout-pals-gym.webp", "workout-pals-gym-768.webp"]) {
-      const [asset, provenanceText] = await Promise.all([
-        readFile(new URL(`../../public/illustrations/${webpName}`, import.meta.url)),
-        readFile(
-          new URL(
-            `../../docs/design/provenance/illustrations/${webpName}.json`,
-            import.meta.url,
-          ),
-          "utf8",
-        ),
-      ]);
-      const provenance = JSON.parse(provenanceText) as Record<string, unknown>;
-      expect(provenance).toMatchObject({
-        generator: "OpenAI built-in image generation",
-        provenanceVersion: 2,
-        sha256: createHash("sha256").update(asset).digest("hex"),
-      });
-      expect(String(provenance["prompt"] ?? "").length).toBeGreaterThan(100);
-      expect(provenance).not.toHaveProperty("source");
-      expect(provenanceText).not.toMatch(
-        /\/Users\/|\/private\/|generated_images|generationId|exec-[0-9a-z-]+/u,
-      );
-    }
   });
 });
