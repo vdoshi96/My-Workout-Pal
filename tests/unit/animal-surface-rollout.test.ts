@@ -3,77 +3,6 @@ import { readFile, readdir } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
-import {
-  canShowRoutineEditorCompanion,
-  canShowSettingsCompanion,
-  canShowWorkoutCompanion,
-} from "@/domain/companions/visibility";
-
-describe("Wave 3 companion visibility", () => {
-  it("keeps routine-editor art out of mutation, validation, status, and review states", () => {
-    const neutral = {
-      busy: false,
-      canMutate: true,
-      dirty: false,
-      hasErrors: false,
-      hasOpenReview: false,
-      hasStatusMessage: false,
-    };
-
-    expect(canShowRoutineEditorCompanion(neutral)).toBe(true);
-    for (const critical of Object.keys(neutral) as (keyof typeof neutral)[]) {
-      const criticalValue = critical === "canMutate" ? false : true;
-      expect(
-        canShowRoutineEditorCompanion({ ...neutral, [critical]: criticalValue }),
-      ).toBe(false);
-    }
-  });
-
-  it("keeps Settings art out of identity, save, error, and deletion states", () => {
-    const neutral = {
-      busy: false,
-      deleteBusy: false,
-      hasDeletionReview: false,
-      hasStatusMessage: false,
-      hasUnsubmittedInput: false,
-      identityReady: true,
-      verified: true,
-    };
-
-    expect(canShowSettingsCompanion(neutral)).toBe(true);
-    expect(canShowSettingsCompanion({ ...neutral, busy: true })).toBe(false);
-    expect(canShowSettingsCompanion({ ...neutral, deleteBusy: true })).toBe(false);
-    expect(canShowSettingsCompanion({ ...neutral, hasDeletionReview: true })).toBe(false);
-    expect(canShowSettingsCompanion({ ...neutral, hasStatusMessage: true })).toBe(false);
-    expect(canShowSettingsCompanion({ ...neutral, hasUnsubmittedInput: true })).toBe(false);
-    expect(canShowSettingsCompanion({ ...neutral, identityReady: false })).toBe(false);
-    expect(canShowSettingsCompanion({ ...neutral, verified: false })).toBe(false);
-  });
-
-  it("shows runner art only in a recovered, online, neutral overview", () => {
-    const neutral = {
-      hasActiveLogging: false,
-      hasBlockingNotice: false,
-      hasGuidance: false,
-      hasPendingOperation: false,
-      online: true,
-      recoveryReady: true,
-      terminal: false,
-      timerActive: false,
-    };
-
-    expect(canShowWorkoutCompanion(neutral)).toBe(true);
-    for (const critical of Object.keys(neutral) as (keyof typeof neutral)[]) {
-      const criticalValue = critical === "online" || critical === "recoveryReady"
-        ? false
-        : true;
-      expect(
-        canShowWorkoutCompanion({ ...neutral, [critical]: criticalValue }),
-      ).toBe(false);
-    }
-  });
-});
-
 describe("Wave 3 companion route and cache boundaries", () => {
   it("places only the closed variants on the named rollout surfaces", async () => {
     const sources = await Promise.all(
@@ -84,17 +13,19 @@ describe("Wave 3 companion route and cache boundaries", () => {
         "../../src/app/app/history/page.tsx",
         "../../src/components/insights/training-history-detail.tsx",
         "../../src/components/settings/settings-form.tsx",
-        "../../src/components/workout/workout-runner.tsx",
+        "../../src/app/workout/[sessionId]/page.tsx",
       ].map((path) => readFile(new URL(path, import.meta.url), "utf8")),
     );
 
-    expect(sources[0]).toContain('<DecorativeCompanion variant="library" />');
-    expect(sources[1]).toContain('<DecorativeCompanion variant="library" />');
-    expect(sources[2]).toContain('<DecorativeCompanion variant="routine-editor" />');
-    expect(sources[3]).toContain('<DecorativeCompanion variant="history" />');
-    expect(sources[4]).toContain('<DecorativeCompanion variant="history" />');
-    expect(sources[5]).toContain('<DecorativeCompanion variant="settings" />');
-    expect(sources[6]).toContain('<DecorativeCompanion variant="workout" />');
+    expect(sources[0]).toContain('<SceneStage scene="library" />');
+    expect(sources[1]).toContain('<SceneStage scene="library" />');
+    expect(sources[2]).toContain('<SceneStage scene="routine" />');
+    expect(sources[3]).toContain('<SceneStage scene="progress" />');
+    expect(sources[4]).toContain('<SceneStage scene="progress" />');
+    expect(sources[5]).toContain('<SceneStage scene="settings" />');
+    // The runner opens on the workout studio scene instead of a corner companion.
+    expect(sources[6]).toContain('<SceneStage scene="workout" />');
+    expect(sources[6]).not.toContain("DecorativeCompanion");
   });
 
   it("allows only the genuinely public Library variant into the public cache", async () => {

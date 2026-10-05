@@ -86,7 +86,7 @@ describe("production copy contract", () => {
     ["src/components/program/program-editor.tsx", "Discard changes"],
     ["src/components/program/program-editor.tsx", "Discard your changes?"],
     ["src/components/program/program-collection.tsx", "Your routines"],
-    ["src/components/program/onboarding-form.tsx", "Where would you like to start?"],
+    ["src/components/program/onboarding-form.tsx", "What are you training for?"],
     ["src/components/layout/authenticated-shell.tsx", "Resend verification email"],
     ["src/components/layout/public-shell.tsx", "Sign in"],
     ["src/components/settings/settings-form.tsx", "Delete my account"],

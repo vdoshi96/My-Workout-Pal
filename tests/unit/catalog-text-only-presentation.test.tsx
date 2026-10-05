@@ -59,7 +59,7 @@ describe("text-only canonical presentation", () => {
 
     expect(result).toEqual(textOnlyExercise);
     expect(markup).toContain("Move under control.");
-    expect(markup).toContain("No video yet. Follow the steps below.");
+    expect(markup).toContain("No demo yet. Follow the steps below.");
     expect(markup).not.toContain("<iframe");
   });
 });

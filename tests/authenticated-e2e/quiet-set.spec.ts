@@ -46,14 +46,14 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     await expect(page.getByRole("heading", {name:"Your routine", exact:true})).toBeVisible();
     await page.getByLabel("Sets", {exact:true}).fill("1");
     await page.getByRole("button", {name:"Save routine", exact:true}).click();
-    await expect(page.locator(".quiet-save-state")).toHaveText("Saved");
+    await expect(page.locator(".pal-editor-save-state")).toHaveText("Saved");
     await page.getByLabel("More actions for Push-up", { exact: true }).click();
     await page.getByRole("button", {name:"Remove Push-up", exact:true}).click();
     await page.getByRole("button", {name:"Remove movement", exact:true}).click();
     await expect(page.getByLabel("Sets", {exact:true})).toHaveCount(0);
     await page.getByRole("button", {name:"Undo removal", exact:true}).click();
     await expect(page.getByLabel("Sets", {exact:true})).toHaveValue("1");
-    await expect(page.locator(".quiet-save-state")).toHaveText("Saved");
+    await expect(page.locator(".pal-editor-save-state")).toHaveText("Saved");
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({path:info.outputPath("routine.png"), fullPage:true});
     await page.getByRole("link", {name:"Today", exact:true}).click();
@@ -95,18 +95,18 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     await expect(page.getByRole("button", {name:"Resume", exact:true})).toBeVisible();
     await page.getByRole("button", {name:"Finish exercise", exact:true}).first().click();
     await page.getByRole("button", {name:"Finish workout", exact:true}).click();
-    await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp$/);
+    await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp(&done=1)?$/);
     await page.goto("/app/progress");
-    await expect(page.getByText("Work sets", {exact:true})).toBeVisible();
-    await expect(page.getByText("Repetitions", {exact:true})).toBeVisible();
-    await expect(page.locator(".progress-totals")).toContainText("10");
-    await expect(page.getByText("Volume", {exact:true})).toHaveCount(0);
+    await expect(page.getByText("Sets", {exact:true})).toBeVisible();
+    await expect(page.getByText("Reps", {exact:true})).toBeVisible();
+    await expect(page.locator(".pal-insights-totals")).toContainText("10");
+    await expect(page.getByText("Lifted", {exact:true})).toHaveCount(0);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({path:info.outputPath("progress.png"),fullPage:true});
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
     await page.goto("/app/settings");
     await page.getByLabel("Your companion").selectOption("mica");
-    await expect(page.locator("[data-companion-placement=settings] img")).toHaveAttribute("src", /hare-prepare/);
+    await expect(page.locator(".pal-scene[data-scene=settings] img")).toHaveAttribute("src", /hare-prepare/);
     await page.screenshot({path:info.outputPath("settings.png"),fullPage:true});
     await page.emulateMedia({colorScheme:"dark"});
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
@@ -117,7 +117,7 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
     await page.emulateMedia({colorScheme:"light"});
     await page.getByLabel("Your companion").selectOption("off");
-    await expect(page.locator("[data-companion-placement=settings]")).toHaveCount(0);
+    await expect(page.locator(".pal-scene[data-scene=settings]")).toHaveCount(0);
     await page.reload();
     await expect(page.getByLabel("Your companion")).toHaveValue("off");
     expect(errors).toEqual([]);
@@ -144,7 +144,7 @@ for (const scenario of [
     await expect(page).toHaveURL(/\/app\/program\/edit$/);
     await page.getByLabel("Sets",{exact:true}).fill("1");
     await page.getByRole("button",{name:"Save routine",exact:true}).click();
-    await expect(page.locator(".quiet-save-state")).toHaveText("Saved");
+    await expect(page.locator(".pal-editor-save-state")).toHaveText("Saved");
     if(scenario.distance) {
       await page.evaluate(() => window.scrollTo(0,0));
       await page.screenshot({path:info.outputPath("routine-long-name.png"),fullPage:true});
@@ -162,9 +162,9 @@ for (const scenario of [
     if(scenario.distance)await expect(page.getByLabel("Distance (meters)",{exact:true})).toHaveValue(scenario.distance);
     await page.getByRole("button",{name:"Finish exercise",exact:true}).first().click();
     await page.getByRole("button",{name:"Finish workout",exact:true}).click();
-    await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp$/);
+    await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp(&done=1)?$/);
     await page.goto("/app/progress");
-    await expect(page.locator(".progress-totals")).toContainText(scenario.total);
-    await expect(page.getByText("Added-load volume",{exact:true})).toHaveCount(0);
+    await expect(page.locator(".pal-insights-totals")).toContainText(scenario.total);
+    await expect(page.getByText("Lifted",{exact:true})).toHaveCount(0);
   } finally {await page.request.delete("/api/harness/scope");}
 });

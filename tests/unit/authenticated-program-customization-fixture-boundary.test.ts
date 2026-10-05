@@ -69,7 +69,7 @@ describe("authenticated customization fixture boundary", () => {
       resolve(repositoryRoot, "src/components/program/program-collection.tsx"),
       "utf8",
     );
-    const styles = readFileSync(resolve(repositoryRoot, "src/app/globals.css"), "utf8");
+    const styles = readFileSync(resolve(repositoryRoot, "src/app/pal-routine.css"), "utf8");
     const editor = readFileSync(
       resolve(repositoryRoot, "src/components/program/program-editor.tsx"),
       "utf8",
@@ -81,10 +81,13 @@ describe("authenticated customization fixture boundary", () => {
 
     expect(collection.match(/maxLength=\{80\}/gu)).toHaveLength(2);
     expect(styles).toMatch(
-      /\.program-editor-add-section button \{[^}]*min-height: 2\.75rem;/u,
+      /\.pal-editor-chips button \{[^}]*min-height: 48px;/u,
     );
     expect(styles).toMatch(
-      /\.program-editor-prescription-actions button, \.program-editor-add \{[^}]*min-height: 2\.75rem;/u,
+      /\.pal-editor-menu-list button \{[^}]*min-height: 48px;/u,
+    );
+    expect(styles).toMatch(
+      /\.pal-editor-section \.pal-editor-add \{[^}]*min-height: 48px;/u,
     );
     expect(editor).toContain('aria-label={`Move ${movementLabel} up`}');
     expect(editor).toContain('aria-label={`Move ${movementLabel} down`}');
@@ -104,9 +107,7 @@ describe("authenticated customization fixture boundary", () => {
     expect(equipmentControl).toContain("aria-controls");
     expect(equipmentControl).toContain("aria-expanded");
     expect(equipmentControl).toContain("reviewHeading.current?.focus()");
-    expect(editor).toContain("equipmentReviewOpen");
-    expect(editor).toContain("onReviewChange={setEquipmentReviewOpen}");
-    expect(editor).toMatch(/hasOpenReview:[\s\S]*equipmentReviewOpen/u);
+    expect(editor).toContain("draftDirty={dirty}");
     expect(equipmentControl).toContain("onReviewChange?: (open: boolean) => void");
     expect(equipmentControl).toContain("onReviewChange?.(open)");
   });

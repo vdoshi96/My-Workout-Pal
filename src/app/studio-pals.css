@@ -124,7 +124,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
   .pal-scene img { animation: pal-scene-in 420ms ease-out both; }
   @keyframes pal-scene-in { from { opacity: 0; transform: translateY(8px) scale(1.01); } to { opacity: 1; transform: none; } }
 }
-[data-reduced-motion=true] .pal-scene img { animation: none; }
+[data-reduced-motion=true] :is(.pal-scene img, .pal-sticker img, .pal-sheet[open]) { animation: none; }
+[data-reduced-motion=true] :is(.pal-button, .primary-action, .secondary-action, .runner-button) { transition: none; }
 @media (forced-colors: active) { .pal-scene, .pal-sticker, .pal-vignette { display: none; } }
 
 /* Landing hero: the studio is the page. */
@@ -356,11 +357,11 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .pal-choice input { height: 1px; opacity: 0; position: absolute; width: 1px; }
 .pal-choice strong { display: block; font: 600 1.15rem/1.2 var(--font-display); }
 .pal-choice small { color: var(--ink-soft); display: block; font-size: .95rem; }
-.pal-choice > svg { color: var(--selected-edge); height: 1.4rem; opacity: 0; width: 1.4rem; }
+.pal-choice > .pal-choice-check { color: var(--selected-edge); height: 1.4rem; opacity: 0; width: 1.4rem; }
 .pal-choice:hover { background: var(--hover-bg); }
 .pal-choice:has(input:checked) { background: var(--selected-bg); border-color: var(--selected-edge); box-shadow: 0 3px 0 var(--selected-edge); color: var(--selected-fg); }
 .pal-choice:has(input:checked) small { color: var(--selected-fg); }
-.pal-choice:has(input:checked) > svg { opacity: 1; }
+.pal-choice:has(input:checked) > .pal-choice-check { opacity: 1; }
 .pal-choice:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
 .pal-choices--art .pal-choice { grid-template-columns: 64px minmax(0, 1fr) auto; }
 .pal-routine-preview { display: grid; gap: 28px; list-style: none; margin: 0; padding: 0; }

@@ -456,7 +456,7 @@ async function submitRunnerAction(
     isOperationRequest(candidate.request()),
   );
   if (name === "Skip exercise") {
-    if (await page.locator(".runner-more").getAttribute("open") === null) {
+    if (await page.locator(".pal-run-more").getAttribute("open") === null) {
       await page.getByText("More options", { exact: true }).click();
     }
     await page.getByRole("button", { name, exact: true }).click();
@@ -469,11 +469,11 @@ async function submitRunnerAction(
 
 async function preparePushCompletion(page: Page): Promise<void> {
   for (const index of [1, 2]) {
-    await page.locator(".runner-set-tab").nth(index).click();
+    await page.locator(".pal-run-set").nth(index).click();
     await saveWeightSet(page, "25");
   }
   await submitRunnerAction(page, "Next exercise");
-  await page.locator(".runner-outline > summary").click();
+  await page.locator(".pal-run-outline > summary").click();
 
   for (const exerciseName of [
     "Seated dumbbell shoulder press",
@@ -619,7 +619,7 @@ test("a real aborted operation retries explicitly with the same key and no onlin
   ).toBeVisible();
   await expect(
     harness.page
-      .locator(".runner-progress")
+      .locator(".pal-run-progress")
       .getByText("Saved", { exact: true }),
   ).toBeVisible();
 
@@ -733,7 +733,7 @@ for (const authCase of [
     ).toBeVisible();
     await expect(
       harness.page
-        .locator(".runner-progress")
+        .locator(".pal-run-progress")
         .getByText("Saved", { exact: true }),
     ).toBeVisible();
     expect(harness.operationRequests).toHaveLength(2);
@@ -776,7 +776,7 @@ test("two tabs retain distinct offline set operations through reload and retry",
     )
     .toBe(1);
   await second.bringToFront();
-  await second.locator(".runner-set-tab").nth(1).click();
+  await second.locator(".pal-run-set").nth(1).click();
   await enterFirstSet(second, "30");
   await expect
     .poll(
@@ -824,7 +824,7 @@ test("two tabs retain distinct offline set operations through reload and retry",
   const retry = first.getByRole("button", { name: "Retry connection" });
   await retry.press("Enter");
   await expect(
-    first.locator(".runner-progress").getByText("Saved", { exact: true }),
+    first.locator(".pal-run-progress").getByText("Saved", { exact: true }),
   ).toBeVisible();
   const saved = await readStoredRunner(first, sessionId);
   expect(saved.operations).toHaveLength(2);
@@ -962,7 +962,7 @@ test("two tabs block a divergent set until the member chooses one original key",
   await harness.context.setOffline(false);
   expect((await savedResponse).status()).toBe(200);
   await expect(
-    first.locator(".runner-progress").getByText("Saved", { exact: true }),
+    first.locator(".pal-run-progress").getByText("Saved", { exact: true }),
   ).toBeVisible();
   expect(harness.signals.operationRequests).toHaveLength(1);
   expect(operationKey(harness.signals.operationRequests[0]!)).toBe(chosenKey);
@@ -1096,7 +1096,7 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
         if (!save)
           throw new Error("The stale tab save control is unavailable.");
         const weight = document.querySelector<HTMLInputElement>(
-          "fieldset.runner-editor input",
+          "fieldset.pal-run-entry input",
         );
         const observed = {
           broadcastType: typeof globalThis.BroadcastChannel,
@@ -1184,7 +1184,7 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
   await completionRequest;
 
   expect((await completionResponse).status()).toBe(200);
-  await expect(first).toHaveURL(`/app/history/${sessionId}`);
+  await expect(first).toHaveURL(new RegExp(`/app/history/${sessionId}\\?from=%2Fapp(&done=1)?$`, "u"));
   await expect
     .poll(async () => readStoredRunner(first, sessionId))
     .toMatchObject({
@@ -1213,7 +1213,7 @@ test("a confirmed save outranks a stale tab and durable completion freezes a sus
     window.dispatchEvent(new Event("focus"));
   });
   await second.bringToFront();
-  await expect(second).toHaveURL(`/app/history/${sessionId}`);
+  await expect(second).toHaveURL(new RegExp(`/app/history/${sessionId}\\?from=%2Fapp(&done=1)?$`, "u"));
   await expect(
     second.getByRole("heading", { name: "Push", exact: true }),
   ).toBeVisible();

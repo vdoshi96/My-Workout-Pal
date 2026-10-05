@@ -221,7 +221,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
   await page.getByText("Add a section", { exact: true }).click();
   await expect(page.getByRole("button", { name: "Add core section" })).toBeEnabled();
   const accessorySection = page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: page.getByLabel("Section name for accessory") });
   const accessoryName = await accessorySection.getByLabel("Section name for accessory").inputValue();
   const removeAccessory = accessorySection.getByRole("button", {

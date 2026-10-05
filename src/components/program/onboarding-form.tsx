@@ -149,7 +149,7 @@ export function OnboardingForm({
       {options.map(([option, label, detail]) => <label className="pal-choice" key={String(option)}>
         <input checked={value === option} disabled={busy} name={name} onChange={() => change(() => set(option))} type="radio" />
         <span><strong>{label}</strong>{detail ? <small>{detail}</small> : null}</span>
-        <Icon name="check" />
+        <Icon className="pal-choice-check" name="check" />
       </label>)}
     </div>
   );
@@ -185,7 +185,7 @@ export function OnboardingForm({
               <input checked={equipment === profile} disabled={busy} name="equipment-profile" onChange={() => change(() => { setEquipment(profile); setFirstExerciseSlug(""); })} type="radio" />
               <EquipmentIllustration kind={profile === "barbell" ? "barbell" : "dumbbell"} />
               <span><strong>{profile === "barbell" ? "A full gym with a barbell and rack" : "Dumbbells, a bench and bodyweight"}</strong><small>{EQUIPMENT_PROFILES[profile].description}</small></span>
-              <Icon name="check" />
+              <Icon className="pal-choice-check" name="check" />
             </label>)}
           </div>
         </> : null}

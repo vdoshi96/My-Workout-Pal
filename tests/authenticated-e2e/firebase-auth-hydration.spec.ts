@@ -107,7 +107,7 @@ test("full-page Settings fails closed until the browser Firebase identity is res
   expect(consoleErrors).toEqual([]);
   expect(failedResponses).toEqual([]);
   expect(failedRequests).toEqual([]);
-  await page.locator(".settings-delete-preview").scrollIntoViewIfNeeded();
+  await page.locator(".pal-settings-danger").scrollIntoViewIfNeeded();
   await page.screenshot({
     fullPage: false,
     path: resolve(

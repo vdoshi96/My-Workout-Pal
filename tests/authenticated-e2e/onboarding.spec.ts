@@ -286,7 +286,7 @@ async function chooseEditorMovement(
 ) {
   const chooser = page.getByRole("dialog");
   await chooser.getByRole("searchbox", { name: "Search movements" }).fill(query);
-  await chooser.locator(".movement-chooser__list").getByRole("button", { name }).click();
+  await chooser.locator(".pal-chooser-list").getByRole("button", { name }).click();
   await chooser.getByRole("button", { name: "Use this movement" }).click();
 }
 
@@ -408,7 +408,7 @@ async function submitRunnerAction(page: Page, name: string | RegExp) {
       response.request().method() === "POST",
   );
   if (name === "Skip exercise") {
-    if (await page.locator(".runner-more").getAttribute("open") === null) {
+    if (await page.locator(".pal-run-more").getAttribute("open") === null) {
       await page.getByText("More options", { exact: true }).click();
     }
     await page.getByRole("button", { name, exact: true }).click();
@@ -431,7 +431,7 @@ async function completePullWorkoutForInsights(page: Page): Promise<string> {
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start workout" }).click();
+  await page.getByRole("button", { name: "Start Pull" }).click();
   expect((await startPromise).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -466,10 +466,10 @@ async function completePullWorkoutForInsights(page: Page): Promise<string> {
   await page.getByLabel("Cardio notes").fill("Immutable QA walk");
   expect((await submitRunnerAction(page, "Save cardio")).status()).toBe(200);
   const completionPromise = submitRunnerAction(page, "Finish workout");
-  await expect(page).toHaveURL(`/app/history/${sessionId}`);
+  await expect(page).toHaveURL(new RegExp(`/app/history/${sessionId}\\?from=%2Fapp(&done=1)?$`, "u"));
   expect((await completionPromise).status()).toBe(200);
   await expect(page.getByText(/25 lb · 12 reps/i).first()).toBeVisible();
-  await expect(page.locator(".history-sets > li")).toHaveCount(3);
+  await expect(page.locator(".pal-history-sets > li")).toHaveCount(3);
   await expect(page.getByText("Immutable QA walk")).toBeVisible();
   await expect(page.getByText("Chest-supported dumbbell row", { exact: true })).toBeVisible();
   await expect(page.getByText("Dumbbells", { exact: true }).first()).toBeVisible();
@@ -846,7 +846,7 @@ test("owned customization publishes once, preserves history, and derives private
   await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
   await alice.page.getByRole("link", { name: "All routines", exact: true }).click();
   const barbellProgramCard = alice.page
-    .locator(".program-collection-list > li")
+    .locator(".pal-routines-list > li")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "QA barbell route" }) });
   await barbellProgramCard.getByRole("button", { name: "Duplicate" }).click();
   await alice.page.getByLabel("New routine name").fill("QA cloned route");
@@ -875,7 +875,7 @@ test("owned customization publishes once, preserves history, and derives private
   await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
   await alice.page.getByRole("link", { name: "All routines", exact: true }).click();
   const originalProgramCard = alice.page
-    .locator(".program-collection-list > li")
+    .locator(".pal-routines-list > li")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "Five-day starter route" }) });
   const activateOriginalResponse = alice.page.waitForResponse(
     (response) =>
@@ -917,7 +917,7 @@ test("owned customization publishes once, preserves history, and derives private
   await alice.page.getByText("Add a section", { exact: true }).click();
   await expect(alice.page.getByRole("button", { name: "Add core section" })).toBeEnabled();
   const accessorySection = alice.page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for accessory") });
   const accessoryName = await accessorySection.getByLabel("Section name for accessory").inputValue();
   const removeAccessory = accessorySection.getByRole("button", {
@@ -940,14 +940,14 @@ test("owned customization publishes once, preserves history, and derives private
 
   await alice.page.getByRole("button", { name: "Add accessory section" }).click();
   const newAccessorySection = alice.page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for accessory") });
   await newAccessorySection.getByLabel("Section name for accessory").fill("Custom assistance");
   await newAccessorySection.getByRole("button", { name: "Add movement" }).click();
   await expect(alice.page.getByRole("heading", { name: "Add movement" })).toBeVisible();
   await chooseEditorMovement(alice.page, "QA supported row", /QA supported row/);
   const customPrescription = alice.page
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "QA supported row" }) });
   await customPrescription.getByLabel("Sets").fill("4");
   await customPrescription.getByLabel("Rest seconds").fill("75");
@@ -967,7 +967,7 @@ test("owned customization publishes once, preserves history, and derives private
   await moveCustomDown.focus();
   await expect(moveCustomDown).toBeFocused();
   await moveCustomDown.press("Enter");
-  await expect(newAccessorySection.locator("li.program-editor-prescription h3")).toHaveText([
+  await expect(newAccessorySection.locator("li.pal-editor-move h3")).toHaveText([
     "Dumbbell curl",
     "QA supported row",
   ]);
@@ -975,7 +975,7 @@ test("owned customization publishes once, preserves history, and derives private
   await alice.page.getByRole("button", { name: "Move Custom assistance section up" }).click();
 
   const walkerEditor = alice.page
-    .locator("fieldset.program-editor-cardio section")
+    .locator("fieldset.pal-editor-cardio section")
     .filter({ has: alice.page.getByRole("heading", { exact: true, level: 3, name: "walker" }) });
   await walkerEditor.getByLabel("Duration", { exact: true }).fill("15:00");
   const walkerDistance = walkerEditor.getByLabel("Distance miles");
@@ -985,11 +985,11 @@ test("owned customization publishes once, preserves history, and derives private
   await walkerEditor.getByLabel("Notes").fill("QA walker target");
   await alice.page.getByLabel("Day name").fill("Power Push");
   await alice.page
-    .locator(".program-editor-outline")
+    .locator(".pal-editor-days")
     .getByRole("button", { name: /Pull \d+ movements$/u })
     .click();
   const substitutedRow = alice.page
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "Chest-supported dumbbell row" }) });
   const substitutedTarget = substitutedRow.getByLabel("Target lb (optional)");
   await substitutedTarget.selectText();
@@ -1030,10 +1030,10 @@ test("owned customization publishes once, preserves history, and derives private
   expect((reconciledPublish.request().postDataJSON() as { idempotencyKey?: unknown }).idempotencyKey)
     .toBe(failedPublishBody.idempotencyKey);
   await expect(alice.page.getByText("Routine saved. Past workouts stay as they were.", { exact: true })).toBeVisible();
-  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
+  await expect(alice.page.locator(".pal-editor-save-state")).toHaveText("Saved");
   expect(await readScopeSummary(alice.page)).toEqual(acceptedPublishSummary);
   await alice.page
-    .locator(".program-editor-outline")
+    .locator(".pal-editor-days")
     .getByRole("button", { name: /Power Push \d+ movements$/u })
     .click();
   if (testInfo.project.name === "chromium-desktop") {
@@ -1073,7 +1073,7 @@ test("owned customization publishes once, preserves history, and derives private
     name: "Review Barbell + rack",
   });
   await expect(equipmentReviewHeading).toBeFocused();
-  const substitutionRows = alice.page.locator(".equipment-change-list > li");
+  const substitutionRows = alice.page.locator(".pal-equip-changes > li");
   await expect(substitutionRows).toHaveCount(6);
   expect(await substitutionRows.locator("span").allTextContents()).toEqual([
     "Pull",
@@ -1175,34 +1175,34 @@ test("owned customization publishes once, preserves history, and derives private
   await alice.page.getByRole("link", { name: "Today", exact: true }).click();
   await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
   await alice.page
-    .locator(".program-editor-outline")
+    .locator(".pal-editor-days")
     .getByRole("button", { name: /Power Push \d+ movements$/u })
     .click();
   const metricCustomPrescription = alice.page
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "QA supported row" }) });
   await expect(metricCustomPrescription.getByLabel("Target kg (optional)")).toHaveValue("20.003");
   await expect(metricCustomPrescription.getByLabel("Notes")).toHaveValue(
     "QA immutable program note",
   );
   const metricWalker = alice.page
-    .locator("fieldset.program-editor-cardio section")
+    .locator("fieldset.pal-editor-cardio section")
     .filter({ has: alice.page.getByRole("heading", { exact: true, level: 3, name: "walker" }) });
   await expect(metricWalker.getByLabel("Distance metres")).toHaveValue("160.934");
-  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
+  await expect(alice.page.locator(".pal-editor-save-state")).toHaveText("Saved");
   await alice.page.getByRole("link", { name: "Back to Today" }).click();
 
   await alice.page.getByRole("link", { name: "Review history", exact: true }).click();
-  const pullHistory = alice.page.locator(".history-list > li").filter({
-    has: alice.page.locator(".history-main strong", { hasText: "Pull" }),
+  const pullHistory = alice.page.locator(".pal-history-list > li").filter({
+    has: alice.page.locator(".pal-history-main strong", { hasText: "Pull" }),
   });
-  await expect(pullHistory.locator(".history-main strong")).toHaveText("Pull");
-  await expect(alice.page.locator(".history-main strong", { hasText: "Power Push" })).toHaveCount(0);
+  await expect(pullHistory.locator(".pal-history-main strong")).toHaveText("Pull");
+  await expect(alice.page.locator(".pal-history-main strong", { hasText: "Power Push" })).toHaveCount(0);
   await pullHistory.getByRole("link").click();
   await expect(alice.page.getByRole("heading", { level: 1, name: "Pull" })).toBeVisible();
   await expect(alice.page.getByText("Chest-supported dumbbell row", { exact: true })).toBeVisible();
   await expect(alice.page.getByText("Barbell bent-over row", { exact: true })).toHaveCount(0);
-  const savedRow = alice.page.locator(".history-exercises > li").filter({
+  const savedRow = alice.page.locator(".pal-history-exercises > li").filter({
     has: alice.page.getByText("Chest-supported dumbbell row", { exact: true }),
   });
   await expect(savedRow.getByText("Dumbbells", { exact: true })).toBeVisible();
@@ -1212,15 +1212,15 @@ test("owned customization publishes once, preserves history, and derives private
   await expect(savedRow.getByText("8–12 reps", { exact: true })).toBeVisible();
   await expect(savedRow.getByText("1m 30s", { exact: true })).toBeVisible();
   await expect(savedRow.getByText(/11\.3 kg · 12 reps/i).first()).toBeVisible();
-  await expect(savedRow.locator(".history-sets > li")).toHaveCount(3);
+  await expect(savedRow.locator(".pal-history-sets > li")).toHaveCount(3);
   await expect(alice.page.getByText("Immutable QA walk")).toBeVisible();
   await expect(alice.page.getByText("12:26 / km", { exact: true })).toBeVisible();
   await assertAccessible(alice.page);
 
   await alice.page.getByRole("link", { name: "Progress", exact: true }).click();
   await expect(alice.page.getByRole("heading", { name: "Progress", exact: true })).toBeVisible();
-  await expect(alice.page.getByText("Logged distance")).toBeVisible();
-  const progressTotals = alice.page.locator(".progress-totals");
+  const progressTotals = alice.page.locator(".pal-insights-totals");
+  await expect(progressTotals.getByText("Distance", { exact: true })).toBeVisible();
   await expect(progressTotals.getByText("408.2 kg·reps", { exact: true })).toBeVisible();
   await expect(progressTotals.getByText("1.61 km", { exact: true })).toBeVisible();
   await alice.page.getByRole("link", { name: /Personal records/ }).click();
@@ -1333,7 +1333,7 @@ test("an incompatible private movement blocks an editor equipment change without
   await alice.page.getByRole("link", { name: "Today", exact: true }).click();
   await alice.page.getByRole("link", { name: "Routine", exact: true }).click();
   const accessorySection = alice.page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for accessory") });
   await accessorySection.getByRole("button", { name: "Add movement" }).click();
   await chooseEditorMovement(alice.page, "QA rack press", /QA rack press/);
@@ -1344,7 +1344,7 @@ test("an incompatible private movement blocks an editor equipment change without
   );
   await alice.page.getByRole("button", { name: "Save routine" }).click();
   expect((await publishResponse).status()).toBe(200);
-  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
+  await expect(alice.page.locator(".pal-editor-save-state")).toHaveText("Saved");
 
   const beforeProfile = await readProfileProgram(alice.page);
   const beforeScope = await readScopeSummary(alice.page);
@@ -1479,12 +1479,12 @@ test("an accepted runner save reconciles after an error response, replays once, 
   expect((await submitRunnerAction(alice.page, "Save cardio")).status()).toBe(200);
 
   const completionPromise = submitRunnerAction(alice.page, "Finish workout");
-  await expect(alice.page).toHaveURL(`/app/history/${sessionId}`);
+  await expect(alice.page).toHaveURL(new RegExp(`/app/history/${sessionId}\\?from=%2Fapp(&done=1)?$`, "u"));
   expect((await completionPromise).status()).toBe(200);
   await expect(alice.page.getByText("Completed workout")).toBeVisible();
   await expect(alice.page.getByRole("heading", { name: "Push" })).toBeVisible();
   await expect(alice.page.getByText(/25 lb · 12 reps/i)).toBeVisible();
-  await expect(alice.page.locator(".history-sets > li")).toHaveCount(3);
+  await expect(alice.page.locator(".pal-history-sets > li")).toHaveCount(3);
   await expect(alice.page.getByRole("heading", { name: "Walker cardio" })).toBeVisible();
   await expect(alice.page.getByText("Synthetic QA walk")).toBeVisible();
   await assertAccessible(alice.page);

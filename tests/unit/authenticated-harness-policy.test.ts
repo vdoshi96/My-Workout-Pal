@@ -277,6 +277,12 @@ describe("credential-free authenticated harness boundary", () => {
     expect(ownerRunner).toContain(
       'router.push(withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app"))',
     );
+    // Finishing (not ending) adds done=1 after `from`, so the summary can celebrate.
+    expect(ownerRunner).toContain(
+      'router.push(`${withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app")}&done=1`)',
+    );
+    expect(ownerRunner).toContain("onComplete={openCompletedHistory}");
+    expect(ownerRunner).toContain("onAbandon={openTerminalHistory}");
   });
 
   it("binds to loopback and allowlists only non-provider child-process environment", () => {
@@ -525,7 +531,7 @@ describe("credential-free authenticated harness boundary", () => {
       "utf8",
     );
     expect(memberProgramHome).toMatch(
-      /<Link[\s\S]{0,160}href=\{`\/app\/program\/\$\{day\.dayKey\}`\}[\s\S]{0,80}prefetch=\{false\}/u,
+      /<Link[\s\S]{0,160}href=\{withFrom\(`\/app\/program\/\$\{selectedDay\.dayKey\}`[\s\S]{0,80}prefetch=\{false\}/u,
     );
     expect(memberProgramHome).not.toContain('aria-label={`Open ${day.displayName} to start`}');
 

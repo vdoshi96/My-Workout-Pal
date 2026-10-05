@@ -122,7 +122,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
   await page.getByRole("button", { name: "Open movement chooser" }).click();
   const reopened = page.getByRole("dialog", { name: "Add movement" });
   await reopened.getByRole("searchbox", { name: "Search movements" }).fill("suitcase");
-  await reopened.locator(".movement-chooser__list").getByRole("button", { name: /Suitcase march/ }).click();
+  await reopened.locator(".pal-chooser-list").getByRole("button", { name: /Suitcase march/ }).click();
   const firstLink = reopened.getByLabel("Your link 1");
   await expect(firstLink).toHaveValue(
     "https://www.youtube.com/watch?v=AbCdEfGhI01",
@@ -218,8 +218,8 @@ test("browses, creates, links, selects, and isolates private movements", async (
   expect((await start).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   await expect(page.getByRole("heading", { name: "Suitcase march" })).toBeVisible();
-  await page.getByText("Technique guidance", { exact: true }).click();
   await expect(page.getByText("Your links", { exact: true })).toBeVisible();
+  await page.getByText("Your links", { exact: true }).click();
   const snapshottedLink = page.getByRole("link", { name: "Open your link 1" });
   await expect(snapshottedLink).toHaveAttribute(
     "href",
@@ -242,7 +242,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
   );
   expect(replacement.status).toBe(200);
   await page.goto(runnerUrl);
-  await page.getByText("Technique guidance", { exact: true }).click();
+  await page.getByText("Your links", { exact: true }).click();
   await expect(page.getByRole("link", { name: "Open your link 1" })).toHaveAttribute(
     "href",
     "https://example.com/suitcase-guide",

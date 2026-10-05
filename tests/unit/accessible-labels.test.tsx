@@ -70,7 +70,7 @@ describe("visible labels remain in accessible names", () => {
       [4, "Upper"],
       [5, "Lower"],
     ] as const) {
-      expect(explorerMarkup).toContain(`<small>Day ${number}</small><h2>${day}</h2>`);
+      expect(explorerMarkup).toContain(`<small>Day ${number}</small><strong>${day}</strong>`);
     }
     expect(publicMarkup).toContain("Your workout companion");
     expect(authenticatedMarkup).toContain("Your workout companion");

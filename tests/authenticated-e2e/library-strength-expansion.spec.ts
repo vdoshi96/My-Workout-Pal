@@ -20,7 +20,7 @@ async function chooseCanonicalMovement(
   await expect(candidate).toBeVisible();
   await candidate.click();
   await expect(dialog.getByRole("heading", { level: 3, name })).toBeVisible();
-  await expect(dialog.getByText("Approved catalog guidance available")).toHaveCount(0);
+  await expect(dialog.getByText("Demo videos ready")).toHaveCount(0);
   await expect(dialog.getByRole("group", { name: "Your private guidance" })).toBeVisible();
   await expect(dialog.locator("iframe")).toHaveCount(0);
   await dialog.getByRole("button", { name: "Use this movement" }).click();
@@ -101,7 +101,7 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
     plannedSameOriginNavigationUrl = undefined;
   }
   const strengthSection = page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: page.getByLabel("Section name for strength") })
     .first();
   await strengthSection.getByRole("button", { name: "Add movement" }).click();
@@ -123,7 +123,7 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
     strengthSection.getByRole("heading", { level: 3, name: "Wall sit" }),
   ).toBeVisible();
   const wallSitEditor = strengthSection
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: page.getByRole("heading", { level: 3, name: "Wall sit" }) });
   await expect(wallSitEditor.getByLabel("Minimum seconds")).toHaveValue("20");
   await expect(wallSitEditor.getByLabel("Maximum seconds")).toHaveValue("45");
@@ -135,7 +135,7 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
   );
   await page.getByRole("button", { name: "Save routine" }).click();
   expect((await publishResponse).status()).toBe(200);
-  await expect(page.locator(".quiet-save-state")).toHaveText("Saved");
+  await expect(page.locator(".pal-editor-save-state")).toHaveText("Saved");
 
   const savedDayLink = page.getByRole("link", { name: "Open saved day" });
   const savedDayHref = await savedDayLink.getAttribute("href");
@@ -152,7 +152,7 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
   await page.reload();
   await expect(page.getByText("Dumbbell floor press", { exact: true })).toBeVisible();
   const savedWallSit = page
-    .locator(".member-day-section li")
+    .locator(".pal-dayplan .pal-move")
     .filter({ has: page.getByText("Wall sit", { exact: true }) });
   await expect(savedWallSit).toBeVisible();
   await expect(savedWallSit.getByText(/20–45 sec/u)).toBeVisible();
@@ -162,7 +162,7 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start workout" }).click();
+  await page.getByRole("button", { name: /^Start / }).click();
   expect((await startResponse).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
 
@@ -171,20 +171,15 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
   await expect(
     page.getByRole("heading", { level: 2, name: "Dumbbell floor press" }),
   ).toBeVisible();
-  await page.getByText("Technique guidance", { exact: true }).click();
-  const techniquePanel = page.locator("details.runner-technique");
-  await expect(techniquePanel.getByText("Unavailable", { exact: true })).toBeVisible();
-  await expect(
-    techniquePanel.getByText(
-      "No demonstration is available for this movement. Workout logging remains available.",
-    ),
-  ).toBeVisible();
+  const movementTools = page.locator(".pal-run-move");
+  await expect(movementTools.getByText("No demo yet", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^(Log|Update) set & rest$/u })).toBeVisible();
   await expect(page.locator("iframe")).toHaveCount(0);
 
   await page.getByRole("button", { name: /Wall sit/iu }).click();
   await expect(page.getByRole("heading", { level: 2, name: "Wall sit" })).toBeVisible();
   await expect(page.getByLabel("Duration (seconds)")).toBeVisible();
-  await expect(techniquePanel.getByText("Unavailable", { exact: true })).toBeVisible();
+  await expect(movementTools.getByText("No demo yet", { exact: true })).toBeVisible();
   await expect(page.locator("iframe")).toHaveCount(0);
   await assertAccessible(page);
   await page.screenshot({

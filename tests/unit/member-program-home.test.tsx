@@ -111,10 +111,11 @@ describe("MemberProgramHome", () => {
       />,
     );
 
-    expect(markup).toContain("Ready when you are, Alice QA.");
-    expect(markup).toContain("Dumbbells · 2 days");
-    expect(markup).toContain("<small>1 movement</small>");
-    expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001"');
+    expect(markup).toContain("Hey Alice! Ready for Mobility?");
+    expect(markup).toContain("1 movement · Dumbbells");
+    expect(markup).toContain("2 days a week");
+    expect(markup).toContain("<small>Day 1</small><strong>Mobility</strong>");
+    expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001?from=');
     expect(markup).not.toContain("Open Mobility to start");
     expect(markup).not.toContain('aria-label="Open Mobility to start"');
     expect(markup).not.toContain("Edit routine");
@@ -124,11 +125,11 @@ describe("MemberProgramHome", () => {
     expect(markup).not.toContain('href="/app/history"');
     expect(markup).not.toContain('href="/app/progress"');
     expect(markup).not.toContain("No completed workouts yet");
-    expect(markup).toContain("Start workout");
+    expect(markup).toContain("Start Mobility");
     expect(markup).not.toContain("Sample");
     expect(markup).not.toContain("five days");
     expect(markup).not.toContain("walker or runner");
-    expect(markup).toContain('data-companion-placement="member-home"');
+    expect(markup).toContain('data-scene="pip"');
     expect(markup).toContain(
       'src="/illustrations/quiet-set/pip-studio.webp"',
     );
@@ -149,13 +150,14 @@ describe("MemberProgramHome", () => {
       />,
     );
 
-    expect(markup).toContain("Workout in progress");
+    expect(markup).toContain("Keep going with Trail");
     expect(markup).toContain("Resume Trail");
     expect(markup).toContain('href="/workout/aaaaaaaa-0000-4000-8000-000000000001"');
-    expect(markup).toContain("Finish or abandon Trail before starting another day.");
+    expect(markup).toContain("finish it before starting another day.");
+    expect(markup).not.toContain("Start Mobility");
     expect(markup).not.toContain("Open Mobility to start");
     expect(markup).not.toContain("Manage routines");
-    expect(markup).toContain('data-companion-placement="member-home"');
+    expect(markup).toContain('data-scene="pip"');
   });
 
   it("keeps an unverified routine readable without offering permanent workout actions", () => {
@@ -169,13 +171,13 @@ describe("MemberProgramHome", () => {
       />,
     );
 
-    expect(markup).toContain("Your routine is available to review.");
+    expect(markup).toContain("Your routine is ready to look through.");
     expect(markup).toContain("Verify your email and sign in again to start or edit workouts.");
     expect(markup).not.toContain("Open Mobility to start");
-    expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001"><span>01</span><strong>Mobility</strong>');
-    expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001"');
+    expect(markup).toContain("<small>Day 1</small><strong>Mobility</strong>");
+    expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001?from=');
     expect(markup).not.toContain("Edit routine");
-    expect(markup).toContain('data-companion-placement="member-home"');
+    expect(markup).toContain('data-scene="pip"');
   });
 
   it("keeps an unverified resumable workout discoverable without enabling a new start", () => {
@@ -197,6 +199,7 @@ describe("MemberProgramHome", () => {
     expect(markup).toContain("Review Trail");
     expect(markup).toContain('href="/workout/aaaaaaaa-0000-4000-8000-000000000001"');
     expect(markup).not.toContain("Open Mobility to start");
-    expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001"');
+    expect(markup).toContain('href="/app/program/70000000-0000-4000-8000-000000000001?from=');
+    expect(markup).not.toContain("Start Mobility");
   });
 });

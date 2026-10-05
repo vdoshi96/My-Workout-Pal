@@ -96,7 +96,7 @@ export function MemberProgramHome({
           {resumableWorkout ? (
             <>
               <h1 id="member-program-title">Welcome back, {firstName}!</h1>
-              <p>{canMutate ? `You're partway through ${resumableWorkout.dayName}. Pick up right where you left off.` : `Your ${resumableWorkout.dayName} workout is waiting. Verify your email to keep going.`}</p>
+              <p>{canMutate ? `You're partway through ${resumableWorkout.dayName}. Pick up where you left off, and finish it before starting another day.` : `Your ${resumableWorkout.dayName} workout is waiting. Verify your email to keep going.`}</p>
               <h2 className="sr-only">{canMutate ? `Keep going with ${resumableWorkout.dayName}` : `Verify to resume ${resumableWorkout.dayName}`}</h2>
               <div className="pal-today-actions">
                 <Link className={canMutate ? "primary-action" : "secondary-action"} href={`/workout/${resumableWorkout.sessionId}`} prefetch={false}>
@@ -108,7 +108,7 @@ export function MemberProgramHome({
             <>
               <h1 id="member-program-title">Hey {firstName}! Ready for {selectedDay.displayName}?</h1>
               <p>{movementCount} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label}</p>
-              {!canMutate ? <p className="pal-notice" role="status">Your routine is ready to look through. Verify your email and sign in again to start workouts.</p> : null}
+              {!canMutate ? <p className="pal-notice" role="status">Your routine is ready to look through. Verify your email and sign in again to start or edit workouts.</p> : null}
               <div className="pal-today-actions">
                 <StartWorkoutControl dayId={selectedDay.id} eligible={canMutate} label={`Start ${selectedDay.displayName}`} programId={program.id} />
               </div>

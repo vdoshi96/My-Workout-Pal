@@ -150,6 +150,41 @@ async function expectCompanion(
   return placement;
 }
 
+/**
+ * Studio Pals insights and Settings pages open on a decorative SceneStage behind the content.
+ * It must stay outside meaning, pointer and focus semantics and never sit on top of a protected region.
+ */
+async function expectInsightsScene(
+  page: Page,
+  scene: "progress" | "routine" | "settings" | "workout",
+  protectedSelectors: readonly string[],
+) {
+  const stage = page.locator(`.pal-scene[data-scene="${scene}"]`);
+  const image = stage.locator("img");
+  await expect(stage).toHaveCount(1);
+  await expect(stage).toHaveAttribute("aria-hidden", "true");
+  await expect(image).toHaveAttribute("alt", "");
+  await expect(stage.locator("a, button, input, select, textarea, [tabindex]")).toHaveCount(0);
+  expect(await stage.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
+  for (const selector of protectedSelectors) {
+    for (const protectedRegion of await page.locator(selector).all()) {
+      if (!(await protectedRegion.isVisible())) continue;
+      await protectedRegion.scrollIntoViewIfNeeded();
+      expect(
+        await protectedRegion.evaluate((element) => {
+          const rect = element.getBoundingClientRect();
+          // Tall regions: sample the middle of their visible part.
+          const top = Math.max(rect.top, 0);
+          const bottom = Math.min(rect.bottom, innerHeight);
+          const target = document.elementFromPoint(rect.left + rect.width / 2, top + (bottom - top) / 2);
+          return target !== null && !target.closest(".pal-scene");
+        }),
+      ).toBe(true);
+    }
+  }
+  return stage;
+}
+
 async function expectNoOverflow(page: Page) {
   expect(
     await page.evaluate(
@@ -244,41 +279,33 @@ test("member rollout surfaces preserve product priority across the authenticated
 
     await page.goto("/app/program/edit");
     await expect(page.getByRole("heading", { name: "Your routine" })).toBeVisible();
-    await expectCompanion(page, "routine-editor", true, [
+    await expectInsightsScene(page, "routine", [
       ".member-header",
       ".member-nav",
-      ".program-editor-hero > div:first-child",
-      ".program-editor-hero .secondary-action",
-      ".program-editor-equipment-control",
-      ".program-editor-layout",
-      ".program-editor-footer",
+      ".pal-editor-head h1",
+      ".pal-editor-tools",
+      ".pal-editor-layout",
+      ".pal-editor-savebar",
     ]);
     await expectNoOverflow(page);
     if (testInfo.project.name === "chromium-desktop" && width === 1440) {
       await capture(page, "routine-editor-chromium-desktop");
       await page.getByText("Equipment and substitutions", { exact: true }).click();
-      await page.locator(".member-equipment-options button[aria-controls]").click();
-      await expect(page.locator(".equipment-review")).toBeVisible();
-      await expect(
-        page.locator('[data-companion-placement="routine-editor"]'),
-      ).toBeHidden();
+      await page.locator(".pal-equip-options button[aria-controls]").click();
+      await expect(page.locator(".pal-equip-review")).toBeVisible();
       await capture(page, "routine-editor-equipment-review-chromium-desktop");
       await page.getByRole("button", { name: "Cancel" }).click();
-      await expect(
-        page.locator('[data-companion-placement="routine-editor"]'),
-      ).toBeVisible();
+      await expect(page.locator(".pal-equip-review")).toHaveCount(0);
     }
 
     await page.goto("/app/settings");
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-    await expectCompanion(page, "settings", true, [
+    await expectInsightsScene(page, "settings", [
       ".member-header",
       ".member-nav",
-      ".member-settings-heading > div:first-child",
-      ".settings-form",
-      ".settings-account",
-      ".settings-delete-preview",
-      ".member-save-status",
+      ".pal-page-head h1",
+      ".pal-settings-section",
+      ".pal-settings-danger",
     ]);
     await page.getByLabel("Display units").focus();
     await expect(page.getByLabel("Display units")).toBeFocused();
@@ -297,16 +324,16 @@ test("member rollout surfaces preserve product priority across the authenticated
   });
 
   await page.goto("/app/program/edit");
-  const editorPlacement = page.locator('[data-companion-placement="routine-editor"]');
-  await page.getByLabel("Routine name").fill("Draft state hides decoration");
-  await expect(editorPlacement).toBeHidden();
+  await page.getByLabel("Routine name").fill("Draft state keeps the scene");
+  await expect(page.locator('.pal-scene[data-scene="routine"]')).toHaveCount(1);
   await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible();
 
   page.once("dialog", async (dialog) => dialog.accept());
   await page.goto("/app/settings");
-  const settingsPlacement = page.locator('[data-companion-placement="settings"]');
+  // The scene stays put while you edit and save, so the page background never flips.
+  const settingsPlacement = page.locator('.pal-scene[data-scene="settings"]');
   await page.getByLabel("Display units").selectOption("metric");
-  await expect(settingsPlacement).toBeHidden();
+  await expect(settingsPlacement).toHaveCount(1);
   const saveSettings = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/preferences" &&
@@ -321,7 +348,7 @@ test("member rollout surfaces preserve product priority across the authenticated
   expect((await saveSettings).status()).toBe(200);
   expect((await refreshSettings).status()).toBe(200);
   await expect(page.getByText("Saved.", { exact: true })).toBeVisible();
-  await expect(settingsPlacement).toBeHidden();
+  await expect(settingsPlacement).toHaveCount(1);
 
   await page.goto("/app");
   await page.getByRole("link", { name: /Push/ }).click();
@@ -336,20 +363,15 @@ test("member rollout surfaces preserve product priority across the authenticated
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
   if (!sessionId) throw new Error("The rollout session ID is unavailable.");
   await expect(page.getByRole("heading", { name: "Push" })).toBeVisible();
-  const runnerPlacement = await expectCompanion(
-    page,
-    "workout",
-    true,
-    [
-      ".owned-workout-route-bar",
-      ".runner-header > div:first-child",
-      ".runner-stamp",
-      ".runner-identity",
-      ".runner-progress",
-      ".runner-layout",
-      ".runner-footer",
-    ],
-  );
+  await expectInsightsScene(page, "workout", [
+    ".pal-run-bar .pal-back-link",
+    ".pal-run-head h1",
+    ".pal-run-progress",
+    ".pal-run-move h2",
+    ".pal-run-sets",
+    ".pal-run-entry",
+    ".pal-run-footer",
+  ]);
   await expectNoOverflow(page);
   if (
     testInfo.project.name === "chromium-desktop" ||
@@ -360,15 +382,13 @@ test("member rollout surfaces preserve product priority across the authenticated
 
   if (currentWidth(testInfo) >= 1024) {
     await page.getByRole("button", { name: /^Start \d/u }).click();
-    await expect(runnerPlacement).toBeHidden();
+    await expect(page.getByRole("heading", { name: "Catch your breath." })).toBeVisible();
     await page.getByRole("button", { name: "Clear" }).click();
-    await expect(runnerPlacement).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Rest timer" })).toBeVisible();
     await context.setOffline(true);
     await expect(page.getByRole("heading", { name: "You're offline" })).toBeVisible();
-    await expect(runnerPlacement).toBeHidden();
     await context.setOffline(false);
     await expect(page.getByRole("heading", { name: "You're offline" })).toHaveCount(0);
-    await expect(runnerPlacement).toBeVisible();
   }
 
   const unverified = await createHarnessContext(
@@ -381,9 +401,7 @@ test("member rollout surfaces preserve product priority across the authenticated
   const unverifiedPage = await unverified.newPage();
   await unverifiedPage.goto("/app/settings");
   await expect(unverifiedPage.getByRole("heading", { name: "Settings" })).toBeVisible();
-  await expect(
-    unverifiedPage.locator('[data-companion-placement="settings"]'),
-  ).toBeHidden();
+  await expectInsightsScene(unverifiedPage, "settings", [".pal-notice", ".pal-page-head h1"]);
   await unverifiedPage.goto(`/workout/${sessionId}`);
   await expect(
     unverifiedPage.getByRole("heading", { name: "Verify before editing this workout" }),
@@ -406,7 +424,7 @@ test("member rollout surfaces preserve product priority across the authenticated
   expect((await cardioResponse).status()).toBe(200);
 
   await page.getByText("Workout outline", { exact: true }).click();
-  const outlineItems = page.locator(".runner-outline li button");
+  const outlineItems = page.locator(".pal-run-outline li button");
   const exerciseCount = await outlineItems.count();
   for (let index = 0; index < exerciseCount; index += 1) {
     await outlineItems.nth(index).click();
@@ -416,7 +434,7 @@ test("member rollout surfaces preserve product priority across the authenticated
           new URL(response.url()).pathname,
         ) && response.request().method() === "POST",
     );
-    if (await page.locator(".runner-more").getAttribute("open") === null) {
+    if (await page.locator(".pal-run-more").getAttribute("open") === null) {
       await page.getByText("More options", { exact: true }).click();
     }
     await page.getByRole("button", { name: "Skip exercise", exact: true }).click();
@@ -424,7 +442,6 @@ test("member rollout surfaces preserve product priority across the authenticated
     expect((await skipResponse).status()).toBe(200);
     await expect(outlineItems.nth(index).getByText("Skipped")).toBeVisible();
   }
-  await expect(runnerPlacement).toBeHidden();
 
   const completionResponse = page.waitForResponse(
     (response) =>
@@ -433,28 +450,28 @@ test("member rollout surfaces preserve product priority across the authenticated
   );
   await page.getByRole("button", { name: "Finish workout" }).click();
   expect((await completionResponse).status()).toBe(200);
-  await expect(page).toHaveURL(`/app/history/${sessionId}`);
+  await expect(page).toHaveURL(new RegExp(`/app/history/${sessionId}\\?from=%2Fapp(&done=1)?$`, "u"));
   await expect(page.getByText("Completed workout")).toBeVisible();
-  await expectCompanion(page, "history", true, [
+  await expectInsightsScene(page, "progress", [
     ".member-header",
     ".member-nav",
-    ".insights-heading > div:first-child",
-    ".archive-notice",
-    ".history-exercises",
-    ".history-cardio",
+    ".pal-page-head h1",
+    ".pal-page-head .pal-actions",
+    ".pal-history-exercises",
+    ".pal-history-cardio",
   ]);
   await expectNoOverflow(page);
 
   await page.goto("/app/history");
   await expect(page.getByRole("heading", { name: "History" })).toBeVisible();
-  await expectCompanion(page, "history", true, [
+  await expectInsightsScene(page, "progress", [
     ".member-header",
     ".member-nav",
-    ".insights-heading > div:first-child",
-    ".insight-action",
-    ".history-filter",
-    ".history-list",
-    ".insight-pagination",
+    ".pal-page-head h1",
+    ".pal-insights-pill",
+    ".pal-insights-filter",
+    ".pal-history-list",
+    ".pal-insights-more",
   ]);
   await page.getByLabel("Show workouts").focus();
   await expect(page.getByLabel("Show workouts")).toBeFocused();
@@ -562,7 +579,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
     expect((await cardioResponse).status()).toBe(200);
 
     await page.getByText("Workout outline", { exact: true }).click();
-    const outlineItems = page.locator(".runner-outline li button");
+    const outlineItems = page.locator(".pal-run-outline li button");
     const exerciseCount = await outlineItems.count();
     for (let index = 0; index < exerciseCount; index += 1) {
       await outlineItems.nth(index).click();
@@ -572,7 +589,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
             new URL(response.url()).pathname,
           ) && response.request().method() === "POST",
       );
-      if (await page.locator(".runner-more").getAttribute("open") === null) {
+      if (await page.locator(".pal-run-more").getAttribute("open") === null) {
         await page.getByText("More options", { exact: true }).click();
       }
       await page.getByRole("button", { name: "Skip exercise", exact: true }).click();
@@ -588,7 +605,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
     );
     await page.getByRole("button", { name: "Finish workout" }).click();
     expect((await completionResponse).status()).toBe(200);
-    await expect(page).toHaveURL(`/app/history/${sessionId}`);
+    await expect(page).toHaveURL(new RegExp(`/app/history/${sessionId}\\?from=%2Fapp(&done=1)?$`, "u"));
 
     await page.goto("/app/library");
     await expect(page.getByRole("heading", { name: "Exercise library" })).toBeVisible();
@@ -625,7 +642,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
 
     await page.goto("/app/history");
     await expect(page.getByRole("heading", { name: "History" })).toBeVisible();
-    await expect(page.locator('[data-companion-placement="history"]')).toBeHidden();
+    await expectInsightsScene(page, "progress", [".pal-page-head h1", ".pal-insights-filter"]);
     await page.getByLabel("Show workouts").focus();
     await expect(page.getByLabel("Show workouts")).toBeFocused();
     await expectNoOverflow(page);
