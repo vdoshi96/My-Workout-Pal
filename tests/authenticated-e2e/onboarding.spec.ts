@@ -21,7 +21,7 @@ import {
   isSameOriginNavigationSupersedingCompanionRequest,
   sameOriginNextFlightNavigationTarget,
 } from "./companion-request-policy";
-import { answerOnboarding, DEFAULT_ANSWERS } from "./support/member";
+import { answerOnboarding, DEFAULT_ANSWERS, skipTour } from "./support/member";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
 
 type ActiveProgramIds = Readonly<{ id: string; revisionId: string }>;
@@ -276,7 +276,7 @@ async function submitOnboarding(
   await save.click();
   const response = await responsePromise;
   // After a saved example routine a short tour opens; skipping it lands on Today as before.
-  if (response.status() === 201 && mode === "example") await page.getByRole("button", { name: "Skip tour" }).click();
+  if (response.status() === 201 && mode === "example") await skipTour(page);
   return { body: await response.json(), response };
 }
 

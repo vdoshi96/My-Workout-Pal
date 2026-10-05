@@ -43,11 +43,16 @@ export async function answerOnboarding(page: Page, answers: OnboardingAnswers = 
   }
 }
 
+/** Skips the tour and waits for Today, whose heading takes focus once it arrives. */
+export async function skipTour(page: Page) {
+  await page.getByRole("button", { name: "Skip tour" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /^Hey .+! Ready for / })).toBeFocused();
+}
+
 /** Saves the routine on the preview and skips the tour, landing on Today. */
 export async function saveRoutineAndSkipTour(page: Page) {
   await page.getByRole("button", { name: "Save my routine" }).click();
-  await expect(page.getByRole("button", { name: "Skip tour" })).toBeVisible();
-  await page.getByRole("button", { name: "Skip tour" }).click();
+  await skipTour(page);
   await expect(page.getByRole("button", { name: /^Start / })).toBeVisible();
 }
 
@@ -76,5 +81,5 @@ export async function saveExampleFromOnboarding(page: Page) {
   await page.getByText("Prefer a different start?").click();
   await page.getByRole("button", { name: "Use the five-day example" }).click();
   await page.getByRole("button", { name: "Save my routine" }).click();
-  await page.getByRole("button", { name: "Skip tour" }).click();
+  await skipTour(page);
 }

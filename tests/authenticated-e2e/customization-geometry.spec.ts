@@ -7,7 +7,7 @@ import {
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
-import { answerOnboarding } from "./support/member";
+import { answerOnboarding, skipTour } from "./support/member";
 
 async function assertAccessible(page: Page) {
   // Next.js streams the document title after the body; wait for it as the pilot spec's helper does.
@@ -189,7 +189,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
   );
   await page.getByRole("button", { name: "Save my routine", exact: true }).click();
   expect((await onboardingResponse).status()).toBe(201);
-  await page.getByRole("button", { name: "Skip tour" }).click();
+  await skipTour(page);
   await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
 
   expect(

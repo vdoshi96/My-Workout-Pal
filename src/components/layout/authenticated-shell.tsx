@@ -62,7 +62,7 @@ export function AuthenticatedShell({
               {viewer.eligibleForPermanentMutations ? "Verified account" : "Email verification required"}
             </small>
           </div>
-          <Link href="/app/settings" aria-label="Settings" className="quiet-settings-link"><Icon name="settings" /><span>Settings</span></Link>
+          <Link href="/app/settings" aria-label="Settings" className="quiet-settings-link" prefetch={false}><Icon name="settings" /><span>Settings</span></Link>
           <AuthenticatedSessionSignOut
             firebaseConfig={firebaseConfig}
             ownerUid={viewer.uid}
