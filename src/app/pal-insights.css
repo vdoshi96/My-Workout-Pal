@@ -1,1 +1,176 @@
-/* Studio Pals: insights screens. Uses the tokens and shared patterns in studio-pals.css. */
+/* Studio Pals: insights screens (Progress, History, workout detail, Records, Settings).
+   Uses the tokens and shared patterns in studio-pals.css. Boxes only for fields, sheets, errors and selected choices. */
+
+/* ---------- Shared pieces ---------- */
+.pal-insights-pill { align-items: center; background: var(--canvas); border: 2px solid var(--ink); border-radius: 999px; color: var(--ink); display: inline-flex; font: 600 1rem/1.2 var(--font-display); gap: 8px; min-height: 48px; padding: 8px 18px; text-decoration: none; }
+.pal-insights-pill:hover { background: var(--hover-bg); }
+.pal-insights-pill svg { height: 1.1em; width: 1.1em; }
+.pal-insights-lead { color: var(--ink-soft); margin: 0 0 14px; max-width: 60ch; }
+.pal-insights .pal-glance dd { font-size: clamp(1.8rem, 6vw, 2.6rem); overflow-wrap: anywhere; }
+.pal-insights .pal-section-head a { align-items: center; display: inline-flex; min-height: 48px; }
+
+/* Status words in a soft pill. Finished is the selected tint; not finished gets a dashed edge so it never relies on colour. */
+.pal-insights-status { align-items: center; border: 2px solid var(--selected-edge); border-radius: 999px; display: inline-flex; font: 600 .85rem/1.2 var(--font-display); gap: 6px; padding: 3px 12px; white-space: nowrap; }
+.pal-insights-status--completed { background: var(--selected-bg); color: var(--selected-fg); }
+.pal-insights-status--abandoned { background: var(--hover-bg); border-color: var(--rule); border-style: dashed; color: var(--ink); }
+
+/* Empty states: the pal, one friendly sentence and one way forward. */
+.pal-insights-empty { align-items: center; display: flex; gap: 24px; }
+.pal-insights-empty .pal-sticker { --sticker: 120px; }
+.pal-insights-empty h2 { margin: 0 0 6px; }
+.pal-insights-empty p { color: var(--ink-soft); font-size: 1.05rem; margin: 0 0 14px; max-width: 42ch; }
+
+/* Fact rows: label then value, inline. */
+.pal-insights-facts { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 0; }
+.pal-insights-facts div { align-items: baseline; display: flex; gap: 6px; min-width: 0; }
+.pal-insights-facts dt { color: var(--ink-soft); font-size: .9rem; }
+.pal-insights-facts dd { font: 600 1rem/1.3 var(--font-display); font-variant-numeric: tabular-nums; margin: 0; overflow-wrap: anywhere; }
+
+/* ---------- Progress ---------- */
+.pal-insights-timeline { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.pal-insights-timeline > li { align-items: center; border-radius: 18px; display: grid; gap: 8px 22px; grid-template-columns: minmax(7rem, 10rem) minmax(0, 1fr) auto; padding: 12px 16px; }
+.pal-insights-timeline > li:nth-child(odd) { background: var(--group); }
+.pal-insights-day { display: grid; gap: 2px; grid-row: 1 / span 2; }
+.pal-insights-day strong { font: 600 1.15rem/1.2 var(--font-display); }
+.pal-insights-day span { color: var(--ink-soft); font-size: .95rem; }
+.pal-insights-sources { display: flex; flex-wrap: wrap; gap: 4px; grid-row: 1 / span 2; justify-content: flex-end; }
+.pal-insights-sources a, .pal-record-sources a { align-items: center; border-radius: 999px; color: var(--brand); display: inline-flex; font: 650 .95rem/1.2 var(--font-display); gap: 6px; min-height: 48px; padding: 6px 12px; text-decoration: none; }
+.pal-insights-sources a:hover, .pal-record-sources a:hover { background: var(--hover-bg); }
+.pal-insights-sources svg, .pal-record-sources svg { height: 1.2em; width: 1.2em; }
+
+/* The volume meter stays a data graphic: a teal bar on a light track with a visible edge. */
+.pal-insights-meter { -webkit-appearance: none; appearance: none; background: var(--canvas); border: 2px solid var(--rule); border-radius: 999px; display: block; height: 16px; overflow: hidden; width: 100%; }
+.pal-insights-meter::-webkit-meter-bar { background: var(--canvas); border: 0; border-radius: 999px; height: 12px; }
+.pal-insights-meter::-webkit-meter-optimum-value,
+.pal-insights-meter::-webkit-meter-suboptimum-value,
+.pal-insights-meter::-webkit-meter-even-less-good-value { background: var(--brand); border-radius: 999px; }
+.pal-insights-meter::-moz-meter-bar { background: var(--brand); border-radius: 999px; }
+
+/* ---------- History ---------- */
+.pal-insights-filter { display: grid; gap: 8px; justify-items: start; }
+.pal-insights-filter label { font-weight: 650; }
+.pal-insights-filter > div { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; }
+.pal-insights-filter select { min-height: 52px; }
+.pal-insights-filter p { color: var(--ink-soft); font-size: .95rem; margin: 0; }
+.pal-history-main { display: grid; gap: 2px; min-width: 0; }
+.pal-history-main strong { overflow-wrap: anywhere; }
+.pal-history-facts span + span::before { content: "·"; margin: 0 .4em; }
+.pal-history-end { align-items: center; display: flex; gap: 10px; }
+.pal-history-end > svg { color: var(--brand); height: 1.2rem; width: 1.2rem; }
+.pal-insights-more { display: flex; }
+
+/* Workout detail: movements are sections split by space, sets an open list, cardio a calm stat row. */
+.pal-history-recap { display: grid; gap: 8px; justify-items: start; }
+.pal-history-recap h2, .pal-history-recap p { margin: 0; }
+.pal-history-recap p { color: var(--ink-soft); }
+.pal-history-detail .pal-page-head > p { font-size: 1.05rem; }
+.pal-history-exercises { display: grid; gap: 44px; list-style: none; margin: 0; padding: 0; }
+.pal-history-exercises > li { display: grid; gap: 12px; min-width: 0; }
+.pal-history-exercise-head { align-items: center; display: flex; gap: 14px; }
+.pal-history-exercise-head .pal-move-number { flex: none; }
+.pal-history-exercise-head strong { display: block; font: 600 1.3rem/1.2 var(--font-display); overflow-wrap: anywhere; }
+.pal-history-exercise-head small { color: var(--ink-soft); display: block; font-size: .95rem; }
+.pal-history-aside { color: var(--ink-soft); margin: 0; max-width: 64ch; overflow-wrap: anywhere; }
+.pal-history-aside strong { color: var(--ink); }
+.pal-history-sets { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.pal-history-sets > li { align-items: baseline; border-radius: 14px; display: grid; gap: 2px 16px; grid-template-columns: 4.5rem minmax(0, 1fr) auto; padding: 10px 14px; }
+.pal-history-sets > li:nth-child(odd) { background: var(--group); }
+.pal-history-sets span, .pal-history-sets small { color: var(--ink-soft); font-size: .95rem; }
+.pal-history-sets strong { font: 600 1.1rem/1.3 var(--font-display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pal-history-sets p { color: var(--ink-soft); grid-column: 2 / -1; margin: 0; overflow-wrap: anywhere; }
+.pal-history-cardio { display: grid; gap: 16px; }
+.pal-insights .pal-history-cardio > h2 { margin: 0; }
+.pal-insights .pal-insights-cardio dd { font-size: clamp(1.4rem, 4vw, 1.8rem); }
+
+/* Workout done: the complete pal, a one-time confetti burst and a tangerine record ribbon. */
+.pal-insights-done .pal-confetti { width: var(--sticker, 120px); }
+.pal-insights-done .pal-sticker { --sticker: 120px; }
+.pal-insights-done > p { color: var(--ink); font: 600 1.2rem/1.4 var(--font-display); }
+.pal-insights-ribbon { background: var(--tangerine); border: 2px solid var(--ink); border-radius: 18px 18px 18px 4px; box-shadow: 0 3px 0 var(--ink); color: var(--on-tangerine); display: grid; gap: 4px; max-width: 100%; padding: 10px 16px; }
+.pal-insights-ribbon strong { font: 650 1.1rem/1.2 var(--font-display); }
+.pal-insights-ribbon ul { display: grid; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.pal-insights-ribbon li { overflow-wrap: anywhere; }
+[data-reduced-motion=true] .pal-insights .pal-sticker img { animation: none; }
+
+/* ---------- Records: trophy rows ---------- */
+.pal-records { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.pal-record { align-items: center; border-radius: 22px; display: grid; gap: 4px 18px; grid-template-columns: 52px minmax(0, 1fr) auto; padding: 16px 18px; }
+.pal-record:nth-child(odd) { background: var(--group); }
+.pal-record-medal { aspect-ratio: 1; background: var(--sun); border: 3px solid var(--ink); border-radius: 50%; box-shadow: inset 0 0 0 6px var(--sun-strong); display: block; width: 48px; }
+.pal-record--newest .pal-record-medal { background: var(--tangerine); box-shadow: inset 0 0 0 6px var(--sun); }
+.pal-record-what { display: grid; gap: 2px; min-width: 0; }
+.pal-record-what small { color: var(--ink-soft); display: block; }
+.pal-record-label { align-items: center; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.pal-insights .pal-record-what h2 { font-size: 1.3rem; margin: 0; overflow-wrap: anywhere; }
+.pal-insights-newest { background: var(--tangerine); border: 2px solid var(--ink); border-radius: 999px; color: var(--on-tangerine); font: 600 .8rem/1.2 var(--font-display); padding: 2px 10px; }
+.pal-record-value { font: 600 clamp(1.8rem, 4vw, 2.6rem)/1.1 var(--font-display); font-variant-numeric: tabular-nums; justify-self: end; text-align: right; }
+.pal-record-sources { display: flex; flex-wrap: wrap; gap: 4px 8px; grid-column: 2 / -1; margin-left: -12px; }
+
+/* ---------- Settings ---------- */
+.pal-settings .pal-page-body { gap: 64px; }
+.pal-settings-section { display: grid; gap: 14px; justify-items: start; max-width: 720px; min-width: 0; }
+.pal-settings .pal-settings-section > h2 { margin: 0; }
+.pal-settings-section > p { color: var(--ink-soft); margin: 0; max-width: 60ch; }
+.pal-settings-field { display: grid; gap: 6px; width: min(100%, 440px); }
+.pal-settings-field label { font-weight: 650; }
+.pal-settings-field select, .pal-settings-field input { min-height: 52px; width: 100%; }
+.pal-settings-field p { color: var(--ink-soft); font-size: .95rem; margin: 0; }
+.pal-settings-check { align-items: flex-start; cursor: pointer; display: flex; gap: 12px; min-height: 48px; padding: 4px 0; }
+.pal-settings-check input { flex: none; height: 24px; margin: 2px 0 0; width: 24px; }
+.pal-settings-check span { display: grid; gap: 2px; }
+.pal-settings-check small { color: var(--ink-soft); font-size: .95rem; }
+.pal-settings-hint { color: var(--ink-soft); font-size: .95rem; margin: 0; }
+.pal-settings-hint a { color: var(--brand); font-weight: 650; }
+.pal-settings-failure { color: var(--danger); display: grid; font-weight: 600; gap: 10px; justify-items: start; margin: 0; }
+.pal-settings-failure p { margin: 0; }
+
+/* Your training: the onboarding questions as choice tiles. */
+.pal-settings-question { border: 0; display: grid; margin: 0; min-width: 0; padding: 0; width: min(100%, 640px); }
+.pal-settings-question legend { font: 600 1.15rem/1.3 var(--font-display); margin: 0 0 10px; padding: 0; }
+.pal-settings-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pal-settings-days .pal-choice { min-height: 56px; }
+.pal-settings-question:disabled .pal-choice { cursor: not-allowed; }
+.pal-settings-question:disabled .pal-choice:not(:has(input:checked)) { border-color: var(--rule); border-style: dashed; color: var(--ink-soft); }
+.pal-settings-question:disabled .pal-choice:not(:has(input:checked)):hover { background: var(--canvas); }
+
+/* Account: plain facts, then the danger zone as a heading and a button (no frame). */
+.pal-settings-identity-list { display: grid; gap: 6px; margin: 0; min-width: 0; }
+.pal-settings-identity-list div { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.pal-settings-identity-list dt { color: var(--ink-soft); min-width: 4.5rem; }
+.pal-settings-identity-list dd { font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+.pal-settings-danger { display: grid; gap: 10px; justify-items: start; margin-top: 24px; }
+.pal-settings-danger h3 { color: var(--danger); margin: 0; }
+.pal-settings-danger > p { color: var(--ink-soft); margin: 0; max-width: 60ch; }
+.pal-settings-identity { color: var(--ink-soft); display: grid; gap: 10px; justify-items: start; margin: 0; }
+.pal-settings-identity--alert { color: var(--danger); font-weight: 600; }
+.pal-settings-identity p { margin: 0; }
+/* globals.css .danger-action still uppercases its label; Studio Pals actions are sentence case. */
+.pal-settings .danger-action { cursor: pointer; text-transform: none; }
+.pal-settings .danger-action:disabled { background: transparent; border-color: var(--rule); border-style: dashed; color: var(--ink-soft); cursor: not-allowed; }
+
+/* Sheets: the shared pal-sheet look. The account deletion sheet takes the danger edge. */
+.pal-settings-sheet > * { margin: 0; }
+.pal-settings-sheet > * + * { margin-top: 14px; }
+.pal-settings-sheet .pal-actions { margin-top: 18px; }
+.pal-settings-sheet--danger { border-color: var(--danger); box-shadow: 0 8px 0 var(--danger); }
+.pal-settings-sheet--danger h2 { color: var(--danger); }
+.pal-settings-delete { display: grid; gap: 14px; }
+.pal-settings-delete .pal-settings-field { width: 100%; }
+
+/* ---------- Phones ---------- */
+@media (max-width: 700px) {
+  .pal-insights-empty { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .pal-insights-empty .pal-sticker { --sticker: 92px; }
+  .pal-insights-timeline > li { grid-template-columns: minmax(0, 1fr); }
+  .pal-insights-day, .pal-insights-sources { grid-row: auto; }
+  .pal-insights-sources { justify-content: flex-start; margin-left: -12px; }
+  .pal-list > li > a:has(.pal-history-main) { grid-template-columns: minmax(0, 1fr); }
+  .pal-history-end { justify-content: space-between; }
+  .pal-history-sets > li { grid-template-columns: 4rem minmax(0, 1fr); }
+  .pal-history-sets small { grid-column: 2; }
+  .pal-record { grid-template-columns: 44px minmax(0, 1fr); padding: 14px; }
+  .pal-record-medal { width: 40px; }
+  .pal-record-value { grid-column: 2; justify-self: start; text-align: left; }
+  .pal-settings-days { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pal-insights-filter > div, .pal-insights-filter select { width: 100%; }
+}

@@ -6,7 +6,46 @@ import {
   formatInsightDuration,
   formatInsightVolume,
   formatPersonalRecord,
+  finishedWorkoutSummary,
+  newestRecordKey,
+  recordsFromSession,
+  summarizeFinishedWorkout,
 } from "@/components/insights/training-insights-presenters";
+import type { PersonalRecordView, TrainingSetView } from "@/server/repositories/training-insights";
+
+function set(overrides: Partial<TrainingSetView>): TrainingSetView {
+  return {
+    addedWeightKg: undefined,
+    distanceMeters: undefined,
+    durationSeconds: undefined,
+    formRating: undefined,
+    id: "set",
+    kind: "weight_reps",
+    note: undefined,
+    position: 1,
+    recordedAt: new Date("2026-08-26T18:00:00.000Z"),
+    repetitions: undefined,
+    setKind: "work",
+    weightKg: undefined,
+    ...overrides,
+  };
+}
+
+function record(overrides: Partial<PersonalRecordView>): PersonalRecordView {
+  return {
+    achievedAt: new Date("2026-08-26T18:00:00.000Z"),
+    calculationVersions: ["personal-record-v1"],
+    exerciseName: "Goblet squat",
+    hasMoreSources: false,
+    isTie: false,
+    sourceSessionIds: ["session-a"],
+    sourceSetLogIds: ["log-a"],
+    totalTieCount: 1,
+    type: "max_weight",
+    value: 20,
+    ...overrides,
+  };
+}
 
 describe("training insights presenters", () => {
   it("converts canonical metrics only at presentation", () => {
@@ -38,5 +77,40 @@ describe("training insights presenters", () => {
     expect(formatPersonalRecord("duration", 95, "metric").value).toBe("1m 35s");
     expect(formatPersonalRecord("distance", 5_000, "metric").value).toBe("5 km");
     expect(formatPersonalRecord("volume", 100, "metric").value).toBe("100 kg·reps");
+  });
+
+  it("sums a finished workout's work sets, reps and lifted load the way Progress does", () => {
+    const summary = summarizeFinishedWorkout([
+      { sets: [
+        set({ repetitions: 5, setKind: "warmup", weightKg: 10 }),
+        set({ repetitions: 10, weightKg: 20 }),
+        set({ repetitions: 8, weightKg: 20 }),
+      ] },
+      { sets: [
+        set({ addedWeightKg: 5, kind: "bodyweight_reps", repetitions: 6 }),
+        set({ kind: "bodyweight_reps", repetitions: 12 }),
+      ] },
+      { sets: [set({ durationSeconds: 45, kind: "duration" })] },
+    ]);
+    expect(summary).toEqual({ repetitions: 36, sets: 5, volumeKg: 390 });
+  });
+
+  it("writes the celebration line in the member's units and drops empty parts", () => {
+    expect(finishedWorkoutSummary({ repetitions: 36, sets: 5, volumeKg: 100 }, "imperial")).toBe(
+      "5 sets · 36 reps · 220.5 lb·reps lifted",
+    );
+    expect(finishedWorkoutSummary({ repetitions: 1, sets: 1, volumeKg: 0 }, "metric")).toBe("1 set · 1 rep");
+    expect(finishedWorkoutSummary({ repetitions: 0, sets: 2, volumeKg: 0 }, "metric")).toBe("2 sets");
+    expect(finishedWorkoutSummary({ repetitions: 0, sets: 0, volumeKg: 0 }, "metric")).toBe("Every workout counts.");
+  });
+
+  it("finds the records this workout set and the newest record overall", () => {
+    const fromThis = record({ sourceSessionIds: ["session-b", "session-a"], sourceSetLogIds: ["log-b"], type: "volume" });
+    const older = record({ achievedAt: new Date("2026-08-20T18:00:00.000Z"), sourceSessionIds: ["session-c"], sourceSetLogIds: ["log-c"] });
+    const newest = record({ achievedAt: new Date("2026-08-28T18:00:00.000Z"), sourceSessionIds: ["session-a"], sourceSetLogIds: ["log-d"] });
+    expect(recordsFromSession([fromThis, older, newest], "session-a")).toEqual([fromThis, newest]);
+    expect(recordsFromSession([older], "session-a")).toEqual([]);
+    expect(newestRecordKey([fromThis, older, newest])).toBe("max_weight:log-d");
+    expect(newestRecordKey([])).toBeUndefined();
   });
 });

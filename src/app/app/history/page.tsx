@@ -7,8 +7,8 @@ import {
   formatInsightDistance,
   formatInsightDuration,
 } from "@/components/insights/training-insights-presenters";
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
+import { PalSticker, SceneStage } from "@/components/ui/scene-stage";
 import { getDatabase } from "@/db/client";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import {
@@ -74,57 +74,62 @@ export default async function TrainingHistoryPage({ searchParams }: PageProps) {
   }).toString()}` : ""}`;
 
   return (
-    <section className="insights-page" aria-labelledby="history-title">
-        <header className="insights-heading companion-heading contour-surface">
-          <div>
-            <h1 id="history-title">History</h1>
-            <p>{"Every workout you've finished or stopped."}</p>
-          </div>
-          <Link className="insight-action" href="/app/progress">View progress <Icon name="arrow-right" /></Link>
-          {history.sessions.length > 0 ? <DecorativeCompanion variant="history" /> : null}
-        </header>
+    <section className="pal-insights" aria-labelledby="history-title">
+      <SceneStage scene="progress" />
+      <header className="pal-page-head">
+        <h1 id="history-title">History</h1>
+        <p>{"Every workout you've finished or stopped."}</p>
+        <div className="pal-actions">
+          <Link className="pal-insights-pill" href="/app/progress">See your progress <Icon name="arrow-right" /></Link>
+        </div>
+      </header>
 
-        <form className="history-filter" method="get">
+      <div className="pal-page-body">
+        <form className="pal-insights-filter" method="get">
           <label htmlFor="history-state">Show workouts</label>
           <div>
             <select defaultValue={state ?? "all"} id="history-state" name="state">
-              <option value="all">Completed and interrupted</option>
-              <option value="completed">Completed only</option>
-              <option value="abandoned">Interrupted only</option>
+              <option value="all">All workouts</option>
+              <option value="completed">Finished</option>
+              <option value="abandoned">Not finished</option>
             </select>
-            <button type="submit">Apply filter</button>
+            <button className="secondary-action" type="submit">Apply filter</button>
           </div>
           <p>Times shown in {timezone}.</p>
         </form>
 
         {history.sessions.length === 0 ? (
-          <div className="member-empty-sheet">
-            <span className="eyebrow">No saved match</span>
-            <h2>{state ? `No ${state === "abandoned" ? "interrupted" : "completed"} workouts yet.` : "Your history starts after a workout ends."}</h2>
-            <p>Finished workouts will show up here.</p>
-            {state ? <Link href="/app/history">Clear filter</Link> : <Link href="/app">Open your program</Link>}
+          <div className="pal-insights-empty">
+            <PalSticker pose="ready" />
+            <div>
+              <h2>{state ? `No ${state === "abandoned" ? "unfinished" : "finished"} workouts yet.` : "Your history starts after your first workout."}</h2>
+              <p>Every workout you finish or stop shows up here.</p>
+              {state ? <Link className="secondary-action" href="/app/history">Clear filter</Link> : <Link className="primary-action" href="/app">Go to Today <Icon name="arrow-right" /></Link>}
+            </div>
           </div>
         ) : (
-          <ol className="history-list">
+          <ol className="pal-list pal-history-list">
             {history.sessions.map((session) => (
               <li id={`session-${session.id}`} key={session.id}>
                 <Link href={withFrom(`/app/history/${session.id}`, `${historyHref}#session-${session.id}`)}>
-                  <span className={`history-state history-state--${session.state}`}>
-                    {session.state === "completed" ? "Completed" : "Interrupted"}
-                  </span>
-                  <span className="history-main">
+                  <span className="pal-history-main">
                     <strong>{session.dayName}</strong>
                     <small>{formatHistoryDate(session.occurredAt, timezone)}</small>
+                    <small className="pal-history-facts">
+                      <span>{session.completedExerciseCount}/{session.exerciseCount} exercises</span>
+                      <span>{session.setCount} set{session.setCount === 1 ? "" : "s"}</span>
+                      <span>{formatInsightDuration(session.durationSeconds)}</span>
+                      {session.cardio?.distanceMeters !== undefined ? (
+                        <span>{formatInsightDistance(session.cardio.distanceMeters, unitSystem)} cardio</span>
+                      ) : null}
+                    </small>
                   </span>
-                  <span className="history-facts">
-                    <span>{session.completedExerciseCount}/{session.exerciseCount} exercises</span>
-                    <span>{session.setCount} set{session.setCount === 1 ? "" : "s"}</span>
-                    <span>{formatInsightDuration(session.durationSeconds)}</span>
-                    {session.cardio?.distanceMeters !== undefined ? (
-                      <span>{formatInsightDistance(session.cardio.distanceMeters, unitSystem)} cardio</span>
-                    ) : null}
+                  <span className="pal-history-end">
+                    <span className={`pal-insights-status pal-insights-status--${session.state}`}>
+                      {session.state === "completed" ? "Completed" : "Not finished"}
+                    </span>
+                    <Icon name="chevron-right" />
                   </span>
-                  <Icon name="chevron-right" />
                 </Link>
               </li>
             ))}
@@ -132,10 +137,11 @@ export default async function TrainingHistoryPage({ searchParams }: PageProps) {
         )}
 
         {nextHref ? (
-          <nav aria-label="History pagination" className="insight-pagination">
-            <Link href={nextHref}>Older workouts <Icon name="arrow-right" /></Link>
+          <nav aria-label="History pagination" className="pal-insights-more">
+            <Link className="secondary-action" href={nextHref}>Older workouts <Icon name="arrow-right" /></Link>
           </nav>
         ) : null}
+      </div>
     </section>
   );
 }

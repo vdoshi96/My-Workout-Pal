@@ -46,6 +46,7 @@ export default async function SettingsPage() {
       equipmentProfileKind={data.model?.equipment.profileKind ?? null}
       firebaseConfig={firebasePublicConfig()}
       initialPreferences={data.model?.preferences ?? null}
+      initialTrainingProfile={data.model?.trainingProfile ?? null}
       timeZones={timeZoneOptions(data.model?.preferences?.timezone)}
       ownerUid={data.viewer.uid}
       viewerProvider={data.viewer.provider}

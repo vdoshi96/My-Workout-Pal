@@ -41,6 +41,7 @@ export default async function HarnessSettingsPage() {
       }
       initialFirebaseIdentityState={{ status: "ready" }}
       initialPreferences={model?.preferences ?? null}
+      initialTrainingProfile={model?.trainingProfile ?? null}
       timeZones={timeZoneOptions(model?.preferences?.timezone)}
       ownerUid={context.viewer.uid}
       viewerProvider={context.viewer.provider}

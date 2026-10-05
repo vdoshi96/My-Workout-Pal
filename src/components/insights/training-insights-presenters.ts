@@ -95,3 +95,65 @@ export function formatPersonalRecord(
       return { label: "Longest duration", value: formatInsightDuration(value) };
   }
 }
+
+export type FinishedWorkoutSummary = Readonly<{ repetitions: number; sets: number; volumeKg: number }>;
+
+type SummarySet = Readonly<{
+  addedWeightKg: number | undefined;
+  kind: "bodyweight_reps" | "distance_duration" | "duration" | "weight_reps";
+  repetitions: number | undefined;
+  setKind: "warmup" | "work";
+  weightKg: number | undefined;
+}>;
+
+/**
+ * What a finished workout added up to: logged work sets, their reps, and lifted load
+ * (weight × reps, or added weight × reps for bodyweight moves), the same way Progress counts them.
+ */
+export function summarizeFinishedWorkout(
+  exercises: ReadonlyArray<Readonly<{ sets: readonly SummarySet[] }>>,
+): FinishedWorkoutSummary {
+  let sets = 0;
+  let repetitions = 0;
+  let volumeKg = 0;
+  for (const set of exercises.flatMap((exercise) => exercise.sets)) {
+    if (set.setKind !== "work") continue;
+    sets += 1;
+    const reps = set.repetitions ?? 0;
+    repetitions += reps;
+    const loadKg = set.kind === "weight_reps" ? set.weightKg ?? 0 : set.kind === "bodyweight_reps" ? set.addedWeightKg ?? 0 : 0;
+    const next = volumeKg + loadKg * reps;
+    if (Number.isFinite(next) && next >= 0) volumeKg = next;
+  }
+  return { repetitions, sets, volumeKg };
+}
+
+/** One friendly line for the workout-done moment, in the member's units. */
+export function finishedWorkoutSummary(summary: FinishedWorkoutSummary, unitSystem: InsightUnitSystem): string {
+  if (summary.sets === 0) return "Every workout counts.";
+  const parts = [`${summary.sets} ${summary.sets === 1 ? "set" : "sets"}`];
+  if (summary.repetitions > 0) parts.push(`${formatNumber(summary.repetitions, 0)} ${summary.repetitions === 1 ? "rep" : "reps"}`);
+  if (summary.volumeKg > 0) parts.push(`${formatInsightVolume(summary.volumeKg, unitSystem)} lifted`);
+  return parts.join(" · ");
+}
+
+type RecordLike = Readonly<{ achievedAt: Date; sourceSessionIds: readonly string[]; sourceSetLogIds: readonly string[]; type: PersonalRecordType }>;
+
+/** Records whose best set came from this workout. */
+export function recordsFromSession<T extends RecordLike>(records: readonly T[], sessionId: string): T[] {
+  return records.filter((record) => record.sourceSessionIds.includes(sessionId));
+}
+
+/** A stable key for one record row. */
+export function recordKey(record: RecordLike): string {
+  return `${record.type}:${record.sourceSetLogIds.join(":")}`;
+}
+
+/** The key of the most recently set record, or undefined when there are none. */
+export function newestRecordKey(records: readonly RecordLike[]): string | undefined {
+  let newest: RecordLike | undefined;
+  for (const record of records) {
+    if (!newest || record.achievedAt.getTime() > newest.achievedAt.getTime()) newest = record;
+  }
+  return newest ? recordKey(newest) : undefined;
+}

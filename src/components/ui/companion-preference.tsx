@@ -22,19 +22,21 @@ function snapshot(): CompanionChoice {
 export function useCompanionChoice(): CompanionChoice {
   return useSyncExternalStore(subscribe, snapshot, () => "pip");
 }
-export function CompanionPreference({ compact = false }: { compact?: boolean }) {
+export function CompanionPreference() {
   const choice = useCompanionChoice();
-  return <section className={`quiet-companion-preference${compact ? " companion-switcher" : ""}`} aria-labelledby="companion-preference-title">
+  return <section className="pal-settings-section" aria-labelledby="companion-preference-title">
     <h2 id="companion-preference-title">Characters</h2>
-    <p>Pick who greets you on Today, or turn the characters off. Saved on this device.</p>
-    <label htmlFor="companion-choice">Your companion</label>
-    <select id="companion-choice" value={choice} onChange={(event) => {
-      try { localStorage.setItem(key, event.target.value); } catch { return; }
-      window.dispatchEvent(new Event(changeEvent));
-    }}>
-      <option value="pip">Pip, the stoat</option>
-      <option value="mica">Mica, the kingfisher</option>
-      <option value="off">Off</option>
-    </select>
+    <p>Pick who cheers you on, or turn the characters off. Saved on this device.</p>
+    <div className="pal-settings-field">
+      <label htmlFor="companion-choice">Your companion</label>
+      <select id="companion-choice" value={choice} onChange={(event) => {
+        try { localStorage.setItem(key, event.target.value); } catch { return; }
+        window.dispatchEvent(new Event(changeEvent));
+      }}>
+        <option value="pip">Pip, the stoat</option>
+        <option value="mica">Mica, the kingfisher</option>
+        <option value="off">Off</option>
+      </select>
+    </div>
   </section>;
 }
