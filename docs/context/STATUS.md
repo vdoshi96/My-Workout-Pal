@@ -1,5 +1,13 @@
 # Project status
 
+## Playful companion overhaul: October 4–5, 2026 (Phase 1, waiting for owner approval)
+
+The owner used the post-audit app and said it fails at its job: it feels like a corporate deck of boxed cards, the art is an afterthought, white text on selected options is hard to read, onboarding teaches nothing, and drill-downs have no way back. [The overhaul plan](../plans/PLAYFUL-COMPANION-OVERHAUL.md) records the Phase 0 audit (box inventory, measured contrast in every state, navigation map, onboarding walkthrough, art inventory) and the Phase 1 *Studio Pals* direction.
+
+Branch `vishal/playful-companion-overhaul` contains the plan, the screenshot and contrast capture tooling (`playwright.capture.config.ts`, `tests/capture/`, `node scripts/test-e2e-authenticated.mjs --capture`), and a prototype of **only** the landing page and member Today, with before and prototype screenshots under `docs/design/playful-overhaul/`. The prototype adds `@fontsource-variable/fredoka` (pending owner approval) and a scoped stylesheet `src/app/studio-pals.css` that Phase 2 folds into one system. Browser tests that check the retired landing and Today layouts are expected to fail on this branch; nothing is merged or deployed. Work is **stopped for owner approval** of the direction, the font, the onboarding questions, the `0008_training_profile` migration and the artwork requests. No production data, schema, seed, Firebase, Neon or Vercel setting changed.
+
+The canonical checkout is the only worktree. A temporary detached worktree of `main` used for the baseline capture was removed.
+
 ## Production-grade supplemental approvals: September 27, 2026
 
 The owner approved the exact WebKit YouTube teardown exception and the logging-shapes response-completion wait in PR #8. Both are implemented without changing assertions, timeouts, application code, or browser settings. The guard passes 24 positive/negative diagnostic checks and typecheck; the [QA report](../qa/latest/PRODUCTION-GRADE-QA.md) records its exact limits and ledger. The last complete committed run on `3feaf55` passed W1–W6 (75 authenticated / 13 skips; 102 release / 66 skips). The supplemental commit must repeat all gates serially; its exact SHA/results and Vercel status are recorded in [PR #8](https://github.com/vdoshi96/My-Workout-Pal/pull/8). Merge is authorized only after every required same-commit gate and Vercel check passes. The pre-hydration interaction issue remains excluded and documented. No UI changed; the 40 reviewed screenshots remain representative. Main remains `c619ac6` until conditional closeout; keep the branch. The canonical checkout is the sole active worktree for this verification. No manual deployment or provider change is authorized.

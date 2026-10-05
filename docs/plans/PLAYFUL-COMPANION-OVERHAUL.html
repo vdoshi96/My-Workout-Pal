@@ -1,0 +1,2018 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="b37c29ab5ecefc0659e48d64a9d47f9583f9dbb73f03eb93b55a2eb4e914946e">
+  <title>Playful companion overhaul · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Playful companion overhaul</h1>
+<h2>Outcome</h2>
+<p>The owner wants a first-time visitor to think: <em>&quot;Oh wow, this is a great companion for my workouts. I can set my routine, track my workouts at the gym, watch videos if I need to, and see my progress and gains.&quot;</em> The app should feel fun, playful and light, never like a tool you have to learn first.</p>
+<p>The September production-grade audit (PR #8, main <code>4db767f</code>) made the app correct. The owner then used it and named five failures:</p>
+<ol>
+<li>It feels like a corporate presentation: too many boxed cards on a flat green-and-cream page.</li>
+<li>The art is an afterthought: a scene dropped into a corner instead of the place the app lives in.</li>
+<li>White text on highlighted or selected options is hard to read.</li>
+<li>Onboarding is pointless: one push-up set, no demo video, no question about goals, no picture of how the app is used.</li>
+<li>Back navigation is missing: a demo opened from the plan has no way back to the same spot.</li>
+</ol>
+<p>This plan records the Phase 0 audit and the Phase 1 direction. Phase 1 ends with a prototype of the landing page and member Today, and then <strong>stops for owner approval</strong>. Phase 2 (rollout) does not begin until the owner approves the direction or sends changes.</p>
+<p>Every <code>AGENTS.md</code> rule still applies. This plan overrides only what the owner&#39;s October 4 brief overrides: the visual system can change from Quiet Set, onboarding can ask new questions and persist new answers, and browser tests that check a deliberately retired layout can be updated under the ledger rules in <a href="#phase-2-rollout-after-approval">Phase 2</a>.</p>
+<h2>Contents</h2>
+<ul>
+<li><a href="#phase-0-audit-of-the-current-state">Phase 0: audit of the current state</a><ul>
+<li><a href="#capture-method">Capture method</a></li>
+<li><a href="#box-inventory">Box inventory</a></li>
+<li><a href="#contrast-audit">Contrast audit</a></li>
+<li><a href="#navigation-map">Navigation map</a></li>
+<li><a href="#onboarding-walkthrough">Onboarding walkthrough</a></li>
+<li><a href="#art-inventory">Art inventory</a></li>
+</ul>
+</li>
+<li><a href="#phase-1-the-new-direction">Phase 1: the new direction</a></li>
+<li><a href="#phase-2-rollout-after-approval">Phase 2: rollout (after approval)</a></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a></li>
+<li><a href="#tests-and-evidence">Tests and evidence</a></li>
+<li><a href="#open-questions-for-the-owner">Open questions for the owner</a></li>
+</ul>
+<hr>
+<h2>Phase 0: audit of the current state</h2>
+<p>No application code changed during Phase 0.</p>
+<h3>Capture method</h3>
+<ul>
+<li><strong>Public screens:</strong> <code>next dev --webpack</code> on <code>127.0.0.1:3118</code> with the read-only local environment, warmed with the route loop from <code>PRODUCTION-GRADE-IMPLEMENTATION.md</code> § Commands. Run with <code>PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test --config playwright.capture.config.ts</code>.</li>
+<li><strong>Member screens:</strong> the synthetic authenticated fixture (in-memory PGlite, Alice QA), through <code>node scripts/test-e2e-authenticated.mjs --capture</code>. The capture walks onboarding with the example routine, opens every member page, starts a workout, logs a set, pauses rest and opens the end dialog. A second scope finishes a one-movement workout so Progress, History and Records have content.</li>
+<li><strong>Viewports and themes:</strong> four Chromium projects: 390 × 844 phone and 1440 × 1000 desktop, each in light and dark (<code>colorScheme</code>). Reduced motion is on, so captures are stable.</li>
+<li><strong>Output:</strong> full-page PNGs plus a <code>*.contrast.json</code> sample file per screen in <code>docs/qa/runs/capture/&lt;project&gt;/</code> (ignored by Git, because these are scratch captures). Reviewed images are downscaled to CSS pixels and copied into <a href="../design/playful-overhaul/"><code>docs/design/playful-overhaul/</code></a>. They are design-review material, so <code>docs/qa/latest/</code> keeps only the newest completed QA run until Phase 2 replaces it.</li>
+<li><strong>Contrast sampling:</strong> <code>tests/capture/capture-kit.ts</code> measures every visible interactive element in the page, groups identical elements by tag, classes and state, and composites translucent backgrounds down to an opaque colour. On desktop it also hovers one element per group, then walks the page with the Tab key so <code>:focus-visible</code> styles apply exactly as a keyboard user sees them. <code>tests/capture/summarize-contrast.mjs</code> turns the samples into the tables below.</li>
+<li><strong>Limits:</strong> YouTube frames are replaced by an inert local page, so the images say nothing about playback. Full-page phone captures repeat the fixed bottom navigation partway down the page; that is a screenshot artefact, not a layout bug. The dev server shows its small Next.js indicator in the bottom-left corner of public captures.</li>
+</ul>
+<p>The baseline images are in <a href="../design/playful-overhaul/before/"><code>docs/design/playful-overhaul/before/</code></a>. The baseline was captured from an untouched checkout of <code>main</code> at <code>4db767f</code>.</p>
+<h3>Box inventory</h3>
+<p>Read from source and checked against the captures. <strong>G</strong> is <code>src/app/globals.css</code>; <strong>Q</strong> is <code>src/app/quiet-set.css</code>, which loads after G and wins ties. <strong>K</strong> keep, <strong>M</strong> merge, <strong>R</strong> remove. A box is any filled, bordered or shadowed container that renders today. Plain rules between list rows don&#39;t count.</p>
+<p>The rule used for each call: keep a box only where it carries real function (a form field, the active set entry, a dialog, the rest timer, a selected state, an error). Everything else moves onto the scene with whitespace, type and soft grouping.</p>
+<h4>Totals per screen</h4>
+<table>
+<thead>
+<tr>
+<th>Screen</th>
+<th>Box kinds</th>
+<th>K</th>
+<th>M</th>
+<th>R</th>
+<th>Art on screen today</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Shared public chrome and PWA toasts</td>
+<td>4</td>
+<td>4</td>
+<td>0</td>
+<td>0</td>
+<td>none</td>
+</tr>
+<tr>
+<td>Shared member chrome</td>
+<td>5</td>
+<td>4</td>
+<td>1</td>
+<td>0</td>
+<td>faded page backdrop</td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td>2</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>dawn/evening studio beside a cream copy plate</td>
+</tr>
+<tr>
+<td><code>/try</code></td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td><strong>none</strong></td>
+</tr>
+<tr>
+<td><code>/program</code></td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td><strong>none</strong></td>
+</tr>
+<tr>
+<td><code>/program/[day]</code></td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>2</td>
+<td><strong>none</strong></td>
+</tr>
+<tr>
+<td><code>/library</code></td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td>otter-study</td>
+</tr>
+<tr>
+<td><code>/library/[slug]</code></td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td><strong>none</strong></td>
+</tr>
+<tr>
+<td><code>/progress</code></td>
+<td>4</td>
+<td>0</td>
+<td>2</td>
+<td>2</td>
+<td>tortoise-review</td>
+</tr>
+<tr>
+<td><code>/sample-workout</code></td>
+<td>5</td>
+<td>0</td>
+<td>3</td>
+<td>2</td>
+<td><strong>none</strong></td>
+</tr>
+<tr>
+<td><code>/sign-in</code></td>
+<td>4</td>
+<td>3</td>
+<td>1</td>
+<td>0</td>
+<td><strong>none</strong></td>
+</tr>
+<tr>
+<td><code>/offline</code>, not-found, error pages</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td><strong>none</strong></td>
+</tr>
+<tr>
+<td><code>/app</code> Today (with a routine)</td>
+<td>6</td>
+<td>1</td>
+<td>1</td>
+<td>4</td>
+<td>pip-studio or mica-studio</td>
+</tr>
+<tr>
+<td><code>/app</code> Today (onboarding)</td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td>pip-studio or mica-studio</td>
+</tr>
+<tr>
+<td><code>/app/program/[day]</code></td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>pip-recover</td>
+</tr>
+<tr>
+<td><code>/app/program/edit</code> (plus movement chooser)</td>
+<td>18 (+9)</td>
+<td>9</td>
+<td>5</td>
+<td>4</td>
+<td>beaver-plan, only in calm states</td>
+</tr>
+<tr>
+<td><code>/app/programs</code></td>
+<td>7</td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+<td>beaver-plan</td>
+</tr>
+<tr>
+<td><code>/app/library</code></td>
+<td>4</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>otter-study</td>
+</tr>
+<tr>
+<td><code>/app/library/[slug]</code></td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>backdrop only</td>
+</tr>
+<tr>
+<td><code>/app/library/custom</code></td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>backdrop only</td>
+</tr>
+<tr>
+<td><code>/app/library/custom/new</code> and <code>[id]</code></td>
+<td>4</td>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+<td>otter-study</td>
+</tr>
+<tr>
+<td><code>/app/progress</code></td>
+<td>5</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>tortoise-review</td>
+</tr>
+<tr>
+<td><code>/app/history</code></td>
+<td>4</td>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+<td>tortoise-review, only with sessions</td>
+</tr>
+<tr>
+<td><code>/app/history/[sessionId]</code></td>
+<td>4</td>
+<td>0</td>
+<td>2</td>
+<td>2</td>
+<td>tortoise-review</td>
+</tr>
+<tr>
+<td><code>/app/prs</code></td>
+<td>2</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>tortoise-review</td>
+</tr>
+<tr>
+<td><code>/app/settings</code></td>
+<td>11</td>
+<td>4</td>
+<td>3</td>
+<td>4</td>
+<td>hare-prepare, only in calm states</td>
+</tr>
+<tr>
+<td><code>/workout/[sessionId]</code> (incl. rest)</td>
+<td>18</td>
+<td>10</td>
+<td>5</td>
+<td>3</td>
+<td>backdrop, plus a 150 × 95 pip-recover slot that is hidden almost always</td>
+</tr>
+</tbody></table>
+<p><strong>Deepest nesting:</strong> Settings equipment (white plate → bordered white review panel → notice); onboarding (white form plate → white choice plate → bordered white tile, three whites deep); program editor (day panel → white section → tinted cardio card → fields); workout (white <code>.runner-main</code> → white <code>.runner-editor</code>, with the rest timer inside the same plate).</p>
+<h4>Shared chrome</h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Element</th>
+<th>Source</th>
+<th>CSS</th>
+<th>Holds</th>
+<th>Rec</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>C1</td>
+<td>Public nav current item</td>
+<td><code>public-shell.tsx:32</code></td>
+<td>Q42 ink fill</td>
+<td>Nav label</td>
+<td>K</td>
+<td>Selected state</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Member header</td>
+<td><code>authenticated-shell.tsx:49</code></td>
+<td>Q350 white fill + shadow</td>
+<td>Brand, identity, settings, sign-out, nav</td>
+<td>M</td>
+<td>Transparent over the scene; keep only the nav pill</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Member phone tab bar</td>
+<td><code>authenticated-nav.tsx:26</code></td>
+<td>Q49 white + top rule, Q427 shadow</td>
+<td>4 destinations</td>
+<td>K</td>
+<td>A fixed bar has to stay readable</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>Member nav current item</td>
+<td><code>authenticated-nav.tsx:29</code></td>
+<td>Q352 ink fill</td>
+<td>Label</td>
+<td>K</td>
+<td>Selected state</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>Verification banner</td>
+<td><code>authenticated-shell.tsx:73</code></td>
+<td>G211 forest fill</td>
+<td>Message + resend</td>
+<td>K</td>
+<td>Blocking account status</td>
+</tr>
+<tr>
+<td>C6–C8</td>
+<td>PWA toast, offline indicator, install error</td>
+<td><code>pwa-registration.tsx:171–195</code></td>
+<td>G98–G107</td>
+<td>Transient status</td>
+<td>K</td>
+<td>Toasts and errors</td>
+</tr>
+</tbody></table>
+<h4>Public screens</h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Screen</th>
+<th>Element</th>
+<th>Source</th>
+<th>CSS</th>
+<th>Rec</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>L1</td>
+<td><code>/</code></td>
+<td>Account-deleted notice</td>
+<td><code>page.tsx:14</code></td>
+<td>G222 forest fill</td>
+<td>M</td>
+<td>One shared soft status strip</td>
+</tr>
+<tr>
+<td>L2</td>
+<td><code>/</code></td>
+<td>Welcome copy plate</td>
+<td><code>page.tsx:16</code></td>
+<td>Q213 cream fill, 16px radius</td>
+<td>R</td>
+<td>The art has a cream wall; a soft scrim replaces the plate</td>
+</tr>
+<tr>
+<td>T1</td>
+<td><code>/try</code></td>
+<td>Reps input</td>
+<td><code>try-one-set.tsx:41</code></td>
+<td>Q34 white field</td>
+<td>K</td>
+<td>Field</td>
+</tr>
+<tr>
+<td>T2</td>
+<td><code>/try</code></td>
+<td>Practice rest timer</td>
+<td><code>try-one-set.tsx:32</code></td>
+<td>Q234 paper-deep fill</td>
+<td>K</td>
+<td>Timer</td>
+</tr>
+<tr>
+<td>P1</td>
+<td><code>/program</code></td>
+<td>Equipment toggle</td>
+<td><code>program-explorer.tsx:18</code></td>
+<td>G588–G591</td>
+<td>K</td>
+<td>Segmented selected state</td>
+</tr>
+<tr>
+<td>P2</td>
+<td><code>/program</code></td>
+<td>Day cards × 5</td>
+<td><code>program-explorer.tsx:23</code></td>
+<td>Q186 border, white fill</td>
+<td>M</td>
+<td>Open illustrated day rows, still fully clickable</td>
+</tr>
+<tr>
+<td>D1</td>
+<td><code>/program/[day]</code></td>
+<td>Cardio sheet</td>
+<td><code>program/[day]/page.tsx:55</code></td>
+<td>G130 ink slab</td>
+<td>R</td>
+<td>Dark slab; a heading is enough</td>
+</tr>
+<tr>
+<td>D2</td>
+<td><code>/program/[day]</code></td>
+<td>Cardio option tiles</td>
+<td>same</td>
+<td>G133 border, inside D1</td>
+<td>R</td>
+<td>Information only</td>
+</tr>
+<tr>
+<td>LB1</td>
+<td><code>/library</code></td>
+<td>Equipment toggle</td>
+<td><code>library/page.tsx:48</code></td>
+<td>G588/G591</td>
+<td>K</td>
+<td>Selected state</td>
+</tr>
+<tr>
+<td>LB2</td>
+<td><code>/library</code></td>
+<td>Search input and button</td>
+<td><code>library/page.tsx:66,73</code></td>
+<td>G594/Q34</td>
+<td>K</td>
+<td>Field</td>
+</tr>
+<tr>
+<td>LB3</td>
+<td><code>/library</code></td>
+<td>Empty state</td>
+<td><code>library/page.tsx:87</code></td>
+<td>G600 dashed rule</td>
+<td>R</td>
+<td>Text plus art</td>
+</tr>
+<tr>
+<td>LB4</td>
+<td><code>/library</code></td>
+<td>Movement cards</td>
+<td><code>library/page.tsx:94</code></td>
+<td>Q186 border, white fill</td>
+<td>M</td>
+<td>Open rows with a demo affordance</td>
+</tr>
+<tr>
+<td>EG1</td>
+<td>Guides</td>
+<td>Video tabs</td>
+<td><code>curated-video-player.tsx:52</code></td>
+<td>G608, Q169; selected uses undefined <code>--route</code></td>
+<td>K</td>
+<td>Selected tab; fix the missing token</td>
+</tr>
+<tr>
+<td>EG2</td>
+<td>Guides</td>
+<td>Video frame</td>
+<td><code>curated-video-player.tsx:77</code></td>
+<td>G613, Q172</td>
+<td>K</td>
+<td>Media frame</td>
+</tr>
+<tr>
+<td>PR1</td>
+<td><code>/progress</code></td>
+<td>&quot;Example data&quot; badge</td>
+<td><code>progress/page.tsx:27</code></td>
+<td>G624 2px border</td>
+<td>M</td>
+<td>Soft pill</td>
+</tr>
+<tr>
+<td>PR2</td>
+<td><code>/progress</code></td>
+<td>Metric cells</td>
+<td><code>progress/page.tsx:33–35</code></td>
+<td>G626/G720 rules</td>
+<td>M</td>
+<td>Open stat row</td>
+</tr>
+<tr>
+<td>PR3</td>
+<td><code>/progress</code></td>
+<td>Chart panel</td>
+<td><code>progress/page.tsx:54</code></td>
+<td>G637 fill</td>
+<td>R</td>
+<td>Fill isn&#39;t needed</td>
+</tr>
+<tr>
+<td>PR4</td>
+<td><code>/progress</code></td>
+<td>Closing CTA band</td>
+<td><code>progress/page.tsx:66</code></td>
+<td>G645 ink slab; the forest button is nearly invisible on it</td>
+<td>R</td>
+<td>Dark slab</td>
+</tr>
+<tr>
+<td>SW1–SW3</td>
+<td><code>/sample-workout</code></td>
+<td>Badge, stamp, set chips</td>
+<td><code>sample-workout/page.tsx:46–79</code></td>
+<td>G624, G120, G662</td>
+<td>M</td>
+<td>Pills and inline set text</td>
+</tr>
+<tr>
+<td>SW4–SW5</td>
+<td><code>/sample-workout</code></td>
+<td>Dark side panel with nested cardio frame</td>
+<td><code>sample-workout/page.tsx:89,97</code></td>
+<td>G665, G672</td>
+<td>R</td>
+<td>Dark slab with a nested frame</td>
+</tr>
+<tr>
+<td>SI1</td>
+<td><code>/sign-in</code></td>
+<td>Auth sheet</td>
+<td><code>sign-in/page.tsx:40</code></td>
+<td>G683 white + border</td>
+<td>M</td>
+<td>At most one soft plate</td>
+</tr>
+<tr>
+<td>SI2–SI4</td>
+<td><code>/sign-in</code></td>
+<td>Mode tabs, provider button, fields</td>
+<td><code>auth-panel.tsx:105–121</code></td>
+<td>G685–G693</td>
+<td>K</td>
+<td>Selected state, button, fields</td>
+</tr>
+</tbody></table>
+<h4>Member screens</h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Screen</th>
+<th>Element</th>
+<th>Source</th>
+<th>CSS</th>
+<th>Rec</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TD1</td>
+<td>Today</td>
+<td>Verification notice</td>
+<td><code>member-program-home.tsx:71</code></td>
+<td>G222</td>
+<td>M</td>
+<td>Shared status strip</td>
+</tr>
+<tr>
+<td>TD2</td>
+<td>Today</td>
+<td>Resume card</td>
+<td><code>member-program-home.tsx:78</code></td>
+<td>Q388 white + shadow</td>
+<td>R</td>
+<td>Heading and action sit on the scene</td>
+</tr>
+<tr>
+<td>TD3</td>
+<td>Today</td>
+<td>Start panel</td>
+<td><code>member-program-home.tsx:106</code></td>
+<td>Q387 white + shadow</td>
+<td>R</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>TD4</td>
+<td>Today</td>
+<td>Day select</td>
+<td><code>member-program-home.tsx:109</code></td>
+<td>Q34</td>
+<td>K→M</td>
+<td>Becomes a row of day pills (selected state)</td>
+</tr>
+<tr>
+<td>TD5</td>
+<td>Today</td>
+<td>All-days list</td>
+<td><code>member-program-home.tsx:126</code></td>
+<td>Q397 white plate</td>
+<td>R</td>
+<td>Day pills and open rows</td>
+</tr>
+<tr>
+<td>TD6</td>
+<td>Today</td>
+<td>Progress at a glance</td>
+<td><code>member-program-home.tsx:139</code></td>
+<td>Q411 white plate</td>
+<td>R</td>
+<td>Open stat row</td>
+</tr>
+<tr>
+<td>OB1</td>
+<td>Onboarding</td>
+<td>Wizard plate</td>
+<td><code>onboarding-form.tsx:106</code></td>
+<td>Q400–403 white</td>
+<td>R</td>
+<td>Fields carry their own edges</td>
+</tr>
+<tr>
+<td>OB2</td>
+<td>Onboarding</td>
+<td>Choice tiles</td>
+<td><code>onboarding-form.tsx:111,129</code></td>
+<td>Q98 white label + G322 bordered span</td>
+<td>M</td>
+<td>One choice tile with a selected outline</td>
+</tr>
+<tr>
+<td>OB3–OB4</td>
+<td>Onboarding</td>
+<td>Selects, search</td>
+<td><code>onboarding-form.tsx:120–137</code></td>
+<td>Q34</td>
+<td>K</td>
+<td>Fields</td>
+</tr>
+<tr>
+<td>DY1</td>
+<td>Day</td>
+<td>Cardio and start card</td>
+<td><code>app/program/[day]/page.tsx:64</code></td>
+<td>G351 white + border</td>
+<td>R</td>
+<td>Side column on the scene</td>
+</tr>
+<tr>
+<td>RE1–RE18</td>
+<td>Routine editor</td>
+<td>Notices, equipment panel and review, outline rail, day editor, section fieldsets, cardio cards, footer, five dialogs</td>
+<td><code>program-editor.tsx</code>, <code>equipment-profile-control.tsx</code></td>
+<td>G450–G528, Q81–Q85, Q313–Q321</td>
+<td>9 K / 5 M / 4 R</td>
+<td>Keep fields, menus, errors and dialogs. Remove the day plate, the invisible white-on-white section plate and the nested cardio cards. Merge the outline rail, equipment review and footer into open, sticky or inline forms</td>
+</tr>
+<tr>
+<td>MC1–MC9</td>
+<td>Movement chooser dialog</td>
+<td>Dialog, header band, search, filter chips, results, guidance status, fieldsets, inline create, phone bar</td>
+<td><code>movement-chooser.tsx:456–706</code></td>
+<td>G726–G756, Q208</td>
+<td>6 K / 2 M / 1 R</td>
+<td>Keep the dialog and its selection states; lighten the ink header band</td>
+</tr>
+<tr>
+<td>PC1–PC7</td>
+<td>Routines</td>
+<td>Notice, routine cards, dark create panel, choice tiles, fields, error, duplicate dialog</td>
+<td><code>program-collection.tsx:328–624</code></td>
+<td>G275–G311</td>
+<td>4 K / 2 M / 1 R</td>
+<td>Remove the dark create slab (open it in a sheet); open rows with only the active highlight</td>
+</tr>
+<tr>
+<td>ML1–ML4</td>
+<td>Member Library</td>
+<td>Search plate, input, empty state, result lists</td>
+<td><code>app/library/page.tsx:64–114</code></td>
+<td>Q400–405</td>
+<td>1 K / 1 M / 2 R</td>
+<td>The input is the box; open ruled lists</td>
+</tr>
+<tr>
+<td>CL1, CE1–CE4</td>
+<td>Custom movements</td>
+<td>Empty state, notice, fields, fieldsets, danger zone</td>
+<td><code>custom-exercise-editor.tsx:188–288</code></td>
+<td>G223, G429–G441</td>
+<td>1 K / 3 M / 2 R</td>
+<td>Legends as subheadings; danger heading instead of a frame</td>
+</tr>
+<tr>
+<td>PG1–PG5</td>
+<td>Progress</td>
+<td>Totals plate, empty state, timeline plate, meter, source links</td>
+<td><code>progress-insights-view.tsx:33–111</code></td>
+<td>Q411, Q400–403, G1041–G1050</td>
+<td>1 K / 1 M / 3 R</td>
+<td>Open stat row and open timeline</td>
+</tr>
+<tr>
+<td>HI1–HI4</td>
+<td>History</td>
+<td>Filter, empty state, session rows, state badge</td>
+<td><code>history/page.tsx:85–107</code></td>
+<td>G976–G989</td>
+<td>1 K / 2 M / 1 R</td>
+<td>Open rows, soft pill</td>
+</tr>
+<tr>
+<td>HD1–HD4</td>
+<td>History detail</td>
+<td>Badge, exercise cards, dark cardio panel, nested stat tiles</td>
+<td><code>training-history-detail.tsx:98–227</code></td>
+<td>G989–G1017</td>
+<td>2 M / 2 R</td>
+<td>Sections split by whitespace</td>
+</tr>
+<tr>
+<td>PRS1–PRS2</td>
+<td>Records</td>
+<td>Empty state, record cards</td>
+<td><code>personal-records-view.tsx:36–67</code></td>
+<td>G1022, Q400–403</td>
+<td>1 M / 1 R</td>
+<td>Trophy rows with a celebration accent</td>
+</tr>
+<tr>
+<td>ST1–ST11</td>
+<td>Settings</td>
+<td>Notice, three white plates (preferences, characters, account), equipment plate and nested review, blockers, delete preview, delete dialog</td>
+<td><code>settings-form.tsx:342–473</code></td>
+<td>Q497–Q498, G384–G414</td>
+<td>4 K / 3 M / 4 R</td>
+<td>Headings and whitespace; the dialog does the confirming</td>
+</tr>
+<tr>
+<td>WR1–WR18</td>
+<td>Runner</td>
+<td>Route bar, opaque runner column, status pills, banners, outline, main plate, phase chip, set tabs, <strong>active set entry</strong>, fields, <strong>rest timer</strong>, empty notes, guidance items, cardio tiles, target, footer, dialogs, recovery state</td>
+<td><code>workout-runner.tsx:1331–2152</code>, <code>owned-workout-runner.tsx</code>, <code>workout/[sessionId]/page.tsx</code></td>
+<td>G811–G924, Q113–Q162, Q413–Q417</td>
+<td>10 K / 5 M / 3 R</td>
+<td>The set entry and the rest timer are the two boxes this screen needs. Remove the opaque column that hides the scene and the white main plate around the set entry</td>
+</tr>
+</tbody></table>
+<h4>Cascade problems found during the inventory</h4>
+<ol>
+<li><strong>The member page background flips while you work.</strong> <code>.member-frame:has(.decorative-companion)</code> (Q467) swaps the scene backdrop for plain paper whenever a companion is mounted. The editor and Settings mount the companion only in calm states, so the background jumps as soon as there are unsaved edits.</li>
+<li><strong>Undefined colour tokens:</strong> <code>--route</code>, <code>--route-dark</code> (G609, G618) and <code>--mint</code> (G1004). The selected video tab loses its ring and the history plan-detail border never draws.</li>
+<li><strong>One danger-bordered dialog style is reused for everything</strong> (G406): discard changes, skip exercise, end workout, and account deletion all look like deletion.</li>
+<li><strong>Dead CSS:</strong> retired heading boxes (G227, G360, G380, G451, G965), runner frames (G854, G870, G885), companion hide rules (G1069–G1135), the never-rendered <code>.companion-switcher</code> (Q391–395, Q446–448, Q490) and the cancelled <code>contours.svg</code> surface.</li>
+<li><strong>Dark landing on phones keeps a cream copy plate</strong> at the top while the rest of the page is dark (Q261), so the hero looks pasted in.</li>
+</ol>
+<h3>Contrast audit</h3>
+<p>Measured in the browser on all 39 captured screens: 2,552 samples across default, hover, keyboard focus, selected/current and disabled states, in both themes. Hover and focus were sampled at 1440px (phones have no hover). Thresholds are WCAG AA: 4.5:1 for text, 3:1 for large text, and 3:1 for focus rings and the edges that identify a control.</p>
+<h4>Text below AA</h4>
+<table>
+<thead>
+<tr>
+<th>Theme</th>
+<th>State</th>
+<th>Element</th>
+<th>Text</th>
+<th>Text colour</th>
+<th>Background</th>
+<th align="right">Ratio</th>
+<th align="right">Needs</th>
+<th>Screens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>dark</td>
+<td>selected, hover</td>
+<td>Equipment toggle (<code>.profile-links a[aria-current]</code>, G591)</td>
+<td>Dumbbells</td>
+<td><code>#fffdf5</code></td>
+<td><code>#d2e2bf</code></td>
+<td align="right"><strong>1.34</strong></td>
+<td align="right">4.5</td>
+<td><code>/program</code>, <code>/library</code></td>
+</tr>
+<tr>
+<td>dark</td>
+<td>selected, hover, focus</td>
+<td>Sign-in mode tab (<code>.auth-tabs button[aria-pressed]</code>, G690)</td>
+<td>Sign in</td>
+<td><code>#fffdf5</code></td>
+<td><code>#d2e2bf</code></td>
+<td align="right"><strong>1.34</strong></td>
+<td align="right">4.5</td>
+<td><code>/sign-in</code></td>
+</tr>
+</tbody></table>
+<p>Both are the owner&#39;s complaint exactly: white text on a highlighted option. The cause is one token. In dark mode <code>--lichen</code> becomes a pale green (<code>#d2e2bf</code>), but <code>--on-lichen</code> stays cream (<code>#fffdf5</code>) because the dark theme never redefines it. The same pair passes in light mode (6.91:1), which is why the light-mode audit in September didn&#39;t catch it.</p>
+<h4>Focus rings and control edges below 3:1</h4>
+<table>
+<thead>
+<tr>
+<th>Theme</th>
+<th>State</th>
+<th>Element</th>
+<th>Edge</th>
+<th>Against</th>
+<th align="right">Ratio</th>
+<th>Screens</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>light</td>
+<td>focus</td>
+<td>Primary action on a dark slab</td>
+<td><code>#916314</code></td>
+<td><code>#183f35</code></td>
+<td align="right"><strong>2.22</strong></td>
+<td><code>/progress</code>, <code>/sample-workout</code>, Routines</td>
+<td>The ochre ring disappears on the forest CTA band, side panel and create panel</td>
+</tr>
+<tr>
+<td>dark</td>
+<td>focus</td>
+<td>Primary and secondary actions on the cream copy plate</td>
+<td><code>#e8c578</code></td>
+<td><code>#f6f3e9</code></td>
+<td align="right"><strong>1.49</strong></td>
+<td><code>/</code></td>
+<td>The dark-theme ring is pale gold, but the landing plate stays cream</td>
+</tr>
+<tr>
+<td>dark</td>
+<td>focus</td>
+<td>Primary action on cream fills</td>
+<td><code>#e8c578</code></td>
+<td><code>#f3f0e4</code></td>
+<td align="right"><strong>1.45</strong></td>
+<td><code>/progress</code>, <code>/sample-workout</code>, Routines</td>
+<td>Same cause</td>
+</tr>
+<tr>
+<td>both</td>
+<td>focus</td>
+<td>YouTube frame</td>
+<td>none</td>
+<td><code>#000000</code></td>
+<td align="right"><strong>0</strong></td>
+<td>Guides</td>
+<td>The iframe has no visible focus ring</td>
+</tr>
+<tr>
+<td>light</td>
+<td>selected</td>
+<td>Checkbox row edge (<code>.onboarding-check</code>, <code>.settings-check</code>)</td>
+<td><code>#a8b6a3</code></td>
+<td><code>#fffdf7</code></td>
+<td align="right"><strong>2.09</strong></td>
+<td>Onboarding step 2, Settings</td>
+<td>The native checkbox still shows the state; the row edge is too faint to read as a control</td>
+</tr>
+</tbody></table>
+<h4>Passing states worth recording</h4>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th align="right">Light</th>
+<th align="right">Dark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Member nav current item (ink fill)</td>
+<td align="right">10.5</td>
+<td align="right">13.3</td>
+</tr>
+<tr>
+<td>Runner current set tab</td>
+<td align="right">9.7</td>
+<td align="right">10.5</td>
+</tr>
+<tr>
+<td>Selected demo tab</td>
+<td align="right">10.4</td>
+<td align="right">13.3</td>
+</tr>
+<tr>
+<td>Selected equipment option (Settings, editor)</td>
+<td align="right">11.5 (edge 6.9)</td>
+<td align="right">11.8 (edge 9.9)</td>
+</tr>
+<tr>
+<td>Selected onboarding choice (edge on the inner tile)</td>
+<td align="right">edge 6.9</td>
+<td align="right">edge 9.9</td>
+</tr>
+<tr>
+<td>Primary action text (cream on forest / forest on sage)</td>
+<td align="right">9.1</td>
+<td align="right">8.1</td>
+</tr>
+<tr>
+<td>Disabled primary action</td>
+<td align="right">9.1</td>
+<td align="right">8.1</td>
+</tr>
+<tr>
+<td>Danger action</td>
+<td align="right">6.4</td>
+<td align="right">7.8</td>
+</tr>
+<tr>
+<td>Focus ring on the page canvas</td>
+<td align="right">4.7</td>
+<td align="right">9.2</td>
+</tr>
+</tbody></table>
+<p><strong>Sampler limits:</strong> the selected onboarding choice reports 1:1 because its edge sits on a nested span; it was measured by hand (above). Native radio and checkbox glyphs are rendered by the browser and are not sampled. Text over artwork is reported against the nearest painted colour, not the picture, so the scene-stage scrim rule in the <a href="#contrast-contract">contrast contract</a> is what guarantees it.</p>
+<h3>Navigation map</h3>
+<p>Every explicit back control today is a hard-coded forward <code>&lt;Link&gt;</code>. None restore scroll, and no list item on a day page has an anchor, so returning to &quot;the same movement&quot; is impossible. Only the browser&#39;s Back button restores position.</p>
+<table>
+<thead>
+<tr>
+<th>Drill-down</th>
+<th>Trigger</th>
+<th>Back control on the destination</th>
+<th>Returns to the exact origin?</th>
+<th>Deep-link fallback</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Landing → <code>/try</code></td>
+<td><code>page.tsx:19</code></td>
+<td>None; the finish step only links forward to <code>/app</code> and <code>/program</code></td>
+<td>n/a (browser Back only)</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Landing → <code>/program</code>, <code>/library</code>, <code>/progress</code></td>
+<td>Shell nav</td>
+<td>None (top-level tabs)</td>
+<td>n/a</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><code>/program</code> → <code>/program/[day]</code></td>
+<td><code>program-explorer.tsx:24</code></td>
+<td>&quot;Example routine&quot; → <code>/program?equipment=</code></td>
+<td>Partial: equipment kept; scroll and day position lost</td>
+<td>Dumbbells</td>
+</tr>
+<tr>
+<td><code>/program/[day]</code> → <code>/library/[slug]</code></td>
+<td><code>program/[day]/page.tsx:52</code>, no <code>returnTo</code></td>
+<td>&quot;Exercise library&quot; → <code>/library?equipment=</code>; the shell also switches the active tab to Library</td>
+<td><strong>No</strong>: the day is lost</td>
+<td>Library</td>
+</tr>
+<tr>
+<td><code>/library</code> → <code>/library/[slug]</code></td>
+<td><code>library/page.tsx:95–99</code> sends <code>returnTo</code></td>
+<td>&quot;Exercise library&quot;</td>
+<td>Partial: equipment kept; <strong>search <code>q</code> dropped</strong> because <code>returnTo</code> is never read</td>
+<td>Library</td>
+</tr>
+<tr>
+<td><code>/sample-workout</code> → guide</td>
+<td><code>sample-workout/page.tsx:66–73</code> sends <code>returnTo</code></td>
+<td>&quot;Exercise library&quot;</td>
+<td><strong>No</strong>: <code>returnTo</code> ignored</td>
+<td>Library</td>
+</tr>
+<tr>
+<td><code>/program/[day]</code> → <code>/sample-workout</code></td>
+<td><code>program/[day]/page.tsx:55</code>, no day or equipment</td>
+<td>&quot;{Day} day&quot; → always Push</td>
+<td><strong>No</strong>: back link points to the wrong day</td>
+<td>Push, dumbbells</td>
+</tr>
+<tr>
+<td>Guide → demo video</td>
+<td>Inline player on the guide</td>
+<td>n/a</td>
+<td>Yes (same page)</td>
+<td>&quot;No video yet&quot;</td>
+</tr>
+<tr>
+<td>Today → <code>/app/program/[day]</code></td>
+<td><code>member-program-home.tsx:112,129</code></td>
+<td>&quot;Today&quot; → <code>/app</code></td>
+<td>Partial: the day picker resets to Day 1; scroll lost; the nav highlights Routine</td>
+<td><code>/app</code></td>
+</tr>
+<tr>
+<td>Day → <code>/app/library/[slug]</code></td>
+<td><code>app/program/[day]/page.tsx:54</code> &quot;Details&quot;</td>
+<td>&quot;Library&quot; → <code>/app/library</code></td>
+<td><strong>No</strong>: day, movement and scroll lost</td>
+<td><code>/app/library</code></td>
+</tr>
+<tr>
+<td>Day → custom movement</td>
+<td><code>app/program/[day]/page.tsx:56</code></td>
+<td>&quot;Custom library&quot;</td>
+<td><strong>No</strong></td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Today or day → runner</td>
+<td><code>start-workout-control.tsx:47</code></td>
+<td>&quot;Back to Today&quot;; &quot;Leave for now&quot; → <code>/app</code></td>
+<td>Partial: lands on Today even when started from a day; re-entering restores the exact exercise and set</td>
+<td>Recovery state</td>
+</tr>
+<tr>
+<td>Runner → guide or video</td>
+<td>Video is inside a <strong>collapsed <code>&lt;details&gt;</code></strong>; the route bar &quot;Library&quot; link leaves the workout</td>
+<td>Library → <code>/app/library</code>, with no way back to the runner except Today&#39;s resume card</td>
+<td>Video yes; Library <strong>no</strong></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Runner → history after finish</td>
+<td><code>owned-workout-runner.tsx:126–128</code></td>
+<td>&quot;Back to history&quot;</td>
+<td>n/a; no completion moment, no &quot;Back to Today&quot;</td>
+<td><code>/app/history</code></td>
+</tr>
+<tr>
+<td>Routine editor → movement chooser</td>
+<td>Modal dialog</td>
+<td>&quot;Close&quot;; focus returns to the trigger</td>
+<td><strong>Yes</strong></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Editor → <code>/app/programs</code></td>
+<td><code>program-editor.tsx:1044</code></td>
+<td>&quot;Back to Today&quot;</td>
+<td><strong>No</strong>: editor origin lost</td>
+<td><code>/app</code></td>
+</tr>
+<tr>
+<td><code>/app/programs</code> → editor</td>
+<td><code>program-collection.tsx:382</code></td>
+<td>&quot;All routines&quot; / &quot;Back to Today&quot;</td>
+<td>Partial: always opens on Day 1</td>
+<td><code>/app</code></td>
+</tr>
+<tr>
+<td>Member Library → guide</td>
+<td><code>app/library/page.tsx:117</code></td>
+<td>&quot;Library&quot;</td>
+<td>Partial: <strong><code>q</code> lost</strong></td>
+<td><code>/app/library</code></td>
+</tr>
+<tr>
+<td>Library → custom new or edit</td>
+<td><code>app/library/page.tsx:60,96</code></td>
+<td>&quot;Custom library&quot;</td>
+<td><strong>No</strong> from <code>/app/library</code></td>
+<td><code>/app/library/custom</code></td>
+</tr>
+<tr>
+<td>History → detail</td>
+<td><code>history/page.tsx:106</code></td>
+<td>&quot;Back to history&quot;</td>
+<td>Partial: filter and page lost</td>
+<td><code>/app/history</code></td>
+</tr>
+<tr>
+<td>Progress → history or detail</td>
+<td><code>progress-insights-view.tsx:74,111</code></td>
+<td>&quot;Back to history&quot;</td>
+<td><strong>No</strong>: came from Progress, goes to History</td>
+<td><code>/app/history</code></td>
+</tr>
+<tr>
+<td>Progress → Records</td>
+<td><code>progress-insights-view.tsx:27</code></td>
+<td>&quot;Back to progress&quot;</td>
+<td>Yes, apart from scroll</td>
+<td><code>/app/progress</code></td>
+</tr>
+<tr>
+<td>Records → source workout</td>
+<td><code>personal-records-view.tsx:67</code></td>
+<td>&quot;Back to history&quot;</td>
+<td><strong>No</strong>: the record is lost</td>
+<td><code>/app/history</code></td>
+</tr>
+<tr>
+<td>Settings</td>
+<td>Header icon</td>
+<td>No back control; sections have no linked anchors</td>
+<td>n/a</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Sign-in <code>returnTo</code></td>
+<td><code>app/layout.tsx:24</code>, <code>proxy.ts:27</code></td>
+<td>Server-normalized</td>
+<td><strong>Yes</strong> for <code>/app…</code> paths</td>
+<td><code>/app</code></td>
+</tr>
+</tbody></table>
+<p><strong>Gaps, most severe first:</strong> (1) the public guide ignores <code>returnTo</code> even though a validated resolver (<code>resolvePublicExerciseReturn</code>) exists and is unit-tested; (2) the member guide always says &quot;Library&quot;; (3) the runner can&#39;t open the full guide without leaving the workout, and its demo hides in a collapsed disclosure; (4) day pages pass no origin and have no movement anchors; (5) Library search is lost after a guide; (6) history detail always returns to History; (7) Today&#39;s day picker and the editor&#39;s selected day reset on every round trip; (8) most back links don&#39;t match their origin; (9) every back control is a forward push, so scroll is never restored.</p>
+<p><strong>Reusable pieces:</strong> <code>resolvePublicExerciseReturn</code> and <code>exerciseDetailHref</code> (<code>src/domain/navigation/public-exercise-return.ts</code>), <code>normalizeReturnPath</code> (<code>src/server/navigation/return-path.ts</code>), <code>ExerciseGuide</code>&#39;s existing <code>backHref</code>/<code>backLabel</code> props, <code>workoutRoutePath</code> (<code>src/client/owned-workout.ts:120</code>), the proxy&#39;s <code>x-mwp-pathname</code> header, and <code>CuratedVideoPlayer</code>, which is self-contained and safe to mount in a sheet (unmount it on close so a hidden frame never keeps playing).</p>
+<h3>Onboarding walkthrough</h3>
+<h4>New guest</h4>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What they see</th>
+<th>Helps the first-time reaction?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Landing</td>
+<td>&quot;A little space for your next set.&quot; Copy about a routine and &quot;a place to keep the work&quot;. <strong>Try one set</strong>, <strong>Create my routine</strong>, a three-item list (build, train, see the work add up), and a link to the five-day example</td>
+<td><strong>Partly.</strong> Routine and progress are hinted at. Videos never appear; &quot;keep guidance nearby&quot; is too abstract</td>
+</tr>
+<tr>
+<td><code>/try</code> step 1</td>
+<td>&quot;Practice only. Nothing is saved.&quot; &quot;Try one set.&quot; Push-up, target 10 reps, a reps field, <strong>Log set &amp; rest</strong></td>
+<td><strong>Tracking only.</strong> No demo, even though it&#39;s a movement people ask about. Push-up has <strong>no approved video</strong>, so it can&#39;t show one</td>
+</tr>
+<tr>
+<td><code>/try</code> step 2</td>
+<td>&quot;Take a moment.&quot; A 30-second rest timer, Pause, Add 30 seconds, <strong>Finish practice</strong></td>
+<td><strong>Tracking mechanics only</strong></td>
+</tr>
+<tr>
+<td><code>/try</code> step 3</td>
+<td>&quot;That&#39;s the rhythm.&quot; <strong>Set up my routine</strong> (→ sign-in) or the five-day example</td>
+<td><strong>Weak.</strong> Doesn&#39;t connect the set to progress; jumps to a sign-in wall</td>
+</tr>
+<tr>
+<td><code>/program</code></td>
+<td>Five-day example with an equipment toggle and day cards</td>
+<td><strong>Routine only.</strong> Push/Pull/Legs/Upper/Lower is jargon to a beginner, with no goal framing</td>
+</tr>
+<tr>
+<td><code>/progress</code></td>
+<td>Example charts with an &quot;Example data&quot; badge</td>
+<td><strong>Progress only</strong>, and nothing links to it from the trial</td>
+</tr>
+</tbody></table>
+<h4>New member (no routine yet)</h4>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What they see</th>
+<th>Persisted</th>
+<th>Helps?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Header</td>
+<td>&quot;Make room for your routine.&quot; &quot;Choose a starting point. Make it yours as you go.&quot; Pip in a masked scene</td>
+<td>—</td>
+<td>Routine only</td>
+</tr>
+<tr>
+<td>1 of 3</td>
+<td>&quot;Where would you like to start?&quot; <strong>Example routine</strong> (five editable days) or <strong>Blank routine</strong> (empty draft)</td>
+<td>—</td>
+<td><strong>Assumes knowledge.</strong> A beginner can&#39;t judge this. No goal, experience or schedule questions</td>
+</tr>
+<tr>
+<td>2 of 3</td>
+<td>&quot;Your preferences&quot;: units, time zone, a Motion disclosure</td>
+<td><code>user_preferences</code></td>
+<td><strong>None.</strong> Settings chores before any value</td>
+</tr>
+<tr>
+<td>3 of 3</td>
+<td>&quot;Equipment and review&quot;: Dumbbells or Barbell + rack; for Blank, a catalog search for a first movement; <strong>Save routine</strong></td>
+<td><code>user_profiles</code>, <code>user_preferences</code>, <code>user_equipment_profiles</code>, a cloned five-day program or a one-movement blank program, all in one transaction (<code>onboardViewer</code>, <code>profile-program.ts:2587–2715</code>)</td>
+<td>Equipment fit only. Blank mode makes a novice search a catalog</td>
+</tr>
+<tr>
+<td>Today afterwards</td>
+<td>&quot;Ready when you are, {name}.&quot; Next workout panel, All days list. Progress appears only after the first finished workout</td>
+<td>—</td>
+<td>Routine and tracking. No videos, no explanation of the four pillars</td>
+</tr>
+</tbody></table>
+<p><strong>Why it fails the brief:</strong> nobody is asked what they&#39;re training for, the routine isn&#39;t fitted to anything they said, the video pillar is invisible until they open a guide, and progress is invisible until after a finished workout.</p>
+<h4>Machinery available</h4>
+<ul>
+<li><code>createStarterProgram(profile)</code> (<code>src/domain/programs/starter.ts:165</code>) and the five-day template seed (<code>src/domain/seed/starter-database.ts:230</code>), with dumbbell and barbell profiles.</li>
+<li>Onboarding clones database template rows (<code>loadTemplateGraph</code>, <code>cloneTemplateRevision</code>) or inserts a minimal blank program (<code>insertMinimalPublishedProgram</code>, <code>profile-program.ts:778</code>).</li>
+<li><code>onboardingRequestSchema</code> (<code>src/server/http/profile-program-api.ts:19</code>) and <code>onboardingSchema</code> (<code>profile-program.ts:391</code>) are both <code>.strict()</code>; new fields must be added to both, to the idempotency hash and to the client body.</li>
+<li>The latest migration is <code>drizzle/0007_personal_guidance.sql</code>.</li>
+<li><strong>Approved demos:</strong> 54 approved videos, exactly two each for <strong>27 movements</strong>, which are exactly the five-day starter&#39;s movements (for example goblet squat, dumbbell bench press, one-arm dumbbell row, dumbbell Romanian deadlift, reverse lunge, front plank, dead bug, bird dog). Push-up has none.</li>
+</ul>
+<h3>Art inventory</h3>
+<p>All scene files are 1200 × 800 with a 600 × 400 phone derivative. Character sheets are 320 × 320 and <strong>opaque</strong> (cream background, no alpha).</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Shows</th>
+<th>Used in</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>quiet-set/dawn-studio</code></td>
+<td>Empty bright gym, cream wall on the left, windows on the right</td>
+<td>Landing hero; faded backdrop for member and workout pages</td>
+<td>Landing: beside a cream copy plate (below the copy on phones). Member: backdrop that fades to paper by 720px, <strong>replaced by plain paper whenever a companion is mounted</strong></td>
+</tr>
+<tr>
+<td><code>quiet-set/evening-studio</code></td>
+<td>Twilight version</td>
+<td>Dark landing and dark member backdrop</td>
+<td>Same slots</td>
+</tr>
+<tr>
+<td><code>quiet-set/pip-studio</code>, <code>mica-studio</code></td>
+<td>Pip (stoat) or Mica (kingfisher) welcoming in the gym</td>
+<td>Today and onboarding (<code>DecorativeCompanion variant=&quot;member-home&quot;</code>)</td>
+<td>Masked scene beside the heading; 30% wide on phones. Dimmed in dark mode</td>
+</tr>
+<tr>
+<td><code>quiet-set/otter-study</code></td>
+<td>Otter on a bench studying a guide</td>
+<td>Public and member Library, custom movement editor</td>
+<td>Masked heading scene</td>
+</tr>
+<tr>
+<td><code>quiet-set/beaver-plan</code></td>
+<td>Beaver planning at a desk</td>
+<td>Routine editor (calm states only), routines list</td>
+<td>Masked heading scene</td>
+</tr>
+<tr>
+<td><code>quiet-set/tortoise-review</code></td>
+<td>Tortoise reviewing a journal</td>
+<td>Public Progress, member Progress, History, history detail, Records</td>
+<td>Masked heading scene</td>
+</tr>
+<tr>
+<td><code>quiet-set/hare-prepare</code></td>
+<td>Hare packing a gym bag</td>
+<td>Settings (calm states only)</td>
+<td>Masked heading scene</td>
+</tr>
+<tr>
+<td><code>quiet-set/pip-recover</code></td>
+<td>Pip resting on a bench with water</td>
+<td>Member day page; a 150 × 95 runner slot that is hidden during logging, timers, saves and completion</td>
+<td>Masked heading scene / tiny corner</td>
+</tr>
+<tr>
+<td><code>quiet-set/pip-ready</code>, <code>pip-resting</code>, <code>pip-complete</code>, <code>mica-ready</code>, <code>mica-resting</code>, <code>mica-complete</code></td>
+<td>Single-character pose sheets on cream</td>
+<td><strong>Not used in the UI.</strong> Still downloaded by the service worker</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>companions/*</code> (16 files)</td>
+<td>Earlier storybook-style transparent cut-outs (hedgehog, otter, raccoon, fox, beaver, tortoise, hare, bear)</td>
+<td><strong>Not used.</strong> 6 are still in the service-worker cache</td>
+<td>Style was retired on September 4</td>
+</tr>
+<tr>
+<td><code>workout-pals-gym(-768)</code></td>
+<td>Busy gym full of animals</td>
+<td><strong>Not used</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>Screens with no art at all:</strong> <code>/try</code>, <code>/program</code>, <code>/program/[day]</code>, <code>/sample-workout</code>, <code>/sign-in</code>, <code>/library/[slug]</code>, <code>/offline</code>, not-found and the end of a workout. <strong>24 of 42 files are unused</strong>, and 12 unused files are still fetched by the service worker on install.</p>
+<p><strong>Companion preference:</strong> <code>pip | mica | off</code> in <code>localStorage</code> (<code>mwp:companion:v1</code>), read only by <code>DecorativeCompanion</code>. Only Today and onboarding honour Pip versus Mica; every other placement shows its fixed character. The server always renders Pip first, so Mica and Off users see a brief swap.</p>
+<hr>
+<h2>Phase 1: the new direction</h2>
+<h3>Direction in one paragraph</h3>
+<p><strong>Studio Pals.</strong> The app lives <em>inside</em> the illustrated studio. Every page opens on a full-bleed scene: the bright daytime studio in light mode, the evening studio in dark mode. Your pal (Pip or Mica) stands in the room and reacts to what&#39;s happening: ready on Today, catching their breath while you rest, cheering when you finish or set a record. Text sits straight on the scene&#39;s cream wall or on a soft scrim that fades into it, never in a white card. Below the scene, content is grouped by whitespace, rounded headings and open rows. The palette warms up: sunshine yellow for the main action, teal from the gym equipment for links and selection, tangerine for celebrations, all on warm cream (or deep evening teal in dark mode). Buttons are chunky, rounded &quot;sticker&quot; shapes that press down when tapped. Motion is small and earned: a pal hops in, a set gets a check pop, a finished workout gets a short confetti burst. Everything stays still when reduced motion is on.</p>
+<h3>Visual system</h3>
+<h4>Environment instead of boxes</h4>
+<ul>
+<li><strong>Scene stage.</strong> Each primary page starts with a <code>SceneStage</code>: a full-width illustrated backdrop that extends behind the header. Desktop: 560–640px tall, cover-cropped so the character stays in frame. Phone: 300–360px, with a phone-specific crop that keeps the character visible.</li>
+<li><strong>Copy on the wall.</strong> Headings and the first action sit on the scene&#39;s cream wall (left on desktop, bottom on phones). Where the wall isn&#39;t calm enough, a <strong>scrim</strong> (a gradient from the page colour at 92% opacity to transparent) guarantees contrast. In dark mode the same scrim uses the evening canvas colour, so light text is always on a dark ground. Text never relies on the picture behind it for contrast.</li>
+<li><strong>The floor.</strong> Below the scene, the page colour continues as the &quot;floor&quot;. Sections are separated by generous space (48–72px), a rounded display heading and, where a group needs a visual edge, a <strong>soft group</strong>: a 4–8% tint of the floor colour with no border and no shadow. Nested containers are not allowed.</li>
+<li><strong>Boxes that stay</strong> are the functional ones from the box inventory&#39;s K rows: form fields, the active set entry, the rest timer, dialogs and sheets, selected states, errors, and the phone tab bar.</li>
+<li><strong>Header.</strong> Transparent over the scene. The brand and navigation become rounded pills; the active pill uses the selected-state tokens. On phones the member tab bar stays a solid bar for legibility.</li>
+</ul>
+<h4>Palette and tokens</h4>
+<p>Text-bearing fills are either very light (with dark ink) or very dark (with light ink). <strong>A mid-tone never carries text</strong>, in any state.</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Light</th>
+<th>Dark</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--canvas</code></td>
+<td><code>#fff8ec</code> warm cream</td>
+<td><code>#14201e</code> evening teal</td>
+<td>Page and scene wall</td>
+</tr>
+<tr>
+<td><code>--floor</code></td>
+<td><code>#f7e6c4</code> honey</td>
+<td><code>#1d2a27</code></td>
+<td>Soft groups, floor wash</td>
+</tr>
+<tr>
+<td><code>--surface</code></td>
+<td><code>#ffffff</code></td>
+<td><code>#22312e</code></td>
+<td>Fields and sheets only</td>
+</tr>
+<tr>
+<td><code>--ink</code></td>
+<td><code>#1d2b28</code></td>
+<td><code>#fbf3e4</code></td>
+<td>Text</td>
+</tr>
+<tr>
+<td><code>--ink-soft</code></td>
+<td><code>#4b5a55</code></td>
+<td><code>#c8c0b0</code></td>
+<td>Secondary text</td>
+</tr>
+<tr>
+<td><code>--brand</code></td>
+<td><code>#0f6b66</code> teal</td>
+<td><code>#6fd6cc</code></td>
+<td>Links, icons, selected edges</td>
+</tr>
+<tr>
+<td><code>--sun</code> / <code>--on-sun</code></td>
+<td><code>#ffc93c</code> / <code>#1d2b28</code></td>
+<td>same</td>
+<td>Primary action</td>
+</tr>
+<tr>
+<td><code>--tangerine</code> / <code>--on-tangerine</code></td>
+<td><code>#ff8b5c</code> / <code>#1d2b28</code></td>
+<td>same</td>
+<td>Celebrations, records</td>
+</tr>
+<tr>
+<td><code>--selected-bg</code> / <code>--selected-fg</code> / <code>--selected-edge</code></td>
+<td><code>#d9f2ee</code> / <code>#1d2b28</code> / <code>#0f6b66</code></td>
+<td><code>#164a45</code> / <code>#fbf3e4</code> / <code>#6fd6cc</code></td>
+<td>Every selected or current state</td>
+</tr>
+<tr>
+<td><code>--hover-bg</code></td>
+<td><code>#f2ead9</code></td>
+<td><code>#22312e</code></td>
+<td>Hover on open rows and ghost buttons</td>
+</tr>
+<tr>
+<td><code>--focus</code></td>
+<td><code>#c2410c</code></td>
+<td><code>#ffb27a</code></td>
+<td>3px focus ring, 3px offset</td>
+</tr>
+<tr>
+<td><code>--danger</code> / <code>--on-danger</code></td>
+<td><code>#b42318</code> / <code>#ffffff</code></td>
+<td><code>#ff9b8f</code> / <code>#14201e</code></td>
+<td>Errors, destructive actions</td>
+</tr>
+<tr>
+<td><code>--rule</code></td>
+<td><code>#8a8f86</code></td>
+<td><code>#6f8580</code></td>
+<td>Field and divider edges</td>
+</tr>
+</tbody></table>
+<p>Measured pairs (WCAG 2.x): ink on canvas 13.9 / 15.2; ink-soft on canvas 6.9 / 9.3; brand on canvas 6.0 / 9.7; ink on sun 9.6; ink on tangerine 6.4; selected text 12.5 / 9.1; selected edge on its fill 5.4 / 5.8; focus ring on canvas 4.9 / 9.5; white on danger 6.6; field edge 3.1 / 4.3. The sun fill against cream is only 1.45:1, so every sun button carries a 2px ink edge (13.9:1).</p>
+<h4>Type</h4>
+<ul>
+<li><strong>Display:</strong> Fredoka (variable, OFL-1.1, self-hosted through <code>@fontsource-variable/fredoka</code>), weights 500–650, for headings, numbers in celebrations, and pills. It&#39;s round, friendly and readable at a glance. <strong>This adds one dependency; see <a href="#open-questions-for-the-owner">open questions</a>.</strong> Fallback: Source Sans 3 at 700.</li>
+<li><strong>Body and controls:</strong> Source Sans 3 Variable stays, with tabular numerals for training values.</li>
+<li>Sentence case everywhere. Georgia and the retired Barlow Condensed imports are removed in Phase 2.</li>
+</ul>
+<h4>Shapes and controls</h4>
+<ul>
+<li><strong>Primary action:</strong> pill (<code>999px</code>), sun fill, ink text, 2px ink edge, <code>0 3px 0</code> ink &quot;ledge&quot;. Pressed: moves down 2px and the ledge shrinks.</li>
+<li><strong>Secondary action:</strong> pill, transparent fill, 2px ink edge.</li>
+<li><strong>Selected chips and day pills:</strong> <code>--selected-bg</code> fill, <code>--selected-fg</code> text, 2px <code>--selected-edge</code>, plus a check icon or &quot;Selected&quot;/&quot;Today&quot; text, so the state never depends on colour.</li>
+<li><strong>Fields:</strong> 12px radius, <code>--surface</code> fill, 2px <code>--rule</code> edge, <code>--brand</code> edge when focused (plus the focus ring).</li>
+<li><strong>Soft groups:</strong> 24px radius, tint only.</li>
+<li>Minimum target 48 × 48px. Equipment choices keep their 80px minimum.</li>
+</ul>
+<h4>Motion (restrained, reduced-motion safe)</h4>
+<table>
+<thead>
+<tr>
+<th>Moment</th>
+<th>Motion</th>
+<th>Duration</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Scene load</td>
+<td>Pal rises 8px and fades in</td>
+<td>320ms, once</td>
+</tr>
+<tr>
+<td>Button press</td>
+<td>Moves down 2px</td>
+<td>90ms</td>
+</tr>
+<tr>
+<td>Set logged</td>
+<td>Check icon pops (scale 0.6 → 1.1 → 1)</td>
+<td>220ms</td>
+</tr>
+<tr>
+<td>Rest</td>
+<td>Timer ring drains; the resting pal breathes (1.5% scale)</td>
+<td>Continuous while resting</td>
+</tr>
+<tr>
+<td>Workout complete / record</td>
+<td>14 CSS confetti shapes burst once; the pal bounces once</td>
+<td>900ms</td>
+</tr>
+<tr>
+<td>Sheet open</td>
+<td>Slides up 24px and fades</td>
+<td>200ms</td>
+</tr>
+</tbody></table>
+<p>All motion sits inside <code>@media (prefers-reduced-motion: no-preference)</code> <strong>and</strong> is cancelled by the in-app <code>data-reduced-motion=&quot;true&quot;</code> preference. Nothing loops except the rest breathing, which stops with either setting.</p>
+<h4>Characters react to moments</h4>
+<table>
+<thead>
+<tr>
+<th>Moment</th>
+<th>Where</th>
+<th>Art (reused now)</th>
+<th>Art wanted (request)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ready</td>
+<td>Landing, Today, onboarding</td>
+<td><code>pip-studio</code> / <code>mica-studio</code> scene</td>
+<td>Evening variants for dark mode</td>
+</tr>
+<tr>
+<td>Resting</td>
+<td>Runner rest timer, trial rest</td>
+<td><code>pip-resting</code> / <code>mica-resting</code> as a round sticker</td>
+<td>Transparent cut-out</td>
+</tr>
+<tr>
+<td>Complete</td>
+<td>New workout-complete moment, trial finish</td>
+<td><code>pip-complete</code> / <code>mica-complete</code> sticker + confetti</td>
+<td>Transparent cut-out</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>Records page, completion summary when a record is set</td>
+<td><code>pip-complete</code> + tangerine &quot;New record&quot; ribbon</td>
+<td>A pose holding a medal</td>
+</tr>
+<tr>
+<td>Studying, planning, reviewing, packing</td>
+<td>Library, routines, progress, settings scene stages</td>
+<td>otter, beaver, tortoise, hare scenes</td>
+<td>Evening variants</td>
+</tr>
+</tbody></table>
+<p>The pose sheets are opaque cream, so until cut-outs exist they appear as <strong>round stickers</strong>: the image clipped to a circle on a cream disc with a 3px ink outline. That reads as deliberate in both themes. The Off preference still hides every character; the scenes stay.</p>
+<h4>Artwork</h4>
+<p>Phase 1 reuses existing files only. The prototype uses <code>pip-studio</code>, <code>mica-studio</code>, <code>dawn-studio</code>, <code>evening-studio</code>, <code>pip-ready</code> and crops of <code>beaver-plan</code>, <code>pip-recover</code>, <code>otter-study</code> and <code>tortoise-review</code>. <strong>No art is generated or committed without approval.</strong> The requests are listed under <a href="#open-questions-for-the-owner">open questions</a>. Any approved new art gets a prompt and hash sidecar in <code>docs/design/provenance/</code>, and only served files go under <code>public/illustrations/</code>.</p>
+<p>Phase 2 also deletes the 24 unused illustration files from <code>public/</code> (keeping their provenance) and removes them from the service-worker cache list, unless the owner wants them kept.</p>
+<h3>Contrast contract</h3>
+<ul>
+<li><strong>State tokens.</strong> Every interactive state uses the tokens above: default, hover (<code>--hover-bg</code>), focus (<code>--focus</code> ring), selected/current (<code>--selected-*</code>), active (pressed ledge), disabled (<code>--ink-soft</code> text on the unchanged fill, dashed <code>--rule</code> edge, no opacity fade). No state puts white or cream text on a mid-tone fill.</li>
+<li><strong>Single source.</strong> Tokens live in <code>src/design/tokens.ts</code> (both themes) and are emitted into CSS custom properties by the stylesheet. A unit test reads that module.</li>
+<li><strong>Automated check, part 1 (unit):</strong> <code>tests/unit/design-token-contrast.test.ts</code> checks every declared text/background pair for every state in both themes: 4.5:1 for text, 3:1 for large text, focus rings and component edges. It fails the build if a token changes into a failing pair.</li>
+<li><strong>Automated check, part 2 (browser):</strong> <code>tests/e2e/state-contrast.spec.ts</code> (public) and <code>tests/authenticated-e2e/state-contrast.spec.ts</code> (member) promote the capture-kit sampler into a test. On each key screen they measure default, hover, keyboard focus, selected/current and disabled states in light and dark, and fail on any pair below the thresholds. Text over artwork must sit on a scrim; the sampler treats the scrim colour as the background and checks it is at least 90% opaque.</li>
+</ul>
+<h3>Navigation contract</h3>
+<p><strong>Rule:</strong> every drill-down shows a visible back control at the top, labelled with where it goes, and it returns to the exact origin.</p>
+<ol>
+<li><strong>Origin travels with the link.</strong> Drill-down links add a validated <code>from</code> parameter, for example <code>/app/library/goblet-squat?from=/app/program/push%23movement-3</code>.</li>
+<li><strong>Anchors exist.</strong> Day movements get <code>id=&quot;movement-{n}&quot;</code>, Library rows <code>id=&quot;movement-{slug}&quot;</code>, history rows <code>id=&quot;session-{id}&quot;</code>, records <code>id=&quot;record-{slug}&quot;</code>, runner exercises <code>id=&quot;exercise-{n}&quot;</code>.</li>
+<li><strong>One resolver.</strong> A pure <code>resolveBackTarget(from, fallback)</code> in <code>src/domain/navigation/back-target.ts</code> accepts only allowlisted origins and returns <code>{ href, label }</code>. Labels are human: &quot;Back to Day 2 · Push&quot;, &quot;Back to Library&quot;, &quot;Back to your workout&quot;, &quot;Back to Progress&quot;, &quot;Back to your records&quot;, &quot;Back to History&quot;, &quot;Back to Today&quot;, &quot;Back to the test drive&quot;. It rejects external, protocol-relative, encoded-control and unknown paths. <strong>TDD.</strong></li>
+<li><strong>One component.</strong> <code>BackLink</code> renders the labelled control (arrow icon, ≥48px target). When the browser&#39;s previous entry is the same origin (tracked in <code>sessionStorage</code>), it calls <code>history.back()</code>, so scroll comes back natively. Otherwise it navigates to the resolved <code>href</code> with its anchor, scrolls the anchored item into view and moves focus to it.</li>
+<li><strong>Deep links without an origin</strong> fall back to the sensible parent: guide → Library (with the equipment filter on public pages), day → Today, history detail → History, record source → Records, runner → Today.</li>
+<li><strong>The tab bar follows the origin.</strong> A day opened from Today keeps Today highlighted.</li>
+<li><strong>Videos open in place.</strong> A <code>DemoSheet</code> (bottom sheet on phones, side sheet on desktop, built on the native <code>&lt;dialog&gt;</code>) wraps <code>CuratedVideoPlayer</code>. It appears wherever a movement is listed: Today&#39;s movement list, day pages, the runner (replacing the collapsed details), the Library list and the trial. Closing it (✕, Escape or swipe-down on phones) returns focus to the trigger and <strong>unmounts the iframe</strong>, so nothing plays hidden. Only approved pairs are passed in; movements without one show &quot;No demo yet&quot; with the written steps. The guide page keeps its inline player.</li>
+<li><strong>Selected state survives round trips.</strong> Today&#39;s selected day and the editor&#39;s selected day live in the URL (<code>?day=push</code>).</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Drill-down</th>
+<th>Back label</th>
+<th>Returns to</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Today → day</td>
+<td>Back to Today</td>
+<td>Today, same selected day</td>
+</tr>
+<tr>
+<td>Day → guide</td>
+<td>Back to Day 2 · Push</td>
+<td>Day page at that movement</td>
+</tr>
+<tr>
+<td>Day/Today/runner → demo</td>
+<td>(sheet) Close</td>
+<td>Same spot, focus on the trigger</td>
+</tr>
+<tr>
+<td>Runner → full guide</td>
+<td>Back to your workout</td>
+<td>Runner at the same exercise and set</td>
+</tr>
+<tr>
+<td>Library → guide</td>
+<td>Back to Library</td>
+<td>Library with the same search and filter, at that row</td>
+</tr>
+<tr>
+<td>Progress → workout</td>
+<td>Back to Progress</td>
+<td>Progress at that row</td>
+</tr>
+<tr>
+<td>Records → source workout</td>
+<td>Back to your records</td>
+<td>Records at that record</td>
+</tr>
+<tr>
+<td>History → workout</td>
+<td>Back to History</td>
+<td>History, same filter and page, at that row</td>
+</tr>
+<tr>
+<td>Finish workout → summary → history</td>
+<td>Back to Today</td>
+<td>Today</td>
+</tr>
+<tr>
+<td>Routines → editor → chooser</td>
+<td>Back to Routines / Close</td>
+<td>Same routine, same day</td>
+</tr>
+<tr>
+<td><code>/program</code> → day → guide (public)</td>
+<td>Back to the Push day</td>
+<td>Day page at that movement</td>
+</tr>
+<tr>
+<td>Trial → demo</td>
+<td>(sheet) Close</td>
+<td>Same step</td>
+</tr>
+</tbody></table>
+<h3>Onboarding redesign</h3>
+<h4>Member flow (replaces the three-step example/blank form)</h4>
+<p>The person should leave with a routine that fits them and a picture of the four pillars. Each step is one question on one screen, with the pal in the scene stage. A progress dot row shows &quot;Step 2 of 5&quot;. Focus moves to each new heading. Back is always available.</p>
+<ol>
+<li><strong>&quot;What are you training for?&quot;</strong> Choose one: <em>Get stronger</em> · <em>Build muscle</em> · <em>Feel fitter overall</em> · <em>Lose fat</em> · <em>Train for a sport or event</em>.</li>
+<li><strong>&quot;How much lifting have you done?&quot;</strong> <em>I&#39;m new to this</em> (under 6 months) · <em>Some</em> (6 months to 2 years) · <em>Lots</em> (2+ years).</li>
+<li><strong>&quot;How many days a week can you train?&quot;</strong> 2 · 3 · 4 · 5. Helper: &quot;Pick what you can keep up. You can change it later.&quot;</li>
+<li><strong>&quot;What do you have to work with?&quot;</strong> <em>Dumbbells, a bench and bodyweight</em> · <em>A full gym with a barbell and rack</em>. (The existing two equipment profiles.)</li>
+<li><strong>&quot;Here&#39;s your routine.&quot;</strong> A preview of the generated routine: its name (for example &quot;3-day full body&quot;), each day with its movements and set × rep targets, and a ▶ on each movement that has an approved demo. Actions: <strong>Save my routine</strong> · &quot;Start from a blank routine instead&quot;. Units default from the browser locale with a small &quot;Pounds · change&quot; toggle; the time zone is detected silently; motion follows the system. All three stay editable in Settings.</li>
+<li><strong>Tour (skippable, four short cards, &quot;Skip tour&quot; always visible):</strong><ul>
+<li><em>Today:</em> &quot;Your next workout is always here. Tap Start when you&#39;re ready.&quot;</li>
+<li><em>Logging:</em> an animated sample set row: &quot;Log what you actually did. Your rest timer starts on its own.&quot;</li>
+<li><em>Demos:</em> an approved demo for the first movement in their routine: &quot;Not sure how a move goes? Watch a quick demo. It opens right where you are.&quot;</li>
+<li><em>Progress:</em> a small chart built from friendly sample data, labelled &quot;Example&quot;: &quot;Every set adds up here: your workouts, your records, your gains.&quot;</li>
+<li>Finish: &quot;You&#39;re all set.&quot; → Today, with Day 1 selected.</li>
+</ul>
+</li>
+</ol>
+<h4>Routine generation (domain, TDD)</h4>
+<p><code>generateStarterRoutine({ goal, experience, daysPerWeek, equipment })</code> in <code>src/domain/programs/generate-routine.ts</code> returns a draft program built only from the 27 catalog movements that have approved demos and are compatible with the chosen equipment. It never sets a target weight (the app doesn&#39;t prescribe load).</p>
+<table>
+<thead>
+<tr>
+<th>Days</th>
+<th>Split</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2</td>
+<td>Full body A, Full body B</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Full body A, B, C (<em>Lots</em> of experience: Push, Pull, Legs)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Upper, Lower, Upper, Lower</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Push, Pull, Legs, Upper, Lower (the existing starter)</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Main lifts</th>
+<th>Accessories</th>
+<th>Rest</th>
+<th>Extras</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Get stronger</td>
+<td>3–4 × 4–6</td>
+<td>2–3 × 8–10</td>
+<td>150s</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Build muscle</td>
+<td>3–4 × 8–12</td>
+<td>3 × 10–15</td>
+<td>90s</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Feel fitter overall</td>
+<td>3 × 8–12</td>
+<td>2 × 12–15</td>
+<td>75s</td>
+<td>15-minute walk or run finish</td>
+</tr>
+<tr>
+<td>Lose fat</td>
+<td>3 × 10–15</td>
+<td>2 × 12–15</td>
+<td>60s</td>
+<td>20-minute walk or run finish</td>
+</tr>
+<tr>
+<td>Train for a sport or event</td>
+<td>3 × 5–8</td>
+<td>2 × 8–12 + core</td>
+<td>90s</td>
+<td>Core section on every day</td>
+</tr>
+</tbody></table>
+<p>Experience sets the size of each day: <em>new</em> 4 movements and the lower set count, <em>some</em> 5, <em>lots</em> 6 and the higher set count. Output is deterministic for the same answers. Tests cover every combination for valid structure, equipment compatibility, approved-demo coverage, no load targets and stable naming.</p>
+<h4>Persistence and ownership</h4>
+<ul>
+<li><strong>New table</strong> <code>user_training_profiles</code> (additive migration <code>0008_training_profile</code>): <code>owner_firebase_uid</code> (PK, FK to <code>user_profiles</code>, cascade delete), <code>training_goal</code> enum (<code>strength</code>, <code>muscle</code>, <code>general</code>, <code>fat_loss</code>, <code>sport</code>), <code>experience_level</code> enum (<code>new</code>, <code>some</code>, <code>lots</code>), <code>days_per_week</code> smallint with a check of 2–5, <code>created_at</code>, <code>updated_at</code>. One row per member, nullable for members who onboarded before this change.</li>
+<li><strong>Onboarding envelope:</strong> add <code>mode: &quot;generated&quot;</code> with a strict <code>trainingProfile</code> object. The server regenerates the routine from the answers and equipment. It never accepts a client-built routine. Ownership comes only from the verified session; the client never sends a UID. The idempotency hash includes the new fields.</li>
+<li><strong>Settings:</strong> a &quot;Your training&quot; section shows and edits the answers. Changing them does <strong>not</strong> rewrite the active routine. It offers &quot;Build a new routine from these answers&quot;, which creates a new routine in Routines and asks before making it active. History and existing routine revisions are untouched.</li>
+<li><strong>Account deletion</strong> removes the new row in the same transaction (covered by the existing owner-scoped deletion test, extended).</li>
+<li><strong>Migration steps for the owner (not run against production by the agent):</strong><ol>
+<li>Review <code>drizzle/0008_training_profile.sql</code>.</li>
+<li>Take the usual pre-migration backup.</li>
+<li>Run <code>pnpm db:migrate</code> against production.</li>
+<li>Run <code>pnpm db:verify</code> and confirm the new table with zero rows.</li>
+<li>Merge the application change only after the migration is live (the read path tolerates a missing row, so the order is safe either way).</li>
+</ol>
+</li>
+</ul>
+<h4>Guest test drive (replaces &quot;Try one set&quot;)</h4>
+<p><code>/try</code> becomes <strong>&quot;Take a 3-minute test drive&quot;</strong>: a guided taste of a real workout, with a one-line &quot;Test drive. Nothing is saved.&quot; note at the top.</p>
+<ol>
+<li><strong>Meet today&#39;s workout.</strong> Two movements with approved demos: <em>Goblet squat</em> (3 × 8–12) and <em>Front plank</em> (2 × 20–45s). Short labels explain each part: &quot;This is your plan for today&quot;, &quot;Targets are a guide, not a rule&quot;.</li>
+<li><strong>Watch the demo.</strong> &quot;Not sure how it goes? Watch a quick demo.&quot; It opens in the <code>DemoSheet</code>, right there.</li>
+<li><strong>Log a set.</strong> Weight and reps, with &quot;Log what you actually did.&quot;</li>
+<li><strong>Rest.</strong> The rest timer with the resting pal sticker: &quot;Catch your breath. Your next set is ready when you are.&quot;</li>
+<li><strong>Next movement.</strong> Front plank, logged as time.</li>
+<li><strong>Done!</strong> The complete pal, a confetti burst, and a mini summary of what they logged, followed by a peek at Progress built from their entries and labelled &quot;Example&quot;. <strong>Make my routine</strong> (→ sign in, then onboarding) or <strong>Look around first</strong> (→ Library).</li>
+</ol>
+<p>Demos come from the approved pairs for those two movements. If either pair is missing, the step shows &quot;No demo yet&quot; with the written steps, and the trial still works.</p>
+<h3>Copy direction</h3>
+<p>Warm, short, second person, a little playful, never cute at the expense of clarity. Examples:</p>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Today</th>
+<th>New</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Landing heading</td>
+<td>A little space for your next set.</td>
+<td>Your new gym buddy.</td>
+</tr>
+<tr>
+<td>Landing intro</td>
+<td>Your routine, a clear next step, and a place to keep the work you put in.</td>
+<td>Plan your routine, log every set, watch a quick demo when you need one, and see your gains add up.</td>
+</tr>
+<tr>
+<td>Landing primary</td>
+<td>Try one set</td>
+<td>Take a test drive</td>
+</tr>
+<tr>
+<td>Landing secondary</td>
+<td>Create my routine</td>
+<td>Make my routine</td>
+</tr>
+<tr>
+<td>Today greeting</td>
+<td>Ready when you are, Alice QA.</td>
+<td>Hey Alice! Ready for Push?</td>
+</tr>
+<tr>
+<td>Today start</td>
+<td>Start workout</td>
+<td>Start Push</td>
+</tr>
+<tr>
+<td>Demo trigger</td>
+<td>Watch demo and technique guidance</td>
+<td>▶ Watch demo</td>
+</tr>
+<tr>
+<td>Rest</td>
+<td>—</td>
+<td>Catch your breath.</td>
+</tr>
+<tr>
+<td>Finish</td>
+<td>(jumps to history)</td>
+<td>Workout done! Nice work.</td>
+</tr>
+</tbody></table>
+<p>The existing copy rules still hold: no implementation vocabulary, one name per concept (routine, workout, movement, Library, Today, Progress, Settings), no repeated disclaimers, and the truthful constraints stated once where they matter.</p>
+<h3>Responsive and accessibility notes</h3>
+<ul>
+<li>Check 390px and 1440px in both themes for overlap, clipping and horizontal scroll. The scene stage never pushes the primary action below the first phone screen.</li>
+<li>Scene art stays decorative: empty <code>alt</code>, <code>aria-hidden</code>, no focus or pointer target. Image failure collapses the stage to a solid canvas.</li>
+<li>Forced colours: scenes and stickers are removed, scrims are dropped, and system colours take over.</li>
+<li>Sheets are native <code>&lt;dialog&gt;</code> elements with a labelled close button, focus trapping and focus return.</li>
+<li>Every announcement (set logged, rest done, step changed) goes through one polite live region.</li>
+</ul>
+<h3>Prototype scope (Phase 1)</h3>
+<p>Only two screens: the <strong>landing page</strong> and <strong>member Today</strong>, at 390px and 1440px, light and dark.</p>
+<ul>
+<li>New tokens and type are scoped to the prototype pages (<code>.pal</code> on the page root, with the member header restyled through <code>:has(.pal-today)</code>), so the other screens stay unchanged until Phase 2.</li>
+<li>Today shows the selected day&#39;s movements with ▶ demo triggers that open the <code>DemoSheet</code> (prototype version), day pills instead of the select, an open stat row, and the scene stage with the selected pal.</li>
+<li>Today&#39;s selected day is kept in the address (<code>/app?day=push</code>), so returning to Today lands on the same day.</li>
+<li>The prototype stylesheet <code>src/app/studio-pals.css</code> loads after Quiet Set and overrides it inside the two scopes. That is deliberate scaffolding for review only: Phase 2 moves the tokens to <code>:root</code>, folds the rules into one stylesheet and deletes the Quiet Set rules they replace, as <code>AGENTS.md</code> requires.</li>
+<li>The &quot;Take a test drive&quot; button still opens today&#39;s one-set trial until Phase 2 builds the test drive.</li>
+<li><code>DESIGN.md</code> still describes Quiet Set, because it documents the shipped source. Phase 2 rewrites it as <em>Studio Pals</em> from the <a href="#visual-system">visual system</a> above once the direction is approved.</li>
+<li>Tests that check the retired landing and Today layouts are expected to fail on the prototype branch. Nothing is merged before Phase 2. On the prototype commit, <code>pnpm typecheck</code>, <code>pnpm lint</code> and <code>pnpm docs:check</code> pass, and Vitest reports 959 passed and 6 failed. All 6 failures check the retired layouts: <code>landing-page.test.tsx</code> (2, old hero copy and image), <code>member-program-home.test.tsx</code> (3, the old start panel, select and resume card) and one <code>authenticated-harness-policy.test.ts</code> source check for the retired &quot;All days&quot; links. Phase 2 updates them under the ledger rules. Browser suites were not run on the prototype.</li>
+</ul>
+<h3>Prototype screenshots</h3>
+<p>Captured from a production build (landing) and the synthetic member fixture (Today), at 390 × 844 and 1440 × 1000. Long pages are cropped to their first 2,400 CSS pixels. The YouTube frame is an inert local placeholder. No capture shows horizontal overflow.</p>
+<table>
+<thead>
+<tr>
+<th>Screen</th>
+<th>Phone light</th>
+<th>Phone dark</th>
+<th>Desktop light</th>
+<th>Desktop dark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Landing</td>
+<td><a href="../design/playful-overhaul/prototype/landing-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/prototype/landing-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/prototype/landing-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/prototype/landing-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Today</td>
+<td><a href="../design/playful-overhaul/prototype/member-today-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Today, demo open in place</td>
+<td><a href="../design/playful-overhaul/prototype/member-today-demo-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-demo-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-demo-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-demo-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Today after a first workout (no approved demo for Push-up)</td>
+<td><a href="../design/playful-overhaul/prototype/member-today-after-workout-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-after-workout-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-after-workout-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/prototype/member-today-after-workout-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+</tbody></table>
+<p>Matching baseline images from <code>main</code> (the full set is in <a href="../design/playful-overhaul/before/"><code>before/</code></a>):</p>
+<table>
+<thead>
+<tr>
+<th>Screen</th>
+<th>Phone light</th>
+<th>Phone dark</th>
+<th>Desktop light</th>
+<th>Desktop dark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Landing</td>
+<td><a href="../design/playful-overhaul/before/landing-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/landing-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/landing-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/landing-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Try one set</td>
+<td><a href="../design/playful-overhaul/before/try-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/try-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/try-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/try-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Five-day example</td>
+<td><a href="../design/playful-overhaul/before/program-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/program-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/program-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/program-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Library</td>
+<td><a href="../design/playful-overhaul/before/library-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/library-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/library-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/library-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Sign in</td>
+<td><a href="../design/playful-overhaul/before/sign-in-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/sign-in-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/sign-in-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/sign-in-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Onboarding step 1</td>
+<td><a href="../design/playful-overhaul/before/member-onboarding-1-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/member-onboarding-1-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/member-onboarding-1-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/member-onboarding-1-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Today</td>
+<td><a href="../design/playful-overhaul/before/member-today-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/member-today-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/member-today-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/member-today-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Day</td>
+<td><a href="../design/playful-overhaul/before/member-day-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/member-day-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/member-day-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/member-day-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Workout</td>
+<td><a href="../design/playful-overhaul/before/runner-set-entry-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/runner-set-entry-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/runner-set-entry-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/runner-set-entry-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+<tr>
+<td>Progress</td>
+<td><a href="../design/playful-overhaul/before/member-progress-phone-light.jpg">phone light</a></td>
+<td><a href="../design/playful-overhaul/before/member-progress-phone-dark.jpg">phone dark</a></td>
+<td><a href="../design/playful-overhaul/before/member-progress-desktop-light.jpg">desktop light</a></td>
+<td><a href="../design/playful-overhaul/before/member-progress-desktop-dark.jpg">desktop dark</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Phase 2: rollout (after approval)</h2>
+<ol>
+<li>Promote the tokens to <code>:root</code>, apply the scene stage and open layouts to every public and member screen, and <strong>delete</strong> the box CSS listed as R and M in the inventory rather than overriding it. Retire <code>quiet-set.css</code> into the new stylesheet and delete dead rules.</li>
+<li>Build <code>BackLink</code>, <code>resolveBackTarget</code>, anchors and <code>DemoSheet</code> everywhere in the navigation table (TDD for the resolver).</li>
+<li>Build <code>generateStarterRoutine</code> (TDD), migration <code>0008</code>, the onboarding envelope, the new onboarding steps and tour, and Settings &gt; Your training.</li>
+<li>Build the guest test drive.</li>
+<li>Add the workout-complete moment and the record celebration.</li>
+<li>Mirror every page change in <code>tests/fixtures/authenticated-app</code>.</li>
+<li><strong>Existing tests:</strong> update a test only when the redesign deliberately retires the layout it checks. Keep its behavioural intent and every numeric threshold (overlap, overflow, target size). Log each edit in the QA report as <code>file:line old → new</code>, tagged <code>playful-overhaul</code>. No skips, retries or longer timeouts. A test that passed before and now fails because of a real regression means the app gets fixed.</li>
+<li>New browser tests: onboarding (guest and member, including Skip tour), back navigation from video, guide, day and record views to the exact origin, and selected-state contrast.</li>
+</ol>
+<hr>
+<h2>Acceptance criteria</h2>
+<ol>
+<li><strong>First impression.</strong> At 390px and 1440px in both themes, the landing page names all four pillars (routine, tracking, demos, progress) above or just below the first screen, with a pal in the scene and no white cards.</li>
+<li><strong>No nested boxes.</strong> No screen has a filled or bordered container inside another, except dialogs and sheets containing fields. Every R row in the box inventory is gone, and its CSS is deleted.</li>
+<li><strong>Contrast.</strong> Every text/background pair in every state (default, hover, focus, selected, active, disabled) is at least 4.5:1 (3:1 for large text), and every focus ring and component edge is at least 3:1, in both themes, measured by both automated checks.</li>
+<li><strong>Navigation.</strong> Every drill-down in the navigation table shows its labelled back control and returns to the exact origin (same day, movement anchor, search, filter, page, set). Deep links fall back to the listed parent. No video playback takes the person off the page they were on.</li>
+<li><strong>Onboarding.</strong> A new member answers goal, experience, days and equipment, gets a routine that matches the generator&#39;s rules, and can skip the tour at any point. A guest can finish the test drive, including a demo, without signing in. Only approved demos appear.</li>
+<li><strong>Persistence.</strong> New answers are stored only through the server-derived owner, survive reload, are editable in Settings, and are deleted with the account. Changing them never rewrites the active routine or history.</li>
+<li><strong>Motion.</strong> Every animation is absent with reduced motion from either the system or the app preference.</li>
+<li><strong>Characters.</strong> The pal reacts at ready, resting, complete and record moments. Off hides every character and keeps every function.</li>
+<li><strong>Gates.</strong> <code>pnpm verify</code>, <code>pnpm test:e2e:authenticated</code>, <code>pnpm test:e2e:release</code>, the public acceptance run and <code>pnpm docs:check</code> all pass on the final commit. Vercel checks pass. The owner approves the final screenshots.</li>
+</ol>
+<h2>Tests and evidence</h2>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Test (written first, fails, then passes)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Routine generation from answers</td>
+<td><code>tests/unit/generate-routine.test.ts</code></td>
+</tr>
+<tr>
+<td>Back-target resolution</td>
+<td><code>tests/unit/back-target.test.ts</code></td>
+</tr>
+<tr>
+<td>Token contrast in every state</td>
+<td><code>tests/unit/design-token-contrast.test.ts</code></td>
+</tr>
+<tr>
+<td>Onboarding envelope and ownership</td>
+<td><code>tests/unit/onboarding-training-profile.test.ts</code>, <code>tests/integration/training-profile-repository.test.ts</code></td>
+</tr>
+<tr>
+<td>Migration 0008</td>
+<td><code>tests/integration/training-profile-schema.test.ts</code> (added to <code>db:check</code>)</td>
+</tr>
+<tr>
+<td>Member onboarding and tour skip</td>
+<td><code>tests/authenticated-e2e/playful-onboarding.spec.ts</code></td>
+</tr>
+<tr>
+<td>Guest test drive</td>
+<td><code>tests/e2e/test-drive.spec.ts</code></td>
+</tr>
+<tr>
+<td>Back navigation to the exact origin</td>
+<td><code>tests/e2e/back-navigation.spec.ts</code>, <code>tests/authenticated-e2e/back-navigation.spec.ts</code></td>
+</tr>
+<tr>
+<td>Selected-state contrast in the browser</td>
+<td><code>tests/e2e/state-contrast.spec.ts</code>, <code>tests/authenticated-e2e/state-contrast.spec.ts</code></td>
+</tr>
+</tbody></table>
+<p>Phase 2 evidence goes in <code>docs/qa/latest/PLAYFUL-OVERHAUL-QA.md</code> with screenshots in <code>docs/qa/latest/playful-overhaul/</code>, replacing the production-grade evidence (390px and 1440px, light and dark): gates with exact output lines, the edit ledger, the contrast table, the navigation map before and after, and anything noticed but not changed.</p>
+<h2>Open questions for the owner</h2>
+<ol>
+<li><strong>Direction.</strong> Approve <em>Studio Pals</em> (scene-led layout, warm palette, chunky rounded controls, reacting pals) or send changes. <em>Recommendation: approve, then adjust details on the real screens.</em></li>
+<li><strong>Display font.</strong> Add Fredoka (OFL, self-hosted, one new dependency, about 60 KB)? <em>Recommendation: yes. The alternative, Source Sans 3 Bold for headings, works but feels much less playful.</em></li>
+<li><strong>Artwork requests</strong> (nothing is generated without approval):<ul>
+<li><strong>a. Transparent cut-outs of Pip and Mica, at least 1024px,</strong> in four poses: ready/waving, resting with water, celebrating (arms up), and holding a medal for records. <em>Why:</em> the existing pose sheets are 320px and opaque cream, so they can only appear as small round stickers. Cut-outs could stand on the scene floor in both themes.</li>
+<li><strong>b. Evening versions of <code>pip-studio</code> and <code>mica-studio</code>.</strong> <em>Why:</em> dark mode currently dims the daylight scene, which looks muddy, and the dark landing can&#39;t show a pal.</li>
+<li><strong>c. A wide studio panorama (about 2400 × 1000), day and evening.</strong> <em>Why:</em> 1440px desktops upscale the 1200px scenes by 20%.</li>
+<li><strong>d. Optional:</strong> four small spot illustrations for the pillars (planning, logging, watching a demo, progress). The prototype crops existing scenes instead.</li>
+</ul>
+</li>
+<li><strong>Unused art.</strong> Delete the 24 unused illustration files from <code>public/</code> and the service-worker cache (keeping provenance)? <em>Recommendation: yes.</em></li>
+<li><strong>Equipment.</strong> Add a &quot;Just bodyweight&quot; equipment option to onboarding? It needs a new equipment profile and substitution rules, and the approved demos include only a few bodyweight movements. <em>Recommendation: not in this iteration.</em></li>
+<li><strong>Migration.</strong> Approve the additive <code>0008_training_profile</code> table and the owner-run migration steps above. <em>Recommendation: approve.</em></li>
+</ol>
+
+  </main>
+</body>
+</html>

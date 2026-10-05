@@ -1,5 +1,12 @@
 # Project log
 
+## 2026-10-05: Playful companion overhaul, Phase 0 audit and Phase 1 prototype
+
+- Added design-review capture tooling: four Chromium projects (390 px and 1440 px, light and dark), public screens from a production build and member screens from the synthetic fixture, with a contrast sampler that measures default, hover, real Tab-key focus, selected and disabled states.
+- Captured the baseline from an untouched `main` (`4db767f`) in a temporary worktree, then removed it. Two text pairs fail AA, both white on a pale highlight in dark mode (equipment toggle and sign-in tab, 1.34:1). Five focus-ring or control-edge pairs fall below 3:1.
+- Wrote `docs/plans/PLAYFUL-COMPANION-OVERHAUL.md` with the box inventory, contrast audit, navigation map, onboarding walkthrough, art inventory, the *Studio Pals* direction, onboarding and routine-generation rules, the navigation contract, the migration plan, acceptance criteria and tests.
+- Built a scoped prototype of the landing page and member Today, including an in-place demo sheet for approved demos and the selected day kept in the address. Stopped for owner approval.
+
 ## 2026-08-30: Wave 2 production release
 
 - Created and checksummed the private mode-`600` PostgreSQL archive outside the

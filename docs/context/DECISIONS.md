@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-10-04: Overhaul the look and onboarding toward a playful companion (proposed, awaiting approval)
+
+The owner judges the app by a first-time visitor's reaction, not by passing gates. The proposed *Studio Pals* direction makes the illustrated studio the page itself, replaces decorative cards with whitespace and soft grouping, adds warm accents with state tokens that never put light text on a mid-tone, gives every drill-down a labelled back control that returns to the exact origin, opens demos in place, and replaces the one-set onboarding with goal, experience, schedule and equipment questions plus a skippable tour. Generated routines use only movements with approved demos and never prescribe load. New answers would live in an additive `user_training_profiles` table owned through the server session. See [the overhaul plan](../plans/PLAYFUL-COMPANION-OVERHAUL.md). Phase 2 starts only after owner approval.
+
 ## 2026-08-25: Treat the recording as workflow evidence
 
 The private recording is evidence for navigation and interaction intent. It is not a source repository or visual specification. The application uses original code, data, copy, assets, and identity.
