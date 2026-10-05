@@ -12,6 +12,9 @@ const playwrightCli = resolve(
 );
 const requestedPlaywrightArguments = process.argv.slice(2);
 if (requestedPlaywrightArguments[0] === "--") requestedPlaywrightArguments.shift();
+// `--capture` reuses this staged fixture for design-review screenshots instead of the test suite.
+const captureMode = requestedPlaywrightArguments[0] === "--capture";
+if (captureMode) requestedPlaywrightArguments.shift();
 const inheritedEnvironmentNames = [
   "CI",
   "FORCE_COLOR",
@@ -131,7 +134,7 @@ try {
         playwrightCli,
         "test",
         "--config",
-        "playwright.authenticated.config.ts",
+        captureMode ? "playwright.capture.config.ts" : "playwright.authenticated.config.ts",
         ...requestedPlaywrightArguments,
       ],
       { env: environment, stdio: "inherit" },
