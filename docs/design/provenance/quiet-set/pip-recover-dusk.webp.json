@@ -1,0 +1,8 @@
+{
+  "source": "Deterministic recolour of pip-recover.webp for dark mode, October 5, 2026, approved by the owner as recomposed artwork. No generative model was used.",
+  "references": ["pip-recover.webp"],
+  "method": "scripts/lib/recolor-dusk-scene.sh pip-recover.webp <out> 0.47 0.52: a soft per-pixel mask (light sky blue inside the upper-right window area) blends the daytime sky toward a lavender-to-indigo dusk gradient, dims foliage in the same area, and applies a mild warm curve to the room. Encoded with cwebp.",
+  "derivative": { "width": 1200, "format": "webp", "quality": 82 },
+  "sha256": "b2f474b7f570587ff0915730905a71a4ef7abaf00d6b2ee5ec20e28e71e895fe",
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

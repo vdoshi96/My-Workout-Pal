@@ -1,0 +1,8 @@
+{
+  "source": "Deterministic recolour of tortoise-review.webp for dark mode, October 5, 2026, approved by the owner as recomposed artwork. No generative model was used.",
+  "references": ["tortoise-review.webp"],
+  "method": "scripts/lib/recolor-dusk-scene.sh tortoise-review.webp <out> 0.47 0.52: a soft per-pixel mask (light sky blue inside the upper-right window area) blends the daytime sky toward a lavender-to-indigo dusk gradient, dims foliage in the same area, and applies a mild warm curve to the room. Encoded with cwebp.",
+  "derivative": { "width": 1200, "format": "webp", "quality": 82 },
+  "sha256": "3d3b033f54439f491863bd3b67226127aee3c942da63ab8279eef49886e3eb20",
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

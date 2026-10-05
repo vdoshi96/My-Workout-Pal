@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicShell } from "@/components/layout/public-shell";
 import { Icon } from "@/components/ui/icon";
-import { PalSticker, SceneStage } from "@/components/ui/scene-stage";
+import { PalSticker, SceneArt, SceneStage } from "@/components/ui/scene-stage";
 
 export const metadata: Metadata = {
   title: "Your new gym buddy",
@@ -59,8 +59,7 @@ export default function HomePage({ searchParams }: { searchParams?: Promise<{ ac
       <ol>
         {pillars.map((pillar) => <li className="pal-pillar" key={pillar.title}>
           <div className="pal-vignette" aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element -- explicit public asset keeps the nonce CSP and offline cache policy. */}
-            <img alt="" decoding="async" draggable={false} height={400} loading="lazy" src={`/illustrations/quiet-set/${pillar.art}-phone.webp`} width={600} />
+            <SceneArt base={`/illustrations/quiet-set/${pillar.art}`} dusk={`/illustrations/quiet-set/${pillar.art}-dusk`} sizes="(max-width: 700px) 112px, 168px" />
           </div>
           <div>
             <h3>{pillar.title}</h3>

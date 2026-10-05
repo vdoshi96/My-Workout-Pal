@@ -1,0 +1,8 @@
+{
+  "source": "Deterministic recolour of otter-study.webp for dark mode, October 5, 2026, approved by the owner as recomposed artwork. No generative model was used.",
+  "references": ["otter-study.webp"],
+  "method": "scripts/lib/recolor-dusk-scene.sh otter-study.webp <out> 0.47 0.52: a soft per-pixel mask (light sky blue inside the upper-right window area) blends the daytime sky toward a lavender-to-indigo dusk gradient, dims foliage in the same area, and applies a mild warm curve to the room. Encoded with cwebp.",
+  "derivative": { "width": 1200, "format": "webp", "quality": 82 },
+  "sha256": "4edf2fed6a879e0701dc7b1cb19c61be65511b55f5909e4a1d9b0b163f099da2",
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}
