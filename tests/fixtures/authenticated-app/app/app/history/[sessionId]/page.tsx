@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { TrainingHistoryDetail } from "@/components/insights/training-history-detail";
 import { getViewerProfileProgram } from "@/server/repositories/profile-program";
+import { fromParam, resolveBackTarget } from "@/domain/navigation/back-target";
 import {
   loadTrainingSession,
   TrainingInsightsRepositoryError,
@@ -46,9 +47,11 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
 
 export default async function HarnessHistoryDetailPage({
   params,
-}: Readonly<{ params: Promise<{ sessionId: string }> }>) {
-  const [{ sessionId }, context] = await Promise.all([
+  searchParams,
+}: Readonly<{ params: Promise<{ sessionId: string }>; searchParams: Promise<{ from?: string | string[] }> }>) {
+  const [{ sessionId }, query, context] = await Promise.all([
     params,
+    searchParams,
     headers().then(harnessRequestContext),
   ]);
   if (!context.viewer) return null;
@@ -57,8 +60,13 @@ export default async function HarnessHistoryDetailPage({
     context.viewer,
     sessionId,
   );
+  const back = resolveBackTarget(fromParam(query.from), {
+    area: "member",
+    fallback: { href: "/app/history", label: "Back to History" },
+  });
   return (
     <TrainingHistoryDetail
+      back={back}
       session={session}
       timezone={profile.preferences.timezone}
       unitSystem={profile.preferences.unitSystem}

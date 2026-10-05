@@ -95,7 +95,7 @@ test("blank setup stays empty until selection, then a bodyweight set survives re
     await expect(page.getByRole("button", {name:"Resume", exact:true})).toBeVisible();
     await page.getByRole("button", {name:"Finish exercise", exact:true}).first().click();
     await page.getByRole("button", {name:"Finish workout", exact:true}).click();
-    await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+$/);
+    await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp$/);
     await page.goto("/app/progress");
     await expect(page.getByText("Work sets", {exact:true})).toBeVisible();
     await expect(page.getByText("Repetitions", {exact:true})).toBeVisible();
@@ -162,7 +162,7 @@ for (const scenario of [
     if(scenario.distance)await expect(page.getByLabel("Distance (meters)",{exact:true})).toHaveValue(scenario.distance);
     await page.getByRole("button",{name:"Finish exercise",exact:true}).first().click();
     await page.getByRole("button",{name:"Finish workout",exact:true}).click();
-    await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+$/);
+    await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp$/);
     await page.goto("/app/progress");
     await expect(page.locator(".progress-totals")).toContainText(scenario.total);
     await expect(page.getByText("Added-load volume",{exact:true})).toHaveCount(0);

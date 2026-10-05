@@ -354,7 +354,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   expect((await submitRunnerAction(alice.page, "Skip exercise")).status()).toBe(200);
   const completion = submitRunnerAction(alice.page, "Finish workout");
   expect((await completion).status()).toBe(200);
-  await expect(alice.page).toHaveURL(/\/app\/history\/[0-9a-f-]+$/u);
+  await expect(alice.page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp$/u);
   const originalHistoryUrl = alice.page.url();
   await expect(alice.page.getByRole("heading", { name: "Sunrise strength" })).toBeVisible();
   await expect(alice.page.getByText(/Main work · skipped/u)).toBeVisible();

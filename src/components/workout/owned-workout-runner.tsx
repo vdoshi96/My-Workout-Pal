@@ -25,6 +25,7 @@ import {
   type ExerciseSubstitution,
 } from "@/domain/workout-runner";
 import type { RunnerUnitSystem } from "@/components/workout/workout-runner-presenters";
+import { withFrom } from "@/domain/navigation/back-target";
 import type { CuratedVideos } from "@/domain/youtube/embed";
 
 type RecoveryState =
@@ -35,12 +36,14 @@ type RecoveryState =
 export function OwnedWorkoutRunner({
   curatedVideosByExerciseId,
   effectiveExerciseIdBySnapshot,
+  guideHrefByExerciseId = {},
   initialState,
   substitutionCandidates,
   unitSystem,
 }: Readonly<{
   curatedVideosByExerciseId: Readonly<Record<string, CuratedVideos>>;
   effectiveExerciseIdBySnapshot: Readonly<Record<string, string>>;
+  guideHrefByExerciseId?: Readonly<Record<string, string>>;
   initialState: ActiveWorkoutState;
   substitutionCandidates: readonly ExerciseSubstitution[];
   unitSystem: RunnerUnitSystem;
@@ -124,7 +127,8 @@ export function OwnedWorkoutRunner({
   }, [attempt, initialState, ownerUid, sessionId, storage]);
 
   function openTerminalHistory() {
-    router.push(`/app/history/${encodeURIComponent(sessionId)}`);
+    // The summary's back control returns to Today, not to the finished runner.
+    router.push(withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app"));
   }
 
   function retryRecovery() {
@@ -176,6 +180,7 @@ export function OwnedWorkoutRunner({
     <WorkoutRunner
       curatedVideosByExerciseId={curatedVideosByExerciseId}
       effectiveExerciseIdBySnapshot={effectiveExerciseIdBySnapshot}
+      guideHrefByExerciseId={guideHrefByExerciseId}
       getCompatibleSubstitutions={(exercise) =>
         compatibleWorkoutSubstitutions(
           exercise,

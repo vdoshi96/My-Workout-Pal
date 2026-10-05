@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Icon } from "@/components/ui/icon";
+import { withFrom } from "@/domain/navigation/back-target";
 import { getDatabase } from "@/db/client";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import { listCustomExercises } from "@/server/repositories/custom-exercises";
@@ -25,7 +26,7 @@ export default async function CustomExerciseLibraryPage() {
           <h1>Custom movements</h1>
           <p>Only you can see these.</p>
         </div>
-        <Link className="primary-action" href="/app/library/custom/new"><span>Create exercise</span><Icon name="arrow-right" /></Link>
+        <Link className="primary-action" href={withFrom("/app/library/custom/new", "/app/library/custom")}><span>Create exercise</span><Icon name="arrow-right" /></Link>
       </header>
 
       {exercises.length === 0 ? (
@@ -37,8 +38,8 @@ export default async function CustomExerciseLibraryPage() {
       ) : (
         <ul className="custom-exercise-list">
           {exercises.map((exercise) => (
-            <li key={exercise.id}>
-              <Link href={`/app/library/custom/${exercise.id}`}>
+            <li id={`movement-${exercise.id}`} key={exercise.id}>
+              <Link href={withFrom(`/app/library/custom/${exercise.id}`, `/app/library/custom#movement-${exercise.id}`)}>
                 <span>
                   <strong>{exercise.name}</strong>
                   <small>{LOGGING_KIND_LABELS[exercise.loggingKind]} · {exercise.equipmentIds.map((id) => EQUIPMENT_LABELS[id]).join(", ")}</small>

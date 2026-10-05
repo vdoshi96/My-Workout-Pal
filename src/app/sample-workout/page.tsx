@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PublicShell } from "@/components/layout/public-shell";
+import { BackLink } from "@/components/navigation/back-link";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { getCatalogExercise } from "@/domain/exercises/catalog";
-import { exerciseDetailHref } from "@/domain/navigation/public-exercise-return";
+import { fromParam, resolveBackTarget, withFrom } from "@/domain/navigation/back-target";
 import { createStarterProgram } from "@/domain/programs/starter";
 
 export const metadata: Metadata = { title: "Example workout" };
@@ -14,7 +15,7 @@ const validDays = ["push", "pull", "legs", "upper", "lower"] as const;
 type DaySlug = (typeof validDays)[number];
 
 type PageProps = {
-  searchParams: Promise<{ day?: string; equipment?: string }>;
+  searchParams: Promise<{ day?: string; equipment?: string; from?: string | string[] }>;
 };
 
 function isDaySlug(value: string | undefined): value is DaySlug {
@@ -27,18 +28,17 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
   const daySlug: DaySlug = isDaySlug(query.day) ? query.day : "push";
   const program = createStarterProgram(EQUIPMENT_PROFILES[profile]);
   const selectedDay = program.days.find((day) => day.name.toLowerCase() === daySlug) ?? program.days[0]!;
+  const pageHref = `/sample-workout?day=${daySlug}&equipment=${profile}`;
+  const back = resolveBackTarget(fromParam(query.from), {
+    area: "public",
+    fallback: { href: `/program/${daySlug}?equipment=${profile}`, label: `Back to the ${selectedDay.name} day` },
+  });
 
   return (
     <PublicShell current={null}>
       <section className="sample-runner-head contour-surface">
         <div>
-          <Link
-            className="back-link"
-            href={`/program/${daySlug}?equipment=${profile}`}
-            prefetch={false}
-          >
-            <Icon name="arrow-left" /> {selectedDay.name} day
-          </Link>
+          <BackLink target={back} />
           <h2>Finished sets</h2>
           <h1>Example workout</h1>
           <p>An example of a finished workout. Nothing here is saved.</p>
@@ -59,15 +59,12 @@ export default async function SampleWorkoutPage({ searchParams }: PageProps) {
               const top = timed ? prescription.maximumSeconds : prescription.maximumReps;
               const unit = timed ? "sec" : "reps";
               return (
-                <li key={exercise.slug}>
+                <li id={`movement-${index + 1}`} key={exercise.slug}>
                   <header>
                     <span className="catalog-number">{String(index + 1).padStart(2, "0")}</span>
                     <div><strong>{prescription.displayName ?? exercise.name}</strong><small>{prescription.sets} work sets · {prescription.restSeconds}s rest</small></div>
                     <Link
-                      href={exerciseDetailHref(exercise.slug, {
-                        equipment: profile,
-                        returnTo: `/sample-workout?day=${daySlug}&equipment=${profile}`,
-                      })}
+                      href={withFrom(`/library/${exercise.slug}?equipment=${profile}`, `${pageHref}#movement-${index + 1}`)}
                       prefetch={false}
                     >
                       Technique

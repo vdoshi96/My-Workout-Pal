@@ -3,7 +3,10 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
+import { NavigationTracker } from "@/components/navigation/navigation-tracker";
 import { OwnedWorkoutRunner } from "@/components/workout/owned-workout-runner";
+import { withFrom } from "@/domain/navigation/back-target";
+import { memberGuideHrefsByExerciseId } from "@/server/read-models/approved-demos";
 import { hydrateWorkoutResumeState } from "@/domain/workout-resume";
 import { listApprovedCuratedVideoPairsByExerciseIds } from "@/server/repositories/curated-videos";
 import { listCustomExercises } from "@/server/repositories/custom-exercises";
@@ -63,7 +66,7 @@ async function loadHarnessWorkout(
           if (historyError instanceof TrainingInsightsRepositoryError && historyError.code === "not_found") return undefined;
           throw historyError;
         });
-        if (session) redirect(`/app/history/${sessionId}`);
+        if (session) redirect(withFrom(`/app/history/${sessionId}`, "/app"));
       }
       notFound();
     }
@@ -92,6 +95,15 @@ export default async function HarnessOwnedWorkoutPage({
     sessionId,
     context.scenario,
   );
+  const substitutionCandidates = buildWorkoutRouteCandidates(
+    resume.snapshot.equipmentProfileKind ?? profileProgram.equipment.profileKind,
+    customExercises,
+    resume.snapshot.availableEquipment,
+  );
+  const guideHrefByExerciseId = memberGuideHrefsByExerciseId(
+    [...Object.values(effectiveIds), ...substitutionCandidates.map(({ id }) => id)],
+    customExercises.map(({ id }) => id),
+  );
 
   return (
     <div className="owned-workout-route">
@@ -110,12 +122,9 @@ export default async function HarnessOwnedWorkoutPage({
           <OwnedWorkoutRunner
             curatedVideosByExerciseId={curatedVideosByExerciseId}
             effectiveExerciseIdBySnapshot={effectiveIds}
+            guideHrefByExerciseId={guideHrefByExerciseId}
             initialState={initialState}
-            substitutionCandidates={buildWorkoutRouteCandidates(
-              resume.snapshot.equipmentProfileKind ?? profileProgram.equipment.profileKind,
-              customExercises,
-              resume.snapshot.availableEquipment,
-            )}
+            substitutionCandidates={substitutionCandidates}
             unitSystem={profileProgram.preferences.unitSystem}
           />
         ) : (
@@ -129,6 +138,7 @@ export default async function HarnessOwnedWorkoutPage({
           </section>
         )}
       </main>
+      <NavigationTracker />
     </div>
   );
 }

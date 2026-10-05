@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { EQUIPMENT_LABELS, LOGGING_KIND_LABELS } from "@/components/exercises/labels";
+import { BackLink } from "@/components/navigation/back-link";
 import { ExerciseVideoField } from "@/components/video/exercise-video-field";
 import { EQUIPMENT_PROFILES, supportsEquipment } from "@/domain/equipment";
 import type { CatalogExercise } from "@/domain/exercises/catalog";
@@ -18,7 +18,7 @@ export function ExerciseGuide({ exercise, profileLabel, backHref, backLabel }: P
   const compatible = supportsEquipment(profile, exercise.requiredEquipment);
   const missing = exercise.requiredEquipment.filter((item) => !(profile.equipment as readonly string[]).includes(item)).map((item) => EQUIPMENT_LABELS[item]).join(", ");
   return <article className="exercise-guide">
-    <Link className="back-link" href={backHref}>{backLabel}</Link>
+    <BackLink target={{ href: backHref, label: backLabel }} />
     <header><h1>{exercise.name}</h1><p>{compatible ? `Works with ${profileLabel}` : `Needs ${missing}`}</p></header>
     <ExerciseVideoField videos={exercise.videos} />
     <section><h2>How to do it</h2><ol className="exercise-cues">{exercise.instructions.map((instruction) => <li key={instruction}>{instruction}</li>)}</ol></section>

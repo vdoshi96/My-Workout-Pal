@@ -367,7 +367,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
   await alice.page.getByText("Workout outline", { exact: true }).click();
   await alice.page.getByRole("button", { name: /Dumbbell farmer carry/u }).click();
   await expect(alice.page.getByRole("heading", { level: 2, name: "Dumbbell farmer carry" })).toBeVisible();
-  await alice.page.getByText("Watch demo and technique guidance", { exact: true }).click();
+  await alice.page.getByText("Technique guidance", { exact: true }).click();
   await expect(alice.page.getByRole("heading", { name: "Technique guidance" })).toBeVisible();
   await expect(alice.page.getByText("Unavailable", { exact: true })).toBeVisible();
   await expect(

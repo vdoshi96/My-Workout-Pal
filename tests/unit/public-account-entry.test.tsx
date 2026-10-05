@@ -80,9 +80,9 @@ describe("ordinary public account entry", () => {
 
     expect(explorer).toContain("Five-day example routine");
     expect(explorer).not.toContain("Starter preview · not saved");
-    expect(day).toContain("Example routine");
+    expect(day).toContain("Back to the example routine");
     expect(day).not.toContain("Starter preview · not saved");
-    expect(day).toContain('href="/sample-workout"');
+    expect(day).toContain('/sample-workout?day=${day}&equipment=${profile}');
     expect(day).toContain('PublicShell current="program"');
   });
 

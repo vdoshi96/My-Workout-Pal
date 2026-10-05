@@ -9,13 +9,15 @@ import {
   CustomExerciseRepositoryError,
   getCustomExercise,
 } from "@/server/repositories/custom-exercises";
+import { getViewerProfileProgram } from "@/server/repositories/profile-program";
+import { fromParam, resolveBackTarget } from "@/domain/navigation/back-target";
 import { getHarnessDatabase } from "../../../../../server/database";
 import { harnessRequestContext } from "../../../../../server/harness-context";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type PageProps = Readonly<{ params: Promise<{ id: string }> }>;
+type PageProps = Readonly<{ params: Promise<{ id: string }>; searchParams?: Promise<{ from?: string | string[] }> }>;
 
 export async function generateMetadata({ params }: PageProps) {
   const context = harnessRequestContext(await headers());
@@ -27,7 +29,7 @@ export async function generateMetadata({ params }: PageProps) {
   catch { return { title: "Custom movement" }; }
 }
 
-export default async function HarnessEditCustomExercisePage({ params }: PageProps) {
+export default async function HarnessEditCustomExercisePage({ params, searchParams }: PageProps) {
   const context = harnessRequestContext(await headers());
   if (!context.viewer) return null;
   const id = customExerciseIdSchema.safeParse((await params).id);
@@ -41,12 +43,22 @@ export default async function HarnessEditCustomExercisePage({ params }: PageProp
     throw error;
   }
 
+  const [query, profileProgram] = await Promise.all([
+    searchParams ?? Promise.resolve({ from: undefined }),
+    getViewerProfileProgram(database, context.viewer).catch(() => undefined),
+  ]);
+  const back = resolveBackTarget(fromParam(query.from), {
+    area: "member",
+    fallback: { href: "/app/library/custom", label: "Back to your movements" },
+    days: profileProgram?.activeProgram?.days ?? [],
+  });
   const [routineReferences, workoutReferences] = await Promise.all([
     database.select({ id: programPrescriptions.id }).from(programPrescriptions).where(and(eq(programPrescriptions.ownerFirebaseUid, context.viewer.uid), eq(programPrescriptions.customExerciseId, id.data))).limit(1),
     database.select({ id: workoutExerciseSnapshots.id }).from(workoutExerciseSnapshots).where(and(eq(workoutExerciseSnapshots.ownerFirebaseUid, context.viewer.uid), eq(workoutExerciseSnapshots.customExerciseId, id.data))).limit(1),
   ]);
   return (
     <CustomExerciseEditor
+      back={back}
       canMutate={context.viewer.eligibleForPermanentMutations}
       exercise={exercise}
       referenced={routineReferences.length + workoutReferences.length > 0}

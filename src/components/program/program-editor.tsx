@@ -54,7 +54,9 @@ import {
 import { parseClockDuration, formatClockDuration } from "@/domain/time-entry";
 import { paceToDisplay, displayToPace } from "@/components/workout/workout-runner-presenters";
 import { LOGGING_KIND_LABELS } from "@/components/exercises/labels";
+import { BackLink } from "@/components/navigation/back-link";
 import { Icon } from "@/components/ui/icon";
+import { withFrom, type BackTarget } from "@/domain/navigation/back-target";
 import {
   movementChooserSelectionSchema,
   type MovementChooserError,
@@ -231,13 +233,18 @@ type PrescriptionRemoval = Readonly<{
 }>;
 
 export function ProgramEditor({
+  back = { href: "/app", label: "Back to Today" },
   canMutate,
   candidates,
+  initialDayKey,
   initialProgram,
   unitSystem = "metric",
 }: Readonly<{
+  back?: BackTarget;
   canMutate: boolean;
   candidates: readonly ProgramExerciseCandidate[];
+  /** The day to open on, from `?day=`; unknown keys open the first day. */
+  initialDayKey?: string | undefined;
   initialProgram: ActiveProgramReadModel;
   unitSystem?: ProgramEditorUnitSystem;
 }>) {
@@ -248,7 +255,10 @@ export function ProgramEditor({
   );
   const [undoDraft, setUndoDraft] = useState<{ before: ProgramEditorDraft; after: ProgramEditorDraft } | null>(null);
   const [baseline, setBaseline] = useState(() => JSON.stringify(draft));
-  const [selectedDayKey, setSelectedDayKey] = useState(initialProgram.days[0]?.dayKey ?? "");
+  const [selectedDayKey, setSelectedDayKey] = useState(() =>
+    initialProgram.days.some((day) => day.dayKey === initialDayKey)
+      ? initialDayKey!
+      : initialProgram.days[0]?.dayKey ?? "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [saveFailed, setSaveFailed] = useState(false);
@@ -303,6 +313,16 @@ export function ProgramEditor({
     draft.days.findIndex((day) => day.dayKey === selectedDayKey),
   );
   const selected = draft.days[selectedDay] ?? draft.days[0]!;
+  const selectedSavedDayKey = program.days.some((day) => day.dayKey === selected.dayKey) ? selected.dayKey : undefined;
+  useEffect(() => {
+    // Keep the selected day in the URL (`?day=`) so a round trip reopens it.
+    // Skip while a draft guard entry exists so the guard's history stays intact.
+    if (!selectedSavedDayKey || dirtyRef.current || draftHistoryGuardActiveRef.current) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("day") === selectedSavedDayKey) return;
+    url.searchParams.set("day", selectedSavedDayKey);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [selectedSavedDayKey]);
   const meaningBySourceId = useMemo(
     () =>
       new Map(
@@ -1041,11 +1061,9 @@ export function ProgramEditor({
           <p className="quiet-save-state">{busy ? "Saving…" : dirty ? "Unsaved changes" : "Saved"}</p>
           <p>Changes apply to future workouts. A workout already started keeps its original movements and targets.</p>
         </div>
-        <nav className="quiet-routine-tools" aria-label="Routine tools"><Link className="secondary-action" href="/app/programs">All routines</Link>
+        <nav className="quiet-routine-tools" aria-label="Routine tools"><Link className="secondary-action" href={withFrom("/app/programs", selectedSavedDayKey ? `/app/program/edit?day=${encodeURIComponent(selectedSavedDayKey)}` : "/app/program/edit")}>All routines</Link>
         <Link className="secondary-action" href="/app/library">Browse movements</Link>
-        <Link className="secondary-action" href="/app">
-          Back to Today
-        </Link></nav>
+        <BackLink target={back} /></nav>
         {showRoutineEditorCompanion ? (
           <DecorativeCompanion variant="routine-editor" />
         ) : null}

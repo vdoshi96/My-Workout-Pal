@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { NavigationTracker } from "@/components/navigation/navigation-tracker";
 import { Icon } from "@/components/ui/icon";
 
 const items = [
@@ -43,6 +44,7 @@ export function PublicShell({
         </nav>
       </header>
       <main id="main-content" tabIndex={-1}>{children}</main>
+      <NavigationTracker />
     </div>
   );
 }

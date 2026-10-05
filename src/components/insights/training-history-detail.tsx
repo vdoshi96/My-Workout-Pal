@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import {
   formatHistoryDate,
   formatInsightDistance,
@@ -8,7 +6,9 @@ import {
 } from "@/components/insights/training-insights-presenters";
 import { formatCardioPace } from "@/components/workout/workout-runner-presenters";
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
+import { BackLink } from "@/components/navigation/back-link";
 import { Icon } from "@/components/ui/icon";
+import type { BackTarget } from "@/domain/navigation/back-target";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
 import type {
   TrainingSessionDetail,
@@ -80,10 +80,12 @@ function prescriptionTarget(
 }
 
 export function TrainingHistoryDetail({
+  back = { href: "/app/history", label: "Back to History" },
   session,
   timezone,
   unitSystem,
 }: Readonly<{
+  back?: BackTarget;
   session: TrainingSessionDetail;
   timezone: string;
   unitSystem: "imperial" | "metric";
@@ -92,9 +94,7 @@ export function TrainingHistoryDetail({
     <article className="insights-page history-detail" aria-labelledby="history-detail-title">
       <header className="insights-heading companion-heading contour-surface">
         <div>
-          <Link className="back-link" href="/app/history">
-            <Icon name="arrow-left" /> Back to history
-          </Link>
+          <BackLink target={back} />
           <span className={`history-state history-state--${session.state}`}>
             {session.state === "completed" ? <><Icon name="leaf" /> Completed workout</> : "Interrupted workout"}
           </span>

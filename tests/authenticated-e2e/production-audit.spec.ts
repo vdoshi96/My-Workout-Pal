@@ -110,7 +110,7 @@ test.describe("production audit: member surfaces", () => {
     const guide = page.locator('main a[href^="/app/library/"]:not([href^="/app/library/custom"])').first();
     await expect(guide).toBeVisible();
     await guide.click();
-    await expect(page).toHaveURL(/\/app\/library\/[a-z0-9-]+$/);
+    await expect(page).toHaveURL(/\/app\/library\/[a-z0-9-]+\?from=[^#]+$/);
     await expect(page.getByRole("navigation", { name: "Account" }).getByRole("link", { name: "Today" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Library", exact: true }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "How to do it" })).toBeVisible();

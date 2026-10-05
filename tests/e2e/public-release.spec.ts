@@ -74,8 +74,8 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("heading", { level: 1, name: "Dumbbell bench press" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Exercise library" }).click();
-  await expect(page).toHaveURL(/\/library\?equipment=dumbbells$/);
+  await page.getByRole("link", { name: "Back to the Push day" }).click();
+  await expect(page).toHaveURL(/\/program\/push\?equipment=dumbbells(?:#movement-\d+)?$/);
   await page.getByRole("link", { name: "Example", exact: true }).click();
   await expect(page).toHaveURL(/\/program$/);
 
@@ -111,8 +111,8 @@ test("guest previews both profiles and completes the public discovery route", as
   await expect(
     page.getByRole("heading", { level: 1, name: "Barbell bent-over row" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Exercise library" }).click();
-  await expect(page).toHaveURL(/\/library\?equipment=barbell$/);
+  await page.getByRole("link", { name: "Back to Library" }).click();
+  await expect(page).toHaveURL(/\/library\?equipment=barbell(?:#movement-[a-z0-9-]+)?$/);
   await page.getByLabel("Search movements").fill("not a real movement");
   await page.getByRole("button", { name: "Search" }).click();
   await expect(

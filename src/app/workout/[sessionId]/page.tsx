@@ -2,7 +2,10 @@ import { loadTrainingSession, TrainingInsightsRepositoryError } from "@/server/r
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { NavigationTracker } from "@/components/navigation/navigation-tracker";
 import { OwnedWorkoutRunner } from "@/components/workout/owned-workout-runner";
+import { withFrom } from "@/domain/navigation/back-target";
+import { memberGuideHrefsByExerciseId } from "@/server/read-models/approved-demos";
 import { getDatabase } from "@/db/client";
 import { hydrateWorkoutResumeState } from "@/domain/workout-resume";
 import { getCurrentViewer } from "@/server/auth/viewer";
@@ -37,12 +40,22 @@ async function loadOwnedWorkoutData(
       database,
       Object.values(effectiveIds),
     ).catch(() => ({}));
+    const substitutionCandidates = buildWorkoutRouteCandidates(
+      resume.snapshot.equipmentProfileKind ?? profileProgram.equipment.profileKind,
+      customExercises,
+      resume.snapshot.availableEquipment,
+    );
+    const guideHrefByExerciseId = memberGuideHrefsByExerciseId(
+      [...Object.values(effectiveIds), ...substitutionCandidates.map(({ id }) => id)],
+      customExercises.map(({ id }) => id),
+    );
     return {
       resume,
       profileProgram,
-      customExercises,
       effectiveIds,
       curatedVideosByExerciseId,
+      guideHrefByExerciseId,
+      substitutionCandidates,
     };
   } catch (error) {
     if (
@@ -54,7 +67,7 @@ async function loadOwnedWorkoutData(
           if (historyError instanceof TrainingInsightsRepositoryError && historyError.code === "not_found") return undefined;
           throw historyError;
         });
-        if (session) redirect(`/app/history/${sessionId}`);
+        if (session) redirect(withFrom(`/app/history/${sessionId}`, "/app"));
       }
       notFound();
     }
@@ -79,9 +92,10 @@ export default async function OwnedWorkoutPage({
   const {
     resume,
     profileProgram,
-    customExercises,
     effectiveIds,
     curatedVideosByExerciseId,
+    guideHrefByExerciseId,
+    substitutionCandidates,
   } =
     await loadOwnedWorkoutData(getDatabase(), viewer, sessionId);
   const initialState = hydrateWorkoutResumeState(resume);
@@ -99,12 +113,9 @@ export default async function OwnedWorkoutPage({
           <OwnedWorkoutRunner
             curatedVideosByExerciseId={curatedVideosByExerciseId}
             effectiveExerciseIdBySnapshot={effectiveIds}
+            guideHrefByExerciseId={guideHrefByExerciseId}
             initialState={initialState}
-            substitutionCandidates={buildWorkoutRouteCandidates(
-              resume.snapshot.equipmentProfileKind ?? profileProgram.equipment.profileKind,
-              customExercises,
-              resume.snapshot.availableEquipment,
-            )}
+            substitutionCandidates={substitutionCandidates}
             unitSystem={profileProgram.preferences.unitSystem}
           />
         ) : (
@@ -124,6 +135,7 @@ export default async function OwnedWorkoutPage({
           </section>
         )}
       </main>
+      <NavigationTracker />
     </div>
   );
 }

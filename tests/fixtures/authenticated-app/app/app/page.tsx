@@ -8,7 +8,8 @@ import {
   getViewerProfileProgram,
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
-import { listApprovedCuratedVideoPairsByExerciseIds } from "@/server/repositories/curated-videos";
+import { listApprovedCuratedVideoPairsByExerciseIds, listApprovedCuratedVideoPairsBySlugs } from "@/server/repositories/curated-videos";
+import { APPROVED_DEMO_SLUGS } from "@/domain/programs/generate-routine";
 import { loadProgressInsights } from "@/server/repositories/training-insights";
 import { createWorkoutRepository } from "@/server/repositories/workout-repository";
 import { getHarnessDatabase } from "../../server/database";
@@ -40,7 +41,8 @@ export default async function HarnessMemberHomePage({ searchParams }: Readonly<{
   const { database } = await getHarnessDatabase(context.scope);
   const model = await readProfileProgramOrUndefined(database, context.viewer);
   if (!model?.activeProgram) {
-    return <OnboardingForm canMutate={context.viewer.eligibleForPermanentMutations} />;
+    const demos = await listApprovedCuratedVideoPairsBySlugs(database, [...APPROVED_DEMO_SLUGS]).catch(() => ({}));
+    return <OnboardingForm canMutate={context.viewer.eligibleForPermanentMutations} demos={demos} displayName={context.viewer.displayName} />;
   }
   const { day } = await searchParams;
   const initialDayKey = typeof day === "string" ? day : null;

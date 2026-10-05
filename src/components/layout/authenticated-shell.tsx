@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 import type { FirebasePublicConfig } from "@/client/firebase";
 import { AuthenticatedNav } from "@/components/layout/authenticated-nav";
 import { AuthenticatedSessionSignOut } from "@/components/layout/authenticated-session-sign-out";
+import { NavigationTracker } from "@/components/navigation/navigation-tracker";
 import { Icon } from "@/components/ui/icon";
 import type { ViewerContext } from "@/server/auth/viewer";
 
@@ -77,6 +78,7 @@ export function AuthenticatedShell({
         </aside>
       ) : null}
       <main className="member-main" id="main-content" tabIndex={-1}>{children}</main>
+      <NavigationTracker />
     </div>
   );
 }

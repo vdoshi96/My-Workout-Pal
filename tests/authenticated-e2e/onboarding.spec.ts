@@ -857,7 +857,8 @@ test("owned customization publishes once, preserves history, and derives private
   );
   await alice.page.getByRole("dialog").getByRole("button", { name: "Duplicate", exact: true }).click();
   expect((await cloneProgramResponse).status()).toBe(201);
-  await alice.page.getByRole("link", { name: "Back to Today", exact: true }).click();
+  // Routines opened from the editor now return to the routine; go to Today directly.
+  await alice.page.getByRole("link", { name: "Today", exact: true }).click();
   await expect(
     alice.page.getByText("QA cloned route · Barbell + rack · 5 days", {
       exact: true,
@@ -900,7 +901,7 @@ test("owned customization publishes once, preserves history, and derives private
   );
   await alice.page.getByRole("button", { name: "Create exercise" }).click();
   expect((await createCustomResponse).status()).toBe(201);
-  await expect(alice.page).toHaveURL(/\/app\/library\/custom\/[0-9a-f-]+$/u);
+  await expect(alice.page).toHaveURL(/\/app\/library\/custom\/[0-9a-f-]+\?from=%2Fapp%2Flibrary$/u);
   const customExerciseId = new URL(alice.page.url()).pathname.split("/").at(-1);
   if (!customExerciseId) throw new Error("The custom exercise ID is unavailable.");
   expect((await readScopeSummary(alice.page)).counts.customExercises).toBe(
@@ -908,7 +909,7 @@ test("owned customization publishes once, preserves history, and derives private
   );
   await expect(alice.page.getByRole("heading", { level: 1, name: "Edit movement" })).toBeVisible();
   await expect(alice.page.getByLabel("Exercise name")).toHaveValue("QA supported row");
-  await alice.page.getByRole("link", { name: /Custom library/ }).click();
+  await alice.page.getByRole("link", { name: "Back to Library" }).click();
   await expect(alice.page.getByRole("link", { name: /QA supported row/ })).toBeVisible();
 
   await alice.page.getByRole("link", { name: "Today", exact: true }).click();

@@ -10,6 +10,9 @@ import {
   listOwnedCustomExercises,
 } from "@/domain/exercises/library";
 import { normalizedMemberLibraryQuery } from "@/domain/exercises/member-library-query";
+import { withFrom } from "@/domain/navigation/back-target";
+import { MovementDemo } from "@/components/video/demo-sheet";
+import { loadApprovedDemosBySlug } from "@/server/read-models/approved-demos";
 import type { ViewerContext } from "@/server/auth/viewer";
 import { listCustomExercises } from "@/server/repositories/custom-exercises";
 import {
@@ -33,7 +36,7 @@ async function loadLibrary(scope: string, viewer: ViewerContext) {
       getViewerProfileProgram(database, viewer),
       listCustomExercises(database, viewer),
     ]);
-    return { customExercises, profileProgram };
+    return { customExercises, database, profileProgram };
   } catch (error) {
     if (error instanceof RepositoryNotFoundError) return undefined;
     throw error;
@@ -55,6 +58,8 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
   const catalogExercises = listCatalogExercises({ profile, query });
   const customExercises = listOwnedCustomExercises(data?.customExercises ?? [], { profile, query });
   const resultCount = catalogExercises.length + customExercises.length;
+  const demos = data ? await loadApprovedDemosBySlug(data.database, catalogExercises.map((exercise) => exercise.slug)) : {};
+  const libraryHref = query ? `/app/library?${new URLSearchParams({ q: query }).toString()}` : "/app/library";
 
   return (
     <section className="member-library" aria-labelledby="member-library-title">
@@ -63,7 +68,7 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
           <h1 id="member-library-title">Exercise library</h1>
           <p>{hasRoutine ? `Movement guides and your private exercises, filtered for ${profile.label.toLocaleLowerCase("en-US")}.` : "Browse dumbbell, bodyweight, and bench movements. Set up your routine to choose your equipment."}</p>
         </div>
-        {hasRoutine ? <Link className="primary-action" href="/app/library/custom/new">Create private exercise <Icon name="arrow-right" /></Link> : <Link className="primary-action" href="/app">Set up your routine <Icon name="arrow-right" /></Link>}
+        {hasRoutine ? <Link className="primary-action" href={withFrom("/app/library/custom/new", libraryHref)}>Create private exercise <Icon name="arrow-right" /></Link> : <Link className="primary-action" href="/app">Set up your routine <Icon name="arrow-right" /></Link>}
         <DecorativeCompanion variant="library" />
       </header>
 
@@ -94,12 +99,12 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
             <section aria-labelledby="private-results-title">
               <div className="section-heading">
                 <div><span className="eyebrow">Yours</span><h2 id="private-results-title">Your private movements</h2></div>
-                <Link href="/app/library/custom">Manage all</Link>
+                <Link href={withFrom("/app/library/custom", libraryHref)}>Manage all</Link>
               </div>
               <ul className="member-library-list">
                 {customExercises.map((exercise) => (
-                  <li key={exercise.id}>
-                    <Link href={`/app/library/custom/${exercise.id}`}>
+                  <li id={`movement-${exercise.id}`} key={exercise.id}>
+                    <Link href={withFrom(`/app/library/custom/${exercise.id}`, `${libraryHref}#movement-${exercise.id}`)}>
                       <span><strong>{exercise.name}</strong><small>{LOGGING_KIND_LABELS[exercise.loggingKind]} · {exercise.equipmentIds.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small></span>
                       <span>Private</span><Icon name="chevron-right" />
                     </Link>
@@ -119,11 +124,12 @@ export default async function HarnessMemberLibraryPage({ searchParams }: PagePro
             ) : (
               <ul className="member-library-list">
                 {catalogExercises.map((exercise) => (
-                  <li key={exercise.slug}>
-                    <Link href={`/app/library/${exercise.slug}`} prefetch={false}>
+                  <li id={`movement-${exercise.slug}`} key={exercise.slug}>
+                    <Link href={withFrom(`/app/library/${exercise.slug}`, `${libraryHref}#movement-${exercise.slug}`)} prefetch={false}>
                       <span><strong>{exercise.name}</strong><small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small></span>
                       <span>Guide</span><Icon name="chevron-right" />
                     </Link>
+                    {demos[exercise.slug] ? <MovementDemo movementName={exercise.name} videos={demos[exercise.slug]} /> : null}
                   </li>
                 ))}
               </ul>

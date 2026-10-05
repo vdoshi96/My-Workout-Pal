@@ -7,9 +7,14 @@ import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { listCatalogExercises } from "@/domain/exercises/library";
-import { exerciseDetailHref } from "@/domain/navigation/public-exercise-return";
+import { withFrom } from "@/domain/navigation/back-target";
+import { MovementDemo } from "@/components/video/demo-sheet";
+import { loadPublicApprovedDemosBySlug } from "@/server/read-models/approved-demos";
 
 export const metadata: Metadata = { title: "Exercise library" };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type PageProps = {
   searchParams: Promise<{
@@ -29,6 +34,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
   const profile: EquipmentProfileKind = query.equipment === "barbell" ? "barbell" : "dumbbells";
   const search = typeof query.q === "string" ? query.q.trim() : "";
   const exercises = listCatalogExercises({ profile: EQUIPMENT_PROFILES[profile], query: search });
+  const demos = await loadPublicApprovedDemosBySlug(exercises.map((exercise) => exercise.slug));
 
   return (
     <PublicShell current="library">
@@ -91,12 +97,12 @@ export default async function LibraryPage({ searchParams }: PageProps) {
         ) : (
           <ul className="library-grid">
             {exercises.map((exercise) => (
-              <li key={exercise.slug}>
+              <li id={`movement-${exercise.slug}`} key={exercise.slug}>
                 <Link
-                  href={exerciseDetailHref(exercise.slug, {
-                    equipment: profile,
-                    returnTo: profileHref(profile, search),
-                  })}
+                  href={withFrom(
+                    `/library/${exercise.slug}?equipment=${profile}`,
+                    `${profileHref(profile, search)}#movement-${exercise.slug}`,
+                  )}
                   prefetch={false}
                 >
 
@@ -106,6 +112,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
                   </span>
                   <Icon name="chevron-right" />
                 </Link>
+                {demos[exercise.slug] ? <MovementDemo movementName={exercise.name} videos={demos[exercise.slug]} /> : null}
               </li>
             ))}
           </ul>

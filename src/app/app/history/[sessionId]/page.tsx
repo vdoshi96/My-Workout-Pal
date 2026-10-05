@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { TrainingHistoryDetail } from "@/components/insights/training-history-detail";
 import { getDatabase } from "@/db/client";
+import { fromParam, resolveBackTarget } from "@/domain/navigation/back-target";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import {
   getViewerProfileProgram,
@@ -15,7 +16,7 @@ import {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type PageProps = Readonly<{ params: Promise<{ sessionId: string }> }>;
+type PageProps = Readonly<{ params: Promise<{ sessionId: string }>; searchParams: Promise<{ from?: string | string[] }> }>;
 
 async function loadHistoryDetailData(
   viewer: NonNullable<Awaited<ReturnType<typeof getCurrentViewer>>>,
@@ -45,15 +46,20 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
   catch { return { title: "Workout" }; }
 }
 
-export default async function TrainingHistoryDetailPage({ params }: PageProps) {
+export default async function TrainingHistoryDetailPage({ params, searchParams }: PageProps) {
   const viewer = await getCurrentViewer();
   if (!viewer) return null;
-  const { sessionId } = await params;
+  const [{ sessionId }, query] = await Promise.all([params, searchParams]);
   const { profile, session } = await loadHistoryDetailData(viewer, sessionId);
   const { timezone, unitSystem } = profile.preferences;
+  const back = resolveBackTarget(fromParam(query.from), {
+    area: "member",
+    fallback: { href: "/app/history", label: "Back to History" },
+  });
 
   return (
     <TrainingHistoryDetail
+      back={back}
       session={session}
       timezone={timezone}
       unitSystem={unitSystem}

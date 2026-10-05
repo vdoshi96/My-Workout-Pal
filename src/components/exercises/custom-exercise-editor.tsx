@@ -1,7 +1,6 @@
 "use client";
 
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -10,13 +9,17 @@ import {
   parseCustomExerciseDeleteResponse,
   parseCustomExerciseMutationResponse,
 } from "@/components/exercises/custom-exercise-response";
+import { BackLink } from "@/components/navigation/back-link";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_IDS, type EquipmentId } from "@/domain/equipment";
+import { withFrom, type BackTarget } from "@/domain/navigation/back-target";
 import type { CustomExerciseView } from "@/server/repositories/custom-exercises";
 
 import { EQUIPMENT_LABELS, LOGGING_KIND_LABELS } from "@/components/exercises/labels";
 
 type EditorMode = "create" | "edit";
+
+const DEFAULT_BACK: BackTarget = { href: "/app/library/custom", label: "Back to your movements" };
 
 type EditableExercise = Readonly<{
   aliases: string;
@@ -60,11 +63,13 @@ export function CustomExerciseEditor({
   exercise,
   mode,
   referenced = false,
+  back = DEFAULT_BACK,
 }: Readonly<{
   canMutate: boolean;
   exercise?: CustomExerciseView;
   mode: EditorMode;
   referenced?: boolean;
+  back?: BackTarget;
 }>) {
   const router = useRouter();
   const [value, setValue] = useState(() => editorValue(exercise));
@@ -144,7 +149,7 @@ export function CustomExerciseEditor({
       setExpectedUpdatedAt(result.exercise.updatedAt);
       setMessage(result.duplicate ? "Saved." : "Exercise saved.");
       if (mode === "create") {
-        router.replace(`/app/library/custom/${result.exercise.id}`);
+        router.replace(withFrom(`/app/library/custom/${result.exercise.id}`, back.href));
       }
       router.refresh();
     } catch (error) {
@@ -184,7 +189,7 @@ export function CustomExerciseEditor({
           <h1 id="custom-exercise-title">{mode === "create" ? "Create a movement" : "Edit movement"}</h1>
 
         </div>
-        <Link className="back-link" href="/app/library/custom"><Icon name="arrow-left" /> Custom library</Link>
+        <BackLink target={back} />
         <DecorativeCompanion variant="library" />
       </header>
 

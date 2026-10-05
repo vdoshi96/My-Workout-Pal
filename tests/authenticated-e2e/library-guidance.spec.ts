@@ -218,7 +218,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
   expect((await start).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   await expect(page.getByRole("heading", { name: "Suitcase march" })).toBeVisible();
-  await page.getByText("Watch demo and technique guidance", { exact: true }).click();
+  await page.getByText("Technique guidance", { exact: true }).click();
   await expect(page.getByText("Your links", { exact: true })).toBeVisible();
   const snapshottedLink = page.getByRole("link", { name: "Open your link 1" });
   await expect(snapshottedLink).toHaveAttribute(
@@ -242,7 +242,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
   );
   expect(replacement.status).toBe(200);
   await page.goto(runnerUrl);
-  await page.getByText("Watch demo and technique guidance", { exact: true }).click();
+  await page.getByText("Technique guidance", { exact: true }).click();
   await expect(page.getByRole("link", { name: "Open your link 1" })).toHaveAttribute(
     "href",
     "https://example.com/suitcase-guide",

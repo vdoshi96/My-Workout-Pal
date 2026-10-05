@@ -145,8 +145,9 @@ describe("approved curated video publication", () => {
       />,
     );
 
-    expect(markup).toContain("Technique demonstrations");
-    expect(markup).toContain("youtube-nocookie.com/embed/AbCdEfGhI01");
+    expect(markup).toContain("Watch demo<span class=\"sr-only\"> for Dumbbell bench press</span>");
+    // The approved pair opens in a sheet; no frame is mounted until it is opened.
+    expect(markup).not.toContain("youtube-nocookie.com/embed/AbCdEfGhI01");
     expect(markup).toContain("Log set &amp; rest");
   });
 

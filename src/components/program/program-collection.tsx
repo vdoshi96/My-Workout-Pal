@@ -23,7 +23,9 @@ import {
   validatedProgramName,
   type ProgramCollectionMutationExpectation,
 } from "@/components/program/program-collection-model";
+import { BackLink } from "@/components/navigation/back-link";
 import { Icon } from "@/components/ui/icon";
+import { withFrom, type BackTarget } from "@/domain/navigation/back-target";
 import {
   EQUIPMENT_PROFILES,
   supportsEquipment,
@@ -59,10 +61,12 @@ function updatedLabel(value: string): string {
 }
 
 export function ProgramCollection({
+  back = { href: "/app", label: "Back to Today" },
   canMutate,
   initialCatalogMovements = [],
   initialPrograms,
 }: Readonly<{
+  back?: BackTarget;
   canMutate: boolean;
   initialCatalogMovements?: readonly Readonly<{
     id: string;
@@ -318,9 +322,7 @@ export function ProgramCollection({
             The active routine is the one you train from on Today.
           </p>
         </div>
-        <Link className="secondary-action" href="/app">
-          <Icon name="arrow-left" /> Back to Today
-        </Link>
+        <BackLink target={back} />
         <DecorativeCompanion variant="routine-editor" />
       </header>
 
@@ -381,7 +383,7 @@ export function ProgramCollection({
                     {program.isActive ? (
                       <Link
                         className="secondary-action"
-                        href="/app/program/edit"
+                        href={withFrom("/app/program/edit", "/app/programs")}
                       >
                         Edit routine
                       </Link>

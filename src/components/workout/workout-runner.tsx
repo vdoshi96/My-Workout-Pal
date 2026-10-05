@@ -56,7 +56,9 @@ import {
   type RunnerStatusPresentation,
 } from "@/components/workout/workout-runner-presenters";
 import { parseClockDuration, formatClockDuration } from "@/domain/time-entry";
-import { CuratedVideoPlayer } from "@/components/video/curated-video-player";
+import Link from "next/link";
+import { MovementDemo } from "@/components/video/demo-sheet";
+import { withFrom } from "@/domain/navigation/back-target";
 import type { CuratedVideos } from "@/domain/youtube/embed";
 import { PersonalGuidancePanel } from "@/components/workout/personal-guidance-panel";
 import { DecorativeCompanion } from "@/components/ui/decorative-companion";
@@ -304,6 +306,8 @@ export type WorkoutRunnerProps = RunnerInput &
       | Promise<readonly ExerciseSubstitution[]>;
     effectiveExerciseIdBySnapshot?: Readonly<Record<string, string>>;
     curatedVideosByExerciseId?: Readonly<Record<string, CuratedVideos>>;
+    /** Full guide destinations keyed by effective exercise id. */
+    guideHrefByExerciseId?: Readonly<Record<string, string>>;
     title?: string;
     className?: string;
   }>;
@@ -1019,6 +1023,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const currentCuratedVideos = currentEffectiveExerciseId
     ? props.curatedVideosByExerciseId?.[currentEffectiveExerciseId]
     : undefined;
+  const currentGuideHref = currentEffectiveExerciseId
+    ? props.guideHrefByExerciseId?.[currentEffectiveExerciseId]
+    : undefined;
+  const currentExerciseAnchor = `exercise-${state.currentExerciseIndex + 1}`;
   const currentPersonalGuidance = state.substitutions[currentExercise.id]
     ? []
     : currentExercise.guidance ?? [];
@@ -1636,6 +1644,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           <section
             className="runner-card runner-active-card"
             aria-labelledby="runner-active-heading"
+            id={currentExerciseAnchor}
           >
             <header className="runner-active-heading">
               <div>
@@ -1658,6 +1667,27 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 {activeSet.isWarmup ? "Warm-up" : "Work"}
               </span>
             </header>
+            {props.curatedVideosByExerciseId || currentGuideHref ? (
+              <div className="runner-movement-tools">
+                {props.curatedVideosByExerciseId ? (
+                  <MovementDemo movementName={currentExerciseName} videos={currentCuratedVideos} />
+                ) : null}
+                {currentGuideHref ? (
+                  <Link
+                    className="runner-guide-link"
+                    href={withFrom(currentGuideHref, `/workout/${encodeURIComponent(state.snapshot.sessionId)}#${currentExerciseAnchor}`)}
+                    onClick={(event) => {
+                      if (!protection.blocked) return;
+                      event.preventDefault();
+                      setActionError(protection.reason ?? "Save or resolve this workout before leaving.");
+                    }}
+                    prefetch={false}
+                  >
+                    Full guide<span className="sr-only"> for {currentExerciseName}</span>
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
 
 
             <div
@@ -1952,34 +1982,32 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               <button className="runner-button" type="button" disabled={closed || state.skippedExerciseIds.includes(currentExercise.id)} onClick={() => skipDialog.current?.showModal()}>Skip exercise</button>
             </details>
             {props.curatedVideosByExerciseId ? (
-              <details className="runner-technique"><summary>Watch demo and technique guidance</summary>
+              <details className="runner-technique"><summary>Technique guidance</summary>
                 <div className="runner-section-heading">
                   <div>
                     <span className="runner-eyebrow">
-                      {currentCuratedVideos
-                        ? "Movement reference"
-                        : currentPersonalGuidance.length > 0
-                          ? "Personal technique reference"
+                      {currentPersonalGuidance.length > 0
+                        ? "Personal technique reference"
+                        : currentCuratedVideos
+                          ? "Movement reference"
                           : "Technique check"}
                     </span>
-                    <h3 id="runner-technique-heading">
-                      {currentCuratedVideos
-                        ? "Technique demonstrations"
-                        : "Technique guidance"}
-                    </h3>
+                    <h3 id="runner-technique-heading">Technique guidance</h3>
                   </div>
                   <span>
-                    {currentCuratedVideos
-                      ? "Demo"
-                      : currentPersonalGuidance.length > 0
-                        ? "Your links"
+                    {currentPersonalGuidance.length > 0
+                      ? "Your links"
+                      : currentCuratedVideos
+                        ? "Demo"
                         : "Unavailable"}
                   </span>
                 </div>
-                {currentCuratedVideos ? (
-                  <CuratedVideoPlayer videos={currentCuratedVideos} />
-                ) : currentPersonalGuidance.length > 0 ? (
+                {currentPersonalGuidance.length > 0 ? (
                   <PersonalGuidancePanel links={currentPersonalGuidance} />
+                ) : currentCuratedVideos ? (
+                  <p className="runner-empty">
+                    Tap Watch demo to see it done.{currentGuideHref ? " The full guide has the steps." : ""}
+                  </p>
                 ) : (
                   <p className="runner-empty">
                     No demonstration is available for this movement.

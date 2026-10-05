@@ -171,7 +171,7 @@ test("publishes, reloads, and starts a routine with text-only upper- and lower-b
   await expect(
     page.getByRole("heading", { level: 2, name: "Dumbbell floor press" }),
   ).toBeVisible();
-  await page.getByText("Watch demo and technique guidance", { exact: true }).click();
+  await page.getByText("Technique guidance", { exact: true }).click();
   const techniquePanel = page.locator("details.runner-technique");
   await expect(techniquePanel.getByText("Unavailable", { exact: true })).toBeVisible();
   await expect(

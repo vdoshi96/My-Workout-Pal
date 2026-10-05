@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
+import { withFrom } from "@/domain/navigation/back-target";
 import { redirect } from "next/navigation";
 
 import { Icon } from "@/components/ui/icon";
@@ -69,6 +70,10 @@ export default async function HarnessTrainingHistoryPage({ searchParams }: PageP
         ...(state ? { state } : {}),
       }).toString()}`
     : undefined;
+  const historyHref = `/app/history${cursor || state ? `?${new URLSearchParams({
+    ...(cursor ? { cursor } : {}),
+    ...(state ? { state } : {}),
+  }).toString()}` : ""}`;
 
   return (
     <section className="insights-page" aria-labelledby="history-title">
@@ -105,8 +110,8 @@ export default async function HarnessTrainingHistoryPage({ searchParams }: PageP
       ) : (
         <ol className="history-list">
           {history.sessions.map((session) => (
-            <li key={session.id}>
-              <Link href={`/app/history/${session.id}`}>
+            <li id={`session-${session.id}`} key={session.id}>
+              <Link href={withFrom(`/app/history/${session.id}`, `${historyHref}#session-${session.id}`)}>
                 <span className={`history-state history-state--${session.state}`}>
                   {session.state === "completed" ? "Completed" : "Interrupted"}
                 </span>

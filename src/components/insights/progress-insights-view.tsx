@@ -8,6 +8,7 @@ import {
   formatProgressDate,
 } from "@/components/insights/training-insights-presenters";
 import { Icon } from "@/components/ui/icon";
+import { withFrom } from "@/domain/navigation/back-target";
 import type { ProgressInsightsReadModel } from "@/server/repositories/training-insights";
 
 export function ProgressInsightsView({
@@ -24,7 +25,7 @@ export function ProgressInsightsView({
           <h1 id="progress-title">Progress</h1>
           <p>Your completed work, grouped by day. Interrupted sessions remain in History.</p>
         </div>
-        <Link className="insight-action" href="/app/prs">
+        <Link className="insight-action" href={withFrom("/app/prs", "/app/progress")}>
           Personal records <Icon name="arrow-right" />
         </Link>
         <DecorativeCompanion variant="history" />
@@ -109,7 +110,8 @@ export function ProgressInsightsView({
                   <div className="progress-sources">
                     {point.sourceIds.map((sessionId, sourceIndex) => (
                       <Link
-                        href={`/app/history/${sessionId}`}
+                        href={withFrom(`/app/history/${sessionId}`, `/app/progress#session-${sessionId}`)}
+                        id={`session-${sessionId}`}
                         key={sessionId}
                         aria-label={`Open saved workout ${sourceIndex + 1} of ${point.sourceIds.length} from ${formatProgressDate(point.date)}`}
                       >

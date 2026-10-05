@@ -275,7 +275,7 @@ describe("credential-free authenticated harness boundary", () => {
     );
     expect(ownerRunner).not.toContain("clearRunnerState");
     expect(ownerRunner).toContain(
-      "router.push(`/app/history/${encodeURIComponent(sessionId)}`)",
+      'router.push(withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app"))',
     );
   });
 

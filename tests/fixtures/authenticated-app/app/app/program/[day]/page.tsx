@@ -2,7 +2,11 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
+import { BackLink } from "@/components/navigation/back-link";
 import { Icon } from "@/components/ui/icon";
+import { MovementDemo } from "@/components/video/demo-sheet";
+import { fromParam, resolveBackTarget, withFrom } from "@/domain/navigation/back-target";
+import { loadApprovedDemosBySlug } from "@/server/read-models/approved-demos";
 import { StartWorkoutControl } from "@/components/workout/start-workout-control";
 import { getViewerProfileProgram, RepositoryNotFoundError } from "@/server/repositories/profile-program";
 import { getHarnessDatabase } from "../../../../server/database";
@@ -22,9 +26,11 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
 
 export default async function HarnessMemberDayPage({
   params,
-}: Readonly<{ params: Promise<{ day: string }> }>) {
-  const [{ day: dayKey }, context] = await Promise.all([
+  searchParams,
+}: Readonly<{ params: Promise<{ day: string }>; searchParams: Promise<{ from?: string | string[] }> }>) {
+  const [{ day: dayKey }, query, context] = await Promise.all([
     params,
+    searchParams,
     headers().then(harnessRequestContext),
   ]);
   if (!context.viewer) return null;
@@ -33,13 +39,22 @@ export default async function HarnessMemberDayPage({
   const program = model.activeProgram;
   const day = program?.days.find((candidate) => candidate.dayKey === dayKey);
   if (!program || !day) notFound();
+  const back = resolveBackTarget(fromParam(query.from), {
+    area: "member",
+    fallback: { href: "/app", label: "Back to Today" },
+    days: program.days,
+  });
+  const demos = await loadApprovedDemosBySlug(
+    database,
+    day.prescriptions.flatMap((prescription) => prescription.exercise.kind === "catalog" ? [prescription.exercise.slug] : []),
+  );
+  const positions = new Map(day.sections.flatMap((section) => section.prescriptions).map((prescription, index) => [prescription.id, index + 1]));
+  const dayHref = `/app/program/${encodeURIComponent(day.dayKey)}`;
 
   return (
     <section className="member-day" aria-labelledby="member-day-title">
       <header className="member-day-heading contour-surface">
-        <Link className="back-link" href="/app">
-          <Icon name="arrow-left" /> Program
-        </Link>
+        <BackLink target={back} />
         <span className="eyebrow">
           Day {day.dayNumber}
         </span>
@@ -56,8 +71,11 @@ export default async function HarnessMemberDayPage({
             <section className="member-day-section" key={section.id}>
               <h2>{section.title}</h2>
               <ol>
-                {section.prescriptions.map((prescription) => (
-                  <li key={prescription.id}>
+                {section.prescriptions.map((prescription) => {
+                  const anchor = `movement-${positions.get(prescription.id) ?? 0}`;
+                  const from = `${dayHref}#${anchor}`;
+                  return (
+                  <li id={anchor} key={prescription.id}>
                     <span>
                       <strong>{prescription.label}</strong>
                       <small>
@@ -69,22 +87,29 @@ export default async function HarnessMemberDayPage({
                       </small>
                     </span>
                     {prescription.exercise.kind === "catalog" ? (
-                      <Link
-                        href={`/app/library/${prescription.exercise.slug}`}
-                        prefetch={false}
-                      >
-                        Details <Icon name="chevron-right" />
-                      </Link>
+                      <>
+                        <MovementDemo movementName={prescription.label} videos={demos[prescription.exercise.slug]} />
+                        <Link
+                          href={withFrom(`/app/library/${prescription.exercise.slug}`, from)}
+                          prefetch={false}
+                        >
+                          Details <Icon name="chevron-right" />
+                        </Link>
+                      </>
                     ) : (
-                      <Link
-                        href={`/app/library/custom/${prescription.exercise.id}`}
-                        prefetch={false}
-                      >
-                        Private details <Icon name="chevron-right" />
-                      </Link>
+                      <>
+                        <MovementDemo movementName={prescription.label} videos={undefined} />
+                        <Link
+                          href={withFrom(`/app/library/custom/${prescription.exercise.id}`, from)}
+                          prefetch={false}
+                        >
+                          Private details <Icon name="chevron-right" />
+                        </Link>
+                      </>
                     )}
                   </li>
-                ))}
+                  );
+                })}
               </ol>
             </section>
           ))}
