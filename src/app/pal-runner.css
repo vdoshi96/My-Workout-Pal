@@ -3,8 +3,7 @@
    pills, the set entry and the Log button come first. The set entry and the rest timer are the only boxes. */
 
 /* ---------- Frame and studio ---------- */
-/* Overrides quiet-set.css `.member-frame, .owned-workout-route` (dawn/evening backdrop image) and
-   `.owned-workout-route > main` (centred 1200px column with 24px/16px padding). Both can be deleted. */
+/* The workout route sits outside the member shell and owns its own frame. */
 .owned-workout-route {
   --run-gutter: clamp(20px, 5vw, 72px);
   --stage-h: 260px; --scene-y: 46%; --glow-x: 77%; --glow-y: 50%; --glow-w: 34%; --glow-h: 110%;
@@ -278,7 +277,9 @@
   .pal-run-choices { grid-template-columns: minmax(0, 1fr); }
   .pal-run-recovery { padding-top: calc(var(--stage-h) - 48px); }
   /* Two rows: Finish next to the save line, then the quiet ways out. */
-  .pal-run-footer { padding-block: 8px calc(8px + env(safe-area-inset-bottom)); }
+  /* On phones Log and Next set lead between sets; the finish row sits at the end of the page instead of covering them. */
+  .pal-run-footer { padding-block: 8px calc(8px + env(safe-area-inset-bottom)); position: static; }
+  .pal-run-footer::before { display: none; }
   .pal-run-footer-actions { column-gap: 12px; display: grid; grid-template-columns: auto minmax(0, 1fr); row-gap: 4px; }
   .pal-run-footer-actions .pal-run-finish { padding-inline: 1rem; }
   .pal-run-footer-actions .pal-text-button { justify-self: start; padding-inline: 4px; }

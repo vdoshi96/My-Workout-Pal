@@ -1,4 +1,4 @@
-export const PWA_CACHE_NAME = "my-workout-pal-public-v8";
+export const PWA_CACHE_NAME = "my-workout-pal-public-v9";
 
 export const PWA_INSTALL_ASSETS = Object.freeze([
   "/",
@@ -34,12 +34,21 @@ export const PWA_INSTALL_ASSETS = Object.freeze([
   "/icon-192.png",
   "/icon-512.png",
   "/icon.svg",
-  "/illustrations/companions/planning-hedgehog-512.webp",
-  "/illustrations/companions/planning-hedgehog.webp",
-  "/illustrations/companions/cataloging-otter-512.webp",
-  "/illustrations/companions/cataloging-otter.webp",
-  "/illustrations/companions/reviewing-raccoon-512.webp",
-  "/illustrations/companions/reviewing-raccoon.webp",
+  // Dusk versions of every scene, for dark mode.
+  "/illustrations/quiet-set/pip-studio-dusk.webp",
+  "/illustrations/quiet-set/pip-studio-dusk-phone.webp",
+  "/illustrations/quiet-set/mica-studio-dusk.webp",
+  "/illustrations/quiet-set/mica-studio-dusk-phone.webp",
+  "/illustrations/quiet-set/otter-study-dusk.webp",
+  "/illustrations/quiet-set/otter-study-dusk-phone.webp",
+  "/illustrations/quiet-set/beaver-plan-dusk.webp",
+  "/illustrations/quiet-set/beaver-plan-dusk-phone.webp",
+  "/illustrations/quiet-set/tortoise-review-dusk.webp",
+  "/illustrations/quiet-set/tortoise-review-dusk-phone.webp",
+  "/illustrations/quiet-set/hare-prepare-dusk.webp",
+  "/illustrations/quiet-set/hare-prepare-dusk-phone.webp",
+  "/illustrations/quiet-set/pip-recover-dusk.webp",
+  "/illustrations/quiet-set/pip-recover-dusk-phone.webp",
 ] as const);
 
 export const PWA_PUBLIC_ASSETS = Object.freeze([
@@ -73,12 +82,21 @@ export const PWA_PUBLIC_ASSETS = Object.freeze([
   "/icon-192.png",
   "/icon-512.png",
   "/icon.svg",
-  "/illustrations/companions/planning-hedgehog-512.webp",
-  "/illustrations/companions/planning-hedgehog.webp",
-  "/illustrations/companions/cataloging-otter-512.webp",
-  "/illustrations/companions/cataloging-otter.webp",
-  "/illustrations/companions/reviewing-raccoon-512.webp",
-  "/illustrations/companions/reviewing-raccoon.webp",
+  // Dusk versions of every scene, for dark mode.
+  "/illustrations/quiet-set/pip-studio-dusk.webp",
+  "/illustrations/quiet-set/pip-studio-dusk-phone.webp",
+  "/illustrations/quiet-set/mica-studio-dusk.webp",
+  "/illustrations/quiet-set/mica-studio-dusk-phone.webp",
+  "/illustrations/quiet-set/otter-study-dusk.webp",
+  "/illustrations/quiet-set/otter-study-dusk-phone.webp",
+  "/illustrations/quiet-set/beaver-plan-dusk.webp",
+  "/illustrations/quiet-set/beaver-plan-dusk-phone.webp",
+  "/illustrations/quiet-set/tortoise-review-dusk.webp",
+  "/illustrations/quiet-set/tortoise-review-dusk-phone.webp",
+  "/illustrations/quiet-set/hare-prepare-dusk.webp",
+  "/illustrations/quiet-set/hare-prepare-dusk-phone.webp",
+  "/illustrations/quiet-set/pip-recover-dusk.webp",
+  "/illustrations/quiet-set/pip-recover-dusk-phone.webp",
 ] as const);
 
 const publicNavigationExact = new Set([

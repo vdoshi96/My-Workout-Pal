@@ -21,16 +21,32 @@ function walk(directory, found = []) {
 
 const markup = [...walk(join(root, "src")), ...walk(join(root, "tests/fixtures/authenticated-app/app"))]
   .map((path) => readFileSync(path, "utf8"))
+  // Module paths are not class names: "@/components/program/onboarding-form" must not keep `.onboarding-form` alive.
+  .map((source) => source.replace(/^\s*(?:import|export)\b[^;]*?from\s*["'][^"']+["'];?/gmu, "").replace(/import\(\s*["'][^"']+["']\s*\)/gu, ""))
   .join("\n");
 const words = new Set(markup.match(/[A-Za-z][A-Za-z0-9_-]*/gu));
 const referenced = (className) =>
   words.has(className) || [...className.matchAll(/--|__/gu)].some((match) => words.has(className.slice(0, match.index + 2)));
 
+// :is(), :where() and :has() take alternatives: the selector lives if any alternative can match.
+// :not() never makes a selector dead. Every other class must be referenced.
 function selectorIsLive(selector) {
-  const classes = [...selector.replace(/:(?:not|has|is|where)\(/gu, " (").matchAll(/\.([A-Za-z][A-Za-z0-9_-]*)/gu)].map((match) => match[1]);
-  // A selector is dead only if a class outside any :not() is unreferenced.
-  const positive = [...selector.replace(/:not\([^)]*\)/gu, "").matchAll(/\.([A-Za-z][A-Za-z0-9_-]*)/gu)].map((match) => match[1]);
-  return classes.length === 0 || positive.every(referenced);
+  const group = /:(is|where|has|not)\(/u.exec(selector);
+  if (!group) {
+    const classes = [...selector.matchAll(/\.([A-Za-z][A-Za-z0-9_-]*)/gu)].map((match) => match[1]);
+    return classes.every(referenced);
+  }
+  let depth = 0;
+  let end = group.index + group[0].length;
+  for (; end < selector.length; end += 1) {
+    if (selector[end] === "(") depth += 1;
+    if (selector[end] === ")") { if (depth === 0) break; depth -= 1; }
+  }
+  const inner = selector.slice(group.index + group[0].length, end);
+  const before = selector.slice(0, group.index);
+  const after = selector.slice(end + 1);
+  if (group[1] === "not") return selectorIsLive(`${before} ${after}`);
+  return splitSelectors(inner).some((alternative) => selectorIsLive(`${before} ${alternative} ${after}`));
 }
 
 function splitSelectors(list) {
@@ -62,8 +78,10 @@ function prune(css, removed) {
     }
     const prelude = css.slice(index, open);
     const body = css.slice(open + 1, close - 1);
-    const lead = prelude.match(/^[\s\S]*?(?=\S[^;}]*$)/u)?.[0] ?? "";
-    const head = prelude.slice(lead.length);
+    // Comments and whitespace before the selector stay with the rule they describe.
+    const headStart = prelude.replace(/\/\*[\s\S]*?\*\//gu, (comment) => " ".repeat(comment.length)).search(/\S[^]*$/u);
+    const lead = headStart > 0 ? prelude.slice(0, headStart) : "";
+    const head = headStart >= 0 ? prelude.slice(headStart) : prelude;
     if (head.trim().startsWith("@")) {
       if (/^@(media|supports|layer|container)/u.test(head.trim())) {
         const inner = prune(body, removed);

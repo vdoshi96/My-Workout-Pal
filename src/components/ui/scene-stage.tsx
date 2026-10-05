@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useCompanionChoice } from "./companion-preference";
 
@@ -25,27 +25,38 @@ function sceneSources(scene: SceneName, choice: "pip" | "mica" | "off") {
 }
 
 /** A daytime picture with its dusk version for dark mode. Decorative only. */
-export function SceneArt({ base, dusk, priority = false, sizes = "100vw", onError }: Readonly<{
+export function SceneArt({ base, dusk, eager = false, priority = false, sizes = "100vw", onError }: Readonly<{
   base: string;
   dusk: string;
+  /** Load immediately; scenes behind a page's opening are always on screen first. */
+  eager?: boolean;
   priority?: boolean;
   sizes?: string;
   onError?: () => void;
 }>) {
+  const image = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    // An image that failed before hydration never reports its error to React; catch it here.
+    const element = image.current;
+    if (element?.complete && element.naturalWidth === 0) onError?.();
+  }, [onError]);
   return (
     <picture>
       <source media="(prefers-color-scheme: dark)" sizes={sizes} srcSet={`${dusk}-phone.webp 600w, ${dusk}.webp 1200w`} />
+      {/* srcSet and sizes come before src so a client-created image never starts the wrong size. */}
       <img
+        srcSet={`${base}-phone.webp 600w, ${base}.webp 1200w`}
+        sizes={sizes}
         alt=""
+        aria-hidden="true"
         decoding="async"
         draggable={false}
         fetchPriority={priority ? "high" : "auto"}
         height={800}
-        loading={priority ? "eager" : "lazy"}
+        loading={priority || eager ? "eager" : "lazy"}
         onError={onError}
-        sizes={sizes}
+        ref={image}
         src={`${base}.webp`}
-        srcSet={`${base}-phone.webp 600w, ${base}.webp 1200w`}
         width={1200}
       />
     </picture>
@@ -63,7 +74,7 @@ export function SceneStage({ priority = false, scene = "pal" }: Readonly<{ prior
   const sources = sceneSources(scene, choice);
   return (
     <div aria-hidden="true" className="pal-scene" data-scene={choice === "off" ? "studio" : scene === "pal" ? choice : scene}>
-      <SceneArt base={sources.day} dusk={sources.dusk} onError={() => setFailed(true)} priority={priority} />
+      <SceneArt base={sources.day} dusk={sources.dusk} eager onError={() => setFailed(true)} priority={priority} />
     </div>
   );
 }

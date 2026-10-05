@@ -38,8 +38,10 @@ body { background: var(--canvas); color: var(--ink); font-family: var(--font-bod
 :is(.public-frame, .member-frame, .owned-workout-route) h2 { font-size: clamp(1.5rem, 2.6vw, 2.05rem); }
 :is(.public-frame, .member-frame, .owned-workout-route) h3 { font-size: 1.3rem; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-/* Focus moves into a video frame, so the frame itself shows the ring. */
-iframe:focus { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* Browsers stop matching :focus once focus is inside a video frame, so FrameFocusRing marks its wrapper. */
+[data-frame-focused] { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* Headings that receive focus after a screen change are announced, not outlined. */
+:is(h1, h2)[tabindex="-1"]:focus { outline: none; }
 ::selection { background: var(--selected-bg); color: var(--selected-fg); }
 
 /* Chunky "sticker" actions. Text-bearing fills are light with dark text; a 2px edge carries the boundary. */
@@ -77,7 +79,6 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
   .movement-chooser__filters input:checked + span, .runner-set-tab--current) {
   background: var(--selected-bg); border-color: var(--selected-edge); box-shadow: inset 0 0 0 1px var(--selected-edge); color: var(--selected-fg);
 }
-:is(.onboarding-profile-grid, .program-create-panel fieldset) > label > input:checked + span { background: var(--selected-bg); border-color: var(--selected-edge); box-shadow: inset 0 0 0 1px var(--selected-edge); color: var(--selected-fg); }
 
 /* ---------- Shells ---------- */
 .skip-link { background: var(--sun); border: 2px solid var(--action-edge); border-radius: 999px; color: var(--on-sun); }
@@ -101,6 +102,14 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 @media (max-width: 959px) {
   .member-nav { background: var(--canvas); border-top: 2px solid var(--ink); box-shadow: 0 -8px 24px rgb(0 0 0 / .08); }
   .member-header .member-account-controls { padding: 2px 4px; }
+}
+/* Phones keep brand and account controls on one row: the controls become labelled icons. */
+@media (max-width: 480px) {
+  .member-header { flex-wrap: nowrap; }
+  .member-header .brand { gap: 10px; min-width: 0; }
+  .member-header .brand-mark { height: 2.5rem; width: 2.5rem; }
+  .member-signout-label { clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+  .member-session-signout button { min-width: 44px; padding: 6px 10px; }
 }
 
 /* ---------- Shared components ---------- */
@@ -167,7 +176,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .pal-closer { align-items: center; display: flex; gap: 28px; justify-content: center; margin: 24px auto 96px; max-width: 920px; padding: 0 clamp(20px, 5vw, 48px); }
 .pal-closer h2 { font-size: clamp(1.8rem, 3.4vw, 2.5rem); margin: 0 0 8px; }
 .pal-closer p { color: var(--ink-soft); margin: 0 0 18px; font-size: 1.05rem; }
-.pal-closer .pal-actions a:not(.pal-button) { color: var(--brand); font-weight: 600; }
+.pal-closer .pal-actions a:not(.pal-button, .primary-action, .secondary-action) { color: var(--brand); font-weight: 600; }
 .pal-sticker { flex: none; width: var(--sticker, 168px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 3px solid var(--ink); background: #f7f3e8; box-shadow: 0 5px 0 var(--ink); }
 .pal-sticker img { display: block; height: 100%; width: 100%; object-fit: cover; }
 @media (prefers-reduced-motion: no-preference) {
@@ -178,7 +187,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 @media (max-width: 960px) { .pal-pillars ol { grid-template-columns: 1fr; gap: 40px; } }
 @media (max-width: 700px) {
   .pal { --stage-h: 400px; --glow-x: 64%; --glow-y: 46%; --glow-w: 72%; --glow-h: 66%; }
-  .pal-hero { align-items: stretch; flex-direction: column; min-height: 0; padding: 268px 0 8px; }
+  .pal-hero { align-items: stretch; flex-direction: column; min-height: 0; padding: 240px 0 8px; }
   .pal-hero .pal-scene img { --scene-x: 70%; --scene-y: 74%; }
   .pal .pal-scene::after { background: linear-gradient(180deg, rgb(var(--scrim) / .88) 0%, rgb(var(--scrim) / 0) 24%, rgb(var(--scrim) / 0) 58%, var(--canvas) 88%); }
   .pal-hero__copy { padding: 0 20px; }
@@ -215,11 +224,14 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .pal-heading-row h2 { font-size: clamp(1.6rem, 2.6vw, 2.1rem); margin: 0; }
 .pal-heading-row a, .pal-heading-row span { color: var(--brand); font-weight: 650; }
 .pal-heading-row span { color: var(--ink-soft); font-weight: 500; }
+.pal-heading-row .pal-heading-links { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
 .pal-day-pills { display: flex; gap: 10px; list-style: none; margin: 0; padding: 4px 2px 10px; overflow-x: auto; scrollbar-width: thin; }
+/* Pills keep their names on one line; a long week scrolls sideways. */
+.pal-day-pills > li { flex: none; }
 .pal-day-pill { align-items: flex-start; background: var(--canvas); border: 2px solid var(--ink); border-radius: 22px; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; font: inherit; gap: 2px; min-height: 64px; min-width: 120px; padding: 10px 18px; text-align: left; }
 .pal-day-pill small { color: var(--ink-soft); font-size: .85rem; }
-.pal-day-pill strong { font: 600 1.1rem/1.2 var(--font-display); }
+.pal-day-pill strong { font: 600 1.1rem/1.2 var(--font-display); white-space: nowrap; }
 .pal-day-pill:hover { background: var(--hover-bg); }
 .pal-day-pill[aria-pressed=true] { background: var(--selected-bg); border-color: var(--selected-edge); color: var(--selected-fg); box-shadow: 0 3px 0 var(--selected-edge); }
 .pal-day-pill[aria-pressed=true] small { color: var(--selected-fg); }
@@ -329,7 +341,6 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .pal-steps li.is-done { background: var(--sun); border-color: var(--action-edge); }
 .pal-drive-step { display: grid; gap: 18px; }
 .pal-drive-step h1 { font-size: clamp(2.2rem, 4.2vw, 3.3rem); margin: 0; }
-.pal-drive-step h1:focus { outline: none; }
 .pal-drive-lead { color: var(--ink-soft); font-size: 1.15rem; margin: 0; }
 .pal-drive-step > .primary-action, .pal-drive-step .pal-set-entry .primary-action { justify-self: start; }
 .pal-drive-rest, .pal-drive-done { justify-items: start; }
@@ -350,7 +361,6 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .member-frame:has(.pal-onboarding) { --stage-h: 520px; --scene-x: 80%; }
 .pal-onboarding-body { display: grid; gap: 20px; max-width: 640px; padding: 24px 0 96px; }
 .pal-onboarding-body h1 { font-size: clamp(2.1rem, 4vw, 3.2rem); margin: 0; }
-.pal-onboarding-body h1:focus { outline: none; }
 .pal-onboarding-hello { color: var(--brand); font: 600 1.15rem var(--font-display); margin: 0; }
 .pal-choices { display: grid; gap: 10px; }
 .pal-choice { align-items: center; background: var(--canvas); border: 2px solid var(--ink); border-radius: 22px; cursor: pointer; display: grid; gap: 4px 14px; grid-template-columns: minmax(0, 1fr) auto; min-height: 64px; padding: 12px 18px; position: relative; }
@@ -416,7 +426,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .pal-list { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }
 .pal-list > li { border-radius: 18px; }
 .pal-list > li:nth-child(odd) { background: var(--group); }
-.pal-list > li > a, .pal-list > li > .pal-row { align-items: center; color: var(--ink); display: grid; gap: 4px 16px; grid-template-columns: minmax(0, 1fr) auto; min-height: 64px; padding: 12px 16px; text-decoration: none; }
+.pal-list > li > a{ align-items: center; color: var(--ink); display: grid; gap: 4px 16px; grid-template-columns: minmax(0, 1fr) auto; min-height: 64px; padding: 12px 16px; text-decoration: none; }
 .pal-list > li > a:hover { background: var(--hover-bg); border-radius: 18px; }
 .pal-list strong { font: 600 1.1rem/1.25 var(--font-display); }
 .pal-list small { color: var(--ink-soft); display: block; }
@@ -432,7 +442,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .pal-chart-bar b { font: 600 1rem var(--font-display); }
 .pal-chart-bar--best { background: var(--tangerine); color: var(--on-tangerine); box-shadow: inset 0 0 0 2px var(--ink); }
 .pal-chart-bar--58 { height: 58%; } .pal-chart-bar--72 { height: 72%; } .pal-chart-bar--88 { height: 88%; }
-.pal-glance small { color: var(--ink-soft); display: block; font-size: .9rem; }
+.pal-glance .pal-glance-note { color: var(--ink-soft); font: 400 .9rem var(--font-body); margin: 2px 0 0; }
 .pal-closer--left { justify-content: flex-start; margin-inline: 0; padding-inline: 0; }
 .pal-no-demo { color: var(--ink-soft); font-size: .9rem; }
 
@@ -513,3 +523,10 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
 .pal-auth .pal-explain svg { color: var(--brand); flex: none; }
 .pal-auth .pal-back-link { grid-column: 1 / -1; justify-self: start; }
 @media (max-width: 860px) { .pal-auth { grid-template-columns: 1fr; } }
+
+/* Long lists (the Library) run in two columns on wide screens, banded in pairs. */
+@media (min-width: 960px) {
+  .pal-moves--grid { column-gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pal-moves--grid > .pal-move:nth-child(odd) { background: transparent; }
+  .pal-moves--grid > .pal-move:is(:nth-child(4n+1), :nth-child(4n+2)) { background: var(--group); }
+}
