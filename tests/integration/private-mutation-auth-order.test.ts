@@ -15,6 +15,8 @@ import { POST as changeEquipment } from "@/app/api/app/profile-program/equipment
 import { POST as createCustomExercise } from "@/app/api/app/custom-exercises/route";
 import { PATCH as updateCustomExercise, DELETE as deleteCustomExercise } from "@/app/api/app/custom-exercises/[id]/route";
 import { PATCH as updatePreferences } from "@/app/api/app/preferences/route";
+import { PUT as saveTrainingProfile } from "@/app/api/app/training-profile/route";
+import { POST as createProgram } from "@/app/api/app/programs/route";
 import { POST as publishProgram } from "@/app/api/app/program/publish/route";
 import { PUT as replacePersonalGuidance } from "@/app/api/app/personal-guidance/route";
 import { PRIVATE_JSON_BODY_LIMIT_BYTES } from "@/server/http/custom-exercise-api";
@@ -27,6 +29,8 @@ import {
   DELETE as fixtureDeleteCustomExercise,
 } from "../fixtures/authenticated-app/app/api/app/custom-exercises/[id]/route";
 import { PATCH as fixtureUpdatePreferences } from "../fixtures/authenticated-app/app/api/app/preferences/route";
+import { PUT as fixtureSaveTrainingProfile } from "../fixtures/authenticated-app/app/api/app/training-profile/route";
+import { POST as fixtureCreateProgram } from "../fixtures/authenticated-app/app/api/app/programs/route";
 import { POST as fixturePublishProgram } from "../fixtures/authenticated-app/app/api/app/program/publish/route";
 import {
   HARNESS_SCENARIO_HEADER,
@@ -124,6 +128,18 @@ const productionMutations: readonly MutationCase[] = [
     pathname: "/api/app/preferences",
   },
   {
+    handler: saveTrainingProfile,
+    method: "PUT",
+    name: "production training answers save",
+    pathname: "/api/app/training-profile",
+  },
+  {
+    handler: createProgram,
+    method: "POST",
+    name: "production routine create",
+    pathname: "/api/app/programs",
+  },
+  {
     handler: publishProgram,
     method: "POST",
     name: "production program publication",
@@ -167,6 +183,18 @@ const fixtureMutations: readonly MutationCase[] = [
     method: "PATCH",
     name: "fixture preference change",
     pathname: "/api/app/preferences",
+  },
+  {
+    handler: fixtureSaveTrainingProfile,
+    method: "PUT",
+    name: "fixture training answers save",
+    pathname: "/api/app/training-profile",
+  },
+  {
+    handler: fixtureCreateProgram,
+    method: "POST",
+    name: "fixture routine create",
+    pathname: "/api/app/programs",
   },
   {
     handler: fixturePublishProgram,

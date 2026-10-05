@@ -19,7 +19,7 @@ describe("package runtime scripts", () => {
 
     expect(packageJson.scripts?.["test:integration"]).toBe("vitest run tests/integration");
     expect(packageJson.scripts?.["db:check"]).toBe(
-      "drizzle-kit check && vitest run tests/unit/database-schema.test.ts tests/integration/account-deletion-schema.test.ts tests/integration/program-collection-schema.test.ts tests/integration/starter-database-bootstrap.test.ts",
+      "drizzle-kit check && vitest run tests/unit/database-schema.test.ts tests/integration/account-deletion-schema.test.ts tests/integration/program-collection-schema.test.ts tests/integration/starter-database-bootstrap.test.ts tests/integration/training-profile-schema.test.ts",
     );
     expect(packageJson.scripts?.["seed:check"]).toBe(
       "node --import tsx scripts/seed-check.ts",

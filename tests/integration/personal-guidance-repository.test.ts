@@ -22,6 +22,7 @@ const migrationUrls = [
   "0005_flexible_routine_topology.sql",
   "0006_program_cardio_display_order.sql",
   "0007_personal_guidance.sql",
+  "0008_training_profile.sql",
 ].map((name) => new URL(`../../drizzle/${name}`, import.meta.url));
 
 const databases: PGlite[] = [];
@@ -106,7 +107,10 @@ describe("personal guidance repository", () => {
   it("backfills existing private YouTube guidance when the personal store is introduced", async () => {
     const raw = new PGlite();
     await raw.waitReady;
-    for (const migrationUrl of migrationUrls.slice(0, -1)) {
+    const guidanceMigrationIndex = migrationUrls.findIndex((url) =>
+      url.pathname.endsWith("/0007_personal_guidance.sql"),
+    );
+    for (const migrationUrl of migrationUrls.slice(0, guidanceMigrationIndex)) {
       await raw.exec(await readFile(migrationUrl, "utf8"));
     }
     databases.push(raw);
@@ -119,7 +123,7 @@ describe("personal guidance repository", () => {
       ["alice", customId],
     );
 
-    await raw.exec(await readFile(migrationUrls.at(-1)!, "utf8"));
+    await raw.exec(await readFile(migrationUrls[guidanceMigrationIndex]!, "utf8"));
 
     const migrated = await raw.query<{
       custom_exercise_id: string;

@@ -21,6 +21,7 @@ import {
   setLogs,
   userEquipmentProfiles,
   userPreferences,
+  userTrainingProfiles,
   userProfiles,
   userPrograms,
   workoutExerciseSnapshots,
@@ -230,6 +231,7 @@ async function deleteOwnedData(
   await database.delete(customExercises).where(eq(customExercises.ownerFirebaseUid, ownerUid));
   await database.delete(userPreferences).where(eq(userPreferences.ownerFirebaseUid, ownerUid));
   await database.delete(userEquipmentProfiles).where(eq(userEquipmentProfiles.ownerFirebaseUid, ownerUid));
+  await database.delete(userTrainingProfiles).where(eq(userTrainingProfiles.ownerFirebaseUid, ownerUid));
   await database.delete(userProfiles).where(eq(userProfiles.firebaseUid, ownerUid));
 }
 

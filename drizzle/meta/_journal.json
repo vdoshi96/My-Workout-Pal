@@ -57,6 +57,13 @@
       "when": 1787894772216,
       "tag": "0007_personal_guidance",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791180451578,
+      "tag": "0008_training_profile",
+      "breakpoints": true
     }
   ]
 }

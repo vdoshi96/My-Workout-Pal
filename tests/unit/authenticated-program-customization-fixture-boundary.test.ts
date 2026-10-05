@@ -113,7 +113,7 @@ describe("authenticated customization fixture boundary", () => {
 
   it("applies the complete checked-in migration inventory", () => {
     const databaseBootstrap = source("server/database.ts");
-    expect(databaseBootstrap.match(/"000[0-7]_[^"]+\.sql"/gu)).toEqual([
+    expect(databaseBootstrap.match(/"000[0-8]_[^"]+\.sql"/gu)).toEqual([
       '"0000_initial.sql"',
       '"0001_account_deletion_saga.sql"',
       '"0002_workout_canonical_measurements.sql"',
@@ -122,6 +122,7 @@ describe("authenticated customization fixture boundary", () => {
       '"0005_flexible_routine_topology.sql"',
       '"0006_program_cardio_display_order.sql"',
       '"0007_personal_guidance.sql"',
+      '"0008_training_profile.sql"',
     ]);
   });
 
@@ -134,6 +135,7 @@ describe("authenticated customization fixture boundary", () => {
       "app/api/app/custom-exercises/route.ts",
       "app/api/app/custom-exercises/[id]/route.ts",
       "app/api/app/preferences/route.ts",
+      "app/api/app/training-profile/route.ts",
     ];
 
     expect(
@@ -171,6 +173,11 @@ describe("authenticated customization fixture boundary", () => {
       "preferencesUpdateRequestSchema",
     );
     expect(source("app/api/app/preferences/route.ts")).toContain("updateViewerPreferences");
+    expect(source("app/api/app/programs/route.ts")).toContain("createViewerProgramFromAnswers");
+    expect(source("app/api/app/training-profile/route.ts")).toContain(
+      "trainingProfileUpdateRequestSchema",
+    );
+    expect(source("app/api/app/training-profile/route.ts")).toContain("updateViewerTrainingProfile");
     expect(source("app/api/app/custom-exercises/route.ts")).toContain(
       "createCustomExerciseRequestSchema",
     );

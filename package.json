@@ -41,7 +41,7 @@
     "seed:check": "node --import tsx scripts/seed-check.ts",
     "docs:build": "node scripts/render-docs.mjs",
     "docs:check": "node scripts/render-docs.mjs --check",
-    "db:check": "drizzle-kit check && vitest run tests/unit/database-schema.test.ts tests/integration/account-deletion-schema.test.ts tests/integration/program-collection-schema.test.ts tests/integration/starter-database-bootstrap.test.ts",
+    "db:check": "drizzle-kit check && vitest run tests/unit/database-schema.test.ts tests/integration/account-deletion-schema.test.ts tests/integration/program-collection-schema.test.ts tests/integration/starter-database-bootstrap.test.ts tests/integration/training-profile-schema.test.ts",
     "production:check": "node scripts/check-production-boundary.mjs",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:check && pnpm seed:check && pnpm pwa:check && pnpm docs:check && pnpm build && pnpm production:check",
     "verify:release": "pnpm verify && pnpm test:e2e:release",

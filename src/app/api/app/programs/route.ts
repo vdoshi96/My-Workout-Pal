@@ -14,6 +14,7 @@ import {
 } from "@/server/http/profile-program-api";
 import {
   cloneViewerProgram,
+  createViewerProgramFromAnswers,
   createViewerProgramFromCustom,
   createViewerProgramFromStarter,
 } from "@/server/repositories/profile-program";
@@ -45,12 +46,20 @@ export async function POST(request: NextRequest): Promise<Response> {
               name: input.name,
               sectionName: input.sectionName,
             })
-          : await cloneViewerProgram(database, viewer, {
-            idempotencyKey: input.idempotencyKey,
-            name: input.name,
-            sourceProgramId: input.sourceProgramId,
-            sourceRevisionId: input.sourceRevisionId,
-          });
+          : input.mode === "generated"
+            ? await createViewerProgramFromAnswers(database, viewer, {
+                activate: input.activate,
+                equipmentProfileKind: input.equipmentProfileKind,
+                idempotencyKey: input.idempotencyKey,
+                name: input.name,
+                trainingProfile: input.trainingProfile,
+              })
+            : await cloneViewerProgram(database, viewer, {
+              idempotencyKey: input.idempotencyKey,
+              name: input.name,
+              sourceProgramId: input.sourceProgramId,
+              sourceRevisionId: input.sourceRevisionId,
+            });
     return privateJson({ profileProgram }, { status: 201 });
   } catch (error) {
     return profileProgramApiError(error);

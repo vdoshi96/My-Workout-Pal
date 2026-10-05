@@ -6,9 +6,17 @@ import {
   type ProgramPublishInput,
 } from "@/domain/programs/publication";
 import type { OwnedEquipmentPreviewChange } from "@/domain/programs/owned-equipment-preview";
+import {
+  DAYS_PER_WEEK_OPTIONS,
+  EXPERIENCE_LEVELS,
+  TRAINING_GOALS,
+  type TrainingProfileAnswers,
+} from "@/domain/programs/generate-routine";
 import type {
   ActiveProgramReadModel,
   ProgramRevisionMutationResult,
+  ProgramSummaryReadModel,
+  TrainingProfileReadModel,
 } from "@/server/repositories/profile-program";
 
 const uuid = z.string().uuid();
@@ -242,8 +250,32 @@ const equipmentEnvelopeSchema = z.object({
   }),
 }).strict();
 
+const trainingProfileSchema = z.object({
+  daysPerWeek: z.union([
+    z.literal(DAYS_PER_WEEK_OPTIONS[0]),
+    z.literal(DAYS_PER_WEEK_OPTIONS[1]),
+    z.literal(DAYS_PER_WEEK_OPTIONS[2]),
+    z.literal(DAYS_PER_WEEK_OPTIONS[3]),
+  ]),
+  experience: z.enum(EXPERIENCE_LEVELS),
+  goal: z.enum(TRAINING_GOALS),
+  updatedAt: z.string().datetime({ offset: true }),
+}).strict();
+
+function sameAnswers(
+  actual: TrainingProfileReadModel | null | undefined,
+  expected: TrainingProfileAnswers,
+): boolean {
+  return Boolean(
+    actual &&
+      actual.goal === expected.goal &&
+      actual.experience === expected.experience &&
+      actual.daysPerWeek === expected.daysPerWeek,
+  );
+}
+
 const onboardingEnvelopeSchema = z.object({
-  mode: z.enum(["example", "blank"]),
+  mode: z.enum(["example", "blank", "generated"]),
   profileProgram: z.object({
     activeProgram: activeProgramSchema,
     equipment: z.object({ profileKind: z.enum(["dumbbells", "barbell"]) }).strict(),
@@ -253,6 +285,7 @@ const onboardingEnvelopeSchema = z.object({
       unitSystem: z.enum(["metric", "imperial"]),
       updatedAt: z.string().datetime({ offset: true }),
     }).strict(),
+    trainingProfile: trainingProfileSchema.nullable().optional(),
   }).passthrough(),
 }).strict();
 
@@ -445,9 +478,11 @@ export function parseOnboardingResponse(
   value: unknown,
   expected: Readonly<{
     equipmentProfileKind: "dumbbells" | "barbell";
-    mode: "example" | "blank";
+    mode: "example" | "blank" | "generated";
     reducedMotion: boolean;
     timezone: string;
+    /** Required for `generated`; checked whenever it is given. */
+    trainingProfile?: TrainingProfileAnswers | undefined;
     unitSystem: "metric" | "imperial";
   }>,
 ): ActiveProgramReadModel {
@@ -463,9 +498,102 @@ export function parseOnboardingResponse(
     model.equipment.profileKind !== expected.equipmentProfileKind ||
     model.preferences.reducedMotion !== expected.reducedMotion ||
     model.preferences.timezone !== expected.timezone ||
-    model.preferences.unitSystem !== expected.unitSystem
+    model.preferences.unitSystem !== expected.unitSystem ||
+    (expected.mode === "generated" && !expected.trainingProfile) ||
+    (expected.trainingProfile !== undefined &&
+      !sameAnswers(model.trainingProfile, expected.trainingProfile))
   ) {
     throw new Error("The server response does not match the requested onboarding setup.");
   }
   return model.activeProgram as ActiveProgramReadModel;
+}
+
+const trainingProfileEnvelopeSchema = z.object({
+  profileProgram: z.object({
+    trainingProfile: trainingProfileSchema.nullable(),
+  }).passthrough(),
+}).strict();
+
+/** Parses `PUT /api/app/training-profile` and returns the saved answers. */
+export function parseTrainingProfileResponse(
+  value: unknown,
+  expected: TrainingProfileAnswers,
+): TrainingProfileReadModel {
+  const parsed = trainingProfileEnvelopeSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error("The server returned an invalid training answers response.");
+  }
+  const saved = parsed.data.profileProgram.trainingProfile;
+  if (!saved || !sameAnswers(saved, expected)) {
+    throw new Error("The server response does not match the saved training answers.");
+  }
+  return saved;
+}
+
+const programSummarySchema = z.object({
+  dayCount: z.number().int().min(1).max(14),
+  equipmentProfileKind: z.enum(["dumbbells", "barbell"]),
+  id: uuid,
+  isActive: z.boolean(),
+  name: z.string().min(1).max(180),
+  programKey: z.string().min(1),
+  revisionId: uuid,
+  revisionNumber: z.number().int().positive(),
+  updatedAt: z.string().datetime({ offset: true }),
+}).passthrough();
+
+const generatedProgramEnvelopeSchema = z.object({
+  profileProgram: mutationResultSchema.extend({
+    programs: z.array(programSummarySchema).min(1).max(24),
+  }),
+}).strict();
+
+export type GeneratedProgramClientModel = Readonly<
+  ProgramRevisionMutationClientModel & {
+    program: ProgramSummaryReadModel;
+    programs: readonly ProgramSummaryReadModel[];
+  }
+>;
+
+/**
+ * Parses `POST /api/app/programs` with `mode: "generated"` ("Build a new
+ * routine from these answers"). Returns the new routine's summary and the
+ * updated collection.
+ */
+export function parseGeneratedProgramResponse(
+  value: unknown,
+  expected: Readonly<{
+    activate: boolean;
+    equipmentProfileKind: "dumbbells" | "barbell";
+  }>,
+): GeneratedProgramClientModel {
+  const parsed = generatedProgramEnvelopeSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error("The server returned an invalid new routine response.");
+  }
+  const model = parsed.data.profileProgram;
+  if (
+    model.activeProgram &&
+    !activeProgramGraphIsValid(model.activeProgram as ActiveProgramReadModel)
+  ) {
+    throw new Error("The server returned an invalid new routine response.");
+  }
+  const program = model.programs.find(({ id }) => id === model.affectedProgramId);
+  if (
+    !program ||
+    program.revisionId !== model.affectedRevisionId ||
+    program.equipmentProfileKind !== expected.equipmentProfileKind ||
+    program.isActive !== expected.activate ||
+    (expected.activate && model.activeProgram?.id !== program.id)
+  ) {
+    throw new Error("The server response does not match the requested new routine.");
+  }
+  return {
+    activeProgram: model.activeProgram as ActiveProgramReadModel | null,
+    affectedProgramId: model.affectedProgramId,
+    affectedRevisionId: model.affectedRevisionId,
+    program: program as ProgramSummaryReadModel,
+    programs: model.programs as ProgramSummaryReadModel[],
+    replayed: model.replayed,
+  };
 }
