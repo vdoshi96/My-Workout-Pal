@@ -226,6 +226,8 @@ async function openPage(
 }
 
 async function assertAccessible(page: Page) {
+  // Next.js streams the document title after a refresh; wait for it as the pilot spec's helper does.
+  await expect.poll(() => page.title()).not.toBe("");
   const results = await new AxeBuilder({ page })
     .exclude('iframe[src*="youtube-nocookie.com"]')
     .analyze();
@@ -587,6 +589,7 @@ test("both synthetic owners onboard while unverified and foreign states fail clo
   expect(alice.failedResponses).toEqual([]);
 
   await alice.page.getByRole("link", { name: "See the whole day" }).click();
+  await alice.page.waitForURL(/\/app\/program\/[^/?#]+\?from=/u);
   const startResponse = alice.page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&

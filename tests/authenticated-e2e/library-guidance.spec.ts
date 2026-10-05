@@ -207,6 +207,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
 
   await page.goto("/app");
   await page.getByRole("link", { name: "See the whole day" }).click();
+  await page.waitForURL(/\/app\/program\/[^/?#]+\?from=/u);
   const start = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&

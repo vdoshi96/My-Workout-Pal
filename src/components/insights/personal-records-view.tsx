@@ -47,7 +47,7 @@ export function PersonalRecordsView({
             <div>
               <h2>No records yet</h2>
               <p>Log a few workouts and your bests show up here.</p>
-              <Link className="secondary-action" href="/app/history">Review history</Link>
+              <Link className="secondary-action" href="/app/history" prefetch={false}>Review history</Link>
             </div>
           </div>
         ) : (
@@ -76,7 +76,7 @@ export function PersonalRecordsView({
                   <strong className="pal-record-value">{presentation.value}</strong>
                   <div className="pal-record-sources">
                     {[...new Set(record.sourceSessionIds)].map((sourceSessionId, index) => (
-                      <Link href={withFrom(`/app/history/${sourceSessionId}`, `/app/prs#${anchor}`)} key={sourceSessionId}>
+                      <Link href={withFrom(`/app/history/${sourceSessionId}`, `/app/prs#${anchor}`)} key={sourceSessionId} prefetch={false}>
                         {record.isTie ? `View tied workout ${index + 1}` : "View source workout"}
                         <Icon name="chevron-right" />
                       </Link>

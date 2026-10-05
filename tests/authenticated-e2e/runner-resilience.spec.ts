@@ -291,6 +291,7 @@ async function onboardAndOpenPush(page: Page): Promise<string> {
   await saveExampleFromOnboarding(page);
   expect((await onboard).status()).toBe(201);
   await page.getByRole("link", { name: "See the whole day" }).click();
+  await page.waitForURL(/\/app\/program\/[^/?#]+\?from=/u);
   const start = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&

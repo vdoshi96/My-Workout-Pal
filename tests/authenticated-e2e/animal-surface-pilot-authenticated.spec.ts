@@ -207,6 +207,7 @@ test("verified, unverified, empty, and active member states keep the fox decorat
   await captureMemberEvidence(page, "ready", testInfo);
 
   await page.getByRole("link", { name: "See the whole day" }).click();
+  await page.waitForURL(/\/app\/program\/[^/?#]+\?from=/u);
   const startResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&

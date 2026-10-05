@@ -277,6 +277,7 @@ test("member rollout surfaces preserve product priority across the authenticated
 
   await page.goto("/app");
   await page.getByRole("link", { name: "See the whole day" }).click();
+  await page.waitForURL(/\/app\/program\/[^/?#]+\?from=/u);
   const startResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
@@ -469,6 +470,7 @@ test("headed native 200 percent zoom reflows member Library and History", async 
     await saveExampleFromOnboarding(page);
     await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
     await page.getByRole("link", { name: "See the whole day" }).click();
+    await page.waitForURL(/\/app\/program\/[^/?#]+\?from=/u);
     const startResponse = page.waitForResponse(
       (response) =>
         new URL(response.url()).pathname === "/api/app/workouts" &&

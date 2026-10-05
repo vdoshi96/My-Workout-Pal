@@ -25,7 +25,7 @@ export function ProgressInsightsView({
         <h1 id="progress-title">Progress</h1>
         <p>Every finished workout adds up here. Workouts you didn&apos;t finish stay in History.</p>
         <div className="pal-actions">
-          <Link className="pal-insights-pill" href={withFrom("/app/prs", "/app/progress")}>
+          <Link className="pal-insights-pill" href={withFrom("/app/prs", "/app/progress")} prefetch={false}>
             Personal records <Icon name="arrow-right" />
           </Link>
         </div>
@@ -50,14 +50,14 @@ export function ProgressInsightsView({
             <div>
               <h2>Finish a workout to see your progress.</h2>
               <p>Your sets, reps and records start adding up after your first one.</p>
-              <Link className="primary-action" href="/app">Go to Today <Icon name="arrow-right" /></Link>
+              <Link className="primary-action" href="/app" prefetch={false}>Go to Today <Icon name="arrow-right" /></Link>
             </div>
           </div>
         ) : (
           <section aria-labelledby="progress-timeline-title">
             <div className="pal-section-head">
               <h2 id="progress-timeline-title">Day by day</h2>
-              <Link href="/app/history">See all history</Link>
+              <Link href="/app/history" prefetch={false}>See all history</Link>
             </div>
             {progress.scope.truncated ? (
               <p className="pal-insights-lead">
@@ -97,6 +97,7 @@ export function ProgressInsightsView({
                           href={withFrom(`/app/history/${sessionId}`, `/app/progress#session-${sessionId}`)}
                           id={`session-${sessionId}`}
                           key={sessionId}
+                          prefetch={false}
                         >
                           <Icon name="history" />
                           <span>Workout {sourceIndex + 1}</span>

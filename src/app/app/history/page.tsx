@@ -80,7 +80,7 @@ export default async function TrainingHistoryPage({ searchParams }: PageProps) {
         <h1 id="history-title">History</h1>
         <p>{"Every workout you've finished or stopped."}</p>
         <div className="pal-actions">
-          <Link className="pal-insights-pill" href="/app/progress">See your progress <Icon name="arrow-right" /></Link>
+          <Link className="pal-insights-pill" href="/app/progress" prefetch={false}>See your progress <Icon name="arrow-right" /></Link>
         </div>
       </header>
 
@@ -104,14 +104,14 @@ export default async function TrainingHistoryPage({ searchParams }: PageProps) {
             <div>
               <h2>{state ? `No ${state === "abandoned" ? "unfinished" : "finished"} workouts yet.` : "Your history starts after your first workout."}</h2>
               <p>Every workout you finish or stop shows up here.</p>
-              {state ? <Link className="secondary-action" href="/app/history">Clear filter</Link> : <Link className="primary-action" href="/app">Go to Today <Icon name="arrow-right" /></Link>}
+              {state ? <Link className="secondary-action" href="/app/history" prefetch={false}>Clear filter</Link> : <Link className="primary-action" href="/app" prefetch={false}>Go to Today <Icon name="arrow-right" /></Link>}
             </div>
           </div>
         ) : (
           <ol className="pal-list pal-history-list">
             {history.sessions.map((session) => (
               <li id={`session-${session.id}`} key={session.id}>
-                <Link href={withFrom(`/app/history/${session.id}`, `${historyHref}#session-${session.id}`)}>
+                <Link href={withFrom(`/app/history/${session.id}`, `${historyHref}#session-${session.id}`)} prefetch={false}>
                   <span className="pal-history-main">
                     <strong>{session.dayName}</strong>
                     <small>{formatHistoryDate(session.occurredAt, timezone)}</small>
@@ -138,7 +138,7 @@ export default async function TrainingHistoryPage({ searchParams }: PageProps) {
 
         {nextHref ? (
           <nav aria-label="History pagination" className="pal-insights-more">
-            <Link className="secondary-action" href={nextHref}>Older workouts <Icon name="arrow-right" /></Link>
+            <Link className="secondary-action" href={nextHref} prefetch={false}>Older workouts <Icon name="arrow-right" /></Link>
           </nav>
         ) : null}
       </div>
