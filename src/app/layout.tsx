@@ -6,6 +6,9 @@ import "@fontsource-variable/fredoka";
 import "./globals.css";
 import "./quiet-set.css";
 import "./studio-pals.css";
+import "./pal-runner.css";
+import "./pal-routine.css";
+import "./pal-insights.css";
 
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";

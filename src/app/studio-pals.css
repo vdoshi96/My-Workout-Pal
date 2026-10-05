@@ -383,3 +383,52 @@ input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
   .member-frame:has(.pal-onboarding) .pal-scene::after { background: linear-gradient(180deg, rgb(var(--scrim) / .9) 0%, rgb(var(--scrim) / 0) 28%, rgb(var(--scrim) / 0) 58%, var(--canvas) 88%); }
   .pal-onboarding-body .pal-actions { flex-direction: column; align-items: stretch; }
 }
+
+/* ---------- Page pattern: a scene behind the header, the heading on the wall, content on the floor ---------- */
+:is(.public-frame, .member-frame):has(.pal-page-head) { --stage-h: 440px; }
+.pal-page-head { display: grid; gap: 10px; justify-items: start; max-width: 600px; min-height: calc(var(--stage-h) - 150px); align-content: center; padding: 8px clamp(20px, 5vw, 72px) 24px; }
+.member-frame .pal-page-head { padding-inline: 0; }
+.pal-page-head h1 { margin: 0; }
+.pal-page-head > p { color: var(--ink-soft); font-size: 1.15rem; margin: 0; max-width: 46ch; }
+.pal-page-head .pal-actions { margin-top: 6px; }
+.pal-page-body { display: grid; gap: 56px; padding: 16px clamp(20px, 5vw, 72px) 96px; max-width: 1240px; }
+.member-frame .pal-page-body { padding-inline: 0; }
+.pal-page-body > section > h2, .pal-section-head h2 { margin: 0 0 14px; }
+.pal-section-head { align-items: baseline; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; }
+.pal-section-head a { color: var(--brand); font-weight: 650; }
+.pal-group { background: var(--group); border-radius: 24px; padding: 18px 20px; }
+@media (max-width: 700px) {
+  :is(.public-frame, .member-frame):has(.pal-page-head) { --stage-h: 260px; --scene-y: 70%; --glow-x: 66%; --glow-y: 50%; --glow-w: 72%; --glow-h: 72%; }
+  .pal-page-head { min-height: 0; padding-top: 170px; }
+  :is(.public-frame, .member-frame):has(.pal-page-head) .pal-scene::after { background: linear-gradient(180deg, rgb(var(--scrim) / .9) 0%, rgb(var(--scrim) / 0) 28%, rgb(var(--scrim) / 0) 58%, var(--canvas) 88%); }
+  .pal-page-body { gap: 44px; padding-bottom: 120px; }
+}
+
+/* Back link: says where it goes, big enough to hit between sets. */
+.pal-back-link { align-items: center; border-radius: 999px; color: var(--brand); display: inline-flex; font: 650 1rem var(--font-display); gap: 8px; min-height: 48px; padding: 6px 14px 6px 8px; text-decoration: none; }
+.pal-back-link:hover { background: var(--hover-bg); }
+.pal-back-link svg { height: 1.1em; width: 1.1em; }
+
+/* Open list rows: alternate rows get a soft tint; no borders, no cards. */
+.pal-list { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.pal-list > li { border-radius: 18px; }
+.pal-list > li:nth-child(odd) { background: var(--group); }
+.pal-list > li > a, .pal-list > li > .pal-row { align-items: center; color: var(--ink); display: grid; gap: 4px 16px; grid-template-columns: minmax(0, 1fr) auto; min-height: 64px; padding: 12px 16px; text-decoration: none; }
+.pal-list > li > a:hover { background: var(--hover-bg); border-radius: 18px; }
+.pal-list strong { font: 600 1.1rem/1.25 var(--font-display); }
+.pal-list small { color: var(--ink-soft); display: block; }
+
+/* Status pages (offline, not found, errors): the pal and one way forward. */
+.status-page { align-content: center; display: grid; gap: 14px; justify-items: center; min-height: 60vh; padding: 48px 20px 120px; text-align: center; }
+.status-page h1 { margin: 0; }
+.status-page p { color: var(--ink-soft); font-size: 1.1rem; margin: 0; max-width: 40ch; }
+
+/* Simple bar chart: values are written on the bars, so colour is never the only cue. */
+.pal-chart { align-items: end; display: flex; gap: 18px; height: 200px; padding: 0 4px; }
+.pal-chart-bar { align-items: start; background: var(--brand); border-radius: 14px 14px 4px 4px; color: var(--canvas); display: flex; justify-content: center; padding-top: 8px; width: min(96px, 26%); }
+.pal-chart-bar b { font: 600 1rem var(--font-display); }
+.pal-chart-bar--best { background: var(--tangerine); color: var(--on-tangerine); box-shadow: inset 0 0 0 2px var(--ink); }
+.pal-chart-bar--58 { height: 58%; } .pal-chart-bar--72 { height: 72%; } .pal-chart-bar--88 { height: 88%; }
+.pal-glance small { color: var(--ink-soft); display: block; font-size: .9rem; }
+.pal-closer--left { justify-content: flex-start; margin-inline: 0; padding-inline: 0; }
+.pal-no-demo { color: var(--ink-soft); font-size: .9rem; }

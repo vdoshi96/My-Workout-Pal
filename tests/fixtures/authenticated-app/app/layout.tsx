@@ -6,6 +6,9 @@ import "@fontsource-variable/fredoka";
 import "../../../../src/app/globals.css";
 import "../../../../src/app/quiet-set.css";
 import "../../../../src/app/studio-pals.css";
+import "../../../../src/app/pal-runner.css";
+import "../../../../src/app/pal-routine.css";
+import "../../../../src/app/pal-insights.css";
 
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
