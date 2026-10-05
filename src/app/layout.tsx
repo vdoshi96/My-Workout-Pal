@@ -2,8 +2,10 @@ import "@fontsource/barlow-condensed/500.css";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
 import "@fontsource-variable/source-sans-3";
+import "@fontsource-variable/fredoka";
 import "./globals.css";
 import "./quiet-set.css";
+import "./studio-pals.css";
 
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
