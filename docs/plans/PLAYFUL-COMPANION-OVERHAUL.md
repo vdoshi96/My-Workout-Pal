@@ -14,7 +14,7 @@ The September production-grade audit (PR #8, main `4db767f`) made the app correc
 
 This plan records the Phase 0 audit and the Phase 1 direction. Phase 1 ends with a prototype of the landing page and member Today, and then **stops for owner approval**. Phase 2 (rollout) does not begin until the owner approves the direction or sends changes.
 
-Every `AGENTS.md` rule still applies. This plan overrides only what the owner's October 4 brief overrides: the visual system can change from Quiet Set, onboarding can ask new questions and persist new answers, and browser tests that check a deliberately retired layout can be updated under the ledger rules in [Phase 2](#phase-2-rollout-after-approval).
+Every `AGENTS.md` rule still applies. This plan overrides only what the owner's October 4 brief overrides: the visual system can change from Quiet Set, onboarding can ask new questions and persist new answers, and browser tests that check a deliberately retired layout can be updated under the ledger rules in [Phase 2](#phase-2-rollout-approved-october-5-2026-implemented).
 
 ## Contents
 
@@ -26,7 +26,7 @@ Every `AGENTS.md` rule still applies. This plan overrides only what the owner's 
   - [Onboarding walkthrough](#onboarding-walkthrough)
   - [Art inventory](#art-inventory)
 - [Phase 1: the new direction](#phase-1-the-new-direction)
-- [Phase 2: rollout (after approval)](#phase-2-rollout-after-approval)
+- [Phase 2: rollout (approved October 5, 2026; implemented)](#phase-2-rollout-approved-october-5-2026-implemented)
 - [Acceptance criteria](#acceptance-criteria)
 - [Tests and evidence](#tests-and-evidence)
 - [Open questions for the owner](#open-questions-for-the-owner)
@@ -394,7 +394,7 @@ Phase 2 also deletes the 24 unused illustration files from `public/` (keeping th
 5. **Deep links without an origin** fall back to the sensible parent: guide → Library (with the equipment filter on public pages), day → Today, history detail → History, record source → Records, runner → Today.
 6. **The tab bar follows the origin.** A day opened from Today keeps Today highlighted.
 7. **Videos open in place.** A `DemoSheet` (bottom sheet on phones, side sheet on desktop, built on the native `<dialog>`) wraps `CuratedVideoPlayer`. It appears wherever a movement is listed: Today's movement list, day pages, the runner (replacing the collapsed details), the Library list and the trial. Closing it (✕, Escape or swipe-down on phones) returns focus to the trigger and **unmounts the iframe**, so nothing plays hidden. Only approved pairs are passed in; movements without one show "No demo yet" with the written steps. The guide page keeps its inline player.
-8. **Selected state survives round trips.** Today's selected day and the editor's selected day live in the URL (`?day=push`).
+8. **Selected state survives round trips.** Today's selected day lives in the address (`/app?day=push`). The editor's selected day travels in the links it builds (`?day=` on "All routines" and in each `from`). *Phase 2 note:* writing `?day=` into the editor's address bar made Next.js treat the post-save refresh as a different page and remount the editor, so the editor leaves the address alone.
 
 | Drill-down | Back label | Returns to |
 |---|---|---|
@@ -542,7 +542,9 @@ Matching baseline images from `main` (the full set is in [`before/`](../design/p
 
 ---
 
-## Phase 2: rollout (after approval)
+## Phase 2: rollout (approved October 5, 2026; implemented)
+
+The owner approved every Phase 1 question and authorized running migration `0008` (done, with a private backup first; see the [QA report](../qa/latest/PLAYFUL-OVERHAUL-QA.md#5-database-migration-0008_training_profile)). Deploy order: the migration ran before any application deploy, so the new code can ship whenever the owner approves the screenshots. Results, the test-edit ledger and screenshots are in the QA report.
 
 1. Promote the tokens to `:root`, apply the scene stage and open layouts to every public and member screen, and **delete** the box CSS listed as R and M in the inventory rather than overriding it. Retire `quiet-set.css` into the new stylesheet and delete dead rules.
 2. Build `BackLink`, `resolveBackTarget`, anchors and `DemoSheet` everywhere in the navigation table (TDD for the resolver).

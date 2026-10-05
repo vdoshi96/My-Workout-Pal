@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="b37c29ab5ecefc0659e48d64a9d47f9583f9dbb73f03eb93b55a2eb4e914946e">
+  <meta name="source-sha256" content="dbba19700c374bd9ed095dddeb2279f874f9476f2539d335ba03b440beadd2c8">
   <title>Playful companion overhaul · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -39,7 +39,7 @@
 <li>Back navigation is missing: a demo opened from the plan has no way back to the same spot.</li>
 </ol>
 <p>This plan records the Phase 0 audit and the Phase 1 direction. Phase 1 ends with a prototype of the landing page and member Today, and then <strong>stops for owner approval</strong>. Phase 2 (rollout) does not begin until the owner approves the direction or sends changes.</p>
-<p>Every <code>AGENTS.md</code> rule still applies. This plan overrides only what the owner&#39;s October 4 brief overrides: the visual system can change from Quiet Set, onboarding can ask new questions and persist new answers, and browser tests that check a deliberately retired layout can be updated under the ledger rules in <a href="#phase-2-rollout-after-approval">Phase 2</a>.</p>
+<p>Every <code>AGENTS.md</code> rule still applies. This plan overrides only what the owner&#39;s October 4 brief overrides: the visual system can change from Quiet Set, onboarding can ask new questions and persist new answers, and browser tests that check a deliberately retired layout can be updated under the ledger rules in <a href="#phase-2-rollout-approved-october-5-2026-implemented">Phase 2</a>.</p>
 <h2>Contents</h2>
 <ul>
 <li><a href="#phase-0-audit-of-the-current-state">Phase 0: audit of the current state</a><ul>
@@ -52,7 +52,7 @@
 </ul>
 </li>
 <li><a href="#phase-1-the-new-direction">Phase 1: the new direction</a></li>
-<li><a href="#phase-2-rollout-after-approval">Phase 2: rollout (after approval)</a></li>
+<li><a href="#phase-2-rollout-approved-october-5-2026-implemented">Phase 2: rollout (approved October 5, 2026; implemented)</a></li>
 <li><a href="#acceptance-criteria">Acceptance criteria</a></li>
 <li><a href="#tests-and-evidence">Tests and evidence</a></li>
 <li><a href="#open-questions-for-the-owner">Open questions for the owner</a></li>
@@ -1539,7 +1539,7 @@
 <li><strong>Deep links without an origin</strong> fall back to the sensible parent: guide → Library (with the equipment filter on public pages), day → Today, history detail → History, record source → Records, runner → Today.</li>
 <li><strong>The tab bar follows the origin.</strong> A day opened from Today keeps Today highlighted.</li>
 <li><strong>Videos open in place.</strong> A <code>DemoSheet</code> (bottom sheet on phones, side sheet on desktop, built on the native <code>&lt;dialog&gt;</code>) wraps <code>CuratedVideoPlayer</code>. It appears wherever a movement is listed: Today&#39;s movement list, day pages, the runner (replacing the collapsed details), the Library list and the trial. Closing it (✕, Escape or swipe-down on phones) returns focus to the trigger and <strong>unmounts the iframe</strong>, so nothing plays hidden. Only approved pairs are passed in; movements without one show &quot;No demo yet&quot; with the written steps. The guide page keeps its inline player.</li>
-<li><strong>Selected state survives round trips.</strong> Today&#39;s selected day and the editor&#39;s selected day live in the URL (<code>?day=push</code>).</li>
+<li><strong>Selected state survives round trips.</strong> Today&#39;s selected day lives in the address (<code>/app?day=push</code>). The editor&#39;s selected day travels in the links it builds (<code>?day=</code> on &quot;All routines&quot; and in each <code>from</code>). <em>Phase 2 note:</em> writing <code>?day=</code> into the editor&#39;s address bar made Next.js treat the post-save refresh as a different page and remount the editor, so the editor leaves the address alone.</li>
 </ol>
 <table>
 <thead>
@@ -1927,7 +1927,8 @@
 </tr>
 </tbody></table>
 <hr>
-<h2>Phase 2: rollout (after approval)</h2>
+<h2>Phase 2: rollout (approved October 5, 2026; implemented)</h2>
+<p>The owner approved every Phase 1 question and authorized running migration <code>0008</code> (done, with a private backup first; see the <a href="../qa/latest/PLAYFUL-OVERHAUL-QA.md#5-database-migration-0008_training_profile">QA report</a>). Deploy order: the migration ran before any application deploy, so the new code can ship whenever the owner approves the screenshots. Results, the test-edit ledger and screenshots are in the QA report.</p>
 <ol>
 <li>Promote the tokens to <code>:root</code>, apply the scene stage and open layouts to every public and member screen, and <strong>delete</strong> the box CSS listed as R and M in the inventory rather than overriding it. Retire <code>quiet-set.css</code> into the new stylesheet and delete dead rules.</li>
 <li>Build <code>BackLink</code>, <code>resolveBackTarget</code>, anchors and <code>DemoSheet</code> everywhere in the navigation table (TDD for the resolver).</li>

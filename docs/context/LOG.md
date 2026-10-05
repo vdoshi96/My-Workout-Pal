@@ -1,5 +1,15 @@
 # Project log
 
+## 2026-10-05: Playful companion overhaul, Phase 2 rollout
+
+- The owner approved the direction, Fredoka, the onboarding questions, the artwork, deleting unused art and running migration `0008_training_profile`, and asked for a more integrated dark mode.
+- Backed up production Neon with `pg_dump` 18.6 to a private mode-`600` archive outside the repository (with its sha256), then applied `0008`. Before: 8 migrations, 1 profile, 1 routine, 134 movements, 268 approved videos. After: 9 migrations, `user_training_profiles` present with 0 rows, every other count unchanged.
+- Rolled *Studio Pals* out to every public and member screen. Deleted `quiet-set.css` and 18 unused illustration files (16 corner-companion images and both `workout-pals-gym` sizes). Rewrote `globals.css` as a structural base. Moved tokens to `:root` and split area styles into `pal-runner.css`, `pal-routine.css` and `pal-insights.css`.
+- Added dusk recolours of all seven scenes (provenance under `docs/design/provenance/quiet-set/`). Dark pages mask the scene into the indigo canvas. Cache policy moved to v9.
+- Built the four-question onboarding with a generated routine (`generateStarterRoutine`, test-first), the example and blank starts, a skippable four-card tour, Settings > Your training, the `/try` test drive, the finish celebration with record ribbon, `BackLink` with `resolveBackTarget` (test-first), and in-place demo sheets.
+- Fixed issues found by the browser suites: Today's day now follows the address, the tab bar reads the router's search params, headings take focus after a finish or the tour, the workout scene stays off the read-only screen, the phone header fits one row, and the editor no longer rewrites its address (that made Next.js remount it after every save).
+- Updated pre-existing tests only where a layout was retired, logged in the [QA report](../qa/latest/PLAYFUL-OVERHAUL-QA.md) ledger.
+
 ## 2026-10-05: Playful companion overhaul, Phase 0 audit and Phase 1 prototype
 
 - Added design-review capture tooling: four Chromium projects (390 px and 1440 px, light and dark), public screens from a production build and member screens from the synthetic fixture, with a contrast sampler that measures default, hover, real Tab-key focus, selected and disabled states.
@@ -695,7 +705,7 @@
 ## 2026-09-23: Production-grade owner decisions, round 2
 
 - Implemented the named recovery, account, metadata, copy, and layout decisions and every approved test mapping in PR #8; preserved the four acceptance files and all test thresholds.
-- Corrected interrupted response-body classification so queued workout writes recover after reload. Latest complete commands report 75 authenticated passes / 13 skips and 102 release passes / 66 skips; exact preflight and committed verification boundaries are in the [QA report](../qa/latest/PRODUCTION-GRADE-QA.md) and PR.
+- Corrected interrupted response-body classification so queued workout writes recover after reload. Latest complete commands report 75 authenticated passes / 13 skips and 102 release passes / 66 skips; exact preflight and committed verification boundaries are in the [QA report](https://github.com/vdoshi96/My-Workout-Pal/blob/4db767f/docs/qa/latest/PRODUCTION-GRADE-QA.md) and PR.
 - Refreshed and reviewed 40 phone/desktop screenshots. Removed the unsuccessful blank-frame video navigation experiment; the stable embed still reproduces a WebKit Cache API teardown error in one of 48 loaded-video departures.
 - Keep merge blocked pending the explicit teardown-policy decision. The canonical checkout remains the sole active worktree; no manual deployment or production/provider changes were made.
 

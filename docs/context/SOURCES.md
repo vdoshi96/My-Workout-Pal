@@ -166,4 +166,4 @@ The project keeps Firebase Admin as the trusted server verifier, constrains only
 - Installed Next.js 16.3.2 error-file guide (`node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/error.md`): the owner-directed `retry()` recovery contract.
 - [WebKit Cache Storage implementation](https://github.com/WebKit/WebKit/blob/main/Source/WebCore/Modules/cache/DOMCacheStorage.cpp): pending cache work rejects when its context stops; supports the observed teardown mechanism, without identifying the cross-origin player's internal operation.
 - [YouTube embedded player parameters](https://developers.google.com/youtube/player_parameters#origin): origin binding is associated with enabled IFrame API control. The current non-API embed can keep its server-rendered URL stable through hydration.
-- [QA report](../qa/latest/PRODUCTION-GRADE-QA.md): local reproduction, failed experiments, evidence limits, and the unresolved owner decision.
+- [QA report](https://github.com/vdoshi96/My-Workout-Pal/blob/4db767f/docs/qa/latest/PRODUCTION-GRADE-QA.md): local reproduction, failed experiments, evidence limits, and the unresolved owner decision.

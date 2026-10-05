@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="1f3af8d71b8e1145d563a7c3e4133e2d01c759f842b2aa027b309c40423cd543">
+  <meta name="source-sha256" content="8f8b25d51ae570f1de6a4dee54388e9a821321ccc7f716b950be83d3735c3a29">
   <title>Decisions · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,7 +28,16 @@
 <body>
   <main>
 <h1>Decisions</h1>
-<h2>2026-10-04: Overhaul the look and onboarding toward a playful companion (proposed, awaiting approval)</h2>
+<h2>2026-10-05: Roll out Studio Pals, generated onboarding and the navigation contract (owner-approved)</h2>
+<p>The owner approved the <em>Studio Pals</em> direction, the Fredoka display font, the four onboarding questions, the evening artwork, deleting unused art, and running migration <code>0008_training_profile</code> against production. They asked for a more integrated dark mode, so dark pages use dusk recolours of every scene, masked into an indigo night canvas, rather than dimmed daylight art.</p>
+<ul>
+<li><strong>One design system.</strong> Tokens live at <code>:root</code> in <code>src/app/studio-pals.css</code>, with area stylesheets for the runner, routine screens and insights. <code>quiet-set.css</code> and the corner companions are deleted, not overridden. Every selected state uses one token set (<code>--selected-bg/fg/edge</code>), and a unit test checks every token pair against WCAG AA in both themes.</li>
+<li><strong>Onboarding.</strong> New members answer goal, experience, days per week and equipment. <code>generateStarterRoutine</code> builds the routine on the server from those answers (the client preview uses the same pure function), using only catalogue movements and never prescribing load. The five-day example and a blank start remain one choice away. Answers are stored in <code>user_training_profiles</code>, owned through the server session, editable in Settings, and deleted with the account. Changing them never rewrites the active routine or history.</li>
+<li><strong>Navigation.</strong> Drill-down links carry a validated <code>from</code> origin. <code>resolveBackTarget</code> accepts only allowlisted member and public origins, and <code>BackLink</code> returns to the exact anchor. Today keeps the selected day in the address, and the address is the source of truth when the page renders. Demos open in a native dialog that mounts the video only while open.</li>
+<li><strong>Focus after a screen is replaced.</strong> Finishing a workout and leaving the tour request focus for the next screen&#39;s heading (<code>ArrivalFocus</code>), because Next.js otherwise leaves focus on the document or the first focusable element.</li>
+<li><strong>Test drive.</strong> <code>/try</code> is a two-movement guest workout with approved demos. It saves nothing.</li>
+</ul>
+<h2>2026-10-04: Overhaul the look and onboarding toward a playful companion (proposed; approved October 5, see above)</h2>
 <p>The owner judges the app by a first-time visitor&#39;s reaction, not by passing gates. The proposed <em>Studio Pals</em> direction makes the illustrated studio the page itself, replaces decorative cards with whitespace and soft grouping, adds warm accents with state tokens that never put light text on a mid-tone, gives every drill-down a labelled back control that returns to the exact origin, opens demos in place, and replaces the one-set onboarding with goal, experience, schedule and equipment questions plus a skippable tour. Generated routines use only movements with approved demos and never prescribe load. New answers would live in an additive <code>user_training_profiles</code> table owned through the server session. See <a href="../plans/PLAYFUL-COMPANION-OVERHAUL.html">the overhaul plan</a>. Phase 2 starts only after owner approval.</p>
 <h2>2026-08-25: Treat the recording as workflow evidence</h2>
 <p>The private recording is evidence for navigation and interaction intent. It is not a source repository or visual specification. The application uses original code, data, copy, assets, and identity.</p>
