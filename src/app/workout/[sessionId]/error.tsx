@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { BackLink } from "@/components/navigation/back-link";
+
 export default function OwnedWorkoutError({
   error,
   retry,
@@ -11,12 +13,15 @@ export default function OwnedWorkoutError({
   }, [error]);
 
   return (
-    <main className="owned-runner-recovery owned-runner-recovery--blocked">
+    <main className="owned-workout-route status-page pal-run-status-page">
       <h1>{"This workout didn't load"}</h1>
       <p>Your logged sets are safe on this device.</p>
-      <button className="primary-action" onClick={retry} type="button">
-        Try again
-      </button>
+      <div className="pal-actions">
+        <button className="primary-action" onClick={retry} type="button">
+          Try again
+        </button>
+        <BackLink target={{ href: "/app", label: "Back to Today" }} />
+      </div>
     </main>
   );
 }

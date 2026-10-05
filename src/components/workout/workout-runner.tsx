@@ -42,6 +42,8 @@ import {
   displayToPace,
   formatMeasurement,
   formatOperationStatus,
+  formatPreviousSet,
+  formatRestHeading,
   formatRestTimer,
   formatRunnerStatus,
   formatSetTarget,
@@ -61,8 +63,8 @@ import { MovementDemo } from "@/components/video/demo-sheet";
 import { withFrom } from "@/domain/navigation/back-target";
 import type { CuratedVideos } from "@/domain/youtube/embed";
 import { PersonalGuidancePanel } from "@/components/workout/personal-guidance-panel";
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
-import { canShowWorkoutCompanion } from "@/domain/companions/visibility";
+import { Icon } from "@/components/ui/icon";
+import { PalSticker } from "@/components/ui/scene-stage";
 
 export type RunnerNavigationProtection = Readonly<{
   blocked: boolean;
@@ -416,7 +418,7 @@ function displayInputValue(
 }
 
 function statusClass(presentation: RunnerStatusPresentation): string {
-  return `runner-status runner-status--${presentation.tone}`;
+  return `pal-run-status pal-run-status--${presentation.tone}`;
 }
 
 function readableOperationKind(kind: string): string {
@@ -557,7 +559,7 @@ function Field({
   invalid?: boolean;
 }>): ReactNode {
   return (
-    <label className="runner-field" htmlFor={id}>
+    <label className="pal-run-field" htmlFor={id}>
       <span>{label}</span>
       <input
         aria-describedby={describedBy}
@@ -589,6 +591,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const [cardioError, setCardioError] = useState(false);
   const activeHeading = useRef<HTMLHeadingElement>(null);
   const setFieldset = useRef<HTMLFieldSetElement>(null);
+  const setStrip = useRef<HTMLDivElement>(null);
+  const restHeading = useRef<HTMLHeadingElement>(null);
   const moreSummary = useRef<HTMLElement>(null);
   const endButton = useRef<HTMLButtonElement>(null);
   const endDialog = useRef<HTMLDialogElement>(null);
@@ -1059,35 +1063,6 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   const hasLoggedCurrentExercise = currentExercise.sets.some(
     ({ id }) => state.loggedSets[id] !== undefined,
   );
-  const showWorkoutCompanion = canShowWorkoutCompanion({
-    hasActiveLogging:
-      progressValue > 0 ||
-      state.dirtySetIds.length > 0 ||
-      state.dirtyCardio ||
-      state.dirtyNoteExerciseIds.length > 0 ||
-      state.loggedCardio !== undefined ||
-      state.operations.length > 0 ||
-      Object.values(skipReasons).some((reason) => reason.trim().length > 0) ||
-      substitutionExerciseId !== undefined,
-    hasBlockingNotice:
-      adapterError !== undefined ||
-      actionError !== undefined ||
-      state.sync.errorMessage !== undefined ||
-      state.auth !== "valid" ||
-      failedOperations.length > 0 ||
-      localTabConflictGroups.length > 0 ||
-      substitutionBusy,
-    hasGuidance:
-      currentCuratedVideos !== undefined || currentPersonalGuidance.length > 0,
-    hasPendingOperation: state.operations.some(
-      ({ status }) => status === "pending",
-    ),
-    online: state.connectivity === "online",
-    recoveryReady:
-      connectivityInitialized && !isRestoring && stateMatchesSnapshot,
-    terminal: closed,
-    timerActive: timerView.status !== "idle",
-  });
   const operationByKey = useMemo(
     () =>
       new Map(
@@ -1174,7 +1149,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
 
   useEffect(() => {
     const guard = (event: MouseEvent) => {
-      const link = (event.target as Element).closest?.(".owned-workout-route-bar a");
+      const link = (event.target as Element).closest?.(".pal-run-bar a");
       if (link && protection.blocked) {
         event.preventDefault();
         event.stopPropagation();
@@ -1188,6 +1163,18 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
   useEffect(() => {
     if (setError) setFieldset.current?.querySelector<HTMLInputElement>('[aria-invalid="true"]')?.focus();
   }, [setError]);
+
+  // On phones the set pills scroll sideways; keep the current one in view without moving the page.
+  useEffect(() => {
+    const strip = setStrip.current;
+    const current = strip?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!strip || !current) return;
+    const start = current.offsetLeft;
+    const end = start + current.offsetWidth;
+    if (start < strip.scrollLeft || end > strip.scrollLeft + strip.clientWidth) {
+      strip.scrollTo({ left: Math.max(0, start - 8) });
+    }
+  }, [state.currentSetIndex, currentExercise.id]);
 
   useEffect(() => {
     if (!focusAfterAdvance.current) return;
@@ -1217,7 +1204,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       );
     if (draft.kind === "weight_reps") {
       return (
-        <div className="runner-field-grid">
+        <div className="pal-set-fields">
           <Field
             id={`${prefix}-weight`}
             invalid={setError && ((draft.weightKg === undefined || draft.weightKg < 0))}
@@ -1246,7 +1233,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     }
     if (draft.kind === "bodyweight_reps") {
       return (
-        <div className="runner-field-grid">
+        <div className="pal-set-fields">
           <Field
             id={`${prefix}-repetitions`}
             invalid={setError && ((draft.repetitions === undefined || draft.repetitions < 1 || !Number.isInteger(draft.repetitions)))}
@@ -1275,7 +1262,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     }
     if (draft.kind === "duration") {
       return (
-        <div className="runner-field-grid runner-field-grid--single">
+        <div className="pal-set-fields pal-set-fields--single">
           <Field
             id={`${prefix}-duration`}
             invalid={setError && ((draft.durationSeconds === undefined || draft.durationSeconds <= 0 || !Number.isInteger(draft.durationSeconds)))}
@@ -1290,7 +1277,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       );
     }
     return (
-      <div className="runner-field-grid">
+      <div className="pal-set-fields">
         <Field
           id={`${prefix}-distance`}
             invalid={setError && ((draft.distanceMeters === undefined || draft.distanceMeters <= 0))}
@@ -1328,37 +1315,34 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     );
     return (
       <section
-        className="runner-card runner-cardio"
+        className="pal-run-section pal-run-cardio"
         aria-labelledby="runner-cardio-heading"
       >
-        <div className="runner-section-heading">
-          <div>
-            <h3 id="runner-cardio-heading">Cardio finish</h3><span>Required to finish</span>
-          </div>
+        <div className="pal-run-section-head">
+          <h3 id="runner-cardio-heading">Cardio finish</h3>
+          <span className="pal-run-section-note">Required to finish</span>
           {state.loggedCardio ? (
             <span className={statusClass({ label: "Saved", tone: "saved" })}>
               Saved
             </span>
           ) : null}
         </div>
-        <p className="runner-muted">Pick your cardio finish.</p>
+        <p className="pal-run-muted">Pick your cardio finish.</p>
         <div
-          className="runner-choice-grid"
+          className="pal-run-choices"
           role="group"
           aria-label="Cardio"
         >
           {state.snapshot.cardioOptions.map((option) => (
             <button
               aria-pressed={state.cardioMode === option.mode}
-              className={classNames(
-                "runner-choice",
-                state.cardioMode === option.mode && "runner-choice--selected",
-              )}
+              className="pal-run-choice"
               disabled={closed}
               key={option.id}
               onClick={() => { setCardioText({}); setCardioError(false); apply({ type: "select_cardio", mode: option.mode }); }}
               type="button"
             >
+              <Icon name={option.mode === "walker" ? "walk" : "run"} />
               <strong>{option.mode === "walker" ? "Walker" : "Runner"}</strong>
               <span>
                 {formatCardioSummary(
@@ -1376,9 +1360,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           ))}
         </div>
         {state.cardioMode && cardioDraft ? (
-          <>
-            <div className="runner-target runner-target--dark">
-              <span>Target</span>
+          <div className="pal-set-entry pal-run-cardio-entry">
+            <p className="pal-run-target">
+              <span>Target</span>{" "}
               <strong>
                 {formatCardioSummary(
                   {
@@ -1399,8 +1383,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   { unitSystem },
                 )}
               </strong>
-            </div>
-            <div className="runner-field-grid">
+            </p>
+            <div className="pal-set-fields">
               <Field
                 id={`${cardioPrefix}-duration`}
                 label="Duration"
@@ -1447,14 +1431,14 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 onChange={(value) => updateCardioField("inclinePercent", value)}
               />
             </div>
-            {cardioError ? <p id="runner-cardio-error" className="runner-field-error">Enter a time like 20:00.</p> : null}
-            <p className="runner-field-help">
+            {cardioError ? <p id="runner-cardio-error" className="pal-field-error">Enter a time like 20:00.</p> : null}
+            <p className="pal-run-muted">
               {cardioDraft.paceSource === "derived"
-                ? `Pace ${formatCardioPace(cardioDraft.paceSecondsPerKilometer, { unitSystem })} is derived from duration and distance.`
-                : "Enter pace or provide duration and distance to derive it."}
+                ? `Pace ${formatCardioPace(cardioDraft.paceSecondsPerKilometer, { unitSystem })} is worked out from your time and distance.`
+                : "Enter a pace, or a time and distance and we'll work it out."}
             </p>
             <label
-              className="runner-field runner-field--wide"
+              className="pal-run-field"
               htmlFor={`${cardioPrefix}-notes`}
             >
               <span>Cardio notes</span>
@@ -1468,9 +1452,9 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 value={cardioDraft.notes}
               />
             </label>
-            <div className="runner-inline-actions">
+            <div className="pal-run-entry-actions">
               <button
-                className="runner-button runner-button--primary"
+                className="primary-action"
                 disabled={closed}
                 onClick={() => {
                   if (!cardioDraft.durationSeconds || (cardioText.paceSecondsPerKilometer && parseClockDuration(cardioText.paceSecondsPerKilometer) === undefined)) { setCardioError(true); return; }
@@ -1481,16 +1465,16 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 Save cardio
               </button>
               {state.loggedCardio ? (
-                <span className="runner-muted">
+                <span className="pal-run-muted">
                   {formatCardioSummary(state.loggedCardio.cardio, {
                     unitSystem,
                   })}
                 </span>
               ) : null}
             </div>
-          </>
+          </div>
         ) : (
-          <p className="runner-empty">
+          <p className="pal-run-muted">
             Choose Walker or Runner to log it.
           </p>
         )}
@@ -1498,51 +1482,134 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
     );
   }
 
+  const loggedActiveSet = state.loggedSets[activeSet.setId];
+  const activeSetStatus = loggedActiveSet
+    ? statusForOperation(loggedActiveSet.operationKey) ?? { label: "Saved", tone: "saved" as const }
+    : undefined;
+  const restActive = timerView.status !== "idle";
+  // Rest controls swap (Pause ↔ Resume, Start ↔ Clear) and the rest area moves above the set entry while
+  // resting. When the pressed control disappears, put focus on the rest heading instead of losing it.
+  const keepFocusInRest = () => {
+    window.requestAnimationFrame(() => {
+      if (document.activeElement === null || document.activeElement === document.body) restHeading.current?.focus();
+    });
+  };
+  const restSection = (
+    <section
+      className={classNames("pal-run-rest", restActive && "pal-run-rest--active")}
+      data-state={timerView.status}
+      role="timer"
+      aria-labelledby="runner-rest-heading"
+    >
+      {restActive ? <PalSticker pose="resting" /> : null}
+      <div className="pal-run-rest-copy">
+        <h3 id="runner-rest-heading" ref={restHeading} tabIndex={-1}>{formatRestHeading(timerView)}</h3>
+        <p>{formatTimerStatus(timerView)}</p>
+      </div>
+      {restActive ? (
+        <strong className="pal-timer">
+          {formatRestTimer(timerView.remainingSeconds)}
+        </strong>
+      ) : null}
+      <div className="pal-run-rest-actions">
+        {timerView.status === "running" ? (
+          <button
+            className="secondary-action"
+            disabled={closed}
+            onClick={() => {
+              apply({ type: "pause_rest" }, "Rest timer paused.");
+              keepFocusInRest();
+            }}
+            type="button"
+          >
+            <Icon name="pause" />
+            Pause
+          </button>
+        ) : null}
+        {timerView.status === "paused" ? (
+          <button
+            className="secondary-action"
+            disabled={closed}
+            onClick={() => { const now = Date.now(); setClockNow(now); apply({ type: "resume_rest", now }, "Rest timer resumed."); keepFocusInRest(); }}
+            type="button"
+          >
+            <Icon name="play" />
+            Resume
+          </button>
+        ) : null}
+        {timerView.status !== "idle" ? <button type="button" className="secondary-action" disabled={closed} onClick={() => { const now = Date.now(); setClockNow(now); apply({type: "extend_rest", seconds: 30, now}, "30 seconds added."); }}><Icon name="plus" />Add 30 seconds</button> : null}
+        {timerView.status === "idle" ||
+        timerView.status === "complete" ? (
+          <button
+            className="secondary-action"
+            disabled={closed}
+            onClick={() => { const now = Date.now(); setClockNow(now); apply({ type: "start_rest", now }, "Rest timer started."); keepFocusInRest(); }}
+            type="button"
+          >
+            Start {formatRestTimer(activeSet.target.restSeconds)}
+          </button>
+        ) : null}
+        {timerView.status !== "idle" ? (
+          <button
+            className="pal-text-button"
+            disabled={closed}
+            onClick={() => {
+              apply({ type: "clear_rest" }, "Rest timer cleared.");
+              keepFocusInRest();
+            }}
+            type="button"
+          >
+            Clear
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+
   return (
     <section
-      className={classNames("workout-runner", props.className)}
+      className={classNames("pal-run", props.className)}
       aria-labelledby="runner-title"
     >
-      <header className="runner-header companion-heading">
-        <div>
-
-          <h1 id="runner-title">{props.title ?? state.snapshot.dayName}</h1>
-
-        </div>
-        <span className="runner-stamp">{formatRunnerStatus(state.status)}</span>
-        {showWorkoutCompanion ? <DecorativeCompanion variant="workout" /> : null}
+      <header className="pal-run-head">
+        <h1 id="runner-title">{props.title ?? state.snapshot.dayName}</h1>
+        <section className="pal-run-progress" aria-label="Workout progress">
+          <progress
+            aria-label={`${progressValue} of ${workSetCount} work sets logged`}
+            max={workSetCount}
+            value={progressValue}
+          />
+          <p>
+            <span>
+              Exercise {state.currentExerciseIndex + 1} of{" "}
+              {state.snapshot.exercises.length}
+            </span>
+            <span>
+              <strong>{progressValue} of {workSetCount}</strong> work sets logged
+            </span>
+            <span className={statusClass(syncPresentation)}>
+              {syncPresentation.label}
+            </span>
+            {state.status === "active" ? null : (
+              <span className="pal-tag">{formatRunnerStatus(state.status)}</span>
+            )}
+          </p>
+        </section>
       </header>
 
-      <section className="runner-progress" aria-label="Workout progress">
-        <div className="runner-progress-heading">
-          <span>Work sets logged</span>
-          <strong>
-            {progressValue} of {workSetCount}
-          </strong>
-        </div>
-        <progress
-          aria-label={`${progressValue} of ${workSetCount} work sets logged`}
-          max={workSetCount}
-          value={progressValue}
-        />
-        <span className={statusClass(syncPresentation)}>
-          {syncPresentation.label}
-        </span>
-      </section>
-
       {isRestoring ? (
-        <p className="runner-banner runner-banner--pending" role="status">
-          Resuming saved workout state…
+        <p className="pal-run-banner pal-run-banner--pending" role="status">
+          Picking up where you left off…
         </p>
       ) : null}
-      {adapterError ? <div className="runner-banner runner-banner--failed" role="alert">
+      {adapterError ? <div className="pal-run-banner pal-run-banner--alert" role="alert">
         <p>{"We couldn't save to this device. Your last logged set is safe."}</p>
-        <button className="runner-button" type="button" onClick={() => setPersistAttempt((value) => value + 1)}>Try again</button>
+        <button className="secondary-action" type="button" onClick={() => setPersistAttempt((value) => value + 1)}>Try again</button>
       </div> : null}
       {state.auth !== "valid" ? (
         <section
           aria-labelledby="runner-auth-blocked-title"
-          className="runner-banner runner-banner--auth runner-banner--action"
+          className="pal-run-banner pal-run-banner--alert"
           role="alert"
         >
           <h2
@@ -1559,7 +1626,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           </p>
           {props.reauthenticationHref ? (
             <a
-              className="runner-button runner-button--primary"
+              className="primary-action"
               href={props.reauthenticationHref}
             >
               Sign in again
@@ -1570,7 +1637,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
       {state.connectivity === "offline" ? (
         <section
           aria-labelledby="runner-offline-title"
-          className="runner-banner runner-banner--offline runner-banner--action"
+          className="pal-run-banner pal-run-banner--offline"
           role="status"
         >
           <h2 id="runner-offline-title">{"You're offline"}</h2>
@@ -1578,7 +1645,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
             Sets are saved on this device and will sync when you reconnect.
           </p>
           <button
-            className="runner-button"
+            className="secondary-action"
             onClick={retryConnection}
             type="button"
           >
@@ -1590,16 +1657,15 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         {announcement}
       </p>
 
-      <div className="runner-layout">
+      <div className="pal-run-layout">
         <details
-          className="runner-outline"
+          className="pal-run-outline"
           aria-label="Workout outline"
         >
           <summary>Workout outline</summary>
-          <div className="runner-section-heading">
-
-            <span>{state.snapshot.exercises.length} moves</span>
-          </div>
+          <p className="pal-run-outline-count">
+            {state.snapshot.exercises.length} {state.snapshot.exercises.length === 1 ? "exercise" : "exercises"}
+          </p>
           <ol>
             {state.snapshot.exercises.map((exercise, index) => {
               const exerciseName =
@@ -1611,14 +1677,11 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 <li key={exercise.id}>
                   <button
                     aria-current={isCurrent ? "step" : undefined}
-                    className={classNames(
-                      isCurrent && "runner-outline-item--current",
-                    )}
                     onClick={() => apply({ type: "navigate_exercise", index })}
                     type="button"
                   >
-                    <span className="runner-outline-number">
-                      {String(index + 1).padStart(2, "0")}
+                    <span className="pal-run-outline-number">
+                      {index + 1}
                     </span>
                     <span>
                       <strong>{exerciseName}</strong>
@@ -1630,7 +1693,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                             : `${exercise.sets.length} sets · ${LOGGING_KIND_LABELS[exercise.loggingKind]}`}
                       </small>
                     </span>
-                    <span aria-hidden="true">
+                    <span aria-hidden="true" className="pal-run-outline-mark">
                       {skipped ? "—" : complete ? "✓" : isCurrent ? "●" : ""}
                     </span>
                   </button>
@@ -1640,58 +1703,46 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           </ol>
         </details>
 
-        <div className="runner-main" id="runner-active-panel">
+        <div className="pal-run-main" id="runner-active-panel">
           <section
-            className="runner-card runner-active-card"
+            className="pal-run-active"
             aria-labelledby="runner-active-heading"
             id={currentExerciseAnchor}
           >
-            <header className="runner-active-heading">
-              <div>
-                <span className="sr-only">{currentExerciseSectionLabel}</span>
-                <span className="runner-eyebrow">
-                  Exercise {state.currentExerciseIndex + 1} of{" "}
-                  {state.snapshot.exercises.length}
-                </span>
-                <h2 id="runner-active-heading" ref={activeHeading} tabIndex={-1}>{currentExerciseName}</h2>
-
-              </div>
-              <span
-                className={classNames(
-                  "runner-phase",
-                  activeSet.isWarmup
-                    ? "runner-phase--warmup"
-                    : "runner-phase--work",
-                )}
-              >
-                {activeSet.isWarmup ? "Warm-up" : "Work"}
-              </span>
+            <header className="pal-run-move">
+              <span className="sr-only">{currentExerciseSectionLabel}</span>
+              <h2 id="runner-active-heading" ref={activeHeading} tabIndex={-1}>{currentExerciseName}</h2>
+              <p className="pal-run-target">
+                <span>Target</span>{" "}
+                <strong>{formatSetTarget(activeSet.target, { unitSystem })}</strong>
+              </p>
+              {props.curatedVideosByExerciseId || currentGuideHref ? (
+                <div className="pal-run-tools">
+                  {props.curatedVideosByExerciseId ? (
+                    <MovementDemo movementName={currentExerciseName} videos={currentCuratedVideos} />
+                  ) : null}
+                  {currentGuideHref ? (
+                    <Link
+                      className="pal-run-guide-link"
+                      href={withFrom(currentGuideHref, `/workout/${encodeURIComponent(state.snapshot.sessionId)}#${currentExerciseAnchor}`)}
+                      onClick={(event) => {
+                        if (!protection.blocked) return;
+                        event.preventDefault();
+                        setActionError(protection.reason ?? "Save or resolve this workout before leaving.");
+                      }}
+                      prefetch={false}
+                    >
+                      Full guide<span className="sr-only"> for {currentExerciseName}</span>
+                      <Icon name="arrow-right" />
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
             </header>
-            {props.curatedVideosByExerciseId || currentGuideHref ? (
-              <div className="runner-movement-tools">
-                {props.curatedVideosByExerciseId ? (
-                  <MovementDemo movementName={currentExerciseName} videos={currentCuratedVideos} />
-                ) : null}
-                {currentGuideHref ? (
-                  <Link
-                    className="runner-guide-link"
-                    href={withFrom(currentGuideHref, `/workout/${encodeURIComponent(state.snapshot.sessionId)}#${currentExerciseAnchor}`)}
-                    onClick={(event) => {
-                      if (!protection.blocked) return;
-                      event.preventDefault();
-                      setActionError(protection.reason ?? "Save or resolve this workout before leaving.");
-                    }}
-                    prefetch={false}
-                  >
-                    Full guide<span className="sr-only"> for {currentExerciseName}</span>
-                  </Link>
-                ) : null}
-              </div>
-            ) : null}
-
 
             <div
-              className="runner-set-tabs"
+              className="pal-run-sets"
+              ref={setStrip}
               role="group"
               aria-label={`${currentExerciseName} sets`}
             >
@@ -1705,15 +1756,20 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   <button
                     aria-current={isCurrent ? "step" : undefined}
                     className={classNames(
-                      "runner-set-tab",
+                      "pal-run-set",
                       isCurrent && "runner-set-tab--current",
-                      set.phase === "warmup" && "runner-set-tab--warmup",
+                      set.phase === "warmup" && "pal-run-set--warmup",
+                      logged && "pal-run-set--logged",
                     )}
+                    data-status={logged ? (operationStatus?.tone ?? "saved") : undefined}
                     key={set.id}
                     onClick={() => apply({ type: "navigate_set", index })}
                     type="button"
                   >
-                    <span>{set.position}</span>
+                    <span className="pal-run-set-number">
+                      {set.position}
+                      {logged ? <span aria-hidden="true" className="pal-run-check"><Icon name="check" /></span> : null}
+                    </span>
                     <strong>
                       {set.phase === "warmup" ? "Warm-up" : "Work"}
                     </strong>
@@ -1727,31 +1783,31 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
               })}
             </div>
 
-            <div className="runner-set-context">
-              <div className="runner-context-block">
-                <span>Previous</span>
-                <strong>
-                  {formatMeasurement(activeSet.previous, { unitSystem })}
-                </strong>
-              </div>
-              <div className="runner-context-block">
-                <span>Target</span>
-                <strong>
-                  {formatSetTarget(activeSet.target, { unitSystem })}
-                </strong>
-              </div>
-            </div>
+            {restActive ? restSection : null}
 
-            <fieldset className="runner-editor" ref={setFieldset} disabled={closed}>
-              <legend>
+            {loggedActiveSet && !state.completedExerciseIds.includes(currentExercise.id) ? <div className="pal-run-forward">
+              <button type="button" className="primary-action" disabled={closed || state.dirtySetIds.includes(activeSet.setId)} onClick={() => { focusAfterAdvance.current = true; setSetError(false); apply(
+                state.currentSetIndex < currentExercise.sets.length - 1
+                  ? { type: "next_set", setId: activeSet.setId }
+                  : { type: "complete_exercise_and_next", exerciseId: currentExercise.id },
+                undefined
+              ); }}>{state.currentSetIndex < currentExercise.sets.length - 1 ? "Next set" : state.currentExerciseIndex < state.snapshot.exercises.length - 1 ? "Next exercise" : "Finish exercise"}<Icon name="arrow-right" /></button>
+              <p>Tap any set above to change it.</p>
+            </div> : null}
+
+            <fieldset className="pal-set-entry pal-run-entry" ref={setFieldset} disabled={closed}>
+              <legend className="pal-set-entry-title">
                 Log {activeSet.isWarmup ? "warm-up" : "work"} set{" "}
                 {activeSet.setPosition}
               </legend>
+              <p className="pal-run-previous">
+                {formatPreviousSet(activeSet.previous, { unitSystem })}
+              </p>
               {renderSetEditor()}
-              {setError ? <p id="runner-set-error" className="runner-field-error">{setEntryErrorMessage(activeSet.draft.kind)}</p> : null}
-              <div className="runner-inline-actions">
+              {setError ? <p id="runner-set-error" className="pal-field-error">{setEntryErrorMessage(activeSet.draft.kind)}</p> : null}
+              <div className="pal-run-entry-actions">
                 <button
-                  className="runner-button runner-button--primary"
+                  className="primary-action"
                   onClick={() => {
                     if (!validateSetDraft(activeSet.draft).ok) { setSetError(true); setActionError(undefined); return; }
                     const now = Date.now();
@@ -1760,263 +1816,149 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   }}
                   type="button"
                 >
-                  {state.loggedSets[activeSet.setId] ? "Update set & rest" : "Log set & rest"}
+                  {loggedActiveSet ? "Update set & rest" : "Log set & rest"}
                 </button>
-                {state.loggedSets[activeSet.setId] ? (
-                  <span
-                    className={statusClass(
-                      statusForOperation(
-                        state.loggedSets[activeSet.setId]?.operationKey,
-                      ) ?? { label: "Saved", tone: "saved" },
-                    )}
-                  >
-                    {statusForOperation(
-                      state.loggedSets[activeSet.setId]?.operationKey,
-                    )?.label ?? "Saved"}
+                {activeSetStatus ? (
+                  <span className={statusClass(activeSetStatus)}>
+                    {activeSetStatus.label}
                   </span>
                 ) : null}
               </div>
             </fieldset>
 
-            {state.loggedSets[activeSet.setId] && !state.completedExerciseIds.includes(currentExercise.id) ? <div className="quiet-runner-forward">
-              <button type="button" className="runner-button runner-button--primary" disabled={closed || state.dirtySetIds.includes(activeSet.setId)} onClick={() => { focusAfterAdvance.current = true; setSetError(false); apply(
-                state.currentSetIndex < currentExercise.sets.length - 1
-                  ? { type: "next_set", setId: activeSet.setId }
-                  : { type: "complete_exercise_and_next", exerciseId: currentExercise.id },
-                undefined
-              ); }}>{state.currentSetIndex < currentExercise.sets.length - 1 ? "Next set" : state.currentExerciseIndex < state.snapshot.exercises.length - 1 ? "Next exercise" : "Finish exercise"}</button>
-              <p>You can edit a logged set by selecting its row.</p>
-            </div> : null}
+            {restActive ? null : restSection}
 
-            <section
-              className="runner-rest"
-              role="timer"
-              aria-labelledby="runner-rest-heading"
-            >
-              <div>
-                <span className="runner-eyebrow">Recovery interval</span>
-                <h3 id="runner-rest-heading">Rest timer</h3>
-                <p>{formatTimerStatus(timerView)}</p>
-              </div>
-              <strong>
-                {formatRestTimer(timerView.remainingSeconds)}
-              </strong>
-              <div className="runner-inline-actions">
-                {timerView.status !== "idle" ? <button type="button" className="runner-button" disabled={closed} onClick={() => { const now = Date.now(); setClockNow(now); apply({type: "extend_rest", seconds: 30, now}, "30 seconds added."); }}>Add 30 seconds</button> : null}
-                {timerView.status === "running" ? (
-                  <button
-                    className="runner-button"
-                    disabled={closed}
-                    onClick={() =>
-                      apply({ type: "pause_rest" }, "Rest timer paused.")
-                    }
-                    type="button"
-                  >
-                    Pause
-                  </button>
-                ) : null}
-                {timerView.status === "paused" ? (
-                  <button
-                    className="runner-button"
-                    disabled={closed}
-                    onClick={() => { const now = Date.now(); setClockNow(now); apply({ type: "resume_rest", now }, "Rest timer resumed."); }}
-                    type="button"
-                  >
-                    Resume
-                  </button>
-                ) : null}
-                {timerView.status === "idle" ||
-                timerView.status === "complete" ? (
-                  <button
-                    className="runner-button"
-                    disabled={closed}
-                    onClick={() => { const now = Date.now(); setClockNow(now); apply({ type: "start_rest", now }, "Rest timer started."); }}
-                    type="button"
-                  >
-                    Start {formatRestTimer(activeSet.target.restSeconds)}
-                  </button>
-                ) : null}
-                {timerView.status !== "idle" ? (
-                  <button
-                    className="runner-button runner-button--quiet"
-                    disabled={closed}
-                    onClick={() =>
-                      apply({ type: "clear_rest" }, "Rest timer cleared.")
-                    }
-                    type="button"
-                  >
-                    Clear
-                  </button>
-                ) : null}
-              </div>
-            </section>
-            <details className="runner-more"><summary ref={moreSummary}>More options</summary>
-          <section
-            className="runner-card runner-notes"
-            aria-labelledby="runner-notes-heading"
-          >
-            <div className="runner-section-heading">
-              <div>
-
-                <h3 id="runner-notes-heading">Exercise note</h3>
-              </div>
-              {state.dirtyNoteExerciseIds.includes(currentExercise.id) ? (
-                <span
-                  className={statusClass({ label: "Pending", tone: "pending" })}
-                >
-                  Unsaved
-                </span>
-              ) : null}
-            </div>
-            <label
-              className="runner-field runner-field--wide"
-              htmlFor="runner-exercise-note"
-            >
-              <span>Note</span>
-              <textarea
-                disabled={closed}
-                id="runner-exercise-note"
-                maxLength={2_000}
-                onChange={(event) =>
-                  apply({
-                    type: "update_note",
-                    exerciseId: currentExercise.id,
-                    note: event.target.value,
-                  })
-                }
-                rows={4}
-                value={state.notesByExercise[currentExercise.id] ?? ""}
-              />
-            </label>
-            <button
-              className="runner-button"
-              disabled={
-                closed ||
-                !state.dirtyNoteExerciseIds.includes(currentExercise.id)
-              }
-              onClick={() =>
-                apply(
-                  { type: "save_note", exerciseId: currentExercise.id },
-                  "Exercise note queued for saving.",
-                )
-              }
-              type="button"
-            >
-              Save note
-            </button>
-          </section>
-
-          {props.getCompatibleSubstitutions ? (
-            <section
-              className="runner-card runner-substitution"
-              aria-labelledby="runner-substitution-heading"
-            >
-              <div className="runner-section-heading">
-                <div>
-
-                  <h3 id="runner-substitution-heading">
-                    Swap exercise
-                  </h3>
-                </div>
-                <span>
-                  {state.substitutions[currentExercise.id]
-                    ? "Substituted"
-                    : "Optional"}
-                </span>
-              </div>
-              <p className="runner-muted">
-                Swap before your first set. Targets stay the same.
-              </p>
-              <button
-                className="runner-button"
-                disabled={
-                  closed || substitutionBusy || hasLoggedCurrentExercise
-                }
-                onClick={() => void requestSubstitutions(currentExercise)}
-                type="button"
-              >
-                {substitutionBusy
-                  ? "Finding compatible moves…"
-                  : "Find a compatible movement"}
-              </button>
-              {substitutionExerciseId === currentExercise.id &&
-              substitutionCandidates.length > 0 ? (
-                <ul className="runner-candidate-list">
-                  {substitutionCandidates.map((candidate) => (
-                    <li key={candidate.id}>
-                      <button
-                        className="runner-candidate"
-                        disabled={closed}
-                        onClick={() => {
-                          apply(
-                            {
-                              type: "substitute_exercise",
-                              exerciseId: currentExercise.id,
-                              replacement: candidate,
-                            },
-                            `${candidate.name} selected as a compatible substitution.`,
-                          );
-                          setSubstitutionCandidates([]);
-                        }}
-                        type="button"
-                      >
-                        <strong>{candidate.name}</strong>
-                        <span>
-                          {{ weight_reps: "Weight and reps", bodyweight_reps: "Reps", duration: "Time", distance_duration: "Distance and time" }[candidate.loggingKind]}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {substitutionExerciseId === currentExercise.id &&
-              !substitutionBusy &&
-              substitutionCandidates.length === 0 ? (
-                <p className="runner-empty">
-                  No compatible replacements are available for this exercise.
-                </p>
-              ) : null}
-            </section>
-          ) : null}
-
-              <button className="runner-button" type="button" disabled={closed || state.skippedExerciseIds.includes(currentExercise.id)} onClick={() => skipDialog.current?.showModal()}>Skip exercise</button>
-            </details>
-            {props.curatedVideosByExerciseId ? (
-              <details className="runner-technique"><summary>Technique guidance</summary>
-                <div className="runner-section-heading">
-                  <div>
-                    <span className="runner-eyebrow">
-                      {currentPersonalGuidance.length > 0
-                        ? "Personal technique reference"
-                        : currentCuratedVideos
-                          ? "Movement reference"
-                          : "Technique check"}
-                    </span>
-                    <h3 id="runner-technique-heading">Technique guidance</h3>
-                  </div>
-                  <span>
-                    {currentPersonalGuidance.length > 0
-                      ? "Your links"
-                      : currentCuratedVideos
-                        ? "Demo"
-                        : "Unavailable"}
-                  </span>
-                </div>
-                {currentPersonalGuidance.length > 0 ? (
-                  <PersonalGuidancePanel links={currentPersonalGuidance} />
-                ) : currentCuratedVideos ? (
-                  <p className="runner-empty">
-                    Tap Watch demo to see it done.{currentGuideHref ? " The full guide has the steps." : ""}
-                  </p>
-                ) : (
-                  <p className="runner-empty">
-                    No demonstration is available for this movement.
-                    Workout logging remains available.
-                  </p>
-                )}
+            {currentPersonalGuidance.length > 0 ? (
+              <details className="pal-run-disclosure pal-run-links-disclosure">
+                <summary>Your links</summary>
+                <PersonalGuidancePanel links={currentPersonalGuidance} />
               </details>
             ) : null}
 
+            <details className="pal-run-disclosure pal-run-more"><summary ref={moreSummary}>More options</summary>
+              <section
+                className="pal-run-section"
+                aria-labelledby="runner-notes-heading"
+              >
+                <div className="pal-run-section-head">
+                  <h3 id="runner-notes-heading">Exercise note</h3>
+                  {state.dirtyNoteExerciseIds.includes(currentExercise.id) ? (
+                    <span
+                      className={statusClass({ label: "Pending", tone: "pending" })}
+                    >
+                      Unsaved
+                    </span>
+                  ) : null}
+                </div>
+                <label
+                  className="pal-run-field"
+                  htmlFor="runner-exercise-note"
+                >
+                  <span>Note</span>
+                  <textarea
+                    disabled={closed}
+                    id="runner-exercise-note"
+                    maxLength={2_000}
+                    onChange={(event) =>
+                      apply({
+                        type: "update_note",
+                        exerciseId: currentExercise.id,
+                        note: event.target.value,
+                      })
+                    }
+                    rows={4}
+                    value={state.notesByExercise[currentExercise.id] ?? ""}
+                  />
+                </label>
+                <button
+                  className="secondary-action"
+                  disabled={
+                    closed ||
+                    !state.dirtyNoteExerciseIds.includes(currentExercise.id)
+                  }
+                  onClick={() =>
+                    apply(
+                      { type: "save_note", exerciseId: currentExercise.id },
+                      "Exercise note queued for saving.",
+                    )
+                  }
+                  type="button"
+                >
+                  Save note
+                </button>
+              </section>
+
+              {props.getCompatibleSubstitutions ? (
+                <section
+                  className="pal-run-section"
+                  aria-labelledby="runner-substitution-heading"
+                >
+                  <div className="pal-run-section-head">
+                    <h3 id="runner-substitution-heading">
+                      Swap exercise
+                    </h3>
+                    <span className="pal-run-section-note">
+                      {state.substitutions[currentExercise.id]
+                        ? "Substituted"
+                        : "Optional"}
+                    </span>
+                  </div>
+                  <p className="pal-run-muted">
+                    Swap before your first set. Targets stay the same.
+                  </p>
+                  <button
+                    className="secondary-action"
+                    disabled={
+                      closed || substitutionBusy || hasLoggedCurrentExercise
+                    }
+                    onClick={() => void requestSubstitutions(currentExercise)}
+                    type="button"
+                  >
+                    {substitutionBusy
+                      ? "Finding compatible moves…"
+                      : "Find a compatible movement"}
+                  </button>
+                  {substitutionExerciseId === currentExercise.id &&
+                  substitutionCandidates.length > 0 ? (
+                    <ul className="pal-run-candidates">
+                      {substitutionCandidates.map((candidate) => (
+                        <li key={candidate.id}>
+                          <button
+                            disabled={closed}
+                            onClick={() => {
+                              apply(
+                                {
+                                  type: "substitute_exercise",
+                                  exerciseId: currentExercise.id,
+                                  replacement: candidate,
+                                },
+                                `${candidate.name} selected as a compatible substitution.`,
+                              );
+                              setSubstitutionCandidates([]);
+                            }}
+                            type="button"
+                          >
+                            <strong>{candidate.name}</strong>
+                            <span>
+                              {{ weight_reps: "Weight and reps", bodyweight_reps: "Reps", duration: "Time", distance_duration: "Distance and time" }[candidate.loggingKind]}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {substitutionExerciseId === currentExercise.id &&
+                  !substitutionBusy &&
+                  substitutionCandidates.length === 0 ? (
+                    <p className="pal-run-muted">
+                      No compatible replacements are available for this exercise.
+                    </p>
+                  ) : null}
+                </section>
+              ) : null}
+
+              <button className="secondary-action pal-run-skip" type="button" disabled={closed || state.skippedExerciseIds.includes(currentExercise.id)} onClick={() => skipDialog.current?.showModal()}>Skip exercise</button>
+            </details>
           </section>
 
           {renderCardio()}
@@ -2024,22 +1966,17 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
           {localTabConflictGroups.length > 0 ? (
             <section
               aria-labelledby="runner-local-conflict-heading"
-              className="runner-card runner-recovery runner-local-conflicts"
+              className="pal-run-alert"
               role="alert"
             >
-              <div className="runner-section-heading">
-                <div>
-                  <span className="runner-eyebrow">
-                    Another tab changed this workout
-                  </span>
-                  <h3
-                    id="runner-local-conflict-heading"
-                    ref={localConflictHeading}
-                    tabIndex={-1}
-                  >
-                    Pick which value to keep
-                  </h3>
-                </div>
+              <div className="pal-run-section-head">
+                <h3
+                  id="runner-local-conflict-heading"
+                  ref={localConflictHeading}
+                  tabIndex={-1}
+                >
+                  Pick which value to keep
+                </h3>
                 <span
                   className={statusClass({
                     label: "Conflict",
@@ -2050,8 +1987,8 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                   {localTabConflictGroups.length === 1 ? "" : "s"}
                 </span>
               </div>
-              <p className="runner-muted">
-                Choose the value you want to save.
+              <p className="pal-run-muted">
+                Another tab changed this workout. Choose the value you want to save.
               </p>
               {localTabConflictGroups.map((group) => {
                 const targetLabel = conflictTargetLabel(
@@ -2060,11 +1997,11 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                 );
                 return (
                   <fieldset
-                    className="runner-conflict-group"
+                    className="pal-run-conflict"
                     key={group.targetKey}
                   >
                     <legend>{targetLabel}</legend>
-                    <div className="runner-conflict-choices">
+                    <div className="pal-run-conflict-choices">
                       {group.operations.map((operation) => {
                         const choiceLabel = conflictChoiceLabel(
                           operation,
@@ -2073,7 +2010,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                         return (
                           <button
                             aria-label={`Keep ${choiceLabel}`}
-                            className="runner-button"
+                            className="secondary-action"
                             disabled={closed}
                             key={operation.idempotencyKey}
                             onClick={() =>
@@ -2100,21 +2037,18 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
 
           {failedOperations.length > 0 ? (
             <section
-              className="runner-card runner-recovery"
+              className="pal-run-alert"
               aria-labelledby="runner-recovery-heading"
             >
-              <div className="runner-section-heading">
-                <div>
-                  <span className="runner-eyebrow">Recovery</span>
-                  <h3 id="runner-recovery-heading">{"Couldn't save"}</h3>
-                </div>
+              <div className="pal-run-section-head">
+                <h3 id="runner-recovery-heading">{"Couldn't save"}</h3>
                 <span
                   className={statusClass({ label: "Failed", tone: "failed" })}
                 >
                   {failedOperations.length} failed
                 </span>
               </div>
-              <ul>
+              <ul className="pal-run-failed">
                 {failedOperations.map((operation) => {
                   const retryable =
                     operation.retryable !== false &&
@@ -2122,13 +2056,10 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                     operation.failureKind !== "permanent";
                   return (
                     <li key={operation.idempotencyKey}>
-                      <div>
-                        <strong>{readableOperationKind(operation.kind)}</strong>
-
-                      </div>
+                      <strong>{readableOperationKind(operation.kind)}</strong>
                       {retryable ? (
                         <button
-                          className="runner-button"
+                          className="secondary-action"
                           disabled={closed}
                           onClick={() =>
                             apply(
@@ -2144,7 +2075,7 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
                           Try again
                         </button>
                       ) : (
-                        <button className="runner-button" type="button" onClick={() => apply({ type: "discard_failed_operation", idempotencyKey: operation.idempotencyKey }, "Change discarded.")}>Discard this change</button>
+                        <button className="secondary-action" type="button" onClick={() => apply({ type: "discard_failed_operation", idempotencyKey: operation.idempotencyKey }, "Change discarded.")}>Discard this change</button>
                       )}
                     </li>
                   );
@@ -2155,30 +2086,38 @@ export function WorkoutRunner(props: WorkoutRunnerProps) {
         </div>
       </div>
 
-      <footer className="runner-footer">
-        <div className="runner-footer-actions">
-          <button className="runner-button runner-button--primary" disabled={closed || state.status === "completing" || persistedState !== state || state.operations.some(({ status }) => status === "pending")} type="button" onClick={() => apply({ type: "complete_session" })}>Finish workout</button>
-          <button ref={endButton} className="runner-button" disabled={closed || state.status === "abandoning"} type="button" onClick={() => endDialog.current?.showModal()}>End workout</button>
-          {props.onNavigateAway ? <button className="runner-button runner-button--quiet" type="button" onClick={handleNavigateAway}>Leave for now</button> : null}
+      <footer className="pal-run-footer">
+        <div className="pal-run-footer-actions">
+          <button className="primary-action pal-run-finish" disabled={closed || state.status === "completing" || persistedState !== state || state.operations.some(({ status }) => status === "pending")} type="button" onClick={() => apply({ type: "complete_session" })}>Finish workout</button>
+          <button ref={endButton} className="pal-text-button" disabled={closed || state.status === "abandoning"} type="button" onClick={() => endDialog.current?.showModal()}>End workout</button>
+          {props.onNavigateAway ? <button className="pal-text-button" type="button" onClick={handleNavigateAway}>Leave for now</button> : null}
+          <p className="pal-run-footer-status">{state.operations.some(({ status }) => status === "pending") ? "Saving…" : state.operations.every(({ status }) => status === "saved" || status === "superseded") ? "All changes saved." : ""}</p>
         </div>
-        <p>{state.operations.some(({ status }) => status === "pending") ? "Saving…" : state.operations.every(({ status }) => status === "saved" || status === "superseded") ? "All changes saved." : ""}</p>
-        {actionError ? <p className="runner-field-error" role="status">{actionError}</p> : null}
+        {actionError ? <p className="pal-field-error" role="status">{actionError}</p> : null}
       </footer>
-      <dialog className="account-delete-dialog runner-dialog" ref={skipDialog} aria-labelledby="runner-skip-title" onClose={() => moreSummary.current?.focus()}>
+      <dialog className="pal-sheet pal-run-dialog" ref={skipDialog} aria-labelledby="runner-skip-title" onClose={() => moreSummary.current?.focus()}>
         <h2 id="runner-skip-title">Skip {currentExerciseName}?</h2>
         <p>{"You can't log sets for it after skipping."}</p>
-        <label htmlFor="runner-skip-reason">Reason (optional)</label>
-        <textarea id="runner-skip-reason" maxLength={500} value={skipReasons[currentExercise.id] ?? ""} onChange={(event) => setSkipReasons((previous) => ({ ...previous, [currentExercise.id]: event.target.value }))} />
-        <button className="runner-button" type="button" onClick={() => { apply({ type: "skip_exercise", exerciseId: currentExercise.id, reason: skipReasons[currentExercise.id] ?? "" }, "Skipped."); skipDialog.current?.close(); }}>Skip exercise</button>
-        <button className="runner-button" type="button" onClick={() => skipDialog.current?.close()}>Cancel</button>
+        <label className="pal-run-field" htmlFor="runner-skip-reason">
+          <span>Reason (optional)</span>
+          <textarea id="runner-skip-reason" maxLength={500} value={skipReasons[currentExercise.id] ?? ""} onChange={(event) => setSkipReasons((previous) => ({ ...previous, [currentExercise.id]: event.target.value }))} />
+        </label>
+        <div className="pal-actions">
+          <button className="danger-action" type="button" onClick={() => { apply({ type: "skip_exercise", exerciseId: currentExercise.id, reason: skipReasons[currentExercise.id] ?? "" }, "Skipped."); skipDialog.current?.close(); }}>Skip exercise</button>
+          <button className="secondary-action" type="button" onClick={() => skipDialog.current?.close()}>Cancel</button>
+        </div>
       </dialog>
-      <dialog className="account-delete-dialog runner-dialog" ref={endDialog} aria-labelledby="runner-end-title" onClose={() => endButton.current?.focus()}>
+      <dialog className="pal-sheet pal-run-dialog" ref={endDialog} aria-labelledby="runner-end-title" onClose={() => endButton.current?.focus()}>
         <h2 id="runner-end-title">End this workout?</h2>
         <p>Sets you logged stay in your history.</p>
-        <label htmlFor="runner-abandon-reason">Note (optional)</label>
-        <textarea id="runner-abandon-reason" maxLength={500} value={abandonReason} onChange={(event) => setAbandonReason(event.target.value)} />
-        <button className="runner-button" type="button" onClick={() => { apply({ type: "abandon_session", reason: abandonReason.trim() }); endDialog.current?.close(); }}>End workout</button>
-        <button className="runner-button" type="button" onClick={() => endDialog.current?.close()}>Keep going</button>
+        <label className="pal-run-field" htmlFor="runner-abandon-reason">
+          <span>Note (optional)</span>
+          <textarea id="runner-abandon-reason" maxLength={500} value={abandonReason} onChange={(event) => setAbandonReason(event.target.value)} />
+        </label>
+        <div className="pal-actions">
+          <button className="danger-action" type="button" onClick={() => { apply({ type: "abandon_session", reason: abandonReason.trim() }); endDialog.current?.close(); }}>End workout</button>
+          <button className="secondary-action" type="button" onClick={() => endDialog.current?.close()}>Keep going</button>
+        </div>
       </dialog>
     </section>
   );
