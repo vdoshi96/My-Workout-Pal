@@ -9,7 +9,7 @@ import { MovementChooserAdapter } from "@/components/exercises/movement-chooser"
 import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
 import { parseProgramPublishResponse } from "@/components/program/program-mutation-response";
 import { reconcileProgramRevisionMutation } from "@/components/program/program-revision-reconciliation";
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
+import { SceneStage } from "@/components/ui/scene-stage";
 import {
   formatProgramDraftIssue,
   PROGRAM_CARDIO_MODES,
@@ -63,7 +63,6 @@ import {
   type MovementChooserRequest,
   type MovementSelection,
 } from "@/domain/exercises/movement-chooser-contract";
-import { canShowRoutineEditorCompanion } from "@/domain/companions/visibility";
 import {
   programPublishRequestSchema,
   type ProgramPublishInput,
@@ -74,6 +73,11 @@ import type {
 
 function operationKey(): string {
   return globalThis.crypto.randomUUID();
+}
+
+/** "strength" → "Strength", for section kinds shown as words. */
+function sentenceCase(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function optionalNumber(value: string): number | null {
@@ -281,7 +285,6 @@ export function ProgramEditor({
   const [sectionRemoval, setSectionRemoval] = useState<SectionRemoval | null>(null);
   const [dayRemoval, setDayRemoval] = useState<DayRemoval | null>(null);
   const [prescriptionRemoval, setPrescriptionRemoval] = useState<PrescriptionRemoval | null>(null);
-  const [equipmentReviewOpen, setEquipmentReviewOpen] = useState(false);
   const [pendingMeasurementKeys, setPendingMeasurementKeys] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -745,7 +748,7 @@ export function ProgramEditor({
   function addCardio(mode: ProgramCardioMode) {
     try {
       setDraft((current) => addProgramCardio(current, selected.dayKey, mode, operationKey()));
-      setMessage(`${mode} cardio added to ${selected.displayName}.`);
+      setMessage(`${sentenceCase(mode)} cardio added to ${selected.displayName}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "The cardio choice could not be added.");
     }
@@ -754,7 +757,7 @@ export function ProgramEditor({
   function removeCardio(cardioKey: string, mode: ProgramCardioMode) {
     try {
       setDraft((current) => removeProgramCardio(current, selected.dayKey, cardioKey));
-      setMessage(`${mode} cardio removed. Save your routine to keep the change.`);
+      setMessage(`${sentenceCase(mode)} cardio removed. Save your routine to keep the change.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "The cardio choice could not be removed.");
     }
@@ -768,7 +771,7 @@ export function ProgramEditor({
         cardioKey,
         direction,
       ));
-      setMessage(`${mode} cardio moved ${direction < 0 ? "up" : "down"}.`);
+      setMessage(`${sentenceCase(mode)} cardio moved ${direction < 0 ? "up" : "down"}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "The cardio choice could not be moved.");
     }
@@ -1037,60 +1040,43 @@ export function ProgramEditor({
   const removingSection = sectionRemoval
     ? draft.days[sectionRemoval.dayIndex]?.sections[sectionRemoval.sectionIndex]
     : undefined;
-  const removingSectionLabel = removingSection?.title.trim() || "program section";
-  const showRoutineEditorCompanion = canShowRoutineEditorCompanion({
-    busy,
-    canMutate,
-    dirty,
-    hasErrors: errors.length > 0,
-    hasOpenReview:
-      chooser !== null ||
-      dayCreatorOpen ||
-      equipmentReviewOpen ||
-      sectionRemoval !== null ||
-      dayRemoval !== null ||
-      prescriptionRemoval !== null,
-    hasStatusMessage: saveFailed,
-  });
+  const removingSectionLabel = removingSection?.title.trim() || "this section";
+  const saveState = busy ? "Saving…" : saveFailed ? "Not saved" : dirty ? "Unsaved changes" : "Saved";
 
   return (
-    <section className="program-editor-page" aria-labelledby="program-editor-title">
-      <header className="program-editor-hero companion-heading contour-surface">
-        <div>
-          <h1 id="program-editor-title" tabIndex={-1}>Your routine</h1>
-          <p className="quiet-save-state">{busy ? "Saving…" : dirty ? "Unsaved changes" : "Saved"}</p>
-          <p>Changes apply to future workouts. A workout already started keeps its original movements and targets.</p>
-        </div>
-        <nav className="quiet-routine-tools" aria-label="Routine tools"><Link className="secondary-action" href={withFrom("/app/programs", selectedSavedDayKey ? `/app/program/edit?day=${encodeURIComponent(selectedSavedDayKey)}` : "/app/program/edit")}>All routines</Link>
-        <Link className="secondary-action" href="/app/library">Browse movements</Link>
-        <BackLink target={back} /></nav>
-        {showRoutineEditorCompanion ? (
-          <DecorativeCompanion variant="routine-editor" />
-        ) : null}
+    <section className="pal-editor" aria-labelledby="program-editor-title">
+      <SceneStage scene="routine" />
+      <header className="pal-page-head pal-editor-head">
+        <BackLink target={back} />
+        <h1 id="program-editor-title" tabIndex={-1}>Your routine</h1>
+        <p>Changes apply to your next workouts. A workout you&apos;ve already started keeps its plan.</p>
+        <nav className="pal-editor-tools" aria-label="Routine tools">
+          <Link className="secondary-action" href={withFrom("/app/programs", selectedSavedDayKey ? `/app/program/edit?day=${encodeURIComponent(selectedSavedDayKey)}` : "/app/program/edit")}>All routines</Link>
+          <Link className="secondary-action" href="/app/library">Browse movements</Link>
+        </nav>
       </header>
 
       {!canMutate ? (
-        <div className="member-inline-notice" role="status">
+        <p className="pal-notice" role="status">
           Verify your email to save changes.
-        </div>
+        </p>
       ) : null}
 
-      <details className="quiet-equipment-details"><summary>Equipment and substitutions</summary>
-      <EquipmentProfileControl
-        canMutate={canMutate}
-        disabled={busy}
-        draftDirty={dirty}
-        onBusyChange={setBusy}
-        onReviewChange={setEquipmentReviewOpen}
-        onSaved={acceptEquipmentRevision}
-        placement="editor"
-        program={program}
-      />
+      <details className="pal-editor-disclosure pal-editor-equipment"><summary>Equipment and substitutions</summary>
+        <EquipmentProfileControl
+          canMutate={canMutate}
+          disabled={busy}
+          draftDirty={dirty}
+          onBusyChange={setBusy}
+          onSaved={acceptEquipmentRevision}
+          placement="editor"
+          program={program}
+        />
       </details>
 
-      <div className="program-editor-layout">
-        <aside className="program-editor-outline" aria-label="Program days">
-          <label className="program-editor-field">
+      <div className="pal-editor-layout">
+        <aside className="pal-editor-days" aria-label="Routine days">
+          <label className="pal-editor-field">
             <span>Routine name</span>
             <input
               disabled={busy}
@@ -1102,62 +1088,70 @@ export function ProgramEditor({
               value={draft.name}
             />
           </label>
+          <h2 className="pal-editor-days-title">Days</h2>
           <ol>
-            {draft.days.map((day, dayIndex) => (
-              <li key={day.dayKey}>
-                <button
-                  id={`program-day-${day.dayKey}`}
-                  aria-current={selectedDay === dayIndex ? "step" : undefined}
-                  onClick={() => setSelectedDayKey(day.dayKey)}
-                  type="button"
-                >
-                  <span>{String(day.dayNumber).padStart(2, "0")}</span>
-                  <strong>{day.displayName}</strong>
-                  <small>{day.sections.flatMap(({ prescriptions }) => prescriptions).length} {day.sections.flatMap(({ prescriptions }) => prescriptions).length === 1 ? "movement" : "movements"}</small>
-                </button>
-                <details className="row-menu"><summary aria-label={`More actions for ${day.displayName}`}>More</summary>
+            {draft.days.map((day, dayIndex) => {
+              const movementCount = day.sections.flatMap(({ prescriptions }) => prescriptions).length;
+              return (
+                <li key={day.dayKey}>
                   <button
-                    aria-label={`Move ${day.displayName} up`}
-                    disabled={busy || dayIndex === 0}
-                    onClick={() => moveDay(day.dayKey, -1)}
+                    id={`program-day-${day.dayKey}`}
+                    aria-current={selectedDay === dayIndex ? "step" : undefined}
+                    className="pal-editor-day-pill"
+                    onClick={() => setSelectedDayKey(day.dayKey)}
                     type="button"
-                  >Up</button>
-                  <button
-                    aria-label={`Move ${day.displayName} down`}
-                    disabled={busy || dayIndex === draft.days.length - 1}
-                    onClick={() => moveDay(day.dayKey, 1)}
-                    type="button"
-                  >Down</button>
-                  <button
-                    aria-label={`Duplicate ${day.displayName}`}
-                    disabled={busy || draft.days.length >= 14}
-                    onClick={() => duplicateDay(day.dayKey)}
-                    type="button"
-                  >Duplicate</button>
-                  <button
-                    aria-label={`Remove ${day.displayName}`}
-                    disabled={busy || draft.days.length <= 1}
-                    onClick={(event) => openDayRemoval(day.dayKey, event.currentTarget)}
-                    type="button"
-                  >Remove</button>
-                </details>
-              </li>
-            ))}
+                  >
+                    <small>Day {day.dayNumber}</small>
+                    <strong>{day.displayName}</strong>
+                    <small>{movementCount} {movementCount === 1 ? "movement" : "movements"}</small>
+                  </button>
+                  <details className="pal-editor-menu"><summary aria-label={`More actions for ${day.displayName}`}>More</summary>
+                    <div className="pal-editor-menu-list">
+                      <button
+                        aria-label={`Move ${day.displayName} up`}
+                        disabled={busy || dayIndex === 0}
+                        onClick={() => moveDay(day.dayKey, -1)}
+                        type="button"
+                      >Up</button>
+                      <button
+                        aria-label={`Move ${day.displayName} down`}
+                        disabled={busy || dayIndex === draft.days.length - 1}
+                        onClick={() => moveDay(day.dayKey, 1)}
+                        type="button"
+                      >Down</button>
+                      <button
+                        aria-label={`Duplicate ${day.displayName}`}
+                        disabled={busy || draft.days.length >= 14}
+                        onClick={() => duplicateDay(day.dayKey)}
+                        type="button"
+                      >Duplicate</button>
+                      <button
+                        aria-label={`Remove ${day.displayName}`}
+                        disabled={busy || draft.days.length <= 1}
+                        onClick={(event) => openDayRemoval(day.dayKey, event.currentTarget)}
+                        type="button"
+                      >Remove</button>
+                    </div>
+                  </details>
+                </li>
+              );
+            })}
           </ol>
           <button
-            className="program-editor-add"
+            className="pal-text-button pal-editor-add"
             disabled={busy || draft.days.length >= 14}
             onClick={openDayCreator}
             type="button"
           >Add day</button>
         </aside>
 
-        <div className="program-editor-main" key={resetVersion}>
-          <section className="program-editor-day" aria-labelledby={`editor-day-${selected.dayKey}`}>
-            <header>
-              <span className="eyebrow">Day {selected.dayNumber}</span>
-              <h2 id={`editor-day-${selected.dayKey}`}>{selected.displayName}</h2>
-              <label className="program-editor-field">
+        <div className="pal-editor-main" key={resetVersion}>
+          <section className="pal-editor-day" aria-labelledby={`editor-day-${selected.dayKey}`}>
+            <header className="pal-editor-day-head">
+              <h2 id={`editor-day-${selected.dayKey}`}>
+                {selected.displayName === `Day ${selected.dayNumber}` ? selected.displayName : `Day ${selected.dayNumber} · ${selected.displayName}`}
+              </h2>
+              <label className="pal-editor-field">
                 <span>Day name</span>
                 <input
                   disabled={busy}
@@ -1173,9 +1167,9 @@ export function ProgramEditor({
             {selected.sections.map((section, sectionIndex) => {
               const sectionLabel = section.title.trim() || `${section.kind} section`;
               return (
-              <fieldset className="program-editor-section" disabled={busy} key={section.draftKey}>
+              <fieldset className="pal-editor-section" disabled={busy} key={section.draftKey}>
                 <legend>
-                  <span>{section.kind}</span>
+                  <span>{sentenceCase(section.kind)} section</span>
                   <input
                     aria-label={`Section name for ${section.kind}`}
                     disabled={busy}
@@ -1187,38 +1181,40 @@ export function ProgramEditor({
                     value={section.title}
                   />
                 </legend>
-                <details className="row-menu"><summary aria-label={`More actions for ${sectionLabel}`}>More</summary>
-                  <div role="group" aria-label={`Reorder ${sectionLabel} section`} className="program-editor-reorder">
+                <details className="pal-editor-menu pal-editor-section-menu"><summary aria-label={`More actions for ${sectionLabel}`}>More</summary>
+                  <div className="pal-editor-menu-list">
+                    <div role="group" aria-label={`Reorder ${sectionLabel} section`} className="pal-editor-reorder">
+                      <button
+                        aria-label={`Move ${sectionLabel} section up`}
+                        disabled={sectionIndex === 0}
+                        onClick={() => moveSection(selectedDay, sectionIndex, -1)}
+                        type="button"
+                      >Up</button>
+                      <button
+                        aria-label={`Move ${sectionLabel} section down`}
+                        disabled={sectionIndex === selected.sections.length - 1}
+                        onClick={() => moveSection(selectedDay, sectionIndex, 1)}
+                        type="button"
+                      >Down</button>
+                    </div>
                     <button
-                      aria-label={`Move ${sectionLabel} section up`}
-                      disabled={sectionIndex === 0}
-                      onClick={() => moveSection(selectedDay, sectionIndex, -1)}
+                      aria-label={`Remove ${sectionLabel} section`}
+                      disabled={selected.sections.length <= 1}
+                      onClick={(event) => openSectionRemoval(
+                        selectedDay,
+                        sectionIndex,
+                        event.currentTarget,
+                      )}
                       type="button"
-                    >Up</button>
-                    <button
-                      aria-label={`Move ${sectionLabel} section down`}
-                      disabled={sectionIndex === selected.sections.length - 1}
-                      onClick={() => moveSection(selectedDay, sectionIndex, 1)}
-                      type="button"
-                    >Down</button>
+                    >Remove section</button>
                   </div>
-                  <button
-                    aria-label={`Remove ${sectionLabel} section`}
-                    disabled={selected.sections.length <= 1}
-                    onClick={(event) => openSectionRemoval(
-                      selectedDay,
-                      sectionIndex,
-                      event.currentTarget,
-                    )}
-                    type="button"
-                  >Remove section</button>
                 </details>
                 {section.prescriptions.length === 0 ? (
-                  <p className="program-editor-empty-section">
-                    Empty section: add a movement or remove it.
+                  <p className="pal-editor-empty">
+                    This section is empty. Add a movement or remove the section.
                   </p>
                 ) : null}
-                <ol>
+                <ol className="pal-editor-moves">
                   {section.prescriptions.map((prescription, prescriptionIndex) => {
                     const meaning = meaningForPrescription(prescription);
                     const movementLabel = meaning?.label ?? prescription.displayName ?? "Exercise";
@@ -1226,19 +1222,20 @@ export function ProgramEditor({
                     const prescriptionDraftIdentity = prescription.prescriptionKey;
                     return (
                       <li
-                        className="program-editor-prescription"
+                        className="pal-editor-move"
                         id={`program-prescription-${prescriptionDraftIdentity}`}
                         key={prescriptionDraftIdentity}
                         tabIndex={-1}
                       >
                         <header>
                           <div>
-                            <span>{section.kind.charAt(0).toUpperCase() + section.kind.slice(1)} · {meaning ? LOGGING_KIND_LABELS[meaning.measurementKind] : "Exercise"}</span>
                             <h3>{movementLabel}</h3>
+                            <small>{sentenceCase(section.kind)} · {meaning ? LOGGING_KIND_LABELS[meaning.measurementKind] : "Exercise"}</small>
                           </div>
-                          <div className="program-editor-prescription-actions">
+                          <div className="pal-editor-move-actions">
                             <button
                               aria-label={`Replace ${movementLabel}`}
+                              className="pal-text-button"
                               disabled={!meaning}
                               onClick={() => {
                                 if (!meaning) return;
@@ -1264,39 +1261,39 @@ export function ProgramEditor({
                               }}
                               type="button"
                             >Replace</button>
-<details className="row-menu"><summary aria-label={`More actions for ${movementLabel}`}>More</summary>
-                            <div role="group" className="program-editor-reorder" aria-label={`Reorder ${meaning?.label ?? "exercise"}`}>
-                              <button
-                                aria-label={`Move ${movementLabel} up`}
-                                disabled={prescriptionIndex === 0}
-                                onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, -1)}
-                                type="button"
-                              >Up</button>
-                              <button
-                                aria-label={`Move ${movementLabel} down`}
-                                disabled={prescriptionIndex === section.prescriptions.length - 1}
-                                onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, 1)}
-                                type="button"
-                              >Down</button>
-                            </div>
-
-                            <button
-                              aria-label={`Remove ${movementLabel}`}
-                              disabled={busy}
-                              onClick={(event) => openPrescriptionRemoval(
-                                selectedDay,
-                                sectionIndex,
-                                prescriptionIndex,
-                                movementLabel,
-                                event.currentTarget,
-                              )}
-                              type="button"
-                            >Remove</button>
-
-</details>
+                            <details className="pal-editor-menu"><summary aria-label={`More actions for ${movementLabel}`}>More</summary>
+                              <div className="pal-editor-menu-list">
+                                <div role="group" className="pal-editor-reorder" aria-label={`Reorder ${meaning?.label ?? "exercise"}`}>
+                                  <button
+                                    aria-label={`Move ${movementLabel} up`}
+                                    disabled={prescriptionIndex === 0}
+                                    onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, -1)}
+                                    type="button"
+                                  >Up</button>
+                                  <button
+                                    aria-label={`Move ${movementLabel} down`}
+                                    disabled={prescriptionIndex === section.prescriptions.length - 1}
+                                    onClick={() => move(selectedDay, sectionIndex, prescriptionIndex, 1)}
+                                    type="button"
+                                  >Down</button>
+                                </div>
+                                <button
+                                  aria-label={`Remove ${movementLabel}`}
+                                  disabled={busy}
+                                  onClick={(event) => openPrescriptionRemoval(
+                                    selectedDay,
+                                    sectionIndex,
+                                    prescriptionIndex,
+                                    movementLabel,
+                                    event.currentTarget,
+                                  )}
+                                  type="button"
+                                >Remove</button>
+                              </div>
+                            </details>
                           </div>
                         </header>
-                        <div className="program-editor-grid">
+                        <div className="pal-editor-fields">
                           <label><span>Sets</span><input {...fieldAttributes(sectionIndex, prescriptionIndex, "setCount")} min={1} max={20} onChange={(event) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { setCount: Number(event.target.value) })} type="number" value={prescription.setCount} /></label>
                           <label><span>Rest seconds</span><input {...fieldAttributes(sectionIndex, prescriptionIndex, "restSeconds")} min={0} max={900} onChange={(event) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { restSeconds: Number(event.target.value) })} type="number" value={prescription.restSeconds} /></label>
                           {duration ? (
@@ -1316,28 +1313,28 @@ export function ProgramEditor({
                           {meaning?.measurementKind === "distance_duration" ? (
                             <label><span>Target {unitLabels.distance}</span><CanonicalMeasurementInput fieldAccessibility={fieldAttributes(sectionIndex, prescriptionIndex, "targetDistanceM")} onEdit={() => setFieldErrors((current) => { const next = { ...current }; delete next[[selectedDay, sectionIndex, prescriptionIndex, "targetDistanceM"].join(":")]; return next; })} canonicalValue={prescription.targetDistanceM} measurement="distance" min={unitSystem === "imperial" ? "0.0001" : "0.001"} onCommit={(targetDistanceM) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { targetDistanceM })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:${prescriptionDraftIdentity}:distance`} step={unitSystem === "imperial" ? "0.0001" : "0.001"} unitSystem={unitSystem} /></label>
                           ) : null}
-                          <label className="program-editor-wide"><span>Notes</span><textarea {...fieldAttributes(sectionIndex, prescriptionIndex, "notes")} maxLength={2000} onChange={(event) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { notes: event.target.value })} value={prescription.notes ?? ""} /></label>
+                          <label className="pal-editor-wide"><span>Notes</span><textarea {...fieldAttributes(sectionIndex, prescriptionIndex, "notes")} maxLength={2000} onChange={(event) => updatePrescription(selectedDay, sectionIndex, prescriptionIndex, { notes: event.target.value })} value={prescription.notes ?? ""} /></label>
                         </div>
                       </li>
                     );
                   })}
                 </ol>
                 <button
-                  className="program-editor-add"
+                  className="secondary-action pal-editor-add"
                   onClick={() => openChooser({
                     dayIndex: selectedDay,
                     request: { intent: "add" },
                     sectionIndex,
                   })}
                   type="button"
-                >Add movement</button>
+                ><Icon name="plus" />Add movement</button>
               </fieldset>
               );
             })}
 
-            <details className="program-editor-add-section"><summary>Add a section</summary>
-              <p>Group movements into sections. Add a movement to each section before saving.</p>
-              <div>
+            <details className="pal-editor-disclosure pal-editor-add-section"><summary>Add a section</summary>
+              <p>Group movements into sections. Each section needs at least one movement before you save.</p>
+              <div className="pal-editor-chips">
                 {PROGRAM_SECTION_KINDS.map((kind) => (
                   <button
                     disabled={busy || selected.sections.length >= PROGRAM_SECTION_MAXIMUM}
@@ -1349,29 +1346,31 @@ export function ProgramEditor({
               </div>
             </details>
 
-            <fieldset className="program-editor-section program-editor-cardio" disabled={busy}>
-              <legend>Optional cardio</legend>
+            <fieldset className="pal-editor-section pal-editor-cardio" disabled={busy}>
+              <legend><span>Optional</span>Cardio finish</legend>
               {selected.cardio.length === 0 ? (
-                <p className="program-editor-empty-section">No cardio choices are attached to this day.</p>
+                <p className="pal-editor-empty">No cardio on this day. Add a walk or run to finish if you like.</p>
               ) : null}
-              <div className="program-editor-cardio-grid">
+              <div className="pal-editor-cardio-list">
                 {selected.cardio.map((cardio) => (
-                  <section key={cardio.cardioKey} aria-labelledby={`cardio-${selected.dayKey}-${cardio.cardioKey}`}>
+                  <section className="pal-editor-move" key={cardio.cardioKey} aria-labelledby={`cardio-${selected.dayKey}-${cardio.cardioKey}`}>
                     <header>
                       <h3 id={`cardio-${selected.dayKey}-${cardio.cardioKey}`}>{cardio.mode}</h3>
-                      <div className="program-editor-cardio-actions">
+                      <div className="pal-editor-move-actions">
                         <div role="group"
                           aria-label={`Reorder ${cardio.mode} cardio`}
-                          className="program-editor-reorder"
+                          className="pal-editor-reorder"
                         >
                           <button
                             aria-label={`Move ${cardio.mode} cardio up`}
+                            className="pal-text-button"
                             disabled={selected.cardio[0]?.cardioKey === cardio.cardioKey}
                             onClick={() => moveCardio(cardio.cardioKey, cardio.mode, -1)}
                             type="button"
                           >Up</button>
                           <button
                             aria-label={`Move ${cardio.mode} cardio down`}
+                            className="pal-text-button"
                             disabled={selected.cardio.at(-1)?.cardioKey === cardio.cardioKey}
                             onClick={() => moveCardio(cardio.cardioKey, cardio.mode, 1)}
                             type="button"
@@ -1379,22 +1378,23 @@ export function ProgramEditor({
                         </div>
                         <button
                           aria-label={`Remove ${cardio.mode} cardio`}
+                          className="pal-text-button"
                           onClick={() => removeCardio(cardio.cardioKey, cardio.mode)}
                           type="button"
                         >Remove cardio</button>
                       </div>
                     </header>
-                    <div className="program-editor-grid">
+                    <div className="pal-editor-fields">
                       <label><span>Duration</span><input type="text" inputMode="numeric" placeholder="mm:ss" value={clockText[`${cardio.cardioKey}:duration`] ?? formatClockDuration(cardio.durationSeconds)} onChange={(event) => { const text = event.target.value; setClockText((current) => ({ ...current, [`${cardio.cardioKey}:duration`]: text })); updateCardio(selectedDay, cardio.cardioKey, { durationSeconds: parseClockDuration(text) ?? 0 }); }} /></label>
                       <label><span>Distance {unitLabels.distance}</span><CanonicalMeasurementInput canonicalValue={cardio.distanceM} measurement="distance" min={unitSystem === "imperial" ? 0.0001 : 0.001} onCommit={(distanceM) => updateCardio(selectedDay, cardio.cardioKey, { distanceM })} onPendingChange={markMeasurementPending} pendingKey={`${selected.dayKey}:${cardio.cardioKey}:distance`} step="0.01" unitSystem={unitSystem} /></label>
                       <label><span>Pace (min/{unitSystem === "imperial" ? "mi" : "km"})</span><input type="text" inputMode="numeric" placeholder="mm:ss" value={clockText[`${cardio.cardioKey}:pace`] ?? (cardio.paceSecondsPerKm === null ? "" : formatClockDuration(paceToDisplay(cardio.paceSecondsPerKm, unitSystem)))} onChange={(event) => { const text = event.target.value; const seconds = parseClockDuration(text); setClockText((current) => ({ ...current, [`${cardio.cardioKey}:pace`]: text })); updateCardio(selectedDay, cardio.cardioKey, { paceSecondsPerKm: text.trim() === "" ? null : seconds === undefined ? 0 : displayToPace(seconds, unitSystem) }); }} /></label>
                       <label><span>Incline %</span><input min={0} max={100} onChange={(event) => updateCardio(selectedDay, cardio.cardioKey, { inclinePercent: optionalNumber(event.target.value) })} step="0.1" type="number" value={cardio.inclinePercent ?? ""} /></label>
-                      <label className="program-editor-wide"><span>Notes</span><textarea maxLength={2000} onChange={(event) => updateCardio(selectedDay, cardio.cardioKey, { notes: event.target.value })} value={cardio.notes ?? ""} /></label>
+                      <label className="pal-editor-wide"><span>Notes</span><textarea maxLength={2000} onChange={(event) => updateCardio(selectedDay, cardio.cardioKey, { notes: event.target.value })} value={cardio.notes ?? ""} /></label>
                     </div>
                   </section>
                 ))}
               </div>
-              <div className="program-editor-add-section">
+              <div className="pal-editor-chips">
                 {PROGRAM_CARDIO_MODES.filter((mode) =>
                   !selected.cardio.some((cardio) => cardio.mode === mode),
                 ).map((mode) => (
@@ -1407,16 +1407,26 @@ export function ProgramEditor({
           </section>
 
           {errors.length > 0 ? (
-            <div className="program-editor-errors" ref={errorRef} role="alert" tabIndex={-1}>
+            <div className="pal-editor-errors" ref={errorRef} role="alert" tabIndex={-1}>
               <h2>Fix these before saving</h2>
               <ul>{errors.map((error, index) => <li id={`program-error-${index}`} key={`${index}-${error}`}>{error}</li>)}</ul>
             </div>
           ) : null}
-          <footer className="program-editor-footer">
-            <div>
-              <p>Save when your routine is ready. You can keep editing afterward.</p>
+          {conflict ? (
+            <div className="pal-notice pal-editor-conflict">
+              <p>Someone changed this routine somewhere else.</p>
+              <div className="pal-actions">
+                <button className="secondary-action" type="button" onClick={() => { if (!dirty || window.confirm("Discard your routine changes?")) window.location.reload(); }}>Reload latest</button>
+                <Link className="pal-text-button" href="/app/programs">All routines</Link>
+              </div>
             </div>
-            <div className="program-editor-footer-actions">
+          ) : null}
+          <footer className="pal-editor-savebar" data-state={busy ? "saving" : saveFailed ? "failed" : dirty ? "unsaved" : "saved"}>
+            <div className="pal-editor-savebar-text">
+              <p className="pal-editor-save-state">{saveState}</p>
+              <div aria-live="polite" className="pal-status" ref={statusRef} role="status" tabIndex={-1}>{message}</div>
+            </div>
+            <div className="pal-editor-savebar-actions">
               {dirty ? <button className="secondary-action" disabled={busy} type="button" onClick={() => discardDialog.current?.showModal()}>Discard changes</button> : null}
               {undoDraft && undoDraft.after === draft ? <button type="button" className="secondary-action" disabled={busy} onClick={() => {setDraft(undoDraft.before); setUndoDraft(null); setMessage("Movement restored to your draft.");}}>Undo removal</button> : null}
               {!dirty ? (
@@ -1431,66 +1441,68 @@ export function ProgramEditor({
               </button>
             </div>
           </footer>
-          {conflict ? <div><button className="secondary-action" type="button" onClick={() => { if (!dirty || window.confirm("Discard your routine changes?")) window.location.reload(); }}>Reload latest</button><Link href="/app/programs">All routines</Link></div> : null}
-          <div aria-live="polite" className="member-save-status" ref={statusRef} role="status" tabIndex={-1}>{message}</div>
         </div>
       </div>
 
-      <dialog className="account-delete-dialog" ref={discardDialog} aria-labelledby="program-discard-title">
-        <h2 id="program-discard-title">Discard your changes?</h2>
-        <p>Your routine goes back to the last saved version.</p>
-        <button className="primary-action" type="button" onClick={discardChanges}>Discard</button>
-        <button className="secondary-action" type="button" onClick={() => discardDialog.current?.close()}>Keep editing</button>
+      <dialog className="pal-sheet pal-routine-sheet" ref={discardDialog} aria-labelledby="program-discard-title">
+        <div className="pal-routine-sheet-body">
+          <h2 id="program-discard-title">Discard your changes?</h2>
+          <p>Your routine goes back to the last saved version.</p>
+          <div className="pal-actions">
+            <button className="primary-action" type="button" onClick={discardChanges}>Discard</button>
+            <button className="secondary-action" type="button" onClick={() => discardDialog.current?.close()}>Keep editing</button>
+          </div>
+        </div>
       </dialog>
       {dayCreatorOpen ? (
         <dialog ref={dayCreatorDialog} onCancel={() => setDayCreatorOpen(false)}
           aria-labelledby="program-day-creator-title"
-          className="program-editor-day-creation-fields program-editor-day-setup"
+          className="pal-sheet pal-routine-sheet"
         >
-          <header>
-
+          <div className="pal-routine-sheet-body">
             <h2 id="program-day-creator-title">New day</h2>
-          </header>
-          <label className="program-editor-field">
-            <span>Day name</span>
-            <input
-              aria-required="true"
-              maxLength={120}
-              onChange={(event) => setNewDayName(event.target.value)}
-              ref={dayNameRef}
-              value={newDayName}
-            />
-          </label>
-          <label className="program-editor-field">
-            <span>First section name</span>
-            <input
-              aria-required="true"
-              maxLength={120}
-              onChange={(event) => setNewDaySectionName(event.target.value)}
-              value={newDaySectionName}
-            />
-          </label>
-          <label className="program-editor-field">
-            <span>Section classification</span>
-            <select
-              onChange={(event) => setNewDaySectionKind(event.target.value as ProgramSectionKind)}
-              value={newDaySectionKind}
-            >
-              {PROGRAM_SECTION_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
-            </select>
-          </label>
-          <footer>
-            <button
-              onClick={() => {
-                setDayCreatorOpen(false);
-                queueMicrotask(() => returnFocusRef.current?.focus());
-              }}
-              type="button"
-            >Cancel</button>
-            <button className="primary-action" onClick={chooseFirstDayMovement} type="button">
-              Choose first movement
-            </button>
-          </footer>
+            <label className="pal-editor-field">
+              <span>Day name</span>
+              <input
+                aria-required="true"
+                maxLength={120}
+                onChange={(event) => setNewDayName(event.target.value)}
+                ref={dayNameRef}
+                value={newDayName}
+              />
+            </label>
+            <label className="pal-editor-field">
+              <span>First section name</span>
+              <input
+                aria-required="true"
+                maxLength={120}
+                onChange={(event) => setNewDaySectionName(event.target.value)}
+                value={newDaySectionName}
+              />
+            </label>
+            <label className="pal-editor-field">
+              <span>Section type</span>
+              <select
+                onChange={(event) => setNewDaySectionKind(event.target.value as ProgramSectionKind)}
+                value={newDaySectionKind}
+              >
+                {PROGRAM_SECTION_KINDS.map((kind) => <option key={kind} value={kind}>{sentenceCase(kind)}</option>)}
+              </select>
+            </label>
+            <div className="pal-actions">
+              <button className="primary-action" onClick={chooseFirstDayMovement} type="button">
+                Choose first movement
+              </button>
+              <button
+                className="secondary-action"
+                onClick={() => {
+                  setDayCreatorOpen(false);
+                  queueMicrotask(() => returnFocusRef.current?.focus());
+                }}
+                type="button"
+              >Cancel</button>
+            </div>
+          </div>
         </dialog>
       ) : null}
 
@@ -1506,49 +1518,45 @@ export function ProgramEditor({
       {dayRemoval ? (
         <dialog
           aria-labelledby="day-removal-title"
-          className="program-section-removal"
+          className="pal-sheet pal-routine-sheet"
           onClick={(event) => {
             if (event.target === event.currentTarget) event.currentTarget.close();
           }}
           onClose={dismissDayRemoval}
           ref={dayRemovalDialogRef}
         >
-          <div className="program-section-removal-sheet">
+          <div className="pal-routine-sheet-body">
             <header>
-              <div>
-                <h2 id="day-removal-title">Remove this day?</h2>
-              </div>
+              <h2 id="day-removal-title">Remove this day?</h2>
               <button
                 aria-label="Close day removal review"
                 onClick={() => dayRemovalDialogRef.current?.close()}
                 type="button"
               >Close</button>
             </header>
-            <div className="program-section-removal-content">
-              <p>{"Past workouts won't change."}</p>
-              {dayRemoval.review.exerciseNames.length > 0 ? (
-                <ul>
-                  {dayRemoval.review.exerciseNames.map((name, index) => (
-                    <li key={`${dayRemoval.review.prescriptionKeys[index] ?? name}-${index}`}>{name}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>This day has no draft movements yet.</p>
-              )}
-            </div>
-            <footer>
-              <button onClick={() => dayRemovalDialogRef.current?.close()} type="button">
-                Keep day
-              </button>
+            <p>{"Past workouts won't change."}</p>
+            {dayRemoval.review.exerciseNames.length > 0 ? (
+              <ul className="pal-routine-sheet-list">
+                {dayRemoval.review.exerciseNames.map((name, index) => (
+                  <li key={`${dayRemoval.review.prescriptionKeys[index] ?? name}-${index}`}>{name}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>This day has no movements yet.</p>
+            )}
+            <div className="pal-actions">
               <button
-                className="primary-action"
+                className="danger-action"
                 onClick={confirmDayRemoval}
                 ref={dayRemovalConfirmRef}
                 type="button"
               >
                 Remove day
               </button>
-            </footer>
+              <button className="secondary-action" onClick={() => dayRemovalDialogRef.current?.close()} type="button">
+                Keep day
+              </button>
+            </div>
           </div>
         </dialog>
       ) : null}
@@ -1556,41 +1564,38 @@ export function ProgramEditor({
       {prescriptionRemoval ? (
         <dialog
           aria-labelledby="prescription-removal-title"
-          className="program-section-removal"
+          className="pal-sheet pal-routine-sheet"
           onClick={(event) => {
             if (event.target === event.currentTarget) event.currentTarget.close();
           }}
           onClose={dismissPrescriptionRemoval}
           ref={prescriptionRemovalDialogRef}
         >
-          <div className="program-section-removal-sheet">
+          <div className="pal-routine-sheet-body">
             <header>
-              <div>
-                <h2 id="prescription-removal-title">
-                  Remove {prescriptionRemoval.review.exerciseName}?
-                </h2>
-              </div>
+              <h2 id="prescription-removal-title">
+                Remove {prescriptionRemoval.review.exerciseName}?
+              </h2>
               <button
                 aria-label="Close movement removal review"
                 onClick={() => prescriptionRemovalDialogRef.current?.close()}
                 type="button"
               >Close</button>
             </header>
-            <div className="program-section-removal-content">
-              <p>{"Past workouts won't change."}</p>
-            </div>
-            <footer>
+            <p>{"Past workouts won't change."}</p>
+            <div className="pal-actions">
               <button
-                onClick={() => prescriptionRemovalDialogRef.current?.close()}
-                type="button"
-              >Keep movement</button>
-              <button
-                className="primary-action"
+                className="danger-action"
                 onClick={confirmPrescriptionRemoval}
                 ref={prescriptionRemovalConfirmRef}
                 type="button"
               >Remove movement</button>
-            </footer>
+              <button
+                className="secondary-action"
+                onClick={() => prescriptionRemovalDialogRef.current?.close()}
+                type="button"
+              >Keep movement</button>
+            </div>
           </div>
         </dialog>
       ) : null}
@@ -1598,49 +1603,45 @@ export function ProgramEditor({
       {sectionRemoval ? (
         <dialog
           aria-labelledby="section-removal-title"
-          className="program-section-removal"
+          className="pal-sheet pal-routine-sheet"
           onClick={(event) => {
             if (event.target === event.currentTarget) event.currentTarget.close();
           }}
           onClose={dismissSectionRemoval}
           ref={sectionRemovalDialogRef}
         >
-          <div className="program-section-removal-sheet">
+          <div className="pal-routine-sheet-body">
             <header>
-              <div>
-                <h2 id="section-removal-title">Remove {removingSectionLabel}?</h2>
-              </div>
+              <h2 id="section-removal-title">Remove {removingSectionLabel}?</h2>
               <button
                 aria-label="Close section removal review"
                 onClick={() => sectionRemovalDialogRef.current?.close()}
                 type="button"
               >Close</button>
             </header>
-            <div className="program-section-removal-content">
-              <p>{"Past workouts won't change."}</p>
-              {sectionRemoval.review.exerciseNames.length > 0 ? (
-                <ul>
-                  {sectionRemoval.review.exerciseNames.map((name, index) => (
-                    <li key={`${sectionRemoval.review.prescriptionKeys[index] ?? name}-${index}`}>{name}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>This section has no draft movements yet.</p>
-              )}
-            </div>
-            <footer>
-              <button onClick={() => sectionRemovalDialogRef.current?.close()} type="button">
-                Keep section
-              </button>
+            <p>{"Past workouts won't change."}</p>
+            {sectionRemoval.review.exerciseNames.length > 0 ? (
+              <ul className="pal-routine-sheet-list">
+                {sectionRemoval.review.exerciseNames.map((name, index) => (
+                  <li key={`${sectionRemoval.review.prescriptionKeys[index] ?? name}-${index}`}>{name}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>This section has no movements yet.</p>
+            )}
+            <div className="pal-actions">
               <button
-                className="primary-action"
+                className="danger-action"
                 onClick={confirmSectionRemoval}
                 ref={sectionRemovalConfirmRef}
                 type="button"
               >
                 Remove section and movements
               </button>
-            </footer>
+              <button className="secondary-action" onClick={() => sectionRemovalDialogRef.current?.close()} type="button">
+                Keep section
+              </button>
+            </div>
           </div>
         </dialog>
       ) : null}
