@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PublicShell } from "@/components/layout/public-shell";
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
+import { SceneStage } from "@/components/ui/scene-stage";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { listCatalogExercises } from "@/domain/exercises/library";
@@ -12,6 +12,8 @@ import { MovementDemo } from "@/components/video/demo-sheet";
 import { loadPublicApprovedDemosBySlug } from "@/server/read-models/approved-demos";
 
 export const metadata: Metadata = { title: "Exercise library" };
+
+const ROLE_LABELS = { compound: "Big lift", accessory: "Accessory", "core-reps": "Core", "core-timed": "Core, timed" } as const;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -38,86 +40,71 @@ export default async function LibraryPage({ searchParams }: PageProps) {
 
   return (
     <PublicShell current="library">
-      <section className="public-hero public-library-hero companion-heading contour-surface">
-        <div>
+      <SceneStage scene="library" />
+      <header className="pal-page-head">
+        <h1>Exercise library</h1>
+        <p>Find a movement, watch a quick demo and see how to do it.</p>
+      </header>
 
-          <h1>Exercise library</h1>
-          <p>Find a movement and see how to do it.</p>
-        </div>
-
-        <DecorativeCompanion variant="library" />
-      </section>
-
-      <section className="library-tools" aria-labelledby="library-tools-heading">
-        <div>
-          <h2 id="library-tools-heading">Compatible equipment</h2>
-          <div className="profile-links" role="group" aria-label="Equipment filter">
+      <div className="pal-page-body">
+        <section className="pal-library-tools" aria-labelledby="library-tools-heading">
+          <h2 id="library-tools-heading">Your equipment</h2>
+          <div className="profile-links pal-segmented" role="group" aria-label="Equipment filter">
             {(Object.keys(EQUIPMENT_PROFILES) as EquipmentProfileKind[]).map((profileId) => (
               <Link
                 aria-current={profile === profileId ? "true" : undefined}
                 href={profileHref(profileId, search)}
                 key={profileId}
               >
-                <Icon name="dumbbell" />
+                {profile === profileId ? <Icon name="check" /> : <Icon name="dumbbell" />}
                 {EQUIPMENT_PROFILES[profileId].label}
               </Link>
             ))}
           </div>
-          <p>Showing movements for {EQUIPMENT_PROFILES[profile].label}.</p>
-        </div>
-        <form className="library-search" role="search" method="get">
-          <input name="equipment" type="hidden" value={profile} />
-          <label htmlFor="library-query">Search movements</label>
-          <div>
-            <input
-              defaultValue={search}
-              id="library-query"
-              name="q"
-              placeholder="Try row, plank, or squat"
-              type="search"
-            />
-            <button type="submit">Search</button>
-          </div>
-        </form>
-      </section>
+          <form className="pal-search" role="search" method="get">
+            <input name="equipment" type="hidden" value={profile} />
+            <label htmlFor="library-query">Search movements</label>
+            <div>
+              <input defaultValue={search} id="library-query" name="q" placeholder="Try row, plank or squat" type="search" />
+              <button className="secondary-action" type="submit">Search</button>
+            </div>
+          </form>
+        </section>
 
-      <section className="library-results" aria-labelledby="library-results-heading">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">{EQUIPMENT_PROFILES[profile].label}</span>
-            <h2 id="library-results-heading">{exercises.length} compatible movements</h2>
+        <section aria-labelledby="library-results-heading">
+          <div className="pal-section-head">
+            <h2 id="library-results-heading">{exercises.length} movements for {EQUIPMENT_PROFILES[profile].label.toLowerCase()}</h2>
+            {search ? <Link href={profileHref(profile, "")}>Clear search</Link> : null}
           </div>
-          {search ? <Link href={profileHref(profile, "")}>Clear search</Link> : null}
-        </div>
-        {exercises.length === 0 ? (
-          <div className="empty-sheet">
-            <h3>No compatible match</h3>
-            <p>Try a different name or switch equipment.</p>
-          </div>
-        ) : (
-          <ul className="library-grid">
-            {exercises.map((exercise) => (
-              <li id={`movement-${exercise.slug}`} key={exercise.slug}>
-                <Link
-                  href={withFrom(
-                    `/library/${exercise.slug}?equipment=${profile}`,
-                    `${profileHref(profile, search)}#movement-${exercise.slug}`,
-                  )}
-                  prefetch={false}
-                >
-
-                  <span>
-                    <strong>{exercise.name}</strong>
-                    <small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small>
-                  </span>
-                  <Icon name="chevron-right" />
-                </Link>
-                {demos[exercise.slug] ? <MovementDemo movementName={exercise.name} videos={demos[exercise.slug]} /> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {exercises.length === 0 ? (
+            <div className="pal-empty">
+              <h3>No match yet</h3>
+              <p>Try a different name or switch equipment.</p>
+            </div>
+          ) : (
+            <ul className="pal-moves">
+              {exercises.map((exercise) => (
+                <li className="pal-move pal-move--plain" id={`movement-${exercise.slug}`} key={exercise.slug}>
+                  <div>
+                    <Link
+                      className="pal-move-name"
+                      href={withFrom(
+                        `/library/${exercise.slug}?equipment=${profile}`,
+                        `${profileHref(profile, search)}#movement-${exercise.slug}`,
+                      )}
+                      prefetch={false}
+                    >
+                      {exercise.name}
+                    </Link>
+                    <small>{ROLE_LABELS[exercise.role]} · {exercise.requiredEquipment.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small>
+                  </div>
+                  {demos[exercise.slug] ? <MovementDemo movementName={exercise.name} videos={demos[exercise.slug]} /> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </PublicShell>
   );
 }

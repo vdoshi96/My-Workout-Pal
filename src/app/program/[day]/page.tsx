@@ -8,6 +8,7 @@ import { MovementDemo } from "@/components/video/demo-sheet";
 import { EQUIPMENT_PROFILES, type EquipmentProfileKind } from "@/domain/equipment";
 import { getCatalogExercise } from "@/domain/exercises/catalog";
 import { PublicShell } from "@/components/layout/public-shell";
+import { SceneStage } from "@/components/ui/scene-stage";
 import { fromParam, resolveBackTarget, withFrom } from "@/domain/navigation/back-target";
 import { createStarterProgram } from "@/domain/programs/starter";
 import { loadPublicApprovedDemosBySlug } from "@/server/read-models/approved-demos";
@@ -51,26 +52,35 @@ export default async function DayPage({ params, searchParams }: PageProps) {
   });
   const demos = await loadPublicApprovedDemosBySlug(selectedDay.prescriptions.map((prescription) => prescription.exerciseSlug));
 
-  return <PublicShell current="program"><section className="day-page">
-    <BackLink target={back} />
-    <header className="public-hero"><h1>{dayName} day</h1><p>{selectedDay.prescriptions.length} movements with a walker or runner finish.</p></header>
-    <div className="day-layout">
-      <div>{selectedDay.sections.map((section) => <section className="prescription-section" key={section.kind}>
-        <h2>{section.kind === "strength" ? "Strength" : section.kind === "accessory" ? "Accessory" : "Core"}</h2>
-        <ol>{section.prescriptionIndexes.map((index) => {
+  return <PublicShell current="program">
+    <SceneStage scene="workout" />
+    <header className="pal-page-head">
+      <BackLink target={back} />
+      <h1>{dayName} day</h1>
+      <p>{selectedDay.prescriptions.length} movements, then a 20-minute walk or run if you like.</p>
+    </header>
+    <div className="pal-page-body">
+      {selectedDay.sections.map((section) => <section aria-labelledby={`section-${section.kind}`} key={section.kind}>
+        <h2 id={`section-${section.kind}`}>{section.kind === "strength" ? "Strength" : section.kind === "accessory" ? "Accessory" : "Core"}</h2>
+        <ol className="pal-moves">{section.prescriptionIndexes.map((index) => {
           const prescription = selectedDay.prescriptions[index];
           if (!prescription) return null;
           const exercise = getCatalogExercise(prescription.exerciseSlug);
           const name = prescription.displayName ?? exercise.name;
-          const target = prescription.minimumSeconds ? `${prescription.minimumSeconds}–${prescription.maximumSeconds} sec` : `${prescription.minimumReps}–${prescription.maximumReps}`;
+          const target = prescription.minimumSeconds ? `${prescription.minimumSeconds}–${prescription.maximumSeconds} sec` : `${prescription.minimumReps}–${prescription.maximumReps} reps`;
           const anchor = `movement-${index + 1}`;
-          return <li id={anchor} key={exercise.slug}>
-            <Link href={withFrom(`/library/${exercise.slug}?equipment=${profile}`, `${dayHref}#${anchor}`)}><span><strong>{name}</strong><small>{prescription.sets} × {target} · {prescription.restSeconds}s rest</small></span><Icon name="chevron-right" /></Link>
+          return <li className="pal-move" id={anchor} key={exercise.slug}>
+            <span aria-hidden="true" className="pal-move-number">{index + 1}</span>
+            <div><Link className="pal-move-name" href={withFrom(`/library/${exercise.slug}?equipment=${profile}`, `${dayHref}#${anchor}`)}>{name}</Link><small>{prescription.sets} sets · {target} · {prescription.restSeconds}s rest</small></div>
             <MovementDemo movementName={name} videos={demos[exercise.slug]} />
           </li>;
         })}</ol>
-      </section>)}</div>
-      <aside className="cardio-sheet"><h2>Cardio finish</h2><div className="cardio-options"><div><Icon name="walk" /><strong>Walker</strong><span>20 minutes</span></div><div><Icon name="run" /><strong>Runner</strong><span>20 minutes</span></div></div><p>Edit cardio targets once you save a routine.</p><Link href={withFrom(`/sample-workout?day=${day}&equipment=${profile}`, dayHref)}>See an example finished workout</Link></aside>
+      </section>)}
+      <section aria-labelledby="cardio-heading">
+        <h2 id="cardio-heading">Cardio finish</h2>
+        <p className="pal-lead"><Icon name="walk" /> Walk or <Icon name="run" /> run for 20 minutes. You can change it once you save a routine.</p>
+        <Link className="secondary-action" href={withFrom(`/sample-workout?day=${day}&equipment=${profile}`, dayHref)}>See an example finished workout <Icon name="arrow-right" /></Link>
+      </section>
     </div>
-  </section></PublicShell>;
+  </PublicShell>;
 }

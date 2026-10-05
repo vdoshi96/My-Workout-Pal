@@ -1,6 +1,5 @@
 "use client";
 
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -10,6 +9,7 @@ import {
   parseCustomExerciseMutationResponse,
 } from "@/components/exercises/custom-exercise-response";
 import { BackLink } from "@/components/navigation/back-link";
+import { SceneStage } from "@/components/ui/scene-stage";
 import { Icon } from "@/components/ui/icon";
 import { EQUIPMENT_IDS, type EquipmentId } from "@/domain/equipment";
 import { withFrom, type BackTarget } from "@/domain/navigation/back-target";
@@ -183,23 +183,21 @@ export function CustomExerciseEditor({
 
   return (
     <section className="custom-editor" aria-labelledby="custom-exercise-title">
-      <header className="member-page-heading companion-heading">
-        <div>
-          <span className="eyebrow">Private exercise</span>
-          <h1 id="custom-exercise-title">{mode === "create" ? "Create a movement" : "Edit movement"}</h1>
-
-        </div>
+      <SceneStage scene="library" />
+      <header className="pal-page-head">
         <BackLink target={back} />
-        <DecorativeCompanion variant="library" />
+        <h1 id="custom-exercise-title">{mode === "create" ? "Create a movement" : "Edit movement"}</h1>
+        <p>Only you can see your private movements.</p>
       </header>
 
+      <div className="pal-page-body">
       {!canMutate ? (
-        <aside className="member-inline-notice" role="status">
+        <aside className="pal-notice" role="status">
           Verify your email and sign in again before saving a custom exercise.
         </aside>
       ) : null}
 
-      <form className="custom-exercise-form" onSubmit={(event) => void submit(event)}>
+      <form className="pal-form" onSubmit={(event) => void submit(event)}>
         <label htmlFor="custom-name">Exercise name</label>
         <input
           autoComplete="off"
@@ -224,7 +222,7 @@ export function CustomExerciseEditor({
 
         <fieldset disabled={!canMutate || busy}>
           <legend>Required equipment</legend>
-          <div className="custom-equipment-grid">
+          <div className="pal-check-chips">
             {EQUIPMENT_IDS.map((id) => (
               <label key={id}>
                 <input
@@ -280,27 +278,26 @@ export function CustomExerciseEditor({
           ))}
         </fieldset>
 
-        <div className="custom-form-actions">
+        <div className="pal-actions">
           <button className="primary-action" disabled={!canMutate || busy} type="submit">
             <span>{busy ? "Working…" : mode === "create" ? "Create exercise" : "Save changes"}</span>
             <Icon name="arrow-right" />
           </button>
-          <p aria-live="polite" role="status">{message}</p>
+          <p aria-live="polite" className="pal-status" role="status">{message}</p>
         </div>
       </form>
 
       {mode === "edit" && exercise ? (
-        <section className="custom-danger-zone">
-          <span className="eyebrow">Deletion</span>
+        <section className="pal-danger-zone">
           <h2>Remove this custom movement</h2>
           <p>You can delete this once no routine or workout uses it.</p>
           {deleteOpen ? (
-            <div aria-labelledby="custom-delete-heading" className="custom-delete-confirm" role="alertdialog">
+            <div aria-labelledby="custom-delete-heading" className="pal-confirm" role="alertdialog">
               <strong id="custom-delete-heading">Delete {exercise.name}?</strong>
               <p>This cannot be undone if the server confirms the exercise is unused.</p>
               <div>
                 <button className="danger-action" disabled={busy} onClick={() => void remove()} ref={deleteConfirmButton} type="button">Delete exercise</button>
-                <button disabled={busy} onClick={() => setDeleteOpen(false)} type="button">Cancel</button>
+                <button className="secondary-action" disabled={busy} onClick={() => setDeleteOpen(false)} type="button">Cancel</button>
               </div>
             </div>
           ) : (
@@ -308,6 +305,7 @@ export function CustomExerciseEditor({
           )}
         </section>
       ) : null}
+      </div>
     </section>
   );
 }

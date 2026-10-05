@@ -74,10 +74,13 @@ function build(pathname: string, entries: ReadonlyArray<readonly [string, string
 
 const memberRules: readonly Rule[] = [
   ({ pathname, params, hash }) => {
-    if (pathname !== "/app" || hash || !onlyParams(params, ["day"])) return undefined;
+    if (pathname !== "/app" || !onlyParams(params, ["day"])) return undefined;
     const day = params.get("day");
     if (day !== null && !DAY_KEY_PATTERN.test(day)) return undefined;
-    return { href: build("/app", [["day", day ?? undefined]]), label: "Back to Today" };
+    // Today lists the chosen day's movements, so a movement anchor needs that day.
+    const movement = day === null ? (hash ? false : "") : anchor(hash, "movement", POSITION_PATTERN);
+    if (movement === false) return undefined;
+    return { href: build("/app", [["day", day ?? undefined]], movement), label: "Back to Today" };
   },
   ({ pathname, params, hash }, context) => {
     const match = /^\/app\/program\/([^/]+)$/u.exec(pathname);

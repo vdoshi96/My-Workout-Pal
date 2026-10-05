@@ -13,6 +13,7 @@ import { Icon } from "@/components/ui/icon";
 import { PalSticker, SceneStage } from "@/components/ui/scene-stage";
 import { DemoSheet } from "@/components/video/demo-sheet";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
+import { withFrom } from "@/domain/navigation/back-target";
 import type { CuratedVideos } from "@/domain/youtube/embed";
 import type {
   ActiveProgramPrescriptionReadModel,
@@ -49,10 +50,10 @@ function targetLabel(prescription: ActiveProgramPrescriptionReadModel) {
   return sets;
 }
 
-function movementHref(prescription: ActiveProgramPrescriptionReadModel) {
-  return prescription.customExerciseId
+function movementHref(prescription: ActiveProgramPrescriptionReadModel, origin: string) {
+  return withFrom(prescription.customExerciseId
     ? `/app/library/custom/${prescription.customExerciseId}`
-    : `/app/library/${prescription.exercise.slug}`;
+    : `/app/library/${prescription.exercise.slug}`, origin);
 }
 
 export function MemberProgramHome({
@@ -137,7 +138,7 @@ export function MemberProgramHome({
         <section aria-labelledby="member-moves-title">
           <div className="pal-heading-row">
             <h2 id="member-moves-title">What&apos;s in {selectedDay.displayName}</h2>
-            <Link href={`/app/program/${selectedDay.dayKey}`} prefetch={false}>See the whole day</Link>
+            <Link href={withFrom(`/app/program/${selectedDay.dayKey}`, `/app?day=${selectedDay.dayKey}`)} prefetch={false}>See the whole day</Link>
           </div>
           <ol className="pal-moves">
             {selectedDay.prescriptions.map((prescription, index) => {
@@ -146,7 +147,7 @@ export function MemberProgramHome({
                 <li className="pal-move" id={`movement-${index + 1}`} key={prescription.id}>
                   <span aria-hidden="true" className="pal-move-number">{index + 1}</span>
                   <div>
-                    <Link className="pal-move-name" href={movementHref(prescription)} prefetch={false}>{prescription.label}</Link>
+                    <Link className="pal-move-name" href={movementHref(prescription, `/app?day=${selectedDay.dayKey}#movement-${index + 1}`)} prefetch={false}>{prescription.label}</Link>
                     <small>{targetLabel(prescription)}</small>
                   </div>
                   {videos ? <DemoSheet movementName={prescription.label} videos={videos} /> : <span className="pal-no-demo">No demo yet</span>}

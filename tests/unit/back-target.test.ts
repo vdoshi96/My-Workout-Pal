@@ -30,6 +30,7 @@ describe("resolveBackTarget for member origins", () => {
   it.each([
     ["/app", { href: "/app", label: "Back to Today" }],
     ["/app?day=pull", { href: "/app?day=pull", label: "Back to Today" }],
+    ["/app?day=pull#movement-2", { href: "/app?day=pull#movement-2", label: "Back to Today" }],
     ["/app/program/pull", { href: "/app/program/pull", label: "Back to Day 2 · Pull" }],
     ["/app/program/push#movement-3", { href: "/app/program/push#movement-3", label: "Back to Day 1 · Push" }],
     ["/app/library", { href: "/app/library", label: "Back to Library" }],
@@ -91,6 +92,8 @@ describe("resolveBackTarget for member origins", () => {
     "/app/library#movement-Bad_Slug",
     "/app/progress#session-not-a-uuid",
     "/app?day=Push Day",
+    "/app?day=pull#movement-x",
+    "/app#elsewhere",
     "/app?tab=today",
     "/workout/not-a-uuid",
     `/workout/${SESSION_ID}#exercise-0`,

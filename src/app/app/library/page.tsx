@@ -1,7 +1,7 @@
 import { EQUIPMENT_LABELS, LOGGING_KIND_LABELS } from "@/components/exercises/labels";
 import Link from "next/link";
 
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
+import { SceneStage } from "@/components/ui/scene-stage";
 import { Icon } from "@/components/ui/icon";
 import { getDatabase } from "@/db/client";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
@@ -21,6 +21,8 @@ import {
 } from "@/server/repositories/profile-program";
 
 export const metadata = { title: "Library" };
+
+const ROLE_LABELS = { compound: "Big lift", accessory: "Accessory", "core-reps": "Core", "core-timed": "Core, timed" } as const;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -57,80 +59,76 @@ export default async function MemberLibraryPage({ searchParams }: PageProps) {
 
   return (
     <section className="member-library" aria-labelledby="member-library-title">
-      <header className="member-library-heading companion-heading contour-surface">
-        <div>
-          <h1 id="member-library-title">Exercise library</h1>
-          <p>{hasRoutine ? `Movement guides and your private exercises, filtered for ${profile.label.toLocaleLowerCase("en-US")}.` : "Browse dumbbell, bodyweight, and bench movements. Set up your routine to choose your equipment."}</p>
+      <SceneStage scene="library" />
+      <header className="pal-page-head">
+        <h1 id="member-library-title">Exercise library</h1>
+        <p>{hasRoutine ? `Guides, demos and your own movements, for ${profile.label.toLocaleLowerCase("en-US")}.` : "Browse dumbbell, bodyweight and bench movements. Set up your routine to choose your equipment."}</p>
+        <div className="pal-actions">
+          {hasRoutine ? <Link className="secondary-action" href={withFrom("/app/library/custom/new", libraryHref)}>Create private exercise <Icon name="plus" /></Link> : <Link className="primary-action" href="/app">Set up your routine <Icon name="arrow-right" /></Link>}
         </div>
-        {hasRoutine ? <Link className="primary-action" href={withFrom("/app/library/custom/new", libraryHref)}>Create private exercise <Icon name="arrow-right" /></Link> : <Link className="primary-action" href="/app">Set up your routine <Icon name="arrow-right" /></Link>}
-        <DecorativeCompanion variant="library" />
       </header>
 
-      <form className="member-library-search" method="get" role="search">
-        <label htmlFor="member-library-query">Search movements</label>
-        <div>
-          <input
-            defaultValue={query}
-            id="member-library-query"
-            maxLength={120}
-            name="q"
-            placeholder="Name, alias, equipment, or muscle"
-            type="search"
-          />
-          <button type="submit">Search</button>
-        </div>
-        <p>{resultCount} compatible result{resultCount === 1 ? "" : "s"}. {hasRoutine ? "Change equipment in Routine." : "Choose equipment when you set up your routine."}</p>
-      </form>
+      <div className="pal-page-body">
+        <form className="pal-search" method="get" role="search">
+          <label htmlFor="member-library-query">Search movements</label>
+          <div>
+            <input defaultValue={query} id="member-library-query" maxLength={120} name="q" placeholder="Name, equipment or muscle" type="search" />
+            <button className="secondary-action" type="submit">Search</button>
+          </div>
+          <p className="pal-note">{resultCount} compatible result{resultCount === 1 ? "" : "s"}. {hasRoutine ? <>Change equipment in <Link href="/app/settings#equipment-profile">Settings</Link>.</> : "Choose equipment when you set up your routine."}</p>
+        </form>
 
-      {resultCount === 0 ? (
-        <div className="member-empty-sheet">
-          <h2>No matches. Try a different search.</h2>
-          <Link href="/app/library">Clear search</Link>
-        </div>
-      ) : (
-        <div className="member-library-results">
-          {customExercises.length > 0 ? (
-            <section aria-labelledby="private-results-title">
-              <div className="section-heading">
-                <div><span className="eyebrow">Yours</span><h2 id="private-results-title">Your private movements</h2></div>
-                <Link href={withFrom("/app/library/custom", libraryHref)}>Manage all</Link>
+        {resultCount === 0 ? (
+          <div className="pal-empty">
+            <h2>No matches. Try a different search.</h2>
+            <Link href="/app/library">Clear search</Link>
+          </div>
+        ) : (
+          <>
+            {customExercises.length > 0 ? (
+              <section aria-labelledby="private-results-title">
+                <div className="pal-section-head">
+                  <h2 id="private-results-title">Your private movements</h2>
+                  <Link href={withFrom("/app/library/custom", libraryHref)}>Manage all</Link>
+                </div>
+                <ul className="pal-moves">
+                  {customExercises.map((exercise) => (
+                    <li className="pal-move pal-move--plain" id={`movement-${exercise.id}`} key={exercise.id}>
+                      <div>
+                        <Link className="pal-move-name" href={withFrom(`/app/library/custom/${exercise.id}`, `${libraryHref}#movement-${exercise.id}`)}>{exercise.name}</Link>
+                        <small>{LOGGING_KIND_LABELS[exercise.loggingKind]} · {exercise.equipmentIds.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small>
+                      </div>
+                      <span className="pal-tag">Private</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            <section aria-labelledby="catalog-results-title">
+              <div className="pal-section-head">
+                <h2 id="catalog-results-title">Movement guides</h2>
+                {query ? <Link href="/app/library">Clear search</Link> : null}
               </div>
-              <ul className="member-library-list">
-                {customExercises.map((exercise) => (
-                  <li id={`movement-${exercise.id}`} key={exercise.id}>
-                    <Link href={withFrom(`/app/library/custom/${exercise.id}`, `${libraryHref}#movement-${exercise.id}`)}>
-                      <span><strong>{exercise.name}</strong><small>{LOGGING_KIND_LABELS[exercise.loggingKind]} · {exercise.equipmentIds.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small></span>
-                      <span>Private</span><Icon name="chevron-right" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              {catalogExercises.length === 0 ? (
+                <p className="pal-note">No matches. Try a different search.</p>
+              ) : (
+                <ul className="pal-moves">
+                  {catalogExercises.map((exercise) => (
+                    <li className="pal-move pal-move--plain" id={`movement-${exercise.slug}`} key={exercise.slug}>
+                      <div>
+                        <Link className="pal-move-name" href={withFrom(`/app/library/${exercise.slug}`, `${libraryHref}#movement-${exercise.slug}`)} prefetch={false}>{exercise.name}</Link>
+                        <small>{ROLE_LABELS[exercise.role]} · {exercise.requiredEquipment.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small>
+                      </div>
+                      {demos[exercise.slug] ? <MovementDemo movementName={exercise.name} videos={demos[exercise.slug]} /> : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
-          ) : null}
-
-          <section aria-labelledby="catalog-results-title">
-            <div className="section-heading">
-              <div><h2 id="catalog-results-title">Movement guides</h2></div>
-              {query ? <Link href="/app/library">Clear search</Link> : null}
-            </div>
-            {catalogExercises.length === 0 ? (
-              <p className="member-library-section-empty">No matches. Try a different search.</p>
-            ) : (
-              <ul className="member-library-list">
-                {catalogExercises.map((exercise) => (
-                  <li id={`movement-${exercise.slug}`} key={exercise.slug}>
-                    <Link href={withFrom(`/app/library/${exercise.slug}`, `${libraryHref}#movement-${exercise.slug}`)} prefetch={false}>
-                      <span><strong>{exercise.name}</strong><small>{exercise.role.replace("-", " ")} · {exercise.requiredEquipment.map((id) => EQUIPMENT_LABELS[id]).join(" + ")}</small></span>
-                      <span>Guide</span><Icon name="chevron-right" />
-                    </Link>
-                    {demos[exercise.slug] ? <MovementDemo movementName={exercise.name} videos={demos[exercise.slug]} /> : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </section>
   );
 }
