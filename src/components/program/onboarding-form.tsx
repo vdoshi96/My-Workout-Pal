@@ -185,7 +185,7 @@ export function OnboardingForm({
             {(Object.keys(EQUIPMENT_PROFILES) as EquipmentProfileKind[]).map((profile) => <label className="pal-choice" key={profile}>
               <input checked={equipment === profile} disabled={busy} name="equipment-profile" onChange={() => change(() => { setEquipment(profile); setFirstExerciseSlug(""); })} type="radio" />
               <EquipmentIllustration kind={profile === "barbell" ? "barbell" : "dumbbell"} />
-              <span><strong>{profile === "barbell" ? "A full gym with a barbell and rack" : "Dumbbells, a bench and bodyweight"}</strong><small>{EQUIPMENT_PROFILES[profile].description}</small></span>
+              <span><strong>{EQUIPMENT_PROFILES[profile].label}</strong><small>{EQUIPMENT_PROFILES[profile].description}</small></span>
               <Icon className="pal-choice-check" name="check" />
             </label>)}
           </div>

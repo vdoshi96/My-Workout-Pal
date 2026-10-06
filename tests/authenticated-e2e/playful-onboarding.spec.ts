@@ -18,7 +18,7 @@ test.describe("playful onboarding", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByRole("alert").filter({ hasText: "Pick one" })).toHaveText("Pick one to continue.");
 
-    await answerOnboarding(page, { goal: "Get stronger", experience: "I'm new to this", days: "2 days", equipment: "Dumbbells, a bench and bodyweight" });
+    await answerOnboarding(page, { goal: "Get stronger", experience: "I'm new to this", days: "2 days", equipment: "Dumbbells" });
     await expect(page.getByRole("heading", { level: 1, name: "Here's your routine." })).toBeFocused();
     await expect(page.getByText("2-day full body", { exact: false })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: /^Day 1 · / })).toBeVisible();

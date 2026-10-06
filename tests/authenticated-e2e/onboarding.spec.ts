@@ -261,7 +261,7 @@ async function submitOnboarding(
   if (!(await save.isVisible())) {
     await answerOnboarding(page, {
       ...DEFAULT_ANSWERS,
-      equipment: profile === "barbell" ? "A full gym with a barbell and rack" : "Dumbbells, a bench and bodyweight",
+      equipment: profile === "barbell" ? "Barbell + rack" : "Dumbbells",
     }, { navigate: false });
     await page.getByText("Prefer a different start?").click();
     await page.getByRole("button", { name: mode === "example" ? "Use the five-day example" : "Start blank" }).click();

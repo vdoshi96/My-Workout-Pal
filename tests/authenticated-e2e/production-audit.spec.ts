@@ -51,7 +51,7 @@ test.describe("production audit: member surfaces", () => {
       [/^Build muscle/, "How much lifting have you done?"],
       [/^Some/, "How many days a week can you train?"],
       [/^3 days/, "What do you have to work with?"],
-      [/^Dumbbells, a bench and bodyweight/, "Here's your routine."],
+      [/^Dumbbells/, "Here's your routine."],
     ] as const) {
       await page.getByRole("radio", { name: choice }).check();
       await page.getByRole("button", { name: "Continue" }).click();

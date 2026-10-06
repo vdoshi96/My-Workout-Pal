@@ -17,14 +17,14 @@ export type OnboardingAnswers = Readonly<{
   goal: "Get stronger" | "Build muscle" | "Feel fitter overall" | "Lose fat" | "Train for a sport or event";
   experience: "I'm new to this" | "Some" | "Lots";
   days: "2 days" | "3 days" | "4 days" | "5 days";
-  equipment: "Dumbbells, a bench and bodyweight" | "A full gym with a barbell and rack";
+  equipment: "Dumbbells" | "Barbell + rack";
 }>;
 
 export const DEFAULT_ANSWERS: OnboardingAnswers = {
   goal: "Build muscle",
   experience: "Some",
   days: "3 days",
-  equipment: "Dumbbells, a bench and bodyweight",
+  equipment: "Dumbbells",
 };
 
 /** Answers the four onboarding questions and stops on the routine preview. */
