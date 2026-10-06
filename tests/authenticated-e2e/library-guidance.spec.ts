@@ -7,6 +7,7 @@ import {
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
+import { saveExampleFromOnboarding } from "./support/member";
 
 async function privateMutation(
   page: Page,
@@ -84,12 +85,9 @@ test("browses, creates, links, selects, and isolates private movements", async (
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await saveExampleFromOnboarding(page);
   expect((await onboarding).status()).toBe(201);
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
 
   await page.goto("/app/library/chooser");
   const dialog = page.getByRole("dialog", { name: "Add movement" });
@@ -122,7 +120,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
   await page.getByRole("button", { name: "Open movement chooser" }).click();
   const reopened = page.getByRole("dialog", { name: "Add movement" });
   await reopened.getByRole("searchbox", { name: "Search movements" }).fill("suitcase");
-  await reopened.locator(".movement-chooser__list").getByRole("button", { name: /Suitcase march/ }).click();
+  await reopened.locator(".pal-chooser-list").getByRole("button", { name: /Suitcase march/ }).click();
   const firstLink = reopened.getByLabel("Your link 1");
   await expect(firstLink).toHaveValue(
     "https://www.youtube.com/watch?v=AbCdEfGhI01",
@@ -208,18 +206,19 @@ test("browses, creates, links, selects, and isolates private movements", async (
   expect(publishResult.status).toBe(200);
 
   await page.goto("/app");
-  await page.getByRole("link", { name: /Guidance day/ }).click();
+  await page.getByRole("link", { name: "See the whole day" }).click();
+  await page.waitForURL(/\/app\/program\/[^/?#]+\?from=/u);
   const start = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Start workout" }).click();
+  await page.getByRole("button", { name: "Start Guidance day" }).click();
   expect((await start).status()).toBe(201);
   await expect(page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   await expect(page.getByRole("heading", { name: "Suitcase march" })).toBeVisible();
-  await page.getByText("Watch demo and technique guidance", { exact: true }).click();
   await expect(page.getByText("Your links", { exact: true })).toBeVisible();
+  await page.getByText("Your links", { exact: true }).click();
   const snapshottedLink = page.getByRole("link", { name: "Open your link 1" });
   await expect(snapshottedLink).toHaveAttribute(
     "href",
@@ -242,7 +241,7 @@ test("browses, creates, links, selects, and isolates private movements", async (
   );
   expect(replacement.status).toBe(200);
   await page.goto(runnerUrl);
-  await page.getByText("Watch demo and technique guidance", { exact: true }).click();
+  await page.getByText("Your links", { exact: true }).click();
   await expect(page.getByRole("link", { name: "Open your link 1" })).toHaveAttribute(
     "href",
     "https://example.com/suitcase-guide",

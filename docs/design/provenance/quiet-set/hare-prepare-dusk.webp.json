@@ -1,0 +1,8 @@
+{
+  "source": "Deterministic recolour of hare-prepare.webp for dark mode, October 5, 2026, approved by the owner as recomposed artwork. No generative model was used.",
+  "references": ["hare-prepare.webp"],
+  "method": "scripts/lib/recolor-dusk-scene.sh hare-prepare.webp <out> 0.47 0.52: a soft per-pixel mask (light sky blue inside the upper-right window area) blends the daytime sky toward a lavender-to-indigo dusk gradient, dims foliage in the same area, and applies a mild warm curve to the room. Encoded with cwebp.",
+  "derivative": { "width": 1200, "format": "webp", "quality": 82 },
+  "sha256": "df76d031a826c9b698d8a5b96477cc86436ae61cacdf25f7db64757b5a7756b2",
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

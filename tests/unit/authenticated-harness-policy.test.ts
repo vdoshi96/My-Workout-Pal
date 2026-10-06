@@ -275,8 +275,14 @@ describe("credential-free authenticated harness boundary", () => {
     );
     expect(ownerRunner).not.toContain("clearRunnerState");
     expect(ownerRunner).toContain(
-      "router.push(`/app/history/${encodeURIComponent(sessionId)}`)",
+      'router.push(withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app"))',
     );
+    // Finishing (not ending) adds done=1 after `from`, so the summary can celebrate.
+    expect(ownerRunner).toContain(
+      'router.push(`${withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app")}&done=1`)',
+    );
+    expect(ownerRunner).toContain("onComplete={openCompletedHistory}");
+    expect(ownerRunner).toContain("onAbandon={openTerminalHistory}");
   });
 
   it("binds to loopback and allowlists only non-provider child-process environment", () => {
@@ -324,9 +330,9 @@ describe("credential-free authenticated harness boundary", () => {
     expect(runner).toContain("stageAuthenticatedFixture({");
     expect(runner).toContain("const releaseFixture =");
     expect(runner).toContain("releaseFixture();");
-    expect(runner).toContain('"public/illustrations/companions/preparing-fox.webp"');
+    expect(runner).toContain('"public/illustrations/quiet-set"');
     expect(runner).toContain(
-      '"tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox.webp"',
+      '"tests/fixtures/authenticated-app/public/illustrations/quiet-set"',
     );
     expect(runner).not.toContain("copyFileSync");
     expect(runner).not.toContain("unlinkSync");
@@ -525,7 +531,7 @@ describe("credential-free authenticated harness boundary", () => {
       "utf8",
     );
     expect(memberProgramHome).toMatch(
-      /<Link[\s\S]{0,160}href=\{`\/app\/program\/\$\{day\.dayKey\}`\}[\s\S]{0,80}prefetch=\{false\}/u,
+      /<Link[\s\S]{0,160}href=\{withFrom\(`\/app\/program\/\$\{selectedDay\.dayKey\}`[\s\S]{0,80}prefetch=\{false\}/u,
     );
     expect(memberProgramHome).not.toContain('aria-label={`Open ${day.displayName} to start`}');
 

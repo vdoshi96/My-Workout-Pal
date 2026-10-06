@@ -32,7 +32,7 @@ function requestStub(
     }),
     method: () => overrides.method ?? "GET",
     url: () =>
-      `http://127.0.0.1:4173${overrides.path ?? "/illustrations/companions/cataloging-otter.webp"}`,
+      `http://127.0.0.1:4173${overrides.path ?? "/illustrations/quiet-set/otter-study.webp"}`,
   } as unknown as Request;
 }
 
@@ -139,7 +139,7 @@ describe("authenticated companion request cancellation policy", () => {
     expect(isSupersededCompanionImageRequest(requestStub({ method: "POST" }))).toBe(false);
     expect(
       isSupersededCompanionImageRequest(
-        requestStub({ path: "/illustrations/companions/unknown.webp" }),
+        requestStub({ path: "/illustrations/quiet-set/unknown.webp" }),
       ),
     ).toBe(false);
     expect(

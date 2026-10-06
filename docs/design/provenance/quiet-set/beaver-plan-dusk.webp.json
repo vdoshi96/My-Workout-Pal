@@ -1,0 +1,8 @@
+{
+  "source": "Deterministic recolour of beaver-plan.webp for dark mode, October 5, 2026, approved by the owner as recomposed artwork. No generative model was used.",
+  "references": ["beaver-plan.webp"],
+  "method": "scripts/lib/recolor-dusk-scene.sh beaver-plan.webp <out> 0.47 0.52: a soft per-pixel mask (light sky blue inside the upper-right window area) blends the daytime sky toward a lavender-to-indigo dusk gradient, dims foliage in the same area, and applies a mild warm curve to the room. Encoded with cwebp.",
+  "derivative": { "width": 1200, "format": "webp", "quality": 82 },
+  "sha256": "e5ccd5e20dd9615f51229498a285f94840d7a16bf444641e73692ed64df58eac",
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

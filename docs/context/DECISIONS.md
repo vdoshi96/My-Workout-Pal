@@ -1,5 +1,20 @@
 # Decisions
 
+## 2026-10-05: Roll out Studio Pals, generated onboarding and the navigation contract (owner-approved)
+
+The owner approved the *Studio Pals* direction, the Fredoka display font, the four onboarding questions, the evening artwork, deleting unused art, and running migration `0008_training_profile` against production. They asked for a more integrated dark mode, so dark pages use dusk recolours of every scene, masked into an indigo night canvas, rather than dimmed daylight art.
+
+- **One design system.** Tokens live at `:root` in `src/app/studio-pals.css`, with area stylesheets for the runner, routine screens and insights. `quiet-set.css` and the corner companions are deleted, not overridden. Every selected state uses one token set (`--selected-bg/fg/edge`), and a unit test checks every token pair against WCAG AA in both themes.
+- **Onboarding.** New members answer goal, experience, days per week and equipment. `generateStarterRoutine` builds the routine on the server from those answers (the client preview uses the same pure function), using only catalogue movements and never prescribing load. The five-day example and a blank start remain one choice away. Answers are stored in `user_training_profiles`, owned through the server session, editable in Settings, and deleted with the account. Changing them never rewrites the active routine or history.
+- **Navigation.** Drill-down links carry a validated `from` origin. `resolveBackTarget` accepts only allowlisted member and public origins, and `BackLink` returns to the exact anchor. Today keeps the selected day in the address, and the address is the source of truth when the page renders. Demos open in a native dialog that mounts the video only while open.
+- **Focus after a screen is replaced.** Finishing a workout and leaving the tour request focus for the next screen's heading (`ArrivalFocus`), because Next.js otherwise leaves focus on the document or the first focusable element.
+- **Test drive.** `/try` is a two-movement guest workout with approved demos. It saves nothing.
+- **Owner review (October 5).** Day pills wrap onto more rows rather than scrolling sideways. Onboarding names the equipment profiles "Dumbbells" and "Barbell + rack", as everywhere else.
+
+## 2026-10-04: Overhaul the look and onboarding toward a playful companion (proposed; approved October 5, see above)
+
+The owner judges the app by a first-time visitor's reaction, not by passing gates. The proposed *Studio Pals* direction makes the illustrated studio the page itself, replaces decorative cards with whitespace and soft grouping, adds warm accents with state tokens that never put light text on a mid-tone, gives every drill-down a labelled back control that returns to the exact origin, opens demos in place, and replaces the one-set onboarding with goal, experience, schedule and equipment questions plus a skippable tour. Generated routines use only movements with approved demos and never prescribe load. New answers would live in an additive `user_training_profiles` table owned through the server session. See [the overhaul plan](../plans/PLAYFUL-COMPANION-OVERHAUL.md). Phase 2 starts only after owner approval.
+
 ## 2026-08-25: Treat the recording as workflow evidence
 
 The private recording is evidence for navigation and interaction intent. It is not a source repository or visual specification. The application uses original code, data, copy, assets, and identity.

@@ -34,7 +34,7 @@ test("restores every opened public companion route offline without caching owned
   // boundary joins the public cache alongside the install-time HTML/assets.
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(
-    page.getByRole("heading", { level: 1, name: "A little space for your next set." }),
+    page.getByRole("heading", { level: 1, name: "Your new gym buddy." }),
   ).toBeVisible();
   await page.goto("/progress", { waitUntil: "networkidle" });
   await expect(
@@ -70,7 +70,7 @@ test("restores every opened public companion route offline without caching owned
       return {
         landingCompanion: Boolean(
           await publicCache.match(
-            "/illustrations/companions/planning-hedgehog.webp",
+            "/illustrations/quiet-set/pip-studio.webp",
           ),
         ),
         memberCompanion: Boolean(
@@ -80,12 +80,12 @@ test("restores every opened public companion route offline without caching owned
         ),
         libraryCompanion: Boolean(
           await publicCache.match(
-            "/illustrations/companions/cataloging-otter.webp",
+            "/illustrations/quiet-set/otter-study.webp",
           ),
         ),
         libraryCompanionCompact: Boolean(
           await publicCache.match(
-            "/illustrations/companions/cataloging-otter-512.webp",
+            "/illustrations/quiet-set/otter-study-phone.webp",
           ),
         ),
         libraryRoute: Boolean(await publicCache.match("/library")),
@@ -97,7 +97,7 @@ test("restores every opened public companion route offline without caching owned
         ),
         progressCompanion: Boolean(
           await publicCache.match(
-            "/illustrations/companions/reviewing-raccoon.webp",
+            "/illustrations/quiet-set/tortoise-review.webp",
           ),
         ),
         publicRoute: Boolean(await publicCache.match("/program/push")),
@@ -125,12 +125,12 @@ test("restores every opened public companion route offline without caching owned
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { level: 1, name: "A little space for your next set." }),
+      page.getByRole("heading", { level: 1, name: "Your new gym buddy." }),
     ).toBeVisible();
     await expect
       .poll(() =>
         page
-          .locator('.quiet-studio img')
+          .locator('.pal-scene img')
           .evaluate((image) => (image as HTMLImageElement).naturalWidth),
       )
       .toBeGreaterThan(0);
@@ -142,7 +142,7 @@ test("restores every opened public companion route offline without caching owned
     await expect
       .poll(() =>
         page
-          .locator('[data-companion-placement="progress-preview"] img')
+          .locator('.pal-scene img')
           .evaluate((image) => (image as HTMLImageElement).naturalWidth),
       )
       .toBeGreaterThan(0);
@@ -155,7 +155,7 @@ test("restores every opened public companion route offline without caching owned
     await expect
       .poll(() =>
         page
-          .locator('[data-companion-placement="library"] img')
+          .locator('.pal-scene img')
           .evaluate((image) => (image as HTMLImageElement).naturalWidth),
       )
       .toBeGreaterThan(0);

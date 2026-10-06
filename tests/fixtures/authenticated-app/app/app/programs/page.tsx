@@ -11,6 +11,7 @@ import {
   getViewerProfileProgram,
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
+import { fromParam, resolveBackTarget } from "@/domain/navigation/back-target";
 import { getHarnessDatabase } from "../../../server/database";
 import { harnessRequestContext } from "../../../server/harness-context";
 
@@ -31,12 +32,19 @@ async function readCollectionOrUndefined(
   }
 }
 
-export default async function HarnessProgramsPage() {
+type PageProps = Readonly<{ searchParams: Promise<{ from?: string | string[] }> }>;
+
+export default async function HarnessProgramsPage({ searchParams }: PageProps) {
   const context = harnessRequestContext(await headers());
   if (!context.viewer) return null;
   const { database } = await getHarnessDatabase(context.scope);
-  const model = await readCollectionOrUndefined(database, context.viewer);
+  const [model, query] = await Promise.all([readCollectionOrUndefined(database, context.viewer), searchParams]);
   if (!model?.activeProgram || model.programs.length === 0) redirect("/app");
+  const back = resolveBackTarget(fromParam(query.from), {
+    area: "member",
+    fallback: { href: "/app", label: "Back to Today" },
+    days: model.activeProgram.days,
+  });
   const catalogMovements = [...new Map(Object.values(EQUIPMENT_PROFILES).flatMap((profile) =>
     listCatalogExercises({ profile }).map((exercise) => [exercise.slug, {
       id: deterministicSeedUuid("catalog-exercise", exercise.slug), name: exercise.name, requiredEquipment: exercise.requiredEquipment,
@@ -44,6 +52,7 @@ export default async function HarnessProgramsPage() {
   )).values()].sort((left, right) => left.name.localeCompare(right.name, "en-US"));
   return (
     <ProgramCollection
+      back={back}
       canMutate={context.viewer.eligibleForPermanentMutations}
       initialCatalogMovements={catalogMovements}
       initialPrograms={model.programs}

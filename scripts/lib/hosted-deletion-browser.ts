@@ -39,6 +39,7 @@ import {
   setLogs,
   userEquipmentProfiles,
   userPreferences,
+  userTrainingProfiles,
   userProfiles,
   userPrograms,
   workoutExerciseSnapshots,
@@ -228,6 +229,7 @@ async function ownerPersistenceSnapshot(
     database.select().from(userProfiles).where(eq(userProfiles.firebaseUid, ownerUid)),
     database.select().from(userPreferences).where(eq(userPreferences.ownerFirebaseUid, ownerUid)),
     database.select().from(userEquipmentProfiles).where(eq(userEquipmentProfiles.ownerFirebaseUid, ownerUid)),
+    database.select().from(userTrainingProfiles).where(eq(userTrainingProfiles.ownerFirebaseUid, ownerUid)),
     database.select().from(customExercises).where(eq(customExercises.ownerFirebaseUid, ownerUid)),
     database.select().from(customExerciseVideos).where(eq(customExerciseVideos.ownerFirebaseUid, ownerUid)),
     database.select().from(customExerciseEquipment).where(eq(customExerciseEquipment.ownerFirebaseUid, ownerUid)),
@@ -1058,9 +1060,7 @@ export async function executeHostedDeletionQa(
       identity: aliceIdentity,
     });
     stage = "public_return_evidence";
-    const hero = alicePage.locator(
-      'img[src="/illustrations/companions/planning-hedgehog.webp"]',
-    );
+    const hero = alicePage.locator('.pal-scene img');
     await expect(hero).toBeVisible();
     await expect(hero).toHaveAttribute("alt", "");
     await expect(hero).toHaveAttribute("aria-hidden", "true");

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { PersonalRecordsView } from "@/components/insights/personal-records-view";
 import { getDatabase } from "@/db/client";
+import { fromParam, resolveBackTarget } from "@/domain/navigation/back-target";
 import { getCurrentViewer } from "@/server/auth/viewer";
 import {
   getViewerProfileProgram,
@@ -31,13 +32,19 @@ async function loadRecordsPageData(
   }
 }
 
-export default async function PersonalRecordsPage() {
+type PageProps = Readonly<{ searchParams: Promise<{ from?: string | string[] }> }>;
+
+export default async function PersonalRecordsPage({ searchParams }: PageProps) {
   const viewer = await getCurrentViewer();
   if (!viewer) return null;
-  const { profile, records } = await loadRecordsPageData(viewer);
+  const [{ profile, records }, query] = await Promise.all([loadRecordsPageData(viewer), searchParams]);
   const { timezone, unitSystem } = profile.preferences;
+  const back = resolveBackTarget(fromParam(query.from), {
+    area: "member",
+    fallback: { href: "/app/progress", label: "Back to Progress" },
+  });
 
   return (
-    <PersonalRecordsView records={records} timezone={timezone} unitSystem={unitSystem} />
+    <PersonalRecordsView back={back} records={records} timezone={timezone} unitSystem={unitSystem} />
   );
 }

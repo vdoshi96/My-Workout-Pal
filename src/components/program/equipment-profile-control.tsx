@@ -89,7 +89,7 @@ export function EquipmentProfileControl({
 
   function cancelReview() {
     updateReviewOpen(false);
-    setMessage(draftDirty ? "Equipment preview closed. Your unpublished editor changes are intact." : "");
+    setMessage(draftDirty ? "Nothing changed. Your routine edits are still here." : "");
     queueMicrotask(() => profileButtons.current[targetProfile]?.focus());
   }
 
@@ -148,16 +148,14 @@ export function EquipmentProfileControl({
   return (
     <section
       aria-labelledby={headingId}
-      className={`member-equipment${placement === "editor" ? " program-editor-equipment-control" : ""}`}
+      className={`pal-equip${placement === "editor" ? " pal-equip--editor" : ""}`}
       id={placement === "settings" ? "equipment-profile" : undefined}
     >
-      <header>
-        <h2 id={headingId}>Equipment</h2>
-        <p>
-          Preview the movements that would change before confirming. Past and in-progress workouts stay as they were.
-        </p>
-      </header>
-      <div aria-label="Equipment profile" className="member-equipment-options" role="group">
+      <h2 id={headingId}>Equipment</h2>
+      <p className="pal-equip-lead">
+        Pick what you train with. You&apos;ll see every movement that changes before you switch. Past workouts stay as they were.
+      </p>
+      <div aria-label="Equipment profile" className="pal-equip-options" role="group">
         {(Object.keys(EQUIPMENT_PROFILES) as EquipmentProfileKind[]).map((profile) => (
           <button
             aria-pressed={profile === (reviewOpen ? targetProfile : program.equipmentProfileKind)}
@@ -165,6 +163,7 @@ export function EquipmentProfileControl({
             aria-expanded={profile !== program.equipmentProfileKind
               ? reviewOpen && profile === targetProfile
               : undefined}
+            className="pal-equip-option"
             disabled={controlsDisabled}
             key={profile}
             onClick={() => chooseTarget(profile)}
@@ -178,18 +177,19 @@ export function EquipmentProfileControl({
               <strong>{EQUIPMENT_PROFILES[profile].label}</strong>
               <small>{profile === program.equipmentProfileKind ? "Current" : "Review change"}</small>
             </span>
+            <Icon name="check" />
           </button>
         ))}
       </div>
 
       {reviewOpen ? (
-        <section aria-labelledby={reviewId} className="equipment-review">
+        <section aria-labelledby={reviewId} className="pal-equip-review">
           <h3 id={reviewId} ref={reviewHeading} tabIndex={-1}>Review {EQUIPMENT_PROFILES[targetProfile].label}</h3>
           <p>{EQUIPMENT_PROFILES[targetProfile].description}</p>
           {preview.changes.length === 0 ? (
             <p>No movements need to change.</p>
           ) : (
-            <ol className="equipment-change-list">
+            <ol className="pal-equip-changes">
               {preview.changes.map((change) => (
                 <li key={change.prescriptionId}>
                   <span>{change.dayDisplayName}</span>
@@ -200,7 +200,7 @@ export function EquipmentProfileControl({
             </ol>
           )}
           {preview.blockers.length > 0 ? (
-            <div className="equipment-blockers" role="alert">
+            <div className="pal-equip-blockers" role="alert">
               <strong>Resolve incompatible custom movements first.</strong>
               <ul>
                 {preview.blockers.map((blocker) => (
@@ -212,14 +212,14 @@ export function EquipmentProfileControl({
             </div>
           ) : null}
           {draftDirty ? (
-            <p className="member-inline-notice" role="status">
+            <p className="pal-notice" role="status">
               Save or discard your routine edits first.
             </p>
           ) : null}
           {!canMutate ? (
-            <p className="member-inline-notice">Verify your email and sign in again before saving this permanent change.</p>
+            <p className="pal-notice">Verify your email and sign in again before you switch equipment.</p>
           ) : null}
-          <div className="equipment-review-actions">
+          <div className="pal-actions">
             <button
               className="primary-action"
               disabled={!canMutate || !preview.canConfirm || controlsDisabled || draftDirty}
@@ -229,11 +229,11 @@ export function EquipmentProfileControl({
               {busy ? "Saving…" : `Confirm ${EQUIPMENT_PROFILES[targetProfile].label}`}
               <Icon name="arrow-right" />
             </button>
-            <button disabled={controlsDisabled} onClick={cancelReview} type="button">Cancel</button>
+            <button className="secondary-action" disabled={controlsDisabled} onClick={cancelReview} type="button">Cancel</button>
           </div>
         </section>
       ) : null}
-      <p aria-live="polite" className="member-save-status" role="status">{message}</p>
+      <p aria-live="polite" className="pal-status" role="status">{message}</p>
     </section>
   );
 }

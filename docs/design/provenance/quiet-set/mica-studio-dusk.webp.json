@@ -1,0 +1,8 @@
+{
+  "source": "Deterministic recolour of mica-studio.webp for dark mode, October 5, 2026, approved by the owner as recomposed artwork. No generative model was used.",
+  "references": ["mica-studio.webp"],
+  "method": "scripts/lib/recolor-dusk-scene.sh mica-studio.webp <out> 0.47 0.52: a soft per-pixel mask (light sky blue inside the upper-right window area) blends the daytime sky toward a lavender-to-indigo dusk gradient, dims foliage in the same area, and applies a mild warm curve to the room. Encoded with cwebp.",
+  "derivative": { "width": 1200, "format": "webp", "quality": 82 },
+  "sha256": "de299ebed0c20e069cac02040af9285485cc6521523f16fb13bb2982e5ac986f",
+  "semantics": "Decorative scene; not exercise instruction or evidence of a user outcome."
+}

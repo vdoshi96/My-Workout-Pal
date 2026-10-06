@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/app",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 import {

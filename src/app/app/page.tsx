@@ -7,6 +7,8 @@ import {
   getViewerProfileProgram,
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
+import { listApprovedCuratedVideoPairsByExerciseIds, listApprovedCuratedVideoPairsBySlugs } from "@/server/repositories/curated-videos";
+import { APPROVED_DEMO_SLUGS } from "@/domain/programs/generate-routine";
 import { loadProgressInsights } from "@/server/repositories/training-insights";
 import { createWorkoutRepository } from "@/server/repositories/workout-repository";
 
@@ -27,20 +29,28 @@ async function readProfileProgramOrUndefined(
   }
 }
 
-export default async function MemberHomePage() {
+export default async function MemberHomePage({ searchParams }: Readonly<{ searchParams: Promise<{ day?: string | string[] }> }>) {
   const viewer = await getCurrentViewer();
   if (!viewer) return null;
   const database = getDatabase();
   const model = await readProfileProgramOrUndefined(database, viewer);
   if (!model?.activeProgram) {
-    return <OnboardingForm canMutate={viewer.eligibleForPermanentMutations} />;
+    const demos = await listApprovedCuratedVideoPairsBySlugs(database, [...APPROVED_DEMO_SLUGS]).catch(() => ({}));
+    return <OnboardingForm canMutate={viewer.eligibleForPermanentMutations} demos={demos} displayName={viewer.displayName} />;
   }
-  const [progress, resumableWorkout] = await Promise.all([
+  const { day } = await searchParams;
+  const initialDayKey = typeof day === "string" ? day : null;
+  const catalogExerciseIds = model.activeProgram.days.flatMap((day) =>
+    day.prescriptions.flatMap((prescription) => prescription.catalogExerciseId ? [prescription.catalogExerciseId] : []));
+  const [progress, resumableWorkout, demos] = await Promise.all([
     loadProgressInsights(database, viewer),
     createWorkoutRepository(database).findResumable(viewer),
+    listApprovedCuratedVideoPairsByExerciseIds(database, catalogExerciseIds).catch(() => ({})),
   ]);
   return (
     <MemberProgramHome
+      demos={demos}
+      initialDayKey={initialDayKey}
       canMutate={viewer.eligibleForPermanentMutations}
       displayName={viewer.displayName}
       initialProgram={model.activeProgram}

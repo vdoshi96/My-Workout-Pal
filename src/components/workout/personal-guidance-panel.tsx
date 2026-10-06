@@ -4,13 +4,13 @@ export function PersonalGuidancePanel({
   links,
 }: Readonly<{ links: readonly PersonalGuidanceLink[] }>) {
   return (
-    <div className="runner-personal-guidance">
+    <div className="pal-run-links">
       <ul aria-label="Your personal guidance links">
         {links.map((link, index) => (
           <li key={`${link.kind}:${link.canonicalUrl}`}>
-            <span className="runner-eyebrow">Your link {index + 1}</span>
+            <span className="pal-run-links-label">Your link {index + 1}</span>
             {link.kind === "youtube" ? (
-              <div className="runner-personal-guidance__player">
+              <div className="pal-run-links-player">
                 <iframe
                   allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -23,6 +23,7 @@ export function PersonalGuidancePanel({
               </div>
             ) : (
               <a
+                className="secondary-action"
                 href={link.canonicalUrl}
                 referrerPolicy="no-referrer"
                 rel="noreferrer noopener"
@@ -34,7 +35,7 @@ export function PersonalGuidancePanel({
           </li>
         ))}
       </ul>
-      <p className="runner-muted">
+      <p className="pal-run-muted">
         Personal links are yours and have not been reviewed or approved by the app.
       </p>
     </div>

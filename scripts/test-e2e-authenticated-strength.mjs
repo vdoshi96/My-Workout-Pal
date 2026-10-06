@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { readdirSync } from "node:fs";
 import { createServer } from "node:net";
 import { resolve } from "node:path";
 
@@ -31,48 +32,14 @@ const contourDestination = resolve(
   repositoryRoot,
   "tests/fixtures/authenticated-app/public/contours.svg",
 );
-const rolloutFixtureCompanionNames = [
-  "cataloging-otter-512.webp",
-  "cataloging-otter.webp",
-  "history-archive-tortoise-512.webp",
-  "history-archive-tortoise.webp",
-  "routine-drafting-beaver-512.webp",
-  "routine-drafting-beaver.webp",
-  "settings-packing-hare-512.webp",
-  "settings-packing-hare.webp",
-  "workout-corner-bear-512.webp",
-  "workout-corner-bear.webp",
-];
-const fixtureAssets = [
-  {
-    destination: resolve(
-      repositoryRoot,
-      "tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox-512.webp",
-    ),
-    source: resolve(
-      repositoryRoot,
-      "public/illustrations/companions/preparing-fox-512.webp",
-    ),
-  },
-  {
-    destination: resolve(
-      repositoryRoot,
-      "tests/fixtures/authenticated-app/public/illustrations/companions/preparing-fox.webp",
-    ),
-    source: resolve(
-      repositoryRoot,
-      "public/illustrations/companions/preparing-fox.webp",
-    ),
-  },
-  ...rolloutFixtureCompanionNames.map((name) => ({
-    destination: resolve(
-      repositoryRoot,
-      "tests/fixtures/authenticated-app/public/illustrations/companions",
-      name,
-    ),
-    source: resolve(repositoryRoot, "public/illustrations/companions", name),
-  })),
-];
+// Stage every served scene, sticker and dusk recolour into the fixture's public folder.
+const sceneDirectory = resolve(repositoryRoot, "public/illustrations/quiet-set");
+const fixtureAssets = readdirSync(sceneDirectory)
+  .filter((name) => name.endsWith(".webp"))
+  .map((name) => ({
+    destination: resolve(repositoryRoot, "tests/fixtures/authenticated-app/public/illustrations/quiet-set", name),
+    source: resolve(sceneDirectory, name),
+  }));
 
 function availableLoopbackPort() {
   return new Promise((resolvePort, reject) => {

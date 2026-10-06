@@ -102,7 +102,7 @@ describe("approved curated video publication", () => {
     );
     expect(available).not.toContain("web-share");
     expect(available).not.toContain("Manual review pending");
-    expect(unavailable).toContain("No video yet. Follow the steps below.");
+    expect(unavailable).toContain("No demo yet. Follow the steps below.");
     expect(unavailable).not.toContain("required YouTube API credential");
   });
 
@@ -145,8 +145,9 @@ describe("approved curated video publication", () => {
       />,
     );
 
-    expect(markup).toContain("Technique demonstrations");
-    expect(markup).toContain("youtube-nocookie.com/embed/AbCdEfGhI01");
+    expect(markup).toContain("Watch demo<span class=\"sr-only\"> for Dumbbell bench press</span>");
+    // The approved pair opens in a sheet; no frame is mounted until it is opened.
+    expect(markup).not.toContain("youtube-nocookie.com/embed/AbCdEfGhI01");
     expect(markup).toContain("Log set &amp; rest");
   });
 
@@ -213,9 +214,9 @@ describe("approved curated video publication", () => {
     );
 
     expect(publicMarkup).toContain("Move under control.");
-    expect(publicMarkup).toContain("No video yet. Follow the steps below.");
+    expect(publicMarkup).toContain("No demo yet. Follow the steps below.");
     expect(publicMarkup).not.toContain("<iframe");
-    expect(privateMarkup).toContain("No demonstration is available");
+    expect(privateMarkup).toContain("No demo yet");
     expect(privateMarkup).toContain("Log set &amp; rest");
     expect(privateMarkup).not.toContain("<iframe");
   });

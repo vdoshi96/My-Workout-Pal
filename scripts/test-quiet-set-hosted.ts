@@ -59,7 +59,7 @@ try {
   stage="routine save";
   await page.getByLabel("Sets",{exact:true}).fill("1");
   await page.getByRole("button",{name:"Save routine",exact:true}).click();
-  await expect(page.locator(".quiet-save-state")).toHaveText("Saved");
+  await expect(page.locator(".pal-editor-save-state")).toHaveText("Saved");
   await page.getByRole("link",{name:"Today",exact:true}).click();
   await expect(page.getByRole("button",{name:"Start workout",exact:true})).toBeInViewport();
   await page.screenshot({path:`${evidenceDir}/today-phone.png`});
@@ -116,8 +116,8 @@ try {
   await expect(page).toHaveURL(/\/app\/history\/[0-9a-f-]+$/);
   await page.goto(`${config.origin}/app/progress`);
   stage="completion: Progress rendering";
-  await expect(page.locator(".progress-totals")).toContainText("10");
-  await expect(page.getByText("Volume",{exact:true})).toHaveCount(0);
+  await expect(page.locator(".pal-insights-totals")).toContainText("10");
+  await expect(page.getByText("Lifted",{exact:true})).toHaveCount(0);
   await expect(page.locator(".member-main h1")).toBeVisible();
   await page.screenshot({path:`${evidenceDir}/progress-phone.png`,fullPage:true});
   stage="completion: Progress accessibility";

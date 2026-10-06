@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { NavigationTracker } from "@/components/navigation/navigation-tracker";
 import { Icon } from "@/components/ui/icon";
 
 const items = [
@@ -15,9 +16,10 @@ type NavItem = "home" | (typeof items)[number]["id"];
 export function PublicShell({
   children,
   current,
-}: Readonly<{ children: ReactNode; current: NavItem | null }>) {
+  tone,
+}: Readonly<{ children: ReactNode; current: NavItem | null; tone?: "pal" }>) {
   return (
-    <div className="public-frame">
+    <div className={tone === "pal" ? "public-frame pal" : "public-frame"}>
       <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="public-header">
         <Link className="brand" href="/" prefetch={false}>
@@ -42,6 +44,7 @@ export function PublicShell({
         </nav>
       </header>
       <main id="main-content" tabIndex={-1}>{children}</main>
+      <NavigationTracker />
     </div>
   );
 }

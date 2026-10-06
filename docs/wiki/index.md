@@ -7,9 +7,11 @@ Use the following documents as the maintained project map:
 
 - [Production-grade audit](../plans/PRODUCTION-GRADE-AUDIT.md): September 22 whole-application findings for workflows, UI, UX, and copy.
 - [Production-grade implementation plan](../plans/PRODUCTION-GRADE-IMPLEMENTATION.md): handoff build contract, acceptance tests, and win conditions for the audit fixes.
+- [Playful companion overhaul](../plans/PLAYFUL-COMPANION-OVERHAUL.md): October audit of boxes, contrast, navigation, onboarding and art, the approved Studio Pals direction and the Phase 2 rollout.
+- [Playful overhaul QA](../qa/latest/PLAYFUL-OVERHAUL-QA.md): gates, contrast, navigation map, migration record, test-edit ledger and 390/1440 light and dark screenshots.
 - `PRODUCT.md`: durable product truth.
 - [Member-atmosphere release QA](https://github.com/vdoshi96/My-Workout-Pal/blob/9d5162d/docs/qa/latest/MEMBER-ATMOSPHERE-QA.md): most recent completed application release verification.
-- [Production-grade audit QA](../qa/latest/PRODUCTION-GRADE-QA.md): branch implementation evidence and the section 10 report.
+- [Production-grade audit QA (as merged)](https://github.com/vdoshi96/My-Workout-Pal/blob/4db767f/docs/qa/latest/PRODUCTION-GRADE-QA.md): branch implementation evidence and the section 10 report.
 - `docs/plans/QUIET-SET-IMPLEMENTATION.md`: implemented report contracts and user-directed cartoon art.
 - `docs/plans/FIRST-PRINCIPLES-SIMPLIFICATION.md`: deletion rationale and interrupted History correction.
 - `docs/context/PROJECT.md`: scope, workflows, stack, and boundaries.

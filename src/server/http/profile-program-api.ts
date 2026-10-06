@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export { programPublishRequestSchema } from "@/domain/programs/publication";
+import { trainingProfileAnswersSchema } from "@/domain/programs/generate-routine";
 import { AuthPolicyError } from "@/server/auth/policy";
 import { FirebaseConfigurationError } from "@/server/firebase/admin";
 import {
@@ -20,14 +21,17 @@ export const onboardingRequestSchema = z
   .object({
     equipmentProfileKind: profileKindSchema,
     idempotencyKey: idempotencyKeySchema,
-    mode: z.enum(["example", "blank"]),
+    mode: z.enum(["example", "blank", "generated"]),
     firstExerciseSlug: z.string().trim().min(1).max(120).optional(),
     reducedMotion: z.boolean().default(false),
     timezone: z.string().trim().min(1).max(64).default("UTC"),
+    /** Required for `generated`; the server rebuilds the routine from it. */
+    trainingProfile: trainingProfileAnswersSchema.optional(),
     unitSystem: z.enum(["metric", "imperial"]).default("metric"),
   })
   .strict()
-  .refine((input) => input.mode !== "blank" || Boolean(input.firstExerciseSlug), { message: "Add your first movement before saving a routine.", path: ["firstExerciseSlug"] });
+  .refine((input) => input.mode !== "blank" || Boolean(input.firstExerciseSlug), { message: "Add your first movement before saving a routine.", path: ["firstExerciseSlug"] })
+  .refine((input) => input.mode !== "generated" || Boolean(input.trainingProfile), { message: "Answer the training questions before saving a routine.", path: ["trainingProfile"] });
 
 export const equipmentChangeRequestSchema = z
   .object({
@@ -45,6 +49,15 @@ export const preferencesUpdateRequestSchema = z
     reducedMotion: z.boolean(),
     timezone: z.string().trim().min(1).max(64),
     unitSystem: z.enum(["metric", "imperial"]),
+  })
+  .strict();
+
+export const trainingProfileUpdateRequestSchema = z
+  .object({
+    /** `null` when the member has no saved answers yet. */
+    expectedUpdatedAt: z.string().datetime({ offset: true }).nullable(),
+    idempotencyKey: idempotencyKeySchema,
+    trainingProfile: trainingProfileAnswersSchema,
   })
   .strict();
 
@@ -79,6 +92,16 @@ export const programCollectionMutationRequestSchema = z.discriminatedUnion(
         name: programNameSchema,
         sourceProgramId: z.string().uuid(),
         sourceRevisionId: z.string().uuid(),
+      })
+      .strict(),
+    z
+      .object({
+        activate: z.boolean(),
+        equipmentProfileKind: profileKindSchema,
+        idempotencyKey: idempotencyKeySchema,
+        mode: z.literal("generated"),
+        name: programNameSchema.optional(),
+        trainingProfile: trainingProfileAnswersSchema,
       })
       .strict(),
   ],

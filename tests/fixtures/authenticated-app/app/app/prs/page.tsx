@@ -7,6 +7,7 @@ import {
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
 import { loadPersonalRecords } from "@/server/repositories/training-insights";
+import { fromParam, resolveBackTarget } from "@/domain/navigation/back-target";
 import { getHarnessDatabase } from "../../../server/database";
 import { harnessRequestContext } from "../../../server/harness-context";
 
@@ -33,13 +34,23 @@ async function loadRecordsPageData(
   }
 }
 
-export default async function HarnessPersonalRecordsPage() {
+type PageProps = Readonly<{ searchParams: Promise<{ from?: string | string[] }> }>;
+
+export default async function HarnessPersonalRecordsPage({ searchParams }: PageProps) {
   const context = harnessRequestContext(await headers());
   if (!context.viewer) return null;
-  const { profile, records } = await loadRecordsPageData(context.scope, context.viewer);
+  const [{ profile, records }, query] = await Promise.all([
+    loadRecordsPageData(context.scope, context.viewer),
+    searchParams,
+  ]);
   if (!profile.activeProgram) redirect("/app");
+  const back = resolveBackTarget(fromParam(query.from), {
+    area: "member",
+    fallback: { href: "/app/progress", label: "Back to Progress" },
+  });
   return (
     <PersonalRecordsView
+      back={back}
       records={records}
       timezone={profile.preferences.timezone}
       unitSystem={profile.preferences.unitSystem}

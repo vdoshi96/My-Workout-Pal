@@ -29,13 +29,14 @@ import { FirebaseClientIdentityStatus } from "@/components/settings/firebase-cli
 import { EquipmentProfileControl } from "@/components/program/equipment-profile-control";
 import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
 import { CompanionPreference } from "@/components/ui/companion-preference";
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
 import { Icon } from "@/components/ui/icon";
+import { SceneStage } from "@/components/ui/scene-stage";
 import { parsePreferencesMutationResponse } from "@/components/settings/preferences-response";
-import { canShowSettingsCompanion } from "@/domain/companions/visibility";
+import { TrainingAnswersSection } from "@/components/settings/training-answers-section";
 import { type EquipmentProfileKind } from "@/domain/equipment";
 import type {
   PreferencesReadModel,
+  TrainingProfileReadModel,
 } from "@/server/repositories/profile-program";
 import type { ViewerContext, ViewerProvider } from "@/server/auth/viewer";
 
@@ -52,9 +53,11 @@ function errorMessage(error: unknown, fallback: string): string {
 export function SettingsForm({
   canMutate,
   activeProgram,
+  equipmentProfileKind,
   firebaseConfig,
   initialFirebaseIdentityState = { status: "loading" },
   initialPreferences,
+  initialTrainingProfile = null,
   timeZones = timeZoneOptions(initialPreferences?.timezone),
   ownerUid,
   viewerProvider,
@@ -66,6 +69,7 @@ export function SettingsForm({
   firebaseConfig: FirebasePublicConfig | null;
   initialFirebaseIdentityState?: FirebaseClientIdentityState;
   initialPreferences: PreferencesReadModel | null;
+  initialTrainingProfile?: TrainingProfileReadModel | null;
   timeZones?: readonly string[];
   ownerUid: string;
   viewerProvider: ViewerProvider;
@@ -95,21 +99,6 @@ export function SettingsForm({
   const providerSupported = viewerProvider === "google" || viewerProvider === "password";
   const shouldResolveFirebaseIdentity = canMutate && firebaseConfig !== null && providerSupported;
   const deletionAvailable = shouldResolveFirebaseIdentity && firebaseIdentityState.status === "ready";
-  const hasUnsubmittedInput =
-    unitSystem !== preferences?.unitSystem ||
-    timezone !== preferences?.timezone ||
-    reducedMotion !== preferences?.reducedMotion;
-  const showSettingsCompanion = canShowSettingsCompanion({
-    busy,
-    deleteBusy,
-    hasDeletionReview: deletionReviewOpen || deletionFinished,
-    hasStatusMessage:
-      message.trim().length > 0 || deleteMessage.trim().length > 0,
-    hasUnsubmittedInput,
-    identityReady: firebaseIdentityState.status === "ready",
-    verified: canMutate,
-  });
-
   useEffect(() => {
     if (!shouldResolveFirebaseIdentity || !firebaseConfig) return;
 
@@ -333,45 +322,54 @@ export function SettingsForm({
   }
 
   return (
-    <section className="member-settings" aria-labelledby="settings-title">
-      <header className="member-settings-heading companion-heading contour-surface">
-        <div>
-          <h1 id="settings-title">Settings</h1>
-          <p>Make the app comfortable for you.</p>
-        </div>
-        {showSettingsCompanion ? <DecorativeCompanion variant="settings" /> : null}
+    <section className="pal-insights pal-settings" aria-labelledby="settings-title">
+      <SceneStage scene="settings" />
+      <header className="pal-page-head">
+        <h1 id="settings-title">Settings</h1>
+        <p>Make the app comfortable for you.</p>
       </header>
 
-      {!canMutate ? (
-        <aside className="member-inline-notice" role="status">Verify your email and sign in again before saving permanent preference changes.</aside>
-      ) : null}
+      <div className="pal-page-body">
+        {!canMutate ? (
+          <p className="pal-notice" role="status">Verify your email and sign in again before saving changes.</p>
+        ) : null}
 
-      <form className="settings-form" onSubmit={(event) => void save(event)}>
-        <section>
+        <TrainingAnswersSection
+          activeProgramId={equipmentProgram?.id ?? null}
+          canMutate={canMutate}
+          disabled={busy || deleteBusy}
+          equipmentProfileKind={equipmentProgram?.equipmentProfileKind ?? equipmentProfileKind}
+          initialTrainingProfile={initialTrainingProfile}
+        />
+
+        <form className="pal-settings-section" onSubmit={(event) => void save(event)}>
           <h2 id="units-title">Units and time zone</h2>
-          <label htmlFor="settings-units">Display units</label>
-          <select
-            disabled={!canMutate || busy || !preferences}
-            aria-describedby="settings-units-help"
-            id="settings-units"
-            onChange={(event) => {
-              changed();
-              setUnitSystem(event.target.value === "metric" ? "metric" : "imperial");
-            }}
-            value={unitSystem}
-          >
-            <option value="imperial">Pounds and miles</option>
-            <option value="metric">Kilograms and kilometers</option>
-          </select>
+          <div className="pal-settings-field">
+            <label htmlFor="settings-units">Display units</label>
+            <select
+              disabled={!canMutate || busy || !preferences}
+              aria-describedby="settings-units-help"
+              id="settings-units"
+              onChange={(event) => {
+                changed();
+                setUnitSystem(event.target.value === "metric" ? "metric" : "imperial");
+              }}
+              value={unitSystem}
+            >
+              <option value="imperial">Pounds and miles</option>
+              <option value="metric">Kilograms and kilometers</option>
+            </select>
+            <p id="settings-units-help">Changing units only changes how weights and distances are shown. Your logged sets stay the same.</p>
+          </div>
 
-          <p id="settings-units-help">Changing units only changes how weights and distances are shown. Your logged sets stay the same.</p>
+          <div className="pal-settings-field">
+            <label htmlFor="settings-timezone">Time zone</label>
+            <select id="settings-timezone" disabled={!canMutate || busy || !preferences} value={timezone} onChange={(event) => { changed(); setTimezone(event.target.value); }}>
+              {timeZones.map((zone) => <option key={zone} value={zone}>{zone}</option>)}
+            </select>
+          </div>
 
-          <label htmlFor="settings-timezone">Time zone</label>
-          <select id="settings-timezone" disabled={!canMutate || busy || !preferences} value={timezone} onChange={(event) => { changed(); setTimezone(event.target.value); }}>
-            {timeZones.map((zone) => <option key={zone} value={zone}>{zone}</option>)}
-          </select>
-
-          <label className="settings-check">
+          <label className="pal-settings-check">
             <input
               checked={reducedMotion}
               disabled={!canMutate || busy || !preferences}
@@ -383,58 +381,64 @@ export function SettingsForm({
             />
             <span><strong>Reduce interface motion</strong><small>Turns off animations and smooth scrolling.</small></span>
           </label>
-          <>{preferences ? <button className="primary-action" disabled={!canMutate || busy} type="submit">{busy ? "Saving…" : "Save preferences"}<Icon name="arrow-right" /></button> : <p>Set up your routine to choose units and time zone.</p>}</>
-        </section>
+          {preferences ? (
+            <div className="pal-actions">
+              <button className="primary-action" disabled={!canMutate || busy} type="submit">{busy ? "Saving…" : "Save preferences"}<Icon name="arrow-right" /></button>
+            </div>
+          ) : <p>Set up your routine to choose units and time zone.</p>}
+          <p aria-live="polite" className="pal-status" role="status">{message}</p>
+        </form>
 
-      </form>
+        <CompanionPreference />
+        {equipmentProgram ? <EquipmentProfileControl canMutate={canMutate} disabled={busy || deleteBusy} program={equipmentProgram} onSaved={setEquipmentProgram} /> : null}
 
-      <CompanionPreference />
-      {equipmentProgram ? <EquipmentProfileControl canMutate={canMutate} disabled={busy || deleteBusy} program={equipmentProgram} onSaved={setEquipmentProgram} /> : null}
-      <section className="settings-account" aria-labelledby="account-settings-title">
-        <h2 id="account-settings-title">Account</h2>
-        {viewerIdentity ? <p>
-          <strong>{viewerIdentity.displayName}</strong><br />
-          {viewerIdentity.email ? <><span>{viewerIdentity.email}</span><br /></> : null}
-          <span>{viewerIdentity.emailVerified ? "Verified" : "Not verified yet"}</span>
-        </p> : null}
-        <div className="settings-delete-preview">
-          <strong>Delete account</strong>
-          <p>{"Permanently deletes your account, routines, workout history and records. This can't be undone."}</p>
-          {!firebaseConfig || !providerSupported ? <small>Account deletion is unavailable right now.</small> : null}
-          {shouldResolveFirebaseIdentity ? (
-            <FirebaseClientIdentityStatus
-              onRetry={retryFirebaseIdentity}
-              state={firebaseIdentityState}
-            />
+        <section className="pal-settings-section" aria-labelledby="account-settings-title">
+          <h2 id="account-settings-title">Account</h2>
+          {viewerIdentity ? (
+            <dl className="pal-settings-identity-list">
+              <div><dt>Name</dt><dd>{viewerIdentity.displayName}</dd></div>
+              {viewerIdentity.email ? <div><dt>Email</dt><dd>{viewerIdentity.email}</dd></div> : null}
+              <div><dt>Status</dt><dd>{viewerIdentity.emailVerified ? "Verified" : "Not verified yet"}</dd></div>
+            </dl>
           ) : null}
-          <button
-            className="danger-action"
-            disabled={!deletionAvailable || busy || deleteBusy}
-            onClick={openDeletionReview}
-            type="button"
-          >Delete my account</button>
-        </div>
-      </section>
-      <p aria-live="polite" className="member-save-status" role="status">{message}</p>
+          <div className="pal-settings-danger">
+            <h3 id="delete-account-title">Delete account</h3>
+            <p>{"Permanently deletes your account, routines, workout history and records. This can't be undone."}</p>
+            {!firebaseConfig || !providerSupported ? <p className="pal-settings-hint">Account deletion is unavailable right now.</p> : null}
+            {shouldResolveFirebaseIdentity ? (
+              <FirebaseClientIdentityStatus
+                onRetry={retryFirebaseIdentity}
+                state={firebaseIdentityState}
+              />
+            ) : null}
+            <button
+              className="danger-action"
+              disabled={!deletionAvailable || busy || deleteBusy}
+              onClick={openDeletionReview}
+              type="button"
+            >Delete my account</button>
+          </div>
+        </section>
+      </div>
 
       <dialog
         aria-describedby="account-delete-impact"
         aria-labelledby="account-delete-heading"
-        className="account-delete-dialog"
+        className="pal-sheet pal-settings-sheet pal-settings-sheet--danger"
         onCancel={(event) => {
           if (deleteBusy) event.preventDefault();
         }}
         onClose={() => setDeletionReviewOpen(false)}
         ref={deleteDialog}
       >
-        <form className="account-delete-form" onSubmit={(event) => void deleteAccount(event)}>
+        <form className="pal-settings-delete" onSubmit={(event) => void deleteAccount(event)}>
           <h2 id="account-delete-heading" ref={deleteHeading} tabIndex={-1}>Delete your account?</h2>
           <div id="account-delete-impact"><p>{"You'll confirm your sign-in, then everything is deleted."}</p></div>
 
           {deletionFinished ? null : (
             <>
               {viewerProvider === "password" ? (
-                <>
+                <div className="pal-settings-field">
                   <label htmlFor="account-delete-password">Current password</label>
                   <input
                     autoComplete="current-password"
@@ -445,23 +449,25 @@ export function SettingsForm({
                     type="password"
                     value={deletePassword}
                   />
-                </>
+                </div>
               ) : null}
-              <label htmlFor="account-delete-confirmation">Type DELETE to confirm</label>
-              <input
-                autoCapitalize="characters"
-                autoComplete="off"
-                disabled={deleteBusy}
-                id="account-delete-confirmation"
-                onChange={(event) => setDeleteConfirmation(event.target.value)}
-                required
-                spellCheck={false}
-                value={deleteConfirmation}
-              />
+              <div className="pal-settings-field">
+                <label htmlFor="account-delete-confirmation">Type DELETE to confirm</label>
+                <input
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  disabled={deleteBusy}
+                  id="account-delete-confirmation"
+                  onChange={(event) => setDeleteConfirmation(event.target.value)}
+                  required
+                  spellCheck={false}
+                  value={deleteConfirmation}
+                />
+              </div>
             </>
           )}
 
-          <p aria-live="polite" className="account-delete-status" role="status">{deleteMessage}</p>
+          <p aria-live="polite" className="account-delete-status pal-status" role="status">{deleteMessage}</p>
           {deletionReviewOpen &&
           shouldResolveFirebaseIdentity &&
           firebaseIdentityState.status !== "ready" ? (
@@ -470,9 +476,9 @@ export function SettingsForm({
               state={firebaseIdentityState}
             />
           ) : null}
-          <div className="account-delete-actions">
+          <div className="pal-actions">
             {deletionFinished ? (
-              <button onClick={() => router.replace("/")} type="button">Return to public site</button>
+              <button className="secondary-action" onClick={() => router.replace("/")} type="button">Return to public site</button>
             ) : (
               <>
                 <button
@@ -486,6 +492,7 @@ export function SettingsForm({
                   type="submit"
                 >{deleteBusy ? "Deleting…" : "Delete everything"}</button>
                 <button
+                  className="secondary-action"
                   disabled={deleteBusy}
                   onClick={() => deleteDialog.current?.close()}
                   type="button"

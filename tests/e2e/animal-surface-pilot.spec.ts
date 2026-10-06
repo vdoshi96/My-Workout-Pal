@@ -50,10 +50,12 @@ async function expectPointerInert(placement: Locator) {
 }
 
 async function expectCompanionSemantics(page: Page, variant: string) {
-  const placement = page.locator(variant === "landing" ? ".quiet-studio" : `[data-companion-placement="${variant}"]`);
+  // Every public page opens on the same decorative SceneStage; the variant only names the page.
+  void variant;
+  const placement = page.locator(".pal-scene");
   const image = placement.locator("img");
   await expect(placement).toBeVisible();
-  if (variant !== "landing") await expect(placement).toHaveAttribute("aria-hidden", "true");
+  await expect(placement).toHaveAttribute("aria-hidden", "true");
   await expect(placement.locator("a, button, input, select, textarea, [tabindex]")).toHaveCount(0);
   await expect(image).toHaveAttribute("alt", "");
   await expect(image).toHaveAttribute("aria-hidden", "true");
@@ -72,13 +74,13 @@ async function expectLandingControls(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   const protectedAreas = [
     page.getByRole("heading", { level: 1 }),
-    page.locator(".quiet-welcome-copy > p"),
-    page.getByRole("link", { name: "Try one set", exact: true }),
-    page.getByRole("link", { name: "Create my routine", exact: true }),
+    page.locator(".pal-hero__copy > p").first(),
+    page.getByRole("link", { name: "Take a test drive", exact: true }).first(),
+    page.getByRole("link", { name: "Make my routine", exact: true }),
     page.getByRole("navigation", { name: "Primary" }),
   ];
   expect(await protectedAreas[0]!.evaluate((element) => element.textContent?.replace(/\s+/gu, " ").trim()))
-    .toBe("A little space for your next set.");
+    .toBe("Your new gym buddy.");
   for (const area of protectedAreas) {
     await area.scrollIntoViewIfNeeded();
     await expect(area).toBeVisible();
@@ -89,12 +91,12 @@ async function expectLandingControls(page: Page) {
     })).toBe(true);
     // The studio is a background scene. Any foreground decoration still must
     // leave each protected rectangle clear, with the original 1 px limit.
-    for (const decoration of await page.locator(".quiet-studio, .quiet-welcome .decorative-companion").all()) {
+    for (const decoration of await page.locator(".pal-scene, .pal-sticker, .pal-vignette").all()) {
       const foreground = await decoration.evaluate((element) => getComputedStyle(element).zIndex !== "-1");
       if (foreground && await decoration.isVisible()) await expectNoIntersection(area, decoration);
     }
   }
-  for (const link of await page.locator(".quiet-welcome-copy > a, .public-nav a").all()) {
+  for (const link of await page.locator(".pal-hero__copy a, .public-nav a").all()) {
     await expect(link).toHaveAttribute("href", /^\//u);
     await link.focus();
     await expect(link).toBeFocused();
@@ -146,13 +148,13 @@ test("landing first viewport reproduces the selected board hierarchy", async ({
 
 const publicPilotSurfaces = [
   {
-    copy: ".quiet-welcome-copy",
-    heading: "A little space for your next set.",
+    copy: ".pal-hero__copy",
+    heading: "Your new gym buddy.",
     path: "/",
     variant: "landing",
   },
   {
-    copy: ".sample-hero-copy",
+    copy: ".pal-page-head",
     heading: "Progress",
     path: "/progress",
     variant: "progress-preview",
@@ -181,17 +183,21 @@ test("public pilot surfaces stay decorative, bounded, and truthful across requir
       await expect(
         page.getByRole("heading", { level: 1, name: surface.heading }),
       ).toBeVisible();
-      const placement = await expectCompanionSemantics(page, surface.variant);
+      await expectCompanionSemantics(page, surface.variant);
       if (surface.path === "/") {
         await expectLandingControls(page);
       } else {
-        await expectNoIntersection(placement, page.locator(surface.copy));
-        await expectNoIntersection(placement, page.locator(".public-header"));
-        await expectNoIntersection(placement, page.locator(".public-nav"));
+        // The scene is a background behind these areas, so each must stay on top and hit-testable.
         await expect(page.getByText("Example data", { exact: true })).toHaveCount(1);
-        await expectNoIntersection(placement, page.locator(".sample-warning"));
-        await expectNoIntersection(placement, page.locator(".sample-metrics"));
-        await expectNoIntersection(placement, page.locator(".sample-chart"));
+        for (const area of [page.locator(surface.copy), page.locator(".public-header"), page.locator(".public-nav"), page.getByText("Example data", { exact: true }), page.getByLabel("Progress preview"), page.locator(".pal-chart")]) {
+          await area.scrollIntoViewIfNeeded();
+          await expect(area).toBeVisible();
+          expect(await area.evaluate((element) => {
+            const rect = element.getBoundingClientRect();
+            const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            return hit === element || (hit !== null && element.contains(hit));
+          })).toBe(true);
+        }
       }
       expect(
         await page.evaluate(
@@ -248,7 +254,7 @@ test("dark and reduced-motion rendering keep both public companions intact", asy
       ),
     ).toBeLessThanOrEqual(1);
     if (surface.path === "/") await expectLandingControls(page);
-    else await expectNoIntersection(placement, page.locator(".public-nav"));
+    else await expect(page.locator(".public-nav")).toBeVisible();
 
     if (browserName === "chromium") {
       const evidencePath = resolve(
@@ -275,30 +281,30 @@ test("forced colors, image failure, and 200 percent zoom collapse decoration saf
   await page.emulateMedia({ colorScheme: "light", forcedColors: "active" });
   for (const surface of publicPilotSurfaces) {
     await page.goto(surface.path);
-    const placement = page.locator(surface.path === "/" ? ".quiet-studio" : `[data-companion-placement="${surface.variant}"]`);
+    const placement = page.locator(".pal-scene");
     await expect(placement).toBeHidden();
     if (surface.path === "/") {
       await expectLandingControls(page);
       continue;
     }
-    const collapsedLayout = await page.locator(surface.copy).evaluate((element) => {
-      const hero = element.parentElement;
-      if (!hero) throw new Error("Pilot hero wrapper is missing.");
-      const copy = element.getBoundingClientRect();
-      const wrapper = hero.getBoundingClientRect();
-      return {
-        copyRatio: copy.width / wrapper.width,
-        gridTemplateColumns: getComputedStyle(hero).gridTemplateColumns,
-      };
-    });
-    expect(collapsedLayout.copyRatio).toBeGreaterThan(0.8);
-    expect(collapsedLayout.gridTemplateColumns.trim().split(/\s+/u)).toHaveLength(1);
+    await expect(page.locator(surface.copy)).toBeVisible();
+    await expect(page.getByLabel("Progress preview")).toBeVisible();
+    // Forced colours: one column, and the copy keeps at least 0.8 of the width it has with the art.
+    const collapsed = await page.locator(surface.copy).evaluate((element) => ({
+      columns: getComputedStyle(element.parentElement!).gridTemplateColumns,
+      width: element.getBoundingClientRect().width,
+    }));
+    await page.emulateMedia({ colorScheme: "light", forcedColors: "none" });
+    const withArt = await page.locator(surface.copy).evaluate((element) => element.getBoundingClientRect().width);
+    await page.emulateMedia({ colorScheme: "light", forcedColors: "active" });
+    expect(collapsed.width / withArt).toBeGreaterThan(0.8);
+    expect(collapsed.columns.trim().split(/\s+/u)).toHaveLength(1);
   }
 
   await page.emulateMedia({ colorScheme: "light", forcedColors: "none" });
   for (const surface of publicPilotSurfaces) {
     await page.goto(surface.path);
-    const placement = page.locator(surface.path === "/" ? ".quiet-studio" : `[data-companion-placement="${surface.variant}"]`);
+    const placement = page.locator(".pal-scene");
     await expectCompanionSemantics(page, surface.variant);
     if (surface.path === "/") {
       await page.route("**/illustrations/quiet-set/**", (route) => route.abort());
@@ -309,20 +315,21 @@ test("forced colors, image failure, and 200 percent zoom collapse decoration saf
         image.removeAttribute("srcset");
         image.src = "/illustrations/quiet-set/missing-pilot-image.webp";
       });
-      await expect.poll(() => placement.locator("img").evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBe(0);
+      await expect(page.locator(".pal-scene")).toHaveCount(0);
       await expectLandingControls(page);
       await page.unroute("**/illustrations/quiet-set/**");
       continue;
     }
+    // The service worker serves scene pictures from its cache, so fail the image itself (as main did).
+    const copyWidth = () => page.locator(surface.copy).evaluate((element) => element.getBoundingClientRect().width);
+    const copyWidthWithArt = await copyWidth();
     await placement.locator("img").evaluate((image) => {
       image.dispatchEvent(new Event("error"));
     });
-    await expect(placement).toBeHidden();
-    const copyRatio = await page.locator(surface.copy).evaluate((element) => {
-      const hero = element.parentElement;
-      if (!hero) throw new Error("Pilot hero wrapper is missing.");
-      return element.getBoundingClientRect().width / hero.getBoundingClientRect().width;
-    });
+    await expect(placement).toHaveCount(0);
+    await expect(page.getByLabel("Progress preview")).toBeVisible();
+    // The copy never shared a column with the art, so it keeps its width (same 0.8 floor as before).
+    const copyRatio = (await copyWidth()) / copyWidthWithArt;
     expect(copyRatio).toBeGreaterThan(0.8);
   }
 
@@ -369,7 +376,7 @@ test("public companion stays outside keyboard focus and the accessibility name g
   );
   await page.setViewportSize({ height: 844, width: 390 });
   await openLanding(page);
-  const placement = page.locator(".quiet-studio");
+  const placement = page.locator(".pal-scene");
   for (let step = 0; step < 8; step += 1) {
     await page.keyboard.press("Tab");
     expect(

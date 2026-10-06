@@ -8,6 +8,8 @@ import {
   getViewerProfileProgram,
   RepositoryNotFoundError,
 } from "@/server/repositories/profile-program";
+import { listApprovedCuratedVideoPairsByExerciseIds, listApprovedCuratedVideoPairsBySlugs } from "@/server/repositories/curated-videos";
+import { APPROVED_DEMO_SLUGS } from "@/domain/programs/generate-routine";
 import { loadProgressInsights } from "@/server/repositories/training-insights";
 import { createWorkoutRepository } from "@/server/repositories/workout-repository";
 import { getHarnessDatabase } from "../../server/database";
@@ -27,7 +29,7 @@ async function readProfileProgramOrUndefined(database: Database, viewer: ViewerC
   }
 }
 
-export default async function HarnessMemberHomePage() {
+export default async function HarnessMemberHomePage({ searchParams }: Readonly<{ searchParams: Promise<{ day?: string | string[] }> }>) {
   const context = harnessRequestContext(await headers());
   if (!context.viewer) return null;
   if (context.scenario === "slow-member-home") {
@@ -39,14 +41,22 @@ export default async function HarnessMemberHomePage() {
   const { database } = await getHarnessDatabase(context.scope);
   const model = await readProfileProgramOrUndefined(database, context.viewer);
   if (!model?.activeProgram) {
-    return <OnboardingForm canMutate={context.viewer.eligibleForPermanentMutations} />;
+    const demos = await listApprovedCuratedVideoPairsBySlugs(database, [...APPROVED_DEMO_SLUGS]).catch(() => ({}));
+    return <OnboardingForm canMutate={context.viewer.eligibleForPermanentMutations} demos={demos} displayName={context.viewer.displayName} />;
   }
-  const [progress, resumableWorkout] = await Promise.all([
+  const { day } = await searchParams;
+  const initialDayKey = typeof day === "string" ? day : null;
+  const catalogExerciseIds = model.activeProgram.days.flatMap((day) =>
+    day.prescriptions.flatMap((prescription) => prescription.catalogExerciseId ? [prescription.catalogExerciseId] : []));
+  const [progress, resumableWorkout, demos] = await Promise.all([
     loadProgressInsights(database, context.viewer),
     createWorkoutRepository(database).findResumable(context.viewer),
+    listApprovedCuratedVideoPairsByExerciseIds(database, catalogExerciseIds).catch(() => ({})),
   ]);
   return (
     <MemberProgramHome
+      demos={demos}
+      initialDayKey={initialDayKey}
       canMutate={context.viewer.eligibleForPermanentMutations}
       displayName={context.viewer.displayName}
       initialProgram={model.activeProgram}

@@ -1,20 +1,14 @@
 import type { Request } from "@playwright/test";
 
-const supersededCompanionPaths = new Set([
-  "/illustrations/quiet-set/tortoise-review.webp",
-  "/illustrations/companions/cataloging-otter-512.webp",
-  "/illustrations/companions/cataloging-otter.webp",
-  "/illustrations/companions/history-archive-tortoise-512.webp",
-  "/illustrations/companions/history-archive-tortoise.webp",
-  "/illustrations/companions/preparing-fox-512.webp",
-  "/illustrations/companions/preparing-fox.webp",
-  "/illustrations/companions/routine-drafting-beaver-512.webp",
-  "/illustrations/companions/routine-drafting-beaver.webp",
-  "/illustrations/companions/settings-packing-hare-512.webp",
-  "/illustrations/companions/settings-packing-hare.webp",
-  "/illustrations/companions/workout-corner-bear-512.webp",
-  "/illustrations/companions/workout-corner-bear.webp",
-]);
+// The decorative scene pictures behind member pages, in every theme and size (see SceneStage).
+const SCENES = ["pip-studio", "mica-studio", "otter-study", "beaver-plan", "tortoise-review", "hare-prepare", "pip-recover", "dawn-studio", "evening-studio"];
+const supersededCompanionPaths = new Set(
+  [
+    ...SCENES.flatMap((scene) => ["", "-phone", "-dusk", "-dusk-phone"].map((suffix) => `/illustrations/quiet-set/${scene}${suffix}.webp`)),
+    // Round pose stickers (PalSticker).
+    ...["pip", "mica"].flatMap((pal) => ["ready", "resting", "complete"].map((pose) => `/illustrations/quiet-set/${pal}-${pose}.webp`)),
+  ],
+);
 
 export function sameOriginNextFlightNavigationTarget(
   request: Request,

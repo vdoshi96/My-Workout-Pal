@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatMeasurement,
+  formatPreviousSet,
+  formatRestHeading,
   displayToKilograms,
   displayToMeters,
   displayToPace,
@@ -9,6 +11,7 @@ import {
   formatRunnerStatus,
   formatSetTarget,
   formatSyncStatus,
+  formatTimerStatus,
   kilogramsToDisplay,
   metersToDisplay,
   paceToDisplay,
@@ -129,6 +132,31 @@ describe("workout runner presentation helpers", () => {
     expect(shouldAnnounceTimerChange(running, runningTick)).toBe(false);
     expect(shouldAnnounceTimerChange(runningTick, paused)).toBe(true);
     expect(shouldAnnounceTimerChange(runningTick, complete)).toBe(true);
+  });
+
+  it("names each rest moment in plain words", () => {
+    const view = (status: RestTimerView["status"]): RestTimerView => ({
+      status,
+      startedAt: undefined,
+      endsAt: undefined,
+      remainingSeconds: 42,
+    });
+    expect(formatRestHeading(view("running"))).toBe("Catch your breath.");
+    expect(formatRestHeading(view("paused"))).toBe("Rest paused");
+    expect(formatRestHeading(view("complete"))).toBe("Rest done.");
+    expect(formatRestHeading(view("idle"))).toBe("Rest timer");
+    expect(formatTimerStatus(view("running"))).toBe("Resting · 0:42 left");
+    expect(formatTimerStatus(view("paused"))).toBe("Paused · 0:42 left");
+    expect(formatTimerStatus(view("complete"))).toBe("Ready when you are.");
+    expect(formatTimerStatus(view("idle"))).toBe("It starts on its own when you log a set.");
+  });
+
+  it("describes the previous set, or says there isn't one yet", () => {
+    expect(formatPreviousSet(undefined)).toBe("No previous set yet");
+    expect(formatPreviousSet({ kind: "weight_reps", weightKg: 20, repetitions: 10 })).toBe("Previous: 20 kg · 10 reps");
+    expect(
+      formatPreviousSet({ kind: "weight_reps", weightKg: 10, repetitions: 5 }, { unitSystem: "imperial" }),
+    ).toBe("Previous: 22.05 lb · 5 reps");
   });
 
   it("formats rest durations with a two-digit seconds component", () => {

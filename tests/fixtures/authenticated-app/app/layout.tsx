@@ -2,9 +2,14 @@ import "@fontsource/barlow-condensed/500.css";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
 import "@fontsource-variable/source-sans-3";
+import "@fontsource-variable/fredoka";
 import "../../../../src/app/globals.css";
-import "../../../../src/app/quiet-set.css";
+import "../../../../src/app/studio-pals.css";
+import "../../../../src/app/pal-runner.css";
+import "../../../../src/app/pal-routine.css";
+import "../../../../src/app/pal-insights.css";
 
+import { FrameFocusRing } from "../../../../src/components/ui/frame-focus-ring";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
@@ -20,6 +25,7 @@ export default function HarnessRootLayout({ children }: Readonly<{ children: Rea
           Local authenticated QA harness · synthetic data only
         </div>
         {children}
+        <FrameFocusRing />
       </body>
     </html>
   );

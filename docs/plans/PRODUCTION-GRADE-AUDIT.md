@@ -66,4 +66,4 @@ Phone (390 px), tablet, and desktop layouts must have no horizontal overflow and
 - `pnpm verify` passes: types, lint, all tests, database/seed/PWA checks, documentation parity, production build, and the production route boundary.
 - Browser evidence covers the public welcome, example routine and day, Library and detail, Progress preview, sign-in, and the member Today, onboarding, routine editor, routines, workout runner, Progress, History, and Settings on phone and desktop.
 
-Implemented on branch vishal/production-grade-audit; see docs/qa/latest/PRODUCTION-GRADE-QA.md.
+Implemented on branch vishal/production-grade-audit; see [its QA report](https://github.com/vdoshi96/My-Workout-Pal/blob/4db767f/docs/qa/latest/PRODUCTION-GRADE-QA.md).

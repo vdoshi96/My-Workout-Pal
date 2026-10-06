@@ -221,15 +221,40 @@ export function formatRunnerStatus(status: RunnerStatus): string {
 export function formatTimerStatus(view: RestTimerView): string {
   switch (view.status) {
     case "running":
-      return `Rest running · ${formatRestTimer(view.remainingSeconds)} remaining`;
+      return `Resting · ${formatRestTimer(view.remainingSeconds)} left`;
     case "paused":
-      return `Rest paused · ${formatRestTimer(view.remainingSeconds)} remaining`;
+      return `Paused · ${formatRestTimer(view.remainingSeconds)} left`;
     case "complete":
-      return "Rest complete";
+      return "Ready when you are.";
     case "idle":
     default:
-      return "Rest timer ready";
+      return "It starts on its own when you log a set.";
   }
+}
+
+/** The rest area's heading: a warm word for each moment, so the state never hides behind the number. */
+export function formatRestHeading(view: RestTimerView): string {
+  switch (view.status) {
+    case "running":
+      return "Catch your breath.";
+    case "paused":
+      return "Rest paused";
+    case "complete":
+      return "Rest done.";
+    case "idle":
+    default:
+      return "Rest timer";
+  }
+}
+
+/** The line under the set entry that reminds you what you did last time. */
+export function formatPreviousSet(
+  measurement: WorkoutMeasurement | undefined,
+  options: RunnerPresentationOptions = {},
+): string {
+  return measurement === undefined
+    ? "No previous set yet"
+    : `Previous: ${formatMeasurement(measurement, options)}`;
 }
 
 export function shouldAnnounceTimerChange(

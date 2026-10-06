@@ -26,6 +26,7 @@ import {
   userPreferences,
   userProfiles,
   userPrograms,
+  userTrainingProfiles,
 } from "@/db/schema";
 import {
   EQUIPMENT_IDS,
@@ -42,13 +43,28 @@ import {
   programPublishRequestSchema,
   type ProgramPublishInput,
 } from "@/domain/programs/publication";
+import {
+  generateStarterRoutine,
+  trainingProfileAnswersSchema,
+  type GeneratedRoutine,
+  type TrainingProfileAnswers,
+} from "@/domain/programs/generate-routine";
 import type { ViewerContext } from "@/server/auth/viewer";
 import { AuthPolicyError } from "@/server/auth/policy";
+import {
+  readTrainingProfile,
+  readTrainingProfileRow,
+  type TrainingProfileReadModel,
+} from "@/server/repositories/training-profile";
+
+export type { TrainingProfileReadModel } from "@/server/repositories/training-profile";
 
 /** The one starter template cloned by authenticated onboarding. */
 export const STARTER_TEMPLATE_KEY = "five-day-starter-route" as const;
 export const STARTER_PROGRAM_KEY = STARTER_TEMPLATE_KEY;
 export const BLANK_PROGRAM_KEY = "blank-routine" as const;
+/** The routine built from onboarding answers. */
+export const GENERATED_PROGRAM_KEY = "generated-routine" as const;
 
 
 export const REPOSITORY_NOT_FOUND_MESSAGE = "The requested resource was not found.";
@@ -91,7 +107,7 @@ export class RepositoryValidationError extends Error {
 }
 
 type UnitSystem = "metric" | "imperial";
-export type OnboardingMode = "example" | "blank";
+export type OnboardingMode = "example" | "blank" | "generated";
 
 export type OnboardingInput = Readonly<{
   /** Preferred name. `profileKind` remains accepted for server callers. */
@@ -103,6 +119,8 @@ export type OnboardingInput = Readonly<{
   idempotencyKey?: string;
   mode?: OnboardingMode;
   firstExerciseSlug?: string | undefined;
+  /** Required for `generated`; optional for the other modes. */
+  trainingProfile?: TrainingProfileAnswers | undefined;
 }>;
 
 export type EquipmentChangeInput = Readonly<{
@@ -122,6 +140,23 @@ export type PreferencesUpdateInput = Readonly<{
 }>;
 
 export type PublishProgramInput = ProgramPublishInput;
+
+export type TrainingProfileUpdateInput = Readonly<{
+  /** `null` when the member has no saved answers yet. */
+  expectedUpdatedAt: string | null;
+  idempotencyKey: string;
+  trainingProfile: TrainingProfileAnswers;
+}>;
+
+export type CreateProgramFromAnswersInput = Readonly<{
+  /** Make the new routine active now. `false` keeps the current one active. */
+  activate: boolean;
+  equipmentProfileKind: EquipmentProfileKind;
+  idempotencyKey: string;
+  /** Defaults to the generated name, for example "3-day full body". */
+  name?: string | undefined;
+  trainingProfile: TrainingProfileAnswers;
+}>;
 
 export type CreateStarterProgramInput = Readonly<{
   equipmentProfileKind: EquipmentProfileKind;
@@ -160,6 +195,7 @@ type NormalizedOnboardingInput = Readonly<{
   idempotencyKey: string | undefined;
   mode: OnboardingMode;
   firstExerciseSlug: string | undefined;
+  trainingProfile: TrainingProfileAnswers | undefined;
 }>;
 
 type NormalizedEquipmentChangeInput = Readonly<{
@@ -313,6 +349,8 @@ export type ProfileProgramReadModel = Readonly<{
   equipment: EquipmentReadModel;
   programs: readonly ProgramSummaryReadModel[];
   activeProgram: ActiveProgramReadModel | null;
+  /** Saved onboarding answers; null for members who never gave them. */
+  trainingProfile: TrainingProfileReadModel | null;
 }>;
 
 export type ProgramRevisionMutationResult = Readonly<
@@ -365,6 +403,14 @@ export type ProfileProgramRepository = Readonly<{
     viewer: ViewerContext | null,
     input: PreferencesUpdateInput,
   ): Promise<ProfileProgramReadModel>;
+  updateTrainingProfile(
+    viewer: ViewerContext | null,
+    input: TrainingProfileUpdateInput,
+  ): Promise<ProfileProgramReadModel>;
+  createProgramFromAnswers(
+    viewer: ViewerContext | null,
+    input: CreateProgramFromAnswersInput,
+  ): Promise<ProgramCollectionMutationResult>;
   publishProgram(
     viewer: ViewerContext | null,
     input: PublishProgramInput,
@@ -396,8 +442,9 @@ const onboardingSchema = z
     timezone: z.string().trim().min(1).max(64).optional(),
     reducedMotion: z.boolean().optional(),
     idempotencyKey: z.string().trim().min(1).max(180).optional(),
-    mode: z.enum(["example", "blank"]).optional(),
+    mode: z.enum(["example", "blank", "generated"]).optional(),
     firstExerciseSlug: z.string().trim().min(1).max(120).optional(),
+    trainingProfile: trainingProfileAnswersSchema.optional(),
   })
   .strict();
 const equipmentChangeSchema = z
@@ -443,6 +490,22 @@ const cloneProgramSchema = z
     name: programNameSchema,
     sourceProgramId: z.string().uuid(),
     sourceRevisionId: z.string().uuid(),
+  })
+  .strict();
+const trainingProfileUpdateSchema = z
+  .object({
+    expectedUpdatedAt: z.string().datetime({ offset: true }).nullable(),
+    idempotencyKey: requiredIdempotencyKeySchema,
+    trainingProfile: trainingProfileAnswersSchema,
+  })
+  .strict();
+const createProgramFromAnswersSchema = z
+  .object({
+    activate: z.boolean(),
+    equipmentProfileKind: profileKindSchema,
+    idempotencyKey: requiredIdempotencyKeySchema,
+    name: programNameSchema.optional(),
+    trainingProfile: trainingProfileAnswersSchema,
   })
   .strict();
 const activateProgramSchema = z
@@ -492,6 +555,9 @@ function parseOnboardingInput(input: OnboardingInput): NormalizedOnboardingInput
   if (parsed.mode === "blank" && !parsed.firstExerciseSlug) {
     throw new RepositoryValidationError("Add your first movement before saving a routine.");
   }
+  if (parsed.mode === "generated" && !parsed.trainingProfile) {
+    throw new RepositoryValidationError("Answer the training questions before saving a routine.");
+  }
   const timezone = validTimezone(parsed.timezone ?? "UTC");
   return {
     equipmentProfileKind: parseEquipmentProfileKind(
@@ -504,7 +570,39 @@ function parseOnboardingInput(input: OnboardingInput): NormalizedOnboardingInput
     idempotencyKey: parsed.idempotencyKey,
     mode: parsed.mode ?? "example",
     firstExerciseSlug: parsed.firstExerciseSlug,
+    trainingProfile: parsed.trainingProfile,
   };
+}
+
+function parseTrainingProfileUpdateInput(
+  input: TrainingProfileUpdateInput,
+): z.infer<typeof trainingProfileUpdateSchema> {
+  const result = trainingProfileUpdateSchema.safeParse(input);
+  if (!result.success) {
+    throw new RepositoryValidationError("The training answers are invalid.");
+  }
+  return result.data;
+}
+
+function parseCreateProgramFromAnswersInput(
+  input: CreateProgramFromAnswersInput,
+): z.infer<typeof createProgramFromAnswersSchema> {
+  const result = createProgramFromAnswersSchema.safeParse(input);
+  if (!result.success) {
+    throw new RepositoryValidationError("The new routine data is invalid.");
+  }
+  return result.data;
+}
+
+function sameTrainingAnswers(
+  row: Readonly<{ trainingGoal: string; experienceLevel: string; daysPerWeek: number }>,
+  answers: TrainingProfileAnswers,
+): boolean {
+  return (
+    row.trainingGoal === answers.goal &&
+    row.experienceLevel === answers.experience &&
+    row.daysPerWeek === answers.daysPerWeek
+  );
 }
 
 function validTimezone(value: string): string {
@@ -921,6 +1019,222 @@ async function insertMinimalPublishedProgram(
     throw new RepositoryConflictError("The custom program revision could not be linked.");
   }
   return { programId: input.programId, revisionId };
+}
+
+/**
+ * Resolves every generated movement to a catalog row and re-checks equipment
+ * on the server, so a catalog or seed change can never publish an
+ * incompatible routine.
+ */
+async function loadGeneratedRoutineExercises(
+  database: RepositoryDatabase,
+  routine: GeneratedRoutine,
+): Promise<ReadonlyMap<string, CatalogExerciseRow>> {
+  const slugs = [
+    ...new Set(
+      routine.days.flatMap((day) =>
+        day.sections.flatMap((section) => section.movements.map(({ exerciseSlug }) => exerciseSlug)),
+      ),
+    ),
+  ];
+  const rows = await database
+    .select()
+    .from(catalogExercises)
+    .where(inArray(catalogExercises.slug, slugs));
+  const bySlug = new Map(rows.map((row) => [row.slug, row] as const));
+  const requirements = rows.length
+    ? await database
+        .select({
+          equipmentId: exerciseEquipment.equipmentId,
+          exerciseId: exerciseEquipment.exerciseId,
+        })
+        .from(exerciseEquipment)
+        .where(inArray(exerciseEquipment.exerciseId, rows.map(({ id }) => id)))
+    : [];
+  const available = new Set<EquipmentId>(EQUIPMENT_PROFILES[routine.equipmentProfileKind].equipment);
+  for (const slug of slugs) {
+    const row = bySlug.get(slug);
+    if (!row) {
+      throw new RepositoryConflictError("A movement in this routine is unavailable right now.");
+    }
+    const incompatible = requirements.some(
+      (requirement) =>
+        requirement.exerciseId === row.id && !available.has(equipmentId(requirement.equipmentId)),
+    );
+    if (incompatible) {
+      throw new RepositoryConflictError("A movement in this routine needs equipment you did not choose.");
+    }
+  }
+  for (const day of routine.days) {
+    for (const section of day.sections) {
+      for (const movement of section.movements) {
+        if (bySlug.get(movement.exerciseSlug)!.loggingKind !== movement.loggingKind) {
+          throw new RepositoryConflictError("A movement in this routine is unavailable right now.");
+        }
+      }
+    }
+  }
+  return bySlug;
+}
+
+/**
+ * Inserts and publishes revision 1 of a routine built by
+ * `generateStarterRoutine`. Every identifier is derived from the owner, the
+ * program and the generated position, so retries inside one idempotent
+ * request produce the same rows.
+ */
+async function insertGeneratedPublishedProgram(
+  database: RepositoryDatabase,
+  ownerFirebaseUid: string,
+  input: Readonly<{
+    isActive: boolean;
+    name: string;
+    programId: string;
+    programKey: string;
+    routine: GeneratedRoutine;
+    topologySeed: string;
+  }>,
+): Promise<Readonly<{ programId: string; revisionId: string }>> {
+  const exercises = await loadGeneratedRoutineExercises(database, input.routine);
+  const programId = input.programId;
+  const seed = `${programId}:generated:${input.topologySeed}`;
+  const revisionId = scopedUuid("program-revision", ownerFirebaseUid, seed);
+  const now = new Date();
+
+  await database.insert(userPrograms).values({
+    activeRevisionId: null,
+    id: programId,
+    isActive: input.isActive,
+    name: input.name,
+    ownerFirebaseUid,
+    programKey: input.programKey,
+    updatedAt: now,
+  });
+  await database.insert(programRevisions).values({
+    id: revisionId,
+    ownerFirebaseUid,
+    programId,
+    revisionNumber: 1,
+    status: "draft",
+    equipmentProfileKind: input.routine.equipmentProfileKind,
+    sourceTemplateRevisionId: null,
+    publishedAt: null,
+  });
+
+  const days: (typeof programDays.$inferInsert)[] = [];
+  const sections: (typeof programSections.$inferInsert)[] = [];
+  const prescriptions: (typeof programPrescriptions.$inferInsert)[] = [];
+  const cardio: (typeof programCardioPrescriptions.$inferInsert)[] = [];
+  for (const day of input.routine.days) {
+    const dayPath = `${seed}:day:${day.dayNumber}`;
+    const dayId = scopedUuid("program-day", ownerFirebaseUid, `${revisionId}:${dayPath}`);
+    days.push({
+      id: dayId,
+      ownerFirebaseUid,
+      programId,
+      revisionId,
+      dayNumber: day.dayNumber,
+      dayKey: scopedUuid("program-day-key", ownerFirebaseUid, dayPath),
+      displayName: day.name,
+    });
+    day.sections.forEach((section, sectionIndex) => {
+      const sectionPath = `${dayPath}:section:${section.kind}`;
+      const sectionId = scopedUuid("program-section", ownerFirebaseUid, `${revisionId}:${sectionPath}`);
+      sections.push({
+        id: sectionId,
+        ownerFirebaseUid,
+        programId,
+        revisionId,
+        dayId,
+        sectionKey: topologyKey("section", ownerFirebaseUid, sectionPath),
+        kind: section.kind,
+        displayOrder: sectionIndex + 1,
+        title: section.title,
+      });
+      section.movements.forEach((movement, movementIndex) => {
+        const movementPath = `${sectionPath}:movement:${movementIndex + 1}`;
+        prescriptions.push({
+          id: scopedUuid("program-prescription", ownerFirebaseUid, `${revisionId}:${movementPath}`),
+          ownerFirebaseUid,
+          programId,
+          revisionId,
+          sectionId,
+          prescriptionKey: topologyKey("prescription", ownerFirebaseUid, movementPath),
+          catalogExerciseId: exercises.get(movement.exerciseSlug)!.id,
+          customExerciseId: null,
+          displayName: null,
+          displayOrder: movementIndex + 1,
+          setKind: movement.setKind,
+          setCount: movement.setCount,
+          measurementKind: movement.measurementKind,
+          minimumReps: movement.minimumReps,
+          maximumReps: movement.maximumReps,
+          minimumSeconds: movement.minimumSeconds,
+          maximumSeconds: movement.maximumSeconds,
+          restSeconds: movement.restSeconds,
+          targetWeightKg: null,
+          targetDistanceM: null,
+          notes: null,
+          targetMetadata: {},
+        });
+      });
+    });
+    day.cardio.forEach((finish, cardioIndex) => {
+      const cardioPath = `${dayPath}:cardio:${finish.mode}`;
+      cardio.push({
+        id: scopedUuid("program-cardio", ownerFirebaseUid, `${revisionId}:${cardioPath}`),
+        ownerFirebaseUid,
+        programId,
+        revisionId,
+        dayId,
+        cardioKey: topologyKey("cardio", ownerFirebaseUid, cardioPath),
+        displayOrder: cardioIndex + 1,
+        mode: finish.mode,
+        durationSeconds: finish.durationSeconds,
+        distanceM: null,
+        paceSecondsPerKm: null,
+        inclinePercent: null,
+        notes: null,
+      });
+    });
+  }
+  await database.insert(programDays).values(days);
+  await database.insert(programSections).values(sections);
+  await database.insert(programPrescriptions).values(prescriptions);
+  if (cardio.length > 0) {
+    await database.insert(programCardioPrescriptions).values(cardio);
+  }
+
+  const published = await database
+    .update(programRevisions)
+    .set({ status: "published", publishedAt: now })
+    .where(
+      and(
+        eq(programRevisions.ownerFirebaseUid, ownerFirebaseUid),
+        eq(programRevisions.programId, programId),
+        eq(programRevisions.id, revisionId),
+        eq(programRevisions.status, "draft"),
+      ),
+    )
+    .returning({ id: programRevisions.id });
+  if (published.length !== 1) {
+    throw new RepositoryConflictError("The new routine could not be saved safely.");
+  }
+  const linked = await database
+    .update(userPrograms)
+    .set({ activeRevisionId: revisionId, updatedAt: now })
+    .where(
+      and(
+        eq(userPrograms.ownerFirebaseUid, ownerFirebaseUid),
+        eq(userPrograms.id, programId),
+        isNull(userPrograms.activeRevisionId),
+      ),
+    )
+    .returning({ id: userPrograms.id });
+  if (linked.length !== 1) {
+    throw new RepositoryConflictError("The new routine could not be saved safely.");
+  }
+  return { programId, revisionId };
 }
 
 type RepositoryDatabase = Database;
@@ -1476,10 +1790,11 @@ async function readViewerData(
   database: RepositoryDatabase,
   ownerFirebaseUid: string,
 ): Promise<ProfileProgramReadModel> {
-  const [profile, preferences, equipment] = await Promise.all([
+  const [profile, preferences, equipment, trainingProfile] = await Promise.all([
     readProfile(database, ownerFirebaseUid),
     readPreferences(database, ownerFirebaseUid),
     readEquipment(database, ownerFirebaseUid),
+    readTrainingProfile(database, ownerFirebaseUid),
   ]);
   const collection = await readProgramSummaries(database, ownerFirebaseUid);
   const active = collection.filter(({ root }) => root.isActive);
@@ -1497,6 +1812,7 @@ async function readViewerData(
     equipment,
     programs: collection.map(({ summary }) => summary),
     activeProgram,
+    trainingProfile,
   };
 }
 
@@ -2597,6 +2913,9 @@ export function createProfileProgramRepository(
       unitSystem: normalized.unitSystem,
       timezone: normalized.timezone,
       reducedMotion: normalized.reducedMotion,
+      // Omitted from the JSON when absent, so earlier example and blank
+      // requests keep their original hash.
+      trainingProfile: normalized.trainingProfile,
     });
     return database.transaction(async (transaction) => {
       const tx = transaction as unknown as Database;
@@ -2648,10 +2967,30 @@ export function createProfileProgramRepository(
           "An equipment profile already exists. Confirm an equipment change instead.",
         );
       }
+      if (normalized.trainingProfile) {
+        const answers = normalized.trainingProfile;
+        await tx
+          .insert(userTrainingProfiles)
+          .values({
+            ownerFirebaseUid: viewer.uid,
+            trainingGoal: answers.goal,
+            experienceLevel: answers.experience,
+            daysPerWeek: answers.daysPerWeek,
+          })
+          .onConflictDoNothing();
+        const savedAnswers = await readTrainingProfileRow(tx, viewer.uid);
+        if (!savedAnswers || !sameTrainingAnswers(savedAnswers, answers)) {
+          throw new RepositoryConflictError(
+            "Your training answers are already saved. Change them in Settings instead.",
+          );
+        }
+      }
       const roots = await lockProgramCollection(tx, viewer.uid);
       const expectedProgramKey = normalized.mode === "example"
         ? STARTER_PROGRAM_KEY
-        : BLANK_PROGRAM_KEY;
+        : normalized.mode === "generated"
+          ? GENERATED_PROGRAM_KEY
+          : BLANK_PROGRAM_KEY;
       if (roots.length > 0) {
         if (
           roots.length !== 1 ||
@@ -2686,6 +3025,19 @@ export function createProfileProgramRepository(
               isNull(userPrograms.activeRevisionId),
             ),
           );
+      } else if (normalized.mode === "generated") {
+        const routine = generateStarterRoutine({
+          ...normalized.trainingProfile!,
+          equipment: normalized.equipmentProfileKind,
+        });
+        await insertGeneratedPublishedProgram(tx, viewer.uid, {
+          isActive: true,
+          name: routine.name,
+          programId: scopedUuid("user-program", viewer.uid, GENERATED_PROGRAM_KEY),
+          programKey: GENERATED_PROGRAM_KEY,
+          routine,
+          topologySeed: "onboarding",
+        });
       } else {
         const exercise = await loadCompatibleCatalogExerciseBySlug(
           tx,
@@ -3381,6 +3733,209 @@ export function createProfileProgramRepository(
     });
   }
 
+  async function updateTrainingProfile(
+    viewerInput: ViewerContext | null,
+    input: TrainingProfileUpdateInput,
+  ): Promise<ProfileProgramReadModel> {
+    const viewer = requirePermanentMutationViewer(viewerInput);
+    const normalized = parseTrainingProfileUpdateInput(input);
+    const requestHash = stableRequestHash("training-profile-update", {
+      expectedUpdatedAt: normalized.expectedUpdatedAt,
+      trainingProfile: normalized.trainingProfile,
+    });
+    return database.transaction(async (transaction) => {
+      const tx = transaction as unknown as Database;
+      // The answers row may not exist yet, so the owner's profile row is the
+      // lock that serializes concurrent first saves.
+      await tx.execute(
+        sql`SELECT firebase_uid FROM user_profiles WHERE firebase_uid = ${viewer.uid} FOR UPDATE`,
+      );
+      await readProfile(tx, viewer.uid);
+      const existingIdempotency = await findIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+      );
+      if (existingIdempotency) {
+        if (
+          existingIdempotency.operation !== "training-profile-update" ||
+          existingIdempotency.requestHash !== requestHash
+        ) {
+          throw new RepositoryConflictError(
+            "The idempotency key was already used for another request.",
+          );
+        }
+        if (existingIdempotency.resultPayload["pending"] === false) {
+          return readViewerData(tx, viewer.uid);
+        }
+      }
+      const current = await readTrainingProfileRow(tx, viewer.uid);
+      const currentUpdatedAt = current ? iso(current.updatedAt) : null;
+      if (currentUpdatedAt !== normalized.expectedUpdatedAt) {
+        throw new RepositoryConflictError(
+          "Your training answers changed after this page loaded. Reload before saving.",
+        );
+      }
+      const reservation = await reserveIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+        "training-profile-update",
+        requestHash,
+      );
+      if (reservation?.replay) return readViewerData(tx, viewer.uid);
+      const answers = normalized.trainingProfile;
+      let updatedAt: Date;
+      if (!current) {
+        updatedAt = new Date();
+        const inserted = await tx
+          .insert(userTrainingProfiles)
+          .values({
+            ownerFirebaseUid: viewer.uid,
+            trainingGoal: answers.goal,
+            experienceLevel: answers.experience,
+            daysPerWeek: answers.daysPerWeek,
+            createdAt: updatedAt,
+            updatedAt,
+          })
+          .onConflictDoNothing()
+          .returning({ ownerFirebaseUid: userTrainingProfiles.ownerFirebaseUid });
+        if (inserted.length !== 1) {
+          throw new RepositoryConflictError(
+            "Your training answers changed before they could be saved. Reload before retrying.",
+          );
+        }
+      } else {
+        updatedAt = new Date(Math.max(Date.now(), current.updatedAt.getTime() + 1));
+        const changed = await tx
+          .update(userTrainingProfiles)
+          .set({
+            trainingGoal: answers.goal,
+            experienceLevel: answers.experience,
+            daysPerWeek: answers.daysPerWeek,
+            updatedAt,
+          })
+          .where(
+            and(
+              eq(userTrainingProfiles.ownerFirebaseUid, viewer.uid),
+              eq(userTrainingProfiles.updatedAt, current.updatedAt),
+            ),
+          )
+          .returning({ ownerFirebaseUid: userTrainingProfiles.ownerFirebaseUid });
+        if (changed.length !== 1) {
+          throw new RepositoryConflictError(
+            "Your training answers changed before they could be saved. Reload before retrying.",
+          );
+        }
+      }
+      await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        updatedAt: iso(updatedAt),
+      });
+      return readViewerData(tx, viewer.uid);
+    });
+  }
+
+  async function createProgramFromAnswers(
+    viewerInput: ViewerContext | null,
+    input: CreateProgramFromAnswersInput,
+  ): Promise<ProgramCollectionMutationResult> {
+    const viewer = requirePermanentMutationViewer(viewerInput);
+    const normalized = parseCreateProgramFromAnswersInput(input);
+    // The server always rebuilds the routine from the answers; it never
+    // accepts a client-built routine.
+    const routine = generateStarterRoutine({
+      ...normalized.trainingProfile,
+      equipment: normalized.equipmentProfileKind,
+    });
+    const name = normalized.name ?? routine.name;
+    const requestHash = stableRequestHash("program-create-generated", {
+      activate: normalized.activate,
+      equipmentProfileKind: normalized.equipmentProfileKind,
+      name,
+      trainingProfile: normalized.trainingProfile,
+    });
+    return database.transaction(async (transaction) => {
+      const tx = transaction as unknown as Database;
+      const roots = await lockProgramCollection(tx, viewer.uid);
+      const reservation = await reserveIdempotency(
+        tx,
+        viewer.uid,
+        normalized.idempotencyKey,
+        "program-create-generated",
+        requestHash,
+      );
+      if (reservation?.replay) {
+        const affected = replayAffectedProgram(reservation.replay);
+        await findProgramRoot(tx, viewer.uid, affected.programId);
+        return {
+          ...(await readViewerData(tx, viewer.uid)),
+          affectedProgramId: affected.programId,
+          affectedRevisionId: affected.revisionId,
+          replayed: true,
+        };
+      }
+      if (roots.length >= 24) {
+        throw new RepositoryValidationError(
+          "An account can keep at most 24 programs.",
+        );
+      }
+      const activeRoots = roots.filter(({ isActive }) => isActive);
+      if (activeRoots.length !== 1) {
+        throw new RepositoryConflictError(
+          "The active program selection needs recovery before creating another program.",
+        );
+      }
+      const programId = scopedUuid(
+        "user-program",
+        viewer.uid,
+        `collection:generated:${normalized.idempotencyKey}`,
+      );
+      const { revisionId } = await insertGeneratedPublishedProgram(tx, viewer.uid, {
+        isActive: false,
+        name,
+        programId,
+        programKey: `program-${programId}`,
+        routine,
+        topologySeed: normalized.idempotencyKey,
+      });
+      if (normalized.activate) {
+        const target = await findProgramRoot(tx, viewer.uid, programId);
+        const targetRevision = (
+          await tx
+            .select()
+            .from(programRevisions)
+            .where(
+              and(
+                eq(programRevisions.ownerFirebaseUid, viewer.uid),
+                eq(programRevisions.programId, programId),
+                eq(programRevisions.id, revisionId),
+              ),
+            )
+            .limit(1)
+        )[0];
+        if (!targetRevision) throw new RepositoryNotFoundError();
+        await activateProgramRoot(
+          tx,
+          viewer.uid,
+          activeRoots[0]!,
+          target,
+          targetRevision,
+          new Date(),
+        );
+      }
+      await finishIdempotency(tx, viewer.uid, normalized.idempotencyKey, {
+        programId,
+        revisionId,
+      });
+      return {
+        ...(await readViewerData(tx, viewer.uid)),
+        affectedProgramId: programId,
+        affectedRevisionId: revisionId,
+        replayed: false,
+      };
+    });
+  }
+
   async function publishProgram(
     viewerInput: ViewerContext | null,
     input: PublishProgramInput,
@@ -3509,6 +4064,8 @@ export function createProfileProgramRepository(
     activateProgram,
     confirmEquipmentChange,
     updatePreferences,
+    updateTrainingProfile,
+    createProgramFromAnswers,
     publishProgram,
   };
 }
@@ -3586,6 +4143,31 @@ export async function updateViewerPreferences(
   input: PreferencesUpdateInput,
 ): Promise<ProfileProgramReadModel> {
   return createProfileProgramRepository(database).updatePreferences(viewer, input);
+}
+
+export async function updateViewerTrainingProfile(
+  database: Database,
+  viewer: ViewerContext | null,
+  input: TrainingProfileUpdateInput,
+): Promise<ProfileProgramReadModel> {
+  return createProfileProgramRepository(database).updateTrainingProfile(viewer, input);
+}
+
+export async function createViewerProgramFromAnswers(
+  database: Database,
+  viewer: ViewerContext | null,
+  input: CreateProgramFromAnswersInput,
+): Promise<ProgramCollectionMutationResult> {
+  return createProfileProgramRepository(database).createProgramFromAnswers(viewer, input);
+}
+
+/** Owner-scoped read of the saved answers alone; null when none were saved. */
+export async function getViewerTrainingProfile(
+  database: Database,
+  viewer: ViewerContext | null,
+): Promise<TrainingProfileReadModel | null> {
+  const current = requireViewer(viewer);
+  return readTrainingProfile(database, current.uid);
 }
 
 export async function publishViewerProgram(

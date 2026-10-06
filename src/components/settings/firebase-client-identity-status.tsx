@@ -15,7 +15,7 @@ export function FirebaseClientIdentityStatus({
 }>) {
   if (state.status === "loading") {
     return (
-      <p aria-live="polite" className="settings-firebase-status" role="status">
+      <p aria-live="polite" className="pal-settings-identity" role="status">
         Checking…
       </p>
     );
@@ -27,13 +27,13 @@ export function FirebaseClientIdentityStatus({
     : "Something went wrong. Try again.";
 
   return (
-    <div className="settings-firebase-status" role="alert">
+    <div className="pal-settings-identity pal-settings-identity--alert" role="alert">
       <p>{message}</p>
-      <div className="settings-firebase-actions">
+      <div className="pal-actions">
         {state.status === "unavailable" ? (
-          <button onClick={onRetry} type="button">Try again</button>
+          <button className="secondary-action" onClick={onRetry} type="button">Try again</button>
         ) : null}
-        <Link href={settingsSignInHref}>Sign in again</Link>
+        <Link className="secondary-action" href={settingsSignInHref}>Sign in again</Link>
       </div>
     </div>
   );

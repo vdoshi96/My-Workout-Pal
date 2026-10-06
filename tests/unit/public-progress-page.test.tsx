@@ -5,7 +5,7 @@ const permanentRedirect = vi.hoisted(() => vi.fn(() => {
   throw new Error("NEXT_REDIRECT");
 }));
 
-vi.mock("next/navigation", () => ({ permanentRedirect }));
+vi.mock("next/navigation", () => ({ permanentRedirect, usePathname: () => "/progress" }));
 
 import ProgressPage, { metadata } from "@/app/progress/page";
 import SampleProgressCompatibilityPage from "@/app/sample-progress/page";
@@ -24,12 +24,12 @@ describe("public Progress preview", () => {
     expect(markup).not.toContain("Sample consistency");
     expect(markup).not.toContain("Sample cardio");
     expect(markup).not.toContain("Sample only");
-    expect(markup).toContain('data-companion-placement="progress-preview"');
+    expect(markup).toContain('data-scene="progress"');
     expect(markup).toContain(
       'src="/illustrations/quiet-set/tortoise-review.webp"',
     );
-    expect(markup.indexOf('data-companion-placement="progress-preview"')).toBeLessThan(
-      markup.indexOf('class="sample-metrics"'),
+    expect(markup.indexOf('data-scene="progress"')).toBeLessThan(
+      markup.indexOf('aria-label="Progress preview"'),
     );
     expect(markup).not.toContain("See your progress");
   });

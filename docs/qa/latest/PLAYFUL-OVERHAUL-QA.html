@@ -1,0 +1,2238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="source-sha256" content="6a4bfdb8299ce8e5a3f069f05419f20b5d0d944f9bba520009c5e23e5073dedd">
+  <title>Playful companion overhaul: QA report · My Workout Pal docs</title>
+  <style>
+    :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
+    @media (prefers-color-scheme: dark) { :root { --paper:#0b252b; --ink:#f4efe5; --route:#ff8269; --rule:#65777a; --code:#17363b; } }
+    * { box-sizing:border-box; }
+    html { background:var(--paper); color:var(--ink); font:17px/1.65 ui-sans-serif,system-ui,sans-serif; }
+    body { margin:0 auto; max-width:78rem; padding:clamp(1rem,4vw,4rem); }
+    main { max-width:76ch; }
+    h1,h2,h3 { line-height:1.15; text-wrap:balance; }
+    h1 { font-size:clamp(2.2rem,7vw,4.8rem); letter-spacing:-.035em; margin:0 0 2rem; }
+    h2 { border-top:1px solid var(--rule); margin-top:3.5rem; padding-top:1.2rem; }
+    a { color:var(--route); text-underline-offset:.18em; }
+    code { background:var(--code); border-radius:.25rem; padding:.08em .3em; }
+    pre { background:var(--code); border:1px solid var(--rule); overflow:auto; padding:1rem; }
+    pre code { padding:0; }
+    table { border-collapse:collapse; display:block; overflow:auto; width:100%; }
+    th,td { border-bottom:1px solid var(--rule); padding:.65rem .8rem; text-align:left; vertical-align:top; }
+    blockquote { border-inline-start:3px solid var(--route); margin-inline:0; padding-inline:1rem; }
+    :focus-visible { outline:3px solid var(--route); outline-offset:3px; }
+  </style>
+</head>
+<body>
+  <main>
+<h1>Playful companion overhaul: QA report</h1>
+<p>Branch <code>vishal/playful-companion-overhaul</code>, October 5, 2026. This report covers Phase 2 of <a href="../../plans/PLAYFUL-COMPANION-OVERHAUL.html">the overhaul plan</a>: the <em>Studio Pals</em> system on every screen, the new onboarding, the guest test drive, the navigation contract and the dark-mode rework the owner asked for. The owner approved the screenshots below on October 5 and asked for two changes: day pills that wrap and one name per equipment profile. Both are in <code>15eb950</code>, and every gate was rerun on that commit before merging.</p>
+<h2>1. Gates</h2>
+<p>Each gate ran on its own, one heavy process at a time, against application commit <code>15eb950</code>. Later commits change only Markdown, generated HTML and screenshots.</p>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Command</th>
+<th>Result (exact output)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Verify</td>
+<td><code>pnpm verify</code></td>
+<td>Exit 0. <code>Tests  1524 passed (1524)</code>, <code>Tests  38 passed (38)</code>, <code>seed:check passed: 27 required variation(s) have exactly two approved videos.</code>, <code>Verified generated service worker.</code>, <code>Verified 76 documentation files.</code>, <code>Production route boundary verified (48 App Router entries).</code></td>
+</tr>
+<tr>
+<td>Member browser suite</td>
+<td><code>pnpm test:e2e:authenticated</code></td>
+<td>Exit 0. <code>95 passed (10.9m)</code>, <code>13 skipped</code></td>
+</tr>
+<tr>
+<td>Release browser suite</td>
+<td><code>pnpm test:e2e:release</code></td>
+<td>Exit 0. <code>118 passed (2.0m)</code>, <code>86 skipped</code></td>
+</tr>
+<tr>
+<td>Public acceptance (warmed dev server on 3118)</td>
+<td><code>PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop</code></td>
+<td>Exit 0. <code>12 passed (24.0s)</code></td>
+</tr>
+<tr>
+<td>Documentation parity</td>
+<td><code>pnpm docs:build</code>, then <code>pnpm docs:check</code></td>
+<td>Exit 0. <code>Verified 76 documentation files.</code></td>
+</tr>
+</tbody></table>
+<p>Skipped tests are the suites&#39; existing per-project skips (for example, headed native zoom and single-engine evidence). No test was skipped, retried or given a longer timeout by this work.</p>
+<p><strong>Earlier runs on earlier commits are part of the record.</strong></p>
+<ul>
+<li>Earlier full member runs on this branch failed while fixes were still landing. Those failures led to the fixes in section 9.</li>
+<li>One failure was <code>library-core-conditioning-expansion.spec.ts</code>, which timed out waiting for an aborted refresh response; see section 9.</li>
+<li>On the previous candidate (<code>9be1dae</code>), the first <code>pnpm verify</code> attempt failed only at <code>docs:check</code>, on a git-ignored local ledger file (<code>docs/qa/runs/ledger-lead.md: HTML counterpart is stale</code>). After rebuilding the docs, that commit passed every gate. The final commit passed every gate on its first run.</li>
+</ul>
+<h2>2. What a first-time visitor sees now</h2>
+<ul>
+<li><p><strong>Landing.</strong> The illustrated studio fills the opening screen. The heading is &quot;Your new gym buddy.&quot; The four pillars (set your routine, track every set, watch a quick demo, see your gains) follow straight after. The page has no white cards.</p>
+</li>
+<li><p><strong>Test drive (<code>/try</code>).</strong> A two-movement guest workout with approved demos: plan, demo in place, log a set, rest, finish, and a peek at how Progress adds up. Nothing is saved, and the page says so once.</p>
+</li>
+<li><p><strong>Member onboarding.</strong> Five steps:</p>
+<ol>
+<li>What are you training for?</li>
+<li>How much lifting have you done?</li>
+<li>How many days a week can you train?</li>
+<li>What do you have to work with? (&quot;Dumbbells&quot; or &quot;Barbell + rack&quot;, the same names as Settings and the editor)</li>
+<li>Here&#39;s your routine.</li>
+</ol>
+<p>The routine is built from the answers by <code>generateStarterRoutine</code> and lists demos that open in place. &quot;Prefer a different start?&quot; offers the five-day example or a blank start. After saving, a four-card tour (Today, logging, demos, progress) can be skipped at any point. Skipping or finishing it moves focus to Today&#39;s heading. Unverified members can answer and preview but not save.</p>
+</li>
+<li><p><strong>Today.</strong> The greeting names the next day (&quot;Hey Alice! Ready for Push?&quot;), followed by one big Start button, the week as day pills that wrap onto more rows, the day&#39;s movements with in-place demos, and the progress glance. The chosen day is kept in the address.</p>
+</li>
+<li><p><strong>Finishing a workout.</strong> A celebration (&quot;Workout done! Nice work.&quot;) with a &quot;New record!&quot; ribbon when one was set. Focus moves to the heading.</p>
+</li>
+<li><p><strong>Dark mode.</strong> Every scene has a dusk recolour, and the scene is masked into the indigo night canvas instead of dimming daylight art. The owner asked for this.</p>
+</li>
+</ul>
+<h2>3. Navigation contract</h2>
+<p>Every drill-down shows a labelled back control that returns to the exact origin. Links carry a validated <code>from</code>, <code>resolveBackTarget</code> accepts only allowlisted origins, and <code>BackLink</code> steps back in history when the previous entry is the target, so scroll comes back. Demos open in a native <code>&lt;dialog&gt;</code> that mounts the video only while open.</p>
+<h3>Before (from the Phase 0 audit)</h3>
+<p>Back controls were forward links with fixed labels. Today&#39;s day picker reset on every round trip, guides always said &quot;Library&quot;, Library search was lost, history detail always went to History, records lost their place, and the runner&#39;s demo hid in a collapsed disclosure. See <a href="../../plans/PLAYFUL-COMPANION-OVERHAUL.md#navigation-map">the audit&#39;s navigation map</a>.</p>
+<h3>After</h3>
+<table>
+<thead>
+<tr>
+<th>Drill-down</th>
+<th>Back label</th>
+<th>Returns to</th>
+<th>Covered by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Today → day</td>
+<td>Back to Today</td>
+<td>Today on the same day</td>
+<td><code>tests/authenticated-e2e/back-navigation.spec.ts</code></td>
+</tr>
+<tr>
+<td>Today → guide</td>
+<td>Back to Today</td>
+<td>Same day, same movement anchor</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Day → guide</td>
+<td>Back to Day 2 · Pull</td>
+<td>Day page, focused on that movement</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Any movement → demo</td>
+<td>Close</td>
+<td>Same spot, focus back on the trigger, video unmounted</td>
+<td>same, <code>playful-onboarding.spec.ts</code>, <code>test-drive.spec.ts</code></td>
+</tr>
+<tr>
+<td>Library → guide</td>
+<td>Back to Library</td>
+<td>Same search, same row</td>
+<td><code>back-navigation.spec.ts</code> (member), <code>public-release.spec.ts</code> (public)</td>
+</tr>
+<tr>
+<td>Deep link without origin</td>
+<td>Parent fallback</td>
+<td>Library, Today and the like</td>
+<td><code>back-navigation.spec.ts</code></td>
+</tr>
+<tr>
+<td>Finish workout → summary</td>
+<td>Back to Today</td>
+<td>Today</td>
+<td><code>back-navigation.spec.ts</code></td>
+</tr>
+<tr>
+<td>Records → source workout</td>
+<td>Back to your records</td>
+<td>Records at that record</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Progress → workout</td>
+<td>Back to Progress</td>
+<td>Progress</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Public day → guide</td>
+<td>Back to the Push day</td>
+<td>Day page at that movement</td>
+<td><code>tests/e2e/back-navigation.spec.ts</code></td>
+</tr>
+<tr>
+<td>Day opened from Today</td>
+<td>(tab bar)</td>
+<td>Today stays highlighted</td>
+<td><code>back-navigation.spec.ts</code></td>
+</tr>
+</tbody></table>
+<p><em>Change from the plan:</em> the routine editor no longer writes <code>?day=</code> into its own address bar. Doing so made Next.js treat the post-save refresh as a different page and remount the editor, which closed open menus. The selected day still travels in the editor&#39;s links (&quot;All routines&quot; and every <code>from</code>).</p>
+<h2>4. Contrast</h2>
+<p>Measured in the browser on all 42 captured screens in both themes: 3,054 samples across default, hover, real Tab-key focus, selected and disabled states. Thresholds are WCAG AA: 4.5:1 for text (3:1 for large text), and 3:1 for focus rings and selected edges.</p>
+<table>
+<thead>
+<tr>
+<th>Theme</th>
+<th>State</th>
+<th align="right">Samples</th>
+<th align="right">Lowest text ratio</th>
+<th align="right">Lowest ring or edge</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>light</td>
+<td>default</td>
+<td align="right">736</td>
+<td align="right">5.40</td>
+<td align="right">n/a</td>
+</tr>
+<tr>
+<td>light</td>
+<td>hover</td>
+<td align="right">401</td>
+<td align="right">5.29</td>
+<td align="right">n/a</td>
+</tr>
+<tr>
+<td>light</td>
+<td>focus</td>
+<td align="right">256</td>
+<td align="right">5.40</td>
+<td align="right">4.21</td>
+</tr>
+<tr>
+<td>light</td>
+<td>selected</td>
+<td align="right">108</td>
+<td align="right">12.52</td>
+<td align="right">6.00</td>
+</tr>
+<tr>
+<td>light</td>
+<td>disabled</td>
+<td align="right">22</td>
+<td align="right">5.90</td>
+<td align="right">n/a</td>
+</tr>
+<tr>
+<td>dark</td>
+<td>default</td>
+<td align="right">741</td>
+<td align="right">6.33</td>
+<td align="right">n/a</td>
+</tr>
+<tr>
+<td>dark</td>
+<td>hover</td>
+<td align="right">404</td>
+<td align="right">8.30</td>
+<td align="right">n/a</td>
+</tr>
+<tr>
+<td>dark</td>
+<td>focus</td>
+<td align="right">256</td>
+<td align="right">6.33</td>
+<td align="right">5.57</td>
+</tr>
+<tr>
+<td>dark</td>
+<td>selected</td>
+<td align="right">108</td>
+<td align="right">8.91</td>
+<td align="right">8.35</td>
+</tr>
+<tr>
+<td>dark</td>
+<td>disabled</td>
+<td align="right">22</td>
+<td align="right">7.63</td>
+<td align="right">n/a</td>
+</tr>
+</tbody></table>
+<p><strong>Before:</strong></p>
+<ul>
+<li>Two text pairs failed: white on a pale highlight in dark mode, 1.34:1.</li>
+<li>Five focus rings or control edges were below 3:1.</li>
+<li>The video frame had no focus ring.</li>
+</ul>
+<p><strong>After:</strong></p>
+<ul>
+<li><strong>Text failures:</strong> none in any state.</li>
+<li><strong>Selected states:</strong> they all use one token set (<code>--selected-bg/fg/edge</code>), checked by <code>tests/unit/design-token-contrast.test.ts</code> in both themes.</li>
+<li><strong>Video frame ring:</strong> browsers stop matching <code>:focus</code> once focus is inside an iframe, so <code>FrameFocusRing</code> marks the frame&#39;s wrapper. The ring measures 4.90:1 in light and 9.55:1 in dark.</li>
+<li><strong>One flag left:</strong> the sampler still flags the focused video frame on its text check. That isn&#39;t a text pair: the frame has no text of its own.</li>
+<li><strong>Bug the browser tests caught:</strong> teal text on the sun-yellow &quot;Sign in&quot; buttons inside page closers, at 4.12:1 in light and 1.01:1 in dark. It&#39;s fixed.</li>
+</ul>
+<h2>5. Database migration <code>0008_training_profile</code></h2>
+<ul>
+<li>The owner authorized running it.</li>
+<li><strong>Backup first:</strong> a private <code>pg_dump</code> 18.6 archive, mode <code>600</code>, stored outside the repository with its sha256 (<code>mwp-playful-pre-0008-20261005T1211Z.dump</code>).</li>
+<li><strong>Before:</strong> 8 migrations, 1 profile, 1 routine, 134 movements, 268 approved videos.</li>
+<li><strong>After:</strong> 9 migrations. <code>user_training_profiles</code> exists with 0 rows, and every other count is unchanged.</li>
+<li>The table is additive. It&#39;s owned through the server-derived Firebase UID and deleted with the account (<code>tests/integration/account-deletion-repository.test.ts</code>).</li>
+</ul>
+<h2>6. Test-first evidence</h2>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Test</th>
+<th>Failing run</th>
+<th>Passing run</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Routine generation (120 answer combinations)</td>
+<td><code>tests/unit/generate-routine.test.ts</code></td>
+<td><code>365 failed, 1 passed (366)</code></td>
+<td><code>366 passed (366)</code></td>
+</tr>
+<tr>
+<td>Back-target resolution</td>
+<td><code>tests/unit/back-target.test.ts</code></td>
+<td><code>29 failed, 47 passed (76)</code></td>
+<td><code>76 passed (76)</code></td>
+</tr>
+<tr>
+<td>Today origins with a day and movement</td>
+<td><code>tests/unit/back-target.test.ts</code></td>
+<td><code>1 failed, 78 passed (79)</code></td>
+<td><code>79 passed (79)</code></td>
+</tr>
+<tr>
+<td>Token contrast in every state</td>
+<td><code>tests/unit/design-token-contrast.test.ts</code></td>
+<td><code>59 failed (59)</code></td>
+<td><code>59 passed (59)</code></td>
+</tr>
+<tr>
+<td>Training-profile schema</td>
+<td><code>tests/integration/training-profile-schema.test.ts</code></td>
+<td><code>4 failed (4)</code></td>
+<td><code>4 passed (4)</code></td>
+</tr>
+<tr>
+<td>Training-profile repository and ownership</td>
+<td><code>tests/integration/training-profile-repository.test.ts</code></td>
+<td><code>10 failed, 1 passed (11)</code></td>
+<td><code>11 passed (11)</code></td>
+</tr>
+<tr>
+<td>Onboarding envelope</td>
+<td><code>tests/unit/onboarding-training-profile.test.ts</code></td>
+<td><code>9 failed, 3 passed (12)</code></td>
+<td><code>12 passed (12)</code></td>
+</tr>
+<tr>
+<td>Finished-workout summary and records</td>
+<td><code>tests/unit/training-insights-presenters.test.ts</code></td>
+<td><code>3 failed, 4 passed (7)</code></td>
+<td><code>7 passed (7)</code></td>
+</tr>
+<tr>
+<td>Today follows the day in the address</td>
+<td><code>tests/unit/member-program-home.test.tsx</code></td>
+<td><code>1 failed, 4 passed (5)</code></td>
+<td><code>5 passed (5)</code></td>
+</tr>
+</tbody></table>
+<p>Raw outputs for the Today-origin, token-contrast and Today-address rows are kept in the ignored <code>docs/qa/runs/tdd/</code>. The others are quoted from the run logs of the agents that wrote them.</p>
+<h2>7. Screenshots</h2>
+<p>The full set of 390 px and 1440 px, light and dark screenshots is in <a href="playful-overhaul/"><code>playful-overhaul/</code></a>. They were captured from a production build (public pages) and the synthetic member fixture, with the YouTube frame stubbed. Long pages are cropped to 2,400 CSS pixels.</p>
+<table>
+<thead>
+<tr>
+<th>Screen</th>
+<th>Phone light</th>
+<th>Phone dark</th>
+<th>Desktop light</th>
+<th>Desktop dark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Landing</td>
+<td><a href="playful-overhaul/landing-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/landing-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/landing-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/landing-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Test drive</td>
+<td><a href="playful-overhaul/try-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/try-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/try-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/try-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Test drive finished</td>
+<td><a href="playful-overhaul/try-complete-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/try-complete-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/try-complete-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/try-complete-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Sign in</td>
+<td><a href="playful-overhaul/sign-in-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/sign-in-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/sign-in-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/sign-in-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Onboarding, first question</td>
+<td><a href="playful-overhaul/member-onboarding-goal-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-onboarding-goal-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-onboarding-goal-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-onboarding-goal-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Onboarding, generated routine</td>
+<td><a href="playful-overhaul/member-onboarding-routine-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-onboarding-routine-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-onboarding-routine-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-onboarding-routine-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Onboarding, tour</td>
+<td><a href="playful-overhaul/member-onboarding-tour-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-onboarding-tour-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-onboarding-tour-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-onboarding-tour-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Today</td>
+<td><a href="playful-overhaul/member-today-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-today-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-today-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-today-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Today, demo open in place</td>
+<td><a href="playful-overhaul/member-today-demo-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-today-demo-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-today-demo-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-today-demo-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Day page</td>
+<td><a href="playful-overhaul/member-day-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-day-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-day-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-day-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Library</td>
+<td><a href="playful-overhaul/member-library-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-library-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-library-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-library-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Routine editor</td>
+<td><a href="playful-overhaul/member-routine-editor-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-routine-editor-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-routine-editor-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-routine-editor-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Workout, logging a set</td>
+<td><a href="playful-overhaul/runner-set-entry-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/runner-set-entry-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/runner-set-entry-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/runner-set-entry-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Workout, resting</td>
+<td><a href="playful-overhaul/runner-rest-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/runner-rest-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/runner-rest-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/runner-rest-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Workout finished</td>
+<td><a href="playful-overhaul/member-workout-done-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-workout-done-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-workout-done-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-workout-done-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Progress</td>
+<td><a href="playful-overhaul/member-progress-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-progress-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-progress-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-progress-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><a href="playful-overhaul/member-settings-phone-light.jpg">phone-light</a></td>
+<td><a href="playful-overhaul/member-settings-phone-dark.jpg">phone-dark</a></td>
+<td><a href="playful-overhaul/member-settings-desktop-light.jpg">desktop-light</a></td>
+<td><a href="playful-overhaul/member-settings-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+</tbody></table>
+<h3>Before (from <code>main</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Screen</th>
+<th>Phone light</th>
+<th>Phone dark</th>
+<th>Desktop light</th>
+<th>Desktop dark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Landing</td>
+<td><a href="../../design/playful-overhaul/before/landing-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/landing-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/landing-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/landing-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Test drive</td>
+<td><a href="../../design/playful-overhaul/before/try-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/try-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/try-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/try-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Sign in</td>
+<td><a href="../../design/playful-overhaul/before/sign-in-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/sign-in-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/sign-in-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/sign-in-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Onboarding, first question</td>
+<td><a href="../../design/playful-overhaul/before/member-onboarding-1-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-onboarding-1-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/member-onboarding-1-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-onboarding-1-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Today</td>
+<td><a href="../../design/playful-overhaul/before/member-today-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-today-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/member-today-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-today-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Day page</td>
+<td><a href="../../design/playful-overhaul/before/member-day-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-day-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/member-day-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-day-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Workout, logging a set</td>
+<td><a href="../../design/playful-overhaul/before/runner-set-entry-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/runner-set-entry-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/runner-set-entry-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/runner-set-entry-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Workout, resting</td>
+<td><a href="../../design/playful-overhaul/before/runner-rest-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/runner-rest-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/runner-rest-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/runner-rest-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Progress</td>
+<td><a href="../../design/playful-overhaul/before/member-progress-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-progress-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/member-progress-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-progress-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><a href="../../design/playful-overhaul/before/member-settings-phone-light.jpg">phone-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-settings-phone-dark.jpg">phone-dark</a></td>
+<td><a href="../../design/playful-overhaul/before/member-settings-desktop-light.jpg">desktop-light</a></td>
+<td><a href="../../design/playful-overhaul/before/member-settings-desktop-dark.jpg">desktop-dark</a></td>
+</tr>
+</tbody></table>
+<h2>8. Edits to pre-existing tests</h2>
+<p>Pre-existing tests changed only where the redesign retired the layout they checked. Every test keeps its intent and every numeric threshold, and no skip, retry or longer timeout was added. Two thresholds were dropped by mistake and then restored, and both now appear in this ledger:</p>
+<ul>
+<li>The forced-colours copy-ratio check (above 0.8, one column).</li>
+<li>A scene image&#39;s <code>naturalWidth &gt; 0</code> check.</li>
+</ul>
+<p>Overlap checks of ≤ 1 px between the retired corner companion and page controls can&#39;t apply to a background scene. They became &quot;each protected control is the topmost element at its own centre&quot;.</p>
+<h3>Lead edits</h3>
+<table>
+<thead>
+<tr>
+<th>File:line</th>
+<th>Old → new</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tests/unit/accessible-labels.test.tsx:73</code></td>
+<td><code>&lt;small&gt;Day N&lt;/small&gt;&lt;h2&gt;Day&lt;/h2&gt;</code> → <code>&lt;small&gt;Day N&lt;/small&gt;&lt;strong&gt;Day&lt;/strong&gt;</code></td>
+<td>The example&#39;s day cards became open rows; the day name is still visible link content with no shorter override. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/animal-surface-rollout.test.ts:91</code></td>
+<td><code>&lt;DecorativeCompanion variant=&quot;library&quot; /&gt;</code> → <code>&lt;SceneStage scene=&quot;library&quot; /&gt;</code></td>
+<td>Library opens on the otter scene instead of a corner companion; the check still pins the otter to Library. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/animal-surface-rollout.test.ts:92</code></td>
+<td><code>&lt;DecorativeCompanion variant=&quot;library&quot; /&gt;</code> → <code>&lt;SceneStage scene=&quot;library&quot; /&gt;</code></td>
+<td>Library opens on the otter scene instead of a corner companion; the check still pins the otter to Library. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/authenticated-harness-policy.test.ts:534</code></td>
+<td><code>href={`/app/program/${day.dayKey}`}</code> → <code>href={withFrom(`/app/program/${selectedDay.dayKey}`, …)}</code></td>
+<td>Today links the chosen day with its origin; the no-prefetch requirement is unchanged. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/catalog-text-only-presentation.test.tsx:62</code></td>
+<td>&quot;No video yet. Follow the steps below.&quot; → &quot;No demo yet. Follow the steps below.&quot;</td>
+<td>One word for demonstrations across the app (&quot;No demo yet&quot; next to every movement). The unavailable state is still asserted. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/curated-video-publication.test.tsx:105</code></td>
+<td>&quot;No video yet. Follow the steps below.&quot; → &quot;No demo yet. Follow the steps below.&quot;</td>
+<td>One word for demonstrations across the app (&quot;No demo yet&quot; next to every movement). The unavailable state is still asserted. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/curated-video-publication.test.tsx:217</code></td>
+<td>&quot;No video yet. Follow the steps below.&quot; → &quot;No demo yet. Follow the steps below.&quot;</td>
+<td>One word for demonstrations across the app (&quot;No demo yet&quot; next to every movement). The unavailable state is still asserted. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/strength-catalog-expansion.test.tsx:280</code></td>
+<td>&quot;No video yet. Follow the steps below.&quot; → &quot;No demo yet. Follow the steps below.&quot;</td>
+<td>One word for demonstrations across the app (&quot;No demo yet&quot; next to every movement). The unavailable state is still asserted. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/curated-video-publication.test.tsx:219</code></td>
+<td>&quot;No demonstration is available&quot; → &quot;No demo yet&quot;</td>
+<td>The runner shows the shared in-place demo trigger, or &quot;No demo yet&quot;, next to the movement. Still asserts no iframe. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/decorative-companion.test.tsx</code> (whole file)</td>
+<td>retired with <code>DecorativeCompanion</code> → <code>tests/unit/scene-stage.test.tsx</code></td>
+<td>Corner companions became full scenes (<code>SceneStage</code>). The new file keeps every intent: closed asset set, <code>aria-hidden</code>, empty <code>alt</code>, not draggable, no focus or role, no optimizer URL, collapse on image failure, hidden in forced colours, motion only when welcome. Old grid-collapse selectors had no subject left. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/animal-surface-rollout.test.ts:6-75</code></td>
+<td>the &quot;Wave 3 companion visibility&quot; block removed with <code>src/domain/companions/visibility.ts</code></td>
+<td>Art no longer appears or disappears with editing, rest or save states (that toggling caused the background flip in the audit). It is a fixed backdrop behind the heading; the browser rollout specs still enforce the 1px no-overlap limit on every protected control. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/landing-page.test.tsx:4</code></td>
+<td><code>describe(&quot;Quiet Set welcome&quot;)</code> → <code>describe(&quot;Studio Pals welcome&quot;)</code></td>
+<td>Name of the retired design. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/landing-page.test.tsx:7</code></td>
+<td>title &quot;A little space for your next set&quot; → &quot;Your new gym buddy&quot;</td>
+<td>Owner-approved landing copy. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/landing-page.test.tsx:9</code></td>
+<td>&quot;No account needed. Practice stays temporary.&quot; → &quot;No account needed for the test drive.&quot;</td>
+<td>Same truthful constraint, new trial name. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/landing-page.test.tsx:11-12</code></td>
+<td>&quot;Explore the five-day example&quot; → &quot;Peek at a five-day routine&quot;</td>
+<td>The example stays a secondary link after the test drive; order check unchanged. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/landing-page.test.tsx:17-20</code></td>
+<td><code>dawn-studio(.webp, -phone.webp)</code> and <code>width=&quot;1200&quot; height=&quot;800&quot;</code> → <code>pip-studio(...)</code>, <code>width=&quot;1200&quot;</code>, <code>height=&quot;800&quot;</code></td>
+<td>The welcome scene now has the pal standing in the room; dimensions are still reserved, priority and no optimizer URL unchanged. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:114</code></td>
+<td>&quot;Ready when you are, Alice QA.&quot; → &quot;Hey Alice! Ready for Mobility?&quot;</td>
+<td>Personal greeting now names the chosen day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:115</code></td>
+<td>&quot;Dumbbells · 2 days&quot; → &quot;1 movement · Dumbbells&quot; and &quot;2 days a week&quot;</td>
+<td>Equipment and day count moved to the hero line and the week heading; singular movement count kept. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:117</code></td>
+<td>&quot;<small>1 movement</small>&quot; → &quot;<small>Day 1</small><strong>Mobility</strong>&quot;</td>
+<td>The day list became day pills (number and name); the movement count is asserted in the hero line. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:118</code></td>
+<td>href &quot;/app/program/<day>&quot; → &quot;/app/program/<day>?from=&quot;</td>
+<td>The day link carries its origin so Back returns to Today on the same day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:128</code></td>
+<td>&quot;Start workout&quot; → &quot;Start Mobility&quot;</td>
+<td>The start action names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:132</code></td>
+<td>data-companion-placement=&quot;member-home&quot; → data-scene=&quot;pip&quot;</td>
+<td>The pal is the Today scene (SceneStage) instead of a corner companion; same Pip art. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:153</code></td>
+<td>&quot;Workout in progress&quot; → &quot;Keep going with Trail&quot;</td>
+<td>The hidden eyebrow was retired earlier; the resume heading carries the state (owner mapping in PR #8). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:156</code></td>
+<td>&quot;Finish or abandon Trail before starting another day.&quot; → &quot;…finish it before starting another day.&quot; plus no &quot;Start Mobility&quot;</td>
+<td>Same one-workout-at-a-time message; now also asserts no competing start. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:174</code></td>
+<td>&quot;Your routine is available to review.&quot; → &quot;Your routine is ready to look through.&quot;</td>
+<td>Warmer copy; the verification instruction is unchanged. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:177</code></td>
+<td>day-grid link markup, plain day href, companion placement → day pill, day href with from, data-scene</td>
+<td>Unverified members still see their days and can open them, with no start action. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:160</code></td>
+<td>data-companion-placement=&quot;member-home&quot; → data-scene=&quot;pip&quot;</td>
+<td>Same as above, in the resume case. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/member-program-home.test.tsx:202</code></td>
+<td>day href → day href with from; plus no &quot;Start Mobility&quot;</td>
+<td>The day is still discoverable; no new start while unverified. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/production-audit-copy.test.ts:89</code></td>
+<td>&quot;Where would you like to start?&quot; → &quot;What are you training for?&quot;</td>
+<td>Owner-approved onboarding opens with the goal question; the example and blank starts moved under &quot;Prefer a different start?&quot;. Still a required plain-language question. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/public-progress-page.test.tsx:27-33</code></td>
+<td><code>data-companion-placement=&quot;progress-preview&quot;</code> before <code>class=&quot;sample-metrics&quot;</code> → <code>data-scene=&quot;progress&quot;</code> before <code>aria-label=&quot;Progress preview&quot;</code></td>
+<td>The tortoise is now the page scene, still ahead of the example stats; the single &quot;Example data&quot; disclosure checks are unchanged. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/public-progress-page.test.tsx:8</code></td>
+<td>mock <code>{ permanentRedirect }</code> → <code>{ permanentRedirect, usePathname: () =&gt; &quot;/progress&quot; }</code></td>
+<td>The shared shell now records the current page for exact back navigation; the mock must provide the hook. No assertion changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:44</code></td>
+<td><code>name: &quot;A little space for your next set.&quot;, }), ).toBeVisible(); await expect(page.locator(&#39;.quiet-studio&#39;)).to…</code> → <code>name: &quot;Your new gym buddy.&quot;, }), ).toBeVisible(); await expect(page.locator(&#39;.pal-scene&#39;)).toBeVisible();</code></td>
+<td>Owner-approved landing heading; the studio is now the full-bleed scene. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:49</code></td>
+<td><code>page.locator(&#39;.quiet-studio img&#39;),</code> → <code>page.locator(&#39;.pal-scene img&#39;),</code></td>
+<td>Same priority image, new scene element. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:51</code></td>
+<td><code>await expect(page.getByText(&quot;No account needed. Practice stays temporary.&quot;)).toBeVisible(); await expect(page.…</code> → <code>await expect(page.getByText(&quot;No account needed for the test drive.&quot;)).toBeVisible(); await expect(page.getByRo…</code></td>
+<td>Same truthful no-account note and account action, new copy. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:62</code></td>
+<td><code>await page.getByRole(&quot;link&quot;, { name: &quot;Explore the five-day example&quot; }).click();</code> → <code>await page.getByRole(&quot;link&quot;, { name: &quot;Peek at a five-day routine&quot; }).click();</code></td>
+<td>The example stays a secondary landing link. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:88</code></td>
+<td><code>const selectedDay = page.locator(&quot;.program-day-grid &gt; li&quot;).filter({ has: page.getByRole(&quot;heading&quot;, { name: &quot;Pu…</code> → <code>const selectedDay = page.locator(&quot;.pal-day-list &gt; li&quot;).filter({ has: page.getByText(&quot;Pull&quot;, { exact: true }) }…</code></td>
+<td>Day cards became open rows; the day name and the barbell variant are still checked in the selected day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:102</code></td>
+<td><code>await expect(page.getByText(&quot;Edit cardio targets once you save a routine.&quot;)).toBeVisible();</code> → <code>await expect(page.getByText(/You can change it once you save a routine\./)).toBeVisible();</code></td>
+<td>Same cardio-editing note, warmer copy. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:119</code></td>
+<td><code>page.getByRole(&quot;heading&quot;, { level: 3, name: &quot;No compatible match&quot; }),</code> → <code>page.getByRole(&quot;heading&quot;, { level: 3, name: &quot;No match yet&quot; }),</code></td>
+<td>Same empty state, warmer copy. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:126</code></td>
+<td><code>page.getByRole(&quot;heading&quot;, { level: 2, name: /^\d+ compatible movements$/ }),</code> → <code>page.getByRole(&quot;heading&quot;, { level: 2, name: /^\d+ movements for / }),</code></td>
+<td>Result count heading now names the equipment. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:138</code></td>
+<td><code>await expect(page.getByText(&quot;Not your workout · never saved&quot;)).toBeVisible(); await expect(page.getByText(&quot;Rea…</code> → <code>await expect(page.getByText(&quot;Example · nothing here is saved&quot;)).toBeVisible();</code></td>
+<td>The two &quot;not saved / read only&quot; badges merged into one example tag. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:153</code></td>
+<td><code>await expect(page.getByRole(&quot;link&quot;, { name: &quot;Explore the example routine&quot; })).toBeVisible();</code> → <code>await expect(page.getByRole(&quot;link&quot;, { name: &quot;Not ready? Take a test drive first&quot; })).toBeVisible();</code></td>
+<td>Sign-in still offers a way to explore without an account; it now points to the test drive. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:179</code></td>
+<td><code>await expect(page.getByText(/\d+ movements with a walker or runner finish\./)).toBeVisible();</code> → <code>await expect(page.getByText(/\d+ movements, then a 20-minute walk or run/)).toBeVisible();</code></td>
+<td>Same day summary, plain words. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:246</code></td>
+<td><code>.getByRole(&quot;link&quot;, { name: &quot;Try one set&quot; }) .boundingBox();</code> → <code>.getByRole(&quot;link&quot;, { name: &quot;Take a test drive&quot; }) .first() .boundingBox();</code></td>
+<td>Primary landing action renamed; the above-the-nav check is unchanged. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:266</code></td>
+<td><code>name: &quot;A little space for your next set.&quot;, }), ).toBeVisible(); const presentation</code> → <code>name: &quot;Your new gym buddy.&quot;, }), ).toBeVisible(); const presentation</code></td>
+<td>Owner-approved landing heading. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:278</code></td>
+<td><code>expect(presentation.backgroundColor).toBe(&quot;rgb(20, 42, 35)&quot;);</code> → <code>expect(presentation.backgroundColor).toBe(&quot;rgb(25, 27, 51)&quot;);</code></td>
+<td>Dark mode is now the dusk indigo canvas (#191b33). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:53</code></td>
+<td><code>const placement = page.locator(variant === &quot;landing&quot; ? &quot;.quiet-studio&quot; : </code>[data-companion-placement=&quot;${variant…<code>→</code>// Every public page opens on the same decorative SceneStage; the variant only names the page. void variant; c…`</td>
+<td>Corner companions and the landing picture became one SceneStage per page; the decorative-semantics checks now apply to both pages, including aria-hidden on the landing. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:77</code></td>
+<td><code>page.locator(&quot;.quiet-welcome-copy &gt; p&quot;), page.getByRole(&quot;link&quot;, { name: &quot;Try one set&quot;, exact: true }), page.ge…</code> → <code>page.locator(&quot;.pal-hero__copy &gt; p&quot;).first(), page.getByRole(&quot;link&quot;, { name: &quot;Take a test drive&quot;, exact: true }…</code></td>
+<td>Same protected intro and both landing actions, new copy and container. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:83</code></td>
+<td><code>.toBe(&quot;A little space for your next set.&quot;);</code> → <code>.toBe(&quot;Your new gym buddy.&quot;);</code></td>
+<td>Owner-approved landing heading. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:94</code></td>
+<td><code>for (const decoration of await page.locator(&quot;.quiet-studio, .quiet-welcome .decorative-companion&quot;).all()) {</code> → <code>for (const decoration of await page.locator(&quot;.pal-scene, .pal-sticker, .pal-vignette&quot;).all()) {</code></td>
+<td>The scene stays a background (z-index -1, exempt as before); stickers and vignettes are foreground decoration and keep the 1 px limit. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:99</code></td>
+<td><code>for (const link of await page.locator(&quot;.quiet-welcome-copy &gt; a, .public-nav a&quot;).all()) {</code> → <code>for (const link of await page.locator(&quot;.pal-hero__copy a, .public-nav a&quot;).all()) {</code></td>
+<td>Same links, new container. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:151</code></td>
+<td><code>copy: &quot;.quiet-welcome-copy&quot;, heading: &quot;A little space for your next set.&quot;,</code> → <code>copy: &quot;.pal-hero__copy&quot;, heading: &quot;Your new gym buddy.&quot;,</code></td>
+<td>Landing copy container and heading. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:157</code></td>
+<td><code>copy: &quot;.sample-hero-copy&quot;,</code> → <code>copy: &quot;.pal-page-head&quot;,</code></td>
+<td>Progress heading container. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:190</code></td>
+<td><code>await expectNoIntersection(placement, page.locator(surface.copy)); await expectNoIntersection(placement, page.…</code> → <code>// The scene is a background behind these areas, so each must stay on top and hit-testable. await expect(page.…</code></td>
+<td>The tortoise moved from a foreground corner to the page background; non-overlap becomes &quot;each protected area is on top and hit-testable&quot;, the same check the landing already uses. Same protected areas (heading, header, nav, disclosure, stats, chart). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:257</code></td>
+<td><code>else await expectNoIntersection(placement, page.locator(&quot;.public-nav&quot;));</code> → <code>else await expect(page.locator(&quot;.public-nav&quot;)).toBeVisible();</code></td>
+<td>The scene sits behind the nav by design; the nav must stay visible. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:284</code></td>
+<td><code>const placement = page.locator(surface.path === &quot;/&quot; ? &quot;.quiet-studio&quot; : </code>[data-companion-placement=&quot;${surface.…<code>→</code>const placement = page.locator(&quot;.pal-scene&quot;); await expect(placement).toBeHidden(); if (surface.path === &quot;/&quot;) …`</td>
+<td>The scene no longer reserves a grid column, so there is nothing to collapse; with the scene hidden the heading and stats must still show. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:297</code></td>
+<td><code>const placement = page.locator(surface.path === &quot;/&quot; ? &quot;.quiet-studio&quot; : </code>[data-companion-placement=&quot;${surface.…<code>→</code>const placement = page.locator(&quot;.pal-scene&quot;); await expectCompanionSemantics(page, surface.variant);`</td>
+<td>Same scene element on both pages. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:313</code></td>
+<td><code>await placement.locator(&quot;img&quot;).evaluate((image) =&gt; { image.dispatchEvent(new Event(&quot;error&quot;)); }); await expect…</code> → <code>await page.route(&quot;**/illustrations/quiet-set/**&quot;, (route) =&gt; route.abort()); await page.reload(); await expect…</code></td>
+<td>Image failure now removes the whole scene (SceneStage returns nothing); the heading and stats stay visible. Blocking the art request replaces the synthetic error event, which React does not observe. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:364</code></td>
+<td><code>const placement = page.locator(&quot;.quiet-studio&quot;); for (let step = 0; step &lt; 8; step += 1) {</code> → <code>const placement = page.locator(&quot;.pal-scene&quot;); for (let step = 0; step &lt; 8; step += 1) {</code></td>
+<td>Same keyboard check on the new scene element. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:308</code></td>
+<td><code>await expect.poll(() =&gt; placement.locator(&quot;img&quot;).evaluate((image) =&gt; (image as HTMLImageElement).naturalWidth)…</code> → <code>await expect(page.locator(&quot;.pal-scene&quot;)).toHaveCount(0);</code></td>
+<td>A failed scene image now removes the whole decorative scene instead of leaving an empty picture; landing controls are still checked next. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-rollout.spec.ts:80</code></td>
+<td><code>const placement = page.locator(&#39;[data-companion-placement=&quot;library&quot;]&#39;); await expect(placement).toHaveCount(1)…</code> → <code>const placement = page.locator(&quot;.pal-scene&quot;); await expect(placement).toHaveCount(1);</code></td>
+<td>The otter is the Library scene (SceneStage) instead of a corner companion. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-rollout.spec.ts:94</code></td>
+<td><code>for (const protectedSelector of [ &quot;.public-header&quot;, &quot;.public-nav&quot;, &quot;.public-library-hero &gt; div:first-child&quot;, &quot;…</code> → <code>for (const protectedSelector of [ &quot;.public-header&quot;, &quot;.public-nav&quot;, &quot;.pal-page-head h1&quot;, &quot;.pal-page-head &gt; p&quot;, …</code></td>
+<td>Same eight protected areas; the scene now sits behind them by design, so &quot;no overlap&quot; becomes &quot;on top and hit-testable&quot;. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-rollout.spec.ts:171</code></td>
+<td><code>await expect(page.locator(&#39;[data-companion-placement=&quot;library&quot;]&#39;)).not.toBeFocused();</code> → <code>await expect(page.locator(&quot;.pal-scene&quot;)).not.toBeFocused();</code></td>
+<td>Same keyboard check, new scene element. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-rollout.spec.ts:187</code></td>
+<td><code>await assertPublicLibrary(page, 1440); const placement = page.locator(&#39;[data-companion-placement=&quot;library&quot;]&#39;);</code> → <code>await assertPublicLibrary(page, 1440); const placement = page.locator(&quot;.pal-scene&quot;);</code></td>
+<td>Same resilience checks, new scene element. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-rollout.spec.ts:226</code></td>
+<td><code>await expectNoIntersection( page.locator(&#39;[data-companion-placement=&quot;library&quot;]&#39;), page.locator(&quot;.library-tools…</code> → <code>await expectOnTop(page.locator(&quot;.pal-library-tools&quot;));</code></td>
+<td>At 2x page scale the tools must stay on top of the background scene. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-rollout.spec.ts:270</code></td>
+<td><code>await expect(page.locator(&#39;[data-companion-placement=&quot;library&quot;]&#39;)).toBeHidden();</code> → <code>await expect(page.locator(&quot;.pal-search&quot;)).toBeVisible();</code></td>
+<td>At native 200% zoom the scene no longer has to hide (it is a background); the search must stay visible. Headed macOS-only gate. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-rollout.spec.ts:10</code></td>
+<td>removed the now-unused <code>expectNoIntersection</code> helper</td>
+<td>Its callers became on-top hit tests (rows above). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/animal-surface-rollout.test.ts:31</code></td>
+<td><code>it(&quot;allows only the genuinely public Library variant into the public cache&quot;, async () =&gt; { const policy = awai…</code> → <code>it(&quot;allows only the genuinely public Library variant into the public cache&quot;, async () =&gt; { const policy = awai…</code></td>
+<td>The retired storybook cut-outs were deleted (owner-approved); the public Library art is now the otter scene and its dusk version. Member-only names stay excluded. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/animal-surface-rollout.test.ts:51</code></td>
+<td><code>const publicDirectory = new URL( &quot;../../public/illustrations/companions/&quot;, import.meta.url, ); const provenanc…</code> → <code>const publicDirectory = new URL( &quot;../../public/illustrations/quiet-set/&quot;, import.meta.url, ); const provenance…</code></td>
+<td>Checks the served scene folder instead of the deleted companions folder. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/animal-surface-rollout.test.ts:73</code></td>
+<td><code>for (const webpName of publicWebps) { const [asset, provenanceText] = await Promise.all([ readFile(new URL(web…</code> → <code>for (const webpName of publicWebps) { const [asset, provenanceText] = await Promise.all([ readFile(new URL(web…</code></td>
+<td>Every served scene still needs a private-safe record; generated originals keep their prompt check and the recoloured dusk versions pin their exact bytes. The generator-version checks applied only to the deleted cut-outs. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/animal-surface-rollout.test.ts:91</code></td>
+<td>removed the <code>workout-pals-gym</code> provenance loop</td>
+<td>Both unused gym images were deleted with owner approval; their provenance stays in <code>docs/design/provenance/illustrations/</code>. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/hosted-deletion-command.test.ts:54</code></td>
+<td><code>expect(browserSource).toContain(&#39;img[src=&quot;/illustrations/companions/planning-hedgehog.webp&quot;]&#39;);</code> → <code>expect(browserSource).toContain(&#39;.pal-scene img&#39;);</code></td>
+<td>After account deletion the public landing shows the studio scene; the retired hedgehog image is gone. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/authenticated-harness-policy.test.ts:333</code></td>
+<td><code>expect(runner).toContain(&#39;&quot;public/illustrations/companions/preparing-fox.webp&quot;&#39;); expect(runner).toContain( &#39;&quot;…</code> → <code>expect(runner).toContain(&#39;&quot;public/illustrations/quiet-set&quot;&#39;); expect(runner).toContain( &#39;&quot;tests/fixtures/authe…</code></td>
+<td>The runner stages every served scene (including the dusk recolours) instead of the deleted companion cut-outs; still through the guarded staging helper with no copy or unlink calls. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/pwa-cache-policy.test.ts:49</code></td>
+<td><code>expect(PWA_INSTALL_ASSETS).toContain( &quot;/illustrations/companions/planning-hedgehog-512.webp&quot;, ); expect(PWA_IN…</code> → <code>expect(PWA_INSTALL_ASSETS).toContain( &quot;/illustrations/quiet-set/pip-studio-dusk.webp&quot;, ); expect(PWA_INSTALL_A…</code></td>
+<td>The public pages now use the studio scenes and their dusk versions; the deleted companion cut-outs left the cache. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/pwa-cache-policy.test.ts:88</code></td>
+<td><code>url: </code>${appOrigin}/illustrations/companions/cataloging-otter.webp<code>, }), ).toBe(true);</code> → <code>url: </code>${appOrigin}/illustrations/quiet-set/otter-study-dusk.webp<code>, }), ).toBe(true);</code></td>
+<td>Explicit public Library art is cacheable (now the dusk otter scene). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/pwa-cache-policy.test.ts:96</code></td>
+<td><code>url: </code>${appOrigin}/illustrations/companions/planning-hedgehog.webp<code>, }), ).toBe(true);</code> → <code>url: </code>${appOrigin}/illustrations/companions/planning-hedgehog.webp<code>, }), ).toBe(false);</code></td>
+<td>The hedgehog was deleted and is no longer an explicit public asset, so it must not be cached. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/pwa-cache-policy.test.ts:104</code></td>
+<td><code>url: </code>${appOrigin}/illustrations/companions/reviewing-raccoon.webp<code>, }), ).toBe(true);</code> → <code>url: </code>${appOrigin}/illustrations/quiet-set/tortoise-review-dusk.webp<code>, }), ).toBe(true);</code></td>
+<td>Explicit public Progress art is cacheable (now the dusk tortoise scene). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:128</code></td>
+<td><code>page.getByRole(&quot;heading&quot;, { level: 1, name: &quot;A little space for your next set.&quot; }),</code> → <code>page.getByRole(&quot;heading&quot;, { level: 1, name: &quot;Your new gym buddy.&quot; }),</code></td>
+<td>Owner-approved landing heading. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:133</code></td>
+<td><code>.locator(&#39;.quiet-studio img&#39;)</code> → <code>.locator(&#39;.pal-scene img&#39;)</code></td>
+<td>The landing studio is now the scene element; the offline image must still load. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:145</code></td>
+<td><code>.locator(&#39;[data-companion-placement=&quot;progress-preview&quot;] img&#39;)</code> → <code>.locator(&#39;.pal-scene img&#39;)</code></td>
+<td>Progress art is the scene element. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:158</code></td>
+<td><code>.locator(&#39;[data-companion-placement=&quot;library&quot;] img&#39;)</code> → <code>.locator(&#39;.pal-scene img&#39;)</code></td>
+<td>Library art is the scene element. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:169-172</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:275-278</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:343-346</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:170</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:276</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:344</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:247-250</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:508-511</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:546-549</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:248</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:509</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:547</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/customization-geometry.spec.ts:191</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/firebase-auth-hydration.spec.ts:82-85</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/firebase-auth-hydration.spec.ts:83</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:229-232</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:684</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:193-196</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:241</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-guidance.spec.ts:87-90</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-guidance.spec.ts:89</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-strength-expansion.spec.ts:90-93</code></td>
+<td>Example radio, two Continues, &quot;Save routine&quot; → <code>saveExampleFromOnboarding(page)</code> (answer the four questions, &quot;Use the five-day example&quot;, &quot;Save my routine&quot;, &quot;Skip tour&quot;)</td>
+<td>Onboarding now asks goal, experience, days and equipment; the five-day example is still one choice away and the journey continues from the same saved routine. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-strength-expansion.spec.ts:92</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:568</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:675</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:735</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:801</code></td>
+<td>heading &quot;All days&quot; → &quot;Your week&quot;</td>
+<td>Today&#39;s day list became the &quot;Your week&quot; day pills; still proves the saved routine reached Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/production-audit.spec.ts:3</code></td>
+<td><code>import { expect, test, type BrowserContext, type Page } from &quot;@playwright/test&quot;;</code> → <code>import { expect, test, type BrowserContext, type Page } from &quot;@playwright/test&quot;; import { answerOnboarding, sa…</code></td>
+<td>Uses the shared onboarding helpers for the new four-question onboarding. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/production-audit.spec.ts:21</code></td>
+<td><code>async function saveExampleRoutine(page: Page) { await page.goto(&quot;/app&quot;); await page.getByRole(&quot;radio&quot;, { name:…</code> → ``</td>
+<td>Local example-routine helper replaced by the shared one (answer four questions, Use the five-day example, Save my routine, Skip tour, then a Start button is visible). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/production-audit.spec.ts:49</code></td>
+<td><code>await expect(page.getByRole(&quot;heading&quot;, { name: &quot;Where would you like to start?&quot; })).toBeVisible(); await page.…</code> → <code>await expect(page.getByRole(&quot;heading&quot;, { name: &quot;What are you training for?&quot; })).toBeVisible(); for (const [cho…</code></td>
+<td>Onboarding steps are now goal, experience, days, equipment and the routine preview; each step heading must still take focus. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/production-audit.spec.ts:126</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot;, exact: true }).click();</code> → <code>await page.getByRole(&quot;button&quot;, { name: /^Start / }).click();</code></td>
+<td>Today&#39;s start button now names the day (&quot;Start Push&quot;). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/customization-geometry.spec.ts:9</code></td>
+<td><code>import { isSupersededCompanionImageRequest } from &quot;./companion-request-policy&quot;;</code> → <code>import { isSupersededCompanionImageRequest } from &quot;./companion-request-policy&quot;; import { answerOnboarding } fr…</code></td>
+<td>Uses the shared onboarding helper. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/customization-geometry.spec.ts:180</code></td>
+<td><code>await expect(page.getByRole(&quot;heading&quot;, { name: &quot;Make room for your routine.&quot; })).toBeVisible(); await page.get…</code> → <code>await answerOnboarding(page, undefined, { navigate: false }); await page.getByText(&quot;Prefer a different start?&quot;…</code></td>
+<td>Onboarding now asks four questions and takes the time zone from the device (no Time zone field); the example routine is one choice away. The 201 save check is unchanged. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/customization-geometry.spec.ts:188</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Save routine&quot;, exact: true }).click(); expect((await onboardingRespons…</code> → <code>await page.getByRole(&quot;button&quot;, { name: &quot;Save my routine&quot;, exact: true }).click(); expect((await onboardingResp…</code></td>
+<td>Save button renamed; the short tour after saving is skipped to reach Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:23</code></td>
+<td><code>} from &quot;./companion-request-policy&quot;;</code> → <code>} from &quot;./companion-request-policy&quot;; import { answerOnboarding, DEFAULT_ANSWERS } from &quot;./support/member&quot;;</code></td>
+<td>Uses the shared onboarding helper. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:257</code></td>
+<td><code>if (await page.getByRole(&quot;radio&quot;, { name: /Example routine/ }).isVisible()) { await page.getByRole(&quot;radio&quot;, { …</code> → <code>const save = page.getByRole(&quot;button&quot;, { name: &quot;Save my routine&quot;, exact: true }); // A failed save keeps the ro…</code></td>
+<td>Onboarding now asks goal, experience, days and equipment, then offers the five-day example or a blank start under &quot;Prefer a different start?&quot;; the barbell profile is the &quot;full gym&quot; answer. Same modes, same equipment, same request checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:276</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Save routine&quot;, exact: true, }).click(); const response = await respons…</code> → <code>await save.click(); const response = await responsePromise; // After a saved example routine a short tour open…</code></td>
+<td>Save button renamed &quot;Save my routine&quot;; the new optional tour is skipped so callers land on Today. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:552</code></td>
+<td><code>await expect(unverified.page.getByRole(&quot;button&quot;, { name: &quot;Continue&quot;, exact: true })).toBeDisabled(); await exp…</code> → <code>await answerOnboarding(unverified.page, DEFAULT_ANSWERS, { navigate: false }); await expect(unverified.page.ge…</code></td>
+<td>Unverified members may now answer the questions and see their routine, but still cannot save (approved onboarding design). The save control stays disabled. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:570</code></td>
+<td><code>await expect(alice.page.getByRole(&quot;heading&quot;, { name: &quot;Ready when you are, Alice QA.&quot; })).toBeVisible(); await …</code> → <code>await expect(alice.page.getByRole(&quot;heading&quot;, { name: &quot;Hey Alice! Ready for Push?&quot; })).toBeVisible(); await exp…</code></td>
+<td>Today&#39;s greeting names the next day; the day picker became the &quot;Your week&quot; day pills (selected day pressed); totals stay hidden before a first workout (<code>.pal-glance</code>). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:577</code></td>
+<td><code>await expect(nextWorkout.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot;, exact: true })).toBeEnabled(); await exp…</code> → <code>await expect(nextWorkout.getByRole(&quot;button&quot;, { name: &quot;Start Push&quot;, exact: true })).toBeEnabled(); await expect…</code></td>
+<td>Start button names the day; &quot;Review this day&quot; became &quot;See the whole day&quot; and carries the way back; day grid became day pills. Today&#39;s &quot;Your week&quot; row now shows routine name and day count; the equipment moved to the line under the greeting. Same facts checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:586</code></td>
+<td><code>await alice.page.getByRole(&quot;link&quot;, { name: /Push/ }).click(); const startResponse</code> → <code>await alice.page.getByRole(&quot;link&quot;, { name: &quot;See the whole day&quot; }).click(); const startResponse</code></td>
+<td>The day page is opened from &quot;See the whole day&quot; (day names are now pills on Today). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:592</code></td>
+<td><code>await alice.page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click(); expect((await startResponse).status()…</code> → <code>await alice.page.getByRole(&quot;button&quot;, { name: &quot;Start Push&quot; }).click(); expect((await startResponse).status()).t…</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:612</code></td>
+<td><code>await expect(unverifiedActive.page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot;, exact: true })).toHaveCount(0)…</code> → <code>await expect(unverifiedActive.page.getByRole(&quot;button&quot;, { name: /^Start /u })).toHaveCount(0);</code></td>
+<td>Start button names the day; still no start while a workout is resumable. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:629</code></td>
+<td><code>.locator(&quot;.member-nav a, .member-resume-card a&quot;)</code> → <code>.locator(&quot;.member-nav a, .pal-today-actions a&quot;)</code></td>
+<td>The resume card became the Today action row; same 44 px target check. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:645</code></td>
+<td><code>await expect(bob.page.getByText(&quot;Barbell + rack · 5 days&quot;)).toBeVisible(); await expect(bob.page.locator(&quot;.mem…</code> → <code>await expect(bob.page.locator(&quot;.pal-today-copy&quot;).getByText(/ · Barbell \+ rack$/u)).toBeVisible(); await expec…</code></td>
+<td>Today&#39;s &quot;Your week&quot; row now shows routine name and day count; the equipment moved to the line under the greeting. Same facts checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:826</code></td>
+<td><code>await alice.page.getByRole(&quot;radio&quot;, { name: /Example routine/ }).check(); await alice.page.getByRole(&quot;button&quot;,…</code> → <code>expect((await submitOnboarding</code></td>
+<td>Onboarding no longer has a separate start choice or Time zone field (the device time zone is used); <code>submitOnboarding</code> picks the example. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:842</code></td>
+<td><code>await expect(alice.page.getByText(&quot;Barbell + rack · 5 days&quot;)).toBeVisible(); await expect(alice.page.locator(&quot;…</code> → <code>await expect(alice.page.locator(&quot;.pal-today-copy&quot;).getByText(/ · Barbell \+ rack$/u)).toBeVisible(); await exp…</code></td>
+<td>Today&#39;s &quot;Your week&quot; row now shows routine name and day count; the equipment moved to the line under the greeting. Same facts checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:863</code></td>
+<td><code>alice.page.getByText(&quot;QA cloned route · Barbell + rack · 5 days&quot;, { exact: true, }), ).toBeVisible();</code> → <code>alice.page.getByText(&quot;QA cloned route · 5 days a week&quot;, { exact: true, }), ).toBeVisible(); await expect(alice…</code></td>
+<td>Today&#39;s &quot;Your week&quot; row now shows routine name and day count; the equipment moved to the line under the greeting. Same facts checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:1050</code></td>
+<td><code>await expect(alice.page.getByRole(&quot;heading&quot;, { name: &quot;Ready when you are, Alice QA.&quot; })).toBeVisible(); await …</code> → <code>await expect(alice.page.getByRole(&quot;heading&quot;, { name: /^Hey Alice! Ready for /u })).toBeVisible(); await expect…</code></td>
+<td>Today&#39;s greeting is now &quot;Hey Alice! Ready for <day>?&quot;. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:1055</code></td>
+<td><code>await expect(alice.page.getByRole(&quot;heading&quot;, { name: &quot;Ready when you are, Alice QA.&quot; })).toBeVisible(); const …</code> → <code>await expect(alice.page.getByRole(&quot;heading&quot;, { name: /^Hey Alice! Ready for /u })).toBeVisible(); const comple…</code></td>
+<td>Today&#39;s totals are the &quot;Your progress&quot; glance; &quot;Completed&quot; is labelled &quot;Workouts&quot;. Same count of 1 checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:428</code></td>
+<td><code>await expect(page).toHaveURL(/\/app\/program\/pull$/u);</code> → <code>await expect(page).toHaveURL(/\/app\/program\/pull\?from=/u);</code></td>
+<td>Day links now carry the way back (<code>?from=</code>). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:424</code></td>
+<td><code>const pullDay = page.getByRole(&quot;link&quot;, { name: /Pull/ }); await pullDay.focus(); await expect(pullDay).toBeFoc…</code> → <code>const pullDay = page.getByRole(&quot;button&quot;, { name: /Pull/u }); await pullDay.focus(); await expect(pullDay).toBe…</code></td>
+<td>Days are chosen with a keyboard-operable day pill, then opened with &quot;See the whole day&quot;; still all keyboard. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:1406</code></td>
+<td><code>await alice.page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click(); const startResponse = await startProm…</code> → <code>await alice.page.getByRole(&quot;button&quot;, { name: /^Start /u }).first().click(); const startResponse = await startP…</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:733</code></td>
+<td><code>await expect(page.getByRole(&quot;heading&quot;, { name: &quot;Make room for your routine.&quot; })).toBeVisible(); const firstBod…</code> → <code>await expect(page.getByRole(&quot;heading&quot;, { name: &quot;The five-day example.&quot; })).toBeVisible(); const firstBody</code></td>
+<td>After a failed save the routine preview stays open (its heading for the example is &quot;The five-day example.&quot;); still proves no false success. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/quiet-set.spec.ts:2</code></td>
+<td><code>import { expect, test } from &quot;@playwright/test&quot;;</code> → <code>import { expect, test } from &quot;@playwright/test&quot;; import { answerOnboarding } from &quot;./support/member&quot;;</code></td>
+<td>Uses the shared onboarding helper. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/quiet-set.spec.ts:30</code></td>
+<td><code>await page.getByRole(&quot;radio&quot;, { name:/Blank routine/ }).check(); await page.getByRole(&quot;button&quot;, {name:&quot;Continu…</code> → <code>await page.getByRole(&quot;radio&quot;, { name:/^Build muscle/ }).check(); await page.getByRole(&quot;button&quot;, {name:&quot;Continu…</code></td>
+<td>Blank start now sits behind four questions and &quot;Prefer a different start?&quot;; units switch with &quot;Use kilograms&quot;. Still checks the step counter, no request before saving, the empty-draft message and a disabled save. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/quiet-set.spec.ts:47</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, {name:&quot;Save routine&quot;}).click(); expect((await created).status()).toBe(201);</code> → <code>await page.getByRole(&quot;button&quot;, {name:&quot;Save my routine&quot;}).click(); expect((await created).status()).toBe(201);</code></td>
+<td>Onboarding save button renamed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/quiet-set.spec.ts:65</code></td>
+<td><code>const start = page.getByRole(&quot;button&quot;, {name:&quot;Start workout&quot;, exact:true});</code> → <code>const start = page.getByRole(&quot;button&quot;, {name:&quot;Start Day 1&quot;, exact:true});</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/quiet-set.spec.ts:73</code></td>
+<td><code>await expect(page.locator(&quot;[data-companion-placement=library] img&quot;)).toHaveAttribute(&quot;src&quot;,/otter-study/);</code> → <code>await expect(page.locator(&quot;.pal-scene[data-scene=library] img&quot;)).toHaveAttribute(&quot;src&quot;,/otter-study/);</code></td>
+<td>Corner companion retired; the otter now lives in the Library&#39;s full-width scene. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/quiet-set.spec.ts:80</code></td>
+<td><code>await expect(page.locator(&quot;[data-companion-placement=member-home] img&quot;)).toHaveAttribute(&quot;src&quot;,/mica-studio/);</code> → <code>await expect(page.locator(&quot;.pal-scene[data-scene=mica] img&quot;)).toHaveAttribute(&quot;src&quot;,/mica-studio/);</code></td>
+<td>Corner companion retired; the chosen pal now lives in Today&#39;s full-width scene. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/quiet-set.spec.ts:142</code></td>
+<td><code>await page.getByRole(&quot;radio&quot;,{name:/Blank routine/}).check(); await page.getByRole(&quot;button&quot;,{name:&quot;Continue&quot;,e…</code> → <code>await answerOnboarding(page, undefined, { navigate: false }); await page.getByText(&quot;Prefer a different start?&quot;…</code></td>
+<td>Blank start now sits behind four questions and &quot;Prefer a different start?&quot;; units switch with &quot;Use kilograms&quot;; search result names no longer append equipment. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/quiet-set.spec.ts:158</code></td>
+<td><code>await page.getByRole(&quot;button&quot;,{name:&quot;Start workout&quot;,exact:true}).click();</code> → <code>await page.getByRole(&quot;button&quot;,{name:&quot;Start Day 1&quot;,exact:true}).click();</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:96</code></td>
+<td><code>async function expectMemberCompanion(page: Page) { const placement = page.locator(&#39;[data-companion-placement=&quot;…</code> → <code>const PROTECTED_TODAY = [ &quot;.member-header a&quot;, &quot;.member-header button&quot;, &quot;.member-nav a&quot;, &quot;.pal-today-copy h1&quot;, …</code></td>
+<td>The corner companion was retired (owner-approved); the pal now lives in Today&#39;s full-width background scene. Same decorative checks (hidden from assistive tech, no pointer events, image loads). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:126</code></td>
+<td><code>for (const selector of [ &quot;.member-header&quot;, &quot;.member-nav&quot;, &quot;.member-program-copy h1&quot;, &quot;.member-program-copy &gt; p…</code> → <code>// The scene is a background behind the copy by design, so &quot;no overlap&quot; becomes &quot;never on top&quot;. for (const reg…</code></td>
+<td>The corner companion was retired (owner-approved); the pal now lives in Today&#39;s full-width background scene. A background necessarily shares space with the copy, so the no-overlap check became: every protected control is the topmost element at its centre. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:184</code></td>
+<td><code>await expect(page.getByRole(&quot;heading&quot;, { name: &quot;Ready when you are, Alice QA.&quot; })).toBeVisible(); await expect…</code> → <code>await expect(page.getByRole(&quot;heading&quot;, { name: &quot;Hey Alice! Ready for Push?&quot; })).toBeVisible(); await expect(pa…</code></td>
+<td>Today&#39;s greeting names the day; routine name and day count moved to &quot;Your week&quot;; day grid became day pills; &quot;Review this day&quot; became &quot;See the whole day&quot; with a way back; totals still hidden before a first workout. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:209</code></td>
+<td><code>await page.getByRole(&quot;link&quot;, { name: /Push/ }).click(); const startResponse = page.waitForResponse(</code> → <code>await page.getByRole(&quot;link&quot;, { name: &quot;See the whole day&quot; }).click(); const startResponse = page.waitForRespons…</code></td>
+<td>The day page opens from &quot;See the whole day&quot;. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:215</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click(); expect((await startResponse).status()).toBe…</code> → <code>await page.getByRole(&quot;button&quot;, { name: &quot;Start Push&quot; }).click(); expect((await startResponse).status()).toBe(20…</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:227</code></td>
+<td><code>const placement = page.locator(&#39;[data-companion-placement=&quot;member-home&quot;]&#39;); if (width &lt;= 767) { await expect(p…</code> → <code>// The scene now shows at every width; Resume must stay clear of the phone tab bar. await expectMemberCompanio…</code></td>
+<td>The corner companion was retired (owner-approved); the pal now lives in Today&#39;s full-width background scene. It now shows at every width (it was hidden below 768 px), so the scene check runs everywhere; the Resume-vs-tab-bar no-overlap check is kept. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:246</code></td>
+<td><code>await expect(unverifiedPage.getByText(&quot;Your routine is available to review.&quot;)).toBeVisible();</code> → <code>await expect(unverifiedPage.getByText(&quot;Your Push workout is waiting. Verify your email to keep going.&quot;)).toBeV…</code></td>
+<td>Unverified resume copy rewritten in plain words (same meaning: review only until verified). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:249</code></td>
+<td><code>const unverifiedPlacement = unverifiedPage.locator( &#39;[data-companion-placement=&quot;member-home&quot;]&#39;, ); if (browser…</code> → <code>// The verification banner and Review link are in PROTECTED_TODAY, so they must sit above the scene. await exp…</code></td>
+<td>The corner companion was retired (owner-approved); the pal now lives in Today&#39;s full-width background scene. The verification and resume no-overlap checks became on-top checks inside the shared helper. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:288</code></td>
+<td><code>await expect(page.locator(&#39;[data-companion-placement=&quot;member-home&quot;]&#39;)).toBeHidden(); expect( await page.locato…</code> → <code>await expect(page.locator(&quot;.pal-today-stage .pal-scene&quot;)).toBeHidden(); expect( await page.locator(&quot;.pal-today…</code></td>
+<td>Same forced-colours rule (art hidden, one copy block, controls reachable) on the new Today containers. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:305</code></td>
+<td><code>const failedPlacement = await expectMemberCompanion(page); await failedPlacement.locator(&quot;img&quot;).evaluate((imag…</code> → <code>const failedPlacement = await expectMemberCompanion(page); const copyWidth = () =&gt; page.locator(&quot;.pal-today-co…</code></td>
+<td>The copy no longer splits a hero with the art, so its width is compared before and after the art fails (same 0.8 floor) instead of against the hero. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:344</code></td>
+<td><code>await expect(page.locator(&#39;[data-companion-placement=&quot;member-home&quot;]&#39;)).toHaveCount(0); await slowNavigation; a…</code> → <code>await expect(page.locator(&quot;.pal-scene&quot;)).toHaveCount(0); await slowNavigation; await expect(page.getByRole(&quot;he…</code></td>
+<td>The corner companion was retired (owner-approved); the pal now lives in Today&#39;s full-width background scene. Loading still shows no scene; greeting renamed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:357</code></td>
+<td><code>await expect(page.locator(&#39;[data-companion-placement=&quot;member-home&quot;]&#39;)).toHaveCount(0); control.scenario = &quot;rea…</code> → <code>await expect(page.locator(&quot;.pal-scene&quot;)).toHaveCount(0); control.scenario = &quot;ready&quot;; await page.getByRole(&quot;but…</code></td>
+<td>The corner companion was retired (owner-approved); the pal now lives in Today&#39;s full-width background scene. The error state still shows no scene; greeting renamed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:259</code></td>
+<td><code>await expectCompanion(page, &quot;library&quot;, true, [ &quot;.member-header&quot;, &quot;.member-nav&quot;, &quot;.member-library-heading h1&quot;, …</code> → <code>await expectInsightsScene(page, &quot;library&quot;, [ &quot;.member-header&quot;, &quot;.member-nav&quot;, &quot;.pal-page-head h1&quot;, &quot;.pal-page-…</code></td>
+<td>The corner companion was retired (owner-approved); the Library otter now lives in the page&#39;s background scene, checked by the same scene helper the other member pages use (decorative, no pointer or focus, never on top of protected regions). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:351</code></td>
+<td><code>await page.goto(&quot;/app&quot;); await page.getByRole(&quot;link&quot;, { name: /Push/ }).click(); const startResponse = page.wa…</code> → <code>await page.goto(&quot;/app&quot;); await page.getByRole(&quot;link&quot;, { name: &quot;See the whole day&quot; }).click(); const startRespo…</code></td>
+<td>Day names are pills on Today; the day page opens from &quot;See the whole day&quot;. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:358</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click(); expect((await startResponse).status()).toBe…</code> → <code>await page.getByRole(&quot;button&quot;, { name: &quot;Start Push&quot; }).click(); expect((await startResponse).status()).toBe(20…</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:407</code></td>
+<td><code>await expect( unverifiedPage.locator(&#39;[data-companion-placement=&quot;workout&quot;]&#39;), ).toHaveCount(0);</code> → <code>await expect( unverifiedPage.locator(&#39;.pal-scene[data-scene=&quot;workout&quot;]&#39;), ).toHaveCount(0);</code></td>
+<td>Corner companion retired; the workout scene is likewise absent on the verify-first screen. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:512</code></td>
+<td><code>const placement = page.locator(&#39;[data-companion-placement=&quot;library&quot;]&#39;); if (currentWidth(testInfo) &gt;= 1024) { …</code> → <code>const placement = page.locator(&#39;.pal-scene[data-scene=&quot;library&quot;]&#39;); await expect(placement).toBeVisible(); awa…</code></td>
+<td>The corner companion was retired (owner-approved); the Library otter now lives in the page&#39;s background scene, checked by the same scene helper the other member pages use (decorative, no pointer or focus, never on top of protected regions). The scene shows at every width, so the failure path is the same on desktop and phone. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:624</code></td>
+<td><code>await expect(page.locator(&#39;[data-companion-placement=&quot;library&quot;]&#39;)).toBeHidden(); await page.getByLabel(&quot;Search…</code> → <code>await expectInsightsScene(page, &quot;library&quot;, [&quot;.pal-page-head h1&quot;, &quot;.pal-search&quot;]); await page.getByLabel(&quot;Searc…</code></td>
+<td>The corner companion was retired (owner-approved); the Library otter now lives in the page&#39;s background scene, checked by the same scene helper the other member pages use (decorative, no pointer or focus, never on top of protected regions). At 200% zoom the scene stays (it used to hide) and must not sit on top of the heading or search. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:79-151</code></td>
+<td><code>expectNoIntersection</code> and <code>expectCompanion</code> helpers → removed</td>
+<td>Only used by the retired corner companion; the scene helper covers the same decorative rules. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:469</code></td>
+<td><code>await page.getByRole(&quot;link&quot;, { name: /Push/ }).click();</code> → <code>await page.getByRole(&quot;link&quot;, { name: &quot;See the whole day&quot; }).click();</code></td>
+<td>Day page opens from &quot;See the whole day&quot;. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:475</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click();</code> → <code>await page.getByRole(&quot;button&quot;, { name: &quot;Start Push&quot; }).click();</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:315</code></td>
+<td><code>await expect( alice.page.getByText(&quot;Weekend route · Dumbbells · 1 day&quot;, { exact: true, }), ).toBeVisible(); aw…</code> → <code>await expect( alice.page.getByText(&quot;Weekend route · 1 day a week&quot;, { exact: true, }), ).toBeVisible(); await e…</code></td>
+<td>Today&#39;s &quot;Your week&quot; row shows routine name and day count, the line under the greeting shows movement count and equipment, and the day grid became day pills. Same facts checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:569</code></td>
+<td><code>await expect(alice.page.getByText(&quot;Dumbbells · 2 days&quot;)).toBeVisible(); await expect(alice.page.locator(&quot;.memb…</code> → <code>await expect(alice.page.getByText(/ · 2 days a week$/u)).toBeVisible(); await expect(alice.page.locator(&quot;.pal-…</code></td>
+<td>Today&#39;s &quot;Your week&quot; row shows routine name and day count, the line under the greeting shows movement count and equipment, and the day grid became day pills. Same facts checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-guidance.spec.ts:209</code></td>
+<td><code>await page.getByRole(&quot;link&quot;, { name: /Guidance day/ }).click();</code> → <code>await page.getByRole(&quot;link&quot;, { name: &quot;See the whole day&quot; }).click();</code></td>
+<td>Day names are pills on Today; the one-day routine&#39;s day page opens from &quot;See the whole day&quot;. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-guidance.spec.ts:215</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click(); expect((await start).status()).toBe(201);</code> → <code>await page.getByRole(&quot;button&quot;, { name: &quot;Start Guidance day&quot; }).click(); expect((await start).status()).toBe(20…</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/runner-resilience.spec.ts:20</code></td>
+<td><code>import { isSupersededCompanionImageRequest } from &quot;./companion-request-policy&quot;;</code> → <code>import { isSupersededCompanionImageRequest } from &quot;./companion-request-policy&quot;; import { saveExampleFromOnboar…</code></td>
+<td>Uses the shared onboarding helper. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/runner-resilience.spec.ts:291</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Continue&quot; }).click(); await page.getByRole(&quot;button&quot;, { name: &quot;Continue…</code> → <code>await saveExampleFromOnboarding(page); expect((await onboard).status()).toBe(201); await page.getByRole(&quot;link&quot;…</code></td>
+<td>Onboarding now asks four questions; the five-day example is chosen under &quot;Prefer a different start?&quot; and the tour is skipped. The day page opens from &quot;See the whole day&quot;. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/runner-resilience.spec.ts:299</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click(); expect((await start).status()).toBe(201);</code> → <code>await page.getByRole(&quot;button&quot;, { name: &quot;Start Push&quot; }).click(); expect((await start).status()).toBe(201);</code></td>
+<td>Start button names the day. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:1392</code></td>
+<td><code>const pushDay = alice.page.getByRole(&quot;link&quot;, { name: /Push/ }); await pushDay.focus(); await expect(pushDay).t…</code> → <code>const pushDay = alice.page.getByRole(&quot;link&quot;, { name: &quot;See the whole day&quot; }); await pushDay.focus(); await expe…</code></td>
+<td>Push (the selected day) opens from &quot;See the whole day&quot;; day links carry the way back (<code>?from=</code>); the day heading now includes the day number. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:83</code></td>
+<td><code>scene: &quot;progress&quot; | &quot;routine&quot; | &quot;settings&quot; | &quot;workout&quot;</code> → adds <code>&quot;library&quot;</code></td>
+<td>The Library scene is checked by the same helper. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:331</code></td>
+<td><code>await expect(alice.page.getByRole(&quot;link&quot;, { name: /Sunrise strength/ })).toHaveAttribute( &quot;href&quot;, </code>/app/progra…<code>→</code>await expect(alice.page.getByRole(&quot;button&quot;, { name: /Sunrise strength/ })).toHaveAttribute(&quot;aria-pressed&quot;, &quot;tr…`</td>
+<td>Today&#39;s day names are pills; the selected day&#39;s page opens from &quot;See the whole day&quot;, whose link still targets the stable day key and now carries the way back (<code>?from=</code>). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/customization-geometry.spec.ts:200</code></td>
+<td><code>).toEqual({ dark: true, paper: &quot;#142a23&quot;, reduced: true, scrollBehavior: &quot;auto&quot; });</code> → <code>).toEqual({ dark: true, paper: &quot;#191b33&quot;, reduced: true, scrollBehavior: &quot;auto&quot; });</code></td>
+<td>The dark canvas changed from forest <code>#142a23</code> to the approved Studio Pals night indigo <code>#191b33</code> (<code>--paper</code> aliases <code>--canvas</code>). Still proves the dark theme applied. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:584</code></td>
+<td><code>await expect(alice.page.getByRole(&quot;link&quot;, { name: new RegExp(day.displayName, &quot;u&quot;) })).toHaveAttribute( &quot;href&quot;…</code> → <code>await alice.page.getByRole(&quot;button&quot;, { name: new RegExp(day.displayName, &quot;u&quot;) }).click(); await expect(alice.p…</code></td>
+<td>Today&#39;s day names are pills; each day&#39;s page link (&quot;See the whole day&quot; after choosing the pill) still targets its stable day key, now with the way back. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/companion-request-policy.ts:3-17</code></td>
+<td>the 12 deleted <code>/illustrations/companions/*</code> paths (plus <code>quiet-set/tortoise-review.webp</code>) → every <code>quiet-set</code> scene picture behind member pages, in its <code>-phone</code>, <code>-dusk</code> and <code>-dusk-phone</code> sizes</td>
+<td>The corner companions were deleted; the same narrowly-scoped WebKit cancellation allowance (cancelled, same-origin, decorative, superseded by navigation) now names the scene pictures that replaced them. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:893</code></td>
+<td><code>expect((await activateOriginalResponse).status()).toBe(200); await expect(alice.page.getByText(&quot;Dumbbells · 5 …</code> → <code>expect((await activateOriginalResponse).status()).toBe(200); await expect(alice.page.locator(&quot;.pal-today-copy&quot;…</code></td>
+<td>Today&#39;s &quot;Your week&quot; row shows the day count and the line under the greeting shows the equipment. Same facts checked. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:789</code></td>
+<td><code>await alice.page.goBack(); await expect(alice.page).toHaveURL(/\/app\/program\/edit$/u);</code> → <code>await alice.page.goBack(); await expect(alice.page).toHaveURL(/\/app\/program\/edit(\?day=[^&amp;#]+)?$/u);</code></td>
+<td>The editor now keeps its selected day in the address (<code>?day=</code>, navigation contract item 8); still proves Back stayed on the editor. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:1474</code></td>
+<td><code>.getByRole(&quot;button&quot;, { name: new RegExp(exerciseName, &quot;i&quot;) }) .click();</code> → <code>.getByRole(&quot;button&quot;, { name: new RegExp(</code>^\d+ ${exerciseName}<code>, &quot;i&quot;) }) .click();</code></td>
+<td>The runner now has an in-place &quot;Watch demo for <movement>&quot; button; the outline step button (which starts with its number) is targeted explicitly. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:269</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: /^Dead bug/u }).click();</code> → <code>await page.getByRole(&quot;button&quot;, { name: &quot;Dead bug&quot;, exact: true }).click();</code></td>
+<td>Exact name: the blank-start search also lists &quot;Dead bug heel tap&quot;. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/runner-resilience.spec.ts:485</code></td>
+<td><code>.getByRole(&quot;button&quot;, { name: new RegExp(exerciseName, &quot;iu&quot;) }) .click();</code> → <code>.getByRole(&quot;button&quot;, { name: new RegExp(</code>^\d+ ${exerciseName}<code>, &quot;iu&quot;) }) .click();</code></td>
+<td>The runner now has an in-place &quot;Watch demo for <movement>&quot; button; the outline step button (which starts with its number) is targeted explicitly. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/authenticated-nav.test.tsx:5</code></td>
+<td><code>usePathname: () =&gt; &quot;/app&quot;, }));</code> → <code>usePathname: () =&gt; &quot;/app&quot;, useSearchParams: () =&gt; new URLSearchParams(), }));</code></td>
+<td>The member tab bar now reads <code>from</code> through Next&#39;s <code>useSearchParams</code>, so the mock provides an empty one. No assertion changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/accessible-labels.test.tsx:7</code></td>
+<td><code>useRouter: () =&gt; ({ refresh: vi.fn(), replace: vi.fn() }), }));</code> → <code>useRouter: () =&gt; ({ refresh: vi.fn(), replace: vi.fn() }), useSearchParams: () =&gt; new URLSearchParams(), }));</code></td>
+<td>The member tab bar now reads <code>from</code> through Next&#39;s <code>useSearchParams</code>, so the mock provides an empty one. No assertion changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:462</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: new RegExp(exerciseName, &quot;i&quot;) }).click();</code> → <code>await page.getByRole(&quot;button&quot;, { name: new RegExp(</code>^\d+ ${exerciseName}<code>, &quot;i&quot;) }).click();</code></td>
+<td>The runner now has an in-place &quot;Watch demo for <movement>&quot; button; the outline step button (which starts with its number) is targeted explicitly. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:331,584,590</code></td>
+<td>day-pill locators <code>/Sunrise strength/</code>, <code>new RegExp(day.displayName)</code>, <code>/Mobility reset/</code> → anchored <code>^Day N &lt;name&gt;$</code></td>
+<td>Same mapping as above, anchored so it doesn&#39;t also match the &quot;Start <day>&quot; button. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/customization-geometry.spec.ts:12</code></td>
+<td><code>async function assertAccessible(page: Page) { const results = await new AxeBuilder({ page }).analyze();</code> → <code>async function assertAccessible(page: Page) { // Next.js streams the document title after the body; wait for i…</code></td>
+<td>After the new tour, Today arrives by a router refresh whose <code>&lt;title&gt;</code> streams in just after the body; WebKit&#39;s axe pass ran in that gap. Same condition-wait as <code>animal-surface-pilot-authenticated.spec.ts</code>&#39;s helper; no timeout, retry or rule changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:354</code></td>
+<td><code>await expect(alice.page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp$/u);</code> → <code>await expect(alice.page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp(&amp;done=1)?$/u);</code></td>
+<td>Finishing now adds <code>done=1</code>, which only shows the celebration; the destination and way back are unchanged (same mapping as the rollout spec). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:1234</code></td>
+<td><code>await expect(alice.page.getByRole(&quot;link&quot;, { name: /View tied workout/ }).first()).toHaveAttribute( &quot;href&quot;, </code>/a…<code>→</code>await expect(alice.page.getByRole(&quot;link&quot;, { name: /View tied workout/ }).first()).toHaveAttribute( &quot;href&quot;, new…`</td>
+<td>Record links now carry the way back to the same record (<code>from=/app/prs#record-…</code>); still targets the tied workout. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:514</code></td>
+<td><code>.locator(&quot;fieldset.pal-editor-section legend input&quot;)</code> → <code>.locator(&quot;fieldset.pal-editor-section .pal-editor-section-head input&quot;)</code></td>
+<td>The section name field moved out of the <code>&lt;legend&gt;</code> into the section header row (it overlapped &quot;More&quot; inside the legend); same inputs, same ids. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/flexible-routine-publication.spec.ts:610</code></td>
+<td><code>await expect(alice.page.getByRole(&quot;button&quot;, { name: /Dumbbell curl/i })).toBeVisible();</code> → <code>await expect(alice.page.getByRole(&quot;button&quot;, { name: /^\d+ Dumbbell curl/i })).toBeVisible();</code></td>
+<td>The runner now has an in-place &quot;Watch demo for <movement>&quot; button; the outline step button (which starts with its number) is targeted explicitly. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/companion-request-policy.test.ts:35</code></td>
+<td><code>&quot;/illustrations/companions/cataloging-otter.webp&quot;</code> → <code>&quot;/illustrations/quiet-set/otter-study.webp&quot;</code></td>
+<td>The deleted corner-companion otter is replaced by the Library scene picture that took its place; the same positive and negative cases run against it. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/unit/companion-request-policy.test.ts:142</code></td>
+<td><code>&quot;/illustrations/companions/unknown.webp&quot;</code> → <code>&quot;/illustrations/quiet-set/unknown.webp&quot;</code></td>
+<td>Unknown-image negative case moved to the folder the allowance now covers; it must still be rejected. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/public-release.spec.ts:115</code></td>
+<td><code>await expect(page).toHaveURL(/\/library\?equipment=barbell(?:#movement-[a-z0-9-]+)?$/);</code> → <code>await expect(page).toHaveURL(/\/library\?equipment=barbell&amp;q=bent\+over\+row(?:#movement-[a-z0-9-]+)?$/);</code></td>
+<td>Navigation contract: &quot;Back to Library&quot; now also keeps the search you came from (the old page dropped <code>q</code>); same equipment filter and anchor. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:37</code></td>
+<td><code>page.getByRole(&quot;heading&quot;, { level: 1, name: &quot;A little space for your next set.&quot; }),</code> → <code>page.getByRole(&quot;heading&quot;, { level: 1, name: &quot;Your new gym buddy.&quot; }),</code></td>
+<td>Owner-approved landing heading (the offline replay further down already checks the new heading). <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:73</code></td>
+<td><code>&quot;/illustrations/companions/planning-hedgehog.webp&quot;,</code> → <code>&quot;/illustrations/quiet-set/pip-studio.webp&quot;,</code></td>
+<td>The landing, Library and Progress corner companions were deleted (owner-approved); each page&#39;s scene picture took their place and is checked in the public cache instead. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:83</code></td>
+<td><code>&quot;/illustrations/companions/cataloging-otter.webp&quot;,</code> → <code>&quot;/illustrations/quiet-set/otter-study.webp&quot;,</code></td>
+<td>The landing, Library and Progress corner companions were deleted (owner-approved); each page&#39;s scene picture took their place and is checked in the public cache instead. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:88</code></td>
+<td><code>&quot;/illustrations/companions/cataloging-otter-512.webp&quot;,</code> → <code>&quot;/illustrations/quiet-set/otter-study-phone.webp&quot;,</code></td>
+<td>The landing, Library and Progress corner companions were deleted (owner-approved); each page&#39;s scene picture took their place and is checked in the public cache instead. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:100</code></td>
+<td><code>&quot;/illustrations/companions/reviewing-raccoon.webp&quot;,</code> → <code>&quot;/illustrations/quiet-set/tortoise-review.webp&quot;,</code></td>
+<td>The landing, Library and Progress corner companions were deleted (owner-approved); each page&#39;s scene picture took their place and is checked in the public cache instead. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/pwa-offline.spec.ts:58-77</code></td>
+<td><code>memberCompanion</code> and <code>privateCompanionPaths</code> checks → unchanged</td>
+<td>Their files were deleted, so these negative checks now pass trivially; there is no member-only art left. The meaningful owned-surface check (<code>ownedRoutePaths: []</code>) is unchanged. Recorded rather than edited. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:313</code></td>
+<td><code>await page.route(&quot;**/illustrations/quiet-set/**&quot;, (route) =&gt; route.abort()); await page.reload(); await expect…</code> → <code>// The service worker serves scene pictures from its cache, so fail the image itself (as main did). const copy…</code></td>
+<td>Restores main&#39;s failure mechanism (dispatch <code>error</code> on the image; a network abort can&#39;t reach the service-worker cache) and its 0.8 copy-width floor, now measured before/after the art fails because the copy no longer splits a hero with the art. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/animal-surface-pilot.spec.ts:290</code></td>
+<td><code>await expect(page.locator(surface.copy)).toBeVisible(); await expect(page.getByLabel(&quot;Progress preview&quot;)).toBe…</code> → <code>await expect(page.locator(surface.copy)).toBeVisible(); await expect(page.getByLabel(&quot;Progress preview&quot;)).toBe…</code></td>
+<td>Restores main&#39;s forced-colours collapse thresholds (copy ratio above 0.8, one grid column). The copy no longer shares a hero with the art, so the ratio compares its forced-colours width with its normal width instead of the hero width. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:91</code></td>
+<td><code>await expect(image).toHaveAttribute(&quot;alt&quot;, &quot;&quot;); await expect(stage.locator(&quot;a, button, input, select, textarea…</code> → <code>await expect(image).toHaveAttribute(&quot;alt&quot;, &quot;&quot;); await expect .poll(() =&gt; image.evaluate((element) =&gt; (element …</code></td>
+<td>Restores the retired companion helper&#39;s <code>naturalWidth &gt; 0</code> check (the picture really loaded) in the scene helper that replaced it. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:279</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Skip tour&quot; }).click();</code> → <code>await skipTour(page);</code></td>
+<td>The shared step also waits until Today&#39;s heading has taken focus (the tour hands focus to it), so the next keyboard step doesn&#39;t race that move. No timeout changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/customization-geometry.spec.ts:192</code></td>
+<td><code>await page.getByRole(&quot;button&quot;, { name: &quot;Skip tour&quot; }).click();</code> → <code>await skipTour(page);</code></td>
+<td>Same shared step and reason. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:280</code></td>
+<td>(new line after &quot;See the whole day&quot; click) → <code>waitForURL(/\/app\/program\/…\?from=/u)</code></td>
+<td>Today and the day page both have a &quot;Start <day>&quot; button, so the next click waits until the day page has loaded instead of hitting Today&#39;s button mid-navigation. Condition wait only; no timeout changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:472</code></td>
+<td>(new line after &quot;See the whole day&quot; click) → <code>waitForURL(/\/app\/program\/…\?from=/u)</code></td>
+<td>Today and the day page both have a &quot;Start <day>&quot; button, so the next click waits until the day page has loaded instead of hitting Today&#39;s button mid-navigation. Condition wait only; no timeout changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/animal-surface-pilot-authenticated.spec.ts:210</code></td>
+<td>(new line after &quot;See the whole day&quot; click) → <code>waitForURL(/\/app\/program\/…\?from=/u)</code></td>
+<td>Today and the day page both have a &quot;Start <day>&quot; button, so the next click waits until the day page has loaded instead of hitting Today&#39;s button mid-navigation. Condition wait only; no timeout changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/library-guidance.spec.ts:210</code></td>
+<td>(new line after &quot;See the whole day&quot; click) → <code>waitForURL(/\/app\/program\/…\?from=/u)</code></td>
+<td>Today and the day page both have a &quot;Start <day>&quot; button, so the next click waits until the day page has loaded instead of hitting Today&#39;s button mid-navigation. Condition wait only; no timeout changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:590</code></td>
+<td>(new line after &quot;See the whole day&quot; click) → <code>waitForURL(/\/app\/program\/…\?from=/u)</code></td>
+<td>Today and the day page both have a &quot;Start <day>&quot; button, so the next click waits until the day page has loaded instead of hitting Today&#39;s button mid-navigation. Condition wait only; no timeout changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/runner-resilience.spec.ts:294</code></td>
+<td>(new line after &quot;See the whole day&quot; click) → <code>waitForURL(/\/app\/program\/…\?from=/u)</code></td>
+<td>Today and the day page both have a &quot;Start <day>&quot; button, so the next click waits until the day page has loaded instead of hitting Today&#39;s button mid-navigation. Condition wait only; no timeout changed. <code>playful-overhaul</code></td>
+</tr>
+<tr>
+<td><code>tests/authenticated-e2e/onboarding.spec.ts:228</code></td>
+<td><code>async function assertAccessible(page: Page) { const results = await new AxeBuilder({ page })</code> → <code>async function assertAccessible(page: Page) { // Next.js streams the document title after a refresh; wait for …</code></td>
+<td>WebKit&#39;s axe pass could run in the gap before a refreshed page&#39;s streamed <code>&lt;title&gt;</code> arrives (the tour and saves refresh). Same condition-wait as the pilot and geometry helpers; no rule, timeout or retry changed. <code>playful-overhaul</code></td>
+</tr>
+</tbody></table>
+<h3>Workout runner</h3>
+<table>
+<thead>
+<tr>
+<th>File:line</th>
+<th>Old → new</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tests/unit/workout-runner-presenters.test.ts:141-160</td>
+<td>(new) <code>formatRestHeading</code>, <code>formatTimerStatus</code>, <code>formatPreviousSet</code> cases</td>
+<td>playful-overhaul: TDD for the new rest copy (&quot;Catch your breath.&quot;) and the &quot;Previous: …&quot; line; failed before the presenter change, passes after</td>
+</tr>
+<tr>
+<td>tests/unit/animal-surface-rollout.test.ts:87,98</td>
+<td>reads <code>workout-runner.tsx</code> and expects <code>&lt;DecorativeCompanion variant=&quot;workout&quot; /&gt;</code> → reads <code>src/app/workout/[sessionId]/page.tsx</code> and expects <code>&lt;SceneStage scene=&quot;workout&quot; /&gt;</code> and no <code>DecorativeCompanion</code></td>
+<td>playful-overhaul: the runner&#39;s 150×95 corner companion is replaced by the workout studio scene stage</td>
+</tr>
+<tr>
+<td>tests/unit/authenticated-harness-policy.test.ts:280-285</td>
+<td>adds expectations for the <code>&amp;done=1</code> completion push, <code>onComplete={openCompletedHistory}</code> and <code>onAbandon={openTerminalHistory}</code></td>
+<td>playful-overhaul: finishing now carries <code>done=1</code> (after <code>from</code>) so History can celebrate; ending a workout does not</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:159</td>
+<td>scene union <code>&quot;progress&quot; | &quot;routine&quot; | &quot;settings&quot;</code> → adds <code>&quot;workout&quot;</code></td>
+<td>playful-overhaul: reuse the shared scene helper for the runner</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:366-374</td>
+<td><code>expectCompanion(page, &quot;workout&quot;, …)</code> over <code>.owned-workout-route-bar</code>, <code>.runner-header &gt; div:first-child</code>, <code>.runner-stamp</code>, <code>.runner-identity</code>, <code>.runner-progress</code>, <code>.runner-layout</code>, <code>.runner-footer</code> → <code>expectInsightsScene(page, &quot;workout&quot;, […])</code> over <code>.pal-run-bar .pal-back-link</code>, <code>.pal-run-head h1</code>, <code>.pal-run-progress</code>, <code>.pal-run-move h2</code>, <code>.pal-run-sets</code>, <code>.pal-run-entry</code>, <code>.pal-run-footer</code></td>
+<td>playful-overhaul: the decorative art is now a non-interactive backdrop; the test still proves it is hidden from assistive tech, takes no pointer events and never sits on top of the protected controls</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:384-390</td>
+<td>rest start / offline asserted the corner companion hides and returns → asserts the &quot;Catch your breath.&quot; and &quot;Rest timer&quot; headings and the offline heading</td>
+<td>playful-overhaul: the backdrop no longer hides; the rest and offline states stay readable instead</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:445 (old)</td>
+<td><code>await expect(runnerPlacement).toBeHidden()</code> after skipping → removed</td>
+<td>playful-overhaul: no companion placement exists on the runner</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:427,437,582,592</td>
+<td><code>.runner-outline li button</code>, <code>.runner-more</code> → <code>.pal-run-outline li button</code>, <code>.pal-run-more</code></td>
+<td>playful-overhaul: class rename only</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:453,608</td>
+<td><code>toHaveURL(\</code>/app/history/${sessionId}`)<code>→</code>toHaveURL(//app/history/<id>?from=%2Fapp(&amp;done=1)?$/)`</td>
+<td>playful-overhaul: finish carries <code>from</code> (already, since the back-navigation change) and now <code>done=1</code>; <code>done</code> is optional in case History tidies its own address after celebrating</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/runner-resilience.spec.ts:459,472,476,622,736,779,827,965,1099</td>
+<td><code>.runner-more</code>, <code>.runner-set-tab</code>, <code>.runner-outline &gt; summary</code>, <code>.runner-progress</code>, <code>fieldset.runner-editor input</code> → <code>.pal-run-more</code>, <code>.pal-run-set</code>, <code>.pal-run-outline &gt; summary</code>, <code>.pal-run-progress</code>, <code>fieldset.pal-run-entry input</code></td>
+<td>playful-overhaul: class rename only</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/runner-resilience.spec.ts:1187,1216</td>
+<td>exact history path → <code>/app/history/&lt;id&gt;?from=%2Fapp(&amp;done=1)?</code></td>
+<td>playful-overhaul: completion destination carries <code>from</code> and <code>done</code></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:411</td>
+<td><code>.runner-more</code> → <code>.pal-run-more</code></td>
+<td>playful-overhaul: class rename only</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:469,1482</td>
+<td>exact history path → <code>/app/history/&lt;id&gt;?from=%2Fapp(&amp;done=1)?</code></td>
+<td>playful-overhaul: completion destination carries <code>from</code> and <code>done</code></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:254</td>
+<td><code>.runner-more</code> → <code>.pal-run-more</code></td>
+<td>playful-overhaul: class rename only</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:668-670</td>
+<td>exact history path → same path plus <code>?from=%2Fapp(&amp;done=1)?</code></td>
+<td>playful-overhaul: completion destination carries <code>from</code> and <code>done</code></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/quiet-set.spec.ts:98,165</td>
+<td><code>\?from=%2Fapp$</code> → <code>\?from=%2Fapp(&amp;done=1)?$</code></td>
+<td>playful-overhaul: completion destination carries <code>done</code></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-strength-expansion.spec.ts:174-182</td>
+<td>open &quot;Technique guidance&quot;, expect &quot;Unavailable&quot; and the long no-demonstration sentence in <code>details.runner-technique</code> → expect &quot;No demo yet&quot; next to the movement (<code>.pal-run-move</code>) and the Log button still visible; still no iframe</td>
+<td>playful-overhaul: the runner&#39;s collapsed technique panel is replaced by the in-place demo control (navigation contract item 7)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:370-372</td>
+<td>same as above (heading &quot;Technique guidance&quot;, &quot;Unavailable&quot;, long sentence) → &quot;No demo yet&quot; in <code>.pal-run-move</code>, Log button visible, no iframe</td>
+<td>playful-overhaul: same reason</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-guidance.spec.ts:221-222,245</td>
+<td>click &quot;Technique guidance&quot; then expect &quot;Your links&quot; → expect the &quot;Your links&quot; disclosure, then open it</td>
+<td>playful-overhaul: personal links now have their own disclosure, shown only when links exist</td>
+</tr>
+</tbody></table>
+<h3>Routine screens</h3>
+<table>
+<thead>
+<tr>
+<th>File:line</th>
+<th>Old → new</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tests/unit/authenticated-program-customization-fixture-boundary.test.ts:72</td>
+<td>reads <code>src/app/globals.css</code> → reads <code>src/app/pal-routine.css</code></td>
+<td>routine editor target sizes now live in the area stylesheet (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/unit/authenticated-program-customization-fixture-boundary.test.ts:84</td>
+<td><code>.program-editor-add-section button {… min-height: 2.75rem</code> → <code>.pal-editor-chips button {… min-height: 48px</code></td>
+<td>add-section buttons renamed; target rises from 44px to 48px (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/unit/authenticated-program-customization-fixture-boundary.test.ts:87</td>
+<td><code>.program-editor-prescription-actions button, .program-editor-add {… 2.75rem</code> → <code>.pal-editor-menu-list button {… 48px</code> and <code>.pal-editor-section .pal-editor-add {… 48px</code></td>
+<td>row actions moved into More popovers; both targets checked at 48px (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/unit/authenticated-program-customization-fixture-boundary.test.ts:107</td>
+<td><code>equipmentReviewOpen</code> / <code>onReviewChange={setEquipmentReviewOpen}</code> / <code>hasOpenReview…equipmentReviewOpen</code> → <code>draftDirty={dirty}</code></td>
+<td>the editor no longer hides a corner companion during equipment review (the scene sits behind the head); the remaining editor-to-equipment contract is the dirty-draft guard. The control keeps its <code>onReviewChange</code> API, still asserted (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/unit/animal-surface-rollout.test.ts:93</td>
+<td><code>&lt;DecorativeCompanion variant=&quot;routine-editor&quot; /&gt;</code> → <code>&lt;SceneStage scene=&quot;routine&quot; /&gt;</code></td>
+<td>routine editor opens on the routine scene (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:225</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (open rows replace RE12 cards) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:256</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (open sections replace RE11 plate) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:291</td>
+<td><code>&quot;.program-editor-errors&quot;</code> → <code>&quot;.pal-editor-errors&quot;</code></td>
+<td>editor error box renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:321</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-core-conditioning-expansion.spec.ts:362</td>
+<td><code>getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; })</code> → <code>getByRole(&quot;button&quot;, { name: </code>Start ${day.displayName}<code> })</code></td>
+<td>day page Start button now names the day (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/customization-geometry.spec.ts:224</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-strength-expansion.spec.ts:23</td>
+<td><code>getByText(&quot;Approved catalog guidance available&quot;)</code> → <code>getByText(&quot;Demo videos ready&quot;)</code></td>
+<td>chooser guidance line reworded without catalog wording (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-strength-expansion.spec.ts:104</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-strength-expansion.spec.ts:126</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-strength-expansion.spec.ts:138</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-strength-expansion.spec.ts:155</td>
+<td><code>&quot;.member-day-section li&quot;</code> → <code>&quot;.pal-dayplan .pal-move&quot;</code></td>
+<td>day page movements are .pal-move rows (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-strength-expansion.spec.ts:165</td>
+<td><code>getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; })</code> → <code>getByRole(&quot;button&quot;, { name: /^Start / })</code></td>
+<td>day page Start button now names the day (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/quiet-set.spec.ts:49</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/quiet-set.spec.ts:56</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/quiet-set.spec.ts:147</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/library-guidance.spec.ts:125</td>
+<td><code>&quot;.movement-chooser__list&quot;</code> → <code>&quot;.pal-chooser-list&quot;</code></td>
+<td>chooser results list renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:289</td>
+<td><code>&quot;.movement-chooser__list&quot;</code> → <code>&quot;.pal-chooser-list&quot;</code></td>
+<td>chooser results list renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:849</td>
+<td><code>&quot;.program-collection-list &gt; li&quot;</code> → <code>&quot;.pal-routines-list &gt; li&quot;</code></td>
+<td>routine rows renamed (open rows replace PC2 cards) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:878</td>
+<td><code>&quot;.program-collection-list &gt; li&quot;</code> → <code>&quot;.pal-routines-list &gt; li&quot;</code></td>
+<td>routine rows renamed (open rows replace PC2 cards) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:920</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:943</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1336</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:950</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:992</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1182</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:970</td>
+<td><code>&quot;li.program-editor-prescription h3&quot;</code> → <code>&quot;li.pal-editor-move h3&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:978</td>
+<td><code>&quot;fieldset.program-editor-cardio section&quot;</code> → <code>&quot;fieldset.pal-editor-cardio section&quot;</code></td>
+<td>editor cardio rows renamed (RE13 cards removed) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1189</td>
+<td><code>&quot;fieldset.program-editor-cardio section&quot;</code> → <code>&quot;fieldset.pal-editor-cardio section&quot;</code></td>
+<td>editor cardio rows renamed (RE13 cards removed) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:988</td>
+<td><code>&quot;.program-editor-outline&quot;</code> → <code>&quot;.pal-editor-days&quot;</code></td>
+<td>day rail renamed (RE7 becomes an open list) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1036</td>
+<td><code>&quot;.program-editor-outline&quot;</code> → <code>&quot;.pal-editor-days&quot;</code></td>
+<td>day rail renamed (RE7 becomes an open list) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1178</td>
+<td><code>&quot;.program-editor-outline&quot;</code> → <code>&quot;.pal-editor-days&quot;</code></td>
+<td>day rail renamed (RE7 becomes an open list) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1033</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1192</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1347</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1076</td>
+<td><code>&quot;.equipment-change-list &gt; li&quot;</code> → <code>&quot;.pal-equip-changes &gt; li&quot;</code></td>
+<td>equipment review list renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:382</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:427</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:442</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:690</td>
+<td><code>&quot;fieldset.program-editor-section&quot;</code> → <code>&quot;fieldset.pal-editor-section&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:387</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:398</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:403</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:458</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:520</td>
+<td><code>&quot;li.program-editor-prescription&quot;</code> → <code>&quot;li.pal-editor-move&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:393</td>
+<td><code>&quot;li.program-editor-prescription h3&quot;</code> → <code>&quot;li.pal-editor-move h3&quot;</code></td>
+<td>editor movement rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:483</td>
+<td><code>&quot;.program-editor-cardio-grid &gt; section h3&quot;</code> → <code>&quot;.pal-editor-cardio-list &gt; section h3&quot;</code></td>
+<td>editor cardio rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:489</td>
+<td><code>&quot;.program-editor-cardio-grid &gt; section h3&quot;</code> → <code>&quot;.pal-editor-cardio-list &gt; section h3&quot;</code></td>
+<td>editor cardio rows renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:509</td>
+<td><code>&quot;.program-editor-outline &gt; ol &gt; li &gt; button strong&quot;</code> → <code>&quot;.pal-editor-days &gt; ol &gt; li &gt; button strong&quot;</code></td>
+<td>day rail renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:517</td>
+<td><code>&quot;fieldset.program-editor-section legend input&quot;</code> → <code>&quot;fieldset.pal-editor-section legend input&quot;</code></td>
+<td>editor sections renamed (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:536</td>
+<td><code>&quot;.quiet-save-state&quot;</code> → <code>&quot;.pal-editor-save-state&quot;</code></td>
+<td>save state word moved into the sticky save bar (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:561</td>
+<td><code>&quot;.member-cardio-card li strong&quot;</code> → <code>&quot;.pal-dayplan-cardio li strong&quot;</code></td>
+<td>day cardio is plain text (DY1 card removed) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:595</td>
+<td><code>&quot;.member-cardio-card li strong&quot;</code> → <code>&quot;.pal-dayplan-cardio li strong&quot;</code></td>
+<td>day cardio is plain text (DY1 card removed) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:562</td>
+<td><code>&quot;.member-cardio-card li span&quot;</code> → <code>&quot;.pal-dayplan-cardio li span&quot;</code></td>
+<td>day cardio is plain text (DY1 card removed) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:596</td>
+<td><code>&quot;.member-cardio-card li span&quot;</code> → <code>&quot;.pal-dayplan-cardio li span&quot;</code></td>
+<td>day cardio is plain text (DY1 card removed) (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:340</td>
+<td>`await expect(alice.page.getByText(&quot;1 movement · no cardio finish&quot;)).toBeVisible();</td>
+<td></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:347</td>
+<td>`await alice.page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click();</td>
+<td></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:558</td>
+<td>`await expect(alice.page.getByText(&quot;2 movements · 2 cardio options&quot;)).toBeVisible();</td>
+<td></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:591</td>
+<td>`await expect(alice.page.getByText(&quot;2 movements · 2 cardio options&quot;)).toBeVisible();</td>
+<td></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/flexible-routine-publication.spec.ts:601</td>
+<td>`await alice.page.getByRole(&quot;button&quot;, { name: &quot;Start workout&quot; }).click();</td>
+<td></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:427</td>
+<td>`await expect(page).toHaveURL(//app/program/pull$/u);</td>
+<td></td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:159</td>
+<td>`scene: &quot;progress&quot;</td>
+<td>&quot;settings&quot;<code>→ adds</code>&quot;routine&quot;`</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:282</td>
+<td><code>expectCompanion(page, &quot;routine-editor&quot;, …)</code> over hero/footer selectors → <code>expectInsightsScene(page, &quot;routine&quot;, …)</code> over head, tools, layout and save bar</td>
+<td>the corner companion is replaced by the decorative routine scene; same decorative, no-pointer, no-overlap intent (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:294</td>
+<td>equipment review classes and companion hide/show checks → <code>.pal-equip-*</code> classes; review closes on Cancel</td>
+<td>the scene sits behind the page head, so it no longer hides during review (playful-overhaul)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:327</td>
+<td>draft hides the routine companion → draft keeps the routine scene</td>
+<td>the scene stays put while you edit, so the page background never flips (same rule as Settings) (playful-overhaul)</td>
+</tr>
+</tbody></table>
+<h3>Progress, History, Records and Settings</h3>
+<table>
+<thead>
+<tr>
+<th>File:line</th>
+<th>Old → new</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tests/unit/training-insights-components.test.tsx:136</td>
+<td>&quot;Interrupted workout&quot; → &quot;Not finished&quot;</td>
+<td>playful-overhaul: status pill copy is now Completed / Not finished</td>
+</tr>
+<tr>
+<td>tests/unit/training-insights-components.test.tsx:167</td>
+<td>&quot;Logged distance&quot; → &quot;<dt>Distance</dt>&quot;</td>
+<td>playful-overhaul: Progress totals use Today&#39;s labels (Workouts, Sets, Reps, Lifted, Time, Distance)</td>
+</tr>
+<tr>
+<td>tests/unit/training-insights-components.test.tsx:169</td>
+<td>&quot;Interrupted sessions remain in History&quot; → &quot;Workouts you didn&#x27;t finish stay in History&quot;</td>
+<td>playful-overhaul: friendlier intro copy, same promise</td>
+</tr>
+<tr>
+<td>tests/unit/training-insights-components.test.tsx:170-172</td>
+<td>&quot;Work sets&quot;, &quot;Repetitions&quot;, &quot;Timeline includes all 1 completed workout&quot; → &quot;<dt>Sets</dt><dd>3</dd>&quot;, &quot;<dt>Reps</dt><dd>32</dd>&quot;, not &quot;Showing your newest&quot;</td>
+<td>playful-overhaul: label rename; the untruncated scope line was noise and is now shown only when the timeline is cut</td>
+</tr>
+<tr>
+<td>tests/unit/training-insights-components.test.tsx:189</td>
+<td>&quot;Showing the newest 180 of 183…&quot; → &quot;Showing your newest 180 of 183…&quot;</td>
+<td>playful-overhaul: copy; the &quot;All-time totals above include all 183&quot; assertion is unchanged</td>
+</tr>
+<tr>
+<td>tests/unit/animal-surface-rollout.test.ts:94-96</td>
+<td><code>&lt;DecorativeCompanion variant=&quot;history&quot;/&quot;settings&quot; /&gt;</code> → <code>&lt;SceneStage scene=&quot;progress&quot;/&quot;settings&quot; /&gt;</code></td>
+<td>playful-overhaul: corner companion art retired for the scene stage (tortoise, hare)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/quiet-set.spec.ts:100-103</td>
+<td>&quot;Work sets&quot;/&quot;Repetitions&quot;/<code>.progress-totals</code>/&quot;Volume&quot; → &quot;Sets&quot;/&quot;Reps&quot;/<code>.pal-insights-totals</code>/&quot;Lifted&quot;</td>
+<td>playful-overhaul: totals plate (PG1) became an open <code>.pal-glance</code> row with Today&#39;s labels; still asserts bodyweight work shows no lifted load</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/quiet-set.spec.ts:109,120</td>
+<td><code>[data-companion-placement=settings]</code> → <code>.pal-scene[data-scene=settings]</code></td>
+<td>playful-overhaul: Settings uses <code>SceneStage scene=&quot;settings&quot;</code> (hare); Off still removes the character scene</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/quiet-set.spec.ts:167-168</td>
+<td><code>.progress-totals</code>, &quot;Added-load volume&quot; → <code>.pal-insights-totals</code>, &quot;Lifted&quot;</td>
+<td>playful-overhaul: same as above</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:472,1215,1487</td>
+<td><code>.history-sets &gt; li</code> → <code>.pal-history-sets &gt; li</code></td>
+<td>playful-overhaul: sets are an open list (HD2)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1196-1200</td>
+<td><code>.history-list</code>, <code>.history-main</code> → <code>.pal-history-list</code>, <code>.pal-history-main</code></td>
+<td>playful-overhaul: History rows are <code>.pal-list</code> rows</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1205</td>
+<td><code>.history-exercises &gt; li</code> → <code>.pal-history-exercises &gt; li</code></td>
+<td>playful-overhaul: exercises are sections split by space (no cards)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/onboarding.spec.ts:1222-1223</td>
+<td><code>getByText(&quot;Logged distance&quot;)</code>, <code>.progress-totals</code> → <code>.pal-insights-totals</code> + <code>getByText(&quot;Distance&quot;, exact)</code> scoped to totals</td>
+<td>playful-overhaul: label rename; scoped because the timeline also says Distance</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/firebase-auth-hydration.spec.ts:110</td>
+<td><code>.settings-delete-preview</code> → <code>.pal-settings-danger</code></td>
+<td>playful-overhaul: deletion preview frame (ST10) became a danger heading and button</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:157</td>
+<td>new helper <code>expectInsightsScene</code></td>
+<td>playful-overhaul: replaces <code>expectCompanion</code> for my screens; checks the scene is decorative (aria-hidden, alt &quot;&quot;, no focusables, pointer-events none) and that no protected region&#39;s visible centre hits the scene</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:309</td>
+<td><code>expectCompanion(page,&quot;settings&quot;,…)</code> with retired selectors → <code>expectInsightsScene(page,&quot;settings&quot;,[header, nav, h1, sections, danger])</code></td>
+<td>playful-overhaul: retired settings plates</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:343,358</td>
+<td>settings art <code>toBeHidden()</code> while editing/saved → scene <code>toHaveCount(1)</code></td>
+<td>playful-overhaul: the scene deliberately stays put so the background no longer flips while you work (plan &quot;Cascade problems&quot; #1)</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:418</td>
+<td>unverified settings art <code>toBeHidden()</code> → <code>expectInsightsScene(…, [&quot;.pal-notice&quot;, h1])</code></td>
+<td>playful-overhaul: same; the notice must stay clear of the art</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:470,482</td>
+<td><code>expectCompanion(page,&quot;history&quot;,…)</code> with <code>.insights-heading</code>, <code>.archive-notice</code>, <code>.history-*</code>, <code>.insight-*</code> → <code>expectInsightsScene(page,&quot;progress&quot;,…)</code> with the new selectors</td>
+<td>playful-overhaul: History/detail use the tortoise scene stage</td>
+</tr>
+<tr>
+<td>tests/authenticated-e2e/animal-surface-rollout-authenticated.spec.ts:660</td>
+<td>200% zoom history art <code>toBeHidden()</code> → <code>expectInsightsScene(page,&quot;progress&quot;,[h1, filter])</code></td>
+<td>playful-overhaul: the scene is a background now; the intent (art never blocks the filter) is checked directly</td>
+</tr>
+</tbody></table>
+<h2>9. Fixed because the browser suites caught them</h2>
+<ul>
+<li>Today&#39;s chosen day is read from the address. Next.js could reuse an earlier render, and the old state ignored the address.</li>
+<li>The tab bar read the address before Next.js updated it. It now uses the router&#39;s search params.</li>
+<li>Focus moves to the new heading after finishing a workout or leaving the tour. Before, it stayed on the document.</li>
+<li>The routine editor&#39;s &quot;More&quot; menus close properly, and the editor no longer rewrites its address. Rewriting it made Next.js remount the editor after every save.</li>
+<li>Primary buttons inside page closers had teal text on sun yellow: 4.12:1 in light, 1.01:1 in dark.</li>
+<li>A first service-worker install showed &quot;A new version is ready&quot; over the test drive&#39;s first button on WebKit.</li>
+<li>On phones, the landing &quot;Take a test drive&quot; button and keyboard-focused controls could sit behind the fixed tab bar. Scroll padding now keeps them clear.</li>
+<li>Scene art loaded lazily, and WebKit cancelled it mid-scroll. It also showed on the read-only workout screen.</li>
+<li>Cancelled prefetches from Settings and from in-page links on Progress, History and Records became page errors on WebKit.</li>
+<li>The video frame had no focus ring.</li>
+<li>Today had lost its link to History; it&#39;s back.</li>
+</ul>
+<h2>10. Noticed, not changed</h2>
+<ul>
+<li><strong>Refresh responses abort in Next.js.</strong> After any save, Next.js cancels the body of the router-refresh response (<code>net::ERR_ABORTED</code>), and <code>main</code> does the same (checked in a temporary worktree of <code>main</code> with an identical probe). <code>library-core-conditioning-expansion.spec.ts</code> waits for that response to finish, an owner-approved wait from PR #8. So it can stall until the test timeout, on either branch. It timed out in two earlier full runs and passed in the final gate run. No retry or timeout was added.</li>
+<li><strong><code>pnpm db:verify</code> drift.</strong> It expects the seed&#39;s 54 curated videos, but production holds 268. This predates this work, and the seed was not changed.</li>
+<li><strong>Unused fonts.</strong> The root layouts still import Barlow Condensed, which Studio Pals no longer uses. Removing the imports would save some bytes and should be its own small change.</li>
+<li><strong>Pre-hydration input.</strong> The owner excluded this issue earlier, and it remains excluded.</li>
+<li><strong>Full-page screenshot artefacts.</strong> Stitched full-page screenshots painted fixed bars and the off-screen skip link mid-page. The capture tooling now grows the viewport instead. Real focus never landed on the skip link: logged focus before each capture was the expected heading or the page body.</li>
+</ul>
+<h2>11. Owner decisions (October 5)</h2>
+<ol>
+<li><strong>Screenshots approved.</strong> The owner authorized the merge.</li>
+<li><strong>Day pills wrap</strong> onto more rows instead of scrolling sideways. The phone Today screenshots were recaptured to show it.</li>
+<li><strong>One name per equipment profile.</strong> Onboarding now says &quot;Dumbbells&quot; and &quot;Barbell + rack&quot;, as Settings and the editor do.</li>
+</ol>
+
+  </main>
+</body>
+</html>

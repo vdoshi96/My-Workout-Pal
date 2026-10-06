@@ -6,7 +6,9 @@ My Workout Pal is a customizable workout companion that connects planning, in-wo
 
 ## Confirmed workflows
 
-- Enter through a bright public welcome and practice one disposable set without an account.
+- Enter through the illustrated welcome and take a disposable two-movement test drive, with demos, without an account.
+- Answer four onboarding questions (goal, experience, days a week, equipment), get a routine built from them, and take or skip a short tour.
+- Go back from any drill-down to the exact origin, and watch demos without leaving the page.
 - Explore the five-day starter example without an account.
 - Preview dumbbell-only and barbell-enabled equipment profiles.
 - Inspect reviewed instructions for every published movement and approved demonstrations where available.

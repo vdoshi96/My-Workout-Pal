@@ -20,6 +20,7 @@ import {
   isSupersededSameOriginRouteChunkRequest,
 } from "./companion-request-policy";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
+import { saveExampleFromOnboarding } from "./support/member";
 
 type HarnessSummary = Readonly<{
   counts: Readonly<{
@@ -226,10 +227,7 @@ async function submitOnboarding(page: Page) {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await saveExampleFromOnboarding(page);
   return responsePromise;
 }
 
@@ -251,7 +249,7 @@ async function submitRunnerAction(page: Page, name: string | RegExp) {
       response.request().method() === "POST",
   );
   if (name === "Skip exercise") {
-    if (await page.locator(".runner-more").getAttribute("open") === null) {
+    if (await page.locator(".pal-run-more").getAttribute("open") === null) {
       await page.getByText("More options", { exact: true }).click();
     }
     await page.getByRole("button", { name, exact: true }).click();
@@ -315,12 +313,12 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   expect((await createResponse).status()).toBe(201);
 
   await expect(
-    alice.page.getByText("Weekend route · Dumbbells · 1 day", {
+    alice.page.getByText("Weekend route · 1 day a week", {
       exact: true,
     }),
   ).toBeVisible();
-  await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(1);
-  await expect(alice.page.locator(".member-day-grid").getByText("1 movement", { exact: true })).toBeVisible();
+  await expect(alice.page.locator(".pal-day-pills > li")).toHaveCount(1);
+  await expect(alice.page.locator(".pal-today-copy").getByText("1 movement · Dumbbells", { exact: true })).toBeVisible();
   const created = await readProfileProgram(alice.page);
   const createdProgram = created.activeProgram;
   if (!createdProgram) throw new Error("The custom program was not activated.");
@@ -330,23 +328,22 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   expect(createdProgram.days[0]?.sections[0]?.title).toBe("Main work");
   expect(createdProgram.days[0]?.cardio).toEqual([]);
   const createdDayKey = createdProgram.days[0]!.dayKey;
-  await expect(alice.page.getByRole("link", { name: /Sunrise strength/ })).toHaveAttribute(
+  await expect(alice.page.getByRole("button", { name: /^Day 1\s*Sunrise strength$/u })).toHaveAttribute("aria-pressed", "true");
+  await expect(alice.page.getByRole("link", { name: "See the whole day" })).toHaveAttribute(
     "href",
-    `/app/program/${createdDayKey}`,
+    new RegExp(`^/app/program/${createdDayKey}\\?from=`, "u"),
   );
 
-  await alice.page.getByRole("link", { name: /Sunrise strength/ }).click();
-  await expect(alice.page).toHaveURL(`/app/program/${createdDayKey}`);
-  await expect(alice.page.getByText("1 movement · no cardio finish")).toBeVisible();
-  await expect(alice.page.getByRole("heading", { name: "Strength only" })).toBeVisible();
-  await expect(alice.page.getByText("This day has no configured cardio segment.")).toBeVisible();
+  await alice.page.getByRole("link", { name: "See the whole day" }).click();
+  await expect(alice.page).toHaveURL(new RegExp(`/app/program/${createdDayKey}\\?from=`, "u"));
+  await expect(alice.page.getByText("1 movement · Dumbbells", { exact: true })).toBeVisible();
   await expect(alice.page.getByRole("heading", { name: "Cardio finish", exact: true })).toHaveCount(0);
   const firstStart = alice.page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Start workout" }).click();
+  await alice.page.getByRole("button", { name: "Start Sunrise strength" }).click();
   expect((await firstStart).status()).toBe(201);
   await expect(alice.page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   await expect(alice.page.getByRole("heading", { level: 1, name: "Sunrise strength" })).toBeVisible();
@@ -354,7 +351,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   expect((await submitRunnerAction(alice.page, "Skip exercise")).status()).toBe(200);
   const completion = submitRunnerAction(alice.page, "Finish workout");
   expect((await completion).status()).toBe(200);
-  await expect(alice.page).toHaveURL(/\/app\/history\/[0-9a-f-]+$/u);
+  await expect(alice.page).toHaveURL(/\/app\/history\/[0-9a-f-]+\?from=%2Fapp(&done=1)?$/u);
   const originalHistoryUrl = alice.page.url();
   await expect(alice.page.getByRole("heading", { name: "Sunrise strength" })).toBeVisible();
   await expect(alice.page.getByText(/Main work · skipped/u)).toBeVisible();
@@ -379,28 +376,28 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   await alice.page.getByLabel("Day name").fill("Mobility reset");
 
   const mainWorkSection = alice.page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for strength") });
   await mainWorkSection.getByRole("button", { name: "Add movement" }).click();
   await chooseEditorMovement(alice.page, "Dumbbell curl", /Dumbbell curl/);
   const curlPrescription = mainWorkSection
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "Dumbbell curl" }) });
   if (await curlPrescription.getByRole("button", { includeHidden: true, name: "Move Dumbbell curl up" }).locator("xpath=ancestor::details[1]").getAttribute("open") === null) {
     await curlPrescription.getByRole("button", { includeHidden: true, name: "Move Dumbbell curl up" }).locator("xpath=ancestor::details[1]").locator("summary").click();
   }
   await curlPrescription.getByRole("button", { name: "Move Dumbbell curl up" }).click();
-  await expect(mainWorkSection.locator("li.program-editor-prescription h3")).toHaveText([
+  await expect(mainWorkSection.locator("li.pal-editor-move h3")).toHaveText([
     "Dumbbell curl",
     "Dumbbell bench press",
   ]);
   const benchPrescription = mainWorkSection
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "Dumbbell bench press" }) });
   await benchPrescription.getByRole("button", { name: "Replace Dumbbell bench press" }).click();
   await chooseEditorMovement(alice.page, "Front plank", /Front plank/);
   const frontPlankInMain = mainWorkSection
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "Front plank" }) });
   if (await frontPlankInMain.getByRole("button", { includeHidden: true, name: "Remove Front plank" }).locator("xpath=ancestor::details[1]").getAttribute("open") === null) {
     await frontPlankInMain.getByRole("button", { includeHidden: true, name: "Remove Front plank" }).locator("xpath=ancestor::details[1]").locator("summary").click();
@@ -424,7 +421,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   }
   await alice.page.getByRole("button", { name: "Add accessory section" }).click();
   const carrySection = alice.page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for accessory") });
   await carrySection.getByLabel("Section name for accessory").fill("Carry prep");
   await carrySection.getByRole("button", { name: "Add movement" }).click();
@@ -439,7 +436,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   }
   await alice.page.getByRole("button", { name: "Add core section" }).click();
   const trunkSection = alice.page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: alice.page.getByLabel("Section name for core") });
   await trunkSection.getByLabel("Section name for core").fill("Trunk check");
   await trunkSection.getByRole("button", { name: "Add movement" }).click();
@@ -455,7 +452,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   await inlineChooser.getByRole("button", { name: "Create and use" }).click();
   expect((await inlineCreate).status()).toBe(201);
   const privatePrescription = trunkSection
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: alice.page.getByRole("heading", { level: 3, name: "QA tempo hold" }) });
   await expect(privatePrescription.getByText("Core · Time", { exact: true })).toBeVisible();
   await expect(privatePrescription.getByLabel("Minimum seconds")).toHaveValue("20");
@@ -480,13 +477,13 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   await alice.page.getByRole("button", { name: "Add walker cardio" }).click();
   await alice.page.getByRole("button", { name: "Add runner cardio" }).click();
   await alice.page.getByRole("button", { name: "Move runner cardio up" }).click();
-  await expect(alice.page.locator(".program-editor-cardio-grid > section h3")).toHaveText([
+  await expect(alice.page.locator(".pal-editor-cardio-list > section h3")).toHaveText([
     "runner",
     "walker",
   ]);
   await alice.page.getByRole("button", { name: "Remove walker cardio" }).click();
   await alice.page.getByRole("button", { name: "Add walker cardio" }).click();
-  await expect(alice.page.locator(".program-editor-cardio-grid > section h3")).toHaveText([
+  await expect(alice.page.locator(".pal-editor-cardio-list > section h3")).toHaveText([
     "runner",
     "walker",
   ]);
@@ -506,7 +503,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   }
   await alice.page.getByRole("button", { name: "Move Mobility reset up" }).click();
   await expect(
-    alice.page.locator(".program-editor-outline > ol > li > button strong"),
+    alice.page.locator(".pal-editor-days > ol > li > button strong"),
   ).toHaveText(["Mobility reset", "Sunrise power"]);
   const unpublishedDayId = await alice.page
     .getByRole("button", { name: /Mobility reset \d+ movements$/u })
@@ -514,10 +511,10 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   const unpublishedDayKey = unpublishedDayId?.replace("program-day-", "");
   expect(unpublishedDayKey).toMatch(UUID_KEY);
   const unpublishedSectionKeys = await alice.page
-    .locator("fieldset.program-editor-section legend input")
+    .locator("fieldset.pal-editor-section .pal-editor-section-head input")
     .evaluateAll((inputs) => inputs.map((input) => input.id.replace("program-section-name-", "")));
   const unpublishedPrescriptionKeys = await alice.page
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .evaluateAll((rows) => rows.map((row) => row.id.replace("program-prescription-", "")));
   const editorEvidence = testInfo.outputPath(`flexible-day-builder-editor-${testInfo.project.name}.png`);
   await alice.page.screenshot({ fullPage: true, path: editorEvidence });
@@ -533,7 +530,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   );
   await alice.page.getByRole("button", { name: "Save routine" }).click();
   expect((await publishResponse).status()).toBe(200);
-  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
+  await expect(alice.page.locator(".pal-editor-save-state")).toHaveText("Saved");
   const publishedFromEditor = await readProfileProgram(alice.page);
   const publishedDay = publishedFromEditor.activeProgram?.days.find(
     ({ displayName }) => displayName === "Mobility reset",
@@ -557,9 +554,9 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   await expect(alice.page).toHaveURL(`/app/program/${publishedDay.dayKey}`);
   await alice.page.reload();
   await expect(alice.page.getByRole("heading", { level: 1, name: "Mobility reset" })).toBeVisible();
-  await expect(alice.page.getByText("2 movements · 2 cardio options")).toBeVisible();
-  await expect(alice.page.locator(".member-cardio-card li strong")).toHaveText(["Runner", "Walker"]);
-  await expect(alice.page.locator(".member-cardio-card li span")).toHaveText(["20 minutes", "20 minutes"]);
+  await expect(alice.page.getByText("2 movements · Dumbbells", { exact: true })).toBeVisible();
+  await expect(alice.page.locator(".pal-dayplan-cardio li strong")).toHaveText(["Runner", "Walker"]);
+  await expect(alice.page.locator(".pal-dayplan-cardio li span")).toHaveText(["20 minutes", "20 minutes"]);
   await expect(alice.page.getByRole("heading", { level: 2, name: "Tempo drills" })).toBeVisible();
   await expect(alice.page.getByRole("heading", { level: 2, name: "Trunk check" })).toBeVisible();
   const savedDayEvidence = testInfo.outputPath(`flexible-day-builder-saved-day-${testInfo.project.name}.png`);
@@ -570,8 +567,9 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   });
 
   await alice.page.goto("/app");
-  await expect(alice.page.getByText("Dumbbells · 2 days")).toBeVisible();
-  await expect(alice.page.locator(".member-day-grid > li")).toHaveCount(2);
+  await expect(alice.page.getByText(/ · 2 days a week$/u)).toBeVisible();
+  await expect(alice.page.locator(".pal-today-copy").getByText(/ · Dumbbells$/u)).toBeVisible();
+  await expect(alice.page.locator(".pal-day-pills > li")).toHaveCount(2);
   const published = await readProfileProgram(alice.page);
   const publishedProgram = published.activeProgram;
   if (!publishedProgram) throw new Error("The flexible publication was not activated.");
@@ -583,30 +581,33 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   for (const day of publishedProgram.days) {
     expect(day.dayKey).toMatch(UUID_KEY);
     expect(LEGACY_STARTER_DAY_KEYS.has(day.dayKey)).toBe(false);
-    await expect(alice.page.getByRole("link", { name: new RegExp(day.displayName, "u") })).toHaveAttribute(
+    await alice.page.getByRole("button", { name: new RegExp(`^Day \\d+\\s*${day.displayName}$`, "u") }).click();
+    await expect(alice.page.getByRole("link", { name: "See the whole day" })).toHaveAttribute(
       "href",
-      `/app/program/${day.dayKey}`,
+      new RegExp(`^/app/program/${day.dayKey}\\?from=`, "u"),
     );
   }
 
-  await alice.page.getByRole("link", { name: /Mobility reset/ }).click();
-  await expect(alice.page.getByText("2 movements · 2 cardio options")).toBeVisible();
-  await expect(alice.page.getByRole("heading", { name: "Choose a finish" })).toBeVisible();
-  await expect(alice.page.locator(".member-cardio-card li strong")).toHaveText(["Runner", "Walker"]);
-  await expect(alice.page.locator(".member-cardio-card li span")).toHaveText(["20 minutes", "20 minutes"]);
+  await alice.page.getByRole("button", { name: /^Day \d+\s*Mobility reset$/u }).click();
+  await alice.page.getByRole("link", { name: "See the whole day" }).click();
+  await expect(alice.page.getByText("2 movements · Dumbbells", { exact: true })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Cardio finish", exact: true })).toBeVisible();
+  await expect(alice.page.getByText("Pick one when you get there.", { exact: true })).toBeVisible();
+  await expect(alice.page.locator(".pal-dayplan-cardio li strong")).toHaveText(["Runner", "Walker"]);
+  await expect(alice.page.locator(".pal-dayplan-cardio li span")).toHaveText(["20 minutes", "20 minutes"]);
   const secondStart = alice.page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Start workout" }).click();
+  await alice.page.getByRole("button", { name: "Start Mobility reset" }).click();
   expect((await secondStart).status()).toBe(201);
   await expect(alice.page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const activeSessionUrl = alice.page.url();
   await expect(alice.page.getByRole("heading", { level: 1, name: "Mobility reset" })).toBeVisible();
   await expect(alice.page.getByText("Tempo drills", { exact: true })).toBeVisible();
   await alice.page.getByText("Workout outline", { exact: true }).click();
-  await expect(alice.page.getByRole("button", { name: /Dumbbell curl/i })).toBeVisible();
+  await expect(alice.page.getByRole("button", { name: /^\d+ Dumbbell curl/i })).toBeVisible();
   await expect(alice.page.getByRole("button", { name: /QA tempo hold/i })).toBeVisible();
   expect((await privateRequest(alice.page, workoutApiPath(activeSessionUrl))).body.snapshot.programRevisionId).toBe(publishedProgram.revisionId);
 
@@ -667,7 +668,7 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   const resumedCompletion = submitRunnerAction(alice.page, "Finish workout");
   expect((await resumedCompletion).status()).toBe(200);
   await expect(alice.page).toHaveURL(
-    workoutApiPath(activeSessionUrl).replace("/api/app/workouts/", "/app/history/"),
+    new RegExp(`${workoutApiPath(activeSessionUrl).replace("/api/app/workouts/", "/app/history/")}\\?from=%2Fapp(&done=1)?$`, "u"),
   );
 
   await alice.page.goto(originalHistoryUrl);
@@ -685,9 +686,9 @@ test("a custom flexible routine survives publication, workout snapshots, and equ
   const bob = await openHarnessPage(browser, scope, "bob", testInfo);
   await bob.page.goto("/app");
   expect((await submitOnboarding(bob.page)).status()).toBe(201);
-  await expect(bob.page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await expect(bob.page.getByRole("heading", { name: "Your week" })).toBeVisible();
   await bob.page.goto("/app/program/edit");
-  const bobSection = bob.page.locator("fieldset.program-editor-section").first();
+  const bobSection = bob.page.locator("fieldset.pal-editor-section").first();
   await bobSection.getByRole("button", { name: "Add movement" }).click();
   const bobChooser = bob.page.getByRole("dialog", { name: "Add movement" });
   await bobChooser.getByRole("radio", { name: "Mine" }).check();

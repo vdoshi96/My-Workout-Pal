@@ -32,6 +32,7 @@ import type {
 } from "@/domain/exercises/movement-chooser-contract";
 
 import { EQUIPMENT_LABELS, LOGGING_KIND_LABELS } from "@/components/exercises/labels";
+import { Icon } from "@/components/ui/icon";
 import type { EquipmentId } from "@/domain/equipment";
 
 type LoadState =
@@ -455,16 +456,15 @@ export function MovementChooserAdapter({
   return (
     <dialog
       aria-labelledby="movement-chooser-title"
-      className="movement-chooser"
+      className="pal-sheet pal-chooser"
       onCancel={(event) => {
         event.preventDefault();
         onDismiss();
       }}
       ref={dialogRef}
     >
-      <header className="movement-chooser__header">
+      <header className="pal-chooser-head">
         <div>
-          <span className="eyebrow">Library</span>
           <h2 id="movement-chooser-title">{intentLabel}</h2>
           <p>Movements that fit your equipment.</p>
         </div>
@@ -474,11 +474,12 @@ export function MovementChooserAdapter({
       </header>
 
       {loadState.status === "loading" ? (
-        <p role="status">Loading compatible movements…</p>
+        <p className="pal-status" role="status">Loading movements that fit your equipment…</p>
       ) : loadState.status === "error" ? (
-        <section className="movement-chooser__error" role="alert">
+        <section className="pal-chooser-error" role="alert">
           <p>{loadState.message}</p>
           <button
+            className="secondary-action"
             onClick={() => {
               setLoadState({ status: "loading" });
               setAttempt((value) => value + 1);
@@ -489,8 +490,8 @@ export function MovementChooserAdapter({
           </button>
         </section>
       ) : (
-        <div className="movement-chooser__body">
-          <section className="movement-chooser__results" aria-label="Movement results">
+        <div className="pal-chooser-body">
+          <section className="pal-chooser-results" aria-label="Movement results">
             <label htmlFor="movement-chooser-search">Search movements</label>
             <input
               autoComplete="off"
@@ -502,7 +503,7 @@ export function MovementChooserAdapter({
               type="search"
               value={query}
             />
-            <fieldset className="movement-chooser__filters">
+            <fieldset className="pal-chooser-filters">
               <legend>Movement source</legend>
               {(["all", "canonical", "private"] as const).map((value) => (
                 <label key={value}>
@@ -512,20 +513,20 @@ export function MovementChooserAdapter({
                     onChange={() => setSourceFilter(value)}
                     type="radio"
                   />
-                  <span>{value === "all" ? "All" : value === "canonical" ? "Canonical" : "Mine"}</span>
+                  <span>{value === "all" ? "All" : value === "canonical" ? "Library" : "Mine"}</span>
                 </label>
               ))}
             </fieldset>
-            <p role="status">
+            <p className="pal-status" role="status">
               {visibleCandidates.length} compatible result{visibleCandidates.length === 1 ? "" : "s"}
             </p>
             {visibleCandidates.length === 0 ? (
-              <div className="movement-chooser__empty">
+              <div className="pal-chooser-empty">
                 <p>No compatible movement matches this search.</p>
-                <button onClick={() => setQuery("")} type="button">Clear search</button>
+                <button className="pal-text-button" onClick={() => setQuery("")} type="button">Clear search</button>
               </div>
             ) : (
-              <ul className="movement-chooser__list">
+              <ul className="pal-chooser-list">
                 {visibleCandidates.map((candidate) => {
                   const key = sourceKey(candidate.selection.source);
                   return (
@@ -541,7 +542,7 @@ export function MovementChooserAdapter({
                             {LOGGING_KIND_LABELS[candidate.selection.loggingKind]} · {candidate.requiredEquipment.map((id) => EQUIPMENT_LABELS[id as EquipmentId]).join(" + ")}
                           </small>
                         </span>
-                        <span>{candidate.selection.source.kind === "catalog" ? "Library" : "Yours"}</span>
+                        <span className="pal-chooser-source">{candidate.selection.source.kind === "catalog" ? "Library" : "Yours"}</span>
                       </button>
                     </li>
                   );
@@ -549,6 +550,7 @@ export function MovementChooserAdapter({
               </ul>
             )}
             <button
+              className="secondary-action"
               disabled={!canMutate}
               onClick={() => setCreateOpen(true)}
               type="button"
@@ -556,30 +558,27 @@ export function MovementChooserAdapter({
               Create private movement
             </button>
             {!canMutate ? (
-              <small>Verify your email before creating movements or saving links.</small>
+              <small className="pal-chooser-hint">Verify your email before creating movements or saving links.</small>
             ) : null}
           </section>
 
-          <section className="movement-chooser__detail">
+          <section className="pal-chooser-detail">
             <p className="sr-only" aria-live="polite">{selectedCandidate ? `${selectedCandidate.selection.name} selected.` : ""}</p>
             {selectedCandidate ? (
               <>
-                <span className="eyebrow">
-                  {selectedCandidate.selection.source.kind === "catalog" ? "Library" : "Yours"}
-                </span>
                 <h3>{selectedCandidate.selection.name}</h3>
                 <p>
                   {LOGGING_KIND_LABELS[selectedCandidate.selection.loggingKind]} · {selectedCandidate.requiredEquipment.map((id) => EQUIPMENT_LABELS[id as EquipmentId]).join(" + ")}
                 </p>
                 {selectedCandidate.hasApprovedGuidance ? (
-                  <div className="movement-chooser__guidance-status">
-                    <strong>Approved catalog guidance available</strong>
-                    <p>Includes demo videos.</p>
-                  </div>
+                  <p className="pal-chooser-guidance">
+                    <Icon name="check" />
+                    <span><strong>Demo videos ready</strong> You&apos;ll find them in the guide and during your workout.</span>
+                  </p>
                 ) : guidance.status === "loading" ? (
-                  <p role="status">Loading your private guidance…</p>
+                  <p className="pal-status" role="status">Loading your private guidance…</p>
                 ) : guidance.status === "ready" ? (
-                  <fieldset disabled={!canMutate || guidanceBusy}>
+                  <fieldset className="pal-chooser-links" disabled={!canMutate || guidanceBusy}>
                     <legend>Your private guidance</legend>
                     <p>Optional. HTTPS YouTube or article links are stored only for your account.</p>
                     {guidance.urls.map((url, index) => (
@@ -595,35 +594,33 @@ export function MovementChooserAdapter({
                         />
                       </label>
                     ))}
-                    <button disabled={!guidanceDirty} onClick={() => void saveGuidance()} type="button">
+                    <button className="secondary-action" disabled={!guidanceDirty} onClick={() => void saveGuidance()} type="button">
                       {guidanceBusy ? "Saving…" : "Save private links"}
                     </button>
-                    {guidance.message ? <p role="status">{guidance.message}</p> : null}
+                    {guidance.message ? <p className="pal-status" role="status">{guidance.message}</p> : null}
                   </fieldset>
                 ) : null}
                 <button
-                  className="primary-action"
+                  className="primary-action pal-chooser-use"
                   disabled={guidanceDirty || guidanceBusy}
                   onClick={() => choose()}
                   type="button"
                 >
                   Use this movement
                 </button>
-                {guidanceDirty ? <small>Save or restore your link changes before choosing.</small> : null}
+                {guidanceDirty ? <small className="pal-chooser-hint">Save or restore your link changes before choosing.</small> : null}
               </>
             ) : (
-              <p>Choose a result to review it.</p>
+              <p className="pal-chooser-hint">Pick a movement to see it here.</p>
             )}
           </section>
         </div>
       )}
 
       {createOpen && loadState.status === "ready" ? (
-        <section className="movement-chooser__inline-create" aria-labelledby="movement-create-title">
-          <div>
-            <span className="eyebrow">Owner-only</span>
-            <h3 id="movement-create-title">Create private movement</h3>
-          </div>
+        <section className="pal-chooser-create" aria-labelledby="movement-create-title">
+          <h3 id="movement-create-title">Create private movement</h3>
+          <p>Only you can see movements you create.</p>
           <form onSubmit={(event) => void submitCreate(event)}>
             <label htmlFor="movement-create-name">Movement name</label>
             <input
@@ -649,7 +646,7 @@ export function MovementChooserAdapter({
                 <option key={value} value={value}>{label}</option>
               ))}
             </select>
-            <fieldset disabled={createBusy}>
+            <fieldset className="pal-chooser-checks" disabled={createBusy}>
               <legend>Required equipment</legend>
               {loadState.data.availableEquipment.map((equipmentId) => (
                 <label key={equipmentId}>
@@ -671,7 +668,7 @@ export function MovementChooserAdapter({
               rows={4}
               value={createDraft.instructions}
             />
-            <fieldset disabled={createBusy}>
+            <fieldset className="pal-chooser-links" disabled={createBusy}>
               <legend>Private guidance</legend>
               {createDraft.guidanceUrls.map((url, index) => (
                 <label key={index} htmlFor={`movement-create-guidance-${index + 1}`}>
@@ -691,9 +688,9 @@ export function MovementChooserAdapter({
                 </label>
               ))}
             </fieldset>
-            {createMessage ? <p role="status">{createMessage}</p> : null}
-            <div className="movement-chooser__inline-actions">
-              <button disabled={createBusy} onClick={() => setCreateOpen(false)} type="button">
+            {createMessage ? <p className="pal-status" role="status">{createMessage}</p> : null}
+            <div className="pal-actions">
+              <button className="secondary-action" disabled={createBusy} onClick={() => setCreateOpen(false)} type="button">
                 Cancel
               </button>
               <button className="primary-action" disabled={createBusy || createDraft.equipmentIds.length === 0} type="submit">
@@ -703,7 +700,7 @@ export function MovementChooserAdapter({
           </form>
         </section>
       ) : null}
-      {selectedCandidate && !createOpen ? <div className="movement-chooser__bottom-bar"><button className="primary-action" disabled={guidanceDirty || guidanceBusy} type="button" onClick={() => choose()}>Use {selectedCandidate.selection.name}</button></div> : null}
+      {selectedCandidate && !createOpen ? <div className="pal-chooser-bar"><button className="primary-action" disabled={guidanceDirty || guidanceBusy} type="button" onClick={() => choose()}>Use {selectedCandidate.selection.name}</button></div> : null}
     </dialog>
   );
 }

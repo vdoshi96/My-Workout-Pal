@@ -27,10 +27,12 @@ function startErrorMessage(error: unknown): string {
 export function StartWorkoutControl({
   dayId,
   eligible,
+  label = "Start workout",
   programId,
 }: Readonly<{
   dayId: string;
   eligible: boolean;
+  label?: string;
   programId: string;
 }>) {
   const router = useRouter();
@@ -75,7 +77,7 @@ export function StartWorkoutControl({
         onClick={() => void handleStart()}
         type="button"
       >
-        {state === "opening" ? "Opening workout…" : "Start workout"}
+        {state === "opening" ? "Opening workout…" : label}
       </button>
       <p aria-live="polite" id="workout-start-status" role="status">
         {message}

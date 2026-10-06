@@ -10,6 +10,7 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   type AnyPgColumn,
@@ -90,6 +91,14 @@ export const deletionJobPhase = pgEnum("deletion_job_phase", [
   "firebase",
   "complete",
 ]);
+export const trainingGoal = pgEnum("training_goal", [
+  "strength",
+  "muscle",
+  "general",
+  "fat_loss",
+  "sport",
+]);
+export const experienceLevel = pgEnum("experience_level", ["new", "some", "lots"]);
 export const progressSourceKind = pgEnum("progress_source_kind", ["set", "cardio"]);
 
 const createdAt = () => timestamp("created_at", { withTimezone: true, mode: "date" }).defaultNow().notNull();
@@ -138,6 +147,30 @@ export const userEquipmentProfiles = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
+);
+
+/**
+ * Onboarding answers used to build a starter routine. One row per member;
+ * members who onboarded before this table existed simply have no row.
+ */
+export const userTrainingProfiles = pgTable(
+  "user_training_profiles",
+  {
+    ownerFirebaseUid: text("owner_firebase_uid")
+      .primaryKey()
+      .references(() => userProfiles.firebaseUid, { onDelete: "restrict", onUpdate: "cascade" }),
+    trainingGoal: trainingGoal("training_goal").notNull(),
+    experienceLevel: experienceLevel("experience_level").notNull(),
+    daysPerWeek: smallint("days_per_week").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    check(
+      "user_training_profiles_days_per_week_range",
+      sql`${table.daysPerWeek} between 2 and 5`,
+    ),
+  ],
 );
 
 export const catalogEquipment = pgTable(
@@ -1375,6 +1408,7 @@ export const schema = {
   userProfiles,
   userPreferences,
   userEquipmentProfiles,
+  userTrainingProfiles,
   catalogEquipment,
   catalogExercises,
   exerciseEquipment,

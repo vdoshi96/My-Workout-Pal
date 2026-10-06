@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
@@ -16,6 +15,8 @@ import {
   runnerStorageNamespaceDigest,
 } from "@/client/runner-storage";
 import { createWorkoutRunnerSubmitter } from "@/client/workout-api";
+import { requestArrivalFocus } from "@/components/navigation/arrival-focus";
+import { BackLink } from "@/components/navigation/back-link";
 import { WorkoutRunner } from "@/components/workout/workout-runner";
 import {
   createRunnerWriterIdentity,
@@ -25,6 +26,7 @@ import {
   type ExerciseSubstitution,
 } from "@/domain/workout-runner";
 import type { RunnerUnitSystem } from "@/components/workout/workout-runner-presenters";
+import { withFrom } from "@/domain/navigation/back-target";
 import type { CuratedVideos } from "@/domain/youtube/embed";
 
 type RecoveryState =
@@ -35,12 +37,14 @@ type RecoveryState =
 export function OwnedWorkoutRunner({
   curatedVideosByExerciseId,
   effectiveExerciseIdBySnapshot,
+  guideHrefByExerciseId = {},
   initialState,
   substitutionCandidates,
   unitSystem,
 }: Readonly<{
   curatedVideosByExerciseId: Readonly<Record<string, CuratedVideos>>;
   effectiveExerciseIdBySnapshot: Readonly<Record<string, string>>;
+  guideHrefByExerciseId?: Readonly<Record<string, string>>;
   initialState: ActiveWorkoutState;
   substitutionCandidates: readonly ExerciseSubstitution[];
   unitSystem: RunnerUnitSystem;
@@ -124,7 +128,14 @@ export function OwnedWorkoutRunner({
   }, [attempt, initialState, ownerUid, sessionId, storage]);
 
   function openTerminalHistory() {
-    router.push(`/app/history/${encodeURIComponent(sessionId)}`);
+    // The summary's back control returns to Today, not to the finished runner.
+    router.push(withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app"));
+  }
+
+  function openCompletedHistory() {
+    // `done=1` lets the summary celebrate a workout that was just finished.
+    requestArrivalFocus("history-done-title");
+    router.push(`${withFrom(`/app/history/${encodeURIComponent(sessionId)}`, "/app")}&done=1`);
   }
 
   function retryRecovery() {
@@ -137,7 +148,7 @@ export function OwnedWorkoutRunner({
       <section
         aria-busy="true"
         aria-labelledby="runner-recovery-title"
-        className="owned-runner-recovery"
+        className="status-page pal-run-recovery"
         role="status"
       >
         <h1 id="runner-recovery-title">Opening your workout…</h1>
@@ -149,24 +160,26 @@ export function OwnedWorkoutRunner({
     return (
       <section
         aria-labelledby="runner-recovery-title"
-        className="owned-runner-recovery owned-runner-recovery--blocked"
+        className="status-page pal-run-recovery"
         role="alert"
       >
         <h1 id="runner-recovery-title">{"We couldn't open this workout"}</h1>
         <p>Your logged sets are still on this device.</p>
-        <div>
+        <div className="pal-actions">
           <button className="primary-action" onClick={retryRecovery} type="button">Try again</button>
           <button className="secondary-action" onClick={() => savedVersionDialog.current?.showModal()} type="button">Use the version saved to your account</button>
-          <Link href="/app">Back to Today</Link>
+          <BackLink target={{ href: "/app", label: "Back to Today" }} />
         </div>
-        <dialog className="account-delete-dialog" ref={savedVersionDialog} aria-labelledby="runner-saved-version-title">
+        <dialog className="pal-sheet pal-run-dialog" ref={savedVersionDialog} aria-labelledby="runner-saved-version-title">
           <h2 id="runner-saved-version-title">Use the saved version?</h2>
           <p>Changes that only exist on this device will be removed.</p>
-          <button className="primary-action" type="button" onClick={async () => {
-            try { await storage.remove(runnerStorageKey(ownerUid, sessionId)); window.location.reload(); }
-            catch (error) { console.error("Workout recovery cleanup failed", error); savedVersionDialog.current?.close(); }
-          }}>Use saved version</button>
-          <button className="secondary-action" type="button" onClick={() => savedVersionDialog.current?.close()}>Cancel</button>
+          <div className="pal-actions">
+            <button className="danger-action" type="button" onClick={async () => {
+              try { await storage.remove(runnerStorageKey(ownerUid, sessionId)); window.location.reload(); }
+              catch (error) { console.error("Workout recovery cleanup failed", error); savedVersionDialog.current?.close(); }
+            }}>Use saved version</button>
+            <button className="secondary-action" type="button" onClick={() => savedVersionDialog.current?.close()}>Cancel</button>
+          </div>
         </dialog>
       </section>
     );
@@ -176,6 +189,7 @@ export function OwnedWorkoutRunner({
     <WorkoutRunner
       curatedVideosByExerciseId={curatedVideosByExerciseId}
       effectiveExerciseIdBySnapshot={effectiveExerciseIdBySnapshot}
+      guideHrefByExerciseId={guideHrefByExerciseId}
       getCompatibleSubstitutions={(exercise) =>
         compatibleWorkoutSubstitutions(
           exercise,
@@ -185,7 +199,7 @@ export function OwnedWorkoutRunner({
       }
       initialState={recovery.state}
       onAbandon={openTerminalHistory}
-      onComplete={openTerminalHistory}
+      onComplete={openCompletedHistory}
       onNavigateAway={() => router.push("/app")}
       protectBeforeUnload
       reauthenticationHref={workoutReauthenticationHref(sessionId)}

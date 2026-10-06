@@ -18,6 +18,7 @@ import {
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
 import type { ProfileProgramReadModel } from "@/server/repositories/profile-program";
+import { saveExampleFromOnboarding } from "./support/member";
 
 type OpenHarnessPage = Readonly<{
   close: () => Promise<void>;
@@ -190,10 +191,7 @@ async function submitOnboarding(page: Page) {
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await saveExampleFromOnboarding(page);
   return responsePromise;
 }
 
@@ -222,7 +220,7 @@ async function addMovement(page: Page, section: Locator, query: string, name: st
 
 function prescriptionRow(page: Page, section: Locator, name: string) {
   return section
-    .locator("li.program-editor-prescription")
+    .locator("li.pal-editor-move")
     .filter({ has: page.getByRole("heading", { level: 3, name }) });
 }
 
@@ -241,7 +239,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
 
   await alice.page.goto("/app");
   expect((await submitOnboarding(alice.page)).status()).toBe(201);
-  await expect(alice.page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await expect(alice.page.getByRole("heading", { name: "Your week" })).toBeVisible();
   await alice.page.waitForLoadState("networkidle");
   const onboarded = await readProfileProgram(alice.page);
   const usesImperialUnits = onboarded.preferences.unitSystem === "imperial";
@@ -253,7 +251,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
   const runnerDistanceLabel = usesImperialUnits ? "Distance (mi)" : "Distance (meters)";
   await alice.page.goto("/app/program/edit");
 
-  const section = alice.page.locator("fieldset.program-editor-section").first();
+  const section = alice.page.locator("fieldset.pal-editor-section").first();
   await addMovement(alice.page, section, "DB clean", "Dumbbell clean");
   await addMovement(alice.page, section, "Crunch", "Crunch");
   await addMovement(alice.page, section, "flutter kicks", "Flutter kick");
@@ -288,7 +286,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
     }
   });
   await alice.page.getByRole("button", { name: "Save routine" }).click();
-  await expect(alice.page.locator(".program-editor-errors")).toContainText(
+  await expect(alice.page.locator(".pal-editor-errors")).toContainText(
     "Dumbbell farmer carry needs a positive distance target before publication.",
   );
   expect(publishRequests).toBe(0);
@@ -318,7 +316,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
   await alice.page.getByRole("button", { name: "Save routine" }).click();
   expect((await publishResponse).status()).toBe(200);
   expect(publishRequests).toBe(1);
-  await expect(alice.page.locator(".quiet-save-state")).toHaveText("Saved");
+  await expect(alice.page.locator(".pal-editor-save-state")).toHaveText("Saved");
   expect((await refreshedEditorResponse).status()).toBe(200);
   await (await refreshedEditorResponse).finished();
 
@@ -359,7 +357,7 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
       new URL(response.url()).pathname === "/api/app/workouts" &&
       response.request().method() === "POST",
   );
-  await alice.page.getByRole("button", { name: "Start workout" }).click();
+  await alice.page.getByRole("button", { name: `Start ${day.displayName}` }).click();
   expect((await startResponse).status()).toBe(201);
   await expect(alice.page).toHaveURL(/\/workout\/[0-9a-f-]+$/u);
   const workoutUrl = alice.page.url();
@@ -367,15 +365,8 @@ test("a verified member publishes, reloads, and starts all owned logging shapes"
   await alice.page.getByText("Workout outline", { exact: true }).click();
   await alice.page.getByRole("button", { name: /Dumbbell farmer carry/u }).click();
   await expect(alice.page.getByRole("heading", { level: 2, name: "Dumbbell farmer carry" })).toBeVisible();
-  await alice.page.getByText("Watch demo and technique guidance", { exact: true }).click();
-  await expect(alice.page.getByRole("heading", { name: "Technique guidance" })).toBeVisible();
-  await expect(alice.page.getByText("Unavailable", { exact: true })).toBeVisible();
-  await expect(
-    alice.page.getByText(
-      "No demonstration is available for this movement. Workout logging remains available.",
-      { exact: true },
-    ),
-  ).toBeVisible();
+  await expect(alice.page.locator(".pal-run-move").getByText("No demo yet", { exact: true })).toBeVisible();
+  await expect(alice.page.getByRole("button", { name: /^(Log|Update) set & rest$/u })).toBeVisible();
   await expect(alice.page.locator("iframe")).toHaveCount(0);
 
   await alice.page.getByLabel(runnerDistanceLabel).fill(runnerDistanceInput);

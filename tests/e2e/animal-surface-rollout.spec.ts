@@ -7,26 +7,6 @@ import { expect, test, type Locator, type Page, type TestInfo } from "@playwrigh
 
 const requiredWidths = [320, 390, 430, 820, 1280, 1440] as const;
 
-async function expectNoIntersection(first: Locator, second: Locator) {
-  const [firstBox, secondBox] = await Promise.all([
-    first.boundingBox(),
-    second.boundingBox(),
-  ]);
-  expect(firstBox).not.toBeNull();
-  expect(secondBox).not.toBeNull();
-  if (!firstBox || !secondBox) throw new Error("Required geometry participant is hidden.");
-  const overlapWidth = Math.max(
-    0,
-    Math.min(firstBox.x + firstBox.width, secondBox.x + secondBox.width) -
-      Math.max(firstBox.x, secondBox.x),
-  );
-  const overlapHeight = Math.max(
-    0,
-    Math.min(firstBox.y + firstBox.height, secondBox.y + secondBox.height) -
-      Math.max(firstBox.y, secondBox.y),
-  );
-  expect(overlapWidth * overlapHeight).toBeLessThanOrEqual(1);
-}
 
 async function expectSemanticSilence(placement: Locator) {
   const image = placement.locator("img");
@@ -61,12 +41,23 @@ async function expectPointerInert(placement: Locator) {
   ).toBe(false);
 }
 
+// The scene is a background behind the page, so protected areas must stay on top and hit-testable.
+async function expectOnTop(area: Locator) {
+  await area.scrollIntoViewIfNeeded();
+  await expect(area).toBeVisible();
+  expect(await area.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    return hit === element || (hit !== null && element.contains(hit));
+  })).toBe(true);
+}
+
 async function assertPublicLibrary(page: Page, width: number) {
   await page.goto("/library");
   await expect(
     page.getByRole("heading", { level: 1, name: "Exercise library" }),
   ).toBeVisible();
-  const placement = page.locator('[data-companion-placement="library"]');
+  const placement = page.locator(".pal-scene");
   await expect(placement).toHaveCount(1);
   await expectSemanticSilence(placement);
 
@@ -83,14 +74,14 @@ async function assertPublicLibrary(page: Page, width: number) {
     for (const protectedSelector of [
       ".public-header",
       ".public-nav",
-      ".public-library-hero > div:first-child",
-      ".public-library-hero p",
-      ".library-tools",
+      ".pal-page-head h1",
+      ".pal-page-head > p",
+      ".pal-library-tools",
       ".profile-links",
-      ".library-search",
-      ".library-results",
+      ".pal-search",
+      "#library-results-heading",
     ]) {
-      await expectNoIntersection(placement, page.locator(protectedSelector));
+      await expectOnTop(page.locator(protectedSelector));
     }
   }
 
@@ -157,7 +148,7 @@ test("public Library keeps keyboard and screen-reader meaning independent from a
   await expect(page.getByLabel("Search movements")).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("button", { name: "Search" })).toBeFocused();
-  await expect(page.locator('[data-companion-placement="library"]')).not.toBeFocused();
+  await expect(page.locator(".pal-scene")).not.toBeFocused();
   const results = await new AxeBuilder({ page }).analyze();
   expect(
     results.violations.filter(({ impact }) =>
@@ -174,7 +165,7 @@ test("public Library decoration is dark, reduced-motion, forced-color, and failu
   await page.setViewportSize({ height: 1000, width: 1440 });
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await assertPublicLibrary(page, 1440);
-  const placement = page.locator('[data-companion-placement="library"]');
+  const placement = page.locator(".pal-scene");
   expect(
     await placement.locator("img").evaluate((element) => {
       const style = getComputedStyle(element);
@@ -212,10 +203,7 @@ test("CDP page scale simulation is recorded separately from native 200 percent z
   await assertPublicLibrary(page, 1440);
   const devtools = await page.context().newCDPSession(page);
   await devtools.send("Emulation.setPageScaleFactor", { pageScaleFactor: 2 });
-  await expectNoIntersection(
-    page.locator('[data-companion-placement="library"]'),
-    page.locator(".library-tools"),
-  );
+  await expectOnTop(page.locator(".pal-library-tools"));
   await expect(page.getByLabel("Search movements")).toBeVisible();
   await devtools.send("Emulation.setPageScaleFactor", { pageScaleFactor: 1 });
 });
@@ -259,7 +247,7 @@ test("headed native 200 percent zoom reflows public Library", async ({
     expect(before.innerWidth / zoomed.innerWidth).toBeCloseTo(2, 1);
     expect(zoomed.visualScale).toBe(1);
     expect(zoomed.scrollWidth - zoomed.clientWidth).toBeLessThanOrEqual(1);
-    await expect(page.locator('[data-companion-placement="library"]')).toBeHidden();
+    await expect(page.locator(".pal-search")).toBeVisible();
     await page.getByLabel("Search movements").focus();
     await expect(page.getByLabel("Search movements")).toBeFocused();
     const results = await new AxeBuilder({ page }).analyze();

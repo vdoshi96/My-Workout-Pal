@@ -58,7 +58,7 @@ export function AuthenticatedSessionSignOut({
   return (
     <div className="member-session-signout">
       <button disabled={busy} onClick={() => void beginSignOut()} type="button">
-        <Icon name="sign-out" /> {busy ? "Signing out…" : "Sign out"}
+        <Icon name="sign-out" /> <span className="member-signout-label">{busy ? "Signing out…" : "Sign out"}</span>
       </button>
       <p aria-live="polite" role="status">{message}</p>
     </div>

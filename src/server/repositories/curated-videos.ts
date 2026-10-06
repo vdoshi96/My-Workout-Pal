@@ -115,3 +115,25 @@ export async function getApprovedCuratedVideoPairBySlug(
   const exerciseId = rows[0]?.exerciseId;
   return exerciseId ? groupExactPairs(rows)[exerciseId] : undefined;
 }
+
+/** Approved pairs keyed by catalog slug, for screens that know movements by slug (onboarding, previews). */
+export async function listApprovedCuratedVideoPairsBySlugs(
+  database: Database,
+  slugs: readonly string[],
+): Promise<Readonly<Record<string, CuratedVideos>>> {
+  const uniqueSlugs = [...new Set(slugs)];
+  if (uniqueSlugs.length === 0) return {};
+  const rows = await selectApprovedRows(database)
+    .where(and(
+      inArray(catalogExercises.slug, uniqueSlugs),
+      eq(curatedVideos.variationId, DEFAULT_YOUTUBE_VARIATION_ID),
+      eq(curatedVideos.approvalStatus, "approved"),
+    ))
+    .orderBy(asc(curatedVideos.exerciseId), asc(curatedVideos.displayOrder));
+  const byExercise = groupExactPairs(rows);
+  const slugByExercise = new Map(rows.map((row) => [row.exerciseId, row.canonicalExerciseSlug]));
+  return Object.fromEntries(Object.entries(byExercise).flatMap(([exerciseId, videos]) => {
+    const slug = slugByExercise.get(exerciseId);
+    return slug ? [[slug, videos]] : [];
+  }));
+}

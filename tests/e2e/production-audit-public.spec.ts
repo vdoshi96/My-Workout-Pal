@@ -66,7 +66,7 @@ test.describe("production audit: public surfaces", () => {
 
     await page.goto("/program/push");
     await expect(page.getByRole("heading", { level: 1, name: "Push day" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Example routine", exact: true })).toHaveAttribute("href", /^\/program/);
+    await expect(page.getByRole("link", { name: "Back to the example routine", exact: true })).toHaveAttribute("href", /^\/program/);
     await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Example", exact: true })).toHaveAttribute("aria-current", "page");
   });
 

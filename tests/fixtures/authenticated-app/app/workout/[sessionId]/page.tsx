@@ -1,9 +1,13 @@
 import { loadTrainingSession, TrainingInsightsRepositoryError } from "@/server/repositories/training-insights";
-import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
+import { BackLink } from "@/components/navigation/back-link";
+import { NavigationTracker } from "@/components/navigation/navigation-tracker";
+import { SceneStage } from "@/components/ui/scene-stage";
 import { OwnedWorkoutRunner } from "@/components/workout/owned-workout-runner";
+import { withFrom } from "@/domain/navigation/back-target";
+import { memberGuideHrefsByExerciseId } from "@/server/read-models/approved-demos";
 import { hydrateWorkoutResumeState } from "@/domain/workout-resume";
 import { listApprovedCuratedVideoPairsByExerciseIds } from "@/server/repositories/curated-videos";
 import { listCustomExercises } from "@/server/repositories/custom-exercises";
@@ -63,7 +67,7 @@ async function loadHarnessWorkout(
           if (historyError instanceof TrainingInsightsRepositoryError && historyError.code === "not_found") return undefined;
           throw historyError;
         });
-        if (session) redirect(`/app/history/${sessionId}`);
+        if (session) redirect(withFrom(`/app/history/${sessionId}`, "/app"));
       }
       notFound();
     }
@@ -92,43 +96,45 @@ export default async function HarnessOwnedWorkoutPage({
     sessionId,
     context.scenario,
   );
+  const substitutionCandidates = buildWorkoutRouteCandidates(
+    resume.snapshot.equipmentProfileKind ?? profileProgram.equipment.profileKind,
+    customExercises,
+    resume.snapshot.availableEquipment,
+  );
+  const guideHrefByExerciseId = memberGuideHrefsByExerciseId(
+    [...Object.values(effectiveIds), ...substitutionCandidates.map(({ id }) => id)],
+    customExercises.map(({ id }) => id),
+  );
 
   return (
     <div className="owned-workout-route">
-      <a className="skip-link" href="#runner-title">
-        Skip to active workout
-      </a>
-      <header className="owned-workout-route-bar">
-        <Link href="/app">Back to Today</Link>
-        <span>
-          {resume.session.dayName}
-        </span>
-        <Link href="/app/library" prefetch={false}>Library</Link>
+      <a className="skip-link" href="#runner-title">Skip to active workout</a>
+      {context.viewer.eligibleForPermanentMutations ? <SceneStage scene="workout" /> : null}
+      <header className="pal-run-bar">
+        <BackLink target={{ href: "/app", label: "Back to Today" }} />
       </header>
       <main>
         {context.viewer.eligibleForPermanentMutations ? (
           <OwnedWorkoutRunner
             curatedVideosByExerciseId={curatedVideosByExerciseId}
             effectiveExerciseIdBySnapshot={effectiveIds}
+            guideHrefByExerciseId={guideHrefByExerciseId}
             initialState={initialState}
-            substitutionCandidates={buildWorkoutRouteCandidates(
-              resume.snapshot.equipmentProfileKind ?? profileProgram.equipment.profileKind,
-              customExercises,
-              resume.snapshot.availableEquipment,
-            )}
+            substitutionCandidates={substitutionCandidates}
             unitSystem={profileProgram.preferences.unitSystem}
           />
         ) : (
           <section
             aria-labelledby="workout-verification-title"
-            className="owned-runner-recovery owned-runner-recovery--blocked"
+            className="status-page pal-run-recovery"
           >
-            <span className="eyebrow">Read-only account</span>
+            <span className="pal-tag">Read-only account</span>
             <h1 id="workout-verification-title">Verify before editing this workout</h1>
             <p>Verify your email, then sign in again to continue this workout.</p>
           </section>
         )}
       </main>
+      <NavigationTracker />
     </div>
   );
 }

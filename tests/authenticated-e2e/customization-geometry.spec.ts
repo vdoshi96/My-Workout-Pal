@@ -7,8 +7,11 @@ import {
   HARNESS_VIEWER_HEADER,
 } from "../fixtures/authenticated-app/server/harness-context";
 import { isSupersededCompanionImageRequest } from "./companion-request-policy";
+import { answerOnboarding, skipTour } from "./support/member";
 
 async function assertAccessible(page: Page) {
+  // Next.js streams the document title after the body; wait for it as the pilot spec's helper does.
+  await expect.poll(() => page.title()).not.toBe("");
   const results = await new AxeBuilder({ page }).analyze();
   expect(
     results.violations.filter((violation) =>
@@ -176,19 +179,18 @@ test("customization surfaces preserve geometry and media preferences", async ({
     await expect(page.getByText("Verified account", { exact: true })).toBeVisible();
   }
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Make room for your routine." })).toBeVisible();
-  await page.getByRole("radio", { name: /Example routine/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByLabel("Time zone").selectOption("America/Chicago");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await answerOnboarding(page, undefined, { navigate: false });
+  await page.getByText("Prefer a different start?").click();
+  await page.getByRole("button", { name: "Use the five-day example" }).click();
   const onboardingResponse = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/api/app/profile-program/onboard" &&
       response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Save routine", exact: true }).click();
+  await page.getByRole("button", { name: "Save my routine", exact: true }).click();
   expect((await onboardingResponse).status()).toBe(201);
-  await expect(page.getByRole("heading", { name: "All days" })).toBeVisible();
+  await skipTour(page);
+  await expect(page.getByRole("heading", { name: "Your week" })).toBeVisible();
 
   expect(
     await page.evaluate(() => ({
@@ -197,7 +199,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
       reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
       scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
     })),
-  ).toEqual({ dark: true, paper: "#142a23", reduced: true, scrollBehavior: "auto" });
+  ).toEqual({ dark: true, paper: "#191b33", reduced: true, scrollBehavior: "auto" });
   await assertViewportGeometry(page);
   await assertMemberTargets(page);
   await assertAccessible(page);
@@ -221,7 +223,7 @@ test("customization surfaces preserve geometry and media preferences", async ({
   await page.getByText("Add a section", { exact: true }).click();
   await expect(page.getByRole("button", { name: "Add core section" })).toBeEnabled();
   const accessorySection = page
-    .locator("fieldset.program-editor-section")
+    .locator("fieldset.pal-editor-section")
     .filter({ has: page.getByLabel("Section name for accessory") });
   const accessoryName = await accessorySection.getByLabel("Section name for accessory").inputValue();
   const removeAccessory = accessorySection.getByRole("button", {

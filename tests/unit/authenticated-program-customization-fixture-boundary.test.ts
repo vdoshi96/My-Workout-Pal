@@ -69,7 +69,7 @@ describe("authenticated customization fixture boundary", () => {
       resolve(repositoryRoot, "src/components/program/program-collection.tsx"),
       "utf8",
     );
-    const styles = readFileSync(resolve(repositoryRoot, "src/app/globals.css"), "utf8");
+    const styles = readFileSync(resolve(repositoryRoot, "src/app/pal-routine.css"), "utf8");
     const editor = readFileSync(
       resolve(repositoryRoot, "src/components/program/program-editor.tsx"),
       "utf8",
@@ -81,10 +81,13 @@ describe("authenticated customization fixture boundary", () => {
 
     expect(collection.match(/maxLength=\{80\}/gu)).toHaveLength(2);
     expect(styles).toMatch(
-      /\.program-editor-add-section button \{[^}]*min-height: 2\.75rem;/u,
+      /\.pal-editor-chips button \{[^}]*min-height: 48px;/u,
     );
     expect(styles).toMatch(
-      /\.program-editor-prescription-actions button, \.program-editor-add \{[^}]*min-height: 2\.75rem;/u,
+      /\.pal-editor-menu-list button \{[^}]*min-height: 48px;/u,
+    );
+    expect(styles).toMatch(
+      /\.pal-editor-section \.pal-editor-add \{[^}]*min-height: 48px;/u,
     );
     expect(editor).toContain('aria-label={`Move ${movementLabel} up`}');
     expect(editor).toContain('aria-label={`Move ${movementLabel} down`}');
@@ -104,16 +107,14 @@ describe("authenticated customization fixture boundary", () => {
     expect(equipmentControl).toContain("aria-controls");
     expect(equipmentControl).toContain("aria-expanded");
     expect(equipmentControl).toContain("reviewHeading.current?.focus()");
-    expect(editor).toContain("equipmentReviewOpen");
-    expect(editor).toContain("onReviewChange={setEquipmentReviewOpen}");
-    expect(editor).toMatch(/hasOpenReview:[\s\S]*equipmentReviewOpen/u);
+    expect(editor).toContain("draftDirty={dirty}");
     expect(equipmentControl).toContain("onReviewChange?: (open: boolean) => void");
     expect(equipmentControl).toContain("onReviewChange?.(open)");
   });
 
   it("applies the complete checked-in migration inventory", () => {
     const databaseBootstrap = source("server/database.ts");
-    expect(databaseBootstrap.match(/"000[0-7]_[^"]+\.sql"/gu)).toEqual([
+    expect(databaseBootstrap.match(/"000[0-8]_[^"]+\.sql"/gu)).toEqual([
       '"0000_initial.sql"',
       '"0001_account_deletion_saga.sql"',
       '"0002_workout_canonical_measurements.sql"',
@@ -122,6 +123,7 @@ describe("authenticated customization fixture boundary", () => {
       '"0005_flexible_routine_topology.sql"',
       '"0006_program_cardio_display_order.sql"',
       '"0007_personal_guidance.sql"',
+      '"0008_training_profile.sql"',
     ]);
   });
 
@@ -134,6 +136,7 @@ describe("authenticated customization fixture boundary", () => {
       "app/api/app/custom-exercises/route.ts",
       "app/api/app/custom-exercises/[id]/route.ts",
       "app/api/app/preferences/route.ts",
+      "app/api/app/training-profile/route.ts",
     ];
 
     expect(
@@ -171,6 +174,11 @@ describe("authenticated customization fixture boundary", () => {
       "preferencesUpdateRequestSchema",
     );
     expect(source("app/api/app/preferences/route.ts")).toContain("updateViewerPreferences");
+    expect(source("app/api/app/programs/route.ts")).toContain("createViewerProgramFromAnswers");
+    expect(source("app/api/app/training-profile/route.ts")).toContain(
+      "trainingProfileUpdateRequestSchema",
+    );
+    expect(source("app/api/app/training-profile/route.ts")).toContain("updateViewerTrainingProfile");
     expect(source("app/api/app/custom-exercises/route.ts")).toContain(
       "createCustomExerciseRequestSchema",
     );

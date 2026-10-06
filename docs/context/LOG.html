@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="4c4f2d1862249520b07d7043e417121465f3cd6100c00d3b1af2b55a441b29d1">
+  <meta name="source-sha256" content="839654ba9167910653c920d5b407f3795ecba725eb17bf36efa1c1993dc9d079">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,6 +28,24 @@
 <body>
   <main>
 <h1>Project log</h1>
+<h2>2026-10-05: Playful companion overhaul, Phase 2 rollout</h2>
+<ul>
+<li>The owner approved the direction, Fredoka, the onboarding questions, the artwork, deleting unused art and running migration <code>0008_training_profile</code>, and asked for a more integrated dark mode.</li>
+<li>Backed up production Neon with <code>pg_dump</code> 18.6 to a private mode-<code>600</code> archive outside the repository (with its sha256), then applied <code>0008</code>. Before: 8 migrations, 1 profile, 1 routine, 134 movements, 268 approved videos. After: 9 migrations, <code>user_training_profiles</code> present with 0 rows, every other count unchanged.</li>
+<li>Rolled <em>Studio Pals</em> out to every public and member screen. Deleted <code>quiet-set.css</code> and 18 unused illustration files (16 corner-companion images and both <code>workout-pals-gym</code> sizes). Rewrote <code>globals.css</code> as a structural base. Moved tokens to <code>:root</code> and split area styles into <code>pal-runner.css</code>, <code>pal-routine.css</code> and <code>pal-insights.css</code>.</li>
+<li>Added dusk recolours of all seven scenes (provenance under <code>docs/design/provenance/quiet-set/</code>). Dark pages mask the scene into the indigo canvas. Cache policy moved to v9.</li>
+<li>Built the four-question onboarding with a generated routine (<code>generateStarterRoutine</code>, test-first), the example and blank starts, a skippable four-card tour, Settings &gt; Your training, the <code>/try</code> test drive, the finish celebration with record ribbon, <code>BackLink</code> with <code>resolveBackTarget</code> (test-first), and in-place demo sheets.</li>
+<li>Fixed issues found by the browser suites: Today&#39;s day now follows the address, the tab bar reads the router&#39;s search params, headings take focus after a finish or the tour, the workout scene stays off the read-only screen, the phone header fits one row, and the editor no longer rewrites its address (that made Next.js remount it after every save).</li>
+<li>Updated pre-existing tests only where a layout was retired, logged in the <a href="../qa/latest/PLAYFUL-OVERHAUL-QA.html">QA report</a> ledger.</li>
+<li>The owner approved the screenshots, asked for day pills that wrap and one name per equipment profile (<code>15eb950</code>), and authorized the merge. All gates passed on <code>15eb950</code>: <code>pnpm verify</code>, 95 authenticated, 118 release and 12 public-acceptance passes, and 76 documentation files verified. PR #9 merged into <code>main</code>.</li>
+</ul>
+<h2>2026-10-05: Playful companion overhaul, Phase 0 audit and Phase 1 prototype</h2>
+<ul>
+<li>Added design-review capture tooling: four Chromium projects (390 px and 1440 px, light and dark), public screens from a production build and member screens from the synthetic fixture, with a contrast sampler that measures default, hover, real Tab-key focus, selected and disabled states.</li>
+<li>Captured the baseline from an untouched <code>main</code> (<code>4db767f</code>) in a temporary worktree, then removed it. Two text pairs fail AA, both white on a pale highlight in dark mode (equipment toggle and sign-in tab, 1.34:1). Five focus-ring or control-edge pairs fall below 3:1.</li>
+<li>Wrote <code>docs/plans/PLAYFUL-COMPANION-OVERHAUL.md</code> with the box inventory, contrast audit, navigation map, onboarding walkthrough, art inventory, the <em>Studio Pals</em> direction, onboarding and routine-generation rules, the navigation contract, the migration plan, acceptance criteria and tests.</li>
+<li>Built a scoped prototype of the landing page and member Today, including an in-place demo sheet for approved demos and the selected day kept in the address. Stopped for owner approval.</li>
+</ul>
 <h2>2026-08-30: Wave 2 production release</h2>
 <ul>
 <li>Created and checksummed the private mode-<code>600</code> PostgreSQL archive outside the
@@ -716,7 +734,7 @@ the private mode-<code>600</code> bundle
 <h2>2026-09-23: Production-grade owner decisions, round 2</h2>
 <ul>
 <li>Implemented the named recovery, account, metadata, copy, and layout decisions and every approved test mapping in PR #8; preserved the four acceptance files and all test thresholds.</li>
-<li>Corrected interrupted response-body classification so queued workout writes recover after reload. Latest complete commands report 75 authenticated passes / 13 skips and 102 release passes / 66 skips; exact preflight and committed verification boundaries are in the <a href="../qa/latest/PRODUCTION-GRADE-QA.html">QA report</a> and PR.</li>
+<li>Corrected interrupted response-body classification so queued workout writes recover after reload. Latest complete commands report 75 authenticated passes / 13 skips and 102 release passes / 66 skips; exact preflight and committed verification boundaries are in the <a href="https://github.com/vdoshi96/My-Workout-Pal/blob/4db767f/docs/qa/latest/PRODUCTION-GRADE-QA.html">QA report</a> and PR.</li>
 <li>Refreshed and reviewed 40 phone/desktop screenshots. Removed the unsuccessful blank-frame video navigation experiment; the stable embed still reproduces a WebKit Cache API teardown error in one of 48 loaded-video departures.</li>
 <li>Keep merge blocked pending the explicit teardown-policy decision. The canonical checkout remains the sole active worktree; no manual deployment or production/provider changes were made.</li>
 </ul>

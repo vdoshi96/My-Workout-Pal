@@ -13,5 +13,5 @@ const shapes: Record<EquipmentIllustrationKind, ReactNode> = {
 };
 /** Decorative equipment artwork; adjacent text defines actual equipment requirements. */
 export function EquipmentIllustration({kind}: {kind:EquipmentIllustrationKind}) {
-  return <svg className="quiet-equipment-art" aria-hidden="true" focusable="false" width="80" height="72" viewBox="0 0 80 72" fill="none" stroke="#183f35" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">{shapes[kind]}</svg>;
+  return <svg className="quiet-equipment-art" aria-hidden="true" focusable="false" width="80" height="72" viewBox="0 0 80 72" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">{shapes[kind]}</svg>;
 }

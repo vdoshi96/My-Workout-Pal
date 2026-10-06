@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 
+import { ArrivalFocus } from "@/components/navigation/arrival-focus";
 import { StartWorkoutControl } from "@/components/workout/start-workout-control";
 import {
   formatInsightDistance,
@@ -10,9 +11,15 @@ import {
   formatInsightVolume,
 } from "@/components/insights/training-insights-presenters";
 import { Icon } from "@/components/ui/icon";
-import { DecorativeCompanion } from "@/components/ui/decorative-companion";
+import { PalSticker, SceneStage } from "@/components/ui/scene-stage";
+import { DemoSheet } from "@/components/video/demo-sheet";
 import { EQUIPMENT_PROFILES } from "@/domain/equipment";
-import type { ActiveProgramReadModel } from "@/server/repositories/profile-program";
+import { withFrom } from "@/domain/navigation/back-target";
+import type { CuratedVideos } from "@/domain/youtube/embed";
+import type {
+  ActiveProgramPrescriptionReadModel,
+  ActiveProgramReadModel,
+} from "@/server/repositories/profile-program";
 
 export type MemberHomeProgressSummary = Readonly<{
   completedSessions: number;
@@ -30,133 +37,154 @@ export type MemberHomeResumableWorkout = Readonly<{
   state: "active" | "completing" | "draft";
 }>;
 
+function range(minimum: number | null, maximum: number | null) {
+  if (minimum === null) return null;
+  return maximum === null || maximum === minimum ? `${minimum}` : `${minimum}–${maximum}`;
+}
+
+function targetLabel(prescription: ActiveProgramPrescriptionReadModel) {
+  const sets = `${prescription.setCount} ${prescription.setCount === 1 ? "set" : "sets"}`;
+  const reps = range(prescription.minimumReps, prescription.maximumReps);
+  if (reps) return `${sets} · ${reps} reps`;
+  const seconds = range(prescription.minimumSeconds, prescription.maximumSeconds);
+  if (seconds) return `${sets} · ${seconds} sec`;
+  return sets;
+}
+
+function movementHref(prescription: ActiveProgramPrescriptionReadModel, origin: string) {
+  return withFrom(prescription.customExerciseId
+    ? `/app/library/custom/${prescription.customExerciseId}`
+    : `/app/library/${prescription.exercise.slug}`, origin);
+}
+
 export function MemberProgramHome({
   canMutate,
+  demos = {},
   displayName,
+  initialDayKey,
   initialProgram,
   progress,
   resumableWorkout,
 }: Readonly<{
   canMutate: boolean;
+  demos?: Readonly<Record<string, CuratedVideos>>;
   displayName: string;
+  initialDayKey?: string | null;
   initialProgram: ActiveProgramReadModel;
   progress: MemberHomeProgressSummary;
   resumableWorkout: MemberHomeResumableWorkout | null;
 }>) {
   const program = initialProgram;
-  const [selectedDayId, setSelectedDayId] = useState(program.days[0]!.id);
-  const selectedDay = program.days.find((day) => day.id === selectedDayId) ?? program.days[0]!;
-  const dayCountLabel = `${program.days.length} ${program.days.length === 1 ? "day" : "days"}`;
-  const greetingName = displayName.trim() || "there";
-  const hasResumableWorkout = resumableWorkout !== null;
+  // The address is the source of truth for the chosen day, so returning to Today restores it even
+  // when the router reuses an earlier render of this page.
+  const dayKey = useSearchParams()?.get("day") ?? initialDayKey;
+  const selectedDay = program.days.find((day) => day.dayKey === dayKey) ?? program.days[0]!;
+  const dayCountLabel = `${program.days.length} ${program.days.length === 1 ? "day" : "days"} a week`;
+  const firstName = displayName.trim().split(/\s+/u)[0] || "there";
+  const movementCount = `${selectedDay.prescriptions.length} ${selectedDay.prescriptions.length === 1 ? "movement" : "movements"}`;
+
+  function chooseDay(key: string) {
+    // Next.js syncs replaceState with useSearchParams, which re-renders with the new day.
+    window.history.replaceState(null, "", `/app?day=${encodeURIComponent(key)}`);
+  }
 
   return (
-    <section
-      className={`member-program${hasResumableWorkout ? " member-program--resumable" : ""}`}
-      aria-labelledby="member-program-title"
-    >
-      <div className="member-today-scene">
-      <header className="member-program-hero contour-surface">
-        <div className="member-program-copy">
-
-          <h1 id="member-program-title">Ready when you are, {greetingName}.</h1>
-          <p>
-            {program.name} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label} · {dayCountLabel}
-          </p>
+    <section className="member-program pal-today" aria-labelledby="member-program-title">
+      <div className="pal-today-stage">
+        <SceneStage priority />
+        <div className="pal-today-copy">
+          {resumableWorkout ? (
+            <>
+              <h1 id="member-program-title">Welcome back, {firstName}!</h1>
+              <p>{canMutate ? `You're partway through ${resumableWorkout.dayName}. Pick up where you left off, and finish it before starting another day.` : `Your ${resumableWorkout.dayName} workout is waiting. Verify your email to keep going.`}</p>
+              <h2 className="sr-only">{canMutate ? `Keep going with ${resumableWorkout.dayName}` : `Verify to resume ${resumableWorkout.dayName}`}</h2>
+              <div className="pal-today-actions">
+                <Link className={canMutate ? "primary-action" : "secondary-action"} href={`/workout/${resumableWorkout.sessionId}`} prefetch={false}>
+                  {canMutate ? `Resume ${resumableWorkout.dayName}` : `Review ${resumableWorkout.dayName}`} <Icon name="arrow-right" />
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 id="member-program-title" tabIndex={-1}>Hey {firstName}! Ready for {selectedDay.displayName}?</h1>
+              <ArrivalFocus headingId="member-program-title" />
+              <p>{movementCount} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label}</p>
+              {!canMutate ? <p className="pal-notice">Your routine is ready to look through. Verify your email and sign in again to start or edit workouts.</p> : null}
+              <div className="pal-today-actions">
+                <StartWorkoutControl dayId={selectedDay.id} eligible={canMutate} label={`Start ${selectedDay.displayName}`} programId={program.id} />
+              </div>
+            </>
+          )}
         </div>
-        <DecorativeCompanion variant="member-home" />
-      </header>
-
-      {!canMutate ? (
-        <aside className="member-inline-notice member-home-verification" role="status">
-          <strong>Your routine is available to review.</strong>{" "}
-          Verify your email and sign in again to start or edit workouts.
-        </aside>
-      ) : null}
-
-      {resumableWorkout ? (
-        <section className="member-resume-card" aria-labelledby="member-resume-title">
-          <div>
-            <span className="eyebrow">
-              {canMutate ? "Workout in progress" : "Workout waiting"}
-            </span>
-            <h2 id="member-resume-title">
-              {canMutate
-                ? `Keep going with ${resumableWorkout.dayName}`
-                : `Verify to resume ${resumableWorkout.dayName}`}
-            </h2>
-            {canMutate ? (
-              <p>
-                Finish or abandon {resumableWorkout.dayName} before starting another day.
-                Your saved workout remains attached to this account.
-              </p>
-            ) : (
-              <p>
-                This saved workout still belongs to your account. The workout page remains
-                read-only until you verify your email and sign in again.
-              </p>
-            )}
-          </div>
-          <Link className={canMutate ? "primary-action" : "secondary-action"} href={`/workout/${resumableWorkout.sessionId}`} prefetch={false}>
-            {canMutate ? `Resume ${resumableWorkout.dayName}` : `Review ${resumableWorkout.dayName}`} <Icon name="arrow-right" />
-          </Link>
-        </section>
-      ) : null}
-
-      {!hasResumableWorkout ? <section className="quiet-today-start" aria-labelledby="today-start-title">
-        <h2 id="today-start-title">Your next workout</h2>
-        <label htmlFor="today-day">Training day</label>
-        <select id="today-day" value={selectedDayId} onChange={(event) => setSelectedDayId(event.target.value)}>{program.days.map((day) => <option key={day.id} value={day.id}>{day.displayName}</option>)}</select>
-        <p>{selectedDay.prescriptions.length} {selectedDay.prescriptions.length === 1 ? "movement" : "movements"} · {EQUIPMENT_PROFILES[program.equipmentProfileKind].label}</p>
-        <StartWorkoutControl dayId={selectedDay.id} programId={program.id} eligible={canMutate} />
-        <Link href={`/app/program/${selectedDay.dayKey}`} prefetch={false}>Review this day</Link>
-      </section> : null}
-
       </div>
 
-      <section className="member-week" aria-labelledby="member-week-title">
-        <div className="section-heading">
-          <div>
-            <h2 id="member-week-title">
-              All days
-            </h2>
+      <div className="pal-today-body">
+        <section className="pal-days" aria-labelledby="member-week-title">
+          <div className="pal-heading-row">
+            <h2 id="member-week-title">Your week</h2>
+            <span>{program.name} · {dayCountLabel}</span>
           </div>
-          <span>{dayCountLabel}</span>
-        </div>
-        <ol className="member-day-grid">
-          {program.days.map((day) => (
-            <li key={day.id}>
-              <Link href={`/app/program/${day.dayKey}`} prefetch={false}>
-                <span>{String(day.dayNumber).padStart(2, "0")}</span>
-                <strong>{day.displayName}</strong><small>{day.prescriptions.length} {day.prescriptions.length === 1 ? "movement" : "movements"}</small>
-                <Icon name="chevron-right" />
-              </Link>
-            </li>
-          ))}
-        </ol>
-      </section>
+          <ul className="pal-day-pills">
+            {program.days.map((day) => (
+              <li key={day.id}>
+                <button aria-pressed={day.id === selectedDay.id} className="pal-day-pill" onClick={() => chooseDay(day.dayKey)} type="button">
+                  {day.displayName === `Day ${day.dayNumber}` ? null : <small>Day {day.dayNumber}</small>}
+                  <strong>{day.displayName}</strong>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-      {progress.completedSessions > 0 ? <section className="member-home-progress" aria-labelledby="member-home-progress-title">
-        <header className="section-heading">
-          <div>
-            <span className="eyebrow">Your saved activity</span>
-            <h2 id="member-home-progress-title">Progress at a glance</h2>
+        <section aria-labelledby="member-moves-title">
+          <div className="pal-heading-row">
+            <h2 id="member-moves-title">What&apos;s in {selectedDay.displayName}</h2>
+            <Link href={withFrom(`/app/program/${selectedDay.dayKey}`, `/app?day=${selectedDay.dayKey}`)} prefetch={false}>See the whole day</Link>
           </div>
-          <div className="member-home-insight-links">
-            <Link href="/app/history">Review history</Link>
-            <Link href="/app/progress">Open progress</Link>
-          </div>
-        </header>
-          <dl className="member-home-totals">
-            <div><dt>Completed</dt><dd>{progress.completedSessions}</dd></div>
-            <div><dt>Work sets</dt><dd>{progress.completedWorkSets ?? 0}</dd></div>
-            <div><dt>Repetitions</dt><dd>{progress.repetitions ?? 0}</dd></div>
-            {progress.volumeKg > 0 ? <div><dt>Volume</dt><dd>{formatInsightVolume(progress.volumeKg, progress.unitSystem)}</dd></div> : null}
-            {progress.durationSeconds > 0 ? <div><dt>Duration</dt><dd>{formatInsightDuration(progress.durationSeconds)}</dd></div> : null}
-            {progress.distanceMeters > 0 ? <div><dt>Distance</dt><dd>{formatInsightDistance(progress.distanceMeters, progress.unitSystem)}</dd></div> : null}
-          </dl>
-      </section> : null}
+          <ol className="pal-moves">
+            {selectedDay.prescriptions.map((prescription, index) => {
+              const videos = prescription.catalogExerciseId ? demos[prescription.catalogExerciseId] : undefined;
+              return (
+                <li className="pal-move" id={`movement-${index + 1}`} key={prescription.id}>
+                  <span aria-hidden="true" className="pal-move-number">{index + 1}</span>
+                  <div>
+                    <Link className="pal-move-name" href={movementHref(prescription, `/app?day=${selectedDay.dayKey}#movement-${index + 1}`)} prefetch={false}>{prescription.label}</Link>
+                    <small>{targetLabel(prescription)}</small>
+                  </div>
+                  {videos ? <DemoSheet movementName={prescription.label} videos={videos} /> : <span className="pal-no-demo">No demo yet</span>}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
 
+        <section aria-labelledby="member-home-progress-title">
+          <div className="pal-heading-row">
+            <h2 id="member-home-progress-title">Your progress</h2>
+            {progress.completedSessions > 0 ? (
+              <span className="pal-heading-links">
+                <Link href="/app/history" prefetch={false}>Review history</Link>
+                <Link href="/app/progress" prefetch={false}>See all progress</Link>
+              </span>
+            ) : null}
+          </div>
+          {progress.completedSessions > 0 ? (
+            <dl className="pal-glance">
+              <div><dt>Workouts</dt><dd>{progress.completedSessions}</dd></div>
+              <div><dt>Sets</dt><dd>{progress.completedWorkSets ?? 0}</dd></div>
+              <div><dt>Reps</dt><dd>{progress.repetitions ?? 0}</dd></div>
+              {progress.volumeKg > 0 ? <div><dt>Lifted</dt><dd>{formatInsightVolume(progress.volumeKg, progress.unitSystem)}</dd></div> : null}
+              {progress.durationSeconds > 0 ? <div><dt>Time</dt><dd>{formatInsightDuration(progress.durationSeconds)}</dd></div> : null}
+              {progress.distanceMeters > 0 ? <div><dt>Distance</dt><dd>{formatInsightDistance(progress.distanceMeters, progress.unitSystem)}</dd></div> : null}
+            </dl>
+          ) : (
+            <div className="pal-empty-progress">
+              <PalSticker pose="ready" />
+              <p>Finish your first workout and your sets, reps and records start adding up here.</p>
+            </div>
+          )}
+        </section>
+      </div>
     </section>
   );
 }
