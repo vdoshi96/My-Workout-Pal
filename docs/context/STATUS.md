@@ -1,10 +1,10 @@
 # Project status
 
-## Playful companion overhaul: October 5, 2026 (Phase 2 complete, waiting for owner screenshot approval)
+## Playful companion overhaul: October 5, 2026 (released)
 
 The owner approved the Phase 1 direction, Fredoka, the onboarding questions, the artwork, deleting unused art and running migration `0008_training_profile`, and asked for a more integrated dark mode. Phase 2 rolled *Studio Pals* out to every public and member screen on branch `vishal/playful-companion-overhaul`. It adds the four-question onboarding with a generated routine and skippable tour, the guest test drive, the finish celebration, in-place demos and the back-navigation contract. Dark pages now use dusk recolours of every scene. See [the QA report](../qa/latest/PLAYFUL-OVERHAUL-QA.md) for gates, the test-edit ledger, contrast, the navigation map and screenshots.
 
-Migration `0008` ran against production Neon after a private `pg_dump` backup; only the new empty table was added. The application change is **not merged or deployed**. `main` deploys to production automatically, so merging waits for all gates on the final commit, passing Vercel checks and the owner's approval of the final screenshots. The canonical checkout is the only worktree; temporary worktrees used to compare against `main` were removed.
+Migration `0008` ran against production Neon after a private `pg_dump` backup; only the new empty table was added. The owner approved the screenshots and asked for wrapping day pills and one name per equipment profile. Both shipped in `15eb950`, which passed every gate, and [PR #9](https://github.com/vdoshi96/My-Workout-Pal/pull/9) merged into `main`, which deploys to production. The canonical checkout is the only worktree; temporary worktrees used to compare against `main` were removed.
 
 ## Playful companion overhaul: October 4–5, 2026 (Phase 1, approved)
 

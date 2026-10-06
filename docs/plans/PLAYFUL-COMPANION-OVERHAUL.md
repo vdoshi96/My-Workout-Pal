@@ -420,7 +420,7 @@ The person should leave with a routine that fits them and a picture of the four 
 1. **"What are you training for?"** Choose one: *Get stronger* · *Build muscle* · *Feel fitter overall* · *Lose fat* · *Train for a sport or event*.
 2. **"How much lifting have you done?"** *I'm new to this* (under 6 months) · *Some* (6 months to 2 years) · *Lots* (2+ years).
 3. **"How many days a week can you train?"** 2 · 3 · 4 · 5. Helper: "Pick what you can keep up. You can change it later."
-4. **"What do you have to work with?"** *Dumbbells, a bench and bodyweight* · *A full gym with a barbell and rack*. (The existing two equipment profiles.)
+4. **"What do you have to work with?"** *Dumbbells* · *Barbell + rack*, each with its description. These are the two existing equipment profiles, under the same names as in Settings and the editor; the owner asked for one name on October 5.
 5. **"Here's your routine."** A preview of the generated routine: its name (for example "3-day full body"), each day with its movements and set × rep targets, and a ▶ on each movement that has an approved demo. Actions: **Save my routine** · "Start from a blank routine instead". Units default from the browser locale with a small "Pounds · change" toggle; the time zone is detected silently; motion follows the system. All three stay editable in Settings.
 6. **Tour (skippable, four short cards, "Skip tour" always visible):**
    - *Today:* "Your next workout is always here. Tap Start when you're ready."

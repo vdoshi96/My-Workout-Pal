@@ -1,17 +1,17 @@
 # Playful companion overhaul: QA report
 
-Branch `vishal/playful-companion-overhaul`, October 5, 2026. This report covers Phase 2 of [the overhaul plan](../../plans/PLAYFUL-COMPANION-OVERHAUL.md): the *Studio Pals* system on every screen, the new onboarding, the guest test drive, the navigation contract and the dark-mode rework the owner asked for. Nothing is merged or deployed. Merging waits for the owner's approval of the screenshots below.
+Branch `vishal/playful-companion-overhaul`, October 5, 2026. This report covers Phase 2 of [the overhaul plan](../../plans/PLAYFUL-COMPANION-OVERHAUL.md): the *Studio Pals* system on every screen, the new onboarding, the guest test drive, the navigation contract and the dark-mode rework the owner asked for. The owner approved the screenshots below on October 5 and asked for two changes: day pills that wrap and one name per equipment profile. Both are in `15eb950`, and every gate was rerun on that commit before merging.
 
 ## 1. Gates
 
-Each gate ran on its own, one heavy process at a time, against application commit `9be1dae`. Later commits change only Markdown, generated HTML and screenshots.
+Each gate ran on its own, one heavy process at a time, against application commit `15eb950`. Later commits change only Markdown, generated HTML and screenshots.
 
 | Gate | Command | Result (exact output) |
 |---|---|---|
 | Verify | `pnpm verify` | Exit 0. `Tests  1524 passed (1524)`, `Tests  38 passed (38)`, `seed:check passed: 27 required variation(s) have exactly two approved videos.`, `Verified generated service worker.`, `Verified 76 documentation files.`, `Production route boundary verified (48 App Router entries).` |
-| Member browser suite | `pnpm test:e2e:authenticated` | Exit 0. `95 passed (10.8m)`, `13 skipped` |
+| Member browser suite | `pnpm test:e2e:authenticated` | Exit 0. `95 passed (10.9m)`, `13 skipped` |
 | Release browser suite | `pnpm test:e2e:release` | Exit 0. `118 passed (2.0m)`, `86 skipped` |
-| Public acceptance (warmed dev server on 3118) | `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop` | Exit 0. `12 passed (25.5s)` |
+| Public acceptance (warmed dev server on 3118) | `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop` | Exit 0. `12 passed (24.0s)` |
 | Documentation parity | `pnpm docs:build`, then `pnpm docs:check` | Exit 0. `Verified 76 documentation files.` |
 
 Skipped tests are the suites' existing per-project skips (for example, headed native zoom and single-engine evidence). No test was skipped, retried or given a longer timeout by this work.
@@ -20,7 +20,7 @@ Skipped tests are the suites' existing per-project skips (for example, headed na
 
 - Earlier full member runs on this branch failed while fixes were still landing. Those failures led to the fixes in section 9.
 - One failure was `library-core-conditioning-expansion.spec.ts`, which timed out waiting for an aborted refresh response; see section 9.
-- The first final-gate attempt of `pnpm verify` on `9be1dae` failed only at `docs:check`, on a git-ignored local ledger file (`docs/qa/runs/ledger-lead.md: HTML counterpart is stale`). After rebuilding the docs, the same commit passed `pnpm verify` as shown above.
+- On the previous candidate (`9be1dae`), the first `pnpm verify` attempt failed only at `docs:check`, on a git-ignored local ledger file (`docs/qa/runs/ledger-lead.md: HTML counterpart is stale`). After rebuilding the docs, that commit passed every gate. The final commit passed every gate on its first run.
 
 ## 2. What a first-time visitor sees now
 
@@ -30,11 +30,11 @@ Skipped tests are the suites' existing per-project skips (for example, headed na
   1. What are you training for?
   2. How much lifting have you done?
   3. How many days a week can you train?
-  4. What do you have to work with?
+  4. What do you have to work with? ("Dumbbells" or "Barbell + rack", the same names as Settings and the editor)
   5. Here's your routine.
 
   The routine is built from the answers by `generateStarterRoutine` and lists demos that open in place. "Prefer a different start?" offers the five-day example or a blank start. After saving, a four-card tour (Today, logging, demos, progress) can be skipped at any point. Skipping or finishing it moves focus to Today's heading. Unverified members can answer and preview but not save.
-- **Today.** The greeting names the next day ("Hey Alice! Ready for Push?"), followed by one big Start button, the week as day pills, the day's movements with in-place demos, and the progress glance. The chosen day is kept in the address.
+- **Today.** The greeting names the next day ("Hey Alice! Ready for Push?"), followed by one big Start button, the week as day pills that wrap onto more rows, the day's movements with in-place demos, and the progress glance. The chosen day is kept in the address.
 - **Finishing a workout.** A celebration ("Workout done! Nice work.") with a "New record!" ribbon when one was set. Focus moves to the heading.
 - **Dark mode.** Every scene has a dusk recolour, and the scene is masked into the indigo night canvas instead of dimming daylight art. The owner asked for this.
 
@@ -528,8 +528,8 @@ Overlap checks of ≤ 1 px between the retired corner companion and page control
 - **Pre-hydration input.** The owner excluded this issue earlier, and it remains excluded.
 - **Full-page screenshot artefacts.** Stitched full-page screenshots painted fixed bars and the off-screen skip link mid-page. The capture tooling now grows the viewport instead. Real focus never landed on the skip link: logged focus before each capture was the expected heading or the page body.
 
-## 11. Open questions
+## 11. Owner decisions (October 5)
 
-1. **Approve the screenshots in section 7.** Merging to `main` deploys to production.
-2. **Day pills on phones.** Day names stay on one line, and a long week scrolls sideways. Would you prefer two rows?
-3. **Barbell profile name.** Onboarding says "A full gym with a barbell and rack", while Settings and the editor say "Barbell + rack". Should both use one name?
+1. **Screenshots approved.** The owner authorized the merge.
+2. **Day pills wrap** onto more rows instead of scrolling sideways. The phone Today screenshots were recaptured to show it.
+3. **One name per equipment profile.** Onboarding now says "Dumbbells" and "Barbell + rack", as Settings and the editor do.

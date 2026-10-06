@@ -9,6 +9,7 @@ The owner approved the *Studio Pals* direction, the Fredoka display font, the fo
 - **Navigation.** Drill-down links carry a validated `from` origin. `resolveBackTarget` accepts only allowlisted member and public origins, and `BackLink` returns to the exact anchor. Today keeps the selected day in the address, and the address is the source of truth when the page renders. Demos open in a native dialog that mounts the video only while open.
 - **Focus after a screen is replaced.** Finishing a workout and leaving the tour request focus for the next screen's heading (`ArrivalFocus`), because Next.js otherwise leaves focus on the document or the first focusable element.
 - **Test drive.** `/try` is a two-movement guest workout with approved demos. It saves nothing.
+- **Owner review (October 5).** Day pills wrap onto more rows rather than scrolling sideways. Onboarding names the equipment profiles "Dumbbells" and "Barbell + rack", as everywhere else.
 
 ## 2026-10-04: Overhaul the look and onboarding toward a playful companion (proposed; approved October 5, see above)
 

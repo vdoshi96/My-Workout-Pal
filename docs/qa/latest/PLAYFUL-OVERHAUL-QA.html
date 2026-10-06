@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="8a7a589bafeb42c532b0c1457e8c8080ff88919854c43d292775f75bda20f14b">
+  <meta name="source-sha256" content="6a4bfdb8299ce8e5a3f069f05419f20b5d0d944f9bba520009c5e23e5073dedd">
   <title>Playful companion overhaul: QA report · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,9 +28,9 @@
 <body>
   <main>
 <h1>Playful companion overhaul: QA report</h1>
-<p>Branch <code>vishal/playful-companion-overhaul</code>, October 5, 2026. This report covers Phase 2 of <a href="../../plans/PLAYFUL-COMPANION-OVERHAUL.html">the overhaul plan</a>: the <em>Studio Pals</em> system on every screen, the new onboarding, the guest test drive, the navigation contract and the dark-mode rework the owner asked for. Nothing is merged or deployed. Merging waits for the owner&#39;s approval of the screenshots below.</p>
+<p>Branch <code>vishal/playful-companion-overhaul</code>, October 5, 2026. This report covers Phase 2 of <a href="../../plans/PLAYFUL-COMPANION-OVERHAUL.html">the overhaul plan</a>: the <em>Studio Pals</em> system on every screen, the new onboarding, the guest test drive, the navigation contract and the dark-mode rework the owner asked for. The owner approved the screenshots below on October 5 and asked for two changes: day pills that wrap and one name per equipment profile. Both are in <code>15eb950</code>, and every gate was rerun on that commit before merging.</p>
 <h2>1. Gates</h2>
-<p>Each gate ran on its own, one heavy process at a time, against application commit <code>9be1dae</code>. Later commits change only Markdown, generated HTML and screenshots.</p>
+<p>Each gate ran on its own, one heavy process at a time, against application commit <code>15eb950</code>. Later commits change only Markdown, generated HTML and screenshots.</p>
 <table>
 <thead>
 <tr>
@@ -47,7 +47,7 @@
 <tr>
 <td>Member browser suite</td>
 <td><code>pnpm test:e2e:authenticated</code></td>
-<td>Exit 0. <code>95 passed (10.8m)</code>, <code>13 skipped</code></td>
+<td>Exit 0. <code>95 passed (10.9m)</code>, <code>13 skipped</code></td>
 </tr>
 <tr>
 <td>Release browser suite</td>
@@ -57,7 +57,7 @@
 <tr>
 <td>Public acceptance (warmed dev server on 3118)</td>
 <td><code>PLAYWRIGHT_BASE_URL=http://127.0.0.1:3118 pnpm exec playwright test production-audit-public --project chromium-phone --project chromium-desktop</code></td>
-<td>Exit 0. <code>12 passed (25.5s)</code></td>
+<td>Exit 0. <code>12 passed (24.0s)</code></td>
 </tr>
 <tr>
 <td>Documentation parity</td>
@@ -70,7 +70,7 @@
 <ul>
 <li>Earlier full member runs on this branch failed while fixes were still landing. Those failures led to the fixes in section 9.</li>
 <li>One failure was <code>library-core-conditioning-expansion.spec.ts</code>, which timed out waiting for an aborted refresh response; see section 9.</li>
-<li>The first final-gate attempt of <code>pnpm verify</code> on <code>9be1dae</code> failed only at <code>docs:check</code>, on a git-ignored local ledger file (<code>docs/qa/runs/ledger-lead.md: HTML counterpart is stale</code>). After rebuilding the docs, the same commit passed <code>pnpm verify</code> as shown above.</li>
+<li>On the previous candidate (<code>9be1dae</code>), the first <code>pnpm verify</code> attempt failed only at <code>docs:check</code>, on a git-ignored local ledger file (<code>docs/qa/runs/ledger-lead.md: HTML counterpart is stale</code>). After rebuilding the docs, that commit passed every gate. The final commit passed every gate on its first run.</li>
 </ul>
 <h2>2. What a first-time visitor sees now</h2>
 <ul>
@@ -83,12 +83,12 @@
 <li>What are you training for?</li>
 <li>How much lifting have you done?</li>
 <li>How many days a week can you train?</li>
-<li>What do you have to work with?</li>
+<li>What do you have to work with? (&quot;Dumbbells&quot; or &quot;Barbell + rack&quot;, the same names as Settings and the editor)</li>
 <li>Here&#39;s your routine.</li>
 </ol>
 <p>The routine is built from the answers by <code>generateStarterRoutine</code> and lists demos that open in place. &quot;Prefer a different start?&quot; offers the five-day example or a blank start. After saving, a four-card tour (Today, logging, demos, progress) can be skipped at any point. Skipping or finishing it moves focus to Today&#39;s heading. Unverified members can answer and preview but not save.</p>
 </li>
-<li><p><strong>Today.</strong> The greeting names the next day (&quot;Hey Alice! Ready for Push?&quot;), followed by one big Start button, the week as day pills, the day&#39;s movements with in-place demos, and the progress glance. The chosen day is kept in the address.</p>
+<li><p><strong>Today.</strong> The greeting names the next day (&quot;Hey Alice! Ready for Push?&quot;), followed by one big Start button, the week as day pills that wrap onto more rows, the day&#39;s movements with in-place demos, and the progress glance. The chosen day is kept in the address.</p>
 </li>
 <li><p><strong>Finishing a workout.</strong> A celebration (&quot;Workout done! Nice work.&quot;) with a &quot;New record!&quot; ribbon when one was set. Focus moves to the heading.</p>
 </li>
@@ -2226,11 +2226,11 @@
 <li><strong>Pre-hydration input.</strong> The owner excluded this issue earlier, and it remains excluded.</li>
 <li><strong>Full-page screenshot artefacts.</strong> Stitched full-page screenshots painted fixed bars and the off-screen skip link mid-page. The capture tooling now grows the viewport instead. Real focus never landed on the skip link: logged focus before each capture was the expected heading or the page body.</li>
 </ul>
-<h2>11. Open questions</h2>
+<h2>11. Owner decisions (October 5)</h2>
 <ol>
-<li><strong>Approve the screenshots in section 7.</strong> Merging to <code>main</code> deploys to production.</li>
-<li><strong>Day pills on phones.</strong> Day names stay on one line, and a long week scrolls sideways. Would you prefer two rows?</li>
-<li><strong>Barbell profile name.</strong> Onboarding says &quot;A full gym with a barbell and rack&quot;, while Settings and the editor say &quot;Barbell + rack&quot;. Should both use one name?</li>
+<li><strong>Screenshots approved.</strong> The owner authorized the merge.</li>
+<li><strong>Day pills wrap</strong> onto more rows instead of scrolling sideways. The phone Today screenshots were recaptured to show it.</li>
+<li><strong>One name per equipment profile.</strong> Onboarding now says &quot;Dumbbells&quot; and &quot;Barbell + rack&quot;, as Settings and the editor do.</li>
 </ol>
 
   </main>

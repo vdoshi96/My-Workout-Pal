@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="598a0e73fd389b02233f7c811544fb2f5ceb8fe4851bbba7fda7004008c4da09">
+  <meta name="source-sha256" content="839654ba9167910653c920d5b407f3795ecba725eb17bf36efa1c1993dc9d079">
   <title>Project log · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -37,6 +37,7 @@
 <li>Built the four-question onboarding with a generated routine (<code>generateStarterRoutine</code>, test-first), the example and blank starts, a skippable four-card tour, Settings &gt; Your training, the <code>/try</code> test drive, the finish celebration with record ribbon, <code>BackLink</code> with <code>resolveBackTarget</code> (test-first), and in-place demo sheets.</li>
 <li>Fixed issues found by the browser suites: Today&#39;s day now follows the address, the tab bar reads the router&#39;s search params, headings take focus after a finish or the tour, the workout scene stays off the read-only screen, the phone header fits one row, and the editor no longer rewrites its address (that made Next.js remount it after every save).</li>
 <li>Updated pre-existing tests only where a layout was retired, logged in the <a href="../qa/latest/PLAYFUL-OVERHAUL-QA.html">QA report</a> ledger.</li>
+<li>The owner approved the screenshots, asked for day pills that wrap and one name per equipment profile (<code>15eb950</code>), and authorized the merge. All gates passed on <code>15eb950</code>: <code>pnpm verify</code>, 95 authenticated, 118 release and 12 public-acceptance passes, and 76 documentation files verified. PR #9 merged into <code>main</code>.</li>
 </ul>
 <h2>2026-10-05: Playful companion overhaul, Phase 0 audit and Phase 1 prototype</h2>
 <ul>

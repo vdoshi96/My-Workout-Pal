@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="source-sha256" content="01a04f8301a50c7f3cd59d7c1303652b1088033b61b1522c19c06791aadba6fa">
+  <meta name="source-sha256" content="874dc749d25999a0635c057c0da7fa92da79cc9be9840782649ed81588e2780e">
   <title>Project status · My Workout Pal docs</title>
   <style>
     :root { color-scheme: light dark; --paper:#f3eee3; --ink:#0d3138; --route:#d95c42; --rule:#a7aa9a; --code:#e6e0d5; }
@@ -28,9 +28,9 @@
 <body>
   <main>
 <h1>Project status</h1>
-<h2>Playful companion overhaul: October 5, 2026 (Phase 2 complete, waiting for owner screenshot approval)</h2>
+<h2>Playful companion overhaul: October 5, 2026 (released)</h2>
 <p>The owner approved the Phase 1 direction, Fredoka, the onboarding questions, the artwork, deleting unused art and running migration <code>0008_training_profile</code>, and asked for a more integrated dark mode. Phase 2 rolled <em>Studio Pals</em> out to every public and member screen on branch <code>vishal/playful-companion-overhaul</code>. It adds the four-question onboarding with a generated routine and skippable tour, the guest test drive, the finish celebration, in-place demos and the back-navigation contract. Dark pages now use dusk recolours of every scene. See <a href="../qa/latest/PLAYFUL-OVERHAUL-QA.html">the QA report</a> for gates, the test-edit ledger, contrast, the navigation map and screenshots.</p>
-<p>Migration <code>0008</code> ran against production Neon after a private <code>pg_dump</code> backup; only the new empty table was added. The application change is <strong>not merged or deployed</strong>. <code>main</code> deploys to production automatically, so merging waits for all gates on the final commit, passing Vercel checks and the owner&#39;s approval of the final screenshots. The canonical checkout is the only worktree; temporary worktrees used to compare against <code>main</code> were removed.</p>
+<p>Migration <code>0008</code> ran against production Neon after a private <code>pg_dump</code> backup; only the new empty table was added. The owner approved the screenshots and asked for wrapping day pills and one name per equipment profile. Both shipped in <code>15eb950</code>, which passed every gate, and <a href="https://github.com/vdoshi96/My-Workout-Pal/pull/9">PR #9</a> merged into <code>main</code>, which deploys to production. The canonical checkout is the only worktree; temporary worktrees used to compare against <code>main</code> were removed.</p>
 <h2>Playful companion overhaul: October 4–5, 2026 (Phase 1, approved)</h2>
 <p>The owner used the post-audit app and said it fails at its job: it feels like a corporate deck of boxed cards, the art is an afterthought, white text on selected options is hard to read, onboarding teaches nothing, and drill-downs have no way back. <a href="../plans/PLAYFUL-COMPANION-OVERHAUL.html">The overhaul plan</a> records the Phase 0 audit (box inventory, measured contrast in every state, navigation map, onboarding walkthrough, art inventory) and the Phase 1 <em>Studio Pals</em> direction.</p>
 <p>Branch <code>vishal/playful-companion-overhaul</code> contains the plan, the screenshot and contrast capture tooling (<code>playwright.capture.config.ts</code>, <code>tests/capture/</code>, <code>node scripts/test-e2e-authenticated.mjs --capture</code>), and a prototype of <strong>only</strong> the landing page and member Today, with before and prototype screenshots under <code>docs/design/playful-overhaul/</code>. The prototype adds <code>@fontsource-variable/fredoka</code> (pending owner approval) and a scoped stylesheet <code>src/app/studio-pals.css</code> that Phase 2 folds into one system. Browser tests that check the retired landing and Today layouts are expected to fail on this branch; nothing is merged or deployed. At that checkpoint work stopped for owner approval, which arrived on October 5 (see above).</p>

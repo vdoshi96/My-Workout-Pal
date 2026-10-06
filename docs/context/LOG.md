@@ -9,6 +9,7 @@
 - Built the four-question onboarding with a generated routine (`generateStarterRoutine`, test-first), the example and blank starts, a skippable four-card tour, Settings > Your training, the `/try` test drive, the finish celebration with record ribbon, `BackLink` with `resolveBackTarget` (test-first), and in-place demo sheets.
 - Fixed issues found by the browser suites: Today's day now follows the address, the tab bar reads the router's search params, headings take focus after a finish or the tour, the workout scene stays off the read-only screen, the phone header fits one row, and the editor no longer rewrites its address (that made Next.js remount it after every save).
 - Updated pre-existing tests only where a layout was retired, logged in the [QA report](../qa/latest/PLAYFUL-OVERHAUL-QA.md) ledger.
+- The owner approved the screenshots, asked for day pills that wrap and one name per equipment profile (`15eb950`), and authorized the merge. All gates passed on `15eb950`: `pnpm verify`, 95 authenticated, 118 release and 12 public-acceptance passes, and 76 documentation files verified. PR #9 merged into `main`.
 
 ## 2026-10-05: Playful companion overhaul, Phase 0 audit and Phase 1 prototype
 
