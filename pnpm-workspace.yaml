@@ -5,6 +5,14 @@ storeDir: .pnpm-store
 
 overrides:
   "jwks-rsa>jose": "4.15.9"
+  # Every firebase release (through 13.1.0) pins @grpc/grpc-js ~1.9.0, which has
+  # no patched release for GHSA-m9gg-hp2v-232j / GHSA-f596-whhp-79r4. 1.13.7 is
+  # the nearest patched line and shares Firestore's @grpc/proto-loader 0.7.x.
+  "@firebase/firestore>@grpc/grpc-js": "1.13.7"
+  # drizzle-kit still depends on the deprecated @esbuild-kit loader (never loaded
+  # by its CLI), which pins esbuild ~0.18.20 (GHSA-67mh-4wv8-2f99). Reuse the
+  # esbuild drizzle-kit itself depends on.
+  "@esbuild-kit/core-utils>esbuild": "0.25.12"
 
 allowBuilds:
   "@firebase/util": true
